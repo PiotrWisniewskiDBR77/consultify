@@ -56,6 +56,14 @@ export interface WeekForecast {
   availableHours: number;
 }
 
+export type OverloadWindow = 'day' | 'week' | 'month';
+
+const WINDOW_MULTIPLIER: Record<OverloadWindow, number> = {
+  day: 1 / 5,
+  week: 1,
+  month: 4,
+};
+
 export interface OverloadAlert {
   userId: string;
   name: string;
@@ -64,6 +72,7 @@ export interface OverloadAlert {
   overloadHours: number;
   severity: 'warning' | 'critical';
   suggestion: string;
+  window: OverloadWindow;
 }
 
 function round1(n: number): number {
@@ -241,27 +250,35 @@ export async function getUserForecast(orgId: string, userId: string): Promise<We
   return weeks;
 }
 
-export async function getOverloadAlerts(orgId: string): Promise<OverloadAlert[]> {
+export async function getOverloadAlerts(
+  orgId: string,
+  window: OverloadWindow = 'week'
+): Promise<OverloadAlert[]> {
   const overview = await getCapacityOverview(orgId);
   const alerts: OverloadAlert[] = [];
+  const mult = WINDOW_MULTIPLIER[window];
 
   for (const user of overview.users) {
-    if (user.allocatedHours > user.capacityHours * 1.1) {
-      const overloadHours = round1(user.allocatedHours - user.capacityHours);
-      const severity = user.allocatedHours > user.capacityHours * 1.3 ? 'critical' : 'warning';
+    const windowCapacity = round1(user.capacityHours * mult);
+    const windowAllocated = round1(user.allocatedHours * mult);
+
+    if (windowAllocated > windowCapacity * 1.1) {
+      const overloadHours = round1(windowAllocated - windowCapacity);
+      const severity = windowAllocated > windowCapacity * 1.3 ? 'critical' : 'warning';
       const suggestion =
         severity === 'critical'
-          ? `Reassign ${overloadHours}h of work or extend deadlines`
-          : `Review task priorities — ${overloadHours}h over capacity`;
+          ? `Reassign ${overloadHours}h of work or extend deadlines (${window} window)`
+          : `Review task priorities — ${overloadHours}h over capacity (${window} window)`;
 
       alerts.push({
         userId: user.userId,
         name: user.name,
-        capacityHours: user.capacityHours,
-        allocatedHours: user.allocatedHours,
+        capacityHours: windowCapacity,
+        allocatedHours: windowAllocated,
         overloadHours,
         severity,
         suggestion,
+        window,
       });
     }
   }

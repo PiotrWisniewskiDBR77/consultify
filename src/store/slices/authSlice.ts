@@ -1,7 +1,21 @@
 import { StateCreator } from 'zustand';
 
 import { AppView, AuthStep, SessionMode, User } from '../../types';
-import { AppState } from '../useAppStore';
+import type { AppState } from '../useAppStore';
+
+const USER_STORAGE_KEY = 'user';
+
+function syncStoredUser(user: User | null) {
+  try {
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
+  } catch {
+    // ignore storage failures
+  }
+}
 
 export interface AuthSlice {
   currentUser: User | null;
@@ -26,7 +40,10 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
   currentOrganization: null,
   isAuthInitializing: true, // Start as true, will be set to false after initial auth check
 
-  setCurrentUser: (user) => set({ currentUser: user }),
+  setCurrentUser: (user) => {
+    syncStoredUser(user);
+    set({ currentUser: user });
+  },
   setSessionMode: (mode) => set({ sessionMode: mode }),
   setAuthInitialStep: (step) => set({ authInitialStep: step }),
   setCurrentOrganization: (org) => set({ currentOrganization: org }),
@@ -43,12 +60,15 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('consultify-storage');
     localStorage.removeItem('consultify_demo_session');
+    localStorage.removeItem('consultify_current_org_id');
     localStorage.removeItem('demo_events');
 
     try {
       sessionStorage.removeItem('isDemo');
       sessionStorage.removeItem('demo_session_id');
       sessionStorage.removeItem('demo_events');
+      sessionStorage.removeItem('attribution_ref');
+      sessionStorage.removeItem('attribution_invite');
     } catch {
       // ignore
     }

@@ -2563,9 +2563,26 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
       logger.info(`${TAG} ✓ ${file} (${Date.now() - startMs}ms)`);
     } catch (err: any) {
       await db.query('ROLLBACK').catch(() => {});
-      logger.error(`${TAG} ✗ ${file} failed: ${err?.message}`);
-      // Stop on first failure — migrations are ordered and may depend on each other
-      throw new Error(`Table Platform migration ${file} failed: ${err?.message}`);
+      const msg = err?.message || '';
+      const isAlreadyExists =
+        msg.includes('already exists') ||
+        msg.includes('duplicate key') ||
+        msg.includes('duplicate_column') ||
+        msg.includes('duplicate_object');
+      if (isAlreadyExists) {
+        logger.warn(`${TAG} ⚠ ${file} skipped (schema already up-to-date): ${msg}`);
+        try {
+          await db.query(
+            'INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)',
+            [file, Date.now() - startMs]
+          );
+        } catch {
+          /* ignore if already recorded */
+        }
+      } else {
+        logger.error(`${TAG} ✗ ${file} failed: ${msg}`);
+        throw new Error(`Table Platform migration ${file} failed: ${msg}`);
+      }
     }
   }
 
@@ -2610,7 +2627,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     logger.info(`[DatabaseInitializer] Database type: ${dbType}`);
 
     if (dbType === 'postgres' && skipPostgresInitInTests) {
-      logger.warn(
+      logger.info(
         '[DatabaseInitializer] Skipping PostgreSQL schema initialization/verification in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)'
       );
       return {

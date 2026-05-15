@@ -1,9 +1,19 @@
-import { FileText, X } from 'lucide-react';
+import { FileText, MessageCircle, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  type ActionRow,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 
@@ -14,20 +24,33 @@ import {
   type TableRow,
 } from '../shared/ModuleHub/FilterableTable';
 import { type RowAction } from '../shared/RowActionsMenu';
+import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import type { ResultsKPI, ResultsLifecycleFilter, ResultsTrackedInitiative } from './kpiDomain';
+import { buildKpiQueueGroups } from './kpiDomain';
+import { loadResultsKpis } from './kpiRuntime';
+import { createResultsShowcaseReports, shouldUseResultsShowcaseData } from './resultsShowcaseData';
 
 export interface ResultsKpiReportsViewProps {
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
   createNonce?: number;
+  selectedLifecycleFilter?: ResultsLifecycleFilter;
+  selectedInitiatives?: ResultsTrackedInitiative[];
+  selectedKpis?: ResultsKPI[];
 }
 
 export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   activeFilters,
   onFilterChange,
   createNonce,
+  selectedLifecycleFilter = 'all',
+  selectedInitiatives = [],
+  selectedKpis = [],
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   type ActionItem = {
     key: string;
@@ -43,15 +66,25 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
 
   const [rows, setRows] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingReportId, setRefreshingReportId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const [availableKpis, setAvailableKpis] = useState<
     Array<{ id: string; name: string; initiativeName?: string | null }>
   >([]);
+  const [availableInitiatives, setAvailableInitiatives] = useState<
+    Array<{ id: string; name: string; status?: string | null }>
+  >([]);
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpiSearch, setKpiSearch] = useState('');
   const [selectedKpiIds, setSelectedKpiIds] = useState<string[]>([]);
+  const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<string[]>([]);
+  const [reviewContext, setReviewContext] = useState({
+    requiresReview: 0,
+    discrepancy: 0,
+    needsEntry: 0,
+  });
 
   const [tasksModalOpen, setTasksModalOpen] = useState(false);
   const [tasksLoading, setTasksLoading] = useState(false);
@@ -70,16 +103,120 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     return end.toISOString().slice(0, 10);
   });
   const [title, setTitle] = useState('');
+  const [reportTemplate, setReportTemplate] = useState('benefits-review');
+  const [aiNarrativeHint, setAiNarrativeHint] = useState('');
+  const [aiDraftLoading, setAiDraftLoading] = useState(false);
+
+  const formatTemplateLabel = useCallback(
+    (templateKey?: string | null) => {
+      switch (templateKey) {
+        case 'control-pack':
+          return t('results.kpiReports.templates.controlPack', 'Control pack');
+        case 'portfolio-review':
+          return t('results.kpiReports.templates.portfolio', 'Portfolio KPI review');
+        case 'executive-monthly':
+          return t('results.kpiReports.templates.executive', 'Executive monthly review');
+        case 'custom':
+          return t('common.custom', 'Custom');
+        default:
+          return t('results.kpiReports.templates.benefits', 'Benefits review');
+      }
+    },
+    [t]
+  );
 
   const columns: TableColumn[] = useMemo(
     () => [
-      { id: 'type', label: t('common.type', 'Type'), width: '12%' },
-      { id: 'name', label: t('common.name', 'Name'), width: '44%' },
+      {
+        id: 'type',
+        label: t('common.type', 'Type'),
+        width: '18%',
+        render: (row) => (
+          <div>
+            <div className="text-sm font-medium text-slate-900 dark:text-white">
+              {formatTemplateLabel(row.type)}
+            </div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">KPI scorecard</div>
+          </div>
+        ),
+      },
+      {
+        id: 'name',
+        label: t('common.name', 'Name'),
+        width: '44%',
+        render: (row) => (
+          <div>
+            <div className="text-sm font-medium text-slate-900 dark:text-white">{row.name}</div>
+            <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span>{row.kpiCount ?? 0} KPI</span>
+              <span>·</span>
+              <span>
+                {row.initiativeCount ?? 0} {t('results.tabs.initiatives', 'Initiatives')}
+              </span>
+              <span>·</span>
+              <span>
+                {row.openActionCount ?? 0} {t('results.kpiReports.openActions', 'open actions')}
+              </span>
+            </div>
+          </div>
+        ),
+      },
       { id: 'period', label: t('common.period', 'Period'), width: '16%' },
       { id: 'status', label: t('common.status', 'Status'), width: '16%' },
       { id: 'updatedAt', label: t('common.updated', 'Updated'), width: '18%' },
     ],
-    [t]
+    [formatTemplateLabel, t]
+  );
+
+  type PreviewReport = PreviewableItem &
+    TableRow & {
+      summaryText: string;
+      relationItems: RelationItem[];
+    };
+
+  const previewItems = useMemo<PreviewReport[]>(
+    () =>
+      rows.map((row) => ({
+        ...row,
+        title: String(row.name || ''),
+        summaryText: t(
+          'results.kpiReports.preview.summary',
+          '{{name}} packages KPI review for {{period}} with {{kpiCount}} KPI across {{initiativeCount}} initiatives. {{openActionCount}} open actions remain linked to this artifact.',
+          {
+            name: String(row.name || 'KPI report'),
+            period: String(row.period || '—'),
+            kpiCount: row.kpiCount ?? 0,
+            initiativeCount: row.initiativeCount ?? 0,
+            openActionCount: row.openActionCount ?? 0,
+          }
+        ),
+        relationItems: [
+          {
+            label: t('results.kpiReports.relation.kpis', '{{count}} KPI in snapshot', {
+              count: row.kpiCount ?? 0,
+            }),
+            type: 'kpi',
+          },
+          {
+            label: t('results.kpiReports.relation.initiatives', '{{count}} initiatives in scope', {
+              count: row.initiativeCount ?? 0,
+            }),
+            type: 'initiative',
+          },
+          {
+            label: t('results.kpiReports.relation.actions', '{{count}} open actions', {
+              count: row.openActionCount ?? 0,
+            }),
+            type: 'report',
+          },
+        ].filter((item) => !item.label.startsWith('0 ')),
+      })),
+    [rows, t]
+  );
+
+  const selectedItem = useMemo(
+    () => (selectedId ? (previewItems.find((item) => item.id === selectedId) ?? null) : null),
+    [previewItems, selectedId]
   );
 
   const fetchReports = useCallback(async () => {
@@ -87,23 +224,42 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     try {
       const res: any = await Api.get('/results/kpi-reports');
       const list = (res?.data || []) as any[];
+      const reports =
+        list.length === 0 && shouldUseResultsShowcaseData() ? createResultsShowcaseReports() : list;
       setRows(
-        (list || []).map((r: any) => ({
+        reports.map((r: any) => ({
           id: r.reportId || r.id,
           reportId: r.reportId || r.id,
           snapshotId: r.snapshotId,
-          type: 'KPI',
-          name: r.title,
+          type: r.templateKey || 'benefits-review',
+          name: r.title || r.name,
           period:
             r.periodStart && r.periodEnd
               ? `${r.periodStart} → ${r.periodEnd}`
               : r.periodStart || '—',
           status: r.status || 'DRAFT',
           updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : '—',
+          aiNarrativeHint: r.aiNarrativeHint || '',
+          initiativeCount: r.initiativeCount ?? null,
+          kpiCount: r.kpiCount ?? null,
+          openActionCount: r.openActionCount ?? null,
         }))
       );
     } catch {
-      setRows([]);
+      setRows(
+        shouldUseResultsShowcaseData()
+          ? createResultsShowcaseReports().map((r) => ({
+              id: r.id,
+              reportId: r.reportId,
+              snapshotId: r.snapshotId,
+              type: 'benefits-review',
+              name: r.title,
+              period: `${r.periodStart} → ${r.periodEnd}`,
+              status: r.status,
+              updatedAt: new Date(r.updatedAt).toLocaleDateString(),
+            }))
+          : []
+      );
     } finally {
       setLoading(false);
     }
@@ -124,32 +280,38 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     (async () => {
       setKpisLoading(true);
       try {
-        let list: any[] = [];
-        try {
-          const catalog = await V8ResultsApi.getKpiCatalog();
-          list = Array.isArray(catalog?.kpis) ? catalog.kpis : [];
-        } catch (error) {
-          if (!shouldFallbackToLegacyResults(error)) {
-            throw error;
-          }
-          const res: any = await Api.get('/benefits/kpis');
-          list = (res?.data || []) as any[];
-        }
-        const items = (list || [])
-          .map((k: any) => ({
+        const runtime = await loadResultsKpis();
+        const items = runtime.kpis
+          .map((k) => ({
             id: String(k.id || '').trim(),
             name: String(k.name || '').trim(),
-            initiativeName: (k.initiativeName || k.initiative_name || null) as string | null,
+            initiativeName: (k.initiativeName || null) as string | null,
           }))
           .filter((k) => k.id && k.name)
           .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        const queue = buildKpiQueueGroups(runtime.kpis);
         if (cancelled) return;
         setAvailableKpis(items);
         setSelectedKpiIds(items.map((k) => k.id));
+        const scopedInitiatives = (selectedInitiatives || []).map((initiative) => ({
+          id: initiative.initiativeId,
+          name: initiative.initiativeName,
+          status: initiative.initiativeStatus,
+        }));
+        setAvailableInitiatives(scopedInitiatives);
+        setSelectedInitiativeIds(scopedInitiatives.map((initiative) => initiative.id));
+        setReviewContext({
+          requiresReview: queue.requiresReview.length,
+          discrepancy: queue.discrepancy.length,
+          needsEntry: queue.needsEntry.length,
+        });
       } catch {
         if (cancelled) return;
         setAvailableKpis([]);
         setSelectedKpiIds([]);
+        setAvailableInitiatives([]);
+        setSelectedInitiativeIds([]);
+        setReviewContext({ requiresReview: 0, discrepancy: 0, needsEntry: 0 });
       } finally {
         if (!cancelled) setKpisLoading(false);
       }
@@ -157,7 +319,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [createOpen]);
+  }, [createOpen, selectedInitiatives]);
 
   const filteredKpis = useMemo(() => {
     const q = kpiSearch.trim().toLowerCase();
@@ -169,16 +331,82 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     });
   }, [availableKpis, kpiSearch]);
 
+  const generateAiDraft = useCallback(async () => {
+    setAiDraftLoading(true);
+    try {
+      const selectedInitiativesLabel = availableInitiatives
+        .filter((initiative) => selectedInitiativeIds.includes(initiative.id))
+        .map((initiative) => initiative.name)
+        .slice(0, 12);
+      const selectedKpisLabel = availableKpis
+        .filter((kpi) => selectedKpiIds.includes(kpi.id))
+        .map((kpi) => `${kpi.name}${kpi.initiativeName ? ` (${kpi.initiativeName})` : ''}`)
+        .slice(0, 20);
+      const contextText = [
+        `Template: ${reportTemplate}`,
+        `Period start: ${periodStart}`,
+        `Period end: ${periodEnd || 'n/a'}`,
+        `Lifecycle filter: ${selectedLifecycleFilter}`,
+        `Initiatives: ${selectedInitiativesLabel.join(', ') || 'none'}`,
+        `KPIs: ${selectedKpisLabel.join(', ') || 'none'}`,
+        `Queue summary: requires review ${reviewContext.requiresReview}, discrepancy ${reviewContext.discrepancy}, needs entry ${reviewContext.needsEntry}`,
+      ].join('\n');
+      const systemInstruction = [
+        'You are drafting a KPI performance review title and short reporting brief.',
+        'Return ONLY valid JSON.',
+        'Schema: {"title": string, "brief": string}',
+        'The title must be concise and executive-friendly.',
+        'The brief must be 1-2 sentences and mention scope, key risks, and intended report purpose.',
+      ].join('\n');
+      const aiRes: any = await Api.post('/ai/refine-text?timeoutMs=20000', {
+        text: contextText,
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: 'KPI report draft',
+        language: 'en',
+      });
+      const raw = String(aiRes?.text || '').trim();
+      const parsed = JSON.parse(raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1] || raw);
+      if (parsed?.title) setTitle(String(parsed.title));
+      if (parsed?.brief) setAiNarrativeHint(String(parsed.brief));
+    } catch {
+      toast.error(t('results.kpiReports.create.aiFailed', 'Failed to generate AI draft'));
+    } finally {
+      setAiDraftLoading(false);
+    }
+  }, [
+    availableInitiatives,
+    availableKpis,
+    periodEnd,
+    periodStart,
+    reportTemplate,
+    reviewContext.discrepancy,
+    reviewContext.needsEntry,
+    reviewContext.requiresReview,
+    selectedInitiativeIds,
+    selectedKpiIds,
+    selectedLifecycleFilter,
+    t,
+  ]);
+
   const handleCreate = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!periodStart) return;
       setCreating(true);
       try {
+        const filters = {
+          lifecycleFilter: selectedLifecycleFilter,
+          initiativeIds: selectedInitiativeIds,
+          ...(reportTemplate !== 'benefits-review' ? { templateKey: reportTemplate } : {}),
+          ...(aiNarrativeHint.trim() ? { aiNarrativeHint: aiNarrativeHint.trim() } : {}),
+        };
         const payload = {
           periodStart,
           periodEnd: periodEnd || null,
           title: title.trim() || undefined,
+          filters,
+          initiativeIds: selectedInitiativeIds.length ? selectedInitiativeIds : undefined,
           kpiIds: selectedKpiIds.length ? selectedKpiIds : undefined,
         };
         let res: any;
@@ -195,13 +423,25 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         setCreateOpen(false);
         setTitle('');
         setKpiSearch('');
+        setAiNarrativeHint('');
         await fetchReports();
         if (resolvedReportId) navigate(`/reports/builder/${resolvedReportId}`);
       } finally {
         setCreating(false);
       }
     },
-    [periodStart, periodEnd, title, selectedKpiIds, fetchReports, navigate]
+    [
+      periodStart,
+      periodEnd,
+      title,
+      reportTemplate,
+      aiNarrativeHint,
+      selectedInitiativeIds,
+      selectedKpiIds,
+      fetchReports,
+      navigate,
+      selectedLifecycleFilter,
+    ]
   );
 
   const inputCls =
@@ -290,41 +530,300 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         onClick: () => navigate(`/reports/builder/${row.reportId}`),
       },
       {
+        id: 'refresh',
+        label:
+          refreshingReportId === row.reportId
+            ? t('common.loading', 'Loading...')
+            : t('results.kpiReports.refresh', 'Refresh snapshot'),
+        onClick: async () => {
+          if (!row.snapshotId || refreshingReportId === row.reportId) return;
+          setRefreshingReportId(row.reportId);
+          try {
+            let res: any;
+            try {
+              res = await V8ResultsApi.refreshKpiReport(String(row.snapshotId));
+            } catch (error) {
+              if (!shouldFallbackToLegacyResults(error)) {
+                throw error;
+              }
+              res = await Api.post(`/results/kpi-reports/${row.snapshotId}/refresh`, {});
+            }
+            toast.success(t('results.kpiReports.refreshDone', 'Snapshot refreshed'));
+            await fetchReports();
+            const nextReportId = res?.data?.reportId || res?.reportId;
+            if (nextReportId) {
+              navigate(`/reports/builder/${nextReportId}`);
+            }
+          } catch {
+            toast.error(t('results.kpiReports.refreshFailed', 'Failed to refresh snapshot'));
+          } finally {
+            setRefreshingReportId(null);
+          }
+        },
+      },
+      {
         id: 'tasks',
         label: t('results.kpiReports.tasks.create', 'Create tasks from action plan'),
         onClick: () => void loadActionsForRow(row),
         divider: true,
       },
+      {
+        id: 'discuss',
+        label: t('results.kpiReports.discuss', 'Discuss report'),
+        onClick: async () => {
+          try {
+            const relatedInitiativeIds = Array.from(
+              new Set(
+                selectedInitiatives
+                  .map((initiative) => String(initiative.initiativeId || '').trim())
+                  .filter(Boolean)
+              )
+            );
+            const relatedKpiIds = Array.from(
+              new Set(
+                selectedKpis.map((kpi) => String(kpi.id || '').trim()).filter(Boolean)
+              )
+            );
+            await openChatWithContext({
+              entityType: 'kpi_report',
+              entityId: String(row.reportId || row.id),
+              entityName: String(row.title || 'KPI Report'),
+              contextData: {
+                ...(row as unknown as Record<string, unknown>),
+                initiativeIds: relatedInitiativeIds,
+                kpiIds: relatedKpiIds,
+                p11Handoff: {
+                  source: 'results_kpi_reports',
+                  lane: 'kpi_reports',
+                  reportId: String(row.reportId || row.id),
+                  initiativeIds: relatedInitiativeIds,
+                  kpiIds: relatedKpiIds,
+                },
+              },
+              pmoContext: {
+                reportId: String(row.reportId || row.id),
+                initiativeIds: relatedInitiativeIds,
+              },
+            });
+            toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
+          } catch {
+            toast.error(t('common.chatOpenError', 'Failed to open chat'));
+          }
+        },
+      },
     ],
-    [navigate, t, loadActionsForRow]
+    [
+      navigate,
+      t,
+      loadActionsForRow,
+      refreshingReportId,
+      fetchReports,
+      openChatWithContext,
+      selectedInitiatives,
+      selectedKpis,
+    ]
   );
 
   return (
     <>
-      <FilterableTable
-        columns={columns}
-        data={rows}
-        activeFilters={activeFilters}
-        onFilterChange={onFilterChange}
-        density="compact"
-        canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-        getRowActions={getRowActions}
-        onRowClick={(row) => navigate(`/reports/builder/${row.reportId}`)}
-        emptyMessage={
-          loading
-            ? t('common.loading', 'Loading...')
-            : t(
-                'results.kpiReports.empty',
-                'No KPI reports yet. Create a report to review performance and corrective actions.'
-              )
-        }
-      />
+      <div className="p-4">
+        <TableWithPreviewLayout<PreviewReport>
+          selectedId={selectedId}
+          selectedItem={selectedItem}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => {
+            const report = previewItems.find((item) => item.id === id);
+            if (report?.reportId) {
+              navigate(`/reports/builder/${report.reportId}`);
+            }
+          }}
+          itemIds={previewItems.map((item) => item.id)}
+          getItemById={(id) => previewItems.find((item) => item.id === id) ?? null}
+          renderPreview={(item) => {
+            const metaPills: MetaPill[] = [
+              {
+                label: formatTemplateLabel(String(item.type || 'benefits-review')),
+                className: 'bg-blue-500/10 text-blue-500 dark:text-blue-300',
+              },
+              {
+                label: String(item.status || 'DRAFT'),
+                className: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+              },
+              {
+                label: t('results.kpiReports.relation.kpis', '{{count}} KPI', {
+                  count: item.kpiCount ?? 0,
+                }),
+                className: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-300',
+              },
+              {
+                label:
+                  t('results.tabs.initiatives', 'Initiatives') + `: ${item.initiativeCount ?? 0}`,
+                className: 'bg-amber-500/10 text-amber-600 dark:text-amber-300',
+              },
+            ];
+
+            return (
+              <div className="space-y-4">
+                <PreviewMetaCard pills={metaPills}>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {t('common.period', 'Period')}
+                      </div>
+                      <div className="text-slate-900 dark:text-white">
+                        {String(item.period || '—')}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {t('common.updated', 'Updated')}
+                      </div>
+                      <div className="text-slate-900 dark:text-white">
+                        {String(item.updatedAt || '—')}
+                      </div>
+                    </div>
+                  </div>
+                </PreviewMetaCard>
+
+                <PreviewDetailsSection
+                  label={t('common.summary', 'Summary')}
+                  text={item.summaryText}
+                  compact
+                >
+                  <div className="mt-3 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.kpiReports.scorecardFlow', 'Scorecard and reconciliation flow')}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                        {t('results.kpi.queue.requiresReview', 'Requires review')}:{' '}
+                        {reviewContext.requiresReview}
+                      </div>
+                      <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                        {t('results.kpi.queue.discrepancy', 'Discrepancy')}:{' '}
+                        {reviewContext.discrepancy}
+                      </div>
+                      <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                        {t('results.filters.needsEntry', 'Needs entry')}: {reviewContext.needsEntry}
+                      </div>
+                    </div>
+                  </div>
+                </PreviewDetailsSection>
+
+                <div>
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {t('common.relations', 'Relations')}
+                  </div>
+                  <PreviewRelations
+                    items={item.relationItems}
+                    emptyLabel={t('common.noRelations', 'No relations')}
+                  />
+                </div>
+              </div>
+            );
+          }}
+          renderPreviewFooter={(item) => {
+            const rows: ActionRow[] = [
+              {
+                columns: 2,
+                buttons: [
+                  {
+                    label: t('common.open', 'Open'),
+                    icon: FileText,
+                    colorScheme: 'primary',
+                    onClick: () => navigate(`/reports/builder/${item.reportId}`),
+                  },
+                  {
+                    label:
+                      refreshingReportId === item.reportId
+                        ? t('common.loading', 'Loading...')
+                        : t('results.kpiReports.refresh', 'Refresh snapshot'),
+                    icon: Sparkles,
+                    colorScheme: 'neutral',
+                    onClick: () =>
+                      void getRowActions(item)
+                        .find((action) => action.id === 'refresh')
+                        ?.onClick(),
+                    disabled: !item.snapshotId || refreshingReportId === item.reportId,
+                  },
+                ],
+              },
+              {
+                buttons: [
+                  {
+                    label: t('results.kpiReports.tasks.create', 'Create tasks from action plan'),
+                    colorScheme: 'neutral',
+                    onClick: () => void loadActionsForRow(item),
+                    flex: true,
+                  },
+                ],
+              },
+            ];
+
+            return <PreviewActionBar rows={rows} />;
+          }}
+        >
+          <FilterableTable
+            columns={columns}
+            data={rows}
+            selectedRowId={selectedId}
+            activeFilters={activeFilters}
+            onFilterChange={onFilterChange}
+            density="compact"
+            canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+            getRowActions={getRowActions}
+            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowDoubleClick={(row) => navigate(`/reports/builder/${row.reportId}`)}
+            emptyMessage={
+              loading
+                ? t('common.loading', 'Loading...')
+                : t(
+                    'results.kpiReports.empty',
+                    'No KPI reports yet. Create a report to review performance and corrective actions.'
+                  )
+            }
+          />
+        </TableWithPreviewLayout>
+      </div>
+
+      <div className="px-4 pb-4">
+        <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {t('results.kpiReports.scorecardFlow', 'Scorecard and reconciliation flow')}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'results.kpiReports.scorecardFlowHint',
+                  'Reports should package signal review, discrepancy evidence, and next actions into one artifact.'
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                {t('results.kpi.queue.requiresReview', 'Requires review')}:{' '}
+                {reviewContext.requiresReview}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-red-500">
+                {t('results.kpi.queue.discrepancy', 'Discrepancy')}: {reviewContext.discrepancy}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-amber-600 dark:text-amber-300">
+                {t('results.filters.needsEntry', 'Needs entry')}: {reviewContext.needsEntry}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"
-            onClick={() => setCreateOpen(false)}
+            onClick={() => {
+              setCreateOpen(false);
+              setAiNarrativeHint('');
+            }}
           />
           <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
@@ -337,7 +836,10 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 </h2>
               </div>
               <button
-                onClick={() => setCreateOpen(false)}
+                onClick={() => {
+                  setCreateOpen(false);
+                  setAiNarrativeHint('');
+                }}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
               >
                 <X size={18} />
@@ -347,15 +849,154 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
                 <label className={labelCls}>{t('common.name', 'Name')}</label>
-                <input
-                  className={inputCls}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t(
-                    'results.kpiReports.create.titlePlaceholder',
-                    'e.g. Monthly KPI Review'
+                <div className="flex gap-2">
+                  <input
+                    className={inputCls}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder={t(
+                      'results.kpiReports.create.titlePlaceholder',
+                      'e.g. Monthly KPI Review'
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void generateAiDraft()}
+                    disabled={aiDraftLoading || selectedKpiIds.length === 0}
+                    className="inline-flex items-center gap-1 rounded-lg border border-primary-500/30 bg-primary-500/10 px-3 text-xs font-medium text-primary-600 dark:text-primary-300 disabled:opacity-50"
+                  >
+                    <Sparkles size={14} />
+                    {aiDraftLoading
+                      ? t('common.loading', 'Loading...')
+                      : t('results.kpiReports.create.aiDraft', 'AI draft')}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label className={labelCls}>
+                    {t('results.kpiReports.create.template', 'Template')}
+                  </label>
+                  <select
+                    className={inputCls}
+                    value={reportTemplate}
+                    onChange={(e) => setReportTemplate(e.target.value)}
+                  >
+                    <option value="benefits-review">
+                      {t('results.kpiReports.templates.benefits', 'Benefits review')}
+                    </option>
+                    <option value="control-pack">
+                      {t('results.kpiReports.templates.controlPack', 'Control pack')}
+                    </option>
+                    <option value="portfolio-review">
+                      {t('results.kpiReports.templates.portfolio', 'Portfolio KPI review')}
+                    </option>
+                    <option value="executive-monthly">
+                      {t('results.kpiReports.templates.executive', 'Executive monthly review')}
+                    </option>
+                    <option value="custom">{t('common.custom', 'Custom')}</option>
+                  </select>
+                </div>
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.kpiReports.create.scope', 'Snapshot scope')}
+                  </div>
+                  <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                    {selectedInitiativeIds.length} {t('results.tabs.initiatives', 'Initiatives')} ·{' '}
+                    {selectedKpiIds.length} KPI
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {t(
+                      'results.kpiReports.create.snapshotHint',
+                      'The report is created as a snapshot with optional refresh later.'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {aiNarrativeHint ? (
+                <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3 text-sm text-slate-700 dark:text-slate-200">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary-500">
+                    {t('results.kpiReports.create.aiBrief', 'AI brief')}
+                  </div>
+                  {aiNarrativeHint}
+                </div>
+              ) : null}
+
+              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('results.kpiReports.create.workflow', 'Closed-loop content')}
+                </div>
+                <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-3">
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] px-3 py-2">
+                    {t(
+                      'results.kpiReports.create.workflowSignal',
+                      'Signal snapshot and KPI selection'
+                    )}
+                  </div>
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] px-3 py-2">
+                    {t(
+                      'results.kpiReports.create.workflowReconcile',
+                      'Discrepancy and reconciliation evidence'
+                    )}
+                  </div>
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] px-3 py-2">
+                    {t(
+                      'results.kpiReports.create.workflowActions',
+                      'Next actions ready for execution'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('results.kpiReports.create.initiatives', 'Observed initiatives')}
+                </div>
+                <div className="mt-2 max-h-32 overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/40 dark:bg-navy-800/40">
+                  {availableInitiatives.length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500">
+                      {t('results.initiatives.empty', 'No tracked initiatives selected.')}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                      {availableInitiatives.map((initiative) => {
+                        const checked = selectedInitiativeIds.includes(initiative.id);
+                        return (
+                          <label
+                            key={initiative.id}
+                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-white/60 dark:hover:bg-navy-800/70 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked;
+                                setSelectedInitiativeIds((prev) =>
+                                  next
+                                    ? Array.from(new Set([...prev, initiative.id]))
+                                    : prev.filter((id) => id !== initiative.id)
+                                );
+                              }}
+                            />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {initiative.name}
+                              </div>
+                              {initiative.status ? (
+                                <div className="text-xs text-slate-500 truncate">
+                                  {initiative.status}
+                                </div>
+                              ) : null}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
-                />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

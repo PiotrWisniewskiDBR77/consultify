@@ -1,0 +1,517 @@
+/**
+ * ArtifactModuleHome — shared landing screen for Dokumenty / Tabele / Prezentacje modules.
+ *
+ * Configured by a single `lane` prop. Shows:
+ * - Top action pills: Nowe | Ostatnie | Zapisane
+ * - Hero section with lane description
+ * - Template grid cards
+ * - Recent artifacts list
+ */
+
+import {
+  Clock,
+  FileSpreadsheet,
+  FileText,
+  FolderOpen,
+  Loader2,
+  Plus,
+  Presentation,
+  Save,
+  Sparkles,
+} from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
+import type { KimiLane } from './KimiWorkspaceShell';
+import { useModuleRecentArtifacts } from './useModuleRecentArtifacts';
+import { useModuleTemplates } from './useModuleTemplates';
+
+type HomeTab = 'templates' | 'recent' | 'saved';
+
+const LANE_META: Record<
+  KimiLane,
+  {
+    icon: React.ElementType;
+    route: string;
+    accentBg: string;
+    accentText: string;
+  }
+> = {
+  wordy: {
+    icon: FileText,
+    route: '/wordy',
+    accentBg: 'bg-purple-500/10',
+    accentText: 'text-purple-500',
+  },
+  excele: {
+    icon: FileSpreadsheet,
+    route: '/excele',
+    accentBg: 'bg-emerald-500/10',
+    accentText: 'text-emerald-500',
+  },
+  prezentacje: {
+    icon: Presentation,
+    route: '/prezentacje',
+    accentBg: 'bg-fuchsia-500/10',
+    accentText: 'text-fuchsia-500',
+  },
+};
+
+interface ArtifactModuleHomeProps {
+  lane: KimiLane;
+}
+
+export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
+  const [activeTab, setActiveTab] = useState<HomeTab>('templates');
+
+  const meta = LANE_META[lane];
+  const Icon = meta.icon;
+
+  const { templates, loading: templatesLoading } = useModuleTemplates(lane);
+  const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane);
+
+  const heroText = useMemo(() => {
+    if (lane === 'wordy')
+      return isPolish
+        ? 'Raporty, briefy, analizy, artykuły i dokumenty biznesowe'
+        : 'Reports, briefs, analyses, articles and business documents';
+    if (lane === 'excele')
+      return isPolish
+        ? 'Budżety, modele finansowe, harmonogramy, matryce ryzyk'
+        : 'Budgets, financial models, timelines, risk matrices';
+    return isPolish
+      ? 'Decki zarządcze, pitch, status update, prezentacje warsztatowe'
+      : 'Executive decks, pitch, status updates, workshop presentations';
+  }, [lane, isPolish]);
+
+  const laneLabel = useMemo(() => {
+    if (lane === 'wordy') return isPolish ? 'Dokumenty' : 'Documents';
+    if (lane === 'excele') return isPolish ? 'Tabele' : 'Tables';
+    return isPolish ? 'Prezentacje' : 'Presentations';
+  }, [lane, isPolish]);
+
+  const handleNewClick = () => {
+    navigate(`${meta.route}?view=new`);
+  };
+
+  const handleTemplateClick = (templateId: string, promptOverride?: string) => {
+    if (promptOverride) {
+      navigate(`${meta.route}?view=new&templatePrompt=${encodeURIComponent(promptOverride)}`);
+    } else {
+      navigate(`${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}`);
+    }
+  };
+
+  const handleArtifactClick = (artifactId: string) => {
+    navigate(`${meta.route}?artifactId=${encodeURIComponent(artifactId)}`);
+  };
+
+  const tabs: Array<{ id: HomeTab; label: string; icon: React.ElementType }> = [
+    { id: 'templates', label: isPolish ? 'Wzorce' : 'Templates', icon: Sparkles },
+    { id: 'recent', label: isPolish ? 'Ostatnie' : 'Recent', icon: Clock },
+    { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', icon: Save },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-slate-50 dark:bg-navy-950">
+      {/* Hero */}
+      <div className="px-6 pt-8 pb-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`w-10 h-10 rounded-xl ${meta.accentBg} flex items-center justify-center`}>
+            <Icon size={22} className={meta.accentText} />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">{laneLabel}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{heroText}</p>
+          </div>
+        </div>
+
+        {/* New button */}
+        <button
+          onClick={handleNewClick}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors mt-2"
+        >
+          <Plus size={16} />
+          {isPolish ? 'Zacznij nowy' : 'Start new'}
+        </button>
+      </div>
+
+      {/* Tab pills */}
+      <div className="px-6 pb-3 flex items-center gap-1.5">
+        {tabs.map((tab) => {
+          const TabIcon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                isActive
+                  ? 'bg-brand/10 text-brand dark:bg-brand/20'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+              }`}
+            >
+              <TabIcon size={14} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab content */}
+      <div className="px-6 pb-8 flex-1">
+        {activeTab === 'templates' && (
+          <TemplatesGrid
+            templates={templates}
+            loading={templatesLoading}
+            onTemplateClick={handleTemplateClick}
+            isPolish={isPolish}
+            lane={lane}
+          />
+        )}
+        {(activeTab === 'recent' || activeTab === 'saved') && (
+          <ArtifactsList
+            artifacts={recentArtifacts}
+            loading={recentLoading}
+            onArtifactClick={handleArtifactClick}
+            isPolish={isPolish}
+            emptyLabel={
+              activeTab === 'recent'
+                ? isPolish
+                  ? 'Brak ostatnich dokumentów'
+                  : 'No recent documents'
+                : isPolish
+                  ? 'Brak zapisanych dokumentów'
+                  : 'No saved documents'
+            }
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ---------- Sub-components ---------- */
+
+interface TemplatesGridProps {
+  templates: Array<{ id: string; title: string; description?: string; category?: string }>;
+  loading: boolean;
+  onTemplateClick: (id: string, promptOverride?: string) => void;
+  isPolish: boolean;
+  lane: KimiLane;
+}
+
+const BUILTIN_TEMPLATES: Record<
+  KimiLane,
+  Array<{ id: string; title: string; titlePl: string; desc: string; descPl: string }>
+> = {
+  wordy: [
+    {
+      id: 'bt-doc-weekly',
+      title: 'Weekly Execution Report',
+      titlePl: 'Tygodniowy raport wykonania',
+      desc: 'Sprint progress, KPIs, blockers',
+      descPl: 'Postęp sprintu, KPI, blokery',
+    },
+    {
+      id: 'bt-doc-steering',
+      title: 'Steering Committee Brief',
+      titlePl: 'Brief dla Komitetu Sterującego',
+      desc: 'Executive summary for decision-makers',
+      descPl: 'Podsumowanie dla decydentów',
+    },
+    {
+      id: 'bt-doc-benefits',
+      title: 'Benefits Tracking Report',
+      titlePl: 'Raport śledzenia korzyści',
+      desc: 'KPI realization and ROI tracking',
+      descPl: 'Realizacja KPI i śledzenie ROI',
+    },
+    {
+      id: 'bt-doc-portfolio',
+      title: 'Portfolio Overview',
+      titlePl: 'Przegląd portfela',
+      desc: 'Cross-initiative health dashboard',
+      descPl: 'Dashboard zdrowia inicjatyw',
+    },
+    {
+      id: 'bt-doc-kickoff',
+      title: 'Project Kickoff Document',
+      titlePl: 'Dokument startu projektu',
+      desc: 'Goals, scope, team, timeline',
+      descPl: 'Cele, zakres, zespół, harmonogram',
+    },
+    {
+      id: 'bt-doc-risk',
+      title: 'Risk Assessment Report',
+      titlePl: 'Raport oceny ryzyk',
+      desc: 'Risk identification and mitigation',
+      descPl: 'Identyfikacja i mitygacja ryzyk',
+    },
+    {
+      id: 'bt-doc-dd',
+      title: 'Due Diligence Report',
+      titlePl: 'Raport due diligence',
+      desc: 'Investment analysis and findings',
+      descPl: 'Analiza inwestycyjna i wnioski',
+    },
+    {
+      id: 'bt-doc-market',
+      title: 'Market Analysis Report',
+      titlePl: 'Raport analizy rynku',
+      desc: 'Market sizing, competitors, trends',
+      descPl: 'Wielkość rynku, konkurencja, trendy',
+    },
+  ],
+  excele: [
+    {
+      id: 'bt-sheet-finmodel',
+      title: 'Financial Model',
+      titlePl: 'Model finansowy',
+      desc: 'P&L + Balance Sheet + Cash Flow',
+      descPl: 'RZiS + Bilans + Cash Flow',
+    },
+    {
+      id: 'bt-sheet-budget',
+      title: 'Budget Planning',
+      titlePl: 'Planowanie budżetu',
+      desc: 'Annual/quarterly budget template',
+      descPl: 'Szablon budżetu rocznego/kwartalnego',
+    },
+    {
+      id: 'bt-sheet-resource',
+      title: 'Resource Allocation Matrix',
+      titlePl: 'Macierz alokacji zasobów',
+      desc: 'Team capacity and assignment',
+      descPl: 'Pojemność zespołu i przypisania',
+    },
+    {
+      id: 'bt-sheet-risk',
+      title: 'Risk Register',
+      titlePl: 'Rejestr ryzyk',
+      desc: 'Risk log with scoring and owners',
+      descPl: 'Log ryzyk z oceną i właścicielami',
+    },
+    {
+      id: 'bt-sheet-timeline',
+      title: 'Project Timeline',
+      titlePl: 'Harmonogram projektu',
+      desc: 'Gantt-style milestone tracker',
+      descPl: 'Tracker kamieni milowych',
+    },
+    {
+      id: 'bt-sheet-competitive',
+      title: 'Competitive Analysis Matrix',
+      titlePl: 'Macierz analizy konkurencji',
+      desc: 'Feature comparison grid',
+      descPl: 'Siatka porównania funkcji',
+    },
+    {
+      id: 'bt-sheet-recruit',
+      title: 'Recruitment Pipeline',
+      titlePl: 'Pipeline rekrutacji',
+      desc: 'Candidate tracking and stages',
+      descPl: 'Śledzenie kandydatów i etapów',
+    },
+    {
+      id: 'bt-sheet-okr',
+      title: 'OKR Tracking Sheet',
+      titlePl: 'Arkusz śledzenia OKR',
+      desc: 'Objectives, key results, progress',
+      descPl: 'Cele, kluczowe rezultaty, postęp',
+    },
+  ],
+  prezentacje: [
+    {
+      id: 'bt-deck-steering',
+      title: 'Steering Committee Deck',
+      titlePl: 'Deck dla Komitetu Sterującego',
+      desc: 'Board-level status presentation',
+      descPl: 'Prezentacja statusu dla zarządu',
+    },
+    {
+      id: 'bt-deck-status',
+      title: 'Project Status Update',
+      titlePl: 'Status update projektu',
+      desc: 'Weekly/monthly progress slides',
+      descPl: 'Slajdy postępu tygodniowego/miesięcznego',
+    },
+    {
+      id: 'bt-deck-pitch',
+      title: 'Pitch Deck',
+      titlePl: 'Pitch Deck',
+      desc: 'Investor / stakeholder pitch',
+      descPl: 'Pitch dla inwestorów / interesariuszy',
+    },
+    {
+      id: 'bt-deck-workshop',
+      title: 'Workshop Facilitation Deck',
+      titlePl: 'Deck warsztatowy',
+      desc: 'Interactive exercises and agenda',
+      descPl: 'Interaktywne ćwiczenia i agenda',
+    },
+    {
+      id: 'bt-deck-qbr',
+      title: 'Quarterly Business Review',
+      titlePl: 'Kwartalny przegląd biznesowy',
+      desc: 'QBR metrics and roadmap',
+      descPl: 'Metryki QBR i roadmapa',
+    },
+    {
+      id: 'bt-deck-strategy',
+      title: 'Strategy Roadmap',
+      titlePl: 'Roadmapa strategiczna',
+      desc: 'Vision, goals, milestones',
+      descPl: 'Wizja, cele, kamienie milowe',
+    },
+    {
+      id: 'bt-deck-invest',
+      title: 'Investment Case Deck',
+      titlePl: 'Deck case inwestycyjnego',
+      desc: 'NPV/IRR/ROI decision support',
+      descPl: 'Wsparcie decyzji NPV/IRR/ROI',
+    },
+    {
+      id: 'bt-deck-digital',
+      title: 'Digital Transformation Assessment',
+      titlePl: 'Ocena transformacji cyfrowej',
+      desc: 'Maturity, gaps, recommendations',
+      descPl: 'Dojrzałość, luki, rekomendacje',
+    },
+  ],
+};
+
+function TemplatesGrid({
+  templates,
+  loading,
+  onTemplateClick,
+  isPolish,
+  lane,
+}: TemplatesGridProps) {
+  const builtinCards = BUILTIN_TEMPLATES[lane];
+
+  const allCards = useMemo(() => {
+    const apiCards = templates.map((t) => ({
+      id: t.id,
+      title: t.title,
+      desc: t.description || '',
+      isBuiltin: false,
+      builtinPrompt: '',
+    }));
+    const builtin = builtinCards.map((b) => ({
+      id: b.id,
+      title: isPolish ? b.titlePl : b.title,
+      desc: isPolish ? b.descPl : b.desc,
+      isBuiltin: true,
+      builtinPrompt: isPolish
+        ? `Stwórz: ${b.titlePl}. ${b.descPl}`
+        : `Create: ${b.title}. ${b.desc}`,
+    }));
+    const apiIds = new Set(apiCards.map((c) => c.id));
+    return [...apiCards, ...builtin.filter((b) => !apiIds.has(b.id))];
+  }, [templates, builtinCards, isPolish]);
+
+  if (loading && allCards.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {allCards.map((card) => (
+        <button
+          key={card.id}
+          onClick={() => onTemplateClick(card.id, card.isBuiltin ? card.builtinPrompt : undefined)}
+          className="group text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
+        >
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors line-clamp-1">
+            {card.title}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+            {card.desc}
+          </p>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface ArtifactsListProps {
+  artifacts: Array<{
+    originRecordId: string;
+    artifactId?: string;
+    title: string;
+    updatedAt: string;
+    statusKey: string;
+  }>;
+  loading: boolean;
+  onArtifactClick: (id: string) => void;
+  isPolish: boolean;
+  emptyLabel: string;
+}
+
+function ArtifactsList({
+  artifacts,
+  loading,
+  onArtifactClick,
+  isPolish,
+  emptyLabel,
+}: ArtifactsListProps) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (artifacts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <FolderOpen size={32} className="text-slate-300 dark:text-slate-600 mb-3" />
+        <p className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {artifacts.map((item) => {
+        const id = item.artifactId || item.originRecordId;
+        const d = new Date(item.updatedAt);
+        return (
+          <button
+            key={id}
+            onClick={() => onArtifactClick(id)}
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                {item.title}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </p>
+            </div>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full ml-3 shrink-0">
+              {item.statusKey}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export default ArtifactModuleHome;

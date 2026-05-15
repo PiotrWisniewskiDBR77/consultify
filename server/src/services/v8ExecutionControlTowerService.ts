@@ -4,9 +4,13 @@
  * overloaded, stale from org-scoped execution graph.
  */
 
-import { detectDelaySignals, type DelaySignal } from './delayDetectionService.js';
-import { getOverloadAlerts, type OverloadAlert } from './workloadCapacityService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
+import { type DelaySignal, detectDelaySignals } from './delayDetectionService.js';
+import {
+  getOverloadAlerts,
+  type OverloadAlert,
+  type OverloadWindow,
+} from './workloadCapacityService.js';
 
 export const V8_EXECUTION_CONTROL_TOWER_CONTRACT = 'execution_control_tower_v1';
 
@@ -87,7 +91,8 @@ function defaultWhatNextForQueue(queue: ControlTowerQueue): ControlTowerWhatNext
         {
           action: 'replan',
           detail: 'Aktualizuj datę końca / forecast w inicjatywie lub zadaniu.',
-          readbackHint: 'Po zapisie kolejka „late” i variancja baseline powinny odświeżyć się w tej samej sesji.',
+          readbackHint:
+            'Po zapisie kolejka „late” i variancja baseline powinny odświeżyć się w tej samej sesji.',
         },
         {
           action: 'escalate',
@@ -121,7 +126,8 @@ function defaultWhatNextForQueue(queue: ControlTowerQueue): ControlTowerWhatNext
         {
           action: 'reassign',
           detail: 'Przepisz część zadań na innego assignee.',
-          readbackHint: 'Kolejka „overloaded” i capacity readback odświeżą się po zmianie właściciela.',
+          readbackHint:
+            'Kolejka „overloaded” i capacity readback odświeżą się po zmianie właściciela.',
         },
         {
           action: 'smooth',
@@ -185,10 +191,12 @@ interface InitRow {
   status: string;
   project_id: string | null;
   planned_end_date: string | null;
+  forecast_end_date: string | null;
   sla_deadline: string | null;
   updated_at: string | null;
   blocked_reason: string | null;
   blocked_at: string | null;
+  end_date: string | null;
 }
 
 interface TaskRow {
@@ -209,11 +217,12 @@ async function loadActiveInitiatives(
   projectId?: string
 ): Promise<InitRow[]> {
   let q = `
-    SELECT id, name, status, project_id, planned_end_date, sla_deadline, updated_at,
-           blocked_reason, blocked_at
+    SELECT id, name, status, project_id, planned_end_date, forecast_end_date,
+           end_date as sla_deadline, updated_at,
+           NULL as blocked_reason, NULL as blocked_at
     FROM initiatives
     WHERE organization_id = ?
-      AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+      AND UPPER(COALESCE(status,'')) NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
   `;
   const p: unknown[] = [organizationId];
   if (projectId) {
@@ -230,7 +239,7 @@ async function loadActiveTasks(organizationId: string, projectId?: string): Prom
     FROM tasks t
     JOIN initiatives i ON i.id = t.initiative_id
     WHERE i.organization_id = ?
-      AND t.status NOT IN ('DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED')
+      AND UPPER(COALESCE(t.status,'')) NOT IN ('DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED')
   `;
   const p: unknown[] = [organizationId];
   if (projectId) {
@@ -386,14 +395,19 @@ function mergeItem(into: Map<string, ControlTowerItem>, item: ControlTowerItem):
 
 export async function getExecutionControlTowerQueues(
   organizationId: string,
-  options?: { projectId?: string; queue?: ControlTowerQueue | 'all' }
+  options?: {
+    projectId?: string;
+    queue?: ControlTowerQueue | 'all';
+    overloadWindow?: OverloadWindow;
+  }
 ): Promise<ControlTowerQueuesResult> {
   const projectId = options?.projectId;
   const queueFilter = options?.queue;
+  const overloadWindow = options?.overloadWindow || 'week';
 
   const [delaySignals, overloadAlerts, initiatives, tasks] = await Promise.all([
     detectDelaySignals(organizationId, projectId, { maxSignals: 2000 }),
-    getOverloadAlerts(organizationId),
+    getOverloadAlerts(organizationId, overloadWindow),
     loadActiveInitiatives(organizationId, projectId),
     loadActiveTasks(organizationId, projectId),
   ]);
@@ -444,7 +458,8 @@ export async function getExecutionControlTowerQueues(
   }
 
   for (const init of initiatives) {
-    const end = parseDay(init.planned_end_date || init.sla_deadline);
+    const effectiveEnd = init.forecast_end_date || init.planned_end_date || init.sla_deadline;
+    const end = parseDay(effectiveEnd);
     if (end !== null && end < today && !isInitTerminal(init.status)) {
       mergeItem(late, {
         entityType: 'INITIATIVE',
@@ -456,7 +471,7 @@ export async function getExecutionControlTowerQueues(
         why: [
           {
             kind: 'baseline_forecast',
-            detail: `Planowany koniec (${init.planned_end_date || init.sla_deadline}) jest w przeszłości.`,
+            detail: `Forecast/planowany koniec (${effectiveEnd}) jest w przeszłości.`,
           },
         ],
         whatNext: defaultWhatNextForQueue('late'),
@@ -672,12 +687,18 @@ export async function getExecutionControlTowerQueues(
     }
   }
 
-  const lateIds = [...late.values()].filter((i) => i.entityType === 'INITIATIVE').map((i) => i.entityId);
+  const lateIds = [...late.values()]
+    .filter((i) => i.entityType === 'INITIATIVE')
+    .map((i) => i.entityId);
   const blockedInitIds = [...blocked.values()]
     .filter((i) => i.entityType === 'INITIATIVE')
     .map((i) => i.entityId);
-  const lateTaskIds = [...late.values()].filter((i) => i.entityType === 'TASK').map((i) => i.entityId);
-  const blockedTaskIds = [...blocked.values()].filter((i) => i.entityType === 'TASK').map((i) => i.entityId);
+  const lateTaskIds = [...late.values()]
+    .filter((i) => i.entityType === 'TASK')
+    .map((i) => i.entityId);
+  const blockedTaskIds = [...blocked.values()]
+    .filter((i) => i.entityType === 'TASK')
+    .map((i) => i.entityId);
 
   const downInit = await loadInitiativeDownstream(organizationId, [
     ...new Set([...lateIds, ...blockedInitIds]),
@@ -758,10 +779,15 @@ export async function getExecutionControlTowerItemDetail(
   item: ControlTowerItem;
   contract: typeof V8_EXECUTION_CONTROL_TOWER_CONTRACT;
 } | null> {
-  const snapshot = await getExecutionControlTowerQueues(organizationId, { projectId, queue: 'all' });
+  const snapshot = await getExecutionControlTowerQueues(organizationId, {
+    projectId,
+    queue: 'all',
+  });
   const hits: Partial<Record<ControlTowerQueue, ControlTowerItem>> = {};
   for (const q of QUEUE_ORDER) {
-    const row = snapshot.queues[q].find((i) => i.entityType === entityType && i.entityId === entityId);
+    const row = snapshot.queues[q].find(
+      (i) => i.entityType === entityType && i.entityId === entityId
+    );
     if (row) hits[q] = row;
   }
   const inQueues = QUEUE_ORDER.filter((q) => hits[q]);
@@ -772,9 +798,7 @@ export async function getExecutionControlTowerItemDetail(
   const base = { ...hits[inQueues[0]!]! };
   const whyKeys = new Set(base.why.map((w) => `${w.kind}:${w.detail}`));
   const whatKeys = new Set(base.whatNext.map((w) => `${w.action}:${w.detail}`));
-  const affectKeys = new Set(
-    base.affectsNext.map((a) => itemKey(a.entityType, a.entityId))
-  );
+  const affectKeys = new Set(base.affectsNext.map((a) => itemKey(a.entityType, a.entityId)));
 
   for (const q of inQueues.slice(1)) {
     const h = hits[q]!;

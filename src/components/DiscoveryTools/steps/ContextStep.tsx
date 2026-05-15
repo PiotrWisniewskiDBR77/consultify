@@ -5,7 +5,7 @@
  * Adapts labels based on tool type.
  */
 
-import { Calendar, Loader2, MapPin, Sparkles, Target } from 'lucide-react';
+import { Calendar, Check, Loader2, MapPin, Sparkles, Target, X } from 'lucide-react';
 import React from 'react';
 
 import {
@@ -31,6 +31,9 @@ interface ContextStepProps {
   isPolish: boolean;
   onGenerateFullSession?: () => void;
   sessionGenerationStatus?: SessionGenerationStatus;
+  missionSuggestion?: Partial<SWOTData['context']> | null;
+  onApplyMissionSuggestion?: () => void;
+  onDismissMissionSuggestion?: () => void;
 }
 
 // ==================== LABELS ====================
@@ -249,6 +252,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({
   isPolish,
   onGenerateFullSession,
   sessionGenerationStatus,
+  missionSuggestion,
+  onApplyMissionSuggestion,
+  onDismissMissionSuggestion,
 }) => {
   const { updateInputData } = useToolStore();
   const [activeMissionFeedback, setActiveMissionFeedback] = React.useState<{
@@ -330,81 +336,6 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
   const dynamicSwotMissionContext = contextData as SWOTData['context'];
   const dynamicSwotSeedProposal = buildDynamicSwotSeedProposal(isPolish);
-
-  React.useEffect(() => {
-    if (toolType !== 'dynamic-swot') {
-      return;
-    }
-
-    const missionContext = dynamicSwotMissionContext;
-    const hasMissingSeedData =
-      !missionContext.goal ||
-      !missionContext.scope ||
-      !missionContext.successSignal ||
-      !missionContext.constraints ||
-      !missionContext.assumptions ||
-      !missionContext.kpiTarget ||
-      !missionContext.understanding;
-
-    if (!hasMissingSeedData) {
-      return;
-    }
-
-    updateInputData({
-      context: {
-        ...missionContext,
-        goal: missionContext.goal || dynamicSwotSeedProposal.goal,
-        scope: missionContext.scope || dynamicSwotSeedProposal.scope,
-        successSignal: missionContext.successSignal || dynamicSwotSeedProposal.successSignal,
-        timeframe: missionContext.timeframe || dynamicSwotSeedProposal.timeframe,
-        kpiTarget: missionContext.kpiTarget || dynamicSwotSeedProposal.kpiTarget,
-        constraints: missionContext.constraints || dynamicSwotSeedProposal.constraints,
-        assumptions: missionContext.assumptions || dynamicSwotSeedProposal.assumptions,
-        understanding: missionContext.understanding || dynamicSwotSeedProposal.understanding,
-        directionChoice: missionContext.directionChoice || dynamicSwotSeedProposal.directionChoice,
-        scopeChoice: missionContext.scopeChoice || dynamicSwotSeedProposal.scopeChoice,
-        successChoice: missionContext.successChoice || dynamicSwotSeedProposal.successChoice,
-        directionChoices:
-          missionContext.directionChoices || dynamicSwotSeedProposal.directionChoices,
-        scopeChoices: missionContext.scopeChoices || dynamicSwotSeedProposal.scopeChoices,
-        successChoices: missionContext.successChoices || dynamicSwotSeedProposal.successChoices,
-        question4Choices:
-          missionContext.question4Choices || dynamicSwotSeedProposal.question4Choices,
-        question5Choices:
-          missionContext.question5Choices || dynamicSwotSeedProposal.question5Choices,
-        question1Confirmed:
-          missionContext.question1Confirmed || dynamicSwotSeedProposal.question1Confirmed,
-        question2Confirmed:
-          missionContext.question2Confirmed || dynamicSwotSeedProposal.question2Confirmed,
-        question3Confirmed:
-          missionContext.question3Confirmed || dynamicSwotSeedProposal.question3Confirmed,
-        question4Confirmed:
-          missionContext.question4Confirmed || dynamicSwotSeedProposal.question4Confirmed,
-        question5Confirmed:
-          missionContext.question5Confirmed || dynamicSwotSeedProposal.question5Confirmed,
-        understandingComment:
-          missionContext.understandingComment || dynamicSwotSeedProposal.understandingComment,
-        directionComment:
-          missionContext.directionComment || dynamicSwotSeedProposal.directionComment,
-        scopeComment: missionContext.scopeComment || dynamicSwotSeedProposal.scopeComment,
-        horizonComment: missionContext.horizonComment || dynamicSwotSeedProposal.horizonComment,
-        successComment: missionContext.successComment || dynamicSwotSeedProposal.successComment,
-        constraintsComment: missionContext.constraintsComment || '',
-      },
-    } as Partial<SWOTData>);
-  }, [
-    dynamicSwotMissionContext.assumptions,
-    dynamicSwotMissionContext.constraints,
-    dynamicSwotMissionContext.goal,
-    dynamicSwotMissionContext.kpiTarget,
-    dynamicSwotMissionContext.scope,
-    dynamicSwotMissionContext.successSignal,
-    dynamicSwotMissionContext.timeframe,
-    dynamicSwotMissionContext.understanding,
-    isPolish,
-    toolType,
-    updateInputData,
-  ]);
 
   if (toolType === 'dynamic-swot') {
     const missionContext = dynamicSwotMissionContext;
@@ -1843,6 +1774,69 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 </div>
                 <div className="mt-4 rounded-2xl border border-violet-200/70 bg-violet-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-violet-900/40 dark:text-slate-200">
                   {executiveSummaryDelivery}
+                </div>
+              </div>
+            )}
+
+            {missionSuggestion && (
+              <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+                    {isPolish ? 'Propozycja AI dla mission brief' : 'AI mission brief proposal'}
+                  </div>
+                  <span className="inline-flex rounded-full border border-sky-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200">
+                    AI
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                  {missionSuggestion.goal ? (
+                    <div>
+                      <span className="font-semibold">
+                        {isPolish ? 'Pytanie strategiczne:' : 'Strategic question:'}
+                      </span>{' '}
+                      {missionSuggestion.goal}
+                    </div>
+                  ) : null}
+                  {missionSuggestion.scope ? (
+                    <div>
+                      <span className="font-semibold">{isPolish ? 'Zakres:' : 'Scope:'}</span>{' '}
+                      {missionSuggestion.scope}
+                    </div>
+                  ) : null}
+                  {missionSuggestion.successSignal ? (
+                    <div>
+                      <span className="font-semibold">
+                        {isPolish ? 'Sygnał sukcesu:' : 'Success signal:'}
+                      </span>{' '}
+                      {missionSuggestion.successSignal}
+                    </div>
+                  ) : null}
+                  {missionSuggestion.constraints ? (
+                    <div>
+                      <span className="font-semibold">
+                        {isPolish ? 'Ograniczenia:' : 'Constraints:'}
+                      </span>{' '}
+                      {missionSuggestion.constraints}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={onApplyMissionSuggestion}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-700"
+                  >
+                    <Check className="h-4 w-4" />
+                    {isPolish ? 'Zastosuj do mission brief' : 'Apply to mission brief'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onDismissMissionSuggestion}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+                  >
+                    <X className="h-4 w-4" />
+                    {isPolish ? 'Odrzuć propozycję' : 'Discard suggestion'}
+                  </button>
                 </div>
               </div>
             )}

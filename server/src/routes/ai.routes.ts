@@ -4,6 +4,7 @@
  */
 
 import * as cheerio from 'cheerio';
+import crypto from 'crypto';
 import { Response, Router } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +18,8 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
-import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
+import type { WorkerWebAccessPolicy } from '../services/ai/virtualWorkerWebAccessService.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
@@ -50,6 +52,7 @@ import {
   ChatRequestSchema,
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
+  ExecuteActionRequestSchema,
   ExportExplanationsQuerySchema,
   GenerateCardDraftRequestSchema,
   GenerateProposalsQuerySchema,
@@ -85,6 +88,40 @@ import {
 } from '../validators/ai.validators.js';
 
 const router = Router();
+
+const DEEP_THINKING_CONFIRM_TTL_MS = 30 * 60 * 1000;
+let deepThinkingConfirmTableReady: Promise<void> | null = null;
+
+async function ensureDeepThinkingConfirmTable(): Promise<void> {
+  if (!deepThinkingConfirmTableReady) {
+    deepThinkingConfirmTableReady = (async () => {
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS ai_deep_thinking_confirms (
+          token TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          organization_id TEXT,
+          conversation_id TEXT,
+          message_hash TEXT NOT NULL,
+          confirm_payload TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          expires_at TEXT NOT NULL,
+          consumed_at TEXT
+        )`
+      );
+    })().catch((error) => {
+      deepThinkingConfirmTableReady = null;
+      throw error;
+    });
+  }
+  await deepThinkingConfirmTableReady;
+}
+
+function hashDeepThinkingMessage(message: unknown): string {
+  return crypto
+    .createHash('sha256')
+    .update(String(message || '').trim())
+    .digest('hex');
+}
 
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
@@ -779,9 +816,9 @@ router.post(
       const db = dbMod;
 
       const messages = (await db.all(
-        `SELECT content, metadata, role FROM conversation_messages
+        `SELECT content, metadata, role, created_at FROM conversation_messages
          WHERE conversation_id = ? AND role = 'ai'
-         ORDER BY created_at DESC LIMIT 1`,
+         ORDER BY created_at DESC LIMIT 10`,
         [conversationId]
       )) as any[];
 
@@ -789,13 +826,44 @@ router.post(
         return res.status(404).json({ error: 'No AI messages found in conversation' });
       }
 
-      const content = messages[0].content || '';
+      const reportMessage =
+        messages.find((message) => {
+          try {
+            const metadata =
+              typeof message?.metadata === 'string'
+                ? JSON.parse(message.metadata)
+                : message?.metadata || {};
+            return (
+              metadata?.deepThinking?.kind === 'report' ||
+              (typeof metadata?.deepThinkingReport === 'string' &&
+                metadata.deepThinkingReport.trim().length > 0)
+            );
+          } catch {
+            return false;
+          }
+        }) || messages[0];
+      const parsedMetadata =
+        typeof reportMessage?.metadata === 'string'
+          ? JSON.parse(reportMessage.metadata || '{}')
+          : reportMessage?.metadata || {};
+      const expectedOutput =
+        parsedMetadata?.deepThinking?.expectedOutput ||
+        parsedMetadata?.deepThinkingConfirm?.understanding?.expectedOutput ||
+        'FullReport';
+      const content =
+        String(parsedMetadata?.deepThinkingReport || '').trim() ||
+        String(reportMessage?.content || '');
       const exportFormat = format || 'markdown';
 
       return res.json({
         success: true,
         format: exportFormat,
         content,
+        report: {
+          expectedOutput,
+          createdAt: reportMessage?.created_at || null,
+          metadata: parsedMetadata?.deepThinking || null,
+        },
         exportedAt: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -982,7 +1050,7 @@ router.post(
     const hasDbProvider = !!(await dbGet(
       `SELECT 1 AS ok
        FROM llm_providers
-       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
        LIMIT 1`
     ));
 
@@ -1016,11 +1084,12 @@ router.post(
       de: 'German (Deutsch)',
       es: 'Spanish (Español)',
       ja: 'Japanese (日本語)',
+      jp: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
     const langCode = (language || 'en').split('-')[0];
     const langName = languageMap[langCode] || 'English';
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. Match the user's language naturally. The UI locale is ${langName}.]\n`;
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
 
     // Confirm schema (structured output)
     // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
@@ -1161,8 +1230,34 @@ router.post(
 
     logger.info('[AI Confirm] LLM call succeeded, returning result');
 
+    await ensureDeepThinkingConfirmTable();
+    const confirmToken = uuidv4();
+    const conversationId =
+      typeof body.conversationId === 'string' && body.conversationId.trim().length > 0
+        ? body.conversationId.trim()
+        : typeof (context as any)?.conversationId === 'string' &&
+            String((context as any)?.conversationId).trim().length > 0
+          ? String((context as any)?.conversationId).trim()
+          : null;
+    const expiresAt = new Date(Date.now() + DEEP_THINKING_CONFIRM_TTL_MS).toISOString();
+    await dbRun(
+      `INSERT INTO ai_deep_thinking_confirms
+         (token, user_id, organization_id, conversation_id, message_hash, confirm_payload, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        confirmToken,
+        req.userId as string,
+        req.organizationId || null,
+        conversationId,
+        hashDeepThinkingMessage(message),
+        JSON.stringify(result.object || {}),
+        expiresAt,
+      ]
+    );
+
     return res.json({
       confirm: result.object,
+      confirmToken,
       metadata: {
         provider: modelCfg.provider,
         model: modelCfg.id,
@@ -1280,6 +1375,9 @@ router.post(
       (aiModes as any).deepResearch = true;
       (context as any).__forceResearchType = 'market_research';
     }
+    if (aiModes?.marketResearch && !aiModes?.webSearch) {
+      (aiModes as any).webSearch = true;
+    }
 
     // Detect "force depth" triggers (user control). These must cause a real structure change.
     const rawMsg = String(message || '').trim();
@@ -1299,13 +1397,65 @@ router.post(
     // Deep Thinking determinism: enforce Confirm gate server-side (not just UI).
     if (aiModes?.deepResearch) {
       const confirmed = Boolean((context as any)?.deepThinkingConfirmed);
-      if (!confirmed) {
+      const confirmTokenRaw = String((context as any)?.deepThinkingConfirmToken || '').trim();
+      if (!confirmed || !confirmTokenRaw) {
         return res.status(400).json({
           error:
-            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
+            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and retry with a valid confirm token.',
           code: 'DEEP_THINKING_CONFIRM_REQUIRED',
         });
       }
+      await ensureDeepThinkingConfirmTable();
+      const tokenRow = (await dbGet(
+        `SELECT token, conversation_id, message_hash, expires_at, consumed_at
+           FROM ai_deep_thinking_confirms
+          WHERE token = ? AND user_id = ?`,
+        [confirmTokenRaw, req.userId as string]
+      )) as
+        | {
+            token: string;
+            conversation_id?: string | null;
+            message_hash: string;
+            expires_at: string;
+            consumed_at?: string | null;
+          }
+        | undefined;
+
+      const requestedConversationId =
+        typeof conversationId === 'string' && conversationId.trim().length > 0
+          ? conversationId.trim()
+          : typeof (context as any)?.conversationId === 'string' &&
+              String((context as any)?.conversationId).trim().length > 0
+            ? String((context as any)?.conversationId).trim()
+            : null;
+
+      const tokenExpired =
+        !tokenRow?.expires_at || Number.isNaN(Date.parse(tokenRow.expires_at))
+          ? true
+          : Date.parse(tokenRow.expires_at) < Date.now();
+      const tokenConversationMismatch =
+        Boolean(tokenRow?.conversation_id) &&
+        Boolean(requestedConversationId) &&
+        tokenRow?.conversation_id !== requestedConversationId;
+      const tokenMessageMismatch =
+        !tokenRow?.message_hash || tokenRow.message_hash !== hashDeepThinkingMessage(message);
+
+      if (
+        !tokenRow ||
+        Boolean(tokenRow.consumed_at) ||
+        tokenExpired ||
+        tokenConversationMismatch ||
+        tokenMessageMismatch
+      ) {
+        return res.status(400).json({
+          error: 'Deep Thinking confirm token is missing, expired, or does not match this request.',
+          code: 'DEEP_THINKING_CONFIRM_INVALID',
+        });
+      }
+      await dbRun(
+        `UPDATE ai_deep_thinking_confirms SET consumed_at = CURRENT_TIMESTAMP WHERE token = ?`,
+        [confirmTokenRaw]
+      );
     }
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
@@ -1359,11 +1509,12 @@ router.post(
       de: 'German (Deutsch)',
       es: 'Spanish (Español)',
       ja: 'Japanese (日本語)',
+      jp: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
     const langCode = (language || 'en').split('-')[0];
     const langName = languageMap[langCode] || 'English';
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. If the user writes in English, respond in English. If the user writes in Polish, respond in Polish. Match the user's language naturally. The UI locale is ${langName} but always prioritize the language of the user's message.]\n`;
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
 
     let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
@@ -1546,7 +1697,7 @@ router.post(
       const hasDbProvider = !!(await dbGet(
         `SELECT 1 AS ok
          FROM llm_providers
-         WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+         WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
          LIMIT 1`
       ));
 
@@ -1653,6 +1804,13 @@ router.post(
           (context as any)?.workspaceContext?.projectId ||
           bodyProjectId ||
           null;
+      const virtualWorkerSlug =
+        typeof (context as any)?.virtualWorkerSlug === 'string' &&
+        (context as any).virtualWorkerSlug.trim().length > 0
+          ? String((context as any).virtualWorkerSlug)
+              .trim()
+              .toLowerCase()
+          : null;
 
       const screenContext = aiModes?.deepResearch
         ? null
@@ -1697,6 +1855,11 @@ router.post(
           screenContext,
           focusMode,
           conversationId,
+          // i18n-teresa fix 2026-04-18: propagate authoritative UI language so AIPipeline
+          // builds its system prompt (persona, behavioral, strict [LANGUAGE INSTRUCTION])
+          // in the locale the user actually selected — not sticky memory prefs.
+          language: language || undefined,
+          conversationLanguage: language ? String(language).split('-')[0] : undefined,
           // Tools & routing options (used by AIPipeline prompt + model selection)
           aiModes,
           knowledgeSources,
@@ -1711,6 +1874,7 @@ router.post(
         options: {
           role: roleName,
           systemInstruction: enhancedSystemInstruction,
+          language: language || undefined,
           // Tools & routing options
           aiModes,
           knowledgeSources,
@@ -1788,6 +1952,46 @@ router.post(
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
 
+      const maybeEmitTeresaProposal = async (assistantText: string) => {
+        if (
+          virtualWorkerSlug !== 'teresa' ||
+          !req.organizationId ||
+          !req.userId ||
+          !assistantText ||
+          assistantText.trim().length === 0
+        ) {
+          return null;
+        }
+
+        try {
+          const teresaModule = await import('../services/v8/teresaCopilotService.js');
+          const proposal = await teresaModule.createChatProposal({
+            organizationId: req.organizationId,
+            userId: req.userId,
+            sessionId: conversationId || streamSessionId,
+            userMessage: message,
+            assistantMessage: assistantText,
+            context: (context || {}) as Record<string, unknown>,
+            citations: collectedCitations,
+          });
+
+          if (proposal) {
+            emitSSE({
+              type: 'teresa_proposal',
+              proposal,
+            });
+          }
+
+          return proposal;
+        } catch (proposalErr: any) {
+          logger.warn(
+            '[AI Stream] Teresa proposal synthesis skipped:',
+            proposalErr?.message || proposalErr
+          );
+          return null;
+        }
+      };
+
       // --------------------------------------------------------
       // Policy gateway (P34-B): allow/deny + rationale + citations/uncertainty posture
       // --------------------------------------------------------
@@ -1800,40 +2004,88 @@ router.post(
       try {
         const polMod = await import('../services/ai/chatPolicyGateway.js');
         const { evaluateChatPolicyDecision } = (polMod as any) || {};
-        if (typeof evaluateChatPolicyDecision === 'function') {
-          const polRes = await evaluateChatPolicyDecision({
-            message: String(message || ''),
-            language,
-            organizationId: req.organizationId || null,
-            userId: req.userId || null,
-            projectId,
-            privateMode: Boolean(privateMode),
-            aiModes: aiModes || null,
-            knowledgeSources: knowledgeSources || null,
-          });
+        if (typeof evaluateChatPolicyDecision !== 'function') {
+          throw new Error('evaluateChatPolicyDecision is not a function');
+        }
 
-          policyDecision = polRes?.decision || null;
-          const sanitizedMessage =
-            typeof polRes?.sanitizedMessage === 'string' ? String(polRes.sanitizedMessage) : '';
-          if (sanitizedMessage && sanitizedMessage !== String(message || '').trim()) {
-            try {
-              // Keep user-visible message unchanged; only sanitize what goes to the LLM/pipeline.
-              (pipelineRequest as any).prompt = sanitizedMessage;
-            } catch {
-              // ignore
-            }
+        const polRes = await evaluateChatPolicyDecision({
+          message: String(message || ''),
+          language,
+          organizationId: req.organizationId || null,
+          userId: req.userId || null,
+          projectId,
+          privateMode: Boolean(privateMode),
+          aiModes: aiModes || null,
+          knowledgeSources: knowledgeSources || null,
+        });
+
+        policyDecision = polRes?.decision || null;
+        const sanitizedMessage =
+          typeof polRes?.sanitizedMessage === 'string' ? String(polRes.sanitizedMessage) : '';
+        if (sanitizedMessage && sanitizedMessage !== String(message || '').trim()) {
+          try {
+            (pipelineRequest as any).prompt = sanitizedMessage;
+          } catch {
+            // ignore
           }
         }
       } catch (polErr: any) {
-        logger.warn('[AI Stream] Policy gateway unavailable:', polErr?.message || String(polErr));
-        policyDecision = null;
+        logger.error(
+          '[AI Stream] Policy gateway unavailable (fail-closed):',
+          polErr?.message || String(polErr)
+        );
+
+        const degradedMsg =
+          'Policy gateway unavailable — request blocked for safety. Please try again.';
+
+        emitSSE({
+          type: 'policy_refusal',
+          decisionId: null,
+          category: 'gateway_unavailable',
+          rationale: degradedMsg,
+          message: degradedMsg,
+          nextSteps: [],
+        });
+
+        if (isClientConnected && !res.destroyed) {
+          try {
+            res.write(`data: ${JSON.stringify({ text: degradedMsg })}\n\n`);
+            res.write('data: [DONE]\n\n');
+          } catch {
+            /* ignore */
+          }
+        }
+
+        streamCompleted = true;
+        clearInterval(heartbeatInterval);
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            await (svcMod.default || svcMod).completeRun({
+              runId: chatRunId,
+              status: 'blocked',
+              pipelineTraceId: pipelineMeta?.traceId || null,
+              modelProvider: pipelineMeta?.provider || null,
+              modelId: pipelineMeta?.model || null,
+              tier: selectedTier || null,
+              outputText: degradedMsg,
+              dtStates: dtStatesEmitted,
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+        return res.end();
       }
 
       if (policyDecision) {
         emitSSE({ type: 'policy_decision', decision: policyDecision });
         if (chatRunId) {
           import('../services/ai/chatTraceService.js')
-            .then((m: any) => (m.default || m).addEvent(chatRunId, 'policy_decision', policyDecision))
+            .then((m: any) =>
+              (m.default || m).addEvent(chatRunId, 'policy_decision', policyDecision)
+            )
             .catch(() => {
               /* ignore */
             });
@@ -1846,10 +2098,16 @@ router.post(
         const msg = String(refusal?.userMessage || '').trim();
         const steps = Array.isArray(refusal?.nextSteps) ? refusal.nextSteps : [];
         const refusalText = [
-          msg || (language?.startsWith('pl') ? 'Nie mogę spełnić tej prośby.' : "I can't comply with that request."),
+          msg ||
+            (language?.startsWith('pl')
+              ? 'Nie mogę spełnić tej prośby.'
+              : "I can't comply with that request."),
           steps.length
             ? (language?.startsWith('pl') ? '\n\n**Co dalej:**\n' : '\n\n**What to do next:**\n') +
-              steps.slice(0, 6).map((s: any) => `- ${String(s || '').trim()}`).join('\n')
+              steps
+                .slice(0, 6)
+                .map((s: any) => `- ${String(s || '').trim()}`)
+                .join('\n')
             : '',
         ]
           .filter(Boolean)
@@ -2022,6 +2280,92 @@ router.post(
         }
       }
 
+      let workerWebPolicyOverride: WorkerWebAccessPolicy | null = null;
+      if (virtualWorkerSlug) {
+        emitSSE({
+          type: 'thought',
+          step: 'virtual_worker',
+          status: 'in_progress',
+          label: `Loading ${virtualWorkerSlug} worker profile and governed knowledge…`,
+        });
+        try {
+          const workerService = await import('../services/ai/virtualWorkerService.js');
+          const workerKnowledgeService =
+            await import('../services/ai/virtualWorkerKnowledgeService.js');
+          const workerWebAccessService =
+            await import('../services/ai/virtualWorkerWebAccessService.js');
+          const workerConfig = await workerService.getWorkerWithProfile(virtualWorkerSlug);
+
+          if (workerConfig?.worker) {
+            const workerSurface = String(workerConfig.worker.surface || 'in_platform');
+            const workerPublicStateOk =
+              workerConfig.worker.status === 'active' &&
+              (workerSurface === 'in_platform' || workerSurface === 'both');
+
+            if (workerPublicStateOk && workerConfig.profile) {
+              const workerPromptAddon = String(workerConfig.profile.system_prompt || '').trim();
+              if (workerPromptAddon) {
+                pipelineRequest = {
+                  ...pipelineRequest,
+                  options: {
+                    ...(pipelineRequest.options || {}),
+                    systemInstruction:
+                      `## ACTIVE WORKER PROFILE (${workerConfig.worker.name})\n${workerPromptAddon}\n\n` +
+                      String((pipelineRequest.options as any)?.systemInstruction || ''),
+                  },
+                } as any;
+              }
+
+              const workerKnowledge = await workerKnowledgeService.buildWorkerKnowledgeContext({
+                workerSlug: virtualWorkerSlug,
+                query: String(message || ''),
+                locale: language,
+                limit: 6,
+              });
+
+              if (workerKnowledge?.contextText?.trim()) {
+                pipelineRequest = {
+                  ...pipelineRequest,
+                  options: {
+                    ...(pipelineRequest.options || {}),
+                    systemInstruction:
+                      String((pipelineRequest.options as any)?.systemInstruction || '') +
+                      `\n\n## GOVERNED WORKER KNOWLEDGE (${workerConfig.worker.name})\n${workerKnowledge.contextText}\n`,
+                  },
+                  context: {
+                    ...((pipelineRequest as any).context || {}),
+                    external: {
+                      ...((pipelineRequest as any).context?.external || {}),
+                      workerKnowledge: {
+                        workerSlug: virtualWorkerSlug,
+                        sources: workerKnowledge.sources || [],
+                        matchedProducts: workerKnowledge.matchedProducts || [],
+                        primaryProducts: workerKnowledge.primaryProducts || [],
+                        usedPillIds: workerKnowledge.usedPillIds || [],
+                        usedPillSections: workerKnowledge.usedPillSections || [],
+                        fallbackReason: workerKnowledge.fallbackReason || null,
+                      },
+                    },
+                  },
+                } as any;
+              }
+
+              const extractedWorkerWebPolicy = workerWebAccessService.extractWorkerWebAccessPolicy(
+                workerConfig.profile
+              );
+              workerWebPolicyOverride = extractedWorkerWebPolicy.internetEnabled
+                ? extractedWorkerWebPolicy
+                : null;
+            }
+          }
+        } catch (workerErr: any) {
+          logger.warn(
+            '[AI Stream] Virtual worker overlay failed:',
+            workerErr?.message || String(workerErr)
+          );
+        }
+      }
+
       logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
         projectId,
         focusMode,
@@ -2032,75 +2376,86 @@ router.post(
       // --------------------------------------------------------
       // Help / KB documentation grounding (product how-to)
       // --------------------------------------------------------
-      // Lightweight retrieval: inject only a few relevant KB articles as snippets.
-      // Also stream KB citations so the UI can show them.
-      emitSSE({
-        type: 'thought',
-        step: 'knowledge',
-        status: 'in_progress',
-        label: 'Searching knowledge base and documentation…',
-      });
-      try {
-        const kbModuleId =
-          String(
-            (screenContext as any)?.moduleId ||
-              (screenContext as any)?.module ||
-              (screenContext as any)?.currentModule ||
-              (screenContext as any)?.screenId ||
-              (screenContext as any)?.currentScreen ||
-              ''
-          ).trim() || null;
+      // Only run the heavier help-doc retrieval for explicit product/how-to
+      // prompts or when the current surface already points at help content.
+      const kbModuleId =
+        String((screenContext as any)?.page?.helpModuleId || '').trim() ||
+        String(
+          (screenContext as any)?.moduleId ||
+            (screenContext as any)?.module ||
+            (screenContext as any)?.currentModule ||
+            ''
+        ).trim() ||
+        null;
+      const hasExplicitHelpContext = Boolean(
+        (screenContext as any)?.page?.helpDocumentId || (screenContext as any)?.page?.helpModuleId
+      );
+      const shouldGroundWithHelpDocs =
+        !aiModes?.deepResearch &&
+        (hasExplicitHelpContext || isProductOrHowToQuery(String(message || ''), language as any));
 
-        const kb = await buildHelpDocsContext({
-          query: message,
-          language,
-          moduleId: kbModuleId,
-          surface: 'ai_recommendations',
-          maxArticles: 3,
-          maxCharsPerArticle: 1200,
+      if (shouldGroundWithHelpDocs) {
+        emitSSE({
+          type: 'thought',
+          step: 'knowledge',
+          status: 'in_progress',
+          label: 'Checking relevant help and product documentation…',
         });
+        try {
+          const kb = await buildHelpDocsContext({
+            query: message,
+            language,
+            moduleId: kbModuleId,
+            surface: 'ai_recommendations',
+            maxArticles: 3,
+            maxCharsPerArticle: 1200,
+          });
 
-        if (kb?.citations?.length) {
-          emitSSE({ type: 'citations', citations: kb.citations });
-          if (chatRunId) {
-            import('../services/ai/chatTraceService.js')
-              .then((m: any) =>
-                (m.default || m).addEvent(chatRunId, 'kb_docs', {
-                  moduleId: kbModuleId,
-                  citationsCount: kb.citations.length,
-                })
-              )
-              .catch(() => {
-                /* ignore */
-              });
+          if (kb?.citations?.length) {
+            emitSSE({ type: 'citations', citations: kb.citations });
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'kb_docs', {
+                    moduleId: kbModuleId,
+                    citationsCount: kb.citations.length,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
           }
-        }
 
-        if (kb?.systemInstructionAddon?.trim()) {
-          pipelineRequest = {
-            ...pipelineRequest,
-            options: {
-              ...(pipelineRequest.options || {}),
-              systemInstruction:
-                String((pipelineRequest.options as any)?.systemInstruction || '') +
-                `\n\n${kb.systemInstructionAddon}\n`,
-            },
-            context: {
-              ...((pipelineRequest as any).context || {}),
-              external: {
-                ...((pipelineRequest as any).context?.external || {}),
-                helpDocs: {
-                  query: message,
-                  moduleId: kbModuleId,
-                  articles: kb.articles || [],
-                  citations: kb.citations || [],
+          if (kb?.systemInstructionAddon?.trim()) {
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n${kb.systemInstructionAddon}\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...((pipelineRequest as any).context?.external || {}),
+                  helpDocs: {
+                    query: message,
+                    moduleId: kbModuleId,
+                    articles: kb.articles || [],
+                    citations: kb.citations || [],
+                  },
                 },
               },
-            },
-          } as any;
+            } as any;
+          }
+        } catch (kbErr: any) {
+          logger.warn(
+            '[AI Stream] KB docs retrieval failed, continuing without it:',
+            kbErr?.message
+          );
         }
-      } catch (kbErr: any) {
-        logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
       }
 
       // --------------------------------------------------------
@@ -2133,67 +2488,82 @@ router.post(
       // 3. Use optimized search queries (not raw message) for better results
       // 4. Run multiple queries for complex questions
       // 5. Inject results + citations into system instruction for grounded answers
-      if (!aiModes?.deepResearch && (aiModes?.webSearch || message?.trim().length >= 20)) {
-        emitSSE({
-          type: 'thought',
-          step: 'web_search_check',
-          status: 'in_progress',
-          label: 'Checking if web search is needed…',
-        });
-      }
       if (!aiModes?.deepResearch) {
         const userEnabledWebSearch = aiModes?.webSearch === true;
+        const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
         const orgIdForWeb = req.organizationId || null;
-
-        // T118: unified governance for all web search (policy + SSRF + allow/deny + sanitize + cache)
-        let webPolicy: any = null;
-        let webGov: any = null;
-        try {
-          webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
-          const getEffectiveWebSearchPolicy =
-            webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
-          if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
-            webPolicy = await getEffectiveWebSearchPolicy(
-              String(orgIdForWeb),
-              projectId || undefined
-            );
-          }
-        } catch {
-          webPolicy = null;
-          webGov = null;
-        }
 
         // Auto-detect web search intent
         let searchIntent: any = null;
-        try {
-          const { detectWebSearchIntent } =
-            await import('../services/ai/webSearchIntentDetector.js');
-          searchIntent = detectWebSearchIntent(message, {
-            userEnabledWebSearch,
-            historyLength: Array.isArray(history) ? history.length : 0,
-          });
-        } catch (err: any) {
-          logger.debug('[AI Stream] Intent detector not available:', err?.message);
-          // Fallback: if user enabled webSearch, search with raw message
-          if (userEnabledWebSearch) {
-            searchIntent = {
-              shouldSearch: true,
-              confidence: 0.5,
-              reason: 'user toggle enabled (fallback)',
-              queries: [message.slice(0, 150)],
-              searchDepth: 'basic' as const,
-              maxResults: 5,
-            };
+        if (userEnabledWebSearch || workerAutoSearchRequested || message?.trim().length >= 20) {
+          try {
+            const { detectWebSearchIntent } =
+              await import('../services/ai/webSearchIntentDetector.js');
+            searchIntent = detectWebSearchIntent(message, {
+              userEnabledWebSearch: userEnabledWebSearch || workerAutoSearchRequested,
+              historyLength: Array.isArray(history) ? history.length : 0,
+            });
+          } catch (err: any) {
+            logger.debug('[AI Stream] Intent detector not available:', err?.message);
+            // Fallback: if user enabled webSearch, search with raw message
+            if (userEnabledWebSearch || workerAutoSearchRequested) {
+              searchIntent = {
+                shouldSearch: true,
+                confidence: 0.5,
+                reason: 'user toggle enabled (fallback)',
+                queries: [message.slice(0, 150)],
+                searchDepth: 'basic' as const,
+                maxResults: 5,
+              };
+            }
           }
         }
 
-        if (searchIntent?.shouldSearch && webPolicy?.internetEnabled) {
+        const shouldAttemptWebSearch = Boolean(
+          searchIntent?.shouldSearch || userEnabledWebSearch || workerAutoSearchRequested
+        );
+        let webPolicy: any = null;
+        let webGov: any = null;
+
+        if (shouldAttemptWebSearch) {
+          emitSSE({
+            type: 'thought',
+            step: 'web_search_check',
+            status: 'in_progress',
+            label: 'Checking live web access for this request…',
+          });
+
           try {
-            const { TavilyWebSearchService } =
-              await import('../services/ai/tavilyWebSearchService.js');
-            const svc = new (TavilyWebSearchService as any)(
-              (process.env.TAVILY_API_KEY || '').trim()
-            );
+            webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
+            const getEffectiveWebSearchPolicy =
+              webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
+            if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
+              webPolicy = await getEffectiveWebSearchPolicy(
+                String(orgIdForWeb),
+                projectId || undefined
+              );
+            }
+            if (workerWebPolicyOverride) {
+              const mergeWorkerWebAccessPolicy = (
+                await import('../services/ai/virtualWorkerWebAccessService.js')
+              ).mergeWorkerWebAccessPolicy;
+              webPolicy = mergeWorkerWebAccessPolicy({
+                workerPolicy: workerWebPolicyOverride as any,
+                orgPolicy: webPolicy,
+                requireOrgPolicy: true,
+              });
+            }
+          } catch {
+            webPolicy = null;
+            webGov = null;
+          }
+        }
+
+        if (shouldAttemptWebSearch && webPolicy?.internetEnabled) {
+          try {
+            const { RuntimeWebSearchService } =
+              await import('../services/ai/runtimeWebSearchService.js');
+            const svc = new (RuntimeWebSearchService as any)();
             const sanitizeQuery = webGov?.sanitizeQuery || webGov?.default?.sanitizeQuery;
             const filterResults = webGov?.filterResults || webGov?.default?.filterResults;
             const getCached = webGov?.getCached || webGov?.default?.getCached;
@@ -2202,6 +2572,7 @@ router.post(
             // Execute search queries (possibly multiple for complex questions)
             const searchQueries: string[] =
               searchIntent.queries?.length > 0 ? searchIntent.queries : [message.slice(0, 150)];
+            const queryLimit = userEnabledWebSearch ? 2 : 1;
 
             emitSSE({
               type: 'research_progress',
@@ -2213,7 +2584,7 @@ router.post(
 
             const allResults: any[] = [];
             const allAnswers: string[] = [];
-            for (const query of searchQueries.slice(0, 3)) {
+            for (const query of searchQueries.slice(0, queryLimit)) {
               try {
                 const cleanQuery =
                   typeof sanitizeQuery === 'function' ? sanitizeQuery(String(query || '')) : query;
@@ -2227,6 +2598,7 @@ router.post(
                     maxResults: searchIntent.maxResults ?? 5,
                     includeNews: true,
                     searchDepth: searchIntent.searchDepth ?? 'basic',
+                    language,
                   }));
                 const resultsRaw = Array.isArray((resp as any)?.results)
                   ? (resp as any).results
@@ -2301,7 +2673,7 @@ router.post(
                 });
             }
 
-            // Inject sources + Tavily answers into system instruction
+            // Inject sources + web-search synthesis into system instruction
             const sourcesText = citations
               .map((c: any, i: number) => `[${i + 1}] ${c.title}\n${c.link}\n${c.excerpt || ''}`)
               .join('\n\n');
@@ -2341,11 +2713,11 @@ router.post(
               stage: 'complete',
               queries: [],
               sources: [],
-              error: 'Web research unavailable',
+              error: 'Live web search failed for this request',
             });
           }
-        } else if (searchIntent?.shouldSearch && !webPolicy?.internetEnabled) {
-          // User/auto-detect wants web search but policy forbids or key missing
+        } else if (shouldAttemptWebSearch && !webPolicy?.internetEnabled) {
+          // User/auto-detect wants web search but policy forbids or runtime is unavailable.
           logger.info('[AI Stream] Web search intent detected but internet is disabled', {
             reason: webPolicy?.reason || null,
           });
@@ -2395,6 +2767,12 @@ router.post(
 
           if (Array.isArray(chunks) && chunks.length > 0) {
             attachmentChunksInjected = true;
+            emitSSE({
+              type: 'thought',
+              step: 'attachments',
+              status: 'completed',
+              label: `Found ${chunks.length} relevant fragment(s) across ${attachmentDocIds.length} attachment(s).`,
+            });
             const attachmentsText = chunks
               .slice(0, 5)
               .map((c: any, i: number) => {
@@ -2462,6 +2840,12 @@ router.post(
 
             if (Array.isArray(rows) && rows.length > 0) {
               attachmentChunksInjected = true;
+              emitSSE({
+                type: 'thought',
+                step: 'attachments',
+                status: 'completed',
+                label: `Loaded ${rows.length} raw chunk(s) directly from attachment source(s).`,
+              });
               const attachmentsText = rows
                 .map((r: any, i: number) => {
                   const source = String(r?.filename || 'Attachment');
@@ -2507,6 +2891,13 @@ router.post(
               : []
           ).join(', ');
 
+          emitSSE({
+            type: 'thought',
+            step: 'attachments',
+            status: 'warning',
+            label: `Attachment content could not be retrieved — answering from metadata only${attachmentNames ? ` (${attachmentNames})` : ''}.`,
+          });
+
           pipelineRequest = {
             ...pipelineRequest,
             options: {
@@ -2518,6 +2909,54 @@ router.post(
                 `If the user asks about these attachments, acknowledge that they were attached but explain that the content extraction may have failed and suggest re-uploading in a supported format (PDF, TXT, MD, CSV, JSON).\n`,
             },
           } as any;
+        }
+      }
+
+      // --------------------------------------------------------
+      // Notebook RAG: inject relevant notes when user is on Notebook tab
+      // --------------------------------------------------------
+      const wsCtx = (context as any)?.workspaceContext;
+      if (
+        wsCtx?.type === 'notebook' &&
+        req.organizationId &&
+        message &&
+        message.trim().length > 0
+      ) {
+        try {
+          const nbSearchMod = await import('../services/v8/notebookSearchService.js');
+          const nbSearch = ((nbSearchMod as any).default || nbSearchMod) as any;
+          const searchFn = nbSearch.searchNotebook || nbSearch.default?.searchNotebook;
+          if (searchFn) {
+            const results = await searchFn(req.organizationId, (req as any).userId || '', {
+              q: message.slice(0, 300),
+              limit: 5,
+            } as any);
+            const notes = Array.isArray(results?.results) ? results.results : [];
+            if (notes.length > 0) {
+              const notesText = notes
+                .slice(0, 5)
+                .map(
+                  (n: any, i: number) =>
+                    `[N${i + 1}] ${String(n.title || 'Untitled')}\n${String(n.snippet || '').slice(0, 500)}`
+                )
+                .join('\n\n');
+
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## NOTEBOOK CONTEXT (relevant notes from user's Notebook)\n${notesText}\n\nRules:\n- The user is currently working in their Notebook. The above notes are relevant to their query.\n- Reference these notes when helpful, citing as [N1], [N2], etc.\n- You can suggest editing, expanding, or connecting these notes.\n`,
+                },
+              } as any;
+            }
+          }
+        } catch (err: any) {
+          logger.warn(
+            '[AI Stream] Notebook RAG failed, continuing without it:',
+            err?.message || String(err)
+          );
         }
       }
 
@@ -3099,7 +3538,7 @@ router.post(
 
               const { runAgentAudit } =
                 await import('../services/ai/agentAudit/orchestratorService.js');
-              const { createAgentAuditRun } =
+              const { AgentAuditPersistenceError, createAgentAuditRun, getAgentAuditRun } =
                 await import('../services/ai/agentAudit/agentAuditStore.js');
 
               const auditOut = await runAgentAudit({
@@ -3119,27 +3558,40 @@ router.post(
                 emit: emitSSE,
               } as any);
 
-              // Persist run (best-effort)
-              try {
-                await createAgentAuditRun({
-                  id: auditOut.orchestratorRunId,
-                  organizationId: req.organizationId!,
-                  userId: req.userId!,
-                  conversationId: conversationId || null,
-                  dtSessionId: streamSessionId,
-                  userIntent: String(agentAudit?.userIntent || 'validate'),
-                  loopIteration: Number(agentAudit?.loopIteration || 1),
-                  decisionContext: decisionContext || null,
-                  selectedAgentIds: agentIds,
-                  verdict: auditOut.verdict || null,
-                  reviews: (auditOut.reviews || []).map((r: any) => ({
-                    agentId: String(r.agentId || ''),
-                    overreach: r.overreach || null,
-                    review: r,
-                  })),
-                } as any);
-              } catch {
-                /* ignore */
+              emitSSE({
+                type: 'agent_audit_state',
+                state: 'aggregating',
+                orchestratorRunId: auditOut.orchestratorRunId,
+                agentsTotal: agentIds.length,
+                qualityStatus: auditOut?.verdict?.qualityStatus,
+                gatesTriggered: auditOut?.verdict?.gatesTriggered || [],
+              });
+
+              await createAgentAuditRun({
+                id: auditOut.orchestratorRunId,
+                organizationId: req.organizationId!,
+                userId: req.userId!,
+                conversationId: conversationId || null,
+                dtSessionId: streamSessionId,
+                userIntent: String(agentAudit?.userIntent || 'validate'),
+                loopIteration: Number(agentAudit?.loopIteration || 1),
+                decisionContext: decisionContext || null,
+                selectedAgentIds: agentIds,
+                verdict: auditOut.verdict || null,
+                reviews: (auditOut.reviews || []).map((r: any) => ({
+                  agentId: String(r.agentId || ''),
+                  overreach: r.overreach || null,
+                  review: r,
+                })),
+              } as any);
+              const persistedAuditRun = await getAgentAuditRun({
+                runId: auditOut.orchestratorRunId,
+                organizationId: req.organizationId!,
+              });
+              if (!persistedAuditRun) {
+                throw new AgentAuditPersistenceError(
+                  `Persisted agent audit run ${auditOut.orchestratorRunId} could not be reloaded`
+                );
               }
 
               emitSSE({
@@ -3151,6 +3603,15 @@ router.post(
                 agentIds,
                 userIntent: agentAudit?.userIntent || 'validate',
                 loopIteration: agentAudit?.loopIteration || 1,
+                persistedRunId: persistedAuditRun.id,
+              });
+              emitSSE({
+                type: 'agent_audit_state',
+                state: 'done',
+                orchestratorRunId: auditOut.orchestratorRunId,
+                agentsTotal: agentIds.length,
+                qualityStatus: auditOut?.verdict?.qualityStatus,
+                gatesTriggered: auditOut?.verdict?.gatesTriggered || [],
               });
             }
           } catch (auditErr: any) {
@@ -3199,7 +3660,9 @@ router.post(
                   // Fire and forget — don't block the stream
                   kgService
                     .processConversation(req.organizationId, message, accumulatedContent)
-                    .catch(() => {});
+                    .catch((err: unknown) =>
+                      logger.warn('[AI] knowledge graph processing failed', err)
+                    );
                 }
               }
             } catch {
@@ -3283,8 +3746,10 @@ router.post(
                 }
 
                 if (knowledgeSources && typeof knowledgeSources === 'object') {
-                  if ((knowledgeSources as any).pmoDocuments === false) add('pmo_documents', 'disabled_by_user');
-                  if ((knowledgeSources as any).projectData === false) add('project_data', 'disabled_by_user');
+                  if ((knowledgeSources as any).pmoDocuments === false)
+                    add('pmo_documents', 'disabled_by_user');
+                  if ((knowledgeSources as any).projectData === false)
+                    add('project_data', 'disabled_by_user');
                   if ((knowledgeSources as any).organizationData === false)
                     add('organization_data', 'disabled_by_user');
                 }
@@ -3372,9 +3837,8 @@ router.post(
                   typeof matchClaimsToCitations === 'function' &&
                   typeof validateClaimCitations === 'function'
                 ) {
-                  const citationsForValidator = (Array.isArray(collectedCitations)
-                    ? collectedCitations
-                    : []
+                  const citationsForValidator = (
+                    Array.isArray(collectedCitations) ? collectedCitations : []
                   )
                     .slice(0, 24)
                     .map((c: any, idx: number) => ({
@@ -3503,6 +3967,8 @@ router.post(
             }
           }
 
+          await maybeEmitTeresaProposal(accumulatedContent);
+
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
 
@@ -3610,9 +4076,8 @@ router.post(
                   typeof matchClaimsToCitations === 'function' &&
                   typeof validateClaimCitations === 'function'
                 ) {
-                  const citationsForValidator = (Array.isArray(collectedCitations)
-                    ? collectedCitations
-                    : []
+                  const citationsForValidator = (
+                    Array.isArray(collectedCitations) ? collectedCitations : []
                   )
                     .slice(0, 24)
                     .map((c: any, idx: number) => ({
@@ -3687,6 +4152,8 @@ router.post(
             } catch {
               /* ignore */
             }
+
+            await maybeEmitTeresaProposal(nonStreamContent);
           }
 
           streamCompleted = true;
@@ -3843,7 +4310,7 @@ router.post(
     const hasDbProvider = !!(await dbGet(
       `SELECT 1 AS ok
        FROM llm_providers
-       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
        LIMIT 1`
     ));
 
@@ -3975,7 +4442,7 @@ router.post(
         }
       );
 
-      console.log('[AI Routes] Chat result:', JSON.stringify(result, null, 2));
+      logger.info('[AI Routes] Chat result:', JSON.stringify(result, null, 2));
 
       await AIAuditLogger.logSuggestion(
         req.userId!,
@@ -4024,7 +4491,7 @@ router.get(
       const info = await (AIPolicyEngine as any).getPolicySummary(req.organizationId as string);
       return res.json(info);
     } catch (err: any) {
-      console.error('[AI Routes] Policy GET error:', err);
+      logger.error('[AI Routes] Policy GET error:', err);
       return res.status(500).json({ error: (err as Error).message });
     }
   })
@@ -4044,7 +4511,7 @@ router.patch(
       const result = await AIPolicyEngine.updatePolicy(req.organizationId!, req.body);
       return res.json(result);
     } catch (err: any) {
-      console.error('[AI Routes] Policy PATCH error:', err);
+      logger.error('[AI Routes] Policy PATCH error:', err);
       return res.status(500).json({ error: (err as Error).message });
     }
   })
@@ -4224,7 +4691,8 @@ router.post(
   verifyToken,
   validateBody(CreateDraftRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { draftType, content, projectId } = req.body;
+    const { draftType, content, projectId, conversationId, planSummary, stepCount, steps, risk } =
+      req.body;
 
     try {
       const AIActionExecutor = await getAIActionExecutor();
@@ -4233,7 +4701,16 @@ router.post(
         content,
         req.userId!,
         req.organizationId!,
-        projectId
+        projectId,
+        conversationId
+          ? {
+              conversationId,
+              planSummary: planSummary || null,
+              stepCount,
+              steps,
+              risk,
+            }
+          : null
       );
       return res.json(result);
     } catch (err: any) {
@@ -4270,7 +4747,11 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const AIActionExecutor = await getAIActionExecutor();
-      const result = await AIActionExecutor.approveAction(req.params.id, req.userId!);
+      const { alwaysApprove, conversationId } = req.body || {};
+      const result = await AIActionExecutor.approveAction(req.params.id, req.userId!, {
+        alwaysApprove,
+        conversationId: conversationId || undefined,
+      });
       return res.json(result);
     } catch (err: any) {
       return res.status(500).json({ error: (err as Error).message });
@@ -4284,10 +4765,13 @@ router.patch(
   validateParams(ActionIdParamSchema),
   validateBody(RejectActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { reason } = req.body;
+    const { reason, alwaysReject, conversationId } = req.body || {};
     try {
       const AIActionExecutor = await getAIActionExecutor();
-      const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason);
+      const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason, {
+        alwaysReject,
+        conversationId: conversationId || undefined,
+      });
       return res.json(result);
     } catch (err: any) {
       return res.status(500).json({ error: (err as Error).message });
@@ -4299,12 +4783,44 @@ router.post(
   '/actions/:id/execute',
   verifyToken,
   validateParams(ActionIdParamSchema),
+  validateBody(ExecuteActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const AIActionExecutor = await getAIActionExecutor();
-      const result = await AIActionExecutor.executeAction(req.params.id, req.userId!);
+      const { conversationId } = req.body || {};
+      const result = await AIActionExecutor.executeAction(req.params.id, req.userId!, {
+        conversationId: conversationId || undefined,
+      });
       return res.json(result);
     } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+/**
+ * V8 / Wave A6 — Unified read over proposals referenced by a conversation.
+ *
+ * Returns one `ChatProposalView` per distinct proposalId referenced in the
+ * conversation's execution-family messages, merging governance truth
+ * (`ai_actions` / `v8_action_proposals`) with facade rendering hints and
+ * thread ordering. Read-only.
+ */
+router.get(
+  '/conversations/:id/proposals',
+  verifyToken,
+  validateParams(z.object({ id: z.string().uuid() })),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getConversationProposals } =
+        await import('../services/v8/proposalUnificationService.js');
+      const proposals = await getConversationProposals({
+        conversationId: req.params.id,
+        organizationId: req.organizationId || undefined,
+      });
+      return res.json({ proposals });
+    } catch (err: any) {
+      logger.error('[AI] Unified proposals read error:', err);
       return res.status(500).json({ error: (err as Error).message });
     }
   })
@@ -5212,13 +5728,14 @@ router.post(
   validateBody(ApproveActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const alwaysApprove = (req.body as any).alwaysApprove;
+      const { alwaysApprove, conversationId } = (req.body as any) || {};
       const AIActionExecutor = await getAIActionExecutor();
       const result = await AIActionExecutor.approveAction(
         (req.params as any).actionId,
         req.userId as string,
         {
           alwaysApprove,
+          conversationId: conversationId || undefined,
         }
       );
       return res.json(result);
@@ -5236,13 +5753,13 @@ router.post(
   validateBody(RejectActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { reason, alwaysReject } = req.body as any;
+      const { reason, alwaysReject, conversationId } = (req.body as any) || {};
       const AIActionExecutor = await getAIActionExecutor();
       const result = await AIActionExecutor.rejectAction(
         (req.params as any).actionId,
         req.userId as string,
         reason,
-        { alwaysReject }
+        { alwaysReject, conversationId: conversationId || undefined }
       );
       return res.json(result);
     } catch (err: any) {

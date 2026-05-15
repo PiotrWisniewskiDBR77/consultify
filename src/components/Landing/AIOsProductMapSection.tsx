@@ -25,7 +25,8 @@ export const AIOsProductMapSection: React.FC = () => {
         },
         {
           badge: 'Agents',
-          title: 'Agents plan, propose, and coordinate work instead of acting like isolated tricks.',
+          title:
+            'Agents plan, propose, and coordinate work instead of acting like isolated tricks.',
           description:
             'The AI work model follows a governed lifecycle from ask to plan to approve to apply to audit.',
         },
@@ -48,7 +49,7 @@ export const AIOsProductMapSection: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70">
-            <BrainCircuit size={12} className="text-primary-300" />
+            <BrainCircuit size={12} className="text-primary-600 dark:text-primary-300" />
             {t('landing.aiOs.badge', 'AI operating system')}
           </div>
           <h2 className="mt-5 text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -74,13 +75,17 @@ export const AIOsProductMapSection: React.FC = () => {
                 className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-6 backdrop-blur-xl"
               >
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary-500/15 bg-primary-500/10">
-                  <Icon size={20} className="text-primary-300" />
+                  <Icon size={20} className="text-primary-600 dark:text-primary-300" />
                 </div>
-                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary-300">
+                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary-600 dark:text-primary-300">
                   {item.badge}
                 </div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-white/58">{item.description}</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-white/58">
+                  {item.description}
+                </p>
               </div>
             );
           })}

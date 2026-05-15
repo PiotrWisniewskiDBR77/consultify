@@ -48,6 +48,10 @@ import {
   PartnerRuntimeSummaryStrip,
 } from '../../components/Partner/PartnerRuntimeSummaryStrip';
 import { PartnerSection } from '../../components/Partner/PartnerSidebar';
+import {
+  PARTNER_CERTIFICATION_DOC_BY_TYPE,
+  PARTNER_DOC_HREF_BY_SLUG,
+} from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import {
@@ -1339,14 +1343,46 @@ interface Certification {
   id: string;
   name: string;
   type: string;
+  track?: string;
+  level?: string;
   status: string;
   progress: number;
   duration: string;
   modules: number;
+  completedModules?: number;
+  targetTier?: string;
+  examMode?: string;
+  examEligible?: boolean;
+  reviewState?: string;
+  needsReview?: boolean;
+  validUntil?: string;
+  publicArticleSlug?: string;
+  lifecycleStep?: string;
+  prerequisiteTypes?: string[];
+  blockedReason?: string | null;
   completedAt?: string;
   certificateId?: string;
   certificateUrl?: string;
   startedAt?: string;
+}
+
+interface CertificationModule {
+  id: string;
+  name: string;
+  description?: string | null;
+  order: number;
+  minutes?: number | null;
+  contentType?: string | null;
+  moduleKind?: string;
+  articleSlug?: string | null;
+  articleLabel?: string | null;
+  lifecycleStep?: string | null;
+  ownerRole?: string | null;
+  reviewRequired?: boolean;
+  status: string;
+  progress: number;
+  startedAt?: string | null;
+  completedAt?: string | null;
 }
 
 const CertificationSection: React.FC<{
@@ -1366,6 +1402,10 @@ const CertificationSection: React.FC<{
   const [examResult, setExamResult] = useState<{ passed: boolean; scorePercent: number } | null>(
     null
   );
+  const [expandedCertificationId, setExpandedCertificationId] = useState<string | null>(null);
+  const [certificationModules, setCertificationModules] = useState<
+    Record<string, CertificationModule[]>
+  >({});
 
   const fetchCertifications = useCallback(async () => {
     try {
@@ -1400,6 +1440,28 @@ const CertificationSection: React.FC<{
     setExamAnswers({});
     setExamResult(null);
     setExamSubmitting(false);
+  };
+
+  const loadModules = async (certId: string) => {
+    if (certificationModules[certId]) return;
+    try {
+      const response = await Api.get(`/api/partners/certifications/${certId}/modules`);
+      const payload = response?.data;
+      if (response?.success && payload?.data) {
+        setCertificationModules((prev) => ({ ...prev, [certId]: payload.data }));
+      }
+    } catch (err) {
+      console.error('Error fetching certification modules:', err);
+    }
+  };
+
+  const toggleCertificationDetails = async (certId: string) => {
+    if (expandedCertificationId === certId) {
+      setExpandedCertificationId(null);
+      return;
+    }
+    setExpandedCertificationId(certId);
+    await loadModules(certId);
   };
 
   const startExam = async (certId: string) => {
@@ -1551,6 +1613,11 @@ const CertificationSection: React.FC<{
           <div className="space-y-4">
             {certifications.map((course, index) => {
               const status = normalizeStatus(course.status);
+              const docHref =
+                (course.publicArticleSlug && PARTNER_DOC_HREF_BY_SLUG[course.publicArticleSlug]) ||
+                PARTNER_CERTIFICATION_DOC_BY_TYPE[course.type];
+              const modules = certificationModules[course.id] || [];
+              const isExpanded = expandedCertificationId === course.id;
               return (
                 <div
                   key={course.id}
@@ -1592,7 +1659,10 @@ const CertificationSection: React.FC<{
                           {getDisplayStatus(course.status)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">{course.type}</p>
+                      <p className="text-sm text-slate-400 mt-1">
+                        {course.track} / {course.level}{' '}
+                        {course.targetTier ? `• ${course.targetTier}` : ''}
+                      </p>
                       <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
@@ -1600,8 +1670,25 @@ const CertificationSection: React.FC<{
                         </span>
                         <span className="flex items-center gap-1">
                           <BookOpen className="w-4 h-4" />
-                          {course.modules} modules
+                          {course.completedModules || 0}/{course.modules} modules
                         </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                        {course.examMode && (
+                          <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-500">
+                            {course.examMode === 'review' ? 'Operator review' : 'Exam-based'}
+                          </span>
+                        )}
+                        {course.reviewState && (
+                          <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                            {course.reviewState}
+                          </span>
+                        )}
+                        {course.blockedReason && (
+                          <span className="px-2 py-1 rounded-full bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300">
+                            {course.blockedReason}
+                          </span>
+                        )}
                       </div>
                       {status !== 'locked' && (
                         <div className="mt-3">
@@ -1622,10 +1709,72 @@ const CertificationSection: React.FC<{
                           </div>
                         </div>
                       )}
-                      {status === 'in-progress' && (
-                        <button className="mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
-                          Continue Learning
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => void toggleCertificationDetails(course.id)}
+                          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          {isExpanded ? 'Hide modules' : 'View modules'}
                         </button>
+                        {docHref && (
+                          <button
+                            onClick={() => navigate(docHref)}
+                            className="px-4 py-2 border border-slate-300 dark:border-navy-600 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-200 hover:border-violet-500 hover:text-violet-600 transition-colors"
+                          >
+                            Open guide
+                          </button>
+                        )}
+                      </div>
+                      {isExpanded && modules.length > 0 && (
+                        <div className="mt-4 space-y-3 border-t border-slate-200 dark:border-navy-700 pt-4">
+                          {modules.map((module) => {
+                            const moduleDocHref =
+                              (module.articleSlug &&
+                                PARTNER_DOC_HREF_BY_SLUG[module.articleSlug]) ||
+                              docHref;
+                            return (
+                              <div
+                                key={module.id}
+                                className="rounded-lg bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 p-3"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="font-medium text-slate-900 dark:text-white">
+                                      {module.order}. {module.name}
+                                    </div>
+                                    {module.description && (
+                                      <p className="mt-1 text-sm text-slate-500">
+                                        {module.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-slate-400">
+                                    {module.minutes ? `${module.minutes} min` : module.moduleKind}
+                                  </span>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <span className="px-2 py-1 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-slate-600 dark:text-slate-300">
+                                    {module.status}
+                                  </span>
+                                  {module.reviewRequired && (
+                                    <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-xs text-amber-700 dark:text-amber-300">
+                                      review required
+                                    </span>
+                                  )}
+                                  {moduleDocHref && (
+                                    <button
+                                      onClick={() => navigate(moduleDocHref)}
+                                      className="inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400"
+                                    >
+                                      <ExternalLink className="w-3 h-3" />
+                                      {module.articleLabel || 'Open article'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                       {status === 'locked' && (
                         <p className="mt-3 text-xs text-slate-500">
@@ -1647,10 +1796,8 @@ const CertificationSection: React.FC<{
     if (loading) return <LoadingSkeleton />;
     if (error) return <ErrorDisplay />;
 
-    const completedCourses = certifications.filter(
-      (c) => normalizeStatus(c.status) === 'completed'
-    );
-    const hasExamsAvailable = completedCourses.length > 0;
+    const examCourses = certifications.filter((c) => c.examMode === 'exam');
+    const hasExamsAvailable = examCourses.length > 0;
 
     return (
       <div className="space-y-6">
@@ -1664,7 +1811,7 @@ const CertificationSection: React.FC<{
         </div>
         {hasExamsAvailable ? (
           <div className="space-y-4">
-            {completedCourses.map((course) => (
+            {examCourses.map((course) => (
               <div
                 key={course.id}
                 className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
@@ -1679,13 +1826,21 @@ const CertificationSection: React.FC<{
                         {course.name} Exam
                       </h4>
                       <p className="text-sm text-slate-400">
-                        {course.certificateId ? 'Passed' : 'Available to take'}
+                        {course.certificateId
+                          ? 'Passed'
+                          : course.examEligible
+                            ? 'Available to take'
+                            : course.blockedReason || 'Complete academy first'}
                       </p>
                     </div>
                   </div>
                   {course.certificateId ? (
                     <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium rounded-full">
                       Passed
+                    </span>
+                  ) : !course.examEligible ? (
+                    <span className="px-3 py-1 bg-slate-200 dark:bg-navy-700 text-slate-500 text-sm font-medium rounded-full">
+                      Locked
                     </span>
                   ) : (
                     <button
@@ -1849,6 +2004,11 @@ const CertificationSection: React.FC<{
                     Issued:{' '}
                     {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
                   </p>
+                  {cert.validUntil && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Valid until: {new Date(cert.validUntil).toLocaleDateString()}
+                    </p>
+                  )}
                   <p className="text-xs text-slate-500 mt-1">ID: {cert.certificateId}</p>
                 </div>
                 <button
@@ -1894,6 +2054,22 @@ interface ResourcesData {
   marketing: Resource[];
   caseStudies: Resource[];
   templates: Resource[];
+  docsBridge?: Array<{
+    id: string;
+    title: string;
+    href: string;
+    kind: string;
+  }>;
+  academyHighlights?: Array<{
+    id: string;
+    type: string;
+    track: string;
+    level: string;
+    status: string;
+    progress: number;
+    reviewState?: string | null;
+    articleSlug?: string | null;
+  }>;
 }
 
 const ResourcesSection: React.FC<{
@@ -1991,6 +2167,9 @@ const ResourcesSection: React.FC<{
   // Map subsection to data key
   const dataKey = subsection === 'case-studies' ? 'caseStudies' : subsection;
   const items = resources?.[dataKey as keyof ResourcesData] || [];
+  const docsBridge = subsection === 'documentation' ? resources?.docsBridge || [] : [];
+  const academyHighlights =
+    subsection === 'documentation' ? resources?.academyHighlights || [] : [];
 
   return (
     <div className="space-y-6">
@@ -2010,6 +2189,70 @@ const ResourcesSection: React.FC<{
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
+
+      {subsection === 'documentation' &&
+        (docsBridge.length > 0 || academyHighlights.length > 0) && (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Canonical partner docs
+              </h3>
+              <div className="mt-3 space-y-3">
+                {docsBridge.map((doc) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => navigate(doc.href)}
+                    className="w-full flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left hover:border-violet-500 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      {doc.title}
+                    </span>
+                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Academy status bridge
+              </h3>
+              <div className="mt-3 space-y-3">
+                {academyHighlights.slice(0, 4).map((item) => {
+                  const href =
+                    (item.articleSlug && PARTNER_DOC_HREF_BY_SLUG[item.articleSlug]) ||
+                    PARTNER_CERTIFICATION_DOC_BY_TYPE[item.type];
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-medium text-slate-900 dark:text-white">
+                          {item.track} / {item.level}
+                        </div>
+                        <div className="text-xs text-slate-400">{item.progress}%</div>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {item.status}
+                        {item.reviewState ? ` • ${item.reviewState}` : ''}
+                      </div>
+                      {href && (
+                        <button
+                          onClick={() => navigate(href)}
+                          className="mt-3 inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Open supporting guide
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
       {items.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">

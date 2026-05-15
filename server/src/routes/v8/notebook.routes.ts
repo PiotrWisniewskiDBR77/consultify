@@ -7,23 +7,29 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
-import * as notebookHandoffService from '../../services/v8/notebookHandoffService.js';
-import * as notebookSearchService from '../../services/v8/notebookSearchService.js';
+import {
+  parseNotebookAttachments,
+  resolveNotebookAttachmentFile,
+} from '../../services/notebookAttachmentService.js';
 import {
   P07_ACCEPTANCE_CHECKLIST,
-  P07_DEGRADED_SCENARIOS,
-  P07_ATTACHMENT_LIFECYCLE_STATES,
+  P07_ANTI_DUPLICATE_RULES,
   P07_ATTACHMENT_ERROR_TAXONOMY,
+  P07_ATTACHMENT_LIFECYCLE_STATES,
+  P07_CAPTURE_ENTRIES,
+  P07_DEGRADED_SCENARIOS,
+  P07_HANDOFF_TARGETS,
+  P07_NON_GOALS,
+  P07_NOTEBOOK_CANON_CONTRACT,
   P07_PROVENANCE_LANGUAGE,
   P07_PROVENANCE_RULES,
-  P07_CAPTURE_ENTRIES,
-  P07_NON_GOALS,
-  P07_ANTI_DUPLICATE_RULES,
-  P07_NOTEBOOK_CANON_CONTRACT,
-  P07_HANDOFF_TARGETS,
   P07_SEARCH_BASELINE,
 } from '../../services/v8/notebookCanon.js';
+import * as notebookHandoffService from '../../services/v8/notebookHandoffService.js';
+import * as notebookSearchService from '../../services/v8/notebookSearchService.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 
 const router = Router();
 
@@ -43,7 +49,10 @@ function notebookMeta(extra?: Record<string, unknown>) {
 function parseCsvParam(v: unknown): string[] | undefined {
   if (v == null || v === '') return undefined;
   const raw = Array.isArray(v) ? v.join(',') : String(v);
-  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  const parts = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   return parts.length ? parts : undefined;
 }
 
@@ -77,7 +86,9 @@ router.get(
 
     const hasAttachmentsExplicit = parseBoolQuery(req.query.has_attachments);
     const has_attachments =
-      hasAttachmentsExplicit !== undefined ? hasAttachmentsExplicit : extractedFilters.has_attachments;
+      hasAttachmentsExplicit !== undefined
+        ? hasAttachmentsExplicit
+        : extractedFilters.has_attachments;
 
     const filters: notebookSearchService.NotebookSearchFilters = {
       ...extractedFilters,
@@ -86,7 +97,8 @@ router.get(
       maturity: req.query.maturity != null ? String(req.query.maturity) : extractedFilters.maturity,
       type: req.query.type != null ? String(req.query.type) : extractedFilters.type,
       owner: req.query.owner != null ? String(req.query.owner) : extractedFilters.owner,
-      visibility: req.query.visibility != null ? String(req.query.visibility) : extractedFilters.visibility,
+      visibility:
+        req.query.visibility != null ? String(req.query.visibility) : extractedFilters.visibility,
       capture_source:
         req.query.capture_source != null
           ? String(req.query.capture_source)
@@ -110,7 +122,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { noteId, suggestion } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
     }
     const payload = await notebookHandoffService.buildRadarHandoff(
       noteId,
@@ -127,7 +141,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { noteId, seed } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
     }
     const payload = await notebookHandoffService.buildInitiativeHandoff(
       noteId,
@@ -144,7 +160,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { noteId, context } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
     }
     const payload = await notebookHandoffService.buildTeresaHandoff(
       noteId,
@@ -160,7 +178,9 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { target, payload } = req.body ?? {};
     if (target !== 'radar' && target !== 'inicjatywy' && target !== 'teresa') {
-      return res.status(400).json({ error: 'target must be radar|inicjatywy|teresa', code: 'P07_HANDOFF_TARGET' });
+      return res
+        .status(400)
+        .json({ error: 'target must be radar|inicjatywy|teresa', code: 'P07_HANDOFF_TARGET' });
     }
     const obj =
       payload && typeof payload === 'object' && !Array.isArray(payload)
@@ -202,6 +222,269 @@ router.get(
         handoff_targets: P07_HANDOFF_TARGETS,
         search_baseline: P07_SEARCH_BASELINE,
       },
+      meta: notebookMeta(),
+    });
+  })
+);
+
+// ── Degraded Scenario 4: Preview/readback unavailable ───────────
+
+router.get(
+  '/preview/:noteId/attachments/:attachmentId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const noteId = String(req.params.noteId || '').trim();
+    const attachmentId = String(req.params.attachmentId || '').trim();
+
+    if (!noteId || !attachmentId) {
+      return res
+        .status(400)
+        .json({ error: 'noteId and attachmentId required', code: 'P07_PREVIEW_PARAMS_REQUIRED' });
+    }
+
+    const row = await dbGet<{
+      id: string;
+      owner_user_id: string;
+      organization_id: string;
+      attachments_json: string | null;
+    }>(
+      `SELECT id, owner_user_id, organization_id, attachments_json
+       FROM notebook_pages
+       WHERE id = $1 LIMIT 1`,
+      [noteId],
+      { fallback: false }
+    );
+
+    if (!row) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(row.organization_id) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+
+    const storedFile = await resolveNotebookAttachmentFile(row.attachments_json, attachmentId);
+
+    if (!storedFile) {
+      const attachments = parseNotebookAttachments(row.attachments_json);
+      const match = attachments.find((a) => a.id === attachmentId);
+      return res.json({
+        degraded: true,
+        scenario: 4,
+        userVisibleState: 'attachment visible, preview unavailable',
+        nextAction: 'download/open externally',
+        attachment: {
+          id: attachmentId,
+          filename: match?.name ?? null,
+          status: 'preview_unavailable',
+        },
+        downloadUrl: `/api/v8/my-work/notebook/pages/${noteId}/attachments/${attachmentId}/download`,
+        meta: notebookMeta(),
+      });
+    }
+
+    return res.json({
+      degraded: false,
+      previewAvailable: true,
+      mimeType: storedFile.mimeType,
+      sizeBytes: storedFile.sizeBytes,
+      meta: notebookMeta(),
+    });
+  })
+);
+
+// ── Degraded Scenario 7 + 8: Deeplink resolution ───────────────
+
+router.get(
+  '/resolve/:noteId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const noteId = String(req.params.noteId || '').trim();
+
+    if (!noteId) {
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_RESOLVE_NOTE_ID_REQUIRED' });
+    }
+
+    const row = await dbGet<{
+      id: string;
+      title: string;
+      status: string;
+      owner_user_id: string;
+      organization_id: string;
+      project_id: string | null;
+      visibility: string;
+      updated_at: string;
+    }>(
+      `SELECT id, title, status, owner_user_id, organization_id, project_id, visibility, updated_at
+       FROM notebook_pages
+       WHERE id = $1 LIMIT 1`,
+      [noteId],
+      { fallback: false }
+    );
+
+    if (!row) {
+      return res.status(404).json({
+        degraded: true,
+        scenario: 7,
+        userVisibleState: 'note not found / deleted',
+        nextAction: 'search by id + activity pointers',
+        searchHint: { q: noteId },
+        fallbackUrl: `/api/v8/notebook/search?q=${encodeURIComponent(noteId)}`,
+        meta: notebookMeta(),
+      });
+    }
+
+    const orgMatch = String(row.organization_id) === String(organizationId);
+    if (!orgMatch) {
+      return res.status(403).json({
+        degraded: true,
+        scenario: 8,
+        userVisibleState: 'link visible, marked degraded(permission)',
+        nextAction: 'request access / capture context',
+        noteId,
+        canRequestAccess: true,
+        meta: notebookMeta(),
+      });
+    }
+
+    const visibility = String(row.visibility || 'private').toLowerCase();
+    const isOwner = String(row.owner_user_id) === String(userId);
+
+    if (visibility === 'private' && !isOwner) {
+      return res.status(403).json({
+        degraded: true,
+        scenario: 8,
+        userVisibleState: 'link visible, marked degraded(permission)',
+        nextAction: 'request access / capture context',
+        noteId,
+        canRequestAccess: true,
+        meta: notebookMeta(),
+      });
+    }
+
+    if (visibility === 'project' && !isOwner && row.project_id) {
+      const cols = await getTableColumns('project_members');
+      let isMember = false;
+      if (cols?.size) {
+        const member = await dbGet<{ ok: number }>(
+          `SELECT 1 as ok FROM project_members WHERE project_id = $1 AND user_id = $2 LIMIT 1`,
+          [row.project_id, userId],
+          { fallback: false }
+        );
+        isMember = !!member;
+      }
+      if (!isMember) {
+        return res.status(403).json({
+          degraded: true,
+          scenario: 8,
+          userVisibleState: 'link visible, marked degraded(permission)',
+          nextAction: 'request access / capture context',
+          noteId,
+          canRequestAccess: true,
+          meta: notebookMeta(),
+        });
+      }
+    }
+
+    return res.json({
+      degraded: false,
+      note: {
+        id: row.id,
+        title: row.title,
+        status: row.status,
+        deeplink: `/api/v8/notebook/resolve/${row.id}`,
+      },
+      meta: notebookMeta(),
+    });
+  })
+);
+
+// ── Degraded Scenario 9: Concurrent edit conflict ───────────────
+
+router.put(
+  '/pages/:noteId/content',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const noteId = String(req.params.noteId || '').trim();
+    const { content, expectedVersion } = req.body ?? {};
+
+    if (!noteId) {
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_CONTENT_NOTE_ID_REQUIRED' });
+    }
+    if (content === undefined || content === null) {
+      return res.status(400).json({ error: 'content required', code: 'P07_CONTENT_REQUIRED' });
+    }
+    if (!expectedVersion) {
+      return res
+        .status(400)
+        .json({ error: 'expectedVersion required', code: 'P07_EXPECTED_VERSION_REQUIRED' });
+    }
+
+    const row = await dbGet<{
+      id: string;
+      owner_user_id: string;
+      organization_id: string;
+      updated_at: string;
+    }>(
+      `SELECT id, owner_user_id, organization_id, updated_at
+       FROM notebook_pages
+       WHERE id = $1 LIMIT 1`,
+      [noteId],
+      { fallback: false }
+    );
+
+    if (!row) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(row.organization_id) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(row.owner_user_id) !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    const currentVersion = row.updated_at;
+    if (String(expectedVersion) !== String(currentVersion)) {
+      return res.status(409).json({
+        degraded: true,
+        scenario: 9,
+        userVisibleState: 'conflict resolution UI (versions)',
+        nextAction: 'explicit conflict resolution — no silent overwrite',
+        conflict: {
+          yourVersion: expectedVersion,
+          serverVersion: currentVersion,
+        },
+        code: 'P07_CONCURRENT_EDIT_CONFLICT',
+        meta: notebookMeta(),
+      });
+    }
+
+    const contentJson = typeof content === 'string' ? content : JSON.stringify(content);
+    const contentText =
+      typeof content === 'string' ? content : typeof content?.text === 'string' ? content.text : '';
+
+    await dbRun(
+      `UPDATE notebook_pages
+       SET content_json = $1, content_text = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3 AND updated_at = $4`,
+      [contentJson, contentText, noteId, currentVersion],
+      { fallback: false }
+    );
+
+    const updated = await dbGet<{ id: string; updated_at: string }>(
+      `SELECT id, updated_at FROM notebook_pages WHERE id = $1 LIMIT 1`,
+      [noteId],
+      { fallback: false }
+    );
+
+    return res.json({
+      degraded: false,
+      success: true,
+      noteId,
+      version: updated?.updated_at ?? null,
       meta: notebookMeta(),
     });
   })

@@ -52,18 +52,49 @@ interface PolicyMessages {
 }
 
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceling' | 'canceled';
+export type BillingRail = 'stripe_subscription' | 'manual_invoice' | 'hybrid_usage_invoice';
+export type ContractStatus =
+  | 'draft'
+  | 'active'
+  | 'renewal_due'
+  | 'grace'
+  | 'suspended'
+  | 'expired'
+  | 'canceled';
+export type AccessPosture =
+  | 'demo_org'
+  | 'demo_view'
+  | 'trial_active'
+  | 'trial_expiring'
+  | 'trial_expired'
+  | 'paid_active'
+  | 'paid_past_due'
+  | 'paid_canceling'
+  | 'paid_manual_active'
+  | 'paid_manual_renewal_due'
+  | 'suspended';
 
 export interface PolicySnapshot {
   orgType: 'DEMO' | 'TRIAL' | 'PAID';
+  posture: AccessPosture;
   isDemo: boolean;
+  isDemoView: boolean;
   isTrial: boolean;
   isPaid: boolean;
+  billingRail: BillingRail | null;
+  contractStatus: ContractStatus | null;
   subscriptionStatus: SubscriptionStatus | null;
+  sourceOfTruth: 'trial_clock' | 'demo_mode' | 'stripe' | 'manual_contract';
   trialStartedAt: string | null;
   trialExpiresAt: string | null;
   trialDaysLeft: number;
   isTrialExpired: boolean;
   warningLevel: 'none' | 'warning' | 'critical' | 'expired';
+  renewalAt?: string | null;
+  graceUntil?: string | null;
+  accessExpiresAt?: string | null;
+  managedByUserId?: string | null;
+  isManualBilling: boolean;
   limits: PolicyLimits | null;
   usageToday: UsageToday;
   usagePercent: UsagePercent;
@@ -87,7 +118,7 @@ interface AccessPolicyContextValue {
 
 const AccessPolicyContext = createContext<AccessPolicyContextValue | undefined>(undefined);
 
-const getAuthToken = (): string | null => {
+export const getAuthToken = (): string | null => {
   try {
     const stored = localStorage.getItem('consultify-storage');
     if (stored) {
@@ -101,7 +132,9 @@ const getAuthToken = (): string | null => {
 };
 
 const isPolicyBypassedRole = (role: unknown): boolean => {
-  const normalizedRole = String(role || '').trim().toUpperCase();
+  const normalizedRole = String(role || '')
+    .trim()
+    .toUpperCase();
   return normalizedRole === 'SUPERADMIN' || normalizedRole === 'SUPER_ADMIN';
 };
 

@@ -1,5 +1,6 @@
 import {
   CheckCircle2,
+  ExternalLink,
   FileOutput,
   GitBranch,
   Loader2,
@@ -11,7 +12,10 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
+import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
+import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
 import type {
   ArtifactFamily,
   ArtifactPlanOutputType,
@@ -20,8 +24,8 @@ import type {
 } from '@/hooks/useV8ArtifactRuns';
 import {
   useV8AcceptArtifactRunPlan,
-  useV8CreateArtifactRunFromChat,
   useV8ArtifactRunHistory,
+  useV8CreateArtifactRunFromChat,
   useV8MaterializeArtifactRun,
   useV8PreflightArtifactRun,
   useV8RetryArtifactRun,
@@ -77,6 +81,8 @@ function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
       return 'Completed';
     case 'failed':
       return 'Failed';
+    case 'cancelled':
+      return 'Cancelled';
     default:
       return 'Planned';
   }
@@ -86,7 +92,12 @@ function deriveEffectiveRunStatus(
   runStatus: ArtifactRunRecord['runStatus'],
   executionState: string | null | undefined
 ): ArtifactRunRecord['runStatus'] {
-  if (runStatus === 'completed' || runStatus === 'failed' || runStatus === 'retry_requested') {
+  if (
+    runStatus === 'completed' ||
+    runStatus === 'failed' ||
+    runStatus === 'cancelled' ||
+    runStatus === 'retry_requested'
+  ) {
     return runStatus;
   }
 
@@ -110,6 +121,8 @@ function deriveEffectiveRunStatus(
       return 'rejected';
     case 'failed':
       return 'failed';
+    case 'cancelled':
+      return 'cancelled';
     default:
       return runStatus;
   }
@@ -131,6 +144,7 @@ export function V8ArtifactRunControl({
   snapshotContext,
 }: V8ArtifactRunControlProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { showV8Chat } = useV8Gate();
   const { data: snapshots, isLoading: snapshotsLoading } = useV8Snapshots(
     showV8Chat && conversationId ? conversationId : undefined
@@ -154,6 +168,7 @@ export function V8ArtifactRunControl({
   const submitExecutionReview = useV8SubmitExecutionReview();
   const approveExecutionRun = useV8ApproveExecutionRun();
   const rejectExecutionRun = useV8RejectExecutionRun();
+  const artifactTrustState = useTrustState(currentRun?.artifactId || null, null);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
   const latestSnapshot = snapshotItems.length > 0 ? snapshotItems[snapshotItems.length - 1] : null;
@@ -587,6 +602,14 @@ export function V8ArtifactRunControl({
                   {t('v8.artifactRun.artifactReady', 'Artifact ready')}: {currentRun.artifactId}
                 </div>
               )}
+              {currentRun.artifactId && artifactTrustState && (
+                <div className="mt-2">
+                  <TrustStatePreviewSection
+                    governance={artifactTrustState}
+                    artifactId={currentRun.artifactId}
+                  />
+                </div>
+              )}
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
                   {currentRun.failureReason}
@@ -624,7 +647,9 @@ export function V8ArtifactRunControl({
                           className="flex items-start justify-between gap-3 text-[11px] text-amber-900 dark:text-amber-100"
                         >
                           <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium">{check.id.replace(/_/g, ' ')}</div>
+                            <div className="truncate font-medium">
+                              {check.id.replace(/_/g, ' ')}
+                            </div>
                             <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
                               {check.message}
                             </div>
@@ -776,6 +801,28 @@ export function V8ArtifactRunControl({
                   </div>
                 </div>
               )}
+
+              {effectiveRunStatus === 'completed' &&
+                currentRun.plan.outputType === 'report' &&
+                currentRun.materializationOrigin?.originRecordId && (
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      data-testid="v8-artifact-run-open-wordy"
+                      onClick={() => {
+                        const reportId = currentRun.materializationOrigin?.originRecordId;
+                        if (reportId) {
+                          navigate(`/wordy?artifactId=${reportId}`);
+                          setIsOpen(false);
+                        }
+                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2 text-sm font-medium text-brand transition hover:bg-brand/10 dark:border-brand/40 dark:bg-brand/10 dark:text-brand dark:hover:bg-brand/20"
+                    >
+                      <ExternalLink size={16} />
+                      {t('v8.artifactRun.openInWordy', 'Continue in Wordy')}
+                    </button>
+                  </div>
+                )}
 
               <div className="mt-3 flex gap-2">
                 {canAccept && (

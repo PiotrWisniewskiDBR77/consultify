@@ -69,7 +69,8 @@ vi.mock('../../../services/notebookAttachmentService.js', () => ({
   addNotebookAttachmentsToPage: (...args: unknown[]) => mockAddNotebookAttachmentsToPage(...args),
   resolveNotebookAttachmentFile: (...args: unknown[]) => mockResolveNotebookAttachmentFile(...args),
   deleteNotebookAttachmentFile: (...args: unknown[]) => mockDeleteNotebookAttachmentFile(...args),
-  removeNotebookAttachmentFromPage: (...args: unknown[]) => mockRemoveNotebookAttachmentFromPage(...args),
+  removeNotebookAttachmentFromPage: (...args: unknown[]) =>
+    mockRemoveNotebookAttachmentFromPage(...args),
   NotebookAttachmentMutationError: class NotebookAttachmentMutationError extends Error {
     status: number;
     code: string;
@@ -314,6 +315,24 @@ describe('V8 My Work notebook routes', () => {
       fileOriginalname: 'note.txt',
       tags: [],
       projectId: undefined,
+    });
+  });
+
+  it('returns controlled error when notebook capture fails', async () => {
+    mockNotebookCapture.mockRejectedValue(new Error('parse failed'));
+
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/capture/upload')
+      .attach('file', Buffer.from('hello world'), {
+        filename: 'note.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({
+      error: 'Notebook capture failed',
+      code: 'NOTEBOOK_CAPTURE_FAILED',
+      message: 'parse failed',
     });
   });
 
@@ -713,6 +732,13 @@ describe('V8 My Work notebook routes', () => {
   });
 
   it('lists notebook AI proposals through the V8 namespace', async () => {
+    mockQueryOne.mockResolvedValue({
+      id: 'note-4b',
+      ownerUserId: USER_ID,
+      organizationId: ORG,
+      projectId: null,
+      visibility: 'private',
+    });
     mockGetProposalsForPage.mockResolvedValue([
       {
         id: 'proposal-1',
@@ -736,6 +762,32 @@ describe('V8 My Work notebook routes', () => {
       limit: 20,
     });
     expect(res.body.data.proposals).toHaveLength(1);
+  });
+
+  it('returns 403 for notebook AI proposals list when page is not accessible', async () => {
+    mockQueryOne.mockResolvedValue({
+      id: 'note-4b',
+      ownerUserId: 'another-user',
+      organizationId: ORG,
+      projectId: null,
+      visibility: 'private',
+    });
+
+    const res = await request(createApp()).get('/api/v8/my-work/notebook/pages/note-4b/ai-proposals');
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    expect(mockGetProposalsForPage).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 for notebook AI proposals list when page is missing', async () => {
+    mockQueryOne.mockResolvedValue(null);
+
+    const res = await request(createApp()).get('/api/v8/my-work/notebook/pages/note-4b/ai-proposals');
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    expect(mockGetProposalsForPage).not.toHaveBeenCalled();
   });
 
   it('resolves notebook AI proposals through the V8 namespace', async () => {

@@ -15,6 +15,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { ROUTES } from '@/routes/routeConfig';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -233,6 +234,17 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
           <ExternalLink size={12} className="text-purple-500 shrink-0" />
           {isPolish ? 'Budżet i predykcja' : 'Budget & Prediction'}
         </button>
+        <button
+          onClick={() =>
+            navigate(
+              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(initiativeId)}`
+            )
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          {isPolish ? 'Wyniki i raporty KPI' : 'Results & KPI reports'}
+        </button>
       </div>
     </div>
   );
@@ -241,7 +253,7 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
 export const InitiativePreviewV3Footer: React.FC<{
   initiative: InitiativePreviewV3Model;
   tasksCount?: number;
-  onOpenFull: () => void;
+  onOpenFull?: () => void;
   onOpenInModule?: () => void;
   onOpenChat?: (prompt: string) => Promise<void> | void;
   onCopyLink?: () => Promise<void> | void;
@@ -323,13 +335,17 @@ export const InitiativePreviewV3Footer: React.FC<{
   const actionRows: ActionRow[] = useMemo(() => {
     if (extraActionsSlot) return [];
     const buttons: ActionRow['buttons'] = [
-      {
-        label: isPolish ? 'Otwórz' : 'Open',
-        icon: ExternalLink,
-        onClick: onOpenFull,
-        colorScheme: 'primary',
-        shortcut: 'O',
-      },
+      ...(onOpenFull
+        ? [
+            {
+              label: isPolish ? 'Otwórz' : 'Open',
+              icon: ExternalLink,
+              onClick: onOpenFull,
+              colorScheme: 'primary' as const,
+              shortcut: 'O',
+            },
+          ]
+        : []),
       ...(onOpenInModule
         ? [
             {

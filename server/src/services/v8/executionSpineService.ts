@@ -28,6 +28,11 @@ import {
 } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import {
+  buildActionPreviewLines,
+  buildProposalOperationContract,
+  mapProposalStatusToOperationStage,
+} from './operationContractService.js';
 
 // ==========================================
 // HELPERS
@@ -299,6 +304,11 @@ export async function transitionRunState(
  */
 export async function createProposal(params: CreateProposalParams): Promise<ActionProposal> {
   const validated = CreateProposalParamsSchema.parse(params);
+  const runRow = await dbGet<RunRow>(
+    `SELECT * FROM v8_execution_runs WHERE run_id = ?`,
+    [validated.executionRunId],
+    { fallback: true }
+  );
 
   const proposalId = uuidv4();
   const now = new Date().toISOString();
@@ -311,15 +321,39 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
     targetRef: validated.targetRef,
     summary: validated.summary,
     reason: validated.reason,
-    mutationDescription: validated.mutationDescription,
+    mutationDescription: validated.mutationDescription as ActionProposal['mutationDescription'],
     riskClass: validated.riskClass,
     approvalClass: validated.approvalClass,
-    previewPayload: validated.previewPayload ?? null,
+    previewPayload: (validated.previewPayload ?? null) as ActionProposal['previewPayload'],
     dependsOn: validated.dependsOn,
     status: 'draft',
     createdAt: now,
     resolvedAt: null,
     resolvedBy: null,
+    operationContract: runRow
+      ? buildProposalOperationContract({
+          kind: 'governed_execution',
+          contractId: proposalId,
+          stage: mapProposalStatusToOperationStage('draft'),
+          createdAt: now,
+          updatedAt: now,
+          organizationId: runRow.organization_id,
+          userId: runRow.initiator_user_id,
+          conversationId: null,
+          contextSnapshotId: validated.contextSnapshotRef,
+          executionRunId: validated.executionRunId,
+          governedProposalId: proposalId,
+          targetModule: validated.targetRef.artifactModule,
+          targetRef: validated.targetRef,
+          title: validated.summary,
+          summary: validated.reason,
+          intent: validated.summary,
+          previewLines: buildActionPreviewLines(
+            (validated.previewPayload ?? null) as ActionPreview | null
+          ),
+          riskLabel: validated.riskClass,
+        })
+      : undefined,
   };
 
   await dbRun(
@@ -662,24 +696,23 @@ export async function replanFromRejection(
 export async function getRunsByOrg(
   organizationId: string,
   stateFilter?: RunState,
-  limit: number = 50
+  limit: number = 50,
+  initiativeId?: string
 ): Promise<ExecutionAgentRun[]> {
-  let sql: string;
-  let params: unknown[];
+  let sql = `SELECT * FROM v8_execution_runs
+             WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
 
   if (stateFilter) {
-    sql = `SELECT * FROM v8_execution_runs
-           WHERE organization_id = ? AND state = ?
-           ORDER BY updated_at DESC
-           LIMIT ?`;
-    params = [organizationId, stateFilter, limit];
-  } else {
-    sql = `SELECT * FROM v8_execution_runs
-           WHERE organization_id = ?
-           ORDER BY updated_at DESC
-           LIMIT ?`;
-    params = [organizationId, limit];
+    sql += ` AND state = ?`;
+    params.push(stateFilter);
   }
+  if (initiativeId) {
+    sql += ` AND json_extract(metadata, '$.initiativeId') = ?`;
+    params.push(initiativeId);
+  }
+  sql += ` ORDER BY updated_at DESC LIMIT ?`;
+  params.push(limit);
 
   const rows = await dbAll<RunRow>(sql, params, { fallback: true });
   return (rows || []).map(rowToRun);
@@ -688,13 +721,22 @@ export async function getRunsByOrg(
 /**
  * Return all runs NOT in terminal states for an organization.
  */
-export async function getActiveRuns(organizationId: string): Promise<ExecutionAgentRun[]> {
+export async function getActiveRuns(
+  organizationId: string,
+  initiativeId?: string
+): Promise<ExecutionAgentRun[]> {
+  let sql = `SELECT * FROM v8_execution_runs
+             WHERE organization_id = ?
+               AND state NOT IN ('completed', 'cancelled', 'expired')`;
+  const params: unknown[] = [organizationId];
+  if (initiativeId) {
+    sql += ` AND json_extract(metadata, '$.initiativeId') = ?`;
+    params.push(initiativeId);
+  }
+  sql += ` ORDER BY created_at DESC`;
   const rows = await dbAll<RunRow>(
-    `SELECT * FROM v8_execution_runs
-     WHERE organization_id = ?
-       AND state NOT IN ('completed', 'cancelled', 'expired')
-     ORDER BY created_at DESC`,
-    [organizationId],
+    sql,
+    params,
     { fallback: true }
   );
 

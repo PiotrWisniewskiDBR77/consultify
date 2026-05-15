@@ -32,9 +32,9 @@ import { useAppStore } from '../../store/useAppStore';
 import { useContextBuilderStore } from '../../store/useContextBuilderStore';
 import { AppView } from '../../types';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
-import { CompanyProfileModule } from './modules/CompanyProfileModule';
 import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
 import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
+import { OrganizationProfileModule } from './modules/OrganizationProfileModule';
 import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
 
 // ==========================================
@@ -239,7 +239,7 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
   const renderActiveModule = () => {
     switch (activeSection) {
       case 'profile':
-        return <CompanyProfileModule />;
+        return <OrganizationProfileModule />;
       case 'goals':
         return <GoalsExpectationsModule />;
       case 'challenges':

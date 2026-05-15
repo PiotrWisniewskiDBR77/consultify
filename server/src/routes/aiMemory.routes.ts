@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -58,7 +59,7 @@ router.get(
         total: memories.length,
       });
     } catch (err: unknown) {
-      console.error('[AIMemory] List error:', err);
+      logger.error('[AIMemory] List error:', err);
       return res.status(500).json({ error: 'Failed to fetch memories' });
     }
   })
@@ -152,7 +153,7 @@ router.get(
         memories: memories.map((m) => ({ key: m.key, value: m.value })),
       });
     } catch (err: unknown) {
-      console.error('[AIMemory] Context error:', err);
+      logger.error('[AIMemory] Context error:', err);
       return res.status(500).json({ error: 'Failed to generate context' });
     }
   })
@@ -229,7 +230,7 @@ router.put(
 
       res.json(updated);
     } catch (err: unknown) {
-      console.error('[AIMemory] Set error:', err);
+      logger.error('[AIMemory] Set error:', err);
       return res.status(500).json({ error: 'Failed to set memory' });
     }
   })
@@ -267,7 +268,7 @@ router.delete(
 
       res.json({ success: true, deleted: key });
     } catch (err: unknown) {
-      console.error('[AIMemory] Delete error:', err);
+      logger.error('[AIMemory] Delete error:', err);
       return res.status(500).json({ error: 'Failed to delete memory' });
     }
   })
@@ -357,7 +358,7 @@ router.post(
 
       res.json({ success: true, results });
     } catch (err: unknown) {
-      console.error('[AIMemory] Bulk set error:', err);
+      logger.error('[AIMemory] Bulk set error:', err);
       return res.status(500).json({ error: 'Failed to set memories' });
     }
   })
@@ -423,7 +424,7 @@ router.post(
 
       res.json({ memories });
     } catch (err: unknown) {
-      console.error('[AIMemory] Parse error:', err);
+      logger.error('[AIMemory] Parse error:', err);
       return res.status(500).json({ error: 'Failed to parse response' });
     }
   })

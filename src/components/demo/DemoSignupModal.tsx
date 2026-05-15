@@ -74,7 +74,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
   );
 
   const TRIAL_BENEFITS = [
-    { icon: Zap, labelKey: 'demo.signup.benefit1', fallback: '14-day full access' },
+    { icon: Zap, labelKey: 'demo.signup.benefit1', fallback: '7-day full access' },
     { icon: Shield, labelKey: 'demo.signup.benefit2', fallback: 'Your own secure workspace' },
     { icon: Sparkles, labelKey: 'demo.signup.benefit3', fallback: 'AI capabilities included' },
   ];

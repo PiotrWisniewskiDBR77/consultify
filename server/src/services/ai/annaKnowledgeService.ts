@@ -2,6 +2,8 @@ import { getDatabase } from '../../database/Database.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import ragService from '../ragService.js';
+import { resolveAnnaPreferredProducts, resolveAnnaSiteConfig } from './annaSiteConfig.js';
+import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
 
 type AnnaDocRow = {
   id?: string;
@@ -67,6 +69,18 @@ Consultify is the main public product priority. It is an AI-powered platform for
 
 const DBR77_FALLBACK_CONTEXT = `Product: DBR77 Ecosystem
 DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`;
+
+const IRIS_FALLBACK_CONTEXT = `Product: IRIS
+IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`;
+
+const DIGITAL_TWIN_FALLBACK_CONTEXT = `Product: Digital Twin
+DBR77 Digital Twin creates a virtual replica of physical factory processes, enabling simulation, scenario planning and optimization without disrupting production. It integrates with IIoT data and IRIS analytics.`;
+
+const IIOT_FALLBACK_CONTEXT = `Product: IIoT
+DBR77 IIoT is the Industrial Internet of Things connectivity layer that collects real-time sensor and machine data from production lines, feeding it into Digital Twin, IRIS and the broader DBR77 analytics stack.`;
+
+const MARKETPLACE_FALLBACK_CONTEXT = `Product: Marketplace
+DBR77 Marketplace is the curated catalog of pre-built transformation modules, integrations and partner solutions that organizations can plug into their Consultify-managed transformation programs.`;
 
 function parseMeta(raw: AnnaDocRow['metadata']): AnnaDocMeta {
   if (!raw) return {};
@@ -165,20 +179,10 @@ function detectRequestedProducts(query: string): {
   };
 }
 
-function isDbR77PortfolioQuestion(query: string): boolean {
-  const q = String(query || '').toLowerCase();
-  const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  if (!mentionsDbR) return false;
-  return (
-    /\bportfolio\b/.test(q) ||
-    /\bekosystem\b/.test(q) ||
-    /\bprodukty\b/.test(q) ||
-    /\bprodukt\b/.test(q) ||
-    /\boferta\b/.test(q) ||
-    /\bco macie\b/.test(q) ||
-    /\bjakie.*(produkty|produkt)\b/.test(q) ||
-    /\bjakie znasz\b/.test(q)
-  );
+function prioritizeProducts(explicitProducts: string[], baseProducts: string[]): string[] {
+  return explicitProducts.length > 0
+    ? uniq([...explicitProducts, ...baseProducts])
+    : uniq(baseProducts);
 }
 
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
@@ -270,40 +274,38 @@ async function searchScopedKnowledge(
     .filter((result) => Boolean(result?.content)) as AnnaRagHit[];
 }
 
+const FALLBACK_CONTEXT_MAP: Record<string, string> = {
+  consultify: CONSULTIFY_FALLBACK_CONTEXT,
+  vector: VECTOR_FALLBACK_CONTEXT,
+  dbr77: DBR77_FALLBACK_CONTEXT,
+  iris: IRIS_FALLBACK_CONTEXT,
+  'digital-twin': DIGITAL_TWIN_FALLBACK_CONTEXT,
+  iiot: IIOT_FALLBACK_CONTEXT,
+  marketplace: MARKETPLACE_FALLBACK_CONTEXT,
+};
+
 function buildFallbackHits(primaryProducts: string[]): AnnaRagHit[] {
   const hits: AnnaRagHit[] = [];
-
-  if (primaryProducts.includes('consultify')) {
-    hits.push({
-      content: CONSULTIFY_FALLBACK_CONTEXT,
-      source: 'consultify-fallback',
-      similarity: 0.6,
-      productSlug: 'consultify',
-    });
+  for (const product of primaryProducts) {
+    const ctx = FALLBACK_CONTEXT_MAP[product];
+    if (ctx) {
+      hits.push({
+        content: ctx,
+        source: `${product}-fallback`,
+        similarity: product === 'consultify' ? 0.6 : product === 'vector' ? 0.55 : 0.5,
+        productSlug: product,
+        language: null,
+      });
+    }
   }
-
-  if (primaryProducts.includes('vector')) {
-    hits.push({
-      content: VECTOR_FALLBACK_CONTEXT,
-      source: 'vector-fallback',
-      similarity: 0.55,
-      productSlug: 'vector',
-    });
-  }
-
-  if (primaryProducts.includes('dbr77')) {
-    hits.push({
-      content: DBR77_FALLBACK_CONTEXT,
-      source: 'dbr77-fallback',
-      similarity: 0.5,
-      productSlug: 'dbr77',
-    });
-  }
-
   return hits;
 }
 
-function buildContextText(hits: AnnaRagHit[]): { contextText: string; sources: string[] } {
+function buildContextText(
+  hits: AnnaRagHit[],
+  priorityProductName: string,
+  crossSellRule: string
+): { contextText: string; sources: string[] } {
   if (hits.length === 0) {
     return {
       contextText:
@@ -314,8 +316,8 @@ function buildContextText(hits: AnnaRagHit[]): { contextText: string; sources: s
 
   const sections: string[] = [
     'ANNA KNOWLEDGE CONTEXT',
-    '- Priority: default to Consultify-first answers.',
-    '- Mention other DBR products only when the user asks directly or when they explain how Consultify fits the wider DBR system.',
+    `- Priority: default to ${priorityProductName} first on this landing page.`,
+    `- Cross-sell rule: ${crossSellRule}`,
   ];
 
   const sources: string[] = [];
@@ -337,27 +339,68 @@ export async function buildAnnaKnowledgeContext(opts: {
   locale?: string;
   limit?: number;
   preferredProducts?: string[];
+  siteKey?: string;
 }): Promise<AnnaKnowledgeContextResult> {
+  const EMPTY_RESULT: AnnaKnowledgeContextResult = {
+    contextText: '',
+    matchedProducts: [],
+    primaryProducts: [],
+    sources: [],
+  };
+
+  try {
+    const { decision } = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'anna',
+      query: opts.query,
+      organizationId: 'public',
+      userId: 'anonymous',
+    });
+    logger.info(
+      `[AnnaKnowledgeService] Policy decision: outcome=${decision.outcome}, allowed=${decision.allowed}`
+    );
+    if (!decision.allowed) {
+      return {
+        ...EMPTY_RESULT,
+        contextText:
+          decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+      };
+    }
+  } catch (gatewayError: unknown) {
+    logger.warn(
+      '[AnnaKnowledgeService] Policy gateway failed, blocking retrieval (fail-closed):',
+      gatewayError instanceof Error ? gatewayError.message : String(gatewayError)
+    );
+    return {
+      ...EMPTY_RESULT,
+      contextText: 'Knowledge retrieval is temporarily unavailable.',
+    };
+  }
+
   const originalQuery = String(opts.query || '').trim();
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
+  const siteConfig = resolveAnnaSiteConfig(opts.siteKey);
+  const sitePreferredProducts =
+    opts.preferredProducts && opts.preferredProducts.length > 0
+      ? uniq(opts.preferredProducts)
+      : resolveAnnaPreferredProducts(opts.siteKey);
 
   const detected = detectRequestedProducts(originalQuery);
   const explicitCrossProductRequest = detected.matchedProducts.some(
-    (product) => product !== 'consultify'
+    (product) => product !== siteConfig.primaryProductSlug
   );
   const preferredCrossProductRequest = Boolean(
-    opts.preferredProducts?.some((product) => product !== 'consultify')
+    sitePreferredProducts.some((product) => product !== siteConfig.primaryProductSlug)
   );
-  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
+  // Always load full DBR77 portfolio context for public Anna (same intent as anna/teresa workers).
+  const portfolioMode = true;
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
+  const explicitProducts = detected.matchedProducts;
+  const portfolioProducts = uniq(['dbr77', ...sitePreferredProducts]);
   const primaryProducts = portfolioMode
-    ? uniq(['dbr77', 'consultify', 'vector', 'iris', 'digital-twin', 'iiot', 'marketplace'])
-    : opts.preferredProducts && opts.preferredProducts.length > 0
-      ? uniq([
-          ...opts.preferredProducts.filter((product) => product !== 'consultify'),
-          'consultify',
-        ])
-      : detected.primaryProducts;
+    ? prioritizeProducts(explicitProducts, portfolioProducts)
+    : explicitProducts.length > 0
+      ? uniq([...explicitProducts, ...sitePreferredProducts])
+      : sitePreferredProducts;
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
   const query = portfolioMode
     ? `${originalQuery} consultify vector iris "digital twin" iiot marketplace`
@@ -370,6 +413,7 @@ export async function buildAnnaKnowledgeContext(opts: {
     const productQueryHints: Record<string, string> = {
       consultify: 'consultify consultinity',
       vector: 'vector',
+      dbr77: 'dbr77 dbr ecosystem',
       iris: 'iris',
       'digital-twin': 'digital twin',
       iiot: 'iiot industrial iot',
@@ -391,7 +435,11 @@ export async function buildAnnaKnowledgeContext(opts: {
                   1
                 );
                 if (preferred.length > 0) return preferred;
-                return await searchScopedKnowledge(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
+                return await searchScopedKnowledge(
+                  `${hint} ${originalQuery}`,
+                  scoped.fallbackDocs,
+                  1
+                );
               })
           )
         ).flat()
@@ -448,9 +496,13 @@ export async function buildAnnaKnowledgeContext(opts: {
       })
       .slice(0, limit);
 
-    const { contextText: rawContextText, sources } = buildContextText(hits);
+    const { contextText: rawContextText, sources } = buildContextText(
+      hits,
+      siteConfig.primaryProductName,
+      siteConfig.crossSellRule
+    );
     const contextText = portfolioMode
-      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
+      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.\n- You always have the governed product knowledge above; when a question touches any DBR77 product, use it. Do not claim you lack access to that product line.`
       : rawContextText;
     return {
       contextText,
@@ -465,7 +517,11 @@ export async function buildAnnaKnowledgeContext(opts: {
     );
 
     const fallbackHits = buildFallbackHits(primaryProducts);
-    const { contextText, sources } = buildContextText(fallbackHits);
+    const { contextText, sources } = buildContextText(
+      fallbackHits,
+      siteConfig.primaryProductName,
+      siteConfig.crossSellRule
+    );
     return {
       contextText,
       matchedProducts: detected.matchedProducts,
@@ -476,18 +532,56 @@ export async function buildAnnaKnowledgeContext(opts: {
 }
 
 export async function buildAnnaVoiceBootstrap(
-  locale?: string
+  locale?: string,
+  siteKey?: string
 ): Promise<AnnaKnowledgeContextResult> {
+  const EMPTY_RESULT: AnnaKnowledgeContextResult = {
+    contextText: '',
+    matchedProducts: [],
+    primaryProducts: [],
+    sources: [],
+  };
+
+  const siteConfig = resolveAnnaSiteConfig(siteKey);
   const bootstrapQuery = String(locale || '')
     .toLowerCase()
     .startsWith('pl')
-    ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector ekosystem'
-    : 'Consultify overview business value demo trial ROI security DBR77 Vector ecosystem';
+    ? `${siteConfig.primaryProductName} czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem`
+    : `${siteConfig.primaryProductName} overview business value demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ecosystem`;
+
+  try {
+    const { decision } = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'anna',
+      query: bootstrapQuery,
+      organizationId: 'public',
+      userId: 'anonymous',
+    });
+    logger.info(
+      `[AnnaKnowledgeService] Voice bootstrap policy decision: outcome=${decision.outcome}, allowed=${decision.allowed}`
+    );
+    if (!decision.allowed) {
+      return {
+        ...EMPTY_RESULT,
+        contextText:
+          decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+      };
+    }
+  } catch (gatewayError: unknown) {
+    logger.warn(
+      '[AnnaKnowledgeService] Voice bootstrap policy gateway failed (fail-closed):',
+      gatewayError instanceof Error ? gatewayError.message : String(gatewayError)
+    );
+    return {
+      ...EMPTY_RESULT,
+      contextText: 'Knowledge retrieval is temporarily unavailable.',
+    };
+  }
 
   return buildAnnaKnowledgeContext({
     query: bootstrapQuery,
     locale,
-    limit: 5,
-    preferredProducts: ['consultify', 'vector', 'dbr77'],
+    limit: 8,
+    preferredProducts: resolveAnnaPreferredProducts(siteKey),
+    siteKey,
   });
 }

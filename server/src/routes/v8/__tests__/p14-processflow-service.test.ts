@@ -131,12 +131,24 @@ describe('P14-B Process Flow Service', () => {
     });
 
     it('rejects when exceeding MAX_OBJECTS (200)', async () => {
-      mockDbAll.mockResolvedValue(Array.from({ length: 200 }, (_, i) => ({
-        id: `n-${i}`, process_id: PROCESS, organization_id: ORG,
-        object_type: 'task', label: `Task ${i}`, lane_id: null, pool_id: null,
-        parent_subprocess_id: null, position_x: 0, position_y: 0,
-        gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01',
-      })));
+      mockDbAll.mockResolvedValue(
+        Array.from({ length: 200 }, (_, i) => ({
+          id: `n-${i}`,
+          process_id: PROCESS,
+          organization_id: ORG,
+          object_type: 'task',
+          label: `Task ${i}`,
+          lane_id: null,
+          pool_id: null,
+          parent_subprocess_id: null,
+          position_x: 0,
+          position_y: 0,
+          gateway_kind: null,
+          metadata: null,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        }))
+      );
       const result = await createNode(PROCESS, ORG, {
         object_type: 'task',
         label: 'Overflow',
@@ -147,9 +159,54 @@ describe('P14-B Process Flow Service', () => {
 
     it('rejects when subprocess nesting exceeds depth 3', async () => {
       mockDbAll.mockResolvedValue([
-        { id: 'sp1', process_id: PROCESS, organization_id: ORG, object_type: 'subprocess', label: 'L1', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-        { id: 'sp2', process_id: PROCESS, organization_id: ORG, object_type: 'subprocess', label: 'L2', lane_id: null, pool_id: null, parent_subprocess_id: 'sp1', position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-        { id: 'sp3', process_id: PROCESS, organization_id: ORG, object_type: 'subprocess', label: 'L3', lane_id: null, pool_id: null, parent_subprocess_id: 'sp2', position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+        {
+          id: 'sp1',
+          process_id: PROCESS,
+          organization_id: ORG,
+          object_type: 'subprocess',
+          label: 'L1',
+          lane_id: null,
+          pool_id: null,
+          parent_subprocess_id: null,
+          position_x: 0,
+          position_y: 0,
+          gateway_kind: null,
+          metadata: null,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        },
+        {
+          id: 'sp2',
+          process_id: PROCESS,
+          organization_id: ORG,
+          object_type: 'subprocess',
+          label: 'L2',
+          lane_id: null,
+          pool_id: null,
+          parent_subprocess_id: 'sp1',
+          position_x: 0,
+          position_y: 0,
+          gateway_kind: null,
+          metadata: null,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        },
+        {
+          id: 'sp3',
+          process_id: PROCESS,
+          organization_id: ORG,
+          object_type: 'subprocess',
+          label: 'L3',
+          lane_id: null,
+          pool_id: null,
+          parent_subprocess_id: 'sp2',
+          position_x: 0,
+          position_y: 0,
+          gateway_kind: null,
+          metadata: null,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        },
       ]);
       const result = await createNode(PROCESS, ORG, {
         object_type: 'task',
@@ -170,7 +227,7 @@ describe('P14-B Process Flow Service', () => {
       expect(mockDbRun).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO'),
         expect.arrayContaining(['xor']),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
   });
@@ -224,8 +281,9 @@ describe('P14-B Process Flow Service', () => {
     });
 
     it('returns NOT_FOUND when node missing', async () => {
-      mockDbRun.mockResolvedValueOnce({ success: true, changes: 0 })
-               .mockResolvedValueOnce({ success: true, changes: 0 });
+      mockDbRun
+        .mockResolvedValueOnce({ success: true, changes: 0 })
+        .mockResolvedValueOnce({ success: true, changes: 0 });
       const result = await deleteNode('missing', ORG);
       expect(result.success).toBe(false);
     });
@@ -309,13 +367,80 @@ describe('P14-B Process Flow Service', () => {
     it('returns valid for correct process', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 't1', process_id: PROCESS, organization_id: ORG, object_type: 'task', label: 'Do work', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 100, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 't1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'task',
+            label: 'Do work',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 100,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 't1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'sf2', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 't1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 't1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'sf2',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 't1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await validateProcess(PROCESS, ORG);
@@ -326,7 +451,22 @@ describe('P14-B Process Flow Service', () => {
     it('detects missing Start event', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 't1', process_id: PROCESS, organization_id: ORG, object_type: 'task', label: 'Work', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 't1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'task',
+            label: 'Work',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([]);
 
@@ -338,7 +478,22 @@ describe('P14-B Process Flow Service', () => {
     it('detects missing End event', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([]);
 
@@ -350,28 +505,138 @@ describe('P14-B Process Flow Service', () => {
     it('detects start_event with incoming flows (semantic layer)', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 'e1', target_node_id: 's1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 'e1',
+            target_node_id: 's1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await validateProcess(PROCESS, ORG);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.layer === 'semantic_first' && e.message.includes('start_event'))).toBe(true);
+      expect(
+        result.errors.some((e) => e.layer === 'semantic_first' && e.message.includes('start_event'))
+      ).toBe(true);
     });
 
     it('detects decision_gateway with <2 outgoing flows', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'g1', process_id: PROCESS, organization_id: ORG, object_type: 'decision_gateway', label: 'Check', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 100, position_y: 0, gateway_kind: 'xor', metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'g1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'decision_gateway',
+            label: 'Check',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 100,
+            position_y: 0,
+            gateway_kind: 'xor',
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 'g1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'sf2', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 'g1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 'g1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'sf2',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 'g1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await validateProcess(PROCESS, ORG);
@@ -382,12 +647,68 @@ describe('P14-B Process Flow Service', () => {
     it('detects orphan nodes (structural layer)', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 't1', process_id: PROCESS, organization_id: ORG, object_type: 'task', label: 'Orphan', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 100, position_y: 100, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 't1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'task',
+            label: 'Orphan',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 100,
+            position_y: 100,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await validateProcess(PROCESS, ORG);
@@ -397,11 +718,52 @@ describe('P14-B Process Flow Service', () => {
     it('detects message_flow within same pool', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: 'pool-a', parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: 'pool-a', parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: 'pool-a',
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: 'pool-a',
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'mf1', process_id: PROCESS, organization_id: ORG, edge_type: 'message_flow', source_node_id: 's1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'mf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'message_flow',
+            source_node_id: 's1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await validateProcess(PROCESS, ORG);
@@ -416,13 +778,80 @@ describe('P14-B Process Flow Service', () => {
     it('produces deterministic readback for linear process', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Begin', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 't1', process_id: PROCESS, organization_id: ORG, object_type: 'task', label: 'Do work', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 100, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'Done', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Begin',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 't1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'task',
+            label: 'Do work',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 100,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'Done',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 't1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'sf2', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 't1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 't1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'sf2',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 't1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await semanticReadback(PROCESS, ORG);
@@ -442,7 +871,22 @@ describe('P14-B Process Flow Service', () => {
     it('warns when no End event', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([]);
 
@@ -453,15 +897,108 @@ describe('P14-B Process Flow Service', () => {
     it('handles decision gateway branching', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'g1', process_id: PROCESS, organization_id: ORG, object_type: 'decision_gateway', label: 'Approved?', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 100, position_y: 0, gateway_kind: 'xor', metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End Yes', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: -50, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e2', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End No', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 50, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'g1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'decision_gateway',
+            label: 'Approved?',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 100,
+            position_y: 0,
+            gateway_kind: 'xor',
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End Yes',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: -50,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e2',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End No',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 50,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 'g1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'sf2', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 'g1', target_node_id: 'e1', label: 'Yes', metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'sf3', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 'g1', target_node_id: 'e2', label: 'No', metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 'g1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'sf2',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 'g1',
+            target_node_id: 'e1',
+            label: 'Yes',
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'sf3',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 'g1',
+            target_node_id: 'e2',
+            label: 'No',
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await semanticReadback(PROCESS, ORG);
@@ -473,13 +1010,80 @@ describe('P14-B Process Flow Service', () => {
     it('flags unlabeled activity', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 't1', process_id: PROCESS, organization_id: ORG, object_type: 'task', label: '', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 100, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 't1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'task',
+            label: '',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 100,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 't1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'sf2', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 't1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 't1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'sf2',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 't1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await semanticReadback(PROCESS, ORG);
@@ -493,7 +1097,22 @@ describe('P14-B Process Flow Service', () => {
     it('exports as JSON with nodes and edges', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([]);
 
@@ -508,18 +1127,100 @@ describe('P14-B Process Flow Service', () => {
     it('exports as readback text', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-          { id: 'e1', process_id: PROCESS, organization_id: ORG, object_type: 'end_event', label: 'End', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 200, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
+          {
+            id: 'e1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'end_event',
+            label: 'End',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 200,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 'e1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 'e1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await exportProcess(PROCESS, ORG, 'readback');
@@ -555,13 +1256,25 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 0, branch_changes: 0 },
       });
-      const fetched = getAIProposal(proposal.id);
+      const fetched = getAIProposal(proposal.id, ORG);
       expect(fetched).toBeTruthy();
       expect(fetched!.id).toBe(proposal.id);
     });
 
     it('returns null for unknown proposal', () => {
-      expect(getAIProposal('nonexistent')).toBeNull();
+      expect(getAIProposal('nonexistent', ORG)).toBeNull();
+    });
+
+    it('returns null for proposal from another organization', () => {
+      const proposal = createAIProposal(PROCESS, 'org-other', {
+        summary: 'Cross tenant',
+        operations: [],
+        before_readback: '',
+        after_readback: '',
+        validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
+        risk_flags: { destructive_count: 0, branch_changes: 0 },
+      });
+      expect(getAIProposal(proposal.id, ORG)).toBeNull();
     });
 
     it('rejects proposal (no silent changes)', async () => {
@@ -573,7 +1286,7 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 1, branch_changes: 0 },
       });
-      const result = await resolveAIProposal(proposal.id, 'reject');
+      const result = await resolveAIProposal(proposal.id, 'reject', ORG);
       expect(result.success).toBe(true);
       expect(result.proposal!.status).toBe('rejected');
       expect(result.applied_count).toBe(0);
@@ -588,7 +1301,7 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 0, branch_changes: 0 },
       });
-      const result = await resolveAIProposal(proposal.id, 'accept');
+      const result = await resolveAIProposal(proposal.id, 'accept', ORG);
       expect(result.success).toBe(true);
       expect(result.proposal!.status).toBe('accepted');
       expect(result.applied_count).toBeGreaterThanOrEqual(1);
@@ -603,14 +1316,28 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 0, branch_changes: 0 },
       });
-      await resolveAIProposal(proposal.id, 'reject');
-      const result = await resolveAIProposal(proposal.id, 'accept');
+      await resolveAIProposal(proposal.id, 'reject', ORG);
+      const result = await resolveAIProposal(proposal.id, 'accept', ORG);
       expect(result.success).toBe(false);
       expect(result.error_code).toBe('INVALID_STATE');
     });
 
     it('returns PROPOSAL_NOT_FOUND for unknown ID', async () => {
-      const result = await resolveAIProposal('unknown', 'accept');
+      const result = await resolveAIProposal('unknown', 'accept', ORG);
+      expect(result.success).toBe(false);
+      expect(result.error_code).toBe('PROPOSAL_NOT_FOUND');
+    });
+
+    it('returns PROPOSAL_NOT_FOUND when resolving proposal from another organization', async () => {
+      const proposal = createAIProposal(PROCESS, 'org-other', {
+        summary: 'Cross tenant',
+        operations: [],
+        before_readback: '',
+        after_readback: '',
+        validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
+        risk_flags: { destructive_count: 0, branch_changes: 0 },
+      });
+      const result = await resolveAIProposal(proposal.id, 'accept', ORG);
       expect(result.success).toBe(false);
       expect(result.error_code).toBe('PROPOSAL_NOT_FOUND');
     });
@@ -633,12 +1360,24 @@ describe('P14-B Process Flow Service', () => {
     });
 
     it('returns degraded when exceeding object limit', async () => {
-      mockDbAll.mockResolvedValue(Array.from({ length: 201 }, (_, i) => ({
-        id: `n-${i}`, process_id: PROCESS, organization_id: ORG,
-        object_type: 'task', label: `Task ${i}`, lane_id: null, pool_id: null,
-        parent_subprocess_id: null, position_x: 0, position_y: 0,
-        gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01',
-      })));
+      mockDbAll.mockResolvedValue(
+        Array.from({ length: 201 }, (_, i) => ({
+          id: `n-${i}`,
+          process_id: PROCESS,
+          organization_id: ORG,
+          object_type: 'task',
+          label: `Task ${i}`,
+          lane_id: null,
+          pool_id: null,
+          parent_subprocess_id: null,
+          position_x: 0,
+          position_y: 0,
+          gateway_kind: null,
+          metadata: null,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        }))
+      );
       const state = await getDegradedState(PROCESS, ORG);
       expect(state.degraded).toBe(true);
       expect(state.scenario).toContain('object limit');
@@ -685,10 +1424,36 @@ describe('P14-B Process Flow Service', () => {
     it('returns nodes and edges for healthy process', async () => {
       mockDbAll
         .mockResolvedValueOnce([
-          { id: 's1', process_id: PROCESS, organization_id: ORG, object_type: 'start_event', label: 'Start', lane_id: null, pool_id: null, parent_subprocess_id: null, position_x: 0, position_y: 0, gateway_kind: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 's1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            object_type: 'start_event',
+            label: 'Start',
+            lane_id: null,
+            pool_id: null,
+            parent_subprocess_id: null,
+            position_x: 0,
+            position_y: 0,
+            gateway_kind: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sf1', process_id: PROCESS, organization_id: ORG, edge_type: 'sequence_flow', source_node_id: 's1', target_node_id: 's1', label: null, metadata: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+          {
+            id: 'sf1',
+            process_id: PROCESS,
+            organization_id: ORG,
+            edge_type: 'sequence_flow',
+            source_node_id: 's1',
+            target_node_id: 's1',
+            label: null,
+            metadata: null,
+            created_at: '2026-01-01',
+            updated_at: '2026-01-01',
+          },
         ]);
 
       const result = await getProcessObjects(PROCESS, ORG);

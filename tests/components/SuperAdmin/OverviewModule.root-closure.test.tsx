@@ -54,16 +54,15 @@ vi.mock('../../../src/views/superadmin/SuperAdminSignalsView', () => ({
   SuperAdminSignalsView: () => <div>SuperAdminSignalsView</div>,
 }));
 
-describe('OverviewModule superadmin root closure', () => {
+describe('OverviewModule superadmin shell content', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('shows the superadmin root closure canon above overview content', async () => {
+  it('renders overview content without the root closure panel', async () => {
     render(<OverviewModule />);
 
-    expect(await screen.findByText('One visible platform control plane')).toBeInTheDocument();
-    expect(screen.getByText('Mounted platform branches')).toBeInTheDocument();
-    expect(screen.getByText('SuperAdminDashboard')).toBeInTheDocument();
+    expect(screen.queryByText('One visible platform control plane')).not.toBeInTheDocument();
+    expect(await screen.findByText('SuperAdminDashboard')).toBeInTheDocument();
   });
 });

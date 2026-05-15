@@ -122,6 +122,27 @@ describe('artifactRegistryService', () => {
     ).toBe('completed');
   });
 
+  it('derives cancelled terminal state from execution cancellation', () => {
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'proposal_created',
+        executionState: 'cancelled',
+      })
+    ).toBe('cancelled');
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'cancelled',
+        executionState: 'approved_for_apply',
+      })
+    ).toBe('cancelled');
+    expect(
+      deriveArtifactRunStatusFromExecutionState({
+        persistedStatus: 'cancelled',
+        executionState: null,
+      })
+    ).toBe('cancelled');
+  });
+
   it('derives validation stage separately from review semantics', () => {
     expect(
       deriveArtifactValidationSnapshot({

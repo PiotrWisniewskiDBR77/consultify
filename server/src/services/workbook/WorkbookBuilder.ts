@@ -8,6 +8,7 @@
 import ExcelJS from 'exceljs';
 
 import logger from '../../utils/Logger.js';
+import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
 import type { CellStyle, WorkbookSchema } from './WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
@@ -96,11 +97,13 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
 
   for (const sheetDef of schema.sheets) {
     const ws = wb.addWorksheet(sheetDef.name, {
-      views: [{
-        state: 'frozen',
-        xSplit: sheetDef.freezeCol ?? 0,
-        ySplit: sheetDef.freezeRow ?? 1,
-      }],
+      views: [
+        {
+          state: 'frozen',
+          xSplit: sheetDef.freezeCol ?? 0,
+          ySplit: sheetDef.freezeRow ?? 1,
+        },
+      ],
       properties: {
         showGridLines: sheetDef.showGridLines !== false,
         tabColor: sheetDef.tabColor ? { argb: hexToArgb(sheetDef.tabColor) } : undefined,
@@ -141,7 +144,8 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
           cell.value = { formula: cellDef.formula } as ExcelJS.CellFormulaValue;
         } else if (cellDef.value !== undefined && cellDef.value !== null) {
           if (col.type === 'number' || col.type === 'currency' || col.type === 'percent') {
-            const num = typeof cellDef.value === 'number' ? cellDef.value : parseFloat(String(cellDef.value));
+            const num =
+              typeof cellDef.value === 'number' ? cellDef.value : parseFloat(String(cellDef.value));
             cell.value = isNaN(num) ? cellDef.value : num;
           } else if (col.type === 'boolean') {
             cell.value = cellDef.value === true || cellDef.value === 'true';
@@ -151,7 +155,10 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
         }
 
         // Number format: cell-level > column-level > type default
-        const numFmt = cellDef.style?.numberFormat || col.numberFormat || (col.type ? TYPE_FORMATS[col.type] : undefined);
+        const numFmt =
+          cellDef.style?.numberFormat ||
+          col.numberFormat ||
+          (col.type ? TYPE_FORMATS[col.type] : undefined);
         if (numFmt) cell.numFmt = numFmt;
 
         // Cell style
@@ -212,7 +219,10 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
 // Validation
 // ---------------------------------------------------------------------------
 
-export function validateWorkbookSchema(schema: WorkbookSchema): { valid: boolean; errors: string[] } {
+export function validateWorkbookSchema(schema: WorkbookSchema): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   if (!schema.sheets || schema.sheets.length === 0) {
@@ -254,3 +264,24 @@ export function validateWorkbookSchema(schema: WorkbookSchema): { valid: boolean
 
   return { valid: errors.length === 0, errors };
 }
+
+// ---------------------------------------------------------------------------
+// §7.1 — Classified error helpers (P23 canon integration)
+// ---------------------------------------------------------------------------
+
+export function classifyBuildError(error: unknown): P23ClassifiedError {
+  const msg = error instanceof Error ? error.message : String(error);
+
+  if (msg.includes('circular') || msg.includes('cycle')) {
+    return createP23Error('formula_cycle_detected', msg);
+  }
+  if (msg.includes('formula') || msg.includes('#DIV') || msg.includes('#REF')) {
+    return createP23Error('formula_error', msg);
+  }
+  if (msg.includes('merge') || msg.includes('column') || msg.includes('schema')) {
+    return createP23Error('validation_failed', msg);
+  }
+  return createP23Error('export_failed', msg);
+}
+
+export type { P23ClassifiedError } from '../v8/exceleCanon.js';

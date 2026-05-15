@@ -8,6 +8,8 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-profile-completeness.js');
 const user_profile_completenessRoutesJS = module.default || module;
@@ -27,6 +29,6 @@ if (typeof user_profile_completenessRoutesJS === 'function') {
   router.use(user_profile_completenessRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('user-profile-completeness.js did not export a valid router');
+  logger.error('user-profile-completeness.js did not export a valid router');
 }
 export default router;

@@ -21,6 +21,7 @@ import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
+import { extractInitiativeKpiRows } from '../initiativeKpiContract';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -116,7 +117,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     setIsLoading(true);
     try {
       const res = await Api.get(`/initiatives/${initiativeId}/kpis`);
-      const rows = Array.isArray(res?.kpis) ? res.kpis : [];
+      const rows = extractInitiativeKpiRows(res);
       setKpis(
         rows.map((k: any, idx: number) => ({
           id: String(k.id || `kpi-${idx}`),

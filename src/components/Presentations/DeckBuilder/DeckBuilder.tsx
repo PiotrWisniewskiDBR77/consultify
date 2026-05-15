@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentPanel } from './AgentPanel';
@@ -22,6 +23,7 @@ import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
+import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { PresentMode } from './PresentMode';
@@ -85,7 +87,7 @@ function deckFromUnifiedJson(params: {
   };
 
   const cards: DeckCard[] = parsed.slides.map((slide: any, idx: number) => {
-    const cardId = `card-${params.deckId}-${idx}`;
+    const cardId = slide.slide_id || slide.id || slide.card_id || `card-${params.deckId}-${idx}`;
     const intent = intentMap[String(slide.intent || '')] || 'key_messages';
     const contentType = String(slide?.content?.type || slide?.intent || '');
 
@@ -96,7 +98,7 @@ function deckFromUnifiedJson(params: {
       isRefreshable = false
     ) => {
       blocks.push({
-        block_id: `block-${params.deckId}-${idx}-${blocks.length}`,
+        block_id: `block-${cardId}-${blocks.length}`,
         card_id: cardId,
         type,
         content,
@@ -292,14 +294,49 @@ export const DeckBuilder: React.FC = () => {
     Array<{ id: string; sourceType: string; sourceId: string }>
   >([]);
   const [deckBacklinksLoading, setDeckBacklinksLoading] = useState(false);
+  const [pendingAgentEdit, setPendingAgentEdit] = useState<{
+    deck: any;
+    reply: string;
+    actions: string[];
+  } | null>(null);
 
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
     useVersionHistory(deck);
 
   const { isCardOutdated, refreshCard, refreshAllCards } = useDataRefresh(deck, updateCard);
 
-  const currentUser = { userId: 'current-user', name: 'You' };
+  const { currentUser: authUser } = useAppStore();
+  const currentUser = useMemo(
+    () => ({
+      userId: authUser?.id || 'current-user',
+      name:
+        authUser?.displayName ||
+        [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ') ||
+        authUser?.email ||
+        'You',
+    }),
+    [authUser]
+  );
   const collab = useCollaboration(deckId, currentUser, false);
+
+  const [brandKit, setBrandKit] = useState<BrandKit | null>(null);
+  useEffect(() => {
+    Api.get('/presentations/brand-kit')
+      .then((res: any) => {
+        const kit = res?.data?.data ?? res?.data ?? res;
+        if (kit && typeof kit === 'object' && kit.primary_color) {
+          setBrandKit({
+            primaryColor: kit.primary_color,
+            secondaryColor: kit.secondary_color,
+            accentColor: kit.accent_color,
+            logoUrl: kit.logo_url,
+            fontTitle: kit.font_title,
+            fontBody: kit.font_body,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useCommandPaletteShortcut(() => setCommandPaletteOpen(true));
 
@@ -404,11 +441,15 @@ export const DeckBuilder: React.FC = () => {
           setLoadingDeck(false);
           setLoadError(null);
           hasLoadedInitialRef.current = true;
-          toast.error('Deck has no content yet. Generate slides first.');
+          toast.error(
+            t('presentations.builder.noContent', 'Deck has no content yet. Generate slides first.')
+          );
         }
       } catch (e: any) {
         if (!cancelled) {
-          const message = e?.message ? String(e.message) : 'Failed to load presentation deck';
+          const message = e?.message
+            ? String(e.message)
+            : t('presentations.builder.loadFailed', 'Failed to load presentation deck');
           toast.error(message);
           setDeck(null);
           setLoadingDeck(false);
@@ -472,19 +513,45 @@ export const DeckBuilder: React.FC = () => {
     const targetDeckId = String(deckId || deck?.deck_id || '').trim();
     if (!targetDeckId) return;
     setDeckBacklinksLoading(true);
-    Api.getLinkGraphBacklinks({ type: 'presentation', id: targetDeckId, limit: 50 })
-      .then((rows: any) => {
-        setDeckBacklinks(
-          (Array.isArray(rows) ? rows : [])
-            .map((x: any) => ({
-              id: String(x?.id || ''),
-              sourceType: String(x?.sourceType || ''),
-              sourceId: String(x?.sourceId || ''),
-            }))
-            .filter((x) => x.sourceType && x.sourceId)
-        );
+
+    const linkGraphP = Api.getLinkGraphBacklinks({
+      type: 'presentation',
+      id: targetDeckId,
+      limit: 50,
+    })
+      .then((rows: any) =>
+        (Array.isArray(rows) ? rows : [])
+          .map((x: any) => ({
+            id: String(x?.id || ''),
+            sourceType: String(x?.sourceType || ''),
+            sourceId: String(x?.sourceId || ''),
+          }))
+          .filter((x: any) => x.sourceType && x.sourceId)
+      )
+      .catch(() => [] as Array<{ id: string; sourceType: string; sourceId: string }>);
+
+    const reportBacklinksP = Api.get(`/report-builder/backlinks/presentation/${targetDeckId}`)
+      .then((res: any) => {
+        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        return items.map((r: any) => ({
+          id: String(r?.id || r?.reportId || ''),
+          sourceType: 'report',
+          sourceId: String(r?.reportId || r?.id || ''),
+        }));
       })
-      .catch(() => setDeckBacklinks([]))
+      .catch(() => [] as Array<{ id: string; sourceType: string; sourceId: string }>);
+
+    Promise.all([linkGraphP, reportBacklinksP])
+      .then(([linkRows, reportRows]) => {
+        const seen = new Set<string>();
+        const merged = [...linkRows, ...reportRows].filter((x) => {
+          const key = `${x.sourceType}:${x.sourceId}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setDeckBacklinks(merged);
+      })
       .finally(() => setDeckBacklinksLoading(false));
   }, [deck?.deck_id, deckId]);
 
@@ -574,7 +641,16 @@ export const DeckBuilder: React.FC = () => {
                   extension: 'pdf',
                 };
         const response = await fetch(request.url, request.init);
-        if (!response.ok) throw new Error('Export failed');
+        if (!response.ok) {
+          let errorMsg = 'Export failed';
+          try {
+            const errorBody = await response.json();
+            errorMsg = errorBody?.error || errorMsg;
+          } catch {
+            /* ignore parse errors */
+          }
+          throw new Error(errorMsg);
+        }
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -582,8 +658,14 @@ export const DeckBuilder: React.FC = () => {
         a.download = `${deck.title || 'presentation'}.${request.extension}`;
         a.click();
         window.URL.revokeObjectURL(url);
-      } catch {
-        /* graceful fallback */
+        toast.success(
+          isPolish
+            ? `Wyeksportowano jako ${format.toUpperCase()}`
+            : `Exported as ${format.toUpperCase()}`
+        );
+      } catch (err: any) {
+        const message = err?.message || (isPolish ? 'Eksport nie powiódł się' : 'Export failed');
+        toast.error(message);
       }
     },
     [deck]
@@ -597,6 +679,19 @@ export const DeckBuilder: React.FC = () => {
     [restoreVersion, setDeck]
   );
 
+  const handleAcceptAgentEdit = useCallback(() => {
+    if (pendingAgentEdit?.deck) {
+      setDeck(pendingAgentEdit.deck);
+      toast.success(isPolish ? 'Zmiany zastosowane' : 'Changes applied');
+    }
+    setPendingAgentEdit(null);
+  }, [pendingAgentEdit, setDeck, isPolish]);
+
+  const handleRejectAgentEdit = useCallback(() => {
+    toast(isPolish ? 'Zmiany odrzucone' : 'Changes rejected');
+    setPendingAgentEdit(null);
+  }, [isPolish]);
+
   const handleAiPrompt = useCallback(
     async (prompt: string) => {
       if (!deck) return { reply: 'No deck loaded.' };
@@ -606,18 +701,18 @@ export const DeckBuilder: React.FC = () => {
       const payload =
         res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
       const nextDeck = payload?.deck;
+      const reply =
+        payload?.reply ||
+        (isPolish
+          ? 'Zastosowałem zmiany w decku.'
+          : 'I applied the requested changes to the deck.');
+      const actions = Array.isArray(payload?.appliedActions) ? payload.appliedActions : [];
       if (nextDeck) {
-        setDeck(nextDeck);
+        setPendingAgentEdit({ deck: nextDeck, reply, actions });
       }
-      return {
-        reply:
-          payload?.reply ||
-          (isPolish
-            ? 'Zastosowałem zmiany w decku.'
-            : 'I applied the requested changes to the deck.'),
-      };
+      return { reply };
     },
-    [deck, isPolish, setDeck]
+    [deck, isPolish]
   );
 
   if (loadingDeck || !deck) {
@@ -626,7 +721,7 @@ export const DeckBuilder: React.FC = () => {
         <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
           <div className="max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-center shadow-xl">
             <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Failed to load deck
+              {t('presentations.builder.loadFailed', 'Failed to load deck')}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{loadError}</p>
             <button
@@ -634,7 +729,7 @@ export const DeckBuilder: React.FC = () => {
               onClick={() => window.location.reload()}
               className="mt-4 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
             >
-              Retry
+              {t('common.retry', 'Retry')}
             </button>
           </div>
         </div>
@@ -643,7 +738,9 @@ export const DeckBuilder: React.FC = () => {
 
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
-        <div className="animate-pulse text-slate-400">Loading deck...</div>
+        <div className="animate-pulse text-slate-400">
+          {t('presentations.builder.loading', 'Loading deck...')}
+        </div>
       </div>
     );
   }
@@ -661,7 +758,10 @@ export const DeckBuilder: React.FC = () => {
   }
 
   return (
-    <DeckThemeProvider initialColorSetId={deck.color_set_id || 'midnight_navy'}>
+    <DeckThemeProvider
+      initialColorSetId={deck.color_set_id || 'midnight_navy'}
+      initialBrandKit={brandKit}
+    >
       <div className="h-screen flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
         {/* Top Bar */}
         <div className="relative">
@@ -728,6 +828,34 @@ export const DeckBuilder: React.FC = () => {
           </EmbeddedView>
         </div>
 
+        {/* AI Agent Edit Proposal Banner (P20 Builder P0 Contract §6.3: proposals, not silent mutation) */}
+        {pendingAgentEdit && (
+          <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
+            <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
+              {pendingAgentEdit.reply}
+              {pendingAgentEdit.actions.length > 0 && (
+                <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                  ({pendingAgentEdit.actions.join(', ')})
+                </span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={handleAcceptAgentEdit}
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+            >
+              {isPolish ? 'Zastosuj' : 'Accept'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRejectAgentEdit}
+              className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+            >
+              {isPolish ? 'Odrzuć' : 'Reject'}
+            </button>
+          </div>
+        )}
+
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative">
           {/* Left: Slide Sorter */}
@@ -762,11 +890,13 @@ export const DeckBuilder: React.FC = () => {
             onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
           />
 
-          {/* Agent Panel (conditional) */}
+          {/* Agent Panel (conditional) — bridged to conversation store */}
           {agentOpen && (
             <AgentPanel
               onClose={() => setAgentOpen(false)}
               sourceNames={deck.source_refs.map((s) => s.artifact_name)}
+              onSendMessage={handleAiPrompt}
+              conversationId={deckId}
             />
           )}
 

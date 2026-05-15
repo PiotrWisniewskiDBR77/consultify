@@ -34,10 +34,35 @@ const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
 // If the network is transiently unavailable, repeated mounts can spam /api and
 // cascade into "TypeError: Failed to fetch" + UI freeze.
 const FETCH_DEDUPE_WINDOW_MS = 1500;
+// chat-history fix 2026-04-18 (feedback #3a41921c CRIT "infinite Loading conversations…"):
+// Without a hard deadline, a hung backend or stalled proxy leaves isLoading=true
+// forever. Give fetches a 20s ceiling; on timeout we release the loader and
+// surface an error so the UI can recover (and the user can retry / refresh).
+const FETCH_HARD_TIMEOUT_MS = 20000;
 let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
+
+function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`);
+      (err as any).code = 'FETCH_TIMEOUT';
+      reject(err);
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Title generation de-dupe / retry
@@ -48,6 +73,16 @@ const _lastTitleAttemptAt: Record<string, number> = {};
 
 function getAppLanguageFallback(): SupportedLanguage {
   try {
+    // Prefer the i18n-selected language stored in localStorage (set when user changes app language)
+    if (typeof localStorage !== 'undefined') {
+      const i18nLng = localStorage.getItem('i18nextLng');
+      if (i18nLng) {
+        const i18nBase = String(i18nLng).split('-')[0].toLowerCase();
+        const i18nMapped = i18nBase === 'ja' ? 'jp' : i18nBase;
+        if (isValidLanguage(i18nMapped)) return i18nMapped as SupportedLanguage;
+      }
+    }
+    // Fall back to browser language
     const nav =
       (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) ||
       'pl';
@@ -108,6 +143,7 @@ export interface Conversation {
     taskId?: string;
     decisionId?: string;
     reportId?: string;
+    kpiId?: string;
   };
   messageCount: number;
   lastMessagePreview?: string;
@@ -128,7 +164,17 @@ export interface ConversationMessage {
   conversationId: string;
   role: 'user' | 'ai';
   content: string;
-  messageType: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call' | 'voice';
+  messageType:
+    | 'text'
+    | 'action_request'
+    | 'summary'
+    | 'file'
+    | 'tool_call'
+    | 'voice'
+    // V8: governed proposal + execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+    | 'execution_proposal'
+    | 'execution_progress'
+    | 'execution_result';
   metadata?: {
     citations?: Citation[];
     actions?: ResponseAction[];
@@ -249,13 +295,14 @@ export function groupConversations(
  */
 export function getConversationEntityType(
   conv: Conversation
-): 'assessment' | 'initiative' | 'roadmap' | 'task' | 'decision' | null {
+): 'assessment' | 'initiative' | 'roadmap' | 'task' | 'decision' | 'kpi' | null {
   const ctx = conv.pmoContext;
   if (ctx?.assessmentId) return 'assessment';
   if (ctx?.initiativeIds && ctx.initiativeIds.length > 0) return 'initiative';
   if (ctx?.roadmapId) return 'roadmap';
   if (ctx?.taskId) return 'task';
   if (ctx?.decisionId) return 'decision';
+  if (ctx?.kpiId) return 'kpi';
   // Fallback: check title prefix (set by useOpenChatWithContext)
   const title = (conv.title || '').toLowerCase();
   if (title.startsWith('task:') || title.startsWith('task ')) return 'task';
@@ -289,7 +336,13 @@ interface ConversationState {
   chatLanguageByConversationId: Record<string, SupportedLanguage>;
 
   // Deep-link / lifecycle state for the active conversation (§2.3.5)
-  _activeConversationState: 'active' | 'archived' | 'deleted' | 'not_found' | 'permission_denied' | null;
+  _activeConversationState:
+    | 'active'
+    | 'archived'
+    | 'deleted'
+    | 'not_found'
+    | 'permission_denied'
+    | null;
   _activeConversationStateMessage: string | null;
 
   // UI State
@@ -327,6 +380,7 @@ interface ConversationState {
   createConversation: (options?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: {
       assessmentId?: string;
       initiativeIds?: string[];
@@ -399,11 +453,14 @@ interface ConversationState {
   /**
    * Export a conversation (§2.3.5 E10).
    */
-  exportConversation: (id: string, params?: {
-    from?: string;
-    to?: string;
-    format?: 'json' | 'markdown' | 'text';
-  }) => Promise<any>;
+  exportConversation: (
+    id: string,
+    params?: {
+      from?: string;
+      to?: string;
+      format?: 'json' | 'markdown' | 'text';
+    }
+  ) => Promise<any>;
 
   /**
    * Purge own data — hard-delete a conversation (§2.3.3 delete-my-data).
@@ -514,10 +571,14 @@ export const useConversationStore = create<ConversationState>()(
         set({ isLoading: true });
         _inflightFetchConversations = (async () => {
           try {
-            const result = await Api.getConversations({
-              archived: options?.archived,
-              projectId: options?.projectId,
-            });
+            const result = await withDeadline(
+              Api.getConversations({
+                archived: options?.archived,
+                projectId: options?.projectId,
+              }),
+              FETCH_HARD_TIMEOUT_MS,
+              'fetchConversations'
+            );
 
             const conversations = (result?.conversations || []).map(mapApiConversation);
             set((state) => {
@@ -534,6 +595,8 @@ export const useConversationStore = create<ConversationState>()(
             });
           } catch (err) {
             console.error('[ConversationStore] Fetch error:', err);
+            // Always release the loader so the sidebar never sits in an
+            // "infinite Loading conversations…" state (feedback #3a41921c).
             set({ isLoading: false });
           }
         })().finally(() => {
@@ -545,8 +608,30 @@ export const useConversationStore = create<ConversationState>()(
 
       fetchConversation: async (id: string) => {
         const now = Date.now();
+
+        // Feedback #2ee998d3 / #53cc607e — always sync activeConversationId to the
+        // requested id up-front, even when we dedupe or reuse an inflight promise.
+        // Without this, clicking a historical conversation within the dedupe window
+        // (or while another fetch is already inflight) returned silently and the
+        // UI kept showing whatever was previously active, so users experienced
+        // "click does nothing" on conversation items.
+        const current = get().activeConversationId;
+        if (current !== id) {
+          set({
+            activeConversationId: id,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+          });
+        }
+
         if (_inflightFetchConversationById[id]) return _inflightFetchConversationById[id];
-        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) return;
+        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) {
+          // Dedupe: a recent successful fetch for this id is in cache. If the id
+          // is now the active one we already synced above; otherwise the call was
+          // preemptive and we can safely return.
+          return;
+        }
         _lastFetchConversationAt[id] = now;
 
         set({ isLoading: true });
@@ -561,7 +646,8 @@ export const useConversationStore = create<ConversationState>()(
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'deleted',
-                _activeConversationStateMessage: result?._stateMessage || 'This conversation has been deleted.',
+                _activeConversationStateMessage:
+                  result?._stateMessage || 'This conversation has been deleted.',
               });
               return;
             }
@@ -605,13 +691,14 @@ export const useConversationStore = create<ConversationState>()(
             console.error('[ConversationStore] Fetch conversation error:', err);
             const status = err?.response?.status || err?.status;
             if (status === 403) {
-              // Permission denied (§2.3.5 E4) — explicit state for UI
+              const reason = err?.response?.data?.reason || err?.data?.reason || '';
               set({
                 activeConversationId: id,
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'permission_denied',
-                _activeConversationStateMessage: 'You do not have access to this conversation.',
+                _activeConversationStateMessage:
+                  reason || 'You do not have access to this conversation.',
               });
               return;
             }
@@ -642,6 +729,7 @@ export const useConversationStore = create<ConversationState>()(
           const result = await Api.createConversation({
             title: options?.title,
             projectId: options?.projectId,
+            chatProjectId: options?.chatProjectId,
             pmoContext: options?.pmoContext,
             language,
           });
@@ -711,7 +799,9 @@ export const useConversationStore = create<ConversationState>()(
                   };
                 });
               }
-            } catch { /* best effort refresh */ }
+            } catch {
+              /* best effort refresh */
+            }
           }
           console.error('[ConversationStore] Update error:', err);
           throw err;
@@ -917,9 +1007,28 @@ export const useConversationStore = create<ConversationState>()(
           if (existing) {
             set({ draftChatLanguage: existing });
           }
+          // Feedback #2ee998d3 — sync the id eagerly so the UI immediately
+          // reflects the selection even before fetchConversation resolves.
+          // fetchConversation also performs this sync (see above) as a safety
+          // net, but doing it here avoids a one-frame delay on every click.
+          const prev = get().activeConversationId;
+          if (prev !== id) {
+            set({
+              activeConversationId: id,
+              activeMessages: [],
+              isLoading: true,
+              _activeConversationState: null,
+              _activeConversationStateMessage: null,
+            });
+          }
           get().fetchConversation(id);
         } else {
-          set({ activeConversationId: null, activeMessages: [] });
+          set({
+            activeConversationId: null,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+          });
         }
       },
 
@@ -1218,9 +1327,22 @@ export const useConversationStore = create<ConversationState>()(
           console.error('[ConversationStore] Server search error:', err);
           const status = err?.response?.status || err?.status;
           if (status === 429) {
-            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true, scopeBlocked: 0 };
+            return {
+              conversations: [],
+              nextCursor: null,
+              hasMore: false,
+              partial: true,
+              rateLimited: true,
+              scopeBlocked: 0,
+            };
           }
-          return { conversations: [], nextCursor: null, hasMore: false, partial: true, scopeBlocked: 0 };
+          return {
+            conversations: [],
+            nextCursor: null,
+            hasMore: false,
+            partial: true,
+            scopeBlocked: 0,
+          };
         }
       },
 
@@ -1257,9 +1379,11 @@ export const useConversationStore = create<ConversationState>()(
             return {
               conversations: newConversations,
               groupedConversations: groupConversations(newConversations),
-              activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+              activeConversationId:
+                state.activeConversationId === id ? null : state.activeConversationId,
               activeMessages: state.activeConversationId === id ? [] : state.activeMessages,
-              _activeConversationState: state.activeConversationId === id ? null : state._activeConversationState,
+              _activeConversationState:
+                state.activeConversationId === id ? null : state._activeConversationState,
             };
           });
         } catch (err) {

@@ -55,9 +55,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       title: t('landing.hero.cards.trial.title', 'Free Trial'),
       description: t(
         'landing.hero.cards.trial.description',
-        '14-day full access to all features. Start your transformation today.'
+        '7-day full access to all features. Start your transformation today.'
       ),
-      meta: t('landing.hero.cards.trial.meta', '14 DAYS FREE'),
+      meta: t('landing.hero.cards.trial.meta', '7 DAYS FREE'),
       cta: t('landing.hero.cards.trial.cta', 'Start Free Trial'),
       image: '/assets/landing/cinematic/trial_command_cockpit.png',
       color: 'indigo',

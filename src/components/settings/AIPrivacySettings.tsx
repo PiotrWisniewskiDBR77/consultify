@@ -57,13 +57,29 @@ export const AIPrivacySettings: React.FC<{ className?: string }> = ({ className 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
   useEffect(() => {
-    setLoading(false);
+    const loadPreferences = async () => {
+      try {
+        setLoading(true);
+        const response = await Api.getAIPrivacyPreferences();
+        if (response?.preferences) {
+          const merged = { ...defaultPreferences, ...response.preferences };
+          setPreferences(merged);
+          setOriginalPreferences(merged);
+        }
+      } catch (error) {
+        console.error('Failed to load AI privacy settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadPreferences();
   }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await new Promise((r) => setTimeout(r, 500));
+      await Api.saveAIPrivacyPreferences(preferences);
       setOriginalPreferences(preferences);
       toast.success(t('settings.ai.privacySaved', 'AI privacy settings saved'));
     } catch {
@@ -73,10 +89,7 @@ export const AIPrivacySettings: React.FC<{ className?: string }> = ({ className 
     }
   }, [preferences, t]);
 
-  const update = <K extends keyof AIPrivacyPreferences>(
-    key: K,
-    value: AIPrivacyPreferences[K]
-  ) => {
+  const update = <K extends keyof AIPrivacyPreferences>(key: K, value: AIPrivacyPreferences[K]) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 

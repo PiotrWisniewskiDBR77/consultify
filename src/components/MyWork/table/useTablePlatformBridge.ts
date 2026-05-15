@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type {
   FilterGroup as TPFilterGroup,
@@ -143,7 +143,7 @@ export function useTablePlatformBridge(
   opts: UseTablePlatformBridgeOpts
 ): UseTablePlatformBridgeReturn {
   const { ideaId, enabled, preferredTableId } = opts;
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const isNewPlatform =
     enabled && isEnabled('tablePlatformMetadataFirst') && !HARD_DISABLE_METADATA_FIRST;
 

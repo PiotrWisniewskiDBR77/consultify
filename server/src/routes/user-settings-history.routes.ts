@@ -8,6 +8,8 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-settings-history.js');
 const user_settings_historyRoutesJS = module.default || module;
@@ -28,6 +30,6 @@ if (typeof user_settings_historyRoutesJS === 'function') {
   router.use(user_settings_historyRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('user-settings-history.js did not export a valid router');
+  logger.error('user-settings-history.js did not export a valid router');
 }
 export default router;

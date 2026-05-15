@@ -1,11 +1,15 @@
 import type { FAQItem } from './faqContent';
 import type { ViewHelpMapping } from './viewToModuleMapping';
 
-export type SupportedHelpLanguage = 'en' | 'pl';
+export type SupportedHelpLanguage = 'en' | 'pl' | 'de' | 'ar' | 'jp' | 'es';
 
 export interface LocalizedText {
   en: string;
   pl: string;
+  de?: string;
+  ar?: string;
+  jp?: string;
+  es?: string;
 }
 
 export type HelpExperienceKind = 'journey' | 'support' | 'system';
@@ -321,16 +325,16 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
     ),
     whatYouDoHere: [
       text(
-        'Run interviews and gather organizational context.',
-        'Prowadzisz wywiady i zbierasz kontekst organizacyjny.'
+        'As an assignee: work from Inbox, complete the interview template, and submit answers for review.',
+        'Jako wykonawca: pracujesz z Inbox, uzupełniasz szablon wywiadu i wysyłasz odpowiedzi do review.'
       ),
       text(
-        'Capture process, data, capability, and constraint signals.',
-        'Zapisujesz sygnały o procesach, danych, kompetencjach i ograniczeniach.'
+        'As a manager: use Sessions as your main cockpit to track in-progress, submitted, sent-back, and approved interview work.',
+        'Jako manager: używasz Sessions jako głównego cockpit view do śledzenia wywiadów w statusach in progress, submitted, sent back i approved.'
       ),
       text(
-        'Turn raw input into a shared starting point for the client team.',
-        'Zamieniasz surowe wejście we wspólny punkt startowy dla zespołu klienta.'
+        'Capture process, data, capability, and constraint signals, then turn raw input into a shared starting point for the client team.',
+        'Zbierasz sygnały o procesach, danych, kompetencjach i ograniczeniach, a potem zamieniasz surowe wejście we wspólny punkt startowy dla zespołu klienta.'
       ),
     ],
     howAiHelpsHere: [
@@ -366,6 +370,14 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
         text(
           'Focus on facts, constraints, and reusable context for the next step.',
           'Skup się na faktach, ograniczeniach i kontekście do wykorzystania dalej.'
+        )
+      ),
+      makeGuide(
+        'interview-manager-cockpit',
+        text('How managers should work in Sessions', 'Jak manager pracuje w Sessions'),
+        text(
+          'Use Sessions as the primary review cockpit, and use Assigned only for assignment administration.',
+          'Używaj Sessions jako głównego cockpit view do review, a Assigned tylko do administracji przypisaniami.'
         )
       ),
       SHARED_GUIDES.kb,
@@ -2791,7 +2803,7 @@ export const HELP_OVERVIEW_GUIDES: HelpQuickGuide[] = [
 export const HELP_MAINTENANCE_PACKS: HelpMaintenancePack[] = [
   {
     id: 'journey-pack',
-    title: text('Journey pack', 'Journey pack'),
+    title: text('Journey pack', 'Pakiet podróży'),
     description: text(
       'Update the 5 core journey steps and their handoffs.',
       'Aktualizuje 5 głównych etapów podróży i przejścia między nimi.'
@@ -2800,7 +2812,7 @@ export const HELP_MAINTENANCE_PACKS: HelpMaintenancePack[] = [
   },
   {
     id: 'support-module-pack',
-    title: text('Support module pack', 'Support module pack'),
+    title: text('Support module pack', 'Pakiet modułów wspierających'),
     description: text(
       'Update supporting modules and their standalone/process framing.',
       'Aktualizuje moduły wspierające oraz ich framing standalone/procesowy.'
@@ -2809,7 +2821,7 @@ export const HELP_MAINTENANCE_PACKS: HelpMaintenancePack[] = [
   },
   {
     id: 'faq-refresh-pack',
-    title: text('FAQ refresh pack', 'FAQ refresh pack'),
+    title: text('FAQ refresh pack', 'Pakiet odświeżenia FAQ'),
     description: text(
       'Refresh short operational questions without rewriting the full help model.',
       'Odświeża krótkie pytania operacyjne bez przepisywania całego modelu helpa.'
@@ -2818,7 +2830,7 @@ export const HELP_MAINTENANCE_PACKS: HelpMaintenancePack[] = [
   },
   {
     id: 'video-pack',
-    title: text('Video pack', 'Video pack'),
+    title: text('Video pack', 'Pakiet wideo'),
     description: text(
       'Add or update micro-video teasers for help blocks.',
       'Dodaje lub aktualizuje teasery micro-video dla bloków helpa.'
@@ -2827,7 +2839,7 @@ export const HELP_MAINTENANCE_PACKS: HelpMaintenancePack[] = [
   },
   {
     id: 'ai-prompt-pack',
-    title: text('AI prompt pack', 'AI prompt pack'),
+    title: text('AI prompt pack', 'Pakiet promptów AI'),
     description: text(
       'Adjust Ask AI handoffs and prompt wording per module or stage.',
       'Dostosowuje handoffy Ask AI i treść promptów per moduł lub etap.'
@@ -2836,7 +2848,7 @@ export const HELP_MAINTENANCE_PACKS: HelpMaintenancePack[] = [
   },
   {
     id: 'new-module-pack',
-    title: text('New module pack', 'New module pack'),
+    title: text('New module pack', 'Pakiet nowego modułu'),
     description: text(
       'Add help for a new module using the same short-form contract.',
       'Dodaje help dla nowego modułu przy użyciu tego samego krótkiego kontraktu.'
@@ -5076,7 +5088,9 @@ export function getHelpDocument(documentId: string | undefined | null): HelpDocu
 }
 
 export function getLocalizedText(value: LocalizedText, language: SupportedHelpLanguage): string {
-  return value[language];
+  const resolved = value[language];
+  if (resolved) return resolved;
+  return value.en;
 }
 
 function getDocumentIdFromMapping(mapping: ViewHelpMapping): string {

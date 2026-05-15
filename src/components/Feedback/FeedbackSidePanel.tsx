@@ -24,6 +24,7 @@ import {
   Meh,
   MessageSquareWarning,
   Monitor,
+  Paperclip,
   Send,
   Smile,
   Sparkles,
@@ -31,6 +32,7 @@ import {
   ThumbsDown,
   ThumbsUp,
   TrendingUp,
+  Upload,
   X,
   Zap,
 } from 'lucide-react';
@@ -38,6 +40,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
+import { buildFeedbackDossier } from '../../services/feedbackCollector';
 import { useAppStore } from '../../store/useAppStore';
 
 // ==================== TYPES ====================
@@ -84,34 +88,37 @@ interface CapturedContext {
   scrollPosition: number;
 }
 
-function capturePageContext(): CapturedContext {
+function capturePageContext(
+  translate?: (key: string, defaultValue: string) => string
+): CapturedContext {
   const w = typeof window !== 'undefined' ? window : null;
   const pathname = w?.location.pathname || '/';
+  const tx = (key: string, defaultValue: string) => translate?.(key, defaultValue) ?? defaultValue;
 
   const moduleMap: Record<string, string> = {
-    '/my-work': 'My Work',
-    '/interview': 'Interview',
-    '/tools': 'Discovery Tools',
-    '/initiatives': 'Initiatives',
-    '/execution': 'Execution',
-    '/results': 'Results',
-    '/finance': 'Finance',
-    '/presentations': 'Presentations',
-    '/assessment': 'Assessment',
-    '/dashboard': 'Dashboard',
-    '/reports': 'Reports',
-    '/settings': 'Settings',
-    '/admin': 'Admin',
-    '/superadmin': 'SuperAdmin',
-    '/chat': 'AI Chat',
-    '/economics': 'Economics',
-    '/implementation': 'Implementation',
+    '/my-work': tx('feedback.panelContext.modules.myWork', 'Moja praca'),
+    '/interview': tx('feedback.panelContext.modules.interview', 'Wywiad'),
+    '/tools': tx('feedback.panelContext.modules.tools', 'Narzędzia Discovery'),
+    '/initiatives': tx('feedback.panelContext.modules.initiatives', 'Inicjatywy'),
+    '/execution': tx('feedback.panelContext.modules.execution', 'Realizacja'),
+    '/results': tx('feedback.panelContext.modules.results', 'Rezultaty'),
+    '/finance': tx('feedback.panelContext.modules.finance', 'Finanse'),
+    '/presentations': tx('feedback.panelContext.modules.presentations', 'Prezentacje'),
+    '/assessment': tx('feedback.panelContext.modules.assessment', 'Ocena'),
+    '/dashboard': tx('feedback.panelContext.modules.dashboard', 'Pulpit'),
+    '/reports': tx('feedback.panelContext.modules.reports', 'Raporty'),
+    '/settings': tx('feedback.panelContext.modules.settings', 'Ustawienia'),
+    '/admin': tx('feedback.panelContext.modules.admin', 'Admin'),
+    '/superadmin': tx('feedback.panelContext.modules.superadmin', 'SuperAdmin'),
+    '/chat': tx('feedback.panelContext.modules.chat', 'Czat AI'),
+    '/economics': tx('feedback.panelContext.modules.economics', 'Ekonomia'),
+    '/implementation': tx('feedback.panelContext.modules.implementation', 'Wdrożenie'),
   };
 
   const matchedKey = Object.keys(moduleMap).find((key) => pathname.startsWith(key));
   const moduleName = matchedKey
     ? moduleMap[matchedKey]
-    : pathname.split('/').filter(Boolean)[0] || 'Home';
+    : pathname.split('/').filter(Boolean)[0] || tx('feedback.panelContext.modules.home', 'Start');
 
   const pageTitle = document.title?.replace(/\s*[-|].*$/, '') || moduleName;
 
@@ -175,20 +182,213 @@ export const FeedbackSidePanel: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   // Context snapshot - captured the moment user opens the panel
   const [capturedCtx, setCapturedCtx] = useState<CapturedContext | null>(null);
   const wasOpenRef = useRef(false);
+
+  // Cursor-ready capture state (V2)
+  // Screenshot is opt-in by default (off) — avoids payload bloat, GDPR
+  // surprises and slow DOM rasterisation on large dashboards. Diagnostics
+  // (console/network/breadcrumbs) stay on because they are cheap and textual.
+  const [attachScreenshot, setAttachScreenshot] = useState(false);
+  const [attachDiagnostics, setAttachDiagnostics] = useState(true);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isPreparingDossier, setIsPreparingDossier] = useState(false);
+
+  // Feedback #00835312 — testers asked for a way to attach their OWN
+  // screenshot to a bug report (screenshot of the full desktop, of a
+  // different window, of a phone, annotated in Skitch, etc.). The old
+  // flow only offered the auto-captured viewport via html-to-image,
+  // which (a) often failed on complex dashboards and (b) never covered
+  // anything outside the current browser tab. This state carries a
+  // user-provided image (file upload OR clipboard paste) and takes
+  // precedence over the auto-capture when set.
+  const [uploadedScreenshot, setUploadedScreenshot] = useState<{
+    dataUrl: string;
+    approxBytes: number;
+    width: number;
+    height: number;
+    fileName?: string;
+  } | null>(null);
+  const screenshotFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isOpen = activeSidePanel === 'FEEDBACK';
 
   // Capture context snapshot when panel opens
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
-      setCapturedCtx(capturePageContext());
+      setCapturedCtx(capturePageContext(t));
+      // Accept optional prefill from ErrorBoundary or other sources
+      try {
+        const prefill = (window as any).__FEEDBACK_PREFILL__;
+        if (prefill && typeof prefill === 'object') {
+          if (prefill.type === 'BUG' || prefill.type === 'IDEA') {
+            setReportType(prefill.type);
+            setActiveTab('report');
+          }
+          if (typeof prefill.title === 'string') setReportTitle(prefill.title);
+          if (typeof prefill.message === 'string') setMessage(prefill.message);
+          if (
+            prefill.severity === 'LOW' ||
+            prefill.severity === 'MEDIUM' ||
+            prefill.severity === 'HIGH' ||
+            prefill.severity === 'CRITICAL'
+          ) {
+            setSeverity(prefill.severity);
+          }
+          if (prefill.error && typeof prefill.error === 'object') {
+            const parts: string[] = [];
+            if (prefill.error.message) parts.push(`Error: ${prefill.error.message}`);
+            if (prefill.error.stack)
+              parts.push(`Stack:\n${String(prefill.error.stack).slice(0, 2000)}`);
+            if (parts.length) setActualBehavior(parts.join('\n\n'));
+          }
+          delete (window as any).__FEEDBACK_PREFILL__;
+        }
+      } catch {
+        // ignore prefill failures
+      }
+    }
+    if (!isOpen && wasOpenRef.current) {
+      setScreenshotPreview(null);
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, t]);
+
+  // When user enters Report tab in BUG mode, prepare a screenshot preview.
+  useEffect(() => {
+    let cancelled = false;
+    async function preparePreview() {
+      if (!isOpen || activeTab !== 'report' || !attachScreenshot) {
+        setScreenshotPreview(null);
+        return;
+      }
+      setIsPreparingDossier(true);
+      try {
+        const dossier = await buildFeedbackDossier({
+          includeScreenshot: true,
+          user: {
+            userId: currentUser?.id || null,
+            role: currentUser?.role || null,
+          },
+        });
+        if (!cancelled) {
+          setScreenshotPreview(dossier.screenshot?.dataUrl || null);
+        }
+      } catch (err) {
+        if (!cancelled) setScreenshotPreview(null);
+      } finally {
+        if (!cancelled) setIsPreparingDossier(false);
+      }
+    }
+    preparePreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, activeTab, attachScreenshot, currentUser?.id, currentUser?.role]);
+
+  // Listen for programmatic open events (e.g. ErrorBoundary)
+  useEffect(() => {
+    function onOpen() {
+      try {
+        useAppStore.getState().openSidePanel?.('FEEDBACK');
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('feedback:open', onOpen as EventListener);
+    return () => window.removeEventListener('feedback:open', onOpen as EventListener);
+  }, []);
+
+  // Feedback #00835312 — load a user-provided image (file or clipboard
+  // blob) into `uploadedScreenshot`. Server Zod schema caps the base64
+  // dataUrl at 2,000,000 characters (~1.5 MB of image data after
+  // encoding), so we cap the raw file at ~1.4 MB and hard-fail with a
+  // toast instead of silently dropping the attachment.
+  const MAX_UPLOADED_SCREENSHOT_BYTES = 1.4 * 1024 * 1024;
+  const loadScreenshotFromFile = useCallback(
+    async (file: File | Blob, fileName?: string) => {
+      try {
+        if (!file.type?.startsWith('image/')) {
+          toast.error(
+            t('feedback.attach.notAnImage', 'Plik musi być obrazem (PNG, JPG, GIF lub WebP).')
+          );
+          return;
+        }
+        if (file.size > MAX_UPLOADED_SCREENSHOT_BYTES) {
+          toast.error(
+            t(
+              'feedback.attach.tooLarge',
+              'Zrzut ekranu jest za duży (max ~1.4 MB). Użyj narzędzia do kompresji lub przytnij obraz.'
+            )
+          );
+          return;
+        }
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        if (!dataUrl || dataUrl.length < 100) {
+          toast.error(
+            t('feedback.attach.readFailed', 'Nie udało się odczytać pliku. Spróbuj ponownie.')
+          );
+          return;
+        }
+        const dims = await new Promise<{ width: number; height: number }>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          img.onerror = () => resolve({ width: 0, height: 0 });
+          img.src = dataUrl;
+        });
+        setUploadedScreenshot({
+          dataUrl,
+          approxBytes: file.size,
+          width: dims.width || 0,
+          height: dims.height || 0,
+          fileName: fileName || (file as File).name || 'screenshot.png',
+        });
+        toast.success(t('feedback.attach.uploaded', 'Screenshot dodany do zgłoszenia.'), {
+          duration: 1500,
+        });
+      } catch (err) {
+        console.warn('[FeedbackSidePanel] loadScreenshotFromFile failed:', err);
+        toast.error(
+          t('feedback.attach.readFailed', 'Nie udało się odczytać pliku. Spróbuj ponownie.')
+        );
+      }
+    },
+    [t]
+  );
+
+  const handleScreenshotFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) await loadScreenshotFromFile(file);
+      if (screenshotFileInputRef.current) screenshotFileInputRef.current.value = '';
+    },
+    [loadScreenshotFromFile]
+  );
+
+  // Ctrl/Cmd-V paste support while the Report tab is open.
+  useEffect(() => {
+    if (!isOpen || activeTab !== 'report' || reportType !== 'BUG') return;
+    const onPaste = async (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
+      const items = Array.from(e.clipboardData.items || []);
+      const imageItem = items.find((it) => it.type?.startsWith('image/'));
+      if (!imageItem) return;
+      const blob = imageItem.getAsFile();
+      if (!blob) return;
+      e.preventDefault();
+      await loadScreenshotFromFile(blob, `pasted-${Date.now()}.png`);
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  }, [isOpen, activeTab, reportType, loadScreenshotFromFile]);
 
   const currentContext =
     capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
@@ -203,22 +403,11 @@ export const FeedbackSidePanel: React.FC = () => {
   const fetchAIInsights = async () => {
     setLoadingInsights(true);
     try {
-      const response = await fetch('/api/feedback/ai-insights', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          context: currentContext,
-          userId: currentUser?.id,
-        }),
+      const data = await Api.getFeedbackAIInsights({
+        context: currentContext,
+        userId: currentUser?.id,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAiInsights(data.insights || []);
-      }
+      setAiInsights(data?.insights || []);
     } catch (error) {
       console.error('Failed to fetch AI insights:', error);
     } finally {
@@ -242,6 +431,8 @@ export const FeedbackSidePanel: React.FC = () => {
     setFeatureName('');
     setFeatureDescription('');
     setFeatureImpact('medium');
+    setUploadedScreenshot(null);
+    setSubmitErrorMessage(null);
   }, []);
 
   // Handle success state
@@ -261,7 +452,8 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!message.trim()) return;
 
     setIsSubmitting(true);
-    const ctx = capturedCtx || capturePageContext();
+    setSubmitErrorMessage(null);
+    const ctx = capturedCtx || capturePageContext(t);
     const structuredBlocks: string[] = [];
     if (stepsToReproduce.trim())
       structuredBlocks.push(`Steps to reproduce:\n${stepsToReproduce.trim()}`);
@@ -270,51 +462,83 @@ export const FeedbackSidePanel: React.FC = () => {
     if (impactNotes.trim()) structuredBlocks.push(`Impact:\n${impactNotes.trim()}`);
 
     const fullDescription = [message.trim(), ...structuredBlocks.map((b) => `\n\n${b}`)].join('');
-    try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          userId: currentUser?.id || 'anonymous',
-          userEmail: currentUser?.email || 'anonymous',
-          userName: currentUser?.full_name || currentUser?.firstName,
-          type: reportType,
-          title: reportTitle.trim() || undefined,
-          message,
-          description: fullDescription,
-          severity,
-          routePath: ctx.routePath,
-          deviceType: ctx.deviceType,
-          screenSize: ctx.screenSize,
-          uiLanguage: ctx.uiLanguage,
-          uiTheme: ctx.uiTheme,
-          clientEnv,
-          metadata: {
-            context: ctx.routePath,
-            moduleName: ctx.moduleName,
-            pageTitle: ctx.pageTitle,
-            browser: ctx.browser,
-            timestamp: ctx.timestamp,
-            screenSize: ctx.screenSize,
-            scrollPosition: ctx.scrollPosition,
-          },
-        }),
-      });
 
-      if (response.ok) {
-        handleSuccess(
-          reportType === 'BUG'
-            ? t('feedback.success.bugReported', "Bug reported! We'll investigate ASAP.")
-            : t('feedback.success.ideaSubmitted', 'Great idea! Added to our backlog.')
-        );
-      } else {
-        throw new Error('Failed to submit');
-      }
+    let dossier: Awaited<ReturnType<typeof buildFeedbackDossier>> | null = null;
+    try {
+      dossier = await buildFeedbackDossier({
+        includeScreenshot: attachScreenshot,
+        user: {
+          userId: currentUser?.id || null,
+          role: currentUser?.role || null,
+        },
+        forSignature: {
+          message: `${reportTitle.trim()} ${message.trim()}`.trim(),
+          route: ctx.routePath,
+        },
+      });
+    } catch (err) {
+      console.warn('[FeedbackSidePanel] buildFeedbackDossier failed:', err);
+    }
+
+    try {
+      await Api.sendFeedback({
+        userId: currentUser?.id || undefined,
+        userEmail: currentUser?.email || undefined,
+        userName: currentUser?.full_name || currentUser?.firstName,
+        type: reportType,
+        title: reportTitle.trim() || undefined,
+        message,
+        description: fullDescription,
+        severity,
+        routePath: ctx.routePath,
+        deviceType: ctx.deviceType,
+        screenSize: ctx.screenSize,
+        uiLanguage: ctx.uiLanguage,
+        uiTheme: ctx.uiTheme,
+        clientEnv,
+        metadata: {
+          context: ctx.routePath,
+          moduleName: ctx.moduleName,
+          pageTitle: ctx.pageTitle,
+          browser: ctx.browser,
+          timestamp: ctx.timestamp,
+          screenSize: ctx.screenSize,
+          scrollPosition: ctx.scrollPosition,
+        },
+        signatureHash: dossier?.signatureHash,
+        appContext: dossier ? (dossier.appContext as any) : undefined,
+        consoleLogs: attachDiagnostics && dossier ? (dossier.consoleLogs as any) : undefined,
+        networkErrors: attachDiagnostics && dossier ? (dossier.networkErrors as any) : undefined,
+        breadcrumbs: attachDiagnostics && dossier ? (dossier.breadcrumbs as any) : undefined,
+        lastUncaughtError: attachDiagnostics && dossier ? dossier.lastUncaughtError : undefined,
+        // Feedback #00835312 — user-uploaded image wins over the
+        // auto-captured viewport so a tester who pastes / uploads their
+        // own annotated screenshot always sees it travel with the
+        // report, even if the `attachScreenshot` checkbox is off.
+        screenshot: uploadedScreenshot
+          ? {
+              dataUrl: uploadedScreenshot.dataUrl,
+              approxBytes: uploadedScreenshot.approxBytes,
+              width: uploadedScreenshot.width,
+              height: uploadedScreenshot.height,
+            }
+          : attachScreenshot && dossier?.screenshot
+            ? {
+                dataUrl: dossier.screenshot.dataUrl,
+                approxBytes: dossier.screenshot.approxBytes,
+                width: dossier.screenshot.width,
+                height: dossier.screenshot.height,
+              }
+            : null,
+      });
+      handleSuccess(
+        reportType === 'BUG'
+          ? t('feedback.success.bugReported', "Bug reported! We'll investigate ASAP.")
+          : t('feedback.success.ideaSubmitted', 'Great idea! Added to our backlog.')
+      );
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -323,36 +547,26 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const improveReportWithAI = async () => {
     if (!message.trim()) return;
-    const ctx = capturedCtx || capturePageContext();
+    const ctx = capturedCtx || capturePageContext(t);
     setIsComposing(true);
     setAiQuestions([]);
     try {
-      const res = await fetch('/api/feedback/compose', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+      const json = await Api.composeFeedback({
+        type: reportType,
+        title: reportTitle.trim() || undefined,
+        message: message.trim(),
+        severity,
+        appEnv: clientEnv || undefined,
+        context: {
+          routePath: ctx.routePath,
+          moduleName: ctx.moduleName,
+          pageTitle: ctx.pageTitle,
+          deviceType: ctx.deviceType,
+          screenSize: ctx.screenSize,
+          uiLanguage: ctx.uiLanguage,
+          uiTheme: ctx.uiTheme,
         },
-        body: JSON.stringify({
-          type: reportType,
-          title: reportTitle.trim() || undefined,
-          message: message.trim(),
-          severity,
-          appEnv: clientEnv || undefined,
-          context: {
-            routePath: ctx.routePath,
-            moduleName: ctx.moduleName,
-            pageTitle: ctx.pageTitle,
-            deviceType: ctx.deviceType,
-            screenSize: ctx.screenSize,
-            uiLanguage: ctx.uiLanguage,
-            uiTheme: ctx.uiTheme,
-          },
-        }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'AI compose failed');
-
       const data = json?.data || json;
       if (data?.title) setReportTitle(String(data.title));
       if (data?.summary) setMessage(String(data.summary));
@@ -389,28 +603,20 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const submitPulse = async (rating: PulseRating, comment?: string) => {
     setIsSubmitting(true);
-    const ctx = capturedCtx || capturePageContext();
+    setSubmitErrorMessage(null);
+    const ctx = capturedCtx || capturePageContext(t);
     try {
-      const response = await fetch('/api/feedback/pulse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          userId: currentUser?.id,
-          rating,
-          context: ctx.routePath,
-          comment: comment || pulseComment,
-          timestamp: ctx.timestamp,
-        }),
+      await Api.submitPulseFeedback({
+        userId: currentUser?.id,
+        rating,
+        context: ctx.routePath,
+        comment: comment || pulseComment,
+        timestamp: ctx.timestamp,
       });
-
-      if (response.ok) {
-        handleSuccess(t('feedback.success.pulse', 'Thanks for your feedback! 🎉'));
-      }
+      handleSuccess(t('feedback.success.pulse', 'Thanks for your feedback! 🎉'));
     } catch (error) {
       console.error('Error submitting pulse:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -423,39 +629,30 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!featureName.trim() || !featureDescription.trim()) return;
 
     setIsSubmitting(true);
-    const ctx = capturedCtx || capturePageContext();
+    setSubmitErrorMessage(null);
+    const ctx = capturedCtx || capturePageContext(t);
     try {
-      const response = await fetch('/api/feedback/feature', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          userId: currentUser?.id,
-          userEmail: currentUser?.email,
-          category: featureCategory,
-          featureName,
-          description: featureDescription,
-          impact: featureImpact,
-          context: ctx.routePath,
-          requestAIAnalysis: true,
-        }),
+      const data = await Api.submitFeatureFeedback({
+        userId: currentUser?.id,
+        userEmail: currentUser?.email,
+        category: featureCategory,
+        featureName,
+        description: featureDescription,
+        impact: featureImpact,
+        context: ctx.routePath,
+        requestAIAnalysis: true,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        handleSuccess(
-          data.aiSuggestion
-            ? t(
-                'feedback.success.featureWithAI',
-                'Feature request submitted! AI found similar requests.'
-              )
-            : t('feedback.success.feature', 'Feature request submitted!')
-        );
-      }
+      handleSuccess(
+        data.aiSuggestion
+          ? t(
+              'feedback.success.featureWithAI',
+              'Feature request submitted! AI found similar requests.'
+            )
+          : t('feedback.success.feature', 'Feature request submitted!')
+      );
     } catch (error) {
       console.error('Error submitting feature:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -473,10 +670,10 @@ export const FeedbackSidePanel: React.FC = () => {
         <button
           key={id}
           onClick={() => setActiveTab(id as Exclude<FeedbackTab, 'pulse'>)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
             activeTab === id
-              ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              ? 'border-amber-600 text-amber-800 dark:border-amber-500 dark:text-amber-400'
+              : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
           <Icon size={14} />
@@ -488,6 +685,10 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const renderContextBadge = () => {
     if (!capturedCtx) return null;
+    const deviceLabel = t(
+      `feedback.panelContext.device.${capturedCtx.deviceType}`,
+      capturedCtx.deviceType
+    );
     return (
       <div className="flex items-center gap-2 p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 text-xs">
         <MapPin size={14} className="text-indigo-500 shrink-0" />
@@ -501,7 +702,7 @@ export const FeedbackSidePanel: React.FC = () => {
         </div>
         <div className="flex items-center gap-1.5 text-indigo-400 dark:text-indigo-500 shrink-0">
           <Monitor size={12} />
-          <span>{capturedCtx.deviceType}</span>
+          <span>{deviceLabel}</span>
         </div>
       </div>
     );
@@ -553,22 +754,22 @@ export const FeedbackSidePanel: React.FC = () => {
             {[
               {
                 value: 'LOW',
-                label: 'Low',
+                label: t('feedback.severity.low', 'Niski'),
                 color: 'text-green-500 bg-green-50 dark:bg-green-900/20',
               },
               {
                 value: 'MEDIUM',
-                label: 'Medium',
+                label: t('feedback.severity.medium', 'Średni'),
                 color: 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20',
               },
               {
                 value: 'HIGH',
-                label: 'High',
+                label: t('feedback.severity.high', 'Wysoki'),
                 color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20',
               },
               {
                 value: 'CRITICAL',
-                label: 'Critical',
+                label: t('feedback.severity.critical', 'Krytyczny'),
                 color: 'text-red-500 bg-red-50 dark:bg-red-900/20',
               },
             ].map(({ value, label, color }) => (
@@ -700,6 +901,123 @@ export const FeedbackSidePanel: React.FC = () => {
         </div>
       )}
 
+      {/* Cursor-ready capture bundle */}
+      {reportType === 'BUG' && (
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span>{t('feedback.attach.title', 'Cursor-ready dowody')}</span>
+            {isPreparingDossier ? (
+              <span className="inline-flex items-center gap-1 text-slate-400">
+                <Loader2 size={12} className="animate-spin" />
+                {t('feedback.attach.preparing', 'Przygotowuję…')}
+              </span>
+            ) : null}
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={attachScreenshot}
+              onChange={(e) => setAttachScreenshot(e.target.checked)}
+              className="h-3.5 w-3.5"
+              disabled={!!uploadedScreenshot}
+            />
+            {t('feedback.attach.screenshot', 'Dołącz screenshot bieżącego widoku (opcjonalnie)')}
+          </label>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={attachDiagnostics}
+              onChange={(e) => setAttachDiagnostics(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            {t(
+              'feedback.attach.diagnostics',
+              'Dołącz logi konsoli, błędy sieci i breadcrumbs (bez wartości z formularzy)'
+            )}
+          </label>
+
+          {/* Feedback #00835312 — explicit upload + paste affordance so
+              testers can attach their OWN screenshot (full desktop,
+              another window, phone photo, annotated in Skitch, etc.).
+              Takes precedence over the auto-captured viewport. */}
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => screenshotFileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+              title={t(
+                'feedback.attach.uploadHint',
+                'Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V).'
+              )}
+            >
+              <Upload size={12} />
+              {uploadedScreenshot
+                ? t('feedback.attach.replace', 'Wymień screenshot')
+                : t('feedback.attach.upload', 'Wgraj własny screenshot')}
+            </button>
+            {uploadedScreenshot ? (
+              <button
+                type="button"
+                onClick={() => setUploadedScreenshot(null)}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                title={t('feedback.attach.remove', 'Usuń załączony screenshot')}
+              >
+                <X size={12} />
+                {t('feedback.attach.removeShort', 'Usuń')}
+              </button>
+            ) : (
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {t('feedback.attach.pasteHint', 'lub wklej (Ctrl/⌘+V)')}
+              </span>
+            )}
+            <input
+              ref={screenshotFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleScreenshotFileChange}
+              className="hidden"
+            />
+          </div>
+
+          {uploadedScreenshot ? (
+            <div className="mt-1 overflow-hidden rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-900">
+              <img
+                src={uploadedScreenshot.dataUrl}
+                alt={uploadedScreenshot.fileName || 'uploaded-screenshot'}
+                className="w-full h-auto max-h-48 object-contain object-top bg-slate-950"
+              />
+              <div className="flex items-center justify-between px-2 py-1 text-[10px] text-slate-400">
+                <span className="truncate">
+                  <Paperclip size={10} className="inline-block mr-1 align-text-bottom" />
+                  {uploadedScreenshot.fileName || 'screenshot.png'}
+                  {uploadedScreenshot.width && uploadedScreenshot.height
+                    ? ` — ${uploadedScreenshot.width}×${uploadedScreenshot.height}`
+                    : ''}
+                </span>
+                <span className="shrink-0">
+                  {Math.max(1, Math.round(uploadedScreenshot.approxBytes / 1024))} KB
+                </span>
+              </div>
+            </div>
+          ) : attachScreenshot && screenshotPreview ? (
+            <div className="mt-1 overflow-hidden rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-900">
+              <img
+                src={screenshotPreview}
+                alt="preview"
+                className="w-full h-auto max-h-48 object-cover object-top"
+                data-feedback-redact
+              />
+              <div className="px-2 py-1 text-[10px] text-slate-400">
+                {t(
+                  'feedback.attach.previewHint',
+                  'Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc.'
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
       {/* Submit Button */}
       <button
         type="submit"
@@ -771,9 +1089,21 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <div className="grid grid-cols-3 gap-1.5">
           {[
-            { value: 'missing', label: 'Missing', icon: AlertTriangle },
-            { value: 'improvement', label: 'Improve', icon: TrendingUp },
-            { value: 'usability', label: 'UX', icon: Star },
+            {
+              value: 'missing',
+              label: t('feedback.feature.categories.missing', 'Brakująca funkcja'),
+              icon: AlertTriangle,
+            },
+            {
+              value: 'improvement',
+              label: t('feedback.feature.categories.improvement', 'Usprawnienie'),
+              icon: TrendingUp,
+            },
+            {
+              value: 'usability',
+              label: t('feedback.feature.categories.usability', 'UX'),
+              icon: Star,
+            },
           ].map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -831,9 +1161,9 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <div className="flex gap-2">
           {[
-            { value: 'low', label: 'Nice to have' },
-            { value: 'medium', label: 'Important' },
-            { value: 'high', label: 'Critical' },
+            { value: 'low', label: t('feedback.feature.impactLevels.low', 'Dobrze mieć') },
+            { value: 'medium', label: t('feedback.feature.impactLevels.medium', 'Ważne') },
+            { value: 'high', label: t('feedback.feature.impactLevels.high', 'Krytyczne') },
           ].map(({ value, label }) => (
             <button
               key={value}
@@ -985,7 +1315,7 @@ export const FeedbackSidePanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
+        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-40 transition-opacity"
         onClick={closeSidePanel}
       />
 
@@ -1001,7 +1331,7 @@ export const FeedbackSidePanel: React.FC = () => {
             {!showSuccess && renderQuickPulseHeader()}
             <button
               onClick={closeSidePanel}
-              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
             >
               <X size={18} />
             </button>
@@ -1017,6 +1347,14 @@ export const FeedbackSidePanel: React.FC = () => {
             renderSuccess()
           ) : (
             <>
+              {submitErrorMessage ? (
+                <div
+                  role="alert"
+                  className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                >
+                  {submitErrorMessage}
+                </div>
+              ) : null}
               {renderQuickPulseComment()}
               {activeTab === 'report' && renderReportTab()}
               {activeTab === 'feature' && renderFeatureTab()}
@@ -1026,9 +1364,10 @@ export const FeedbackSidePanel: React.FC = () => {
 
         {/* Footer */}
         {!showSuccess && (
-          <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
-              {t('feedback.footer', 'Feedback sent as')} <b>{currentUser?.email || 'Anonymous'}</b>
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center">
+              {t('feedback.footer', 'Opinia wysyłana jako')}{' '}
+              <b>{currentUser?.email || t('feedback.anonymous', 'Anonimowo')}</b>
             </div>
           </div>
         )}

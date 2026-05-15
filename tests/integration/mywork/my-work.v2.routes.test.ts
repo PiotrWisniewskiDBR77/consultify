@@ -4,8 +4,6 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-import { makeTestApp } from '../_helpers/testApp';
-
 describe('My Work (V2) routes', () => {
   const prevEnv = { ...process.env };
   const workerId = process.env.VITEST_WORKER_ID || '0';
@@ -15,6 +13,7 @@ describe('My Work (V2) routes', () => {
   let resetConnection: (() => Promise<void>) | null = null;
   let db: any;
   let router: any;
+  let makeTestApp: any;
 
   const mount = () =>
     makeTestApp({
@@ -30,6 +29,7 @@ describe('My Work (V2) routes', () => {
     process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 
     vi.resetModules();
+    ({ makeTestApp } = await import('../_helpers/testApp'));
     const dbMod = await import('../../../server/src/database/Database.js');
     resetConnection = dbMod.resetConnection;
     await resetConnection();
@@ -407,5 +407,6 @@ describe('My Work (V2) routes', () => {
     );
     expect(dismissed?.signal_key).toBe('notification:n-1');
   });
+
 });
 

@@ -41,7 +41,8 @@
     "select": "Auswählen",
     "connected": "verbunden",
     "comingSoon": "Kommt bald",
-    "root": "Root"
+    "root": "Root",
+    "noOrganizations": "Keine Organisationen gefunden"
   },
   "contextBadge": {
     "aiSees": "KI sieht",
@@ -404,10 +405,148 @@
   },
   "myWork": {
     "title": "Meine Arbeit",
+    "home": "Startseite",
+    "manager": "Manager",
     "inbox": "Posteingang",
     "focus": "Fokus",
     "calendar": "Kalender",
-    "tasks": "Aufgaben"
+    "tasks": "Aufgaben",
+    "radar": {
+      "pulseLabel": "Radar · Kontext, Ideen und sanfte Orientierung",
+      "unavailable": "Radar ist vorübergehend nicht verfügbar.",
+      "unavailableHint": "Das bedeutet nicht, dass der Tag leer ist. Versuchen Sie, den Startbildschirm neu zu laden.",
+      "retry": "Wiederholen",
+      "roofTruthChecking": "Roof truth: wird geprüft…",
+      "roofExpandHint": "Modulliste und Datenkohärenz-Audit ein- oder ausklappen.",
+      "roofModules": "Roof · {{count}} Module",
+      "pulse": "Puls",
+      "gentleExplanation": "Sanfte Erklärung",
+      "explainBriefing": "Erkläre dieses Briefing in einfacher Sprache, ohne Druck — 3 Punkte: was es bedeutet, warum jetzt, und ein kleiner Schritt, den ich tun kann.",
+      "explain": "Erklären",
+      "calmPlan": "Hilf mir, daraus einen ruhigen Schritt-für-Schritt-Plan zu machen — ohne Eile.",
+      "blocks": {
+        "aiPulseCore": "KI-Puls",
+        "industryLens": "Branchenkontext",
+        "executionCurrent": "Umsetzungsstrom",
+        "sparkField": "Ideen & Notizen",
+        "decisionTemperature": "Entscheidungstemperatur",
+        "teamSignal": "Teamsignal",
+        "momentum": "Momentum"
+      },
+      "blockHints": {
+        "aiPulseCore": "Pulszusammenfassung: Schlagzeile, Fokus und Puls-Score.",
+        "momentum": "Programmmomentum: Statistiken und Fortschrittssignale.",
+        "sparkField": "Ideen & Notizen: Laufzeit-Notizen und aktuelle Ergebnisse.",
+        "decisionTemperature": "Entscheidungen: Warteschlange, Blocker, heißestes Thema.",
+        "industryLens": "Branchenkontext: Markt, Technologie, Benchmark, Vergleichsfall.",
+        "executionCurrent": "Umsetzung: Arbeitsströme und Artefakte.",
+        "teamSignal": "Team: Ausrichtung und Organisationssignale."
+      },
+      "worthNoticing": "Bemerkenswert",
+      "talkToAI": "Mit KI sprechen",
+      "openExecution": "Zur Umsetzung",
+      "topMove": "Wichtigster Schritt",
+      "pulseActionPrompt": "Wandle diesen Puls in einen konkreten Plan für heute und diese Woche um.",
+      "decisionQueue": "Entscheidungswarteschlange",
+      "decisionQueueClear": "Keine Entscheidungen in der Warteschlange und keine harten Blocker — alles im grünen Bereich.",
+      "pending": "Ausstehend",
+      "blocking": "Blockierend",
+      "hottestDecision": "Dringendste Entscheidung",
+      "unblockPrompt": "Hilf mir, diese Entscheidung zu entblocken: {{title}}",
+      "outputFlow": "Output-Strom",
+      "visibility": {
+        "private": "Privat",
+        "project": "Projekt",
+        "organization": "Organisation",
+        "reviewShared": "Prüfung nötig",
+        "demo": "Demo"
+      },
+      "reviewState": {
+        "privateDraft": "Privater Entwurf",
+        "reviewReady": "Prüfbereit",
+        "inReview": "In Prüfung",
+        "approved": "Genehmigt",
+        "published": "Veröffentlicht"
+      },
+      "artifactType": {
+        "presentation": "Präsentation",
+        "sheet": "Tabelle",
+        "report": "Bericht"
+      },
+      "outputsLibraryNote": "Prüfung und Sichtbarkeit bleiben mit der Output-Bibliothek abgestimmt.",
+      "askAISequencing": "KI um Reihenfolge bitten",
+      "sequencingPrompt": "Erstelle die beste Ausführungsreihenfolge basierend auf den aktuellen Strömen.",
+      "ideasWithTasks": "Ideen mit Aufgaben {{count}}",
+      "recentNotes": "Aktuelle Notizen {{count}}",
+      "recentOutputs": "Aktuelle Outputs {{count}}",
+      "orgSignals": "Organisationssignale {{count}}",
+      "expandIdea": "Stärkste Idee ausbauen",
+      "expandIdeaPrompt": "Baue diese Idee zu einer Initiative aus und schlage die ersten 3 Schritte vor: {{text}}",
+      "newIdea": "Neue Idee",
+      "newIdeaSubtitle": "Neuen Transformationspfad starten",
+      "noteLabel": "Notiz",
+      "nodes": "Knoten",
+      "tasks": "Aufgaben",
+      "stages": {
+        "spark": "Funke",
+        "shaping": "Gestaltung",
+        "growing": "Wachstum"
+      },
+      "benchmark": "Benchmark",
+      "peerCase": "Vergleichsfall",
+      "peerCasePrompt": "Vergleiche diesen Fall mit unserem Transformationsprogramm und gib mir 3 Schlussfolgerungen: {{title}}",
+      "signalPrompt": "Erkläre, warum dieses Signal für unsere Transformation wichtig ist: {{title}}",
+      "teamReadout": "Team-Signal",
+      "teamUpdatePrompt": "Bereite ein kurzes Team-Update basierend auf diesem Signal vor: {{title}}",
+      "momentumPrompt": "Erkläre, was dieses Momentum-Signal für die Transformation bedeutet: {{title}}",
+      "live": "Live",
+      "rel": "Rel",
+      "loadError": "Radar konnte nicht geladen werden",
+      "triage": {
+        "title": "Triage-Cockpit",
+        "subtitle": "Operationelle Signale nach Entscheidungspriorität geordnet",
+        "empty": "Keine Triage-Signale vorhanden. Der operative Radar ist klar.",
+        "category": {
+          "execution_delivery": "Umsetzung",
+          "decision_alignment": "Entscheidung",
+          "finance_kpi": "Finanzen / KPI",
+          "governance_compliance": "Governance",
+          "external_change": "Externe Veränderung"
+        },
+        "timeWindow": {
+          "next_24h": "Nächste 24h",
+          "this_week": "Diese Woche",
+          "this_month": "Dieser Monat"
+        },
+        "driver": {
+          "deadline": "Frist",
+          "blocker": "Blocker",
+          "variance": "Abweichung",
+          "escalation": "Eskalation",
+          "opportunity": "Chance"
+        },
+        "whyNow": "Warum jetzt",
+        "evidence": "Nachweise",
+        "evidencePartial": "Teilweise Abdeckung",
+        "evidenceComplete": "Vollständige Abdeckung",
+        "uncertainty": "Unsicherheitsgrenze",
+        "missingInputs": "Fehlende Daten",
+        "conflicts": "Konflikte",
+        "wouldChange": "Würde Ranking ändern",
+        "owner": "Verantwortlicher",
+        "nextAction": "Nächste Aktion",
+        "goTo": "Gehe zu {{module}}",
+        "fallback": "Alternativ: {{fallback}}",
+        "degraded": {
+          "missing_data": "Einige Daten fehlen. Ergebnisse können unvollständig sein.",
+          "conflict": "Widersprüchliche Daten erkannt. Mit Vorsicht prüfen.",
+          "stale": "Daten könnten veraltet sein. Quellen ggf. aktualisieren.",
+          "permission": "Zugriff eingeschränkt. Einige Informationen sind verborgen."
+        },
+        "hardGate": "Hard Gate",
+        "score": "Punktzahl"
+      }
+    }
   },
   "step1": {
     "title": "Schritt 1"
@@ -955,14 +1094,26 @@
       "tutorials": "Anleitungen",
       "bestPractices": "Best Practices",
       "faq": "FAQ",
-      "troubleshooting": "Fehlerbehebung"
+      "troubleshooting": "Fehlerbehebung",
+      "contentMoved": "Dieser Inhalt wurde verschoben oder entfernt.",
+      "contentMovedHint": "Durchsuchen Sie unsere Sammlungen, um zu finden, was Sie suchen.",
+      "browseCollections": "Sammlungen durchsuchen",
+      "deprecated": "Dieser Artikel wurde zurückgezogen",
+      "viewReplacement": "Ersatzartikel anzeigen",
+      "missingTranslationBanner": "Keine DE-Version — EN wird angezeigt",
+      "staleTranslation": "Diese Übersetzung ist möglicherweise veraltet.",
+      "nextAction": "Nächster Schritt",
+      "backToSurface": "Zurück zur Arbeit"
     },
     "sidePanel": {
       "title": "Help Center",
       "tabs": {
-        "overview": "Overview",
+        "overview": "Übersicht",
+        "thisStep": "Dieser Schritt",
+        "guides": "Anleitungen",
         "faq": "FAQ",
-        "knowledge": "Knowledge Base"
+        "knowledge": "Wissensdatenbank",
+        "updates": "Neuigkeiten"
       },
       "fullDocs": "Full documentation",
       "overview": {
@@ -1005,15 +1156,38 @@
         "notify": {
           "success": "You'll be notified when it's ready!"
         }
+      },
+      "whatThisIs": "Was das ist",
+      "whyItMatters": "Warum es wichtig ist",
+      "whatYouDoHere": "Was Sie hier tun",
+      "howAiHelpsHere": "Wie KI hier hilft",
+      "whatComesNext": "Was als Nächstes kommt",
+      "askAi": "KI fragen",
+      "quickGuides": "Schnellanleitungen",
+      "watchVideo": "Video ansehen",
+      "modules": {
+        "welcome": "Willkommen",
+        "dashboard": "Dashboard",
+        "assessment": "Hub fuer lizenzierte Tools",
+        "initiatives": "Initiativen",
+        "roadmap": "Roadmap",
+        "reports": "Berichte",
+        "settings": "Einstellungen",
+        "admin": "Administration",
+        "superadmin": "Super Admin",
+        "superadmin_ai_infrastructure": "KI-Infrastruktur",
+        "superadmin_ai_development": "KI-Entwicklung",
+        "superadmin_ai_operations": "KI-Betrieb",
+        "billing": "Abrechnung & Abonnement"
       }
     },
-  "search": {
-      "placeholder": "Search help articles, tutorials...",
+    "search": {
+      "placeholder": "Hilfe suchen... (Cmd+K)",
       "searching": "Searching...",
       "results": "Results",
       "found": "found",
       "viewAll": "View all results",
-      "noResults": "No results found for \"{{query}}\"",
+      "noResults": "Keine Ergebnisse für",
       "tryDifferent": "Try different keywords or browse categories",
       "recent": "Recent searches",
       "clearRecent": "Clear",
@@ -1022,7 +1196,24 @@
       "navigate": "Navigate",
       "select": "Select",
       "close": "Close",
-      "buttonText": "Search help..."
+      "buttonText": "Search help...",
+      "tryDifferentKeywords": "Versuchen Sie andere Suchbegriffe oder durchsuchen Sie die Kategorien",
+      "types": {
+        "module": "Modul",
+        "card": "Karte",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "filters": {
+        "all": "Alle",
+        "module": "Modul",
+        "card": "Karte",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "suggestionsTitle": "Versuchen Sie zu suchen nach:",
+      "browseTitle": "Oder durchsuchen:",
+      "helpOverviewLink": "Hilfe-Uebersicht oeffnen"
     },
     "article": {
       "tableOfContents": "Table of Contents",
@@ -1089,6 +1280,25 @@
       "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
       "support": "Support",
       "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    },
+    "widget": {
+      "label": "Hilfe",
+      "header": "Hilfezentrum",
+      "searchPlaceholder": "Hilfe suchen...",
+      "noResults": "Keine Ergebnisse fuer \"{{query}}\"",
+      "docs": "Dokumentation",
+      "contact": "Kontakt"
+    },
+    "chatbot": {
+      "title": "Teresa — Hilfe",
+      "placeholder": "Fragen Sie Teresa...",
+      "send": "Senden",
+      "typing": "Schreibt...",
+      "clear": "Chat löschen",
+      "sources": "Quellen",
+      "helpful": "War das hilfreich?",
+      "suggestions": "Vorgeschlagene Fragen",
+      "poweredBy": "Wissensbasierte KI"
     }
   },
   "kb": {
@@ -1167,6 +1377,20 @@
     }
   },
   "settings": {
+    "menu": {
+      "preferences": "Einstellungen",
+      "theme": "Design",
+      "language": "Sprache",
+      "demoMode": "Demo öffnen",
+      "demoModeExit": "Demo beenden",
+      "demoModeOn": "Der Demo-Modus ist aktiv - du erkundest Atelier Toys",
+      "demoModeOff": "Den Atelier-Toys-Demo-Workspace öffnen",
+      "demoReadOnly": "Demo-Daten - nur lesen",
+      "myProfile": "Mein Profil",
+      "billing": "Abrechnung & Pläne",
+      "aiConfig": "KI-Konfiguration",
+      "switchOrg": "Organisation wechseln"
+    },
     "title": "Einstellungen",
     "profile": "Profil",
     "billing": "Abrechnung",
@@ -1202,8 +1426,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {
@@ -1228,9 +1452,39 @@
     },
     "topBar": {
       "demo": "Demo",
-      "trial": "Trial",
-      "login": "Log in",
-      "signUp": "Sign up"
+      "trial": "Test starten",
+      "login": "Anmelden",
+      "signUp": "Registrieren",
+      "menu": "Menü",
+      "lightMode": "Hell",
+      "darkMode": "Dunkel",
+      "switchLight": "Zum hellen Modus wechseln",
+      "switchDark": "Zum dunklen Modus wechseln"
+    },
+    "profitHero": {
+      "h1": {
+        "line1": "Consultify AI.",
+        "line2": "Das gesamte Business-Wissen der Welt.",
+        "line3": "Verwandelt in Ihren Profit."
+      },
+      "sub": "Für Berater, Transformationsteams und Operatoren, die Diagnose, Planung, Umsetzung und messbare Ergebnisse in einem Workflow brauchen.",
+      "billboard": "Wir haben für Consulting getan, was Spotify für Musik getan hat: unbegrenzter Zugang. Nur dass Sie statt Playlists Profit bekommen.",
+      "billboardShort": "Ein Workflow von der Diagnose über die Umsetzung bis zu messbaren Ergebnissen.",
+      "ctaPrimary": "Test starten",
+      "ctaSecondary": "Demo ausprobieren",
+      "ctaNote": "Kurze Teaser sind öffentlich. Die Vollversionen werden nach dem Login freigeschaltet.",
+      "panel": {
+        "title": "Vom Chat -> zu Deliverables -> zu Profit",
+        "subtitle": "Ein Workspace. Durchgängige Umsetzung.",
+        "items": {
+          "tools": "Tools & Frameworks",
+          "finance": "Finanzanalyse",
+          "reports": "Berichte & Präsentationen",
+          "governance": "Governance standardmäßig"
+        },
+        "imageAlt": "Consultify Produktscreenshot",
+        "imageHint": "Screenshots erscheinen hier, sobald die Assets verfügbar sind."
+      }
     },
     "methodology": {
       "badge": "Our Methodology",
@@ -1269,19 +1523,153 @@
       },
       "knowledge": {
         "title": "Wissen",
+        "blogDbr77": "DBR77 Blog",
+        "blogConsultify": "Consultify Blog",
         "blog": "Blog",
         "reports": "Berichte",
         "podcasts": "Podcasts"
+      },
+      "documentation": {
+        "title": "Dokumentation"
       },
       "legal": {
         "privacy": "Datenschutzrichtlinie",
         "cookies": "Cookie-Richtlinie",
         "terms": "Nutzungsbedingungen",
+        "subscription": "Abonnementbedingungen",
+        "dpa": "Auftragsverarbeitung (DPA)",
+        "sla": "Service Levels (SLA)",
         "acceptableUse": "Richtlinie zur akzeptablen Nutzung",
         "aiPolicy": "KI-Richtlinie",
         "security": "Sicherheitsübersicht",
         "consent": "Einwilligung & Kontrolle"
+      },
+      "offices": "Standorte"
+    },
+    "problemPlatform": {
+      "heading": "Was Spotify für Musik getan hat,",
+      "headingAccent": "tun wir für Consulting.",
+      "problem": {
+        "badge": "Das Marktproblem",
+        "title": "Business Intelligence ist noch immer unzugänglich, generisch und unsicher.",
+        "body": "Der Markt hat KI und digitale Werkzeuge noch immer nicht in eine skalierbare Ebene für taktische und strategische Geschäftsprozesse verwandelt.",
+        "points": [
+          "Beratung bleibt für die meisten Unternehmen unzugänglich.",
+          "Große Sprachmodelle sind keine Spezialisten und verstehen den Unternehmenskontext nicht.",
+          "Die meisten KI-Lösungen sind für echte Geschäftsarbeit nicht sicher genug."
+        ],
+        "solve": "Genau diese Lücke schließt Consultify."
+      },
+      "pattern": {
+        "badge": "Der Kategoriewechsel",
+        "title": "Was Spotify für Musik getan hat: Zugang, Qualität und Vertrauen im großen Maßstab.",
+        "body": "Spotify hat nicht mehr Musik geschaffen. Es hat großartige Musik sofort zugänglich, verlässlich und einfach nutzbar gemacht. Consultify vollzieht denselben Wandel für Business Intelligence.",
+        "examples": [
+          "Direkter Zugang zu Business-Wissen aus Harvard.",
+          "Intelligenz, die im vollen Kontext Ihres Unternehmens arbeitet, nicht in isolierten Prompts.",
+          "Vertrauen und Sicherheit durch Technologie, die auf die individuellen Anforderungen Ihres Unternehmens zugeschnitten ist."
+        ],
+        "summary": "Zugang. Qualität. Vertrauen. Das ist der Wandel."
       }
+    },
+    "docs": {
+      "badge": "Hilfe & Bewertung",
+      "title": "Alles, was Sie zur Bewertung von Consultify brauchen",
+      "subtitle": "Nutzen Sie Wissen, Sicherheit, Preise und Partnermaterialien, um zu entscheiden, ob Consultify zu Ihrem Rollout passt.",
+      "searchPlaceholder": "Wissensartikel und Leitfäden durchsuchen...",
+      "searchBtn": "Suchen",
+      "knowledgeBase": "Wissensdatenbank",
+      "knowledgeBaseDesc": "Experten-Leitfäden zu Transformation, Governance, ROI-Verteidigung und Umsetzungsdisziplin.",
+      "security": "Sicherheit & Compliance",
+      "securityDesc": "AES-256, DSGVO, Datenresidenz und Enterprise-Deployment-Optionen erklärt.",
+      "pricing": "Preise",
+      "pricingDesc": "Seat-Pakete, gemeinsames AI-Budget, lizenzierte Tools und Enterprise-Pläne.",
+      "partnerProgram": "Partnerprogramm",
+      "partnerProgramDesc": "Umsatzbeteiligung, Zertifizierungen, Akademie-Zugang und Bewerbungsprozess.",
+      "legalCenter": "Rechtszentrum",
+      "legalCenterDesc": "AGB, Datenschutzrichtlinie, Datenverarbeitungsverträge und Compliance-Dokumente.",
+      "resources": "Ressourcen",
+      "resourcesDesc": "Fallstudien, Whitepapers, Webinare und Produktaktualisierungen.",
+      "explore": "Entdecken"
+    },
+    "whereItHappens": {
+      "badge": "Was Consultify leistet",
+      "heading": "Consultify bringt Consulting-Wissen, Frameworks, Umsetzung und Deliverables in eine gemeinsame Arbeitsumgebung.",
+      "sub": "So sieht die Consulting Intelligence Platform in der Praxis aus: nicht nur KI-Antworten, sondern ein strukturierter Consulting-Workflow von der Diagnose bis zum Ergebnis.",
+      "closingNote": "Ein Kategorieversprechen, eine Produktoberfläche, ein Weg vom Verständnis zu messbaren Ergebnissen.",
+      "imageAlt": "Consultify Produktscreenshot",
+      "imageHint": "Screenshots erscheinen hier, sobald die Assets verfügbar sind.",
+      "features": {
+        "aiCore": {
+          "badge": "AI Core",
+          "title": "Strategischer KI-Berater",
+          "description": "Die KI analysiert Ihre Organisation, identifiziert Lücken und erstellt in Minuten statt Monaten eine priorisierte strategische Roadmap.",
+          "highlights": [
+            "Diagnosebewertung",
+            "Gap-Analyse",
+            "Benchmark gegen die Branche"
+          ]
+        },
+        "economics": {
+          "badge": "Wirtschaftlichkeit",
+          "title": "Finanzmodellierung & ROI",
+          "description": "Erstellen Sie Business Cases, modellieren Sie NPV-/IRR-Szenarien und verfolgen Sie die tatsächlichen im Vergleich zu den geplanten Renditen jeder Initiative.",
+          "highlights": [
+            "NPV- / IRR-Modellierung",
+            "Sensitivitätsanalyse",
+            "Live-ROI-Tracking"
+          ]
+        },
+        "execution": {
+          "badge": "Umsetzung",
+          "title": "Initiativenmanagement",
+          "description": "Machen Sie aus Strategie echte Umsetzung. Steuern Sie Workstreams, Meilensteine und Governance - mit KI, die Ihr Team bei jeder Entscheidung in Richtung Wirkung lenkt.",
+          "highlights": [
+            "Initiativen-Roadmap",
+            "Menschliche Freigabegates",
+            "Risiko-Früherkennung"
+          ]
+        },
+        "deliverables": {
+          "badge": "Deliverables",
+          "title": "Berichts- & Präsentations-Builder",
+          "description": "Erstellen Sie aus Live-Daten sofort Vorstandsberichte und Investor-Decks. Ein Klick von der Analyse zum fertigen Output.",
+          "highlights": [
+            "Automatisch erzeugte Decks",
+            "Narrative Engine",
+            "Quellen-Nachvollziehbarkeit"
+          ]
+        },
+        "chat": {
+          "badge": "Chat",
+          "title": "KI-Experteninterview",
+          "description": "Fragen Sie alles zu Ihrem Geschäftskontext. Die KI greift auf 10.000+ Frameworks und Ihre internen Daten zu und antwortet präzise.",
+          "highlights": [
+            "Kontextbewusster Chat",
+            "Framework-Bibliothek",
+            "Antworten mit Quellen"
+          ]
+        },
+        "results": {
+          "badge": "Ergebnisse",
+          "title": "Impact-Tracking",
+          "description": "Verbinden Sie Initiativen mit realen KPIs. Messen Sie den tatsächlich gelieferten Wert und markieren Sie Abweichungen automatisch, bevor sie zum Problem werden.",
+          "highlights": [
+            "Live-KPI-Verfolgung",
+            "Abweichungswarnungen",
+            "Wirkungsnachweis"
+          ]
+        }
+      }
+    },
+    "knowledge": {
+      "badge": "Wissensdatenbank",
+      "title": "Entdecken Sie unsere Expertise",
+      "subtitle": "Bewährte Methoden und Best Practices, denen Branchenführer in ganz Europa vertrauen.",
+      "readMore": "Vollständigen Artikel lesen",
+      "exploreAll": "Gesamte Wissensdatenbank öffnen",
+      "ctaSubtext": "Starten Sie eine kostenlose Testphase, um alle Artikel, Videos und Ressourcen freizuschalten.",
+      "minUnit": "Min."
     }
   },
   "partner": {
@@ -1501,12 +1889,12 @@
           }
         },
         "digital-maturity": {
-          "name": "Digital Maturity Assessment",
-          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "name": "Digitale Reifegradanalyse",
+          "description": "Bewerten Sie die digitale Bereitschaft in den Dimensionen Technologie, Prozesse und Menschen mit branchenüblichen Frameworks.",
           "outputs": {
-            "0": "Maturity Radar",
-            "1": "Benchmark Comparison",
-            "2": "Transformation Roadmap"
+            "0": "Reifegrad-Radar",
+            "1": "Benchmark-Vergleich",
+            "2": "Transformations-Roadmap"
           }
         },
         "automation-roadmap": {
@@ -1519,12 +1907,12 @@
           }
         },
         "technology-scanner": {
-          "name": "Technology Landscape Scanner",
-          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "name": "Technologielandschaft-Scanner",
+          "description": "Scannen Sie aufkommende Technologien für Ihre Branche und bewerten Sie die Adoptionsbereitschaft.",
           "outputs": {
-            "0": "Technology Radar",
-            "1": "Adoption Assessment",
-            "2": "Pilot Recommendations"
+            "0": "Technologie-Radar",
+            "1": "Adoptionsbewertung",
+            "2": "Pilotempfehlungen"
           }
         },
         "data-strategy": {
@@ -1669,5 +2057,345 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "megatrends": {
+    "title": "Megatrend-Analyse",
+    "subtitle": "Branchenmegatrends erkunden, ein Radar erstellen und strategische Erkenntnisse gewinnen",
+    "tabs": {
+      "baseline": "Branchen-Baseline",
+      "radar": "Trend-Radar-Karte",
+      "detail": "Trenddetails",
+      "custom": "Eigene Trends",
+      "insights": "KI-Erkenntnisse"
+    },
+    "selectTrend": "Wählen Sie einen Trend aus der Baseline oder Radar-Karte, um Details zu sehen.",
+    "goToBaseline": "Zur Baseline"
+  },
+  "executive": {
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "health": {
+      "title": "Portfolio-Gesundheit",
+      "subtitle": "Gesamte Ausführungsleistung",
+      "portfolio": "Portfolio-Gesundheit",
+      "excellent": "Ausgezeichnet",
+      "good": "Gut",
+      "attention": "Handlungsbedarf",
+      "critical": "Kritisch",
+      "noData": "Keine Daten",
+      "lastUpdated": "Zuletzt aktualisiert",
+      "live": "Live",
+      "execution": "Ausführung",
+      "decisions": "Entscheidungsgeschwindigkeit",
+      "capacity": "Teamkapazität",
+      "risk": "Risikominderung",
+      "noBreakdown": "Detaildaten noch nicht verfügbar",
+      "noBreakdownHint": "Daten erscheinen, sobald Aufgaben und Entscheidungen verfolgt werden",
+      "vsLastWeek": "vs letzte Woche"
+    },
+    "kpi": {
+      "tasks": "Aufgabenausführung",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "Pünktlich",
+      "overdue": "Überfällig",
+      "decisions": "Ausstehende Entscheidungen",
+      "awaiting": "ausstehend",
+      "critical": "Kritisch",
+      "avgWait": "Ø Wartezeit",
+      "team": "Teamkapazität",
+      "teamCapacity": "Teamkapazität",
+      "utilized": "ausgelastet",
+      "overloaded": "Überlastet",
+      "available": "Verfügbar",
+      "risk": "Risikoniveau",
+      "riskLevel": "Risikoniveau",
+      "blockers": "Blockaden",
+      "escalations": "Eskalationen",
+      "noData": "Keine Daten",
+      "riskLow": "Niedrig",
+      "riskMedium": "Mittel",
+      "riskHigh": "Hoch",
+      "riskCritical": "Kritisch"
+    },
+    "action": {
+      "decision": "Entscheidung",
+      "task": "Aufgabe",
+      "escalation": "Eskalation",
+      "blocker": "Blockade",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "view": "Details anzeigen",
+      "title": "Handlungsbedarf",
+      "allClear": "Alles erledigt!",
+      "noUrgent": "Keine dringenden Punkte, die Ihre Aufmerksamkeit erfordern.",
+      "viewAll": "Alle anzeigen"
+    },
+    "actions": {
+      "title": "Handlungsbedarf",
+      "critical": "kritisch",
+      "highPriority": "hohe Priorität",
+      "viewAll": "Alle anzeigen",
+      "viewDetails": "Details anzeigen",
+      "allClear": "Alles erledigt",
+      "overdue": "überfällig",
+      "days": "T"
+    },
+    "urgency": {
+      "critical": "Kritisch",
+      "high": "Hoch"
+    },
+    "decisions": {
+      "title": "Entscheidungswarteschlange",
+      "queue": "Entscheidungswarteschlange",
+      "noPending": "Keine ausstehenden Entscheidungen",
+      "allClear": "Keine ausstehenden Entscheidungen",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "delegate": "Delegieren",
+      "viewAll": "Alle Entscheidungen anzeigen",
+      "approved": "Entscheidung genehmigt",
+      "rejected": "Entscheidung abgelehnt",
+      "error": "Entscheidung konnte nicht verarbeitet werden",
+      "waiting": "wartend"
+    },
+    "team": {
+      "title": "Teamleistung",
+      "members": "Mitglieder",
+      "avgCapacity": "Ø Kapazität",
+      "overloaded": "Überlastet",
+      "available": "Verfügbar",
+      "noMembers": "Keine Teammitglieder gefunden",
+      "viewAll": "Vollständigen Teambericht anzeigen",
+      "tasks": "Aufgaben",
+      "unknown": "Unbekannt"
+    },
+    "teamPerf": {
+      "title": "Teamleistung",
+      "noMembers": "Keine Teammitglieder gefunden"
+    },
+    "initiatives": {
+      "title": "Initiativen",
+      "active": "aktive Initiativen",
+      "viewAll": "Alle anzeigen",
+      "empty": "Keine aktiven Initiativen",
+      "tasks": "Aufgaben",
+      "overdue": "überfällig",
+      "untitled": "Ohne Titel"
+    },
+    "signals": {
+      "title": "KI-Signale",
+      "subtitle": "Intelligente Warnungen aus Ihrem Portfolio",
+      "viewAll": "Alle anzeigen",
+      "empty": "Keine Signale"
+    },
+    "refresh": "Aktualisieren",
+    "lastUpdated": "Aktualisiert",
+    "loadError": "Dashboard-Daten konnten nicht geladen werden",
+    "patterns": {
+      "title": "Arbeitsmuster",
+      "tasksPerWeek": "Aufgaben/Woche",
+      "avgTaskTime": "Ø Aufgabenzeit",
+      "avgDecisionTime": "Ø Entscheidungszeit",
+      "overdueRate": "Überfälligkeitsrate",
+      "insight": {
+        "overloaded": "Sie haben {{openTasks}} offene Aufgaben, erledigen aber durchschnittlich {{velocity}}/Woche. Erwägen Sie Delegation oder Verschiebung.",
+        "highOverdue": "{{rate}}% Ihrer Aufgaben mit Fristen werden verspätet abgeschlossen. Versuchen Sie, Pufferzeit einzuplanen.",
+        "slowDecisions": "Durchschnittliche Entscheidungszeit beträgt {{days}} Tage. Schnellere Entscheidungen könnten Teams entlasten."
+      }
+    },
+    "aiOperator": {
+      "title": "KI-Operator",
+      "subtitle": "Beziehung, Navigation, Ausführung und Wert in einem Cockpit",
+      "readiness": "Operator-Bereitschaft",
+      "stage": "Phase",
+      "relationship": "Beziehung",
+      "daysSinceTouch": "Tage seit Kontakt",
+      "noTouchpoint": "Kein Kontakt",
+      "value": "Wert",
+      "autonomy": "Autonomie",
+      "nextActions": "Nächste beste Aktionen",
+      "open": "Öffnen",
+      "noActions": "Keine dringenden Operator-Aktionen.",
+      "cadence": "Kadenz und Workstreams",
+      "executiveBrief": "Executive-Brief",
+      "noBrief": "Noch kein Brief vorhanden.",
+      "sequence": "Operator-Sequenz",
+      "noPlan": "Noch kein Operator-Plan vorhanden.",
+      "intervene": "Eingreifen",
+      "noSequence": "Sequenzplan wurde noch nicht erstellt.",
+      "nextMilestone": "Nächster Meilenstein",
+      "none": "Keine",
+      "planBlockers": "Plan-Blockaden",
+      "noBlockers": "Keine aktiven Plan-Blockaden.",
+      "programSummary": "Programmzusammenfassung",
+      "suggestedInterventions": "Vorgeschlagene Interventionen",
+      "working": "Wird bearbeitet...",
+      "propose": "Vorschlagen",
+      "noInterventions": "Keine neuen Interventionen vorzuschlagen.",
+      "approvalQueue": "Genehmigungswarteschlange",
+      "accept": "Akzeptieren",
+      "reject": "Ablehnen",
+      "execute": "Ausführen",
+      "noQueue": "Keine Interventionen in der Genehmigungswarteschlange."
+    },
+    "operator": {
+      "proposed": "Operator-Intervention vorgeschlagen.",
+      "proposeFailed": "Intervention konnte nicht vorgeschlagen werden.",
+      "accepted": "Intervention akzeptiert.",
+      "acceptFailed": "Intervention konnte nicht akzeptiert werden.",
+      "executed": "Intervention ausgeführt.",
+      "executeFailed": "Intervention konnte nicht ausgeführt werden.",
+      "rejected": "Intervention abgelehnt.",
+      "rejectFailed": "Intervention konnte nicht abgelehnt werden."
+    }
+  },
+  "contact": {
+    "badge": "Kontakt aufnehmen",
+    "hero": {
+      "title1": "Sprechen wir über",
+      "title2": "Ihren nächsten Schritt",
+      "subtitle": "Ob Sie eine Demo benötigen, Enterprise-Deployment besprechen oder eine Frage haben — wir sind für Sie da."
+    },
+    "offices": "Büros",
+    "email": "E-Mail",
+    "emailGeneral": "Allgemein",
+    "emailSales": "Vertrieb",
+    "emailSupport": "Support",
+    "bookDemo": "30-Min-Gespräch buchen",
+    "bookDemoSub": "Kostenlose Beratung. Sehen Sie Consultify in Aktion.",
+    "sla": "Wir antworten innerhalb von 1 Werktag. Bestehende Kunden erhalten schnellere Hilfe über den In-App-Support.",
+    "types": {
+      "general": "Allgemeine Anfrage",
+      "sales": "Vertrieb / Demo-Anfrage",
+      "support": "Technischer Support",
+      "partnership": "Partnerschaft",
+      "security": "Sicherheit & Compliance",
+      "press": "Presse & Medien"
+    },
+    "form": {
+      "title": "Senden Sie uns eine Nachricht",
+      "subtitle": "Mit * markierte Felder sind Pflichtfelder",
+      "name": "Ihr Name",
+      "email": "E-Mail-Adresse",
+      "company": "Unternehmen",
+      "inquiryType": "Anfragetyp",
+      "message": "Nachricht",
+      "messagePlaceholder": "Wie können wir Ihnen helfen?",
+      "securityNote": "Ihre Daten werden verschlüsselt und gemäß unserer Datenschutzrichtlinie verarbeitet.",
+      "send": "Nachricht senden",
+      "sending": "Wird gesendet..."
+    },
+    "success": {
+      "title": "Nachricht gesendet",
+      "subtitle": "Vielen Dank für Ihre Kontaktaufnahme. Wir melden uns innerhalb von 1 Werktag.",
+      "another": "Weitere Nachricht senden"
+    }
+  },
+  "moduleHome": {
+    "new": "Neu",
+    "recent": "Letzte",
+    "saved": "Gespeichert",
+    "templates": "Vorlagen",
+    "heroDoc": "Berichte, Briefings, Analysen, Artikel und Geschäftsdokumente",
+    "heroSheet": "Budgets, Finanzmodelle, Zeitpläne, Risikomatrizen",
+    "heroDeck": "Management-Decks, Pitch, Status-Updates, Workshop-Präsentationen",
+    "startNew": "Neu starten",
+    "fromTemplate": "Aus Vorlage",
+    "viewAll": "Alle anzeigen"
+  },
+  "chatOutputTool": {
+    "auto": "Auto",
+    "documents": "Dokumente",
+    "tables": "Tabellen",
+    "presentations": "Präsentationen"
+  },
+  "demo": {
+    "banner": {
+      "mode": "Demo-Modus",
+      "exit": "Demo verlassen",
+      "exitShort": "Schließen",
+      "startTrial": "Testphase starten",
+      "restartLocale": "Demo in {{locale}} neu laden",
+      "projects": "Projekte",
+      "initiatives": "Initiativen",
+      "hints": "Hinweise",
+      "readOnlyTitle": "Nur-Lese-Modus",
+      "readOnlyDesc": "Änderungen werden nicht gespeichert",
+      "exploreTitle": "Funktionen erkunden",
+      "exploreDesc": "Alle Module durchsuchen",
+      "hintTitle": "Hinweis",
+      "defaultHint": "Klicken Sie auf Initiativen, um Details zu sehen",
+      "help": "Hilfe",
+      "partnerProgram": "Partnerprogramm",
+      "showLimitations": "Einschränkungen",
+      "hideLimitations": "Ausblenden",
+      "limitations": {
+        "readOnly": "Nur-Lese-Modus — Änderungen werden nicht gespeichert",
+        "sampleData": "Beispieldaten — entdecken Sie realistische Szenarien",
+        "session": "Sitzung läuft in 24 Std. ab",
+        "aiQuota": "KI-Interaktionen begrenzt ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "KI",
+      "used": "verwendet",
+      "aiUsageTooltip": "Heute verwendete KI-Aufrufe / tägliches Limit",
+      "tokenUsageTooltip": "Heute verwendete Tokens / tägliches Limit"
+    }
+  },
+  "access": {
+    "banner": {
+      "demo": "Sie sehen eine Demo-Umgebung (nur lesend)",
+      "pastDue": "Zahlung fehlgeschlagen. Bitte aktualisieren Sie Ihre Zahlungsmethode.",
+      "trialExpired": "Ihre Testphase ist abgelaufen. Upgrade, um fortzufahren.",
+      "trialCritical": "Testphase läuft in {{days}} Tag(en) ab. Jetzt upgraden.",
+      "trialWarning": "Noch {{days}} Tag(e) in Ihrer Testphase",
+      "approachingLimits": "Sie nähern sich Ihren Nutzungslimits. Upgrade für unterbrechungsfreien Zugriff."
+    },
+    "modal": {
+      "trialExpired": "Ihre Testphase ist beendet. Ihre Daten sind sicher, aber Ihre Organisation ist jetzt im Nur-Lese-Modus. Upgrade, um vollen Zugriff wiederherzustellen.",
+      "title": "Zugriff erforderlich",
+      "close": "Schließen",
+      "bookCall": "Termin buchen"
+    },
+    "cta": {
+      "upgradePlan": "Plan upgraden",
+      "upgradeNow": "Jetzt upgraden",
+      "fixPayment": "Zahlung korrigieren",
+      "addPaymentMethod": "Zahlungsmethode hinzufügen",
+      "startTrial": "Kostenlose Testphase starten",
+      "completeSetup": "Einrichtung abschließen",
+      "goToBilling": "Zur Abrechnung",
+      "contactSales": "Vertrieb kontaktieren"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "Organisation nicht gefunden. Bitte melden Sie sich erneut an.",
+      "ORG_INACTIVE": "Ihre Organisation ist inaktiv. Bitte kontaktieren Sie den Support oder melden Sie sich erneut an.",
+      "TRIAL_PROFILE_INCOMPLETE": "Organisations-Setup abschließen, um Ihre KI-Testphase zu starten.",
+      "AI_TOKEN_BUDGET_EXCEEDED": "Ihr KI-Testbudget ist aufgebraucht. Fügen Sie eine Zahlungsmethode hinzu, um KI weiter zu nutzen.",
+      "AI_LIMIT_REACHED": "Sie haben Ihr tägliches KI-Limit erreicht. Upgrade, um fortzufahren.",
+      "TRIAL_EXPIRED": "Ihre Testphase ist abgelaufen. Upgrade, um alle Funktionen weiterzunutzen.",
+      "DEMO_READ_ONLY": "Der Demo-Modus ist schreibgeschützt. Starten Sie eine kostenlose Testphase, um eigene Daten anzulegen.",
+      "DEMO_TIME_EXPIRED": "Demo-Sitzung abgelaufen. Starten Sie eine kostenlose Testphase, um fortzufahren.",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "KI-Limit der Demo-Sitzung erreicht. Starten Sie eine kostenlose Testphase für mehr.",
+      "PROJECT_LIMIT_REACHED": "Projektlimit erreicht. Upgrade für weitere Projekte.",
+      "INITIATIVE_LIMIT_REACHED": "Initiativenlimit erreicht. Upgrade für weitere Initiativen.",
+      "USER_LIMIT_REACHED": "Nutzerlimit erreicht. Upgrade, um weitere Teammitglieder einzuladen.",
+      "STORAGE_LIMIT_REACHED": "Speicherlimit erreicht. Upgrade für mehr Speicher.",
+      "SUBSCRIPTION_PAST_DUE": "Zahlung fehlgeschlagen. Bitte aktualisieren Sie Ihre Zahlungsmethode.",
+      "SUBSCRIPTION_CANCELLED": "Ihr Abonnement wurde gekündigt.",
+      "INSUFFICIENT_TOKENS": "Unzureichende Tokens. Zahlungsmethode hinzufügen oder upgraden.",
+      "default": "Diese Aktion ist auf Ihrer aktuellen Zugriffsstufe blockiert."
+    },
+    "upgrade": {
+      "instantUnlock": "Alle Limits werden sofort nach dem Upgrade entfernt"
+    }
+  },
+  "feedback": {
+    "floatingButton": {
+      "label": "Fehler melden",
+      "ariaLabel": "Fehler melden (Shift+Ctrl+B)"
+    }
   }
 }

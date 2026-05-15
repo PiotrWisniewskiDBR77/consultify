@@ -9,7 +9,7 @@ import { Command, Keyboard, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SHORTCUTS_HELP, type ShortcutHelp } from '../hooks/useKeyboardShortcuts';
+import { type ShortcutHelp, SHORTCUTS_HELP } from '../hooks/useKeyboardShortcuts';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;

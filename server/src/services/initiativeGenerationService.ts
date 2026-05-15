@@ -336,7 +336,7 @@ Return valid JSON array only.`;
         };
       }
     } catch (err: any) {
-      console.warn('[InitiativeGeneration] Failed to enrich context:', err.message);
+      logger.warn('[InitiativeGeneration] Failed to enrich context:', err.message);
     }
 
     return context;

@@ -12,10 +12,14 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+// @ts-ignore -- aiQueue module lacks type declarations
+import _aiQueue from '../queues/aiQueue.js';
 import promptAssembler from '../services/ai/promptAssembler.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+// @ts-ignore -- aiQueue module lacks type declarations
+const aiQueue: any = _aiQueue as any;
 
 const router = Router();
 
@@ -97,7 +101,7 @@ router.get(
         count: parsedPrompts.length,
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error listing prompts:', error);
+      logger.error('[AI Prompts API] Error listing prompts:', error);
       return res.status(500).json({
         error: 'Failed to list prompts',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -128,7 +132,7 @@ router.get(
         data: categories,
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error listing categories:', error);
+      logger.error('[AI Prompts API] Error listing categories:', error);
       return res.status(500).json({
         error: 'Failed to list categories',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -189,7 +193,7 @@ router.get(
         versions: normalizedVersions,
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error getting prompt:', error);
+      logger.error('[AI Prompts API] Error getting prompt:', error);
       return res.status(500).json({
         error: 'Failed to get prompt',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -264,7 +268,7 @@ router.post(
         prompt: { id, name, category, version: 1, system_prompt: resolvedTemplate },
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error creating prompt:', error);
+      logger.error('[AI Prompts API] Error creating prompt:', error);
       return res.status(500).json({
         error: 'Failed to create prompt',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -348,13 +352,51 @@ router.put(
         }
       }
 
+      // Auto-trigger eval suite on prompt template change
+      if (resolvedTemplate && resolvedTemplate !== existing.template) {
+        try {
+          const orgId = req.user?.organizationId;
+          if (orgId && !(aiQueue as any).isUnavailable) {
+            const triggers = await dbAll(
+              `SELECT * FROM ai_eval_auto_triggers WHERE organization_id = ? AND trigger_type = 'prompt_update' AND is_active = 1`,
+              [orgId]
+            ).catch(() => []);
+            for (const trigger of (triggers as any[]) || []) {
+              const datasetId = trigger.target_dataset_id;
+              if (!datasetId) continue;
+              const evalTypes = JSON.parse(trigger.eval_types_json || '[]');
+              await aiQueue.add(`eval-prompt-change-${id}`, {
+                taskType: 'RUN_EVAL_SUITE',
+                payload: {
+                  organizationId: orgId,
+                  datasetId,
+                  evalTypes,
+                  purpose: 'prompt_regression',
+                  runBy: userId,
+                },
+                userId,
+              });
+              await dbRun(
+                `UPDATE ai_eval_auto_triggers SET last_triggered_at = datetime('now') WHERE id = ?`,
+                [trigger.id]
+              ).catch((err: unknown) =>
+                logger.warn('[AI Prompts] trigger timestamp update failed', err)
+              );
+              logger.info(`[AI Prompts] Triggered eval suite for prompt ${id} v${newVersion}`);
+            }
+          }
+        } catch (triggerErr) {
+          logger.warn(`[AI Prompts] Eval auto-trigger failed (non-blocking): ${triggerErr}`);
+        }
+      }
+
       res.json({
         success: true,
         data: { id, version: newVersion, system_prompt: resolvedTemplate },
         prompt: { id, version: newVersion, system_prompt: resolvedTemplate },
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error updating prompt:', error);
+      logger.error('[AI Prompts API] Error updating prompt:', error);
       return res.status(500).json({
         error: 'Failed to update prompt',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -414,7 +456,7 @@ router.delete(
 
       res.json({ success: true, message: 'Prompt deactivated' });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error deleting prompt:', error);
+      logger.error('[AI Prompts API] Error deleting prompt:', error);
       return res.status(500).json({
         error: 'Failed to delete prompt',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -467,7 +509,7 @@ router.post(
         result: renderedTemplate,
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error testing prompt:', error);
+      logger.error('[AI Prompts API] Error testing prompt:', error);
       return res.status(500).json({
         error: 'Failed to test prompt',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -550,7 +592,7 @@ router.post(
         data: { currentVersion: newVersion },
       });
     } catch (error: unknown) {
-      console.error('[AI Prompts API] Error restoring version:', error);
+      logger.error('[AI Prompts API] Error restoring version:', error);
       return res.status(500).json({
         error: 'Failed to restore version',
         details: error instanceof Error ? error.message : 'Unknown error',

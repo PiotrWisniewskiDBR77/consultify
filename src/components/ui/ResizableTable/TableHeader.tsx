@@ -42,6 +42,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   return (
     <thead>
       <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-20">
+        {/* §6 header: bg-slate-50, border-slate-200 */}
         {/* Select All Checkbox */}
         {showSelectColumn && (
           <th className="w-10 px-2 py-2">
@@ -49,12 +50,13 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
               onClick={() => onSelectAll?.(!allSelected)}
               className={`
                 w-5 h-5 rounded border flex items-center justify-center transition-colors
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-navy-900
                 ${
                   allSelected
-                    ? 'bg-primary-500 border-primary-500 text-white'
+                    ? 'bg-primary-600 border-primary-600 text-white'
                     : someSelected
-                      ? 'bg-primary-500/50 border-primary-500 text-white'
-                      : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                      ? 'bg-primary-500 border-primary-500 text-white'
+                      : 'bg-white dark:bg-navy-900 border-slate-400 dark:border-navy-500 hover:border-primary-500 text-transparent hover:text-slate-500'
                 }
               `}
             >
@@ -83,7 +85,8 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
               key={column.id}
               className={`
                 relative group/header px-3 py-2
-                text-left text-xs font-medium text-slate-500 uppercase tracking-wider
+                text-left text-xs font-semibold uppercase tracking-wider
+                text-slate-600 dark:text-slate-400
                 ${column.align === 'center' ? 'text-center' : ''}
                 ${column.align === 'right' ? 'text-right' : ''}
               `}
@@ -94,7 +97,9 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
               }}
             >
               <div className="flex items-center gap-1">
-                <span className={hasActiveFilter ? 'text-primary-500' : ''}>{column.label}</span>
+                <span className={hasActiveFilter ? 'text-primary-700 dark:text-primary-400' : ''}>
+                  {column.label}
+                </span>
 
                 {/* Filter Dropdown */}
                 {column.filterable && column.filterOptions && (

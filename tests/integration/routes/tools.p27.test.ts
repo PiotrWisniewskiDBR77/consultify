@@ -109,11 +109,34 @@ describe('P27-B: Tools Session → Result → Promotion', () => {
         ],
       });
       expect(status).toBe(409);
-      expect(data.error).toContain('unresolved blocker');
-      expect(data.unresolvedBlockers).toHaveLength(1);
+      expect(data.error).toContain('unresolved missing items');
+      expect(data.unresolvedMissingItems).toHaveLength(1);
     });
 
-    it('allows FINALIZED when all blockers are resolved', async () => {
+    it('blocks FINALIZED when any missing item remains unresolved', async () => {
+      const { status, data } = await put(`/tools/${strategicSessionId}`, {
+        answers: {
+          context: { goal: 'Test strategic question', scope: 'Global', successSignal: 'KPI up' },
+          signals: [{ id: 's1', content: 'Market growth' }],
+          items: [
+            { quadrant: 'strengths', content: 'Strong brand' },
+            { quadrant: 'weaknesses', content: 'High costs' },
+            { quadrant: 'opportunities', content: 'New market' },
+            { quadrant: 'threats', content: 'Competition' },
+          ],
+        },
+        completionPercent: 100,
+        confidenceAvg: 4,
+        status: 'FINALIZED',
+        missingItems: [
+          { id: 'mi-1', label: 'Needs evidence', severity: 'warning', resolved: false },
+        ],
+      });
+      expect(status).toBe(409);
+      expect(data.unresolvedMissingItems).toHaveLength(1);
+    });
+
+    it('allows FINALIZED when all missing items are resolved', async () => {
       const { status, data } = await put(`/tools/${strategicSessionId}`, {
         answers: {
           context: { goal: 'Test strategic question', scope: 'Global', successSignal: 'KPI up' },
@@ -130,7 +153,7 @@ describe('P27-B: Tools Session → Result → Promotion', () => {
         status: 'FINALIZED',
         missingItems: [
           { id: 'mi-1', label: 'Missing SWOT items', severity: 'blocker', resolved: true },
-          { id: 'mi-2', label: 'Needs evidence', severity: 'warning', resolved: false },
+          { id: 'mi-2', label: 'Needs evidence', severity: 'warning', resolved: true },
         ],
       });
       expect(status).toBe(200);
@@ -292,6 +315,76 @@ describe('P27-B: Tools Session → Result → Promotion', () => {
       expect(status).toBe(200);
       expect(data.outputType).toBe('presentation');
       expect(data.sourceSessionId).toBe(strategicSessionId);
+    });
+
+    it('blocks promotion when unresolved missing items reappear', async () => {
+      const { data: createdSession } = await post('/tools', {
+        toolType: 'dynamic-swot',
+        name: 'P27-B Promotion Gate Test',
+      });
+      const gatedSessionId = createdSession.id;
+
+      const update = await put(`/tools/${gatedSessionId}`, {
+        answers: {
+          context: { goal: 'Test strategic question', scope: 'Global', successSignal: 'KPI up' },
+          items: [
+            { quadrant: 'strengths', content: 'Strong brand' },
+            { quadrant: 'weaknesses', content: 'High costs' },
+            { quadrant: 'opportunities', content: 'New market' },
+            { quadrant: 'threats', content: 'Competition' },
+          ],
+        },
+        completionPercent: 100,
+        confidenceAvg: 4,
+        status: 'FINALIZED',
+        missingItems: [{ id: 'mi-x', label: 'Resolve open issue', severity: 'blocker', resolved: true }],
+      });
+      expect(update.status).toBe(200);
+
+      const reopen = await put(`/tools/${gatedSessionId}`, {
+        answers: {
+          context: { goal: 'Test strategic question', scope: 'Global', successSignal: 'KPI up' },
+          items: [
+            { quadrant: 'strengths', content: 'Strong brand' },
+            { quadrant: 'weaknesses', content: 'High costs' },
+            { quadrant: 'opportunities', content: 'New market' },
+            { quadrant: 'threats', content: 'Competition' },
+          ],
+        },
+        completionPercent: 100,
+        confidenceAvg: 4,
+        status: 'FINALIZED',
+        missingItems: [{ id: 'mi-x', label: 'Resolve open issue', severity: 'blocker', resolved: false }],
+      });
+      expect(reopen.status).toBe(409);
+
+      const promotion = await post(`/tools/${gatedSessionId}/promote`, {
+        outputType: 'report',
+        title: 'Blocked report',
+      });
+      expect(promotion.status).toBe(409);
+      expect(promotion.data.unresolvedMissingItems).toHaveLength(1);
+    });
+
+    it('promotes FINALIZED session to initiative idempotently with traceability', async () => {
+      const first = await post(`/tools/${strategicSessionId}/promote`, {
+        outputType: 'initiative',
+        title: 'SWOT Initiative',
+        description: 'Generated from wizard-compatible finalized tool session',
+      });
+      expect(first.status).toBe(200);
+      expect(first.data.outputType).toBe('initiative');
+      expect(first.data.sourceSessionId).toBe(strategicSessionId);
+      expect(first.data.sourceVersion).toBe(1);
+
+      const second = await post(`/tools/${strategicSessionId}/promote`, {
+        outputType: 'initiative',
+        title: 'SWOT Initiative',
+        description: 'Generated from wizard-compatible finalized tool session',
+      });
+      expect(second.status).toBe(200);
+      expect(second.data.id).toBe(first.data.id);
+      expect(second.data.deduplicated).toBe(true);
     });
 
     it('rejects invalid outputType', async () => {

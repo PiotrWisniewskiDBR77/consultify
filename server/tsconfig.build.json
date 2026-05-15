@@ -1,18 +1,27 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // Relax checks for production builds to allow Railway deployment
+    // Strictness recovery plan — re-enable checks incrementally:
+    //   Phase 1 (now):  strictBindCallApply, strictFunctionTypes, noImplicitThis ✅
+    //   Phase 2 (next): noImplicitAny
+    //   Phase 3 (goal): strictNullChecks, strictPropertyInitialization → full strict
+
+    // Phase 1 — safe to enable, rarely breaks existing code
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+
+    // Phase 2+ — still relaxed, requires targeted fixes
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+
+    // Code quality — relaxed for now
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "strictFunctionTypes": false,
-    "strictBindCallApply": false,
-    "strictPropertyInitialization": false,
-    "noImplicitThis": false,
+
     "skipLibCheck": true,
-    // Allow @ts-expect-error that may be needed in Docker but unused locally
-    "noUnusedLocals": false
+    "noEmitOnError": false
   }
 }

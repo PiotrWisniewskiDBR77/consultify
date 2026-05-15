@@ -113,9 +113,7 @@ describe('P11 V8 planning handoff route', () => {
 
   it('GET /api/v8/planning/initiatives/:id/handoff returns bounded envelope', async () => {
     const app = createApp();
-    const res = await request(app).get(
-      `/api/v8/planning/initiatives/${INIT}/handoff?kind=kpi`
-    );
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/handoff?kind=kpi`);
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
@@ -123,6 +121,7 @@ describe('P11 V8 planning handoff route', () => {
     expect(h?.initiativeId).toBe(INIT);
     expect(h?.initiativeTitle).toBe('Handoff initiative');
     expect(h?.initiativeLifecycleState).toBe('planned');
+    expect(h?.handoffBy).toBe(UID);
     expect(h?.kpiIntent).toBeTruthy();
     expect(h?.executionIntent).toBeUndefined();
     expect(Array.isArray(h?.contextPack)).toBe(true);

@@ -26,15 +26,12 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
   ClipboardList,
   Clock,
   FileText,
   GripVertical,
   LayoutDashboard,
-  LayoutGrid,
-  Loader2,
   MessageSquare,
   Scale,
   Shield,
@@ -43,14 +40,12 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import {
-  Callout,
-} from '@/components/shared/NModeBlocks';
+import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
@@ -67,11 +62,12 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
+import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
-import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -81,6 +77,8 @@ import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterableTable,
   FilterChip,
+  HubWorkAreaLoadError,
+  HubWorkAreaLoading,
   ModuleHub,
   ModuleTab,
   OpenDocument,
@@ -88,17 +86,25 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import {
   buildReportMarkdown,
   computeRAG,
+  enrichExecutionReport,
   exportReportPDF,
   RAG_CONFIG,
-  type ReportDef as ReportCompactDef,
-} from './ReportCompactPanel';
-import { type ReportDataContext, ReportDocumentView } from './ReportDocumentView';
-import { type ManagerModuleDataContext, type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
+  type ReportDataContext,
+  type ReportDef,
+} from './executionReports';
+import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import { ReportDocumentView } from './ReportDocumentView';
+
+const ExecutionInitiativeDocumentView = React.lazy(() =>
+  import('../Initiatives/InitiativeDocumentView').then((module) => ({
+    default: module.InitiativeDocumentView,
+  }))
+);
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -381,7 +387,6 @@ interface ExecutionDecision {
   relatedObjectName?: string;
 }
 
-
 type PMOHealthSnapshot = {
   projectId: string;
   projectName: string;
@@ -502,9 +507,10 @@ type ExecutiveAggregateSnapshot = {
 };
 
 const normalizeTaskStatus = (
-  status: ProjectTaskStatus
+  status: ProjectTaskStatus | null | undefined
 ): 'todo' | 'in_progress' | 'review' | 'blocked' | 'done' => {
-  const normalized = status.toString().toLowerCase();
+  if (!status) return 'todo';
+  const normalized = String(status).toLowerCase();
   if (normalized === 'in_progress') return 'in_progress';
   if (normalized === 'review') return 'review';
   if (normalized === 'blocked') return 'blocked';
@@ -524,11 +530,14 @@ interface ExecutionHubProps {
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
+  const currentUser = useAppStore((s) => s.currentUser);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -547,20 +556,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
-
-  // Workload heatmap controls (rendered in top bar)
-  const [workloadViewMode, setWorkloadViewMode] = useState<'weekly' | 'monthly'>('monthly');
-  const [workloadWeekCount, setWorkloadWeekCount] = useState(8);
-  const [workloadMonthCount, setWorkloadMonthCount] = useState(6);
-  const [workloadStartDate, setWorkloadStartDate] = useState(() => {
-    const today = new Date();
-    today.setDate(today.getDate() - 7);
-    return today;
-  });
+  const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
+  const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
+  const [reportPreset, setReportPreset] = useState<
+    'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
+  >('all');
 
   // Data state
+  const initRetryRef = React.useRef(0);
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
+  const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [decisions, setDecisions] = useState<ExecutionDecision[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -611,6 +618,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }>
   >([]);
   const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
 
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
@@ -619,6 +627,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingExecSnapshot, setIsLoadingExecSnapshot] = useState(false);
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
+
+  const [managerLaneCounts, setManagerLaneCounts] = useState<
+    Record<string, { total: number; critical: number; warning: number }>
+  >({});
+
+  useEffect(() => {
+    setOpenDocuments((prev) =>
+      prev.filter((doc) => !(doc.type === 'report' && doc.subType === 'manager'))
+    );
+    setActiveDocumentId((prev) => (prev?.startsWith('manager:') ? null : prev));
+  }, []);
 
   const formatNumber = useCallback(
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
@@ -635,6 +654,81 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const queueExecutionTruthRefresh = useCallback(() => {
     setExecutionTruthRefreshKey((prev) => prev + 1);
   }, []);
+
+  useEffect(() => {
+    if (deepLinkHandled) return;
+    const openId = String(searchParams.get('open') || '').trim();
+    const mode = String(searchParams.get('mode') || '').trim().toLowerCase();
+    const targetTab = String(searchParams.get('tab') || '').trim().toLowerCase();
+    const targetView = String(searchParams.get('view') || '').trim().toLowerCase();
+
+    if (targetTab === 'reports') {
+      setActiveTab('reports');
+      setViewMode(targetView === 'grid' ? 'grid' : 'table');
+      setDeepLinkHandled(true);
+      return;
+    }
+
+    if (openId && (mode === 'doc' || mode === 'initiative')) {
+      setActiveTab('list');
+      setViewMode('table');
+      setActiveDocumentId(openId);
+      setIsSidePanelOpen(false);
+      setDeepLinkHandled(true);
+    }
+  }, [deepLinkHandled, searchParams]);
+
+  useEffect(() => {
+    if (!deepLinkHandled) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has('open')) {
+      next.delete('open');
+      changed = true;
+    }
+    if (next.has('mode')) {
+      next.delete('mode');
+      changed = true;
+    }
+    if (next.has('view')) {
+      next.delete('view');
+      changed = true;
+    }
+    if (changed) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [deepLinkHandled, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    const currentTab = String(next.get('tab') || '').trim().toLowerCase();
+    const desiredTab = String(activeTab || '').trim().toLowerCase();
+    if (desiredTab && currentTab !== desiredTab) {
+      next.set('tab', desiredTab);
+      changed = true;
+    }
+    const currentView = String(next.get('view') || '').trim().toLowerCase();
+    const desiredView = String(viewMode || '').trim().toLowerCase();
+    if (desiredView && currentView !== desiredView) {
+      next.set('view', desiredView);
+      changed = true;
+    }
+    const currentInitiativeScope = String(next.get('initiativeId') || '').trim();
+    const desiredInitiativeScope =
+      activeDocumentId && !activeDocumentId.startsWith('report:') ? activeDocumentId : '';
+    if (desiredInitiativeScope) {
+      if (currentInitiativeScope !== desiredInitiativeScope) {
+        next.set('initiativeId', desiredInitiativeScope);
+        changed = true;
+      }
+    } else if (currentInitiativeScope) {
+      next.delete('initiativeId');
+      changed = true;
+    }
+    if (!changed) return;
+    setSearchParams(next, { replace: true });
+  }, [activeDocumentId, activeTab, searchParams, setSearchParams, viewMode]);
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -827,32 +921,52 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Fetch initiatives in execution phase
   useEffect(() => {
+    initRetryRef.current = 0;
     const loadInitiatives = async () => {
       setIsLoading(true);
+      setInitiativesLoadError(null);
+      setInitiativesLoadErrorCode(null);
       try {
-        // Get initiatives that are in execution phase
         const response = await Api.getInitiatives(currentProjectId || undefined);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
 
-        // Filter to execution-relevant statuses
         const executionInitiatives = data.filter((i: FullInitiative) =>
           EXECUTION_STATUSES.includes(i.status)
         );
 
         setInitiatives(executionInitiatives);
-      } catch (err) {
+        initRetryRef.current = 0;
+      } catch (err: any) {
         console.error('[ExecutionHub] Failed to load:', err);
-        // Fallback to session data
+        const isNetworkError =
+          !err?.status ||
+          err?.message?.includes('Failed to fetch') ||
+          err?.message?.includes('NetworkError');
+        if (isNetworkError && initRetryRef.current < 3) {
+          initRetryRef.current++;
+          const delay = Math.min(2000 * Math.pow(2, initRetryRef.current - 1), 8000);
+          console.warn(
+            `[ExecutionHub] Network error, retrying in ${delay}ms (attempt ${initRetryRef.current}/3)`
+          );
+          setTimeout(loadInitiatives, delay);
+          return;
+        }
         const executionInitiatives = (fullSessionData?.initiatives || []).filter(
           (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );
         setInitiatives(executionInitiatives);
+        const { message, code } = mapHubLoadFailureToPresentation(
+          err,
+          t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
+        );
+        setInitiativesLoadError(message);
+        setInitiativesLoadErrorCode(code);
       } finally {
         setIsLoading(false);
       }
     };
     loadInitiatives();
-  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives]);
+  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -921,16 +1035,59 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           );
         });
         setOverspendSignals(
-          normalizeExecutionArrayEnvelope<typeof overspendSignals[number]>(data, ['signals'])
+          normalizeExecutionArrayEnvelope<(typeof overspendSignals)[number]>(data, ['signals'])
         );
       } catch {
         setOverspendSignals([]);
       }
     };
     setIsLoadingControlSignals(true);
-    void Promise.allSettled([loadRiskSignals(), loadDelaySignals(), loadOverspendSignals()]).finally(
-      () => setIsLoadingControlSignals(false)
-    );
+    void Promise.allSettled([
+      loadRiskSignals(),
+      loadDelaySignals(),
+      loadOverspendSignals(),
+    ]).finally(() => setIsLoadingControlSignals(false));
+  }, [currentProjectId, executionTruthRefreshKey]);
+
+  useEffect(() => {
+    const LANES = [
+      'action-queue',
+      'decisions',
+      'blockers',
+      'workload',
+      'risk',
+      'people-change',
+    ] as const;
+    const pid = currentProjectId || undefined;
+    Promise.allSettled(
+      LANES.map(async (laneId) => {
+        try {
+          const resp = await V8ExecutionControlApi.getManagerProblems(laneId, pid);
+          const data = (resp as any)?.data || resp;
+          const problems: Array<{ severity: string }> = data?.problems || [];
+          return {
+            laneId,
+            total: problems.length,
+            critical: problems.filter((p) => p.severity === 'critical').length,
+            warning: problems.filter((p) => p.severity === 'warning').length,
+          };
+        } catch {
+          return { laneId, total: 0, critical: 0, warning: 0 };
+        }
+      })
+    ).then((results) => {
+      const counts: Record<string, { total: number; critical: number; warning: number }> = {};
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          counts[r.value.laneId] = {
+            total: r.value.total,
+            critical: r.value.critical,
+            warning: r.value.warning,
+          };
+        }
+      }
+      setManagerLaneCounts(counts);
+    });
   }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
@@ -1253,67 +1410,81 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }, {});
   }, [decisions]);
 
-  // Filter initiatives
-  const filteredInitiatives = useMemo(() => {
-    let result = initiatives;
+  const matchesAttentionPreset = useCallback(
+    (
+      initiative: FullInitiative,
+      attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
+    ) => {
+      if (attention === 'blocked') {
+        return initiative.status === InitiativeStatus.BLOCKED;
+      }
+      if (attention === 'missing_dates') {
+        return !initiative.plannedStartDate || !initiative.plannedEndDate;
+      }
+      if (attention === 'overdue') {
+        if (!initiative.plannedEndDate && !initiative.slaDeadline) return false;
+        const deadline = initiative.slaDeadline || initiative.plannedEndDate!;
+        const isOverdue = new Date(deadline) < new Date();
+        const terminal =
+          initiative.status === InitiativeStatus.DONE ||
+          initiative.status === InitiativeStatus.ARCHIVED;
+        return isOverdue && !terminal;
+      }
+      if (attention === 'overdue_decisions') {
+        const related = decisionsByInitiative[initiative.id] || [];
+        return related.some(
+          (decision) =>
+            String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
+        );
+      }
+      const now = Date.now();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      const relatedTasks = tasksByInitiative[initiative.id] || [];
+      return relatedTasks.some((task) => {
+        if (!task.dueDate) return false;
+        const due = new Date(task.dueDate).getTime();
+        return due >= now && due <= now + sevenDays && normalizeTaskStatus(task.status) !== 'done';
+      });
+    },
+    [decisionsByInitiative, tasksByInitiative]
+  );
 
-    // Scope filter (when user hasn't explicitly chosen a status)
-    if (!activeStatusFilter && scope === 'active') {
+  const dashboardBaseInitiatives = useMemo(() => {
+    let result = initiatives;
+    if (scope === 'active') {
       result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
     }
-
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       result = result.filter(
         (i) =>
-          i.name.toLowerCase().includes(query) ||
-          (i.description || '').toLowerCase().includes(query)
+          (i.name || '').toLowerCase().includes(q) ||
+          (i.description || '').toLowerCase().includes(q)
       );
     }
+    return result;
+  }, [initiatives, scope, searchQuery]);
+
+  // Filter initiatives for portfolio surfaces only.
+  const filteredInitiatives = useMemo(() => {
+    let result = dashboardBaseInitiatives;
 
     activeFilters.forEach((filter) => {
       if (filter.column === 'status') {
         result = result.filter((i) => i.status === filter.value);
       }
       if (filter.column === 'attention') {
-        if (filter.value === 'blocked') {
-          result = result.filter((i) => i.status === InitiativeStatus.BLOCKED);
-        }
-        if (filter.value === 'missing_dates') {
-          result = result.filter((i) => !i.plannedStartDate || !i.plannedEndDate);
-        }
-        if (filter.value === 'overdue') {
-          result = result.filter((i) => {
-            if (!i.plannedEndDate && !i.slaDeadline) return false;
-            const deadline = i.slaDeadline || i.plannedEndDate!;
-            const isOverdue = new Date(deadline) < new Date();
-            const terminal =
-              i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.ARCHIVED;
-            return isOverdue && !terminal;
-          });
-        }
-        if (filter.value === 'overdue_decisions') {
-          result = result.filter((i) => {
-            const arr = decisionsByInitiative[i.id] || [];
-            return arr.some(
-              (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
-            );
-          });
-        }
-        if (filter.value === 'due_soon_tasks') {
-          const now = Date.now();
-          const sevenDays = 7 * 24 * 60 * 60 * 1000;
-          result = result.filter((i) => {
-            const arr = tasksByInitiative[i.id] || [];
-            return arr.some((t) => {
-              if (!t.dueDate) return false;
-              const due = new Date(t.dueDate).getTime();
-              return (
-                due >= now && due <= now + sevenDays && normalizeTaskStatus(t.status) !== 'done'
-              );
-            });
-          });
-        }
+        result = result.filter((i) =>
+          matchesAttentionPreset(
+            i,
+            filter.value as
+              | 'blocked'
+              | 'missing_dates'
+              | 'overdue'
+              | 'overdue_decisions'
+              | 'due_soon_tasks'
+          )
+        );
       }
     });
 
@@ -1322,45 +1493,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     return result;
-  }, [
-    initiatives,
-    searchQuery,
-    activeFilters,
-    activeStatusFilter,
-    scope,
-    tasksByInitiative,
-    decisionsByInitiative,
-  ]);
+  }, [dashboardBaseInitiatives, activeFilters, activeStatusFilter, matchesAttentionPreset]);
 
   const summaryInitiatives = useMemo(() => {
-    let result = initiatives;
-
-    // Scope (Active = scheduled/executing/blocked; All = everything loaded for this hub)
-    if (scope === 'active') {
-      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
-    }
-
-    // Status dropdown selection (default: EXECUTING to satisfy "w realizacji")
+    let result = dashboardBaseInitiatives;
     if (activeStatusFilter) {
       result = result.filter((i) => i.status === activeStatusFilter);
     }
-
-    // Search
-    const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      result = result.filter(
-        (i) =>
-          String(i.name || '')
-            .toLowerCase()
-            .includes(q) ||
-          String(i.summary || i.description || '')
-            .toLowerCase()
-            .includes(q)
-      );
-    }
-
     return result;
-  }, [initiatives, scope, activeStatusFilter, searchQuery]);
+  }, [dashboardBaseInitiatives, activeStatusFilter]);
 
   const mapToPreviewModel = useCallback((i: FullInitiative): InitiativePreviewV3Model => {
     return {
@@ -1390,7 +1531,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           entityType: 'initiative',
           entityId: initiative.id,
           entityName: initiative.name,
-          contextData: initiative as unknown as Record<string, unknown>,
+          contextData: {
+            ...(initiative as unknown as Record<string, unknown>),
+            p11Handoff: {
+              source: 'execution_hub',
+              lane: activeTab === 'reports' ? 'execution_reports' : 'execution_portfolio',
+              initiativeId: initiative.id,
+              initiativeIds: [initiative.id],
+            },
+          },
           pmoContext: { initiativeIds: [initiative.id] },
         });
         await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
@@ -1406,14 +1555,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
-        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+        const query = new URLSearchParams();
+        query.set('open', encodeURIComponent(id));
+        query.set('mode', 'doc');
+        query.set('initiativeId', encodeURIComponent(id));
+        query.set('tab', String(activeTab || 'list'));
+        query.set('view', String(viewMode || 'table'));
+        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?${query.toString()}`;
         await navigator.clipboard.writeText(url);
         toast.success(t('common.copied', 'Copied'));
       } catch {
         toast.error(t('common.copyFailed', 'Copy failed'));
       }
     },
-    [t]
+    [activeTab, t, viewMode]
   );
 
   // Tab configuration
@@ -1438,12 +1593,45 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'people_change' as ModuleTab,
         label: t('execution.tabs.peopleChange', 'Manager'),
         icon: <Shield size={16} />,
-        count:
-          (stats.blocked ?? 0) +
-          (actionQueueItems?.length ?? 0),
+        count: (stats.blocked ?? 0) + (actionQueueItems?.length ?? 0),
       },
     ],
     [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions, actionQueueItems]
+  );
+
+  // Handle inline status change from table/grid
+  const handleInlineStatusChange = useCallback(
+    async (initiativeId: string, newStatus: string) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
+      const previous = initiatives.find((i) => i.id === initiativeId);
+      try {
+        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
+        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
+        setInitiatives((prev) =>
+          prev.map((i) =>
+            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
+          )
+        );
+        trackFunnelEvent('execution_status_updated', {
+          initiativeId,
+          from: previous?.status || null,
+          to: newStatus,
+          tab: activeTab,
+          viewMode,
+        });
+        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
+        );
+      }
+    },
+    [activeTab, initiatives, isPilotParticipant, t, viewMode]
   );
 
   // Table columns
@@ -1490,6 +1678,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         render: (row) => {
           const meta = STATUS_METADATA[row.status as InitiativeStatus];
           const actions = getStatusActions(row.status as InitiativeStatus);
+          const canMutateStatus = !isPilotParticipant && actions.length > 0;
           return (
             <div className="relative group">
               <div
@@ -1500,7 +1689,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 />
                 {meta?.label || row.status}
               </div>
-              {actions.length > 0 && (
+              {canMutateStatus && (
                 <select
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   value=""
@@ -1756,17 +1945,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
     ],
-    [t, decisionsByInitiative, tasksByInitiative]
+    [decisionsByInitiative, handleInlineStatusChange, isPilotParticipant, t, tasksByInitiative]
   );
-
-  // Status counts for the StatusDropdown (top bar control)
-  const statusDropdownCounts: Record<string, number> = useMemo(() => {
-    const counts: Record<string, number> = { all: initiatives.length };
-    EXECUTION_STATUSES.forEach((s) => {
-      counts[s] = statusCounts[s] ?? 0;
-    });
-    return counts;
-  }, [initiatives.length, statusCounts]);
 
   const scopeToggle = (
     <div
@@ -1811,9 +1991,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const rightControls = useMemo(() => {
-    const showScope = activeTab === 'list' || activeTab === 'reports';
-    const showHeatmapShortcut = false;
-    const showHeatmapControls = activeTab === ('people_change' as ModuleTab);
+    const showScope = activeTab === 'list';
     const execChip =
       currentProjectId && activeTab !== 'list' ? (
         <button
@@ -1840,130 +2018,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       ) : null;
 
-    if (!showScope && !showHeatmapShortcut && !showHeatmapControls) {
+    if (!showScope) {
       return <div className="flex items-center gap-2">{execChip}</div>;
     }
-
-    const navigateWorkload = (direction: 'prev' | 'next') => {
-      setWorkloadStartDate((prev) => {
-        const next = new Date(prev);
-        if (workloadViewMode === 'weekly') {
-          next.setDate(next.getDate() + (direction === 'next' ? 7 : -7));
-        } else {
-          next.setMonth(next.getMonth() + (direction === 'next' ? 1 : -1));
-        }
-        return next;
-      });
-    };
-
-    const heatmapShortcut = (
-      <button
-        type="button"
-        onClick={() =>
-          setActiveTab(activeTab === 'team' ? ('initiatives' as ModuleTab) : ('team' as ModuleTab))
-        }
-        className={`h-9 w-9 rounded-lg flex items-center justify-center border transition-colors ${
-          activeTab === 'team'
-            ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-        }`}
-        title={t('execution.heatmap', 'Workload Heatmap')}
-      >
-        <Users size={16} />
-      </button>
-    );
-
-    const heatmapControls = showHeatmapControls ? (
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
-          <button
-            type="button"
-            onClick={() => navigateWorkload('prev')}
-            className="h-7 w-7 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-navy-900/50 transition-colors"
-            title={t('common.prev', 'Previous')}
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigateWorkload('next')}
-            className="h-7 w-7 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-navy-900/50 transition-colors"
-            title={t('common.next', 'Next')}
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-
-        <div className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
-          <button
-            type="button"
-            onClick={() => setWorkloadViewMode('weekly')}
-            className={`h-7 px-2 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              workloadViewMode === 'weekly'
-                ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title="Weekly"
-          >
-            <LayoutGrid size={14} />W
-          </button>
-          <button
-            type="button"
-            onClick={() => setWorkloadViewMode('monthly')}
-            className={`h-7 px-2 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              workloadViewMode === 'monthly'
-                ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title="Monthly"
-          >
-            <CalendarDays size={14} />M
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
-          {(workloadViewMode === 'weekly' ? [6, 8, 12] : [3, 6, 12]).map((n) => (
-            <button
-              key={`${workloadViewMode}-${n}`}
-              type="button"
-              onClick={() => {
-                if (workloadViewMode === 'weekly') setWorkloadWeekCount(n);
-                else setWorkloadMonthCount(n);
-              }}
-              className={`h-7 px-2 rounded-md text-[11px] font-semibold transition-colors ${
-                (workloadViewMode === 'weekly' ? workloadWeekCount === n : workloadMonthCount === n)
-                  ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
-              }`}
-              title={workloadViewMode === 'weekly' ? `${n} weeks` : `${n} months`}
-            >
-              {n}
-              {workloadViewMode === 'weekly' ? 'W' : 'M'}
-            </button>
-          ))}
-        </div>
-      </div>
-    ) : null;
 
     return (
       <div className="flex items-center gap-2">
         {execChip}
-        {showScope ? scopeToggle : null}
-        {showHeatmapShortcut ? heatmapShortcut : null}
-        {heatmapControls}
+        {scopeToggle}
       </div>
     );
-  }, [
-    activeTab,
-    currentProjectId,
-    execSnapshotSource,
-    execTopline,
-    scopeToggle,
-    t,
-    workloadMonthCount,
-    workloadViewMode,
-    workloadWeekCount,
-  ]);
+  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, scopeToggle, t]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -1984,8 +2049,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
       : 100;
 
-    const criticalCapacityAlerts = capacityAlerts.filter((alert) => alert.severity === 'critical').length;
-    const warningCapacityAlerts = capacityAlerts.filter((alert) => alert.severity !== 'critical').length;
+    const criticalCapacityAlerts = capacityAlerts.filter(
+      (alert) => alert.severity === 'critical'
+    ).length;
+    const warningCapacityAlerts = capacityAlerts.filter(
+      (alert) => alert.severity !== 'critical'
+    ).length;
     const capacityHealth =
       capacityAlerts.length === 0
         ? 100
@@ -1996,7 +2065,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.max(0, 100 - Math.round((blockedCount / totalInitiatives) * 100))
       : 100;
 
-    const healthScore = Math.round((avgProgress + decisionHealth + capacityHealth + riskHealth) / 4);
+    const healthScore = Math.round(
+      (avgProgress + decisionHealth + capacityHealth + riskHealth) / 4
+    );
 
     const budgetValues = initiatives
       .map((initiative) => (initiative as any).budget || (initiative as any).costCapex)
@@ -2021,7 +2092,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       isHealthLoading: isLoadingHealth,
     };
   }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth, capacityAlerts]);
-
 
   const handleExport = useCallback(() => {
     const headers = ['Name', 'Status', 'Owner', 'Progress', 'Planned Start', 'Planned End'];
@@ -2088,34 +2158,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
-  const MANAGER_MODULES: { id: ManagerModuleId; title: string }[] = [
-    { id: 'action-queue', title: 'Action Queue' },
-    { id: 'decisions', title: 'Decisions & Approvals' },
-    { id: 'blockers', title: 'Blockers & Escalations' },
-    { id: 'workload', title: 'Resource & Workload' },
-    { id: 'risk', title: 'Execution Risk' },
-    { id: 'people-change', title: 'People & Change' },
-  ];
-
-  const handleOpenManagerModule = useCallback((moduleId: ManagerModuleId) => {
-    const mod = MANAGER_MODULES.find((m) => m.id === moduleId);
-    if (!mod) return;
-    const docId = `manager:${mod.id}`;
-    const doc: OpenDocument = {
-      id: docId,
-      type: 'report',
-      subType: 'manager',
-      name: mod.title,
-      status: 'DRAFT',
-    };
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === docId)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(docId);
-    setIsSidePanelOpen(false);
-  }, []);
-
   const handleOpenSidePanel = useCallback((row: FullInitiative) => {
     setActiveDocumentId(null);
     setSelectedInitiative(row);
@@ -2137,19 +2179,41 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
-  const handleRemoveFilter = useCallback((id: string) => {
-    if (activeTab === 'list') {
-      setSummaryFilters((prev) => prev.filter((f) => f.id !== id));
-      return;
-    }
-    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+  const handleMainTabChange = useCallback((tab: ModuleTab) => {
+    setActiveTab(tab);
+    setActiveDocumentId(null);
+    setIsSidePanelOpen(false);
   }, []);
+
+  const handleRemoveFilter = useCallback(
+    (id: string) => {
+      if (activeTab === 'list') {
+        setSummaryFilters((prev) => prev.filter((f) => f.id !== id));
+        return;
+      }
+      if (activeTab === 'reports') {
+        setReportFilters((prev) => prev.filter((f) => f.id !== id));
+        return;
+      }
+      setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+    },
+    [activeTab]
+  );
 
   const handleClearFilters = useCallback(() => {
     if (activeTab === 'list') {
       setSummaryFilters([]);
       return;
     }
+    if (activeTab === 'reports') {
+      setReportFilters([]);
+      return;
+    }
+    setActiveFilters([]);
+  }, [activeTab]);
+
+  const resetExecutionCommandRow = useCallback(() => {
+    setActiveStatusFilter(null);
     setActiveFilters([]);
   }, []);
 
@@ -2182,13 +2246,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   // Handle drag start
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const { active } = event;
-    const taskData = active.data.current;
-    if (taskData?.type === 'task') {
-      setActiveTask(taskData.task);
-    }
-  }, []);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      if (isPilotParticipant) return;
+      const { active } = event;
+      const taskData = active.data.current;
+      if (taskData?.type === 'task') {
+        setActiveTask(taskData.task);
+      }
+    },
+    [isPilotParticipant]
+  );
 
   // Handle drag over (for visual feedback)
   const handleDragOver = useCallback((event: DragOverEvent) => {
@@ -2198,6 +2266,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Handle drag end - update task status
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
+      if (isPilotParticipant) {
+        setActiveTask(null);
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
       const { active, over } = event;
       setActiveTask(null);
 
@@ -2252,7 +2327,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         console.error('Error updating task status:', error);
       }
     },
-    [t, tasks]
+    [isPilotParticipant, t, tasks]
   );
 
   const renderTaskBoard = () => {
@@ -2272,11 +2347,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     );
 
     if (isLoadingTasks) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] =
@@ -2378,35 +2449,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [activeDocumentId]
   );
 
-  // Handle inline status change from table/grid
-  const handleInlineStatusChange = useCallback(
-    async (initiativeId: string, newStatus: string) => {
-      const previous = initiatives.find((i) => i.id === initiativeId);
-      try {
-        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
-        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-        setInitiatives((prev) =>
-          prev.map((i) =>
-            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
-          )
-        );
-        trackFunnelEvent('execution_status_updated', {
-          initiativeId,
-          from: previous?.status || null,
-          to: newStatus,
-          tab: activeTab,
-          viewMode,
-        });
-        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
-      } catch (e: any) {
-        toast.error(
-          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
-        );
-      }
-    },
-    [activeTab, initiatives, t, viewMode]
-  );
-
   const handleViewModeChange = useCallback(
     (nextViewMode: ViewMode) => {
       setViewMode(nextViewMode);
@@ -2420,36 +2462,55 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [activeTab, currentProjectId]
   );
 
+  const handleCreateInitiative = useCallback(() => {
+    if (isPilotParticipant) {
+      dispatchPilotAccessBlocked({
+        href: '/initiatives',
+      });
+      return;
+    }
+    navigate(`${ROUTES.INITIATIVES}?new=1`);
+  }, [isPilotParticipant, navigate]);
+
   const handleInitiativeUpdate = useCallback((updated: FullInitiative) => {
     setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
     setSelectedInitiative((prev) => (prev?.id === updated.id ? updated : prev));
   }, []);
 
-  const handlePortfolioUpdate = useCallback((updated: PortfolioInitiative) => {
-    setInitiatives((prev) =>
-      prev.map((i) =>
-        i.id === updated.id
-          ? {
-              ...i,
-              name: updated.name,
-              summary: updated.summary ?? i.summary,
-              description: updated.description ?? i.description,
-              status: updated.status,
-              priority: mapPriorityToFull(updated.priority),
-              plannedStartDate: updated.plannedStartDate ?? i.plannedStartDate,
-              plannedEndDate: updated.plannedEndDate ?? i.plannedEndDate,
-            }
-          : i
-      )
-    );
-    setSelectedInitiative((prev) =>
-      prev?.id === updated.id ? { ...prev, status: updated.status } : prev
-    );
-    void refreshExecutionAfterWrite();
-  }, [refreshExecutionAfterWrite]);
+  const handlePortfolioUpdate = useCallback(
+    (updated: PortfolioInitiative) => {
+      setInitiatives((prev) =>
+        prev.map((i) =>
+          i.id === updated.id
+            ? {
+                ...i,
+                name: updated.name,
+                summary: updated.summary ?? i.summary,
+                description: updated.description ?? i.description,
+                status: updated.status,
+                priority: mapPriorityToFull(updated.priority),
+                plannedStartDate: updated.plannedStartDate ?? i.plannedStartDate,
+                plannedEndDate: updated.plannedEndDate ?? i.plannedEndDate,
+              }
+            : i
+        )
+      );
+      setSelectedInitiative((prev) =>
+        prev?.id === updated.id ? { ...prev, status: updated.status } : prev
+      );
+      void refreshExecutionAfterWrite();
+    },
+    [refreshExecutionAfterWrite]
+  );
 
   const handleTimelineUpdate = useCallback(
     async (initiativeId: string, field: string, value: string, reason?: string) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
       try {
         const payload = { initiativeId, field, value, reason } as const;
         const fallbackRequest = () =>
@@ -2546,7 +2607,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         );
       }
     },
-    [refreshExecutionAfterWrite, t]
+    [isPilotParticipant, refreshExecutionAfterWrite, t]
   );
 
   // Handle refresh
@@ -2675,23 +2736,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
-  const dashboardBaseInitiatives = useMemo(() => {
-    let result = initiatives;
-    if (!activeStatusFilter && scope === 'active') {
-      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
-    }
-    if (activeStatusFilter) {
-      result = result.filter((i) => i.status === activeStatusFilter);
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (i) => i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [initiatives, activeStatusFilter, scope, searchQuery]);
-
   const actionCenter = useMemo(() => {
     const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
@@ -2768,11 +2812,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const renderTasksQueue = () => {
     if (isLoadingTasks) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     const TaskRow: React.FC<{ task: Task }> = ({ task }) => {
@@ -2944,11 +2984,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const renderDecisionsBuckets = () => {
     if (isLoadingDecisions) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     const getDue = (d: any): string | undefined => d?.dueDate || d?.deadline || d?.createdAt;
@@ -3060,6 +3096,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     ) => {
       setActiveTab('list' as ModuleTab);
       setViewMode('table');
+      setActiveDocumentId(null);
+      setIsSidePanelOpen(false);
       if (attention === 'blocked') {
         setActiveStatusFilter(InitiativeStatus.BLOCKED);
         setActiveFilters([]);
@@ -3094,28 +3132,85 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const commandRowContent = useMemo(() => {
-    if (activeTab === 'reports') {
-      return (
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <FileText size={14} />
-          <span>11 {t('execution.reportCatalog.available', 'reports available')}</span>
-        </div>
-      );
-    }
-
-    if (activeTab === ('people_change' as ModuleTab)) {
-      return (
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <Shield size={14} />
-          <span>{actionQueueItems.length} {t('execution.manager.commandRow', 'action items')} · {actionCenter.blocked.length} {t('execution.attention.blocked', 'blocked')}</span>
-        </div>
-      );
-    }
-
     const chipBase =
       'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
     const badgeBase =
       'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+
+    if (activeDocumentId && !activeDocumentId.startsWith('report:')) {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/initiatives?open=${encodeURIComponent(activeDocumentId)}&mode=doc`)
+            }
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+          >
+            <Target size={14} />
+            <span>{t('execution.command.openInInitiatives', 'Open in Initiatives')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(activeDocumentId)}`
+              )
+            }
+            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+          >
+            <FileText size={14} />
+            <span>{t('initiatives.preview.resultsAndReports', 'Results & KPI reports')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'reports') {
+      const reportPresets = [
+        { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
+        { id: 'weekly' as const, label: 'Weekly', count: 4 },
+        { id: 'monthly' as const, label: 'Monthly', count: 4 },
+        { id: 'bi-weekly' as const, label: 'Bi-weekly', count: 2 },
+        { id: 'on-demand' as const, label: 'On demand', count: 2 },
+        { id: 'sponsor' as const, label: 'Sponsor', count: 5 },
+      ];
+      return (
+        <div className="flex items-center gap-2">
+          {reportPresets.map((preset) => {
+            const active = reportPreset === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => setReportPreset((prev) => (prev === preset.id ? 'all' : preset.id))}
+                className={`${chipBase} ${
+                  active
+                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+                }`}
+              >
+                {preset.id === 'all' ? (
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                ) : (
+                  <FileText size={14} className="text-cyan-400" />
+                )}
+                <span>{preset.label}</span>
+                <span
+                  className={`${badgeBase} ${
+                    active
+                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {preset.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
 
     const isAttentionActive = (attention: string) =>
       activeFilters.some((f) => f.column === 'attention' && String(f.value) === attention);
@@ -3124,136 +3219,149 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const overdueDecisionsCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
     const dueSoonTasksCount = actionCenter.dueSoonTasks.length;
+    const allCount = dashboardBaseInitiatives.length;
+    const allActive =
+      !activeStatusFilter &&
+      !isAttentionActive('overdue_decisions') &&
+      !isAttentionActive('missing_dates') &&
+      !isAttentionActive('due_soon_tasks');
+    const executionPresets = [
+      {
+        id: 'all',
+        label: t('common.all', 'ALL'),
+        count: allCount,
+        active: allActive,
+        disabled: false,
+        icon: <span className="w-2 h-2 rounded-full bg-slate-400" />,
+        onClick: resetExecutionCommandRow,
+      },
+      {
+        id: 'blocked',
+        label: t('execution.attention.blocked', 'Blocked'),
+        count: blockedCount,
+        active: activeStatusFilter === InitiativeStatus.BLOCKED,
+        disabled: blockedCount === 0,
+        icon: <AlertTriangle size={14} className="text-rose-400" />,
+        onClick: () => {
+          if (activeStatusFilter === InitiativeStatus.BLOCKED) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('blocked');
+        },
+      },
+      {
+        id: 'overdue_decisions',
+        label: t('execution.attention.overdueDecisions', 'Overdue decisions'),
+        count: overdueDecisionsCount,
+        active: isAttentionActive('overdue_decisions'),
+        disabled: overdueDecisionsCount === 0,
+        icon: <Scale size={14} className="text-amber-400" />,
+        onClick: () => {
+          if (isAttentionActive('overdue_decisions')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('overdue_decisions');
+        },
+      },
+      {
+        id: 'missing_dates',
+        label: t('execution.attention.missingDates', 'Missing dates'),
+        count: missingDatesCount,
+        active: isAttentionActive('missing_dates'),
+        disabled: missingDatesCount === 0,
+        icon: <Calendar size={14} className="text-yellow-400" />,
+        onClick: () => {
+          if (isAttentionActive('missing_dates')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('missing_dates');
+        },
+      },
+      {
+        id: 'due_soon_tasks',
+        label: t('execution.attention.dueSoonTasks', 'Due soon tasks'),
+        count: dueSoonTasksCount,
+        active: isAttentionActive('due_soon_tasks'),
+        disabled: dueSoonTasksCount === 0,
+        icon: <Clock size={14} className="text-cyan-400" />,
+        onClick: () => {
+          if (isAttentionActive('due_soon_tasks')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('due_soon_tasks');
+        },
+      },
+    ] as const;
 
     return (
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('blocked')}
-          disabled={blockedCount === 0}
-          className={`${chipBase} ${
-            activeStatusFilter === InitiativeStatus.BLOCKED
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : blockedCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.blocked', 'Blocked')}
-        >
-          <AlertTriangle size={14} className="text-rose-400" />
-          <span>{t('execution.attention.blocked', 'Blocked')}</span>
-          <span
-            className={`${badgeBase} ${
-              activeStatusFilter === InitiativeStatus.BLOCKED
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+        {executionPresets.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={preset.onClick}
+            disabled={preset.disabled}
+            className={`${chipBase} ${
+              preset.active
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : preset.disabled
+                  ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
             }`}
+            title={preset.label}
           >
-            {blockedCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('overdue_decisions')}
-          disabled={overdueDecisionsCount === 0}
-          className={`${chipBase} ${
-            isAttentionActive('overdue_decisions')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : overdueDecisionsCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.overdueDecisions', 'Overdue decisions')}
-        >
-          <Scale size={14} className="text-amber-400" />
-          <span>{t('execution.attention.overdueDecisions', 'Overdue decisions')}</span>
-          <span
-            className={`${badgeBase} ${
-              isAttentionActive('overdue_decisions')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {overdueDecisionsCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('missing_dates')}
-          disabled={missingDatesCount === 0}
-          className={`${chipBase} ${
-            isAttentionActive('missing_dates')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : missingDatesCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.missingDates', 'Missing dates')}
-        >
-          <Calendar size={14} className="text-yellow-400" />
-          <span>{t('execution.attention.missingDates', 'Missing dates')}</span>
-          <span
-            className={`${badgeBase} ${
-              isAttentionActive('missing_dates')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {missingDatesCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('due_soon_tasks')}
-          disabled={dueSoonTasksCount === 0}
-          className={`${chipBase} ${
-            isAttentionActive('due_soon_tasks')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : dueSoonTasksCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.dueSoonTasks', 'Due soon tasks')}
-        >
-          <Clock size={14} className="text-cyan-400" />
-          <span>{t('execution.attention.dueSoonTasks', 'Due soon tasks')}</span>
-          <span
-            className={`${badgeBase} ${
-              isAttentionActive('due_soon_tasks')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {dueSoonTasksCount}
-          </span>
-        </button>
+            {preset.icon}
+            <span>{preset.label}</span>
+            <span
+              className={`${badgeBase} ${
+                preset.active
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {preset.count}
+            </span>
+          </button>
+        ))}
       </div>
     );
-  }, [activeTab, activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t, actionQueueItems.length]);
+  }, [
+    activeDocumentId,
+    activeTab,
+    actionCenter,
+    actionQueueItems.length,
+    activeFilters,
+    activeStatusFilter,
+    dashboardBaseInitiatives.length,
+    openInitiativesWithAttention,
+    reportPreset,
+    resetExecutionCommandRow,
+    riskSignals.length,
+    t,
+    tasks.length,
+    navigate,
+  ]);
 
   // ---------------------------------------------------------------------------
   // RAPORTY — pre-defined report catalog (§5 of EXECUTION_SURFACES spec)
   // Every report declares: audience, cadence, scope, data sources,
   // mandatory sections, RAG/confidence logic, expected follow-up actions.
   // ---------------------------------------------------------------------------
-  type ReportDef = {
-    id: string;
-    title: string;
-    audience: string;
-    cadence: string;
-    scope: string;
-    dataSources: string[];
-    sections: string[];
-    ragLogic: string;
-    followUpActions: string[];
-    icon: React.ReactNode;
-    highlights: { label: string; value: string | number; variant?: 'default' | 'warn' | 'critical' }[];
-  };
-
-  const reportCatalog = useMemo((): ReportDef[] => {
+  const reportCatalog = useMemo((): Array<
+    Omit<
+      ReportDef,
+      | 'aiExecutiveReadout'
+      | 'aiRecommendedActions'
+      | 'dataQuality'
+      | 'degradedFlags'
+      | 'lastRefreshAt'
+      | 'scenarioNotes'
+    >
+  > => {
     const blocked = actionCenter.blocked.length;
     const overdueDecisionCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
@@ -3261,7 +3369,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const pendingDecisions = decisions.filter(
       (d) => String(d.status).toUpperCase() === 'PENDING'
     ).length;
-    const totalInitiatives = filteredInitiatives.length;
+    const totalInitiatives = dashboardBaseInitiatives.length;
     const progressPct = execSnapshot?.overview?.progressPercent ?? null;
 
     return [
@@ -3272,9 +3380,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Weekly',
         scope: 'All active initiatives in current execution cycle',
         dataSources: ['Initiatives', 'Tasks', 'Decisions', 'Risk signals', 'Milestones'],
-        sections: ['Progress summary', 'Blockers & escalations', 'Overdue items', 'Next milestones', 'Key decisions needed'],
-        ragLogic: 'GREEN if no blockers and progress on-track; AMBER if overdue items >0 or progress <5% this week; RED if blockers >0',
-        followUpActions: ['Clear blockers', 'Resolve overdue decisions', 'Update missing dates', 'Reassign stale tasks'],
+        sections: [
+          'Progress summary',
+          'Blockers & escalations',
+          'Overdue items',
+          'Next milestones',
+          'Key decisions needed',
+        ],
+        ragLogic:
+          'GREEN if no blockers and progress on-track; AMBER if overdue items >0 or progress <5% this week; RED if blockers >0',
+        followUpActions: [
+          'Clear blockers',
+          'Resolve overdue decisions',
+          'Update missing dates',
+          'Reassign stale tasks',
+        ],
         icon: <CalendarDays size={18} className="text-cyan-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
@@ -3289,13 +3409,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Full portfolio month-over-month trends',
         dataSources: ['Initiatives', 'Budget', 'Milestones', 'Baseline/forecast', 'Capacity'],
-        sections: ['Portfolio trend (MoM)', 'Milestone slippage summary', 'Budget variance', 'Delivery confidence', 'Capacity utilization overview'],
-        ragLogic: 'GREEN if all initiatives on-track; AMBER if >20% initiatives amber; RED if any initiative RED or budget variance >15%',
-        followUpActions: ['Rebaseline slipped initiatives', 'Escalate budget overruns', 'Rebalance overloaded resources'],
+        sections: [
+          'Portfolio trend (MoM)',
+          'Milestone slippage summary',
+          'Budget variance',
+          'Delivery confidence',
+          'Capacity utilization overview',
+        ],
+        ragLogic:
+          'GREEN if all initiatives on-track; AMBER if >20% initiatives amber; RED if any initiative RED or budget variance >15%',
+        followUpActions: [
+          'Rebaseline slipped initiatives',
+          'Escalate budget overruns',
+          'Rebalance overloaded resources',
+        ],
         icon: <TrendingUp size={18} className="text-indigo-500" />,
         highlights: [
           { label: 'Initiatives', value: totalInitiatives },
-          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          {
+            label: 'Missing dates',
+            value: missingDatesCount,
+            variant: missingDatesCount > 0 ? 'warn' : 'default',
+          },
         ],
       },
       {
@@ -3304,10 +3439,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         audience: 'Steering Committee',
         cadence: 'Bi-weekly',
         scope: 'Per-initiative RAG and aggregate program health',
-        dataSources: ['Initiatives', 'Risk signals', 'Delay signals', 'Priority alerts', 'Exec snapshot'],
-        sections: ['RAG per initiative', 'Priority alerts', 'Confidence score & trend', 'Executive narrative', 'Required governance decisions'],
-        ragLogic: 'GREEN if confidence >70% and no critical alerts; AMBER if confidence 40-70% or critical alerts exist; RED if confidence <40% or multiple critical blockers',
-        followUpActions: ['Review RED initiatives', 'Approve recovery plans', 'Authorize resource reallocation'],
+        dataSources: [
+          'Initiatives',
+          'Risk signals',
+          'Delay signals',
+          'Priority alerts',
+          'Exec snapshot',
+        ],
+        sections: [
+          'RAG per initiative',
+          'Priority alerts',
+          'Confidence score & trend',
+          'Executive narrative',
+          'Required governance decisions',
+        ],
+        ragLogic:
+          'GREEN if confidence >70% and no critical alerts; AMBER if confidence 40-70% or critical alerts exist; RED if confidence <40% or multiple critical blockers',
+        followUpActions: [
+          'Review RED initiatives',
+          'Approve recovery plans',
+          'Authorize resource reallocation',
+        ],
         icon: <Shield size={18} className="text-emerald-500" />,
         highlights: [
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3321,9 +3473,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'On demand',
         scope: 'All blocked initiatives and downstream blast radius',
         dataSources: ['Blocked initiatives', 'Dependencies', 'Tasks', 'Risk register'],
-        sections: ['Active blockers list', 'Blast radius per blocker', 'Owner accountability', 'Recovery actions proposed', 'Dependency chain impact'],
-        ragLogic: 'RED if any blockers; AMBER if blockers existed in last 7 days; GREEN if clear for >7 days',
-        followUpActions: ['Assign blocker owners', 'Remove external dependencies', 'Escalate to governance', 'Replan affected work'],
+        sections: [
+          'Active blockers list',
+          'Blast radius per blocker',
+          'Owner accountability',
+          'Recovery actions proposed',
+          'Dependency chain impact',
+        ],
+        ragLogic:
+          'RED if any blockers; AMBER if blockers existed in last 7 days; GREEN if clear for >7 days',
+        followUpActions: [
+          'Assign blocker owners',
+          'Remove external dependencies',
+          'Escalate to governance',
+          'Replan affected work',
+        ],
         icon: <AlertTriangle size={18} className="text-rose-500" />,
         highlights: [
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3337,12 +3501,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Weekly',
         scope: 'All milestones with baseline vs forecast drift',
         dataSources: ['Milestones', 'Baseline', 'Forecast', 'Delay signals'],
-        sections: ['Slipped milestones', 'Drift by initiative', 'Root cause analysis', 'Forecast accuracy trend', 'Recovery timeline'],
-        ragLogic: 'GREEN if no milestones slipped >3 days; AMBER if 1-2 milestones slipped; RED if >2 milestones slipped or any critical milestone missed',
-        followUpActions: ['Rebaseline slipped milestones', 'Add recovery buffer', 'Escalate critical misses'],
+        sections: [
+          'Slipped milestones',
+          'Drift by initiative',
+          'Root cause analysis',
+          'Forecast accuracy trend',
+          'Recovery timeline',
+        ],
+        ragLogic:
+          'GREEN if no milestones slipped >3 days; AMBER if 1-2 milestones slipped; RED if >2 milestones slipped or any critical milestone missed',
+        followUpActions: [
+          'Rebaseline slipped milestones',
+          'Add recovery buffer',
+          'Escalate critical misses',
+        ],
         icon: <Clock size={18} className="text-amber-500" />,
         highlights: [
-          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          {
+            label: 'Missing dates',
+            value: missingDatesCount,
+            variant: missingDatesCount > 0 ? 'warn' : 'default',
+          },
         ],
       },
       {
@@ -3352,13 +3531,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Per-person and per-team workload vs capacity',
         dataSources: ['Tasks', 'Assignments', 'Capacity', 'Workload view'],
-        sections: ['Utilization by person', 'Team averages', 'Overload alerts', 'Underutilized resources', 'Capacity horizon (4-week lookahead)'],
-        ragLogic: 'GREEN if all <85% utilized; AMBER if anyone 85-100%; RED if anyone >100% or team average >90%',
-        followUpActions: ['Smooth overloaded assignments', 'Redistribute idle capacity', 'Flag resource gaps to hiring'],
-        icon: <Users size={18} className="text-violet-500" />,
-        highlights: [
-          { label: 'Tasks', value: totalTasks },
+        sections: [
+          'Utilization by person',
+          'Team averages',
+          'Overload alerts',
+          'Underutilized resources',
+          'Capacity horizon (4-week lookahead)',
         ],
+        ragLogic:
+          'GREEN if all <85% utilized; AMBER if anyone 85-100%; RED if anyone >100% or team average >90%',
+        followUpActions: [
+          'Smooth overloaded assignments',
+          'Redistribute idle capacity',
+          'Flag resource gaps to hiring',
+        ],
+        icon: <Users size={18} className="text-violet-500" />,
+        highlights: [{ label: 'Tasks', value: totalTasks }],
       },
       {
         id: 'budget-variance',
@@ -3367,13 +3555,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Planned vs actual budget per initiative',
         dataSources: ['Budget', 'Initiatives', 'Overspend signals'],
-        sections: ['Aggregate budget status', 'Per-initiative variance', 'Forecast overshoot alerts', 'Burn rate trend', 'Cost category breakdown'],
-        ragLogic: 'GREEN if variance <5%; AMBER if 5-15%; RED if >15% overspend or forecast exceeds approved budget',
-        followUpActions: ['Review overspending initiatives', 'Request budget reallocation', 'Freeze discretionary spend'],
-        icon: <TrendingUp size={18} className="text-green-500" />,
-        highlights: [
-          { label: 'Initiatives', value: totalInitiatives },
+        sections: [
+          'Aggregate budget status',
+          'Per-initiative variance',
+          'Forecast overshoot alerts',
+          'Burn rate trend',
+          'Cost category breakdown',
         ],
+        ragLogic:
+          'GREEN if variance <5%; AMBER if 5-15%; RED if >15% overspend or forecast exceeds approved budget',
+        followUpActions: [
+          'Review overspending initiatives',
+          'Request budget reallocation',
+          'Freeze discretionary spend',
+        ],
+        icon: <TrendingUp size={18} className="text-green-500" />,
+        highlights: [{ label: 'Initiatives', value: totalInitiatives }],
       },
       {
         id: 'decision-backlog',
@@ -3382,12 +3579,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Weekly',
         scope: 'All pending decisions and approval age',
         dataSources: ['Decisions', 'Action queue', 'Initiative dependencies'],
-        sections: ['Pending decisions list', 'Aging histogram', 'Decision-latency risk', 'Accountability gaps', 'Downstream blocked work'],
-        ragLogic: 'GREEN if no decisions overdue; AMBER if 1-3 overdue; RED if >3 overdue or any blocking critical path',
-        followUpActions: ['Escalate aged decisions', 'Assign decision owners', 'Unblock dependent work'],
+        sections: [
+          'Pending decisions list',
+          'Aging histogram',
+          'Decision-latency risk',
+          'Accountability gaps',
+          'Downstream blocked work',
+        ],
+        ragLogic:
+          'GREEN if no decisions overdue; AMBER if 1-3 overdue; RED if >3 overdue or any blocking critical path',
+        followUpActions: [
+          'Escalate aged decisions',
+          'Assign decision owners',
+          'Unblock dependent work',
+        ],
         icon: <Scale size={18} className="text-amber-600" />,
         highlights: [
-          { label: 'Overdue', value: overdueDecisionCount, variant: overdueDecisionCount > 0 ? 'warn' : 'default' },
+          {
+            label: 'Overdue',
+            value: overdueDecisionCount,
+            variant: overdueDecisionCount > 0 ? 'warn' : 'default',
+          },
           { label: 'Pending', value: pendingDecisions },
         ],
       },
@@ -3398,13 +3610,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Bi-weekly',
         scope: 'Inter-initiative dependency graph and cascade risk',
         dataSources: ['Dependencies', 'Initiatives', 'Risk signals'],
-        sections: ['Dependency map', 'Critical path', 'Cascade impact analysis', 'Dependency health', 'External dependency risks'],
-        ragLogic: 'GREEN if no dependency conflicts; AMBER if dependencies at risk; RED if broken dependency chain on critical path',
-        followUpActions: ['Resolve dependency conflicts', 'Decouple tightly coupled work', 'Add buffers to critical chains'],
-        icon: <GripVertical size={18} className="text-slate-500" />,
-        highlights: [
-          { label: 'Initiatives', value: totalInitiatives },
+        sections: [
+          'Dependency map',
+          'Critical path',
+          'Cascade impact analysis',
+          'Dependency health',
+          'External dependency risks',
         ],
+        ragLogic:
+          'GREEN if no dependency conflicts; AMBER if dependencies at risk; RED if broken dependency chain on critical path',
+        followUpActions: [
+          'Resolve dependency conflicts',
+          'Decouple tightly coupled work',
+          'Add buffers to critical chains',
+        ],
+        icon: <GripVertical size={18} className="text-slate-500" />,
+        highlights: [{ label: 'Initiatives', value: totalInitiatives }],
       },
       {
         id: 'delivery-confidence',
@@ -3413,9 +3634,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Risk-adjusted delivery forecast with confidence scoring',
         dataSources: ['Initiatives', 'Risk signals', 'Delay signals', 'Budget', 'Exec snapshot'],
-        sections: ['Confidence per initiative', 'Trend direction', 'Risk-adjusted forecast', 'Sponsor-ready narrative', 'Recommended governance actions'],
-        ragLogic: 'GREEN if aggregate confidence >75%; AMBER if 50-75%; RED if <50% or confidence declining for 2+ periods',
-        followUpActions: ['Investigate declining confidence', 'Approve recovery plans', 'Communicate revised timelines'],
+        sections: [
+          'Confidence per initiative',
+          'Trend direction',
+          'Risk-adjusted forecast',
+          'Sponsor-ready narrative',
+          'Recommended governance actions',
+        ],
+        ragLogic:
+          'GREEN if aggregate confidence >75%; AMBER if 50-75%; RED if <50% or confidence declining for 2+ periods',
+        followUpActions: [
+          'Investigate declining confidence',
+          'Approve recovery plans',
+          'Communicate revised timelines',
+        ],
         icon: <Sparkles size={18} className="text-cyan-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
@@ -3429,81 +3661,146 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'On demand',
         scope: 'Concise executive summary of portfolio state',
         dataSources: ['Exec snapshot', 'Initiatives', 'Risk signals', 'Milestones'],
-        sections: ['Overall progress', 'Top 3 risks', 'Next milestones', 'Decisions required from sponsor', 'Key achievements this period'],
-        ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
-        followUpActions: ['Make requested decisions', 'Remove escalated blockers', 'Approve budget changes'],
-        icon: <FileText size={18} className="text-indigo-500" />,
-        highlights: [
-          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
+        sections: [
+          'Overall progress',
+          'Top 3 risks',
+          'Next milestones',
+          'Decisions required from sponsor',
+          'Key achievements this period',
         ],
+        ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
+        followUpActions: [
+          'Make requested decisions',
+          'Remove escalated blockers',
+          'Approve budget changes',
+        ],
+        icon: <FileText size={18} className="text-indigo-500" />,
+        highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
       },
     ];
-  }, [actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
+  }, [actionCenter, tasks.length, decisions, dashboardBaseInitiatives.length, execSnapshot]);
 
-  const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
-  const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
+  const reportDataContext = useMemo(
+    (): ReportDataContext => ({
+      initiatives: dashboardBaseInitiatives.map((i) => ({
+        id: i.id,
+        name: i.name,
+        status: i.status,
+        health: initiativeHealthMap.get(i.id)?.health,
+        progress: (i as any).progressPercent ?? (i as any).progress,
+        owner: (i as any).ownerName || (i as any).owner?.name,
+        targetDate: (i as any).plannedEndDate || (i as any).targetDate || (i as any).endDate,
+        priority: (i as any).priority,
+      })),
+      tasks: tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        priority: (t as any).priority,
+        dueDate: t.dueDate,
+        assigneeName: (t as any).assigneeName || (t as any).assignee?.name,
+        initiativeId: (t as any).initiativeId,
+        initiativeName: (t as any).initiativeName,
+      })),
+      decisions: decisions.map((d) => ({
+        id: d.id,
+        title: d.title,
+        status: d.status,
+        priority: (d as any).priority,
+        dueDate: (d as any).dueDate,
+        ownerName: (d as any).ownerName || (d as any).owner?.name,
+        relatedObjectId: (d as any).relatedObjectId,
+      })),
+      blocked: actionCenter.blocked.map((i) => ({
+        id: i.id,
+        name: i.name,
+        reason: (i as any).blockedReason,
+      })),
+      riskSignals: riskSignals.map((r) => ({
+        id: (r as any).id,
+        title: r.title,
+        initiativeName: r.initiativeName,
+        severity: r.severity,
+        description: r.description,
+        suggestedAction: r.suggestedAction,
+      })),
+      delaySignals: delaySignals.map((d) => ({
+        entityName: d.entityName,
+        deviationType: d.deviationType,
+        daysDeviation: d.daysDeviation,
+        severity: d.severity,
+      })),
+      overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
+        id: d.id,
+        title: d.title,
+        ownerName: (d as any).ownerName || (d as any).owner?.name,
+        dueDate: (d as any).dueDate,
+      })),
+      missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
+      dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        dueDate: (t as any).dueDate,
+        assigneeName: (t as any).assigneeName,
+      })),
+      overspendSignals,
+      nextMilestones: execSnapshot?.overview?.nextMilestones ?? [],
+      priorityAlerts: execSnapshot?.overview?.priorityAlerts ?? [],
+      timelineWarnings,
+      capacityAlerts,
+      capacityTimeline,
+      phaseLabel: execSnapshot?.overview?.phaseLabel,
+      progressPercent: execSnapshot?.overview?.progressPercent ?? null,
+      totalInitiatives: dashboardBaseInitiatives.length,
+      lastRefreshAt: execSnapshot?.generatedAt,
+    }),
+    [
+      dashboardBaseInitiatives,
+      tasks,
+      decisions,
+      actionCenter,
+      riskSignals,
+      delaySignals,
+      overspendSignals,
+      execSnapshot,
+      initiativeHealthMap,
+      timelineWarnings,
+      capacityAlerts,
+      capacityTimeline,
+    ]
+  );
 
-  const reportDataContext = useMemo((): ReportDataContext => ({
-    initiatives: filteredInitiatives.map((i) => ({
-      id: i.id,
-      name: i.name,
-      status: i.status,
-      health: initiativeHealthMap.get(i.id)?.health,
-      progress: (i as any).progressPercent ?? (i as any).progress,
-      owner: (i as any).ownerName || (i as any).owner?.name,
-      targetDate: (i as any).targetDate,
-      priority: (i as any).priority,
-    })),
-    tasks: tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      status: t.status,
-      priority: (t as any).priority,
-      dueDate: t.dueDate,
-      assigneeName: (t as any).assigneeName || (t as any).assignee?.name,
-      initiativeId: (t as any).initiativeId,
-      initiativeName: (t as any).initiativeName,
-    })),
-    decisions: decisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      status: d.status,
-      priority: (d as any).priority,
-      dueDate: (d as any).dueDate,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      relatedObjectId: (d as any).relatedObjectId,
-    })),
-    blocked: actionCenter.blocked.map((i) => ({ id: i.id, name: i.name, reason: (i as any).blockedReason })),
-    riskSignals: riskSignals.map((r) => ({
-      id: (r as any).id,
-      title: r.title,
-      initiativeName: r.initiativeName,
-      severity: r.severity,
-      description: r.description,
-      suggestedAction: r.suggestedAction,
-    })),
-    delaySignals: delaySignals.map((d) => ({
-      entityName: d.entityName,
-      deviationType: d.deviationType,
-      daysDeviation: d.daysDeviation,
-      severity: d.severity,
-    })),
-    overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      dueDate: (d as any).dueDate,
-    })),
-    missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
-    dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      dueDate: (t as any).dueDate,
-      assigneeName: (t as any).assigneeName,
-    })),
-    progressPercent: execSnapshot?.overview?.progressPercent ?? null,
-    totalInitiatives: filteredInitiatives.length,
-  }), [filteredInitiatives, tasks, decisions, actionCenter, riskSignals, delaySignals, execSnapshot, initiativeHealthMap]);
+  const enrichedReportCatalog = useMemo(
+    () => reportCatalog.map((report) => enrichExecutionReport(report, reportDataContext)),
+    [reportCatalog, reportDataContext]
+  );
+
+  const filteredReportCatalog = useMemo(() => {
+    let result = enrichedReportCatalog;
+    if (reportPreset === 'weekly') {
+      result = result.filter((report) => report.cadence === 'Weekly');
+    } else if (reportPreset === 'monthly') {
+      result = result.filter((report) => report.cadence === 'Monthly');
+    } else if (reportPreset === 'bi-weekly') {
+      result = result.filter((report) => report.cadence === 'Bi-weekly');
+    } else if (reportPreset === 'on-demand') {
+      result = result.filter((report) => report.cadence === 'On demand');
+    } else if (reportPreset === 'sponsor') {
+      result = result.filter(
+        (report) => /sponsor/i.test(report.audience) || /sponsor/i.test(report.title)
+      );
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (report) =>
+          report.title.toLowerCase().includes(query) ||
+          report.audience.toLowerCase().includes(query) ||
+          report.cadence.toLowerCase().includes(query)
+      );
+    }
+    return result;
+  }, [enrichedReportCatalog, reportPreset, searchQuery]);
 
   // MANAGER — operator cockpit
   // ---------------------------------------------------------------------------
@@ -3520,14 +3817,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [actionQueueItems, actionCenter]);
 
   const interventionSuggestions = useMemo(() => {
-    const suggestions: { id: string; action: string; reason: string; expected: string; icon: React.ReactNode; severity: 'high' | 'medium' | 'low' }[] = [];
+    const suggestions: {
+      id: string;
+      action: string;
+      reason: string;
+      expected: string;
+      icon: React.ReactNode;
+      severity: 'high' | 'medium' | 'low';
+    }[] = [];
 
     if (managerMetrics.blockedCount > 0) {
       suggestions.push({
         id: 'unblock',
         action: t('execution.manager.suggestions.unblock', 'Resolve blockers'),
-        reason: t('execution.manager.suggestions.unblockReason', '{{count}} initiative(s) blocked — delivery stalled.', { count: managerMetrics.blockedCount }),
-        expected: t('execution.manager.suggestions.unblockExpected', 'Unblocked initiatives resume delivery.'),
+        reason: t(
+          'execution.manager.suggestions.unblockReason',
+          '{{count}} initiative(s) blocked — delivery stalled.',
+          { count: managerMetrics.blockedCount }
+        ),
+        expected: t(
+          'execution.manager.suggestions.unblockExpected',
+          'Unblocked initiatives resume delivery.'
+        ),
         icon: <AlertTriangle size={14} className="text-rose-500" />,
         severity: 'high',
       });
@@ -3537,8 +3848,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       suggestions.push({
         id: 'escalate-decisions',
         action: t('execution.manager.suggestions.escalate', 'Escalate overdue decisions'),
-        reason: t('execution.manager.suggestions.escalateReason', '{{count}} approval(s) past due — blocking downstream work.', { count: managerMetrics.overdueItems }),
-        expected: t('execution.manager.suggestions.escalateExpected', 'Decision queue clears, dependent tasks unblock.'),
+        reason: t(
+          'execution.manager.suggestions.escalateReason',
+          '{{count}} approval(s) past due — blocking downstream work.',
+          { count: managerMetrics.overdueItems }
+        ),
+        expected: t(
+          'execution.manager.suggestions.escalateExpected',
+          'Decision queue clears, dependent tasks unblock.'
+        ),
         icon: <Scale size={14} className="text-amber-500" />,
         severity: 'high',
       });
@@ -3548,8 +3866,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       suggestions.push({
         id: 'fill-dates',
         action: t('execution.manager.suggestions.replan', 'Fill missing dates'),
-        reason: t('execution.manager.suggestions.replanReason', '{{count}} initiative(s) have no target date — timeline invisible.', { count: managerMetrics.missingDatesCount }),
-        expected: t('execution.manager.suggestions.replanExpected', 'Timeline becomes credible; slippage detection activates.'),
+        reason: t(
+          'execution.manager.suggestions.replanReason',
+          '{{count}} initiative(s) have no target date — timeline invisible.',
+          { count: managerMetrics.missingDatesCount }
+        ),
+        expected: t(
+          'execution.manager.suggestions.replanExpected',
+          'Timeline becomes credible; slippage detection activates.'
+        ),
         icon: <Clock size={14} className="text-cyan-500" />,
         severity: 'medium',
       });
@@ -3558,9 +3883,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (managerMetrics.kpiAlerts > 0) {
       suggestions.push({
         id: 'address-kpi',
-        action: t('execution.manager.suggestions.addressKpi', 'Create recovery plans for KPI deviations'),
-        reason: t('execution.manager.suggestions.addressKpiReason', '{{count}} KPI deviation(s) without a plan.', { count: managerMetrics.kpiAlerts }),
-        expected: t('execution.manager.suggestions.addressKpiExpected', 'Deviations get action plans, confidence improves.'),
+        action: t(
+          'execution.manager.suggestions.addressKpi',
+          'Create recovery plans for KPI deviations'
+        ),
+        reason: t(
+          'execution.manager.suggestions.addressKpiReason',
+          '{{count}} KPI deviation(s) without a plan.',
+          { count: managerMetrics.kpiAlerts }
+        ),
+        expected: t(
+          'execution.manager.suggestions.addressKpiExpected',
+          'Deviations get action plans, confidence improves.'
+        ),
         icon: <Target size={14} className="text-fuchsia-500" />,
         severity: 'medium',
       });
@@ -3570,8 +3905,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       suggestions.push({
         id: 'smooth-workload',
         action: t('execution.manager.suggestions.smooth', 'Rebalance upcoming workload'),
-        reason: t('execution.manager.suggestions.smoothReason', '{{count}} tasks due soon — potential resource crunch.', { count: actionCenter.dueSoonTasks.length }),
-        expected: t('execution.manager.suggestions.smoothExpected', 'Workload spread evenly; no single-point overload.'),
+        reason: t(
+          'execution.manager.suggestions.smoothReason',
+          '{{count}} tasks due soon — potential resource crunch.',
+          { count: actionCenter.dueSoonTasks.length }
+        ),
+        expected: t(
+          'execution.manager.suggestions.smoothExpected',
+          'Workload spread evenly; no single-point overload.'
+        ),
         icon: <Users size={14} className="text-violet-500" />,
         severity: 'low',
       });
@@ -3580,148 +3922,132 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return suggestions;
   }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
 
-  const managerDataContext = useMemo((): ManagerModuleDataContext => ({
-    initiatives: filteredInitiatives,
-    tasks,
-    decisions: decisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      status: d.status,
-      priority: (d as any).priority,
-      dueDate: (d as any).dueDate,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      relatedObjectId: (d as any).relatedObjectId,
-      relatedObjectName: (d as any).relatedObjectName,
-    })),
-    actionQueueItems: actionQueueItems.map((item) => ({
-      type: item.type,
-      id: item.id,
-      title: item.title,
-      initiativeName: item.initiativeName,
-      dueDate: item.dueDate,
-      severity: item.severity,
-      impact: item.impact,
-      periodStart: item.periodStart,
-    })),
-    blocked: actionCenter.blocked.map((i) => ({ id: i.id, name: i.name, reason: (i as any).blockedReason })),
-    overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      dueDate: d.dueDate,
-      relatedObjectId: (d as any).relatedObjectId,
-      relatedObjectName: (d as any).relatedObjectName,
-    })),
-    missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
-    dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      dueDate: (t as any).dueDate,
-      assigneeName: (t as any).assigneeName,
-    })),
-    riskSignals,
-    delaySignals,
-    interventionSuggestions,
-    kpiAlerts: managerMetrics.kpiAlerts,
-    projectId: currentProjectId || undefined,
-    onInitiativeClick: handleOpenSidePanel,
-  }), [filteredInitiatives, tasks, decisions, actionQueueItems, actionCenter, riskSignals, delaySignals, interventionSuggestions, managerMetrics.kpiAlerts, currentProjectId, handleOpenSidePanel]);
+  // managerDataContext removed — ManagerModuleView now fetches its own data via API
 
   const handleGenerateReport = useCallback(
     async (report: ReportDef) => {
-      const prompt = `Generate an execution report: "${report.title}" for audience "${report.audience}".
-Scope: ${report.scope}.
-Include these sections: ${report.sections.join(', ')}.
-Apply this RAG logic: ${report.ragLogic}.
-Data: ${filteredInitiatives.length} initiatives, ${tasks.length} tasks, ${decisions.length} decisions, ${actionCenter.blocked.length} blocked, ${riskSignals.length} risk signals.
-Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
+      const prompt = `Generate an execution report for "${report.title}".
+Audience: ${report.audience}
+Cadence: ${report.cadence}
+Scope: ${report.scope}
+Top metrics: ${report.highlights.map((item) => `${item.label}=${item.value}`).join(', ')}
+Top exceptions: blockers=${actionCenter.blocked.length}, overdue decisions=${actionCenter.overdueDecisions.length}, missing dates=${actionCenter.missingDates.length}, due soon tasks=${actionCenter.dueSoonTasks.length}
+Degraded flags: ${report.degradedFlags.length > 0 ? report.degradedFlags.join(', ') : 'none'}
+Known limitations: ${(report.dataQuality.knownLimitations ?? []).length > 0 ? (report.dataQuality.knownLimitations ?? []).join(' | ') : 'none'}
+Mandatory sections: ${report.sections.join(', ')}
+Existing AI readout: ${report.aiExecutiveReadout.join(' ')}
+Expected follow-up actions: ${report.followUpActions.join(', ')}
+
+Please return:
+1. a concise executive readout grounded in the data,
+2. concrete owner-based actions with timing,
+3. any caveats caused by degraded data posture.`;
       try {
         const convId = await openChatWithContext({
           entityType: 'execution_report' as any,
           entityId: report.id,
           entityName: report.title,
-          contextData: { reportId: report.id, scope: report.scope, audience: report.audience, cadence: report.cadence },
+          contextData: {
+            reportId: report.id,
+            scope: report.scope,
+            audience: report.audience,
+            cadence: report.cadence,
+            highlights: report.highlights,
+            degradedFlags: report.degradedFlags,
+            dataQuality: report.dataQuality,
+          },
         });
         await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
-        toast.success(t('execution.reportCatalog.generating', 'Generating "{{title}}"…', { title: report.title }), { duration: 2000 });
+        toast.success(
+          t('execution.reportCatalog.generating', 'Generating "{{title}}"…', {
+            title: report.title,
+          }),
+          { duration: 2000 }
+        );
         if (isChatCollapsed) toggleChatCollapse();
       } catch {
         toast.error(t('execution.reportCatalog.generateError', 'Failed to generate report'));
       }
     },
-    [filteredInitiatives.length, tasks.length, decisions.length, actionCenter.blocked.length, riskSignals.length, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
+    [actionCenter, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
   );
 
-  const reportColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'title',
-      label: t('execution.reportCatalog.col.title', 'Report'),
-      render: (row: any) => {
-        const r = row as ReportDef;
-        return (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
-              {r.icon}
+  const reportColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('execution.reportCatalog.col.title', 'Report'),
+        render: (row: any) => {
+          const r = row as ReportDef;
+          return (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
+                {r.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {r.title}
+                </div>
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                  {r.audience}
+                </div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{r.title}</div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{r.audience}</div>
+          );
+        },
+      },
+      {
+        id: 'cadence',
+        label: t('execution.reportCatalog.col.cadence', 'Cadence'),
+        width: '100px',
+        render: (row: any) => (
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {(row as ReportDef).cadence}
+          </span>
+        ),
+      },
+      {
+        id: 'highlights',
+        label: t('execution.reportCatalog.col.data', 'Live Data'),
+        width: '200px',
+        render: (row: any) => {
+          const r = row as ReportDef;
+          return (
+            <div className="flex flex-wrap gap-1">
+              {r.highlights.slice(0, 3).map((h) => (
+                <span
+                  key={h.label}
+                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    h.variant === 'critical'
+                      ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                      : h.variant === 'warn'
+                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {h.label}: {h.value}
+                </span>
+              ))}
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'cadence',
-      label: t('execution.reportCatalog.col.cadence', 'Cadence'),
-      width: '100px',
-      render: (row: any) => (
-        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {(row as ReportDef).cadence}
-        </span>
-      ),
-    },
-    {
-      id: 'highlights',
-      label: t('execution.reportCatalog.col.data', 'Live Data'),
-      width: '200px',
-      render: (row: any) => {
-        const r = row as ReportDef;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {r.highlights.slice(0, 3).map((h) => (
-              <span
-                key={h.label}
-                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                  h.variant === 'critical'
-                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                    : h.variant === 'warn'
-                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {h.label}: {h.value}
-              </span>
-            ))}
-          </div>
-        );
+      {
+        id: 'sections',
+        label: t('execution.reportCatalog.col.sections', 'Sections'),
+        width: '60px',
+        render: (row: any) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+            {(row as ReportDef).sections.length}
+          </span>
+        ),
       },
-    },
-    {
-      id: 'sections',
-      label: t('execution.reportCatalog.col.sections', 'Sections'),
-      width: '60px',
-      render: (row: any) => (
-        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-          {(row as ReportDef).sections.length}
-        </span>
-      ),
-    },
-  ], [t]);
-
+    ],
+    [t]
+  );
 
   const renderReportPreviewBody = useCallback((report: ReportDef) => {
-    const rag = computeRAG(report as ReportCompactDef);
+    const rag = computeRAG(report);
     const ragConf = RAG_CONFIG[rag];
     const RagIcon = ragConf.icon;
     return (
@@ -3729,7 +4055,9 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         {/* RAG badge + title */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}>
+            <div
+              className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}
+            >
               <RagIcon size={10} className="inline mr-1 -mt-0.5" />
               {ragConf.label}
             </div>
@@ -3742,8 +4070,12 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
               {report.icon}
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">{report.title}</div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">{report.audience}</div>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                {report.title}
+              </div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                {report.audience}
+              </div>
             </div>
           </div>
         </div>
@@ -3770,42 +4102,103 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
 
         {/* Scope */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Scope</div>
-          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{report.scope}</p>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Scope
+          </div>
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+            {report.scope}
+          </p>
         </div>
 
         {/* Data sources */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Data Sources</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Data Sources
+          </div>
           <div className="flex flex-wrap gap-1">
             {report.dataSources.map((ds) => (
-              <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
+              <span
+                key={ds}
+                className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+              >
+                {ds}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            AI Executive Readout
+          </div>
+          <div className="space-y-1.5">
+            {report.aiExecutiveReadout.slice(0, 3).map((line) => (
+              <div
+                key={line}
+                className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+              >
+                {line}
+              </div>
             ))}
           </div>
         </div>
 
         {/* Mandatory sections */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Mandatory Sections</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Mandatory Sections
+          </div>
           <ol className="space-y-0.5 list-decimal list-inside">
             {report.sections.map((s) => (
-              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">{s}</li>
+              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
+                {s}
+              </li>
             ))}
           </ol>
         </div>
 
         {/* RAG logic */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">RAG / Confidence Logic</div>
-          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            RAG / Confidence Logic
+          </div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            {report.ragLogic}
+          </p>
         </div>
 
         {/* Follow-up actions */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Expected Follow-up Actions</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Expected Follow-up Actions
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {report.followUpActions.map((a) => (
-              <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
+              <span
+                key={a}
+                className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300"
+              >
+                {a}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Data Quality
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
+              {report.dataQuality.confidence}
+            </span>
+            {report.degradedFlags.map((flag) => (
+              <span
+                key={flag}
+                className="inline-block px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-[10px] text-violet-700 dark:text-violet-300"
+              >
+                {flag}
+              </span>
             ))}
           </div>
         </div>
@@ -3813,50 +4206,73 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     );
   }, []);
 
-  const renderReportPreviewFooter = useCallback((report: ReportDef) => {
-    const rag = computeRAG(report as ReportCompactDef);
-    return (
-      <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
-        <button
-          type="button"
-          onClick={() => handleGenerateReport(report)}
-          className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
-        >
-          {t('execution.reportPanel.generateAI', 'Generate with AI')}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            exportReportPDF(report as ReportCompactDef, rag);
-            toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
-          }}
-          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-        >
-          PDF
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            const md = buildReportMarkdown(report as ReportCompactDef, rag);
-            navigator.clipboard.writeText(md).then(
-              () => toast.success(t('execution.reportPanel.copied', 'Copied')),
-              () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
-            );
-          }}
-          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-        >
-          {t('execution.reportPanel.copy', 'Copy')}
-        </button>
-      </div>
-    );
-  }, [handleGenerateReport, t]);
+  const handleGenerateInWordy = useCallback(
+    (report: ReportDef) => {
+      navigate(`/wordy?sourceType=execution_report&sourceId=${encodeURIComponent(report.id)}`);
+    },
+    [navigate]
+  );
+
+  const renderReportPreviewFooter = useCallback(
+    (report: ReportDef) => {
+      const rag = computeRAG(report);
+      return (
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
+          <button
+            type="button"
+            onClick={() => handleGenerateReport(report)}
+            className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+          >
+            {t('execution.reportPanel.generateAI', 'Generate with AI')}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleGenerateInWordy(report)}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-brand/40 text-brand hover:bg-brand/5 dark:border-brand/50 dark:text-brand dark:hover:bg-brand/10 transition-colors"
+          >
+            {t('execution.reportPanel.generateInWordy', 'Generate in Wordy')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              exportReportPDF(report, rag);
+              toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
+            }}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
+            PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const md = buildReportMarkdown(report, rag);
+              navigator.clipboard.writeText(md).then(
+                () => toast.success(t('execution.reportPanel.copied', 'Copied')),
+                () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
+              );
+            }}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
+            {t('execution.reportPanel.copy', 'Copy')}
+          </button>
+        </div>
+      );
+    },
+    [handleGenerateReport, handleGenerateInWordy, t]
+  );
 
   const renderReportsCatalog = () => {
-    if (filteredInitiatives.length === 0) {
+    if (reportDataContext.totalInitiatives === 0) {
       return (
         <div className="p-4">
-          <Callout variant="info" title={t('execution.reportCatalog.noData', 'No execution data yet')}>
-            {t('execution.reportCatalog.noDataDesc', 'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.')}
+          <Callout
+            variant="info"
+            title={t('execution.reportCatalog.noData', 'No execution data yet')}
+          >
+            {t(
+              'execution.reportCatalog.noDataDesc',
+              'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.'
+            )}
           </Callout>
         </div>
       );
@@ -3866,9 +4282,11 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
       type ReportRow = ReportDef & { title: string };
       const selectedReportPreviewId = reportPreviewId;
       const selectedReport = selectedReportPreviewId
-        ? (reportCatalog.find((r) => r.id === selectedReportPreviewId) as ReportRow | undefined) ?? null
+        ? ((filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as
+            | ReportRow
+            | undefined) ?? null)
         : null;
-      const reportIds = reportCatalog.map((r) => r.id);
+      const reportIds = filteredReportCatalog.map((r) => r.id);
 
       return (
         <div className="h-full overflow-hidden">
@@ -3877,9 +4295,11 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             selectedItem={selectedReport}
             onSelect={setReportPreviewId}
             itemIds={reportIds}
-            getItemById={(id) => (reportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
+            getItemById={(id) =>
+              (filteredReportCatalog.find((r) => r.id === id) as ReportRow) ?? null
+            }
             onOpenFull={(id) => {
-              const r = reportCatalog.find((x) => x.id === id);
+              const r = filteredReportCatalog.find((x) => x.id === id);
               if (r) handleOpenReport(r);
             }}
             renderPreview={(item) => renderReportPreviewBody(item)}
@@ -3887,11 +4307,11 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
           >
             <FilterableTable
               columns={reportColumns}
-              data={reportCatalog as any[]}
+              data={filteredReportCatalog as any[]}
               selectedRowId={selectedReportPreviewId}
               onRowClick={(row) => setReportPreviewId(String(row.id))}
               onRowDoubleClick={(row) => {
-                const r = reportCatalog.find((x) => x.id === row.id);
+                const r = filteredReportCatalog.find((x) => x.id === row.id);
                 if (r) handleOpenReport(r);
               }}
               activeFilters={reportFilters}
@@ -3913,7 +4333,10 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
               {t('execution.reportCatalog.heading', 'Execution Reports')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.')}
+              {t(
+                'execution.reportCatalog.subheading',
+                'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.'
+              )}
             </p>
           </div>
           <button
@@ -3926,7 +4349,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {reportCatalog.map((report) => {
+          {filteredReportCatalog.map((report) => {
             return (
               <button
                 key={report.id}
@@ -3955,7 +4378,10 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
                         </div>
                       </div>
                     </div>
-                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500" />
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500"
+                    />
                   </div>
 
                   {report.highlights.length > 0 && (
@@ -3985,131 +4411,6 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     );
   };
 
-  // ---------------------------------------------------------------------------
-  const renderManagerCockpit = () => {
-    const { kpiAlerts, overdueItems, blockedCount, missingDatesCount } = managerMetrics;
-    const withoutOwner = filteredInitiatives.filter((i: any) => !i.ownerId && !i.assigneeId).length;
-    const highRisks = riskSignals.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length;
-
-    const tiles: {
-      id: ManagerModuleId;
-      icon: React.ReactNode;
-      title: string;
-      description: string;
-      metrics: { label: string; value: number | string; variant?: 'default' | 'warn' | 'critical' }[];
-    }[] = [
-      {
-        id: 'action-queue',
-        icon: <ClipboardList size={20} className="text-cyan-500" />,
-        title: t('execution.manager.tile.actionQueue', 'Action Queue'),
-        description: t('execution.manager.tile.actionQueueDesc', 'Tasks, decisions, and escalations requiring your attention.'),
-        metrics: [
-          { label: 'Items', value: actionQueueItems.length, variant: actionQueueItems.length > 0 ? 'warn' : 'default' },
-          { label: 'Overdue', value: overdueItems, variant: overdueItems > 0 ? 'critical' : 'default' },
-        ],
-      },
-      {
-        id: 'decisions',
-        icon: <Scale size={20} className="text-amber-500" />,
-        title: t('execution.manager.tile.decisions', 'Decisions & Approvals'),
-        description: t('execution.manager.tile.decisionsDesc', 'Pending and overdue decisions blocking downstream work.'),
-        metrics: [
-          { label: 'Overdue', value: overdueItems, variant: overdueItems > 0 ? 'critical' : 'default' },
-          { label: 'Pending', value: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length },
-        ],
-      },
-      {
-        id: 'blockers',
-        icon: <AlertTriangle size={20} className="text-rose-500" />,
-        title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
-        description: t('execution.manager.tile.blockersDesc', 'Blocked initiatives, critical risks, and recovery actions.'),
-        metrics: [
-          { label: 'Blocked', value: blockedCount, variant: blockedCount > 0 ? 'critical' : 'default' },
-          { label: 'Critical risks', value: highRisks, variant: highRisks > 0 ? 'warn' : 'default' },
-        ],
-      },
-      {
-        id: 'workload',
-        icon: <Users size={20} className="text-violet-500" />,
-        title: t('execution.manager.tile.workload', 'Resource & Workload'),
-        description: t('execution.manager.tile.workloadDesc', 'Per-person task load, utilization, and capacity gaps.'),
-        metrics: [
-          { label: 'Tasks', value: tasks.length },
-          { label: 'Due soon', value: actionCenter.dueSoonTasks.length, variant: actionCenter.dueSoonTasks.length > 3 ? 'warn' : 'default' },
-        ],
-      },
-      {
-        id: 'risk',
-        icon: <Shield size={20} className="text-rose-500" />,
-        title: t('execution.manager.tile.risk', 'Execution Risk'),
-        description: t('execution.manager.tile.riskDesc', 'Risk signals, delay detection, and intervention suggestions.'),
-        metrics: [
-          { label: 'Risk signals', value: riskSignals.length, variant: riskSignals.length > 3 ? 'warn' : 'default' },
-          { label: 'Delays', value: delaySignals.length, variant: delaySignals.length > 2 ? 'warn' : 'default' },
-        ],
-      },
-      {
-        id: 'people-change',
-        icon: <Users size={20} className="text-emerald-500" />,
-        title: t('execution.manager.tile.peopleChange', 'People & Change'),
-        description: t('execution.manager.tile.peopleChangeDesc', 'Ownership gaps, stakeholder mapping, and communication.'),
-        metrics: [
-          { label: 'Missing owners', value: withoutOwner, variant: withoutOwner > 0 ? 'warn' : 'default' },
-          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
-        ],
-      },
-    ];
-
-    return (
-      <div className="p-4 space-y-5">
-        {/* §3.3 Honest degraded posture */}
-        {filteredInitiatives.length === 0 && (
-          <Callout variant="info" title={t('execution.manager.noInitiatives', 'No executing initiatives')}>
-            {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
-          </Callout>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tiles.map((tile) => {
-            const hasAlerts = tile.metrics.some((m) => m.variant === 'critical' || m.variant === 'warn');
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={() => handleOpenManagerModule(tile.id)}
-                className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30 ${
-                  hasAlerts ? 'border-amber-200 dark:border-amber-800/40' : 'border-slate-200 dark:border-navy-700'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
-                    {tile.icon}
-                  </div>
-                  <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-1" />
-                </div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{tile.title}</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{tile.description}</p>
-                <div className="flex gap-3">
-                  {tile.metrics.map((m) => (
-                    <div key={m.label} className="min-w-0">
-                      <div className={`text-lg font-bold tabular-nums ${
-                        m.variant === 'critical' ? 'text-rose-600 dark:text-rose-400' :
-                        m.variant === 'warn' ? 'text-amber-600 dark:text-amber-400' :
-                        'text-slate-900 dark:text-white'
-                      }`}>{m.value}</div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">{m.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-
   const sidePanelInitiative = useMemo(
     () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
     [selectedInitiative]
@@ -4117,46 +4418,67 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
 
   // Render content
   const renderContent = () => {
-    if (isLoading) {
+    if (initiativesLoadError) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-        </div>
+        <HubWorkAreaLoadError
+          title={t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')}
+          message={initiativesLoadError}
+          errorCode={initiativesLoadErrorCode}
+          retryLabel={t('execution.hub.retry', 'Retry')}
+          dismissLabel={t('execution.hub.dismiss', 'Dismiss')}
+          onRetry={() => setExecutionTruthRefreshKey((prev) => prev + 1)}
+          onDismiss={() => {
+            setInitiativesLoadError(null);
+            setInitiativesLoadErrorCode(null);
+          }}
+        />
+      );
+    }
+
+    if (isLoading) {
+      return <HubWorkAreaLoading />;
+    }
+
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return (
+        <ExecutionManagementView
+          managerLaneCounts={managerLaneCounts}
+          projectId={currentProjectId || undefined}
+          searchQuery={searchQuery}
+          hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}
+          onOpenEntity={
+            handleOpenSidePanel
+              ? (type, id) => handleOpenSidePanel({ id, name: id } as any)
+              : undefined
+          }
+        />
       );
     }
 
     if (activeDocumentId) {
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
-        const report = reportCatalog.find((r) => r.id === reportId);
+        const report = enrichedReportCatalog.find((r) => r.id === reportId);
         if (report) {
           return (
             <ReportDocumentView
-              report={report as ReportCompactDef}
+              report={report}
               data={reportDataContext}
               onBack={handleShowList}
-              onGenerateAI={(r) => handleGenerateReport(r as ReportDef)}
+              onGenerateAI={handleGenerateReport}
             />
           );
         }
       }
-      if (activeDocumentId.startsWith('manager:')) {
-        const moduleId = activeDocumentId.replace('manager:', '');
-        return (
-          <ManagerModuleView
-            moduleId={moduleId}
-            data={managerDataContext}
-            onBack={handleShowList}
-          />
-        );
-      }
       return (
-        <InitiativeDocumentView
-          initiativeId={activeDocumentId}
-          onBack={handleShowList}
-          onStatusChange={() => handleRefresh()}
-          sourceModule="execution"
-        />
+        <Suspense fallback={<HubWorkAreaLoading />}>
+          <ExecutionInitiativeDocumentView
+            initiativeId={activeDocumentId}
+            onBack={handleShowList}
+            onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
+            sourceModule="execution"
+          />
+        </Suspense>
       );
     }
 
@@ -4167,10 +4489,13 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             initiatives={portfolioInitiatives}
             scope={scope}
             onInitiativeClick={(pi) => {
-              const full = summaryInitiatives.find((x) => x.id === pi.id) || filteredInitiatives.find((x) => x.id === pi.id);
+              const full =
+                summaryInitiatives.find((x) => x.id === pi.id) ||
+                filteredInitiatives.find((x) => x.id === pi.id);
               if (full) handleOpenSidePanel(full);
             }}
             onStatusChange={(id, status) => handleInlineStatusChange(id, status)}
+            readOnly={isPilotParticipant}
           />
         );
       }
@@ -4179,11 +4504,15 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         return (
           <div className="min-h-[420px]">
             <ExecutionTimelineView
-              initiatives={(summaryInitiatives.length ? summaryInitiatives : filteredInitiatives) as FullInitiative[]}
+              initiatives={
+                (summaryInitiatives.length
+                  ? summaryInitiatives
+                  : filteredInitiatives) as FullInitiative[]
+              }
               onInitiativeClick={handleOpenSidePanel}
-              onUpdateInitiative={handleInitiativeUpdate}
-              onTimelineUpdate={handleTimelineUpdate}
-              onDependenciesChanged={handleRefresh}
+              onUpdateInitiative={isPilotParticipant ? undefined : handleInitiativeUpdate}
+              onTimelineUpdate={isPilotParticipant ? undefined : handleTimelineUpdate}
+              onDependenciesChanged={isPilotParticipant ? undefined : handleRefresh}
               riskSignals={riskSignals}
               delaySignals={delaySignals}
               governedTimelineWarnings={timelineWarnings}
@@ -4273,10 +4602,6 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
       );
     }
 
-    if (activeTab === ('people_change' as ModuleTab)) {
-      return renderManagerCockpit();
-    }
-
     if (activeTab === 'reports') {
       return renderReportsCatalog();
     }
@@ -4299,29 +4624,33 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
       <ModuleHub
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleMainTabChange}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
+        openDocuments={activeTab === ('people_change' as ModuleTab) ? [] : openDocuments}
+        activeDocumentId={activeTab === ('people_change' as ModuleTab) ? null : activeDocumentId}
         onSelectDocument={setActiveDocumentId}
         onCloseDocument={handleCloseDocument}
         onShowList={handleShowList}
-        activeFilters={activeTab === 'list' ? summaryFilters : activeFilters}
+        activeFilters={
+          activeTab === ('people_change' as ModuleTab)
+            ? []
+            : activeTab === 'list'
+              ? summaryFilters
+              : activeTab === 'reports'
+                ? reportFilters
+                : activeFilters
+        }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
+        onNewItem={isPilotParticipant ? undefined : handleCreateInitiative}
+        newItemLabel={t('initiatives.form.newInitiative', 'New Initiative')}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
-        statusDropdownContext={
-          activeTab === 'list' || activeTab === 'reports' ? 'execution' : undefined
-        }
-        statusCounts={
-          activeTab === 'list' || activeTab === 'reports' ? statusDropdownCounts : undefined
-        }
         rightControls={rightControls}
         availableViewModes={availableViewModes}
-        commandRowContent={commandRowContent}
+        commandRowContent={activeTab === ('people_change' as ModuleTab) ? null : commandRowContent}
       >
         {renderContent()}
       </ModuleHub>

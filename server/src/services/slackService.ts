@@ -53,6 +53,16 @@ interface AIHealthAlertData {
   color?: string;
 }
 
+interface RegistrationAlertData {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  organizationName: string;
+  role: string;
+  accessCode?: string;
+  assignedInterviewNames?: string[];
+}
+
 interface SlackServiceDependencies {
   webhookUrl?: string;
   axiosInstance?: AxiosInstance;
@@ -64,11 +74,32 @@ interface SlackServiceDependencies {
 
 class SlackServiceClass {
   private webhookUrl: string | undefined;
+  private registrationWebhookUrl: string | undefined;
   private axiosInstance: AxiosInstance;
 
   constructor(deps?: SlackServiceDependencies) {
-    this.webhookUrl = deps?.webhookUrl || process.env.SLACK_WEBHOOK_URL;
+    this.webhookUrl = deps?.webhookUrl || this.resolveWebhookUrl();
+    this.registrationWebhookUrl = this.resolveRegistrationWebhookUrl() || this.webhookUrl;
     this.axiosInstance = deps?.axiosInstance || axios;
+  }
+
+  private resolveWebhookUrl(): string | undefined {
+    const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+    return process.env[`SLACK_WEBHOOK_URL_${envName}`] || process.env.SLACK_WEBHOOK_URL;
+  }
+
+  private resolveRegistrationWebhookUrl(): string | undefined {
+    const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+    return (
+      process.env[`SLACK_REGISTRATION_WEBHOOK_URL_${envName}`] ||
+      process.env.SLACK_REGISTRATION_WEBHOOK_URL
+    );
   }
 
   /**
@@ -81,8 +112,14 @@ class SlackServiceClass {
     }
 
     try {
-      const emoji = severity === 'CRITICAL' ? ':rotating_light:' : ':warning:';
-      const color = severity === 'CRITICAL' ? '#ff0000' : '#ffcc00';
+      const emoji =
+        severity === 'CRITICAL'
+          ? ':rotating_light:'
+          : severity === 'WARNING'
+            ? ':warning:'
+            : ':information_source:';
+      const color =
+        severity === 'CRITICAL' ? '#ff0000' : severity === 'WARNING' ? '#ffcc00' : '#3b82f6';
 
       const payload = {
         attachments: [
@@ -286,14 +323,14 @@ class SlackServiceClass {
       if (feedback.feedbackId) {
         contextElements.push({
           type: 'mrkdwn',
-          text: `🔗 <${appUrl}/superadmin?tab=feedback|View in SuperAdmin>`,
+          text: `🔗 <${appUrl}/superadmin/customers/feedback|View in SuperAdmin>`,
         });
       }
 
       if (feedback.taskId) {
         contextElements.push({
           type: 'mrkdwn',
-          text: `🧩 <${appUrl}/my-work/tasks/${feedback.taskId}|Open task>`,
+          text: `🧩 <${appUrl}/my-work?taskId=${feedback.taskId}|Open task>`,
         });
       }
 
@@ -406,6 +443,88 @@ class SlackServiceClass {
       throw error;
     }
   }
+
+  async sendRegistrationAlert(data: RegistrationAlertData): Promise<void> {
+    if (!this.registrationWebhookUrl) {
+      logger.debug('[SlackService] No registration webhook URL configured, skipping alert');
+      return;
+    }
+
+    try {
+      const fullName =
+        [data.firstName, data.lastName].filter(Boolean).join(' ').trim() || data.email;
+      const assignedInterviews =
+        data.assignedInterviewNames && data.assignedInterviewNames.length > 0
+          ? data.assignedInterviewNames.map((name) => `• ${name}`).join('\n')
+          : '• None';
+
+      const payload = {
+        attachments: [
+          {
+            color: '#2563eb',
+            blocks: [
+              {
+                type: 'header',
+                text: {
+                  type: 'plain_text',
+                  text: ':wave: New registration',
+                  emoji: true,
+                },
+              },
+              {
+                type: 'section',
+                fields: [
+                  {
+                    type: 'mrkdwn',
+                    text: `*User*\n${fullName}`,
+                  },
+                  {
+                    type: 'mrkdwn',
+                    text: `*Email*\n${data.email}`,
+                  },
+                  {
+                    type: 'mrkdwn',
+                    text: `*Organization*\n${data.organizationName}`,
+                  },
+                  {
+                    type: 'mrkdwn',
+                    text: `*Role*\n${data.role}`,
+                  },
+                ],
+              },
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `*Assigned interviews*\n${assignedInterviews}`,
+                },
+              },
+              {
+                type: 'context',
+                elements: [
+                  {
+                    type: 'mrkdwn',
+                    text: `Access code: ${data.accessCode || 'n/a'} | ${new Date().toLocaleString('en-US')}`,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      await this.axiosInstance.post(this.registrationWebhookUrl, payload);
+      logger.info('[SlackService] Registration alert sent', {
+        email: data.email,
+        organizationName: data.organizationName,
+      });
+    } catch (error: unknown) {
+      logger.error(
+        '[SlackService] Failed to send registration alert:',
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
 }
 
 // ==========================================
@@ -430,3 +549,5 @@ export const sendNewFeedbackAlert = (feedback: FeedbackData) =>
   slackService.sendNewFeedbackAlert(feedback);
 export const sendAIHealthAlert = (alertData: AIHealthAlertData) =>
   slackService.sendAIHealthAlert(alertData);
+export const sendRegistrationAlert = (data: RegistrationAlertData) =>
+  slackService.sendRegistrationAlert(data);

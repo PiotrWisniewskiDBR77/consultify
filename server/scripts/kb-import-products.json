@@ -1,0 +1,225 @@
+{
+  "$schema_comment": "Per-product KB SQL import: section labels MUST match knowledge_base_manifest.json lp_section values.",
+  "sharedTags": [
+    { "slug": "governance", "kind": "domain", "en": "Governance", "pl": "Governance", "de": "Governance" },
+    { "slug": "execution", "kind": "domain", "en": "Execution", "pl": "Egzekucja", "de": "Umsetzung" },
+    { "slug": "roi-finance", "kind": "domain", "en": "ROI & Finance", "pl": "ROI i finanse", "de": "ROI & Finanzen" },
+    { "slug": "ai-strategy", "kind": "domain", "en": "AI & decisions", "pl": "AI i decyzje", "de": "KI & Entscheidungen" },
+    { "slug": "visibility", "kind": "domain", "en": "Visibility & signals", "pl": "Widoczność i sygnały", "de": "Sichtbarkeit & Signale" },
+    { "slug": "oee-downtime", "kind": "domain", "en": "OEE & downtime", "pl": "OEE i przestoje", "de": "OEE & Stillstand" },
+    { "slug": "rollout", "kind": "domain", "en": "Rollout & pilots", "pl": "Wdrożenia i pilotaże", "de": "Rollout & Piloten" },
+    { "slug": "capex", "kind": "domain", "en": "CAPEX & investment", "pl": "CAPEX i inwestycje", "de": "CAPEX & Investition" },
+    { "slug": "simulation", "kind": "domain", "en": "Simulation & twin", "pl": "Symulacja i digital twin", "de": "Simulation & Twin" },
+    { "slug": "layout-flow", "kind": "domain", "en": "Layout & flow", "pl": "Układ i przepływ", "de": "Layout & Fluss" },
+    { "slug": "sourcing", "kind": "domain", "en": "Sourcing & suppliers", "pl": "Sourcing i dostawcy", "de": "Sourcing & Lieferanten" },
+    { "slug": "automation-buying", "kind": "domain", "en": "Automation buying", "pl": "Zakupy automatyki", "de": "Automatisierung Einkauf" },
+    { "slug": "security-ai", "kind": "domain", "en": "Industrial AI security", "pl": "Bezpieczeństwo AI", "de": "Industrielle KI-Sicherheit" },
+    { "slug": "risk", "kind": "domain", "en": "Risk", "pl": "Ryzyko", "de": "Risiko" },
+    { "slug": "for-plant", "kind": "audience", "en": "Plant & operations", "pl": "Dział produkcji", "de": "Werk & Betrieb" },
+    { "slug": "for-owners", "kind": "audience", "en": "Owners & executives", "pl": "Właściciele i zarząd", "de": "Eigentümer & Führung" },
+    { "slug": "for-cfo", "kind": "audience", "en": "CFO & finance", "pl": "CFO i finanse", "de": "CFO & Finanzen" },
+    { "slug": "for-engineering", "kind": "audience", "en": "Engineering & IT", "pl": "Inżynieria i IT", "de": "Engineering & IT" }
+  ],
+  "products": {
+    "IoT": {
+      "productKey": "iot",
+      "blogsFolder": "IoT",
+      "migrationFilename": "745_iot_kb_import_v1.sql",
+      "collectionRootSlug": "iot-knowledge-base",
+      "collectionRootTitles": {
+        "en": { "title": "IoT Knowledge Base", "description": "Industrial IoT and machine data — visibility, rollout, and operational decisions." },
+        "pl": { "title": "Baza wiedzy IoT", "description": "Przemysłowy IoT i dane z maszyn — widoczność, wdrożenia i decyzje operacyjne." },
+        "de": { "title": "IoT Wissensdatenbank", "description": "Industrielles IoT und Maschinendaten — Sichtbarkeit, Rollout und operative Entscheidungen." }
+      },
+      "relatedModulesDefault": ["assessment", "dashboard", "roadmap"],
+      "sections": [
+        {
+          "label": "Downtime And OEE",
+          "icon": "Activity",
+          "en": { "name": "Downtime And OEE", "description": "Make operational losses visible early enough to change the shift." },
+          "pl": { "name": "Przestoje i OEE", "description": "Spraw, by straty operacyjne były widoczne na tyle wcześnie, by zmienić zmianę." },
+          "de": { "name": "Stillstand und OEE", "description": "Mach operative Verluste früh genug sichtbar, um die Schicht zu ändern." }
+        },
+        {
+          "label": "Execution And Rollout",
+          "icon": "Zap",
+          "en": { "name": "Execution And Rollout", "description": "Show how pilots become plant-standard operating behavior without disruption." },
+          "pl": { "name": "Egzekucja i wdrożenie", "description": "Jak pilotaże stają się standardem zakładu bez chaosu." },
+          "de": { "name": "Umsetzung und Rollout", "description": "Wie Piloten zur Werkstandard werden, ohne den Betrieb zu sprengen." }
+        },
+        {
+          "label": "AI And Decision Making",
+          "icon": "Cpu",
+          "en": { "name": "AI And Decision Making", "description": "Show how machine signals become usable operational decisions, not just collected data." },
+          "pl": { "name": "AI i podejmowanie decyzji", "description": "Jak sygnały z maszyn stają się decyzjami operacyjnymi, a nie tylko zbiorem danych." },
+          "de": { "name": "KI und Entscheidungsfindung", "description": "Wie Maschinensignale zu nutzbaren Entscheidungen werden, nicht nur zu Daten." }
+        }
+      ],
+      "sectionTagFallback": {
+        "Downtime And OEE": ["visibility", "oee-downtime", "for-plant"],
+        "Execution And Rollout": ["rollout", "execution", "for-plant"],
+        "AI And Decision Making": ["ai-strategy", "visibility", "for-engineering"]
+      }
+    },
+    "IRIS": {
+      "productKey": "iris",
+      "blogsFolder": "IRIS",
+      "migrationFilename": "746_iris_kb_import_v1.sql",
+      "collectionRootSlug": "iris-knowledge-base",
+      "collectionRootTitles": {
+        "en": { "title": "IRIS Knowledge Base", "description": "Plant operating system — AI-assisted execution, rollout, and governance." },
+        "pl": { "title": "Baza wiedzy IRIS", "description": "System operacyjny zakładu — egzekucja wspierana przez AI, wdrożenie i governance." },
+        "de": { "title": "IRIS Wissensdatenbank", "description": "Werksbetriebssystem — KI-gestützte Ausführung, Rollout und Governance." }
+      },
+      "relatedModulesDefault": ["assessment", "dashboard", "roadmap"],
+      "sections": [
+        {
+          "label": "AI And Decision Making",
+          "icon": "Sparkles",
+          "en": { "name": "AI And Decision Making", "description": "Recommendations, approvals, and execution boundaries in plant operations." },
+          "pl": { "name": "AI i decyzje", "description": "Rekomendacje, zatwierdzenia i granice egzekucji w operacjach zakładu." },
+          "de": { "name": "KI und Entscheidungen", "description": "Empfehlungen, Freigaben und Ausführungsgrenzen im Werksbetrieb." }
+        },
+        {
+          "label": "Execution And Rollout",
+          "icon": "Zap",
+          "en": { "name": "Execution And Rollout", "description": "From insight to owned action, tasking, and closure." },
+          "pl": { "name": "Egzekucja i wdrożenie", "description": "Od insightu do działania, zadań i domknięcia." },
+          "de": { "name": "Umsetzung und Rollout", "description": "Vom Insight zu verantworteten Aktionen, Tasks und Abschluss." }
+        },
+        {
+          "label": "Governance And ROI",
+          "icon": "Shield",
+          "en": { "name": "Governance And ROI", "description": "Governable, auditable, economically defensible plant logic." },
+          "pl": { "name": "Governance i ROI", "description": "Logika zakładu pod kontrolą, z audytem i obroną ekonomiczną." },
+          "de": { "name": "Governance und ROI", "description": "Steuerbare, auditierbare, wirtschaftlich verteidigbare Werkslogik." }
+        }
+      ],
+      "sectionTagFallback": {
+        "AI And Decision Making": ["ai-strategy", "execution", "for-plant"],
+        "Execution And Rollout": ["execution", "rollout", "for-plant"],
+        "Governance And ROI": ["governance", "roi-finance", "for-owners"]
+      }
+    },
+    "DT": {
+      "productKey": "dt",
+      "blogsFolder": "DT",
+      "migrationFilename": "747_dt_kb_import_v1.sql",
+      "collectionRootSlug": "dt-knowledge-base",
+      "collectionRootTitles": {
+        "en": { "title": "Digital Twin Knowledge Base", "description": "Layout, flow, CAPEX, and governance for simulation-led decisions." },
+        "pl": { "title": "Baza wiedzy Digital Twin", "description": "Układ, przepływ, CAPEX i governance dla decyzji opartych na symulacji." },
+        "de": { "title": "Digital-Twin Wissensdatenbank", "description": "Layout, Fluss, CAPEX und Governance für simulationsgestützte Entscheidungen." }
+      },
+      "relatedModulesDefault": ["assessment", "dashboard", "roadmap"],
+      "sections": [
+        {
+          "label": "Layout And Flow",
+          "icon": "LayoutGrid",
+          "en": { "name": "Layout And Flow", "description": "Physical and logical flow before capital and integration commitments." },
+          "pl": { "name": "Układ i przepływ", "description": "Przepływ fizyczny i logiczny przed zobowiązaniami kapitałowymi." },
+          "de": { "name": "Layout und Fluss", "description": "Physischer und logischer Fluss vor Kapital- und Integrationsentscheidungen." }
+        },
+        {
+          "label": "CAPEX And Investment",
+          "icon": "Landmark",
+          "en": { "name": "CAPEX And Investment", "description": "Investment logic that survives scrutiny and scenario discipline." },
+          "pl": { "name": "CAPEX i inwestycje", "description": "Logika inwestycji odporna na weryfikację i dyscyplinę scenariuszy." },
+          "de": { "name": "CAPEX und Investition", "description": "Investitionslogik, die Prüfung und Szenariendisziplin übersteht." }
+        },
+        {
+          "label": "Governance And ROI",
+          "icon": "Shield",
+          "en": { "name": "Governance And ROI", "description": "Governance, auditability, and ROI defense for digital twin programs." },
+          "pl": { "name": "Governance i ROI", "description": "Governance, audyt i obrona ROI dla programów digital twin." },
+          "de": { "name": "Governance und ROI", "description": "Governance, Auditierbarkeit und ROI-Verteidigung für Digital-Twin-Programme." }
+        }
+      ],
+      "sectionTagFallback": {
+        "Layout And Flow": ["layout-flow", "simulation", "for-engineering"],
+        "CAPEX And Investment": ["capex", "roi-finance", "for-cfo"],
+        "Governance And ROI": ["governance", "roi-finance", "risk"]
+      }
+    },
+    "Marketplace": {
+      "productKey": "marketplace",
+      "blogsFolder": "Marketplace",
+      "migrationFilename": "748_marketplace_kb_import_v1.sql",
+      "collectionRootSlug": "marketplace-knowledge-base",
+      "collectionRootTitles": {
+        "en": { "title": "Marketplace Knowledge Base", "description": "Automation sourcing, CAPEX clarity, and execution-safe buying." },
+        "pl": { "title": "Baza wiedzy Marketplace", "description": "Sourcing automatyki, jasność CAPEX i bezpieczne zakupy pod egzekucję." },
+        "de": { "title": "Marketplace Wissensdatenbank", "description": "Automatisierungssourcing, CAPEX-Klarheit und ausführungssicherer Einkauf." }
+      },
+      "relatedModulesDefault": ["assessment", "dashboard", "roadmap"],
+      "sections": [
+        {
+          "label": "Automation And Sourcing",
+          "icon": "ShoppingCart",
+          "en": { "name": "Automation And Sourcing", "description": "RFI/RFP discipline, comparability, and supplier truth tests." },
+          "pl": { "name": "Automatyzacja i sourcing", "description": "Dyscyplina RFI/RFP, porównywalność i testy prawdy u dostawców." },
+          "de": { "name": "Automatisierung und Sourcing", "description": "RFI/RFP-Disziplin, Vergleichbarkeit und Lieferanten-Wahrheitstests." }
+        },
+        {
+          "label": "CAPEX And Investment",
+          "icon": "Landmark",
+          "en": { "name": "CAPEX And Investment", "description": "Business cases and approvals that survive integration reality." },
+          "pl": { "name": "CAPEX i inwestycje", "description": "Case’y biznesowe i zatwierdzenia odporne na rzeczywistość integracji." },
+          "de": { "name": "CAPEX und Investition", "description": "Business Cases und Freigaben, die Integrationsrealität überstehen." }
+        },
+        {
+          "label": "Execution And Rollout",
+          "icon": "Zap",
+          "en": { "name": "Execution And Rollout", "description": "From award to go-live without losing acceptance and ownership." },
+          "pl": { "name": "Egzekucja i wdrożenie", "description": "Od wyboru dostawcy do go-live bez utraty acceptance i właściciela." },
+          "de": { "name": "Umsetzung und Rollout", "description": "Vom Zuschlag bis Go-live ohne Akzeptanz und Ownership zu verlieren." }
+        }
+      ],
+      "sectionTagFallback": {
+        "Automation And Sourcing": ["sourcing", "automation-buying", "for-engineering"],
+        "CAPEX And Investment": ["capex", "roi-finance", "for-cfo"],
+        "Execution And Rollout": ["execution", "rollout", "for-plant"]
+      }
+    },
+    "Vector": {
+      "productKey": "vector",
+      "blogsFolder": "Vector",
+      "migrationFilename": "749_vector_kb_import_v1.sql",
+      "collectionRootSlug": "vector-knowledge-base",
+      "collectionRootTitles": {
+        "en": { "title": "Vector Knowledge Base", "description": "Industrial AI — decision quality, governance, and secure deployment." },
+        "pl": { "title": "Baza wiedzy Vector", "description": "AI przemysłowe — jakość decyzji, governance i bezpieczne wdrożenie." },
+        "de": { "title": "Vector Wissensdatenbank", "description": "Industrielle KI — Entscheidungsqualität, Governance und sicheres Deployment." }
+      },
+      "relatedModulesDefault": ["assessment", "dashboard", "roadmap"],
+      "sections": [
+        {
+          "label": "AI And Decision Making",
+          "icon": "Brain",
+          "en": { "name": "AI And Decision Making", "description": "Public AI risk, industrial boundaries, and decision-grade AI." },
+          "pl": { "name": "AI i decyzje", "description": "Ryzyko publicznego AI, granice przemysłowe i AI klasy decyzyjnej." },
+          "de": { "name": "KI und Entscheidungen", "description": "Public-AI-Risiko, industrielle Grenzen und entscheidungsreife KI." }
+        },
+        {
+          "label": "Governance And ROI",
+          "icon": "Shield",
+          "en": { "name": "Governance And ROI", "description": "Security, auditability, and deployment cost as leadership issues." },
+          "pl": { "name": "Governance i ROI", "description": "Bezpieczeństwo, audyt i koszt wdrożenia jako tematy zarządcze." },
+          "de": { "name": "Governance und ROI", "description": "Sicherheit, Auditierbarkeit und Deployment-Kosten als Führungsthemen." }
+        },
+        {
+          "label": "Execution And Rollout",
+          "icon": "Zap",
+          "en": { "name": "Execution And Rollout", "description": "Controlled promotion, isolation, and scale without losing the control plane." },
+          "pl": { "name": "Egzekucja i wdrożenie", "description": "Kontrolowana promocja, izolacja i skala bez utraty płaszczyzny kontroli." },
+          "de": { "name": "Umsetzung und Rollout", "description": "Kontrollierte Promotion, Isolation und Skalierung ohne Control-Plane-Verlust." }
+        }
+      ],
+      "sectionTagFallback": {
+        "AI And Decision Making": ["ai-strategy", "security-ai", "for-engineering"],
+        "Governance And ROI": ["governance", "security-ai", "for-owners"],
+        "Execution And Rollout": ["execution", "rollout", "risk"]
+      }
+    }
+  }
+}

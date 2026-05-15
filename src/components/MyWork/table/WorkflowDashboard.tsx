@@ -64,6 +64,7 @@ export function WorkflowDashboard({
     distributionsCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const isLocked = Boolean(locked);
 
   const loadStats = useCallback(async () => {
     try {
@@ -304,8 +305,15 @@ export function WorkflowDashboard({
           return (
             <button
               key={card.id}
-              onClick={() => setActivePanel(card.id)}
-              className="group text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md transition-all"
+              onClick={() => {
+                if (!isLocked) setActivePanel(card.id);
+              }}
+              disabled={isLocked}
+              className={`group text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 transition-all ${
+                isLocked
+                  ? 'cursor-not-allowed opacity-60'
+                  : 'hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md'
+              }`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`p-2 rounded-lg ${card.bgColor}`}>

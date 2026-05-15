@@ -62,6 +62,16 @@ interface EndpointMetrics {
   avgTime: number;
   errorCount: number;
 }
+interface MetricsServiceShape {
+  recordDbQuery: (queryType: string, dbType: string, durationSeconds: number) => void;
+  recordHttpRequest: (
+    method: string,
+    routeLabel: string,
+    statusCode: number,
+    durationSeconds: number
+  ) => void;
+  recordError: (errorType: string, source: string) => void;
+}
 
 interface MetricsSummary {
   totalRequests: number;
@@ -86,6 +96,71 @@ const metricsStore: MetricsStore = {
 };
 
 const MAX_ENTRIES = 1000;
+const MAX_METRIC_PATH_CHARS = 2048;
+const MAX_METHOD_LABEL_CHARS = 32;
+const MAX_DB_QUERY_TYPE_CHARS = 128;
+const MAX_USER_CONTEXT_CHARS = 256;
+const DEFAULT_SLOW_REQUEST_THRESHOLD_MS = 1000;
+const MAX_SLOW_REQUEST_THRESHOLD_MS = 86_400_000;
+const resolveSlowRequestThresholdMs = (raw: string | undefined): number => {
+  const normalized = normalizeOptionalString(raw);
+  if (!normalized) return DEFAULT_SLOW_REQUEST_THRESHOLD_MS;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_SLOW_REQUEST_THRESHOLD_MS;
+  return Math.min(parsed, MAX_SLOW_REQUEST_THRESHOLD_MS);
+};
+const SLOW_REQUEST_THRESHOLD_MS = resolveSlowRequestThresholdMs(process.env.SLOW_REQUEST_THRESHOLD_MS);
+const IS_TEST_ENV = process.env.NODE_ENV === 'test';
+const performanceFinishHooked = new WeakSet<Response>();
+const performanceCloseHooked = new WeakSet<Response>();
+
+function safeRead<T>(reader: () => T, fallback: T): T {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeOptionalString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
+function readRequestMethod(req: Request): string {
+  return normalizeOptionalString(safeRead(() => req.method, undefined)) || 'UNKNOWN';
+}
+
+function readRequestPath(req: Request): string {
+  return (
+    normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+    normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+    'unknown'
+  );
+}
+
+function getRouteLabel(req: Request): string {
+  const routePath = safeRead(() => (req.route as any)?.path, undefined);
+  const baseUrl = normalizeOptionalString(safeRead(() => req.baseUrl, undefined)) || '';
+  const path = readRequestPath(req);
+  if (typeof routePath === 'string') {
+    return `${baseUrl}${routePath}` || path;
+  }
+  return baseUrl || path;
+}
+function clampMetricText(value: string, maxChars: number): string {
+  return value.length > maxChars ? value.slice(0, maxChars) : value;
+}
+function finiteOrZero(value: number): number {
+  return Number.isFinite(value) ? value : 0;
+}
+
+function sanitizeDbQueryType(value: unknown): string {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) return 'unknown';
+  return clampMetricText(normalized.toLowerCase(), MAX_DB_QUERY_TYPE_CHARS);
+}
 
 // ==========================================
 // MIDDLEWARE
@@ -102,6 +177,8 @@ export function performanceMetricsMiddleware(
 ): void {
   const startTime = Date.now();
   const startMemory = process.memoryUsage();
+  const requestMethod = readRequestMethod(req);
+  const requestPath = readRequestPath(req);
 
   // Store metrics in request for later access
   req._performanceMetrics = {
@@ -112,80 +189,202 @@ export function performanceMetricsMiddleware(
   };
 
   // Enable performance tracking for this request (if available)
-  const metricsService = getMetricsService();
-  if (typeof queryHelpers.enablePerformanceTracking === 'function') {
-    queryHelpers.enablePerformanceTracking((_queryType: string, duration: number) => {
-      if (req._performanceMetrics) {
-        req._performanceMetrics.dbQueryCount++;
-        req._performanceMetrics.dbQueryTime += duration;
-      }
-      // Record DB query metric for Prometheus
-      const dbType = process.env.DB_TYPE || 'postgres';
-      metricsService.recordDbQuery(_queryType, dbType, duration / 1000); // Convert to seconds
-    });
+  let metricsService: MetricsServiceShape | null = null;
+  try {
+    metricsService = getMetricsService() as MetricsServiceShape;
+  } catch (error) {
+    logger.warn('Performance middleware getMetricsService failed', error);
   }
+  let performanceTrackingEnabled = false;
+  if (typeof queryHelpers.enablePerformanceTracking === 'function') {
+    try {
+      queryHelpers.enablePerformanceTracking((_queryType: string, duration: number) => {
+        try {
+          if (!Number.isFinite(duration) || duration < 0) {
+            return;
+          }
+          if (req._performanceMetrics) {
+            req._performanceMetrics.dbQueryCount++;
+            req._performanceMetrics.dbQueryTime += duration;
+          }
+          // Record DB query metric for Prometheus
+          const dbType = process.env.DB_TYPE || 'postgres';
+          const queryType = sanitizeDbQueryType(_queryType);
+          metricsService?.recordDbQuery(queryType, dbType, duration / 1000); // Convert to seconds
+        } catch (error) {
+          logger.warn('Performance middleware DB tracking callback failed', error);
+        }
+      });
+      performanceTrackingEnabled = true;
+    } catch (error) {
+      logger.warn('Performance middleware enablePerformanceTracking failed', error);
+    }
+  }
+  let trackingReleased = false;
+  let finishObserved = false;
+  const releasePerformanceTracking = (): void => {
+    if (!performanceTrackingEnabled || trackingReleased) return;
+    trackingReleased = true;
+    if (typeof queryHelpers.disablePerformanceTracking === 'function') {
+      try {
+        queryHelpers.disablePerformanceTracking();
+      } catch (error) {
+        logger.warn('Performance middleware tracking teardown failed', error);
+      }
+    }
+  };
 
   // Track response finish
-  res.on('finish', () => {
-    const responseTime = Date.now() - startTime;
-    const endMemory = process.memoryUsage();
-    const memoryDelta = {
-      heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-      external: endMemory.external - startMemory.external,
-      rss: endMemory.rss - startMemory.rss,
-    };
-
-    const metrics = req._performanceMetrics || { dbQueryCount: 0, dbQueryTime: 0 };
-    const metric: Metric = {
-      timestamp: new Date().toISOString(),
-      method: req.method,
-      path: req.originalUrl || req.path,
-      statusCode: res.statusCode,
-      responseTime,
-      dbQueryCount: metrics.dbQueryCount,
-      dbQueryTime: metrics.dbQueryTime,
-      memoryDelta,
-      userId: req.user?.id || null,
-      organizationId: req.user?.organizationId || null,
-    };
-
-    // Store metric
-    metricsStore.requests.push(metric);
-    if (metricsStore.requests.length > MAX_ENTRIES) {
-      metricsStore.requests.shift();
+  const onFinish = () => {
+    if (finishObserved) {
+      return;
     }
+    finishObserved = true;
+    try {
+      const responseTimeRaw = Date.now() - startTime;
+      const responseTime =
+        Number.isFinite(responseTimeRaw) && responseTimeRaw >= 0 ? responseTimeRaw : 0;
+      const routeLabel = clampMetricText(getRouteLabel(req), MAX_METRIC_PATH_CHARS);
+      const methodLabel = clampMetricText(requestMethod, MAX_METHOD_LABEL_CHARS);
+      const endMemory = safeRead(() => process.memoryUsage(), startMemory);
+      const memoryDelta = {
+        heapUsed: finiteOrZero(endMemory.heapUsed - startMemory.heapUsed),
+        external: finiteOrZero(endMemory.external - startMemory.external),
+        rss: finiteOrZero(endMemory.rss - startMemory.rss),
+      };
 
-    // Log slow requests (>1s) or errors
-    if (responseTime > 1000 || res.statusCode >= 400) {
-      logger.warn('Performance metric', {
-        ...metric,
-        isSlow: responseTime > 1000,
-        isError: res.statusCode >= 400,
-      });
-    }
-
-    // Log high DB query count (>10 queries)
-    if (metrics.dbQueryCount > 10) {
-      logger.warn('High DB query count', {
-        path: req.originalUrl || req.path,
+      const metrics = safeRead(
+        () => req._performanceMetrics || { dbQueryCount: 0, dbQueryTime: 0 },
+        { dbQueryCount: 0, dbQueryTime: 0 }
+      );
+      const statusCodeRaw = safeRead(() => res.statusCode, 500);
+      const statusCode =
+        Number.isFinite(statusCodeRaw) &&
+        Number.isInteger(statusCodeRaw) &&
+        statusCodeRaw >= 100 &&
+        statusCodeRaw <= 599
+          ? statusCodeRaw
+          : 500;
+      const metric: Metric = {
+        timestamp: new Date().toISOString(),
+        method: methodLabel,
+        path: clampMetricText(requestPath, MAX_METRIC_PATH_CHARS),
+        statusCode,
+        responseTime,
         dbQueryCount: metrics.dbQueryCount,
         dbQueryTime: metrics.dbQueryTime,
-      });
-    }
+        memoryDelta,
+        userId: clampMetricText(
+          normalizeOptionalString(safeRead(() => req.user?.id, undefined)) || '',
+          MAX_USER_CONTEXT_CHARS
+        ) || null,
+        organizationId:
+          clampMetricText(
+            normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) || '',
+            MAX_USER_CONTEXT_CHARS
+          ) || null,
+      };
 
-    // Record error metric if status >= 400
-    if (res.statusCode >= 400) {
-      const errorType = res.statusCode >= 500 ? 'server_error' : 'client_error';
-      metricsService.recordError(errorType, 'http');
-    }
+      // Store metric
+      metricsStore.requests.push(metric);
+      if (metricsStore.requests.length > MAX_ENTRIES) {
+        metricsStore.requests.shift();
+      }
+      try {
+        metricsService?.recordHttpRequest(methodLabel, routeLabel, statusCode, responseTime / 1000);
+      } catch (error) {
+        logger.warn('Performance middleware recordHttpRequest failed', error);
+      }
 
-    // Disable performance tracking when request finishes
-    if (typeof queryHelpers.disablePerformanceTracking === 'function') {
-      queryHelpers.disablePerformanceTracking();
-    }
-  });
+      // Log slow requests or errors outside test mode.
+      // Tests intentionally exercise many 401/403/4xx paths, which can create noisy logs.
+      if (!IS_TEST_ENV && (responseTime > SLOW_REQUEST_THRESHOLD_MS || statusCode >= 400)) {
+        logger.warn('Performance metric', {
+          ...metric,
+          route: routeLabel,
+          isSlow: responseTime > SLOW_REQUEST_THRESHOLD_MS,
+          isError: statusCode >= 400,
+        });
+      }
 
-  next();
+      // Log high DB query counts outside test mode.
+      if (!IS_TEST_ENV && metrics.dbQueryCount > 10) {
+        logger.warn('High DB query count', {
+          path: metric.path,
+          dbQueryCount: metrics.dbQueryCount,
+          dbQueryTime: metrics.dbQueryTime,
+        });
+      }
+
+      // Record error metric if status >= 400
+      if (statusCode >= 400) {
+        try {
+          const errorType = statusCode >= 500 ? 'server_error' : 'client_error';
+          metricsService?.recordError(errorType, 'http');
+        } catch (error) {
+          logger.warn('Performance middleware recordError failed', error);
+        }
+      }
+    } catch (error) {
+      logger.warn('Performance middleware finish handler failed', error);
+    } finally {
+      releasePerformanceTracking();
+    }
+  };
+
+  const finishListenerAttached = safeRead(() => {
+    if (typeof res.on !== 'function') {
+      return false;
+    }
+    if (performanceFinishHooked.has(res)) {
+      return true;
+    }
+    if (
+      typeof (res as Response & { once?: (event: string, listener: () => void) => Response })
+        .once === 'function'
+    ) {
+      (res as Response & { once: (event: string, listener: () => void) => Response }).once(
+        'finish',
+        onFinish
+      );
+    } else {
+      res.on('finish', onFinish);
+    }
+    performanceFinishHooked.add(res);
+    return true;
+  }, false);
+
+  if (performanceTrackingEnabled && !finishListenerAttached) {
+    releasePerformanceTracking();
+  }
+  safeRead(() => {
+    if (typeof res.on !== 'function') {
+      return false;
+    }
+    if (performanceCloseHooked.has(res)) {
+      return true;
+    }
+    if (
+      typeof (res as Response & { once?: (event: string, listener: () => void) => Response })
+        .once === 'function'
+    ) {
+      (res as Response & { once: (event: string, listener: () => void) => Response }).once(
+        'close',
+        releasePerformanceTracking
+      );
+    } else {
+      res.on('close', releasePerformanceTracking);
+    }
+    performanceCloseHooked.add(res);
+    return true;
+  }, false);
+
+  try {
+    next();
+  } catch (error) {
+    releasePerformanceTracking();
+    throw error;
+  }
 }
 
 // ==========================================
@@ -303,3 +502,4 @@ export function clearMetrics(): void {
 
 export const resetMetrics = clearMetrics;
 export { metricsStore }; // Expose for testing
+export { resolveSlowRequestThresholdMs };

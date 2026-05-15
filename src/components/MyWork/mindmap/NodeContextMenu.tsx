@@ -29,6 +29,7 @@ import {
   Target,
   Trash2,
   UserPlus,
+  Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -344,6 +345,13 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                   labelPl: '→ Inicjatywa (gałąź)',
                   labelEn: '→ Initiative (branch)',
                   icon: Rocket,
+                  disabled: isLocked,
+                },
+                {
+                  id: 'ctx_subtree_convert_process_flow',
+                  labelPl: '→ Przepływ procesu (gałąź)',
+                  labelEn: '→ Process Flow (branch)',
+                  icon: Workflow,
                   disabled: isLocked,
                 },
               ] as MenuItemBase[],

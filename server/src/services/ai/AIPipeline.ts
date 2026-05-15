@@ -181,6 +181,12 @@ const CAPABILITY_REGISTRY: CapabilityRegistry = {
     description: 'Generate weekly/monthly engagement summary report',
     outputFormat: 'text',
   },
+  help: {
+    role: 'COACH',
+    maxTokens: 4000,
+    description: 'Contextual help assistant grounded in knowledge base articles',
+    outputFormat: 'text',
+  },
 };
 
 // ==========================================
@@ -705,6 +711,15 @@ export class AIPipeline {
           }
         }
 
+        // i18n-teresa fix 2026-04-18: propagate authoritative UI language
+        const authoritativeLanguageDT =
+          (request as any)?.options?.language ||
+          (request.context as any)?.language ||
+          (lightContext as any)?.conversationLanguage ||
+          (lightContext as any)?.userMemory?.preferences?.language ||
+          'en';
+        (lightContext as any).conversationLanguage = String(authoritativeLanguageDT).split('-')[0];
+
         return {
           context: lightContext as any,
           ragResults: 0,
@@ -795,14 +810,33 @@ export class AIPipeline {
           }
         }
 
+        // Resolve authoritative UI language for this request.
+        // Order of precedence (i18n-teresa fix 2026-04-18):
+        //   1. request.options.language / request.context.language    (explicit UI locale)
+        //   2. ctx.conversationLanguage                                (existing thread language)
+        //   3. userMemory.preferences.language                         (sticky profile pref)
+        //   4. 'en' fallback (NOT 'pl' — previously defaulted to Polish)
+        const authoritativeLanguage =
+          (request as any)?.options?.language ||
+          (request.context as any)?.language ||
+          (fullContext as any)?.conversationLanguage ||
+          userMemory?.preferences?.language ||
+          'en';
+
         // Merge memory into context
         const contextWithMemory = {
           ...fullContext,
+          conversationLanguage: String(authoritativeLanguage).split('-')[0],
           userMemory: userMemory
             ? {
                 preferences: userMemory.preferences,
                 expertise: userMemory.expertise?.slice(0, 10),
-                recentTopics: userMemory.recentTopics?.slice(0, 5),
+                // chat-scoping fix (feedback #4408f355 Quick savings context bleed):
+                // recentTopics is a GLOBAL per-user rollup across ALL conversations and orgs,
+                // so passing it to the LLM makes Teresa answer about topics from unrelated
+                // sessions (cross-conversation / cross-org leak). Drop it from runtime context;
+                // if a future "global memory" feature returns, it must be explicitly opt-in
+                // and scoped per-org.
                 interactionCount: userMemory.interactionCount,
               }
             : null,
@@ -869,8 +903,16 @@ export class AIPipeline {
 
       // Fallback: use context from request
       logger.info('[AIPipeline] Using fallback context (no userId/organizationId)');
+      const fallbackContext: any = { ...(request.context || {}) };
+      // i18n-teresa fix 2026-04-18: still propagate authoritative language in fallback
+      const authoritativeLanguageFallback =
+        (request as any)?.options?.language ||
+        fallbackContext?.language ||
+        fallbackContext?.conversationLanguage ||
+        'en';
+      fallbackContext.conversationLanguage = String(authoritativeLanguageFallback).split('-')[0];
       return {
-        context: request.context || {},
+        context: fallbackContext,
         ragResults: 0,
         memoryUsed: false,
       };
@@ -896,7 +938,9 @@ export class AIPipeline {
     // Dedicated system instruction mode: when a caller provides systemInstruction
     // AND sets dedicatedSystemPrompt=true, use ONLY that instruction as the system
     // prompt (skip persona, org context, etc.). Used by WorkbookGeneratorService, etc.
-    const dedicatedMode = !!(request.options as any)?.dedicatedSystemPrompt && (request.options as any)?.systemInstruction;
+    const dedicatedMode =
+      !!(request.options as any)?.dedicatedSystemPrompt &&
+      (request.options as any)?.systemInstruction;
 
     let systemPrompt: string;
     if (dedicatedMode) {
@@ -1111,6 +1155,11 @@ export class AIPipeline {
     }
 
     // 4.5. User memory (preferences, expertise, communication style)
+    // i18n-teresa fix 2026-04-18: DO NOT inject `preferences.language` into the prompt.
+    // It used to be rendered in Polish as "Preferowany język: pl", which the LLM treated as
+    // an authoritative user preference and overrode the UI locale (EN) with Polish output —
+    // even literally quoting "preferowany język to polski". The authoritative language is
+    // now enforced exclusively via the strict LANGUAGE INSTRUCTION block below.
     if (ctx?.userMemory) {
       const um = ctx.userMemory;
       const memParts: string[] = ['## PREFERENCJE UŻYTKOWNIKA'];
@@ -1118,11 +1167,11 @@ export class AIPipeline {
         memParts.push(`- Styl komunikacji: ${um.preferences.communicationStyle}`);
       if (um.preferences?.detailLevel)
         memParts.push(`- Poziom szczegółowości: ${um.preferences.detailLevel}`);
-      if (um.preferences?.language)
-        memParts.push(`- Preferowany język: ${um.preferences.language}`);
       if (um.expertise?.length > 0) memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
-      if (um.recentTopics?.length > 0)
-        memParts.push(`- Ostatnie tematy: ${um.recentTopics.join(', ')}`);
+      // chat-scoping fix 2026-04-18 (feedback #4408f355 Quick savings context bleed):
+      // DO NOT render `recentTopics`. It is a cross-conversation / cross-org user-level
+      // rollup and caused Teresa to pull content from other sessions (privacy + scoping
+      // regression). Conversation-local context is already supplied via history + RAG.
       if (um.interactionCount)
         memParts.push(`- Liczba dotychczasowych interakcji: ${um.interactionCount}`);
       if (memParts.length > 1) parts.push(memParts.join('\n'));
@@ -1247,6 +1296,24 @@ export class AIPipeline {
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
+    // 9. Strict LANGUAGE INSTRUCTION (i18n-teresa fix 2026-04-18).
+    //    Appended LAST so it is the most recent / highest-priority directive the LLM sees.
+    //    Mirrors the non-negotiable language policy used in /chat/stream & /chat/confirm routes.
+    const langBaseFinal = conversationLang ? String(conversationLang).split('-')[0] : 'en';
+    const languageLabelMap: Record<string, string> = {
+      pl: 'Polish (Polski)',
+      en: 'English',
+      de: 'German (Deutsch)',
+      es: 'Spanish (Español)',
+      ja: 'Japanese (日本語)',
+      jp: 'Japanese (日本語)',
+      ar: 'Arabic (العربية)',
+    };
+    const langLabel = languageLabelMap[langBaseFinal] || 'English';
+    parts.push(
+      `[LANGUAGE INSTRUCTION: You MUST always respond in ${langLabel}. This is the user's chosen application language and takes absolute priority over any other hint (memory, organization terminology, prior conversation). Even if the user writes their message in a different language, your response must be in ${langLabel}. Never mix languages within a single response. This is non-negotiable.]`
+    );
+
     return parts.filter(Boolean).join('\n\n');
   }
 
@@ -1262,15 +1329,70 @@ export class AIPipeline {
   private buildOrganizationSection(org: any): string {
     if (!org) return '';
 
+    const p = org.profile;
+    const s = org.strategic;
+    const sys = org.systems;
+    const ops = org.operations;
+
     const lines = [
       '## ORGANIZACJA',
-      `- Nazwa: ${org.organizationName || 'Nieznana'}`,
-      org.industry ? `- Branża: ${org.industry}` : '',
+      `- Nazwa: ${org.organizationName || p?.companyName || 'Nieznana'}`,
+      p?.organizationType ? `- Typ organizacji: ${p.organizationType}` : '',
+      org.industry || p?.industry
+        ? `- Branża: ${org.industry || p?.industry}${p?.industrySubsector ? ` / ${p.industrySubsector}` : ''}`
+        : '',
+      p?.companySize
+        ? `- Skala: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} pracowników)` : ''}${p.annualRevenue ? `, przychód: ${p.annualRevenue}` : ''}`
+        : '',
+      s?.growthStage ? `- Etap wzrostu: ${s.growthStage}` : '',
+      s?.competitivePosition ? `- Pozycja konkurencyjna: ${s.competitivePosition}` : '',
       `- Aktywne projekty: ${org.activeProjectCount || 0}`,
       `- Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`,
     ];
 
-    // Inject organization terminology for consistent language
+    if (s?.priorities?.length > 0) {
+      lines.push(`- Priorytety strategiczne: ${s.priorities.join(', ')}`);
+    }
+    if (s?.mission) {
+      lines.push(`- Misja: ${s.mission}`);
+    }
+    if (sys?.stack?.length > 0) {
+      lines.push(`- Stack technologiczny: ${sys.stack.join(', ')}`);
+    }
+    if (sys?.coreSystems?.length > 0) {
+      lines.push(`- Systemy core: ${sys.coreSystems.join(', ')}`);
+    }
+    if (sys?.cloudAdoption) {
+      lines.push(`- Cloud: ${sys.cloudAdoption}`);
+    }
+    if (ops?.constraints?.length > 0) {
+      lines.push(`- Ograniczenia: ${ops.constraints.slice(0, 5).join(', ')}`);
+    }
+    if (s?.riskAppetite) {
+      lines.push(`- Apetyt na ryzyko: ${s.riskAppetite}`);
+    }
+    if (p?.revenueModel) {
+      lines.push(`- Model przychodowy: ${p.revenueModel}`);
+    }
+    if (ops?.deliveryModel) {
+      lines.push(`- Model dostarczania: ${ops.deliveryModel}`);
+    }
+    if (ops?.productionArchetype) {
+      lines.push(`- Archetyp produkcji: ${ops.productionArchetype}`);
+    }
+    if (ops?.shiftPattern) {
+      lines.push(`- System zmianowy: ${ops.shiftPattern}`);
+    }
+    if (ops?.automationLevel) {
+      lines.push(`- Poziom automatyzacji: ${ops.automationLevel}`);
+    }
+    if (p?.communicationStyle) {
+      lines.push(`- Styl komunikacji: ${p.communicationStyle}`);
+    }
+    if (p?.industryJargonLevel) {
+      lines.push(`- Żargon branżowy: ${p.industryJargonLevel}`);
+    }
+
     if (org.terminology && Object.keys(org.terminology).length > 0) {
       lines.push('', '### Terminologia organizacji (używaj tych terminów):');
       for (const [term, definition] of Object.entries(org.terminology)) {
@@ -1278,11 +1400,80 @@ export class AIPipeline {
       }
     }
 
-    // Inject org-level best practices / patterns
     if (org.orgPatterns && org.orgPatterns.length > 0) {
       lines.push('', '### Wzorce organizacyjne (learned from past projects):');
       for (const p of org.orgPatterns.slice(0, 3)) {
         lines.push(`- [${p.type}] ${p.title}: ${p.content}`);
+      }
+    }
+
+    // Feedback #1b81d375 / #30592ee0 — surface interview findings that were
+    // already computed by OrganizationContextService (P10 insights with
+    // confidence tags) so Teresa can reason about them instead of replying
+    // "nie mam danych".
+    const findings: string[] = Array.isArray(org?.signals?.interviewFindingsFormatted)
+      ? (org.signals.interviewFindingsFormatted as string[])
+      : [];
+    if (findings.length > 0) {
+      lines.push('', '### Ustalenia z wywiadów (zatwierdzone insighty):');
+      for (const f of findings.slice(0, 8)) {
+        lines.push(`- ${f}`);
+      }
+    }
+
+    // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — raw snapshot
+    // of the tenant's collected context (Q&As, uploaded evidence, manual
+    // notes, document extractions). Previously we had the data sitting in
+    // `organization_context_items` but never surfaced it to the prompt, so
+    // Teresa couldn't cite VTS/Atelier answers or attached files even when
+    // they existed.
+    const snap = org?.contextItemsSample as
+      | {
+          interviewAnswers?: Array<{ question: string; answer: string; updatedAt: string }>;
+          evidence?: Array<{ title: string; fileType?: string; updatedAt: string }>;
+          manualNotes?: Array<{ title: string; snippet: string; updatedAt: string }>;
+          documentExtractions?: Array<{ title: string; snippet: string; updatedAt: string }>;
+          totalItems?: number;
+          lastUpdated?: string | null;
+        }
+      | undefined;
+    if (snap) {
+      const snapLines: string[] = [
+        '',
+        '### Dane zebrane od organizacji (wywiady, dowody, notatki)',
+      ];
+      if (Array.isArray(snap.interviewAnswers) && snap.interviewAnswers.length > 0) {
+        snapLines.push('#### Ostatnie odpowiedzi z wywiadów:');
+        for (const qa of snap.interviewAnswers) {
+          snapLines.push(`- **P:** ${qa.question}`);
+          snapLines.push(`  **O:** ${qa.answer}`);
+        }
+      }
+      if (Array.isArray(snap.evidence) && snap.evidence.length > 0) {
+        snapLines.push('#### Załączone dowody / pliki:');
+        for (const ev of snap.evidence) {
+          const typeHint = ev.fileType ? ` (${ev.fileType})` : '';
+          snapLines.push(`- ${ev.title}${typeHint}`);
+        }
+      }
+      if (Array.isArray(snap.manualNotes) && snap.manualNotes.length > 0) {
+        snapLines.push('#### Notatki ręczne:');
+        for (const note of snap.manualNotes) {
+          snapLines.push(`- ${note.title}: ${note.snippet}`);
+        }
+      }
+      if (Array.isArray(snap.documentExtractions) && snap.documentExtractions.length > 0) {
+        snapLines.push('#### Wyciągi z dokumentów:');
+        for (const doc of snap.documentExtractions) {
+          snapLines.push(`- ${doc.title}: ${doc.snippet}`);
+        }
+      }
+      // Only push the section if at least one bucket produced content.
+      if (snapLines.length > 2) {
+        snapLines.push(
+          `_Łącznie zebranych wpisów: ${snap.totalItems ?? 'n/d'}. Korzystaj z tych danych cytując pytanie/źródło, gdy odpowiadasz._`
+        );
+        lines.push(...snapLines);
       }
     }
 
@@ -1634,6 +1825,9 @@ export class AIPipeline {
     ctx: any,
     request: AIPipelineRequest
   ): string {
+    // i18n-teresa fix 2026-04-18: rules 5-7 previously told the model to respond in the
+    // language the user WROTE in, which directly contradicted the strict LANGUAGE INSTRUCTION
+    // appended later. Replaced with a single rule that defers to the authoritative block.
     const instructions: string[] = [
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
@@ -1641,9 +1835,7 @@ export class AIPipeline {
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
-      '5. MULTI-LANGUAGE SUPPORT: Twoją natywną funkcją jest obsługa 6 języków: polski (pl), angielski (en), niemiecki (de), hiszpański (es), arabski (ar), japoński (ja).',
-      '6. Zawsze odpowiadaj w tym samym języku, w którym zwrócił się do Ciebie użytkownik. Jeśli użytkownik mówi po polsku, odpowiadaj po polsku. Jeśli po japońsku - po japońsku, itd.',
-      '7. Dbaj o naturalność i poprawność językową w każdym z tych języków.',
+      "5. LANGUAGE POLICY: You support Polish (pl), English (en), German (de), Spanish (es), Arabic (ar) and Japanese (ja). ALWAYS respond in the single language specified by the final [LANGUAGE INSTRUCTION] block — do NOT auto-detect from the user's input and do NOT mix languages within one response. Natural, idiomatic output in the selected language is required.",
     ];
 
     // Chat runtime modes (ToolsMenu)
@@ -1656,9 +1848,26 @@ export class AIPipeline {
     const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
 
     if (aiModes?.deepResearch) {
+      const expectedOutput =
+        (ctx as any)?.deepThinkingExpectedOutput ||
+        (ctx as any)?.deepThinkingConfirm?.understanding?.expectedOutput ||
+        'FullReport';
       instructions.push(
         '8. TRYB: Deep Research — zanim odpowiesz, doprecyzuj brakujące informacje i przedstaw uporządkowaną analizę, założenia oraz rekomendacje.'
       );
+      if (expectedOutput === 'Decision') {
+        instructions.push(
+          '8a. OUTPUT MODE: Decision — deliver a concise decision-ready recommendation first, followed by rationale, trade-offs, risks, and immediate next actions.'
+        );
+      } else if (expectedOutput === 'StructuredAnalysis') {
+        instructions.push(
+          '8a. OUTPUT MODE: StructuredAnalysis — use a structured comparison with explicit criteria, options, evidence, and a concise recommendation.'
+        );
+      } else {
+        instructions.push(
+          '8a. OUTPUT MODE: FullReport — provide a full strategic report with detailed sections, evidence, implications, and next-step guidance.'
+        );
+      }
     }
 
     // Web search instruction — active when user toggle is on OR when auto-detected
@@ -1674,7 +1883,7 @@ export class AIPipeline {
         );
       } else {
         instructions.push(
-          '9. TRYB: Web Search — wyszukiwanie jest włączone, ale w tym przypadku nie dostarczono wyników. Nie udawaj, że wykonałeś wyszukiwanie. Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy, zaznaczając że odpowiedź nie jest oparta na najświeższych danych z internetu.'
+          '9. TRYB: Web Search — dla tego żądania nie dostarczono użytecznych wyników web. Nie udawaj, że wykonałeś skuteczne wyszukiwanie ani nie twierdź ogólnie, że system "nie ma internetu". Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy i wyraźnie zaznacz, że ta odpowiedź nie została ugruntowana świeżymi źródłami z web search.'
         );
       }
     }
@@ -2453,8 +2662,28 @@ export class AIPipeline {
 
   private handleError(error: unknown): AIError {
     if (error instanceof Error) {
+      const anyErr = error as any;
+      // Feedback #a9fcdd99 / #3b6c0287 — preserve the underlying error's `code`
+      // (e.g. CIRCUIT_OPEN, INVALID_API_KEY, RATE_LIMIT) so the route handler
+      // and SSE client can render a user-friendly localized message instead of
+      // the raw engineering text. Without this, every thrown Error was
+      // collapsed to `AI_ERROR`, which the client didn't recognize and fell
+      // back to surfacing the raw message (e.g. "Circuit [openrouter] is
+      // OPEN. Retry in 18s") in the chat bubble.
+      const preserved =
+        typeof anyErr?.code === 'string' && anyErr.code.length > 0 ? anyErr.code : null;
+      const msg = String(error.message || '');
+      const inferred = !preserved
+        ? /invalid_api_key|incorrect api key/i.test(msg)
+          ? 'INVALID_API_KEY'
+          : /quota|rate.limit|429|too many/i.test(msg)
+            ? 'RATE_LIMIT'
+            : /circuit.*open/i.test(msg)
+              ? 'CIRCUIT_OPEN'
+              : null
+        : null;
       return {
-        code: 'AI_ERROR',
+        code: preserved || inferred || 'AI_ERROR',
         message: error.message,
         retryable: true,
       };

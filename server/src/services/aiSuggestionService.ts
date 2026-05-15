@@ -10,6 +10,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../utils/Logger.js';
+
 // ============================================
 // TYPES
 // ============================================
@@ -885,7 +887,7 @@ class AISuggestionService {
         const enhancedSuggestions = this.mergeAISuggestions(baseSuggestions, aiResponse);
         return enhancedSuggestions;
       } catch (error) {
-        console.error('AI enhancement failed, returning base suggestions:', error);
+        logger.error('AI enhancement failed, returning base suggestions:', error);
         return baseSuggestions;
       }
     }

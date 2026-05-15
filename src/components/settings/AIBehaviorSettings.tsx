@@ -282,9 +282,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <SettingsSelect
                   options={toneOptions}
                   value={preferences.tone}
-                  onChange={(e) =>
-                    update('tone', e.target.value as AIBehaviorPreferences['tone'])
-                  }
+                  onChange={(e) => update('tone', e.target.value as AIBehaviorPreferences['tone'])}
                 />
               </SettingsFormRow>
 
@@ -292,9 +290,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <SettingsButtonGroup
                   options={formalityOptions}
                   value={preferences.formality}
-                  onChange={(v) =>
-                    update('formality', v as AIBehaviorPreferences['formality'])
-                  }
+                  onChange={(v) => update('formality', v as AIBehaviorPreferences['formality'])}
                   size="sm"
                 />
               </SettingsFormRow>

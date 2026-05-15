@@ -1,25 +1,26 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import React, { useLayoutEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 
 import { V8Provider } from '@/providers/V8Provider';
+import { createAppQueryClient } from '@/lib/createAppQueryClient';
+import { installQueryFailureWebPerf } from '@/lib/installQueryFailureWebPerf';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';
-import { AutoSaveProvider } from '../context/AutoSaveContext';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
 import { AIProvider } from '../contexts/AIContext';
+import { AutoSaveProvider } from '../contexts/AutoSaveContext';
 import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
+import { OrgProvider } from '../contexts/OrgContext';
+import { TeresaVoiceProvider } from '../contexts/TeresaVoiceContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, staleTime: 30_000 },
-  },
-});
+const queryClient = createAppQueryClient();
+installQueryFailureWebPerf(queryClient);
 
 /**
  * ThemeSync - Keeps the DOM `dark` class in sync with the Zustand theme state.
@@ -69,11 +70,15 @@ interface AppProvidersProps {
 
 const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <V8Provider>
-    <TrialProvider>
+    <OrgProvider>
       <AccessPolicyProvider>
-        <AIProvider>{children}</AIProvider>
+        <TrialProvider>
+          <AIProvider>
+            <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
+          </AIProvider>
+        </TrialProvider>
       </AccessPolicyProvider>
-    </TrialProvider>
+    </OrgProvider>
   </V8Provider>
 );
 
@@ -88,7 +93,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <ThemeSync />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <FeatureFlagsProvider>
+          <FeatureFlagsProvider showDevTools={false}>
             <AutoSaveProvider>
               <TourProvider>
                 <HelpProvider>

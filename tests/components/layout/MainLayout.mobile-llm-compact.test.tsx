@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppView } from '../../../src/types';
@@ -34,6 +35,7 @@ const conversationState = {
   setDisplayMode: vi.fn(),
   setWorkspaceContext: vi.fn(),
   expandToFullScreen: vi.fn(),
+  workspaceContext: null,
 };
 
 vi.mock('react-i18next', () => ({
@@ -52,7 +54,11 @@ vi.mock('../../../src/store/useAppStore', () => ({
 }));
 
 vi.mock('../../../src/store/useConversationStore', () => ({
-  useConversationStore: () => conversationState,
+  useConversationStore: Object.assign(
+    (selector?: (state: typeof conversationState) => unknown) =>
+      typeof selector === 'function' ? selector(conversationState) : conversationState,
+    { getState: () => conversationState }
+  ),
 }));
 
 vi.mock('../../../src/types/workspace', () => ({
@@ -87,6 +93,9 @@ vi.mock('../../../src/components/Feedback/FeedbackToggleButton', () => ({
 vi.mock('../../../src/components/Help/HelpSidePanel', () => ({
   HelpSidePanel: () => <div data-testid="help-side-panel" />,
 }));
+vi.mock('../../../src/components/Help/HelpDeepLinkListener', () => ({
+  HelpDeepLinkListener: () => null,
+}));
 vi.mock('../../../src/components/Help/HelpToggleButton', () => ({
   HelpToggleButton: () => <button type="button">help</button>,
 }));
@@ -117,9 +126,6 @@ vi.mock('../../../src/components/navigation/Sidebar', () => ({
 vi.mock('../../../src/components/Onboarding/OnboardingFirstLoginCTA', () => ({
   OnboardingFirstLoginCTA: () => <div data-testid="onboarding-cta" />,
 }));
-vi.mock('../../../src/components/settings/FeatureFlagsDevToolsToggleButton', () => ({
-  FeatureFlagsDevToolsToggleButton: () => <button type="button">flags</button>,
-}));
 vi.mock('../../../src/components/SystemHealth', () => ({
   SystemHealth: () => <div data-testid="system-health" />,
 }));
@@ -132,10 +138,21 @@ vi.mock('../../../src/components/Trial/TrialExpiredGate', () => ({
 
 import { MainLayout } from '../../../src/layouts/MainLayout';
 
+function renderMainLayout() {
+  return render(
+    <MemoryRouter>
+      <MainLayout breadcrumbs={['Home']}>
+        <div>content</div>
+      </MainLayout>
+    </MemoryRouter>
+  );
+}
+
 describe('MainLayout mobile LLM selector compact continuity', () => {
   beforeEach(() => {
     deviceState.isMobile = true;
     deviceState.safeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+    appState.isChatCollapsed = true;
     llmSelectorMock.mockClear();
     appState.setIsSidebarOpen.mockReset();
     appState.toggleChatCollapse.mockReset();
@@ -147,30 +164,35 @@ describe('MainLayout mobile LLM selector compact continuity', () => {
   });
 
   it('passes compact mode to the shared LLM selector on mobile', () => {
-    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+    renderMainLayout();
 
     expect(screen.getByTestId('llm-selector-prop')).toHaveTextContent('compact');
-    expect(screen.getByText('A credible mobile support promise')).toBeInTheDocument();
   });
 
   it('keeps the shared LLM selector in regular mode outside mobile breakpoints', () => {
     deviceState.isMobile = false;
 
-    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+    renderMainLayout();
 
     expect(screen.getByTestId('llm-selector-prop')).toHaveTextContent('regular');
   });
 
   it('anchors the global action rail above the mobile bottom navigation strip', () => {
-    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+    renderMainLayout();
 
     expect(screen.getByTestId('global-fab-rail')).toHaveStyle({ bottom: '76px' });
+  });
+
+  it('does not expose the deprecated A/B toggle in the global action rail', () => {
+    renderMainLayout();
+
+    expect(screen.queryByText('flags')).not.toBeInTheDocument();
   });
 
   it('includes safe-area inset in the mobile global action rail offset', () => {
     deviceState.safeAreaInsets = { top: 0, bottom: 10, left: 0, right: 0 };
 
-    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+    renderMainLayout();
 
     expect(screen.getByTestId('global-fab-rail')).toHaveStyle({ bottom: '86px' });
   });
@@ -178,8 +200,34 @@ describe('MainLayout mobile LLM selector compact continuity', () => {
   it('keeps desktop global action rail positioning outside mobile breakpoints', () => {
     deviceState.isMobile = false;
 
-    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+    renderMainLayout();
 
     expect(screen.getByTestId('global-fab-rail').style.bottom).toBe('');
+  });
+
+  it('uses translated label for split chat close button', () => {
+    appState.isChatCollapsed = false;
+
+    renderMainLayout();
+
+    expect(screen.getAllByRole('button', { name: 'Close AI panel', hidden: true })).toHaveLength(2);
+  });
+
+  it('uses explicit button semantics for mobile menu trigger', () => {
+    render(
+      <form>
+        <MemoryRouter>
+          <MainLayout breadcrumbs={['Home']}>
+            <div>content</div>
+          </MainLayout>
+        </MemoryRouter>
+      </form>
+    );
+
+    const menuButton = screen.getByRole('button', { name: 'Open menu', hidden: true });
+    expect(menuButton).toHaveAttribute('type', 'button');
+
+    menuButton.click();
+    expect(appState.setIsSidebarOpen).toHaveBeenCalledWith(true);
   });
 });

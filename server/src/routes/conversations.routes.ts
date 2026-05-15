@@ -37,6 +37,27 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+function resolveConversationCorrelationId(req: AuthRequest): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildConversationFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveConversationCorrelationId(req),
+  };
+}
+
 // ==================== HELPERS ====================
 
 /**
@@ -145,7 +166,18 @@ const AddMessageSchema = z.object({
   role: z.enum(['user', 'ai']),
   content: z.string().min(1),
   messageType: z
-    .enum(['text', 'action_request', 'summary', 'file', 'tool_call', 'voice'])
+    .enum([
+      'text',
+      'action_request',
+      'summary',
+      'file',
+      'tool_call',
+      'voice',
+      // V8: governed proposal + execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+      'execution_proposal',
+      'execution_progress',
+      'execution_result',
+    ])
     .optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   tokenCount: z.number().int().positive().optional(),
@@ -361,9 +393,11 @@ router.post(
               'create_thread'
             );
             if (!perm.allowed) {
-              return res
-                .status(403)
-                .json({ error: 'No permission to create thread in this team project' });
+              return res.status(403).json({
+                error: 'No permission to create thread in this team project',
+                reason: perm.reason,
+                role: perm.role,
+              });
             }
           }
         } catch {
@@ -463,9 +497,34 @@ router.get(
         [id]
       );
 
+      // Include attachment pointers per message (L4 bridge)
+      let attachments: any[] = [];
+      try {
+        attachments =
+          (await dbAll(
+            `SELECT id, message_id, kind, target_id, target_url, display_name, mime, size_bytes, created_at
+           FROM conversation_message_attachments WHERE conversation_id = ? ORDER BY created_at ASC`,
+            [id]
+          )) || [];
+      } catch {
+        /* table may not exist */
+      }
+
+      const attachmentsByMessage: Record<string, any[]> = {};
+      for (const att of attachments) {
+        const mid = (att as any).message_id;
+        if (!attachmentsByMessage[mid]) attachmentsByMessage[mid] = [];
+        attachmentsByMessage[mid].push(att);
+      }
+
+      const messagesWithAttachments = (messages as any[]).map((m: any) => ({
+        ...m,
+        attachments: attachmentsByMessage[m.id] || [],
+      }));
+
       return res.json({
         ...conversation,
-        messages,
+        messages: messagesWithAttachments,
         _state: conversationState,
       });
     } catch (err: any) {
@@ -509,7 +568,11 @@ router.patch(
           { isCreator }
         );
         if (!perm.allowed) {
-          return res.status(403).json({ error: 'No permission to update this team conversation' });
+          return res.status(403).json({
+            error: 'No permission to update this team conversation',
+            reason: perm.reason,
+            role: perm.role,
+          });
         }
       }
 
@@ -518,7 +581,8 @@ router.patch(
         const currentVersion = (existing as any).version || 1;
         if (currentVersion !== updates.expectedVersion) {
           return res.status(409).json({
-            error: 'Conflict: conversation was modified by another session. Please refresh and retry.',
+            error:
+              'Conflict: conversation was modified by another session. Please refresh and retry.',
             code: 'VERSION_CONFLICT',
             currentVersion,
             expectedVersion: updates.expectedVersion,
@@ -618,7 +682,11 @@ router.delete(
           { isCreator }
         );
         if (!perm.allowed) {
-          return res.status(403).json({ error: 'No permission to delete this team conversation' });
+          return res.status(403).json({
+            error: 'No permission to delete this team conversation',
+            reason: perm.reason,
+            role: perm.role,
+          });
         }
       }
 
@@ -638,7 +706,15 @@ router.delete(
           await dbRun(
             `INSERT INTO conversation_purge_audit (id, conversation_id, purged_by_user_id, organization_id, message_count, title_hash, purged_at)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), id, req.userId!, req.organizationId || null, msgCount, titleHash, new Date().toISOString()]
+            [
+              uuidv4(),
+              id,
+              req.userId!,
+              req.organizationId || null,
+              msgCount,
+              titleHash,
+              new Date().toISOString(),
+            ]
           );
         } catch {
           // Audit table may not exist yet; proceed with purge
@@ -646,22 +722,27 @@ router.delete(
 
         await dbRun('DELETE FROM conversation_messages WHERE conversation_id = ?', [id]);
         await dbRun('DELETE FROM conversations WHERE id = ?', [id]);
-        logger.info(`[Conversations] Hard-deleted (purge): ${id} by user ${req.userId}, ${msgCount} messages`);
+        logger.info(
+          `[Conversations] Hard-deleted (purge): ${id} by user ${req.userId}, ${msgCount} messages`
+        );
         return res.json({ success: true, deleted: id, purged: true, messagesRemoved: msgCount });
       }
 
       // Soft-delete: set deleted_at timestamp (grace window)
       const now = new Date().toISOString();
       try {
-        await dbRun(
-          `UPDATE conversations SET deleted_at = ?, updated_at = ? WHERE id = ?`,
-          [now, now, id]
-        );
+        await dbRun(`UPDATE conversations SET deleted_at = ?, updated_at = ? WHERE id = ?`, [
+          now,
+          now,
+          id,
+        ]);
       } catch {
         // deleted_at column may not exist yet — fall back to hard delete
         await dbRun('DELETE FROM conversation_messages WHERE conversation_id = ?', [id]);
         await dbRun('DELETE FROM conversations WHERE id = ?', [id]);
-        logger.info(`[Conversations] Hard-deleted (no deleted_at column): ${id} by user ${req.userId}`);
+        logger.info(
+          `[Conversations] Hard-deleted (no deleted_at column): ${id} by user ${req.userId}`
+        );
         return res.json({ success: true, deleted: id, purged: true });
       }
 
@@ -707,23 +788,36 @@ router.post(
           'add_message'
         );
         if (!perm.allowed) {
-          return res
-            .status(403)
-            .json({ error: 'No permission to add messages to this team conversation' });
+          return res.status(403).json({
+            error: 'No permission to add messages to this team conversation',
+            reason: perm.reason,
+            role: perm.role,
+          });
         }
       }
 
       const messageId = uuidv4();
       const now = new Date().toISOString();
-      // Set author_user_id for user messages (null for AI messages)
       const authorUserId = role === 'user' ? req.userId! : null;
+
+      // Resolve active session for this conversation (§2.3.1 session linkage)
+      let activeSessionId: string | null = null;
+      try {
+        const session = await dbGet(
+          `SELECT id FROM conversation_sessions WHERE conversation_id = ? AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+          [conversationId]
+        );
+        activeSessionId = (session as any)?.id || null;
+      } catch {
+        /* session table may not exist */
+      }
 
       await dbRun(
         `
                 INSERT INTO conversation_messages (
                     id, conversation_id, role, content, message_type, 
-                    metadata, token_count, model_used, author_user_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    metadata, token_count, model_used, author_user_id, session_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           messageId,
@@ -735,9 +829,39 @@ router.post(
           tokenCount || null,
           modelUsed || null,
           authorUserId,
+          activeSessionId,
           now,
         ]
       );
+
+      // Auto-persist metadata.attachments to conversation_message_attachments (L4 bridge)
+      if (metadata && Array.isArray((metadata as any).attachments)) {
+        for (const att of (metadata as any).attachments) {
+          try {
+            const kind = att.kind || (att.sourceUrl ? 'link' : 'file');
+            await dbRun(
+              `INSERT INTO conversation_message_attachments
+               (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                uuidv4(),
+                messageId,
+                conversationId,
+                kind,
+                att.docId || att.targetId || null,
+                att.sourceUrl || att.targetUrl || null,
+                att.filename || att.displayName || 'attachment',
+                att.mimeType || att.mime || null,
+                att.size || att.sizeBytes || null,
+                att.provenancePointer || null,
+                now,
+              ]
+            );
+          } catch {
+            /* attachment table may not exist; non-blocking */
+          }
+        }
+      }
 
       // Update conversation metadata (message_count, last_message_preview, last_message_at)
       await dbRun(
@@ -901,7 +1025,11 @@ router.post(
           'add_message'
         );
         if (!perm.allowed) {
-          return res.status(403).json({ error: 'No permission to edit this team conversation' });
+          return res.status(403).json({
+            error: 'No permission to edit this team conversation',
+            reason: perm.reason,
+            role: perm.role,
+          });
         }
       }
 
@@ -1106,8 +1234,16 @@ router.post(
       return res.json({ title: generatedTitle });
     } catch (err: any) {
       logger.error('[Conversations] Generate title error:', err);
-      // Return error status instead of masking failure
-      return res.status(500).json({ error: 'Title generation failed', details: err.message });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_TITLE_GENERATION_FAILED',
+            'Failed to generate conversation title.'
+          )
+        );
     }
   })
 );
@@ -1132,7 +1268,16 @@ router.post(
       const ownedIds = owned.map((c) => c.id);
 
       if (ownedIds.length === 0) {
-        return res.status(404).json({ error: 'No conversations found' });
+        return res
+          .status(404)
+          .json(
+            buildConversationFailClosedError(
+              req,
+              404,
+              'CONVERSATIONS_BULK_NOT_FOUND',
+              'No conversations were found for this bulk request.'
+            )
+          );
       }
 
       const ownedPlaceholders = ownedIds.map(() => '?').join(',');
@@ -1189,7 +1334,16 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Conversations] Bulk operation error:', err);
-      return res.status(500).json({ error: err.message });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_BULK_OPERATION_FAILED',
+            'Bulk conversation operation failed.'
+          )
+        );
     }
   })
 );
@@ -1437,9 +1591,13 @@ router.get(
       // Exclude soft-deleted by default
       whereClause += ` AND c.deleted_at IS NULL`;
 
-      // Search in title, preview, and message content
-      whereClause += ` AND (c.title ILIKE ? OR c.last_message_preview ILIKE ? OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND cm2.content ILIKE ?))`;
-      params.push(searchPattern, searchPattern, searchPattern);
+      // FTS with ILIKE fallback: use tsvector search on conversations + message content
+      whereClause += ` AND (
+        (c.search_vector IS NOT NULL AND c.search_vector @@ plainto_tsquery('simple', ?))
+        OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND to_tsvector('simple', coalesce(cm2.content, '')) @@ plainto_tsquery('simple', ?))
+        OR c.title ILIKE ? OR c.last_message_preview ILIKE ?
+      )`;
+      params.push(query, query, searchPattern, searchPattern);
 
       // Filters
       if (folderId) {
@@ -1482,8 +1640,10 @@ router.get(
 
       const fromClause = `FROM conversations c LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id`;
 
-      // Boost: pinned first, then recency
-      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
+      // Rank: FTS relevance (when available) > pinned > recency
+      // ts_rank is parameterized via the WHERE clause match; we add it as a tiebreaker
+      params.push(query); // param for ts_rank in ORDER BY
+      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, CASE WHEN c.search_vector IS NOT NULL THEN ts_rank(c.search_vector, plainto_tsquery('simple', ?)) ELSE 0 END DESC, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
 
       const results = (await dbAll(
         `SELECT DISTINCT c.id, c.title, c.title_source, c.project_id, c.chat_project_id,
@@ -1521,7 +1681,9 @@ router.get(
             [req.organizationId, searchPattern, searchPattern]
           );
           scopeBlocked = (blockedCount as any)?.cnt || 0;
-        } catch { /* non-blocking */ }
+        } catch {
+          /* non-blocking */
+        }
       }
 
       return res.json({
@@ -1533,7 +1695,16 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[Conversations] Search error:', err);
-      return res.status(500).json({ error: 'Search failed' });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_SEARCH_FAILED',
+            'Failed to search conversations.'
+          )
+        );
     }
   })
 );
@@ -1561,7 +1732,11 @@ router.post(
     const { kind, targetId, targetUrl, displayName, mime, sizeBytes, provenancePointer } = req.body;
 
     try {
-      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
       if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
       const message = await dbGet(
@@ -1575,10 +1750,25 @@ router.post(
         `INSERT INTO conversation_message_attachments
          (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [attachmentId, messageId, conversationId, kind, targetId || null, targetUrl || null, displayName, mime || null, sizeBytes || null, provenancePointer || null, new Date().toISOString()]
+        [
+          attachmentId,
+          messageId,
+          conversationId,
+          kind,
+          targetId || null,
+          targetUrl || null,
+          displayName,
+          mime || null,
+          sizeBytes || null,
+          provenancePointer || null,
+          new Date().toISOString(),
+        ]
       );
 
-      const attachment = await dbGet(`SELECT * FROM conversation_message_attachments WHERE id = ?`, [attachmentId]);
+      const attachment = await dbGet(
+        `SELECT * FROM conversation_message_attachments WHERE id = ?`,
+        [attachmentId]
+      );
       return res.status(201).json(attachment);
     } catch (err: any) {
       logger.error('[Conversations] Add attachment error:', err);
@@ -1596,7 +1786,11 @@ router.get(
     const { id: conversationId, messageId } = req.params;
 
     try {
-      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
       if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
       const attachments = await dbAll(
@@ -1608,7 +1802,11 @@ router.get(
     } catch (err: any) {
       // Degraded posture E6: table may not exist yet
       if (err?.message?.includes('no such table') || err?.message?.includes('does not exist')) {
-        return res.json({ attachments: [], _degraded: true, _reason: 'attachment_table_unavailable' });
+        return res.json({
+          attachments: [],
+          _degraded: true,
+          _reason: 'attachment_table_unavailable',
+        });
       }
       logger.error('[Conversations] List attachments error:', err);
       return res.status(500).json({ error: err.message });
@@ -1624,7 +1822,11 @@ router.delete(
     const { id: conversationId, messageId, attachmentId } = req.params;
 
     try {
-      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
       if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
       await dbRun(
@@ -1651,7 +1853,11 @@ router.get(
     const { id: conversationId } = req.params;
 
     try {
-      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
       if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
       const sessions = await dbAll(
@@ -1675,19 +1881,25 @@ router.post(
   '/:id/sessions',
   verifyToken,
   validateParams(ConversationIdParamSchema),
-  validateBody(z.object({
-    modelId: z.string().max(100).optional(),
-    presetId: z.string().max(100).optional(),
-    locale: z.string().max(10).optional(),
-    toolsEnabled: z.array(z.string()).optional(),
-    retrievalParams: z.record(z.string(), z.unknown()).optional(),
-  })),
+  validateBody(
+    z.object({
+      modelId: z.string().max(100).optional(),
+      presetId: z.string().max(100).optional(),
+      locale: z.string().max(10).optional(),
+      toolsEnabled: z.array(z.string()).optional(),
+      retrievalParams: z.record(z.string(), z.unknown()).optional(),
+    })
+  ),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id: conversationId } = req.params;
     const { modelId, presetId, locale, toolsEnabled, retrievalParams } = req.body;
 
     try {
-      const conversation = await findAccessibleConversation(conversationId, req.userId!, req.organizationId);
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
       if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
       // End the current active session
@@ -1696,7 +1908,9 @@ router.post(
           `UPDATE conversation_sessions SET ended_at = ? WHERE conversation_id = ? AND ended_at IS NULL`,
           [new Date().toISOString(), conversationId]
         );
-      } catch { /* table may not exist */ }
+      } catch {
+        /* table may not exist */
+      }
 
       const sessionId = uuidv4();
       const now = new Date().toISOString();
@@ -1704,7 +1918,17 @@ router.post(
       await dbRun(
         `INSERT INTO conversation_sessions (id, conversation_id, model_id, preset_id, locale, tools_enabled, retrieval_params, started_at, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [sessionId, conversationId, modelId || null, presetId || null, locale || null, JSON.stringify(toolsEnabled || []), JSON.stringify(retrievalParams || {}), now, now]
+        [
+          sessionId,
+          conversationId,
+          modelId || null,
+          presetId || null,
+          locale || null,
+          JSON.stringify(toolsEnabled || []),
+          JSON.stringify(retrievalParams || {}),
+          now,
+          now,
+        ]
       );
 
       const session = await dbGet(`SELECT * FROM conversation_sessions WHERE id = ?`, [sessionId]);
@@ -1776,14 +2000,17 @@ router.get(
       // Fetch attachments for exported messages
       let attachments: any[] = [];
       try {
-        attachments = (await dbAll(
-          `SELECT cma.message_id, cma.kind, cma.display_name, cma.target_url, cma.mime
+        attachments =
+          (await dbAll(
+            `SELECT cma.message_id, cma.kind, cma.display_name, cma.target_url, cma.mime
            FROM conversation_message_attachments cma
            WHERE cma.conversation_id = ?
            ORDER BY cma.created_at ASC`,
-          [id]
-        )) || [];
-      } catch { /* table may not exist */ }
+            [id]
+          )) || [];
+      } catch {
+        /* table may not exist */
+      }
 
       const fmt = exportFormat || 'json';
       const conv = conversation as any;
@@ -1793,7 +2020,7 @@ router.get(
         md += `**Created:** ${conv.created_at}\n`;
         md += `**Messages:** ${(messages as any[]).length}\n\n---\n\n`;
         for (const msg of messages as any[]) {
-          const role = msg.role === 'user' ? (msg.author_name || 'User') : 'AI';
+          const role = msg.role === 'user' ? msg.author_name || 'User' : 'AI';
           md += `### ${role} — ${msg.created_at}\n\n${msg.content}\n\n`;
           const msgAttachments = attachments.filter((a: any) => a.message_id === msg.id);
           if (msgAttachments.length > 0) {
@@ -1802,18 +2029,24 @@ router.get(
           md += `---\n\n`;
         }
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="${conv.title || 'conversation'}.md"`);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${conv.title || 'conversation'}.md"`
+        );
         return res.send(md);
       }
 
       if (fmt === 'text') {
         let txt = `${conv.title || 'Conversation'}\n${'='.repeat(40)}\n\n`;
         for (const msg of messages as any[]) {
-          const role = msg.role === 'user' ? (msg.author_name || 'User') : 'AI';
+          const role = msg.role === 'user' ? msg.author_name || 'User' : 'AI';
           txt += `[${msg.created_at}] ${role}:\n${msg.content}\n\n`;
         }
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="${conv.title || 'conversation'}.txt"`);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${conv.title || 'conversation'}.txt"`
+        );
         return res.send(txt);
       }
 
@@ -1872,7 +2105,16 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Conversations] Auto-archive error:', err);
-      return res.status(500).json({ error: 'Auto-archive failed' });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_AUTO_ARCHIVE_FAILED',
+            'Failed to auto-archive conversations.'
+          )
+        );
     }
   })
 );

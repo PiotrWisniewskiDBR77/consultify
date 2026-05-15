@@ -38,6 +38,7 @@ export interface OpenChatOptions {
     taskId?: string;
     decisionId?: string;
     reportId?: string;
+    kpiId?: string;
   };
 }
 
@@ -64,6 +65,7 @@ export function useOpenChatWithContext() {
         existingPmoCtx?.taskId === entityId ||
         existingPmoCtx?.decisionId === entityId ||
         existingPmoCtx?.reportId === entityId ||
+        existingPmoCtx?.kpiId === entityId ||
         (existingPmoCtx?.initiativeIds || []).includes(entityId);
 
       // Ensure chat UI becomes visible.
@@ -112,6 +114,7 @@ export function useOpenChatWithContext() {
           taskId: entityType === 'task' ? entityId : undefined,
           decisionId: entityType === 'decision' ? entityId : undefined,
           reportId: entityType === 'report' ? entityId : undefined,
+          kpiId: entityType === 'kpi' ? entityId : undefined,
         },
       });
 

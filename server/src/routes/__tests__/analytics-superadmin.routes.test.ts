@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getPublicAnnaFunnelSummary = vi.fn();
+const dbAll = vi.fn();
+const dbGet = vi.fn();
+const dbRun = vi.fn();
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
@@ -16,9 +19,9 @@ vi.mock('../../services/annaAnalyticsService.js', () => ({
 }));
 
 vi.mock('../../utils/DbPromise.js', () => ({
-  all: vi.fn(),
-  get: vi.fn(),
-  run: vi.fn(),
+  all: dbAll,
+  get: dbGet,
+  run: dbRun,
 }));
 
 vi.mock('../../utils/Logger.js', () => ({
@@ -107,6 +110,34 @@ describe('Analytics Superadmin Routes — Anna funnel summary', () => {
           createdAt: '2026-03-27T00:00:00.000Z',
         },
       ],
+    });
+  });
+});
+
+describe('Analytics Superadmin Routes — degraded failures are explicit', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('GET /dashboards returns 500 with degraded payload when the query fails', async () => {
+    dbAll.mockRejectedValueOnce(new Error('db down'));
+
+    const router = await importRouter();
+    const layer = router.stack.find(
+      (entry: any) => entry.route?.path === '/dashboards' && entry.route?.methods?.get
+    );
+    expect(layer).toBeDefined();
+
+    const req = createMockReq();
+    const res = createMockRes();
+    const handlers = layer!.route!.stack;
+    await handlers[handlers.length - 1].handle(req, res, vi.fn());
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Failed to fetch dashboards',
+      degraded: true,
+      dashboards: [],
     });
   });
 });

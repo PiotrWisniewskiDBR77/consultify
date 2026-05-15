@@ -1,188 +1,952 @@
 /**
- * ResourcesAnalysis — Resource allocation heatmap/table
- * V3-F02: Portfolio quality gate — Resources sub-view
+ * ResourcesAnalysis — Team workload management view
+ * V3-F02b: Team-centric resource view with AI rebalancing
+ *
+ * Shows team members with their initiative assignments and workload.
+ * AI button at top proposes reassignments to balance the load.
  */
 
-import { AlertTriangle, ExternalLink, Lightbulb } from 'lucide-react';
-import React from 'react';
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Filter,
+  Loader2,
+  Sparkles,
+  UserPlus,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import type { PortfolioInitiative } from '@/types';
 
-import type { AnalysisIssue, ResourceAllocation } from './types';
+import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
+import type {
+  OrgUser,
+  QuickUpdatePayload,
+  RegisterAnalysisWorkspacePanel,
+  ResourceAllocation,
+} from './types';
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+interface AiReassignment {
+  initiativeId: string;
+  initiativeName: string;
+  fromUserId: string;
+  fromUserName: string;
+  toUserId: string;
+  toUserName: string;
+  role: string;
+  reason: string;
+}
 
 interface ResourcesAnalysisProps {
   allocations: ResourceAllocation[];
-  issues: AnalysisIssue[];
+  issues: unknown[];
   onOpenInitiative: (id: string) => void;
+  onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
+  users?: OrgUser[];
+  initiatives?: PortfolioInitiative[];
+  onRegisterActions?: (node: React.ReactNode) => void;
+  onRegisterWorkspacePanel?: RegisterAnalysisWorkspacePanel;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Sort helpers                                                       */
+/* ------------------------------------------------------------------ */
+
+type SortColumn = 'person' | 'role' | 'initiatives' | 'workload' | 'status';
+type SortDir = 'asc' | 'desc';
+
+const SortIcon: React.FC<{ column: SortColumn; currentCol: SortColumn; currentDir: SortDir }> = ({
+  column,
+  currentCol,
+  currentDir,
+}) => {
+  if (column !== currentCol)
+    return <ArrowUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  return currentDir === 'asc' ? (
+    <ArrowUp size={12} className="text-primary-500" />
+  ) : (
+    <ArrowDown size={12} className="text-primary-500" />
+  );
+};
+
+const SortableHeader: React.FC<{
+  label: string;
+  column: SortColumn;
+  currentCol: SortColumn;
+  currentDir: SortDir;
+  onSort: (col: SortColumn) => void;
+  align?: 'left' | 'center' | 'right';
+  className?: string;
+}> = ({ label, column, currentCol, currentDir, onSort, align = 'left', className = '' }) => (
+  <th
+    className={`text-${align} px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 ${className}`}
+  >
+    <button
+      onClick={() => onSort(column)}
+      className={`inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors ${
+        align === 'center' ? 'mx-auto' : ''
+      }`}
+    >
+      {label}
+      <SortIcon column={column} currentCol={currentCol} currentDir={currentDir} />
+    </button>
+  </th>
+);
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   allocations,
-  issues,
   onOpenInitiative,
+  onQuickUpdate,
+  users = [],
+  initiatives = [],
+  onRegisterActions,
+  onRegisterWorkspacePanel,
 }) => {
   const { t } = useTranslation();
+  const [expandedResourceId, setExpandedResourceId] = useState<string | null>(null);
+  const [reassigningInitId, setReassigningInitId] = useState<string | null>(null);
+  const [selectedNewOwner, setSelectedNewOwner] = useState<string>('');
 
-  const handleIssueClick = (issue: AnalysisIssue) => {
-    trackFunnelEvent('initiatives_analysis_issue_opened', {
-      subview: 'resources',
-      issueType: issue.issueType,
-    });
-    if (issue.initiativeId) onOpenInitiative(issue.initiativeId);
-  };
+  // AI rebalancing state
+  const [aiProposals, setAiProposals] = useState<AiReassignment[] | null>(null);
+  const [aiRunning, setAiRunning] = useState(false);
+  const [applyingProposalIdx, setApplyingProposalIdx] = useState<number | null>(null);
+  const [proposalOverrides, setProposalOverrides] = useState<Record<number, string>>({});
+
+  // Sort & filter state
+  const [sortCol, setSortCol] = useState<SortColumn>('workload');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+  /* ---------- derived stats ---------- */
 
   const overallocatedCount = allocations.filter((a) => a.status === 'overallocated').length;
-  const keyMetric = overallocatedCount;
+  const okCount = allocations.filter((a) => a.status === 'ok').length;
+  const underutilizedCount = allocations.filter((a) => a.status === 'underutilized').length;
+  const totalInitiatives = initiatives.length;
+
+  const uniqueRoles = useMemo(
+    () => Array.from(new Set(allocations.map((a) => a.role))).sort(),
+    [allocations]
+  );
+
+  const handleSort = useCallback(
+    (col: SortColumn) => {
+      if (sortCol === col) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortCol(col);
+        setSortDir(col === 'workload' || col === 'initiatives' ? 'desc' : 'asc');
+      }
+    },
+    [sortCol]
+  );
+
+  const sortedAllocations = useMemo(() => {
+    let list = [...allocations];
+
+    if (roleFilter !== 'all') {
+      list = list.filter((a) => a.role === roleFilter);
+    }
+
+    const statusOrder: Record<string, number> = {
+      overallocated: 0,
+      ok: 1,
+      underutilized: 2,
+    };
+
+    list.sort((a, b) => {
+      let cmp = 0;
+      switch (sortCol) {
+        case 'person':
+          cmp = a.resourceName.localeCompare(b.resourceName);
+          break;
+        case 'role':
+          cmp = a.role.localeCompare(b.role);
+          break;
+        case 'initiatives':
+          cmp = a.allocatedInitiatives.length - b.allocatedInitiatives.length;
+          break;
+        case 'workload':
+          cmp = a.utilizationPercent - b.utilizationPercent;
+          break;
+        case 'status':
+          cmp = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+          break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    return list;
+  }, [allocations, roleFilter, sortCol, sortDir]);
+
+  /* ---------- helpers ---------- */
+
+  const getInitiativeName = (id: string) => {
+    return initiatives.find((i) => i.id === id)?.name ?? id;
+  };
+
+  const getUserLabel = (u: OrgUser) => `${u.firstName} ${u.lastName}`;
+
+  const closeAiWorkspace = useCallback(() => {
+    setAiProposals(null);
+    setProposalOverrides({});
+  }, []);
+
+  /* ---------- handlers ---------- */
+
+  const handleReassignOwner = useCallback(
+    async (initiativeId: string, newOwnerId: string, role: string) => {
+      if (!onQuickUpdate || !newOwnerId) return;
+      try {
+        const updates: QuickUpdatePayload =
+          role === 'Business Owner'
+            ? { ownerBusinessId: newOwnerId }
+            : { ownerExecutionId: newOwnerId };
+        await onQuickUpdate(initiativeId, updates);
+        toast.success(t('initiatives.analysis.resources.ownerReassigned', 'Owner reassigned'));
+        setReassigningInitId(null);
+        setSelectedNewOwner('');
+      } catch {
+        toast.error(t('initiatives.analysis.resources.reassignFailed', 'Failed to reassign owner'));
+      }
+    },
+    [onQuickUpdate, t]
+  );
+
+  /* ---------- AI rebalancing ---------- */
+
+  const computeAiProposals = useCallback(() => {
+    setAiRunning(true);
+
+    // Simulate a short delay for "thinking"
+    setTimeout(() => {
+      const overloaded = allocations.filter((a) => a.status === 'overallocated');
+      const available = allocations.filter(
+        (a) => a.status === 'ok' || a.status === 'underutilized'
+      );
+
+      // Also consider users not yet assigned to any initiative
+      const assignedUserIds = new Set(allocations.map((a) => a.resourceId));
+      const unassignedUsers = users.filter((u) => !assignedUserIds.has(u.id));
+
+      const proposals: AiReassignment[] = [];
+
+      for (const overRes of overloaded) {
+        const excessCount = overRes.allocatedInitiatives.length - 1;
+        const candidateInits = overRes.allocatedInitiatives.slice(1, 1 + excessCount);
+
+        for (const initId of candidateInits) {
+          // Try to find a same-role person with capacity
+          const sameRoleFree = available.find(
+            (a) => a.role === overRes.role && a.utilizationPercent < 100
+          );
+          // Or an unassigned user
+          const unassigned = unassignedUsers.shift();
+
+          const target =
+            sameRoleFree ||
+            (unassigned
+              ? {
+                  resourceId: unassigned.id,
+                  resourceName: getUserLabel(unassigned),
+                }
+              : null);
+
+          if (target) {
+            proposals.push({
+              initiativeId: initId,
+              initiativeName: getInitiativeName(initId),
+              fromUserId: overRes.resourceId,
+              fromUserName: overRes.resourceName,
+              toUserId: target.resourceId,
+              toUserName: target.resourceName,
+              role: overRes.role,
+              reason: sameRoleFree
+                ? `${target.resourceName} has capacity (${(sameRoleFree as ResourceAllocation).utilizationPercent}%)`
+                : `${target.resourceName} is currently unassigned`,
+            });
+
+            // Update available capacity in-memory
+            if (sameRoleFree) {
+              (sameRoleFree as any).utilizationPercent += 100;
+              if ((sameRoleFree as any).utilizationPercent >= 100) {
+                const idx = available.indexOf(sameRoleFree);
+                if (idx >= 0) available.splice(idx, 1);
+              }
+            }
+          } else {
+            // No one available — add a "no capacity" warning instead
+            proposals.push({
+              initiativeId: initId,
+              initiativeName: getInitiativeName(initId),
+              fromUserId: overRes.resourceId,
+              fromUserName: overRes.resourceName,
+              toUserId: '',
+              toUserName: '',
+              role: overRes.role,
+              reason: t(
+                'initiatives.analysis.resources.aiNoCapacity',
+                'No available team member — consider hiring or postponing'
+              ),
+            });
+          }
+        }
+      }
+
+      setAiProposals(proposals.length > 0 ? proposals : []);
+      setProposalOverrides({});
+      setAiRunning(false);
+    }, 800);
+  }, [allocations, users, initiatives, t]);
+
+  const handleApplyProposal = useCallback(
+    async (proposal: AiReassignment, idx: number) => {
+      if (!onQuickUpdate || !proposal.toUserId) return;
+      setApplyingProposalIdx(idx);
+      try {
+        const updates: QuickUpdatePayload =
+          proposal.role === 'Business Owner'
+            ? { ownerBusinessId: proposal.toUserId }
+            : { ownerExecutionId: proposal.toUserId };
+        await onQuickUpdate(proposal.initiativeId, updates);
+        toast.success(t('initiatives.analysis.resources.proposalApplied', 'Reassignment applied'));
+        // Remove applied proposal
+        setAiProposals((prev) => prev?.filter((_, i) => i !== idx) ?? null);
+      } catch {
+        toast.error(t('initiatives.analysis.resources.reassignFailed', 'Failed to reassign'));
+      } finally {
+        setApplyingProposalIdx(null);
+      }
+    },
+    [onQuickUpdate, t]
+  );
+
+  const handleApplyAllProposals = useCallback(async () => {
+    if (!onQuickUpdate || !aiProposals) return;
+    const resolvedProposals = aiProposals.map((p, idx) => {
+      const overrideId = proposalOverrides[idx];
+      return overrideId ? { ...p, toUserId: overrideId } : p;
+    });
+    const actionable = resolvedProposals.filter((p) => p.toUserId);
+    if (actionable.length === 0) {
+      toast.error(
+        t(
+          'initiatives.analysis.resources.noActionable',
+          'No actionable proposals — select a person for each row first'
+        )
+      );
+      return;
+    }
+    setAiRunning(true);
+    let success = 0;
+    let failed = 0;
+    for (const proposal of actionable) {
+      try {
+        const updates: QuickUpdatePayload =
+          proposal.role === 'Business Owner'
+            ? { ownerBusinessId: proposal.toUserId }
+            : { ownerExecutionId: proposal.toUserId };
+        await onQuickUpdate(proposal.initiativeId, updates);
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    if (failed === 0) {
+      toast.success(
+        t('initiatives.analysis.resources.allApplied', {
+          count: success,
+          defaultValue: 'All {{count}} reassignments applied',
+        })
+      );
+    } else {
+      toast.error(
+        t('initiatives.analysis.resources.partialApplied', {
+          success,
+          failed,
+          defaultValue: '{{success}} applied, {{failed}} failed',
+        })
+      );
+    }
+    setAiProposals(null);
+    setProposalOverrides({});
+    setAiRunning(false);
+  }, [aiProposals, proposalOverrides, onQuickUpdate, t]);
+
+  const aiProposalsPanel =
+    aiProposals !== null ? (
+      <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden m-4">
+        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              {t('initiatives.analysis.resources.aiProposals', 'AI rebalancing proposals')}
+            </h3>
+            <span className="text-xs text-purple-500 dark:text-purple-400">
+              ({aiProposals.length})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {aiProposals.some((p, i) => p.toUserId || proposalOverrides[i]) && (
+              <button
+                onClick={handleApplyAllProposals}
+                disabled={aiRunning}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              >
+                <Check size={12} />
+                {t('initiatives.analysis.resources.applyAll', 'Apply all')}
+              </button>
+            )}
+            <button
+              onClick={closeAiWorkspace}
+              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        {aiProposals.length === 0 ? (
+          <div className="px-4 py-6 text-center">
+            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t(
+                'initiatives.analysis.resources.aiBalanced',
+                'Workload is balanced — no changes needed'
+              )}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            {aiProposals.map((proposal, idx) => {
+              const overrideUserId = proposalOverrides[idx];
+              const effectiveUserId = overrideUserId ?? proposal.toUserId;
+              const effectiveUserName = overrideUserId
+                ? users.find((u) => u.id === overrideUserId)
+                  ? getUserLabel(users.find((u) => u.id === overrideUserId)!)
+                  : overrideUserId
+                : proposal.toUserName;
+              const isOverridden = !!overrideUserId && overrideUserId !== proposal.toUserId;
+
+              return (
+                <div
+                  key={`${proposal.initiativeId}-${idx}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-slate-900 dark:text-white truncate">
+                        {proposal.initiativeName}
+                      </span>
+                      <span className="text-slate-400 dark:text-slate-500">:</span>
+                      <span className="text-red-600 dark:text-red-400 line-through text-xs">
+                        {proposal.fromUserName}
+                      </span>
+                      <span className="text-slate-400">→</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {proposal.reason}
+                    </p>
+                  </div>
+
+                  <select
+                    value={effectiveUserId}
+                    onChange={(e) => {
+                      setProposalOverrides((prev) => ({ ...prev, [idx]: e.target.value }));
+                    }}
+                    className={`shrink-0 px-2 py-1.5 text-xs rounded-lg border transition-colors bg-white dark:bg-navy-950 text-slate-900 dark:text-white ${
+                      isOverridden
+                        ? 'border-primary-400 dark:border-primary-500 ring-1 ring-primary-400/30'
+                        : 'border-slate-200 dark:border-navy-700'
+                    }`}
+                  >
+                    {proposal.toUserId && (
+                      <option value={proposal.toUserId}>{proposal.toUserName} (AI)</option>
+                    )}
+                    {!proposal.toUserId && (
+                      <option value="">
+                        {t('initiatives.analysis.resources.selectPerson', '— Select person —')}
+                      </option>
+                    )}
+                    {users
+                      .filter((u) => u.id !== proposal.fromUserId && u.id !== proposal.toUserId)
+                      .map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {getUserLabel(u)}
+                        </option>
+                      ))}
+                  </select>
+
+                  <button
+                    onClick={() => {
+                      if (!effectiveUserId) return;
+                      const effectiveProposal: AiReassignment = {
+                        ...proposal,
+                        toUserId: effectiveUserId,
+                        toUserName: effectiveUserName,
+                      };
+                      handleApplyProposal(effectiveProposal, idx);
+                    }}
+                    disabled={applyingProposalIdx === idx || !effectiveUserId}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {applyingProposalIdx === idx ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Check size={12} />
+                    )}
+                    {t('initiatives.analysis.resources.accept', 'Accept')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    ) : null;
+
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    if (!onQuickUpdate) {
+      onRegisterActions(null);
+      return;
+    }
+    const toggleAiProposalsPanel = () => {
+      if (aiProposals !== null) {
+        closeAiWorkspace();
+        return;
+      }
+      computeAiProposals();
+    };
+    onRegisterActions(
+      <button
+        onClick={toggleAiProposalsPanel}
+        disabled={aiRunning}
+        className={getMenu3AiButtonClass(aiProposals !== null)}
+      >
+        {aiRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+        {aiRunning ? 'Analyzing...' : 'AI Balance workload'}
+      </button>
+    );
+  }, [
+    onRegisterActions,
+    onQuickUpdate,
+    computeAiProposals,
+    aiProposals,
+    aiRunning,
+    closeAiWorkspace,
+  ]);
+
+  useEffect(() => {
+    if (!onRegisterWorkspacePanel) return;
+    if (!aiProposalsPanel) {
+      onRegisterWorkspacePanel(null);
+      return;
+    }
+    onRegisterWorkspacePanel({
+      title: 'AI Balance Workload',
+      subtitle: 'Reassign ownership to reduce overload and restore capacity.',
+      icon: <Sparkles size={16} />,
+      content: aiProposalsPanel,
+    });
+    return () => onRegisterWorkspacePanel(null);
+  }, [aiProposalsPanel, onRegisterWorkspacePanel]);
+
+  /* ---------- render ---------- */
 
   return (
     <div className="space-y-6">
-      {/* Summary card */}
-      <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
-        <div className="text-2xl font-semibold text-slate-900 dark:text-white">{keyMetric}</div>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          {t('initiatives.analysis.resources.overallocatedCount', {
-            count: keyMetric,
-            defaultValue: '{{count}} overallocated resource(s)',
-          })}
+      {/* Header strip: stats */}
+      <div className="flex items-center gap-4">
+        {/* Stats cards */}
+        <div className="flex-1 grid grid-cols-4 gap-3">
+          <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
+            <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              {allocations.length}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {t('initiatives.analysis.resources.teamMembers', 'Team members')}
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
+            <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              {totalInitiatives}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {t('initiatives.analysis.resources.totalInitiatives', 'Initiatives')}
+            </div>
+          </div>
+          <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10 p-3">
+            <div className="text-xl font-semibold text-red-600 dark:text-red-400">
+              {overallocatedCount}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {t('initiatives.analysis.resources.overloaded', 'Overloaded')}
+            </div>
+          </div>
+          <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 p-3">
+            <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+              {okCount + underutilizedCount}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {t('initiatives.analysis.resources.available', 'Available')}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Resource allocation table */}
+      {/* AI Proposals panel */}
+      {!onRegisterWorkspacePanel && aiProposalsPanel}
+
+      {/* Team workload table */}
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {t('initiatives.analysis.resources.teamWorkload', 'Team workload')}
+          </h3>
+          {roleFilter !== 'all' && (
+            <button
+              onClick={() => setRoleFilter('all')}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
+                bg-primary-500/10 text-primary-600 dark:text-primary-400
+                hover:bg-primary-500/20 transition-colors"
+            >
+              <X size={10} />
+              {roleFilter}
+            </button>
+          )}
+        </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.resource', 'Resource')}
+            <tr className="bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700">
+              <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-8" />
+              <SortableHeader
+                label={t('initiatives.analysis.resources.person', 'Person')}
+                column="person"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="left"
+              />
+              <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 relative">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleSort('role')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  >
+                    {t('initiatives.analysis.resources.role', 'Role')}
+                    <SortIcon column="role" currentCol={sortCol} currentDir={sortDir} />
+                  </button>
+                  <button
+                    onClick={() => setShowRoleDropdown((v) => !v)}
+                    className={`p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors ${
+                      roleFilter !== 'all'
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-slate-400 dark:text-slate-500'
+                    }`}
+                  >
+                    <Filter size={12} />
+                  </button>
+                </div>
+                {showRoleDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowRoleDropdown(false)}
+                    />
+                    <div
+                      className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-navy-900
+                      border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg py-1 min-w-[180px]"
+                    >
+                      <button
+                        onClick={() => {
+                          setRoleFilter('all');
+                          setShowRoleDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
+                          roleFilter === 'all'
+                            ? 'font-semibold text-primary-600 dark:text-primary-400'
+                            : 'text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {t('initiatives.analysis.resources.allRoles', 'All roles')}
+                      </button>
+                      {uniqueRoles.map((role) => (
+                        <button
+                          key={role}
+                          onClick={() => {
+                            setRoleFilter(role);
+                            setShowRoleDropdown(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
+                            roleFilter === role
+                              ? 'font-semibold text-primary-600 dark:text-primary-400'
+                              : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </th>
-              <th className="text-left px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.role', 'Role')}
-              </th>
-              <th className="text-left px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.initiatives', 'Initiatives')}
-              </th>
-              <th className="text-left px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.utilization', 'Utilization')}
-              </th>
-              <th className="text-left px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                {t('initiatives.analysis.resources.status', 'Status')}
-              </th>
+              <SortableHeader
+                label={t('initiatives.analysis.resources.initiatives', 'Initiatives')}
+                column="initiatives"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="center"
+                className="w-24"
+              />
+              <SortableHeader
+                label={t('initiatives.analysis.resources.workload', 'Workload')}
+                column="workload"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="left"
+                className="w-48"
+              />
+              <SortableHeader
+                label={t('initiatives.analysis.resources.status', 'Status')}
+                column="status"
+                currentCol={sortCol}
+                currentDir={sortDir}
+                onSort={handleSort}
+                align="center"
+                className="w-28"
+              />
             </tr>
           </thead>
           <tbody>
-            {allocations.map((a) => (
-              <tr
-                key={a.resourceId}
-                className={`border-b border-slate-100 dark:border-navy-800/50 ${
-                  a.status === 'overallocated' ? 'bg-red-500/5 dark:bg-red-500/10' : ''
-                }`}
-              >
-                <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
-                  {a.resourceName}
-                </td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{a.role}</td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                  {a.allocatedInitiatives.length}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      a.utilizationPercent > 100
-                        ? 'font-semibold text-red-600 dark:text-red-400'
-                        : 'text-slate-700 dark:text-slate-300'
-                    }
+            {sortedAllocations.map((a) => {
+              const isExpanded = expandedResourceId === a.resourceId;
+              return (
+                <React.Fragment key={a.resourceId}>
+                  <tr
+                    className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
+                      hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
+                      ${a.status === 'overallocated' ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
+                    onClick={() => setExpandedResourceId(isExpanded ? null : a.resourceId)}
                   >
-                    {a.utilizationPercent}%
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      a.status === 'overallocated'
-                        ? 'bg-red-500/20 text-red-700 dark:text-red-300'
-                        : a.status === 'underutilized'
-                          ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                          : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                    }`}
-                  >
-                    {a.status === 'overallocated'
-                      ? t('initiatives.analysis.resources.overallocated', 'Overallocated')
-                      : a.status === 'underutilized'
-                        ? t('initiatives.analysis.resources.underutilized', 'Underutilized')
-                        : t('initiatives.analysis.resources.ok', 'OK')}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                    <td className="px-4 py-3 text-slate-400">
+                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
+                            a.status === 'overallocated'
+                              ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                              : a.status === 'underutilized'
+                                ? 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                                : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                          }`}
+                        >
+                          {a.resourceName
+                            .split(' ')
+                            .map((w) => w[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {a.resourceName}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{a.role}</td>
+                    <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400">
+                      {a.allocatedInitiatives.length}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2.5 bg-slate-200 dark:bg-navy-700 rounded-full">
+                          <div
+                            className={`h-2.5 rounded-full transition-all duration-300 ${
+                              a.utilizationPercent > 100
+                                ? 'bg-red-500'
+                                : a.utilizationPercent > 80
+                                  ? 'bg-amber-500'
+                                  : a.utilizationPercent > 0
+                                    ? 'bg-emerald-500'
+                                    : 'bg-slate-300 dark:bg-navy-600'
+                            }`}
+                            style={{
+                              width: `${Math.min(100, a.utilizationPercent)}%`,
+                            }}
+                          />
+                        </div>
+                        <span
+                          className={`text-xs font-semibold tabular-nums w-12 text-right ${
+                            a.utilizationPercent > 100
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {a.utilizationPercent}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          a.status === 'overallocated'
+                            ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                            : a.status === 'underutilized'
+                              ? 'bg-slate-200/70 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                              : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                        }`}
+                      >
+                        {a.status === 'overallocated'
+                          ? t('initiatives.analysis.resources.overallocated', 'Overloaded')
+                          : a.status === 'underutilized'
+                            ? t('initiatives.analysis.resources.underutilized', 'Free')
+                            : t('initiatives.analysis.resources.ok', 'OK')}
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Expanded: initiative assignments */}
+                  {isExpanded && (
+                    <tr>
+                      <td colSpan={6} className="px-0 py-0">
+                        <div className="bg-slate-50/50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+                          <div className="px-12 py-3 space-y-1.5">
+                            {a.allocatedInitiatives.map((initId) => {
+                              const initName = getInitiativeName(initId);
+                              const isReassigning = reassigningInitId === initId;
+                              return (
+                                <div
+                                  key={initId}
+                                  className="flex items-center gap-3 py-2 px-3 rounded-lg
+                                    bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700"
+                                >
+                                  <span className="flex-1 text-sm font-medium text-slate-900 dark:text-white truncate">
+                                    {initName}
+                                  </span>
+                                  {isReassigning ? (
+                                    <div
+                                      className="flex items-center gap-2"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <select
+                                        value={selectedNewOwner}
+                                        onChange={(e) => setSelectedNewOwner(e.target.value)}
+                                        className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950
+                                          border border-slate-200 dark:border-navy-700 rounded-lg
+                                          text-slate-900 dark:text-white"
+                                      >
+                                        <option value="">
+                                          {t(
+                                            'initiatives.analysis.resources.selectOwner',
+                                            'Select new owner...'
+                                          )}
+                                        </option>
+                                        {users
+                                          .filter((u) => u.id !== a.resourceId)
+                                          .map((u) => (
+                                            <option key={u.id} value={u.id}>
+                                              {getUserLabel(u)}
+                                            </option>
+                                          ))}
+                                      </select>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleReassignOwner(initId, selectedNewOwner, a.role);
+                                        }}
+                                        disabled={!selectedNewOwner}
+                                        className="p-1 rounded text-emerald-600 dark:text-emerald-400
+                                          hover:bg-emerald-500/10 disabled:opacity-30"
+                                      >
+                                        <Check size={14} />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setReassigningInitId(null);
+                                          setSelectedNewOwner('');
+                                        }}
+                                        className="p-1 rounded text-slate-400
+                                          hover:bg-slate-200 dark:hover:bg-navy-700"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1">
+                                      {onQuickUpdate && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setReassigningInitId(initId);
+                                            setSelectedNewOwner('');
+                                          }}
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg
+                                            text-xs font-medium text-slate-600 dark:text-slate-400
+                                            hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                                        >
+                                          <UserPlus size={12} />
+                                          {t('initiatives.analysis.resources.reassign', 'Reassign')}
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onOpenInitiative(initId);
+                                        }}
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg
+                                          text-xs font-medium bg-primary-500/10 text-primary-600
+                                          dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                      >
+                                        <ExternalLink size={12} />
+                                        {t('initiatives.analysis.previewInitiative', 'Preview')}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Issues list */}
-      {issues.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-            {t('initiatives.analysis.issues', 'Issues')}
-          </h3>
-          <div className="space-y-2">
-            {issues
-              .sort((a, b) => {
-                const order: Record<string, number> = {
-                  critical: 0,
-                  high: 1,
-                  medium: 2,
-                  low: 3,
-                };
-                return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
-              })
-              .map((issue) => (
-                <div
-                  key={issue.id}
-                  className="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
-                >
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0 ${
-                      issue.severity === 'critical'
-                        ? 'bg-red-500/20 text-red-700 dark:text-red-300'
-                        : issue.severity === 'high'
-                          ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                          : issue.severity === 'medium'
-                            ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                            : 'bg-slate-500/20 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {issue.severity}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-900 dark:text-white">{issue.description}</p>
-                    {issue.fixSuggestion && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                        <Lightbulb size={12} />
-                        {issue.fixSuggestion}
-                      </p>
-                    )}
-                  </div>
-                  {issue.initiativeId && (
-                    <button
-                      onClick={() => handleIssueClick(issue)}
-                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
-                    >
-                      <ExternalLink size={12} />
-                      {t('initiatives.analysis.openInitiative', 'Open initiative')}
-                    </button>
-                  )}
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {allocations.length === 0 && issues.length === 0 && (
+      {/* Empty state */}
+      {allocations.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
           <AlertTriangle size={32} className="mb-3 opacity-50" />
           <p className="text-sm">
-            {t('initiatives.analysis.resources.noData', 'No resource allocation data available.')}
+            {t('initiatives.analysis.resources.noData', 'No team members assigned yet.')}
           </p>
         </div>
       )}

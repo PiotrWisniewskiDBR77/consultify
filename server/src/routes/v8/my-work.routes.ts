@@ -145,9 +145,7 @@ function notebookSelectExpr(
   fallbackSql: string
 ): string {
   const prefix = tableAlias ? `${tableAlias}.` : '';
-  return cols.has(column)
-    ? `${prefix}${column} as ${alias}`
-    : `${fallbackSql} as ${alias}`;
+  return cols.has(column) ? `${prefix}${column} as ${alias}` : `${fallbackSql} as ${alias}`;
 }
 
 function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string {
@@ -166,9 +164,7 @@ function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string
     notebookSelectExpr(cols, tableAlias, 'icon', 'icon', 'NULL'),
     notebookSelectExpr(cols, tableAlias, 'summary', 'summary', 'NULL'),
     notebookSelectExpr(cols, tableAlias, 'status', 'status', `'active'`),
-    cols.has('pinned')
-      ? `coalesce(${prefix}pinned, 0) as pinned`
-      : `0 as pinned`,
+    cols.has('pinned') ? `coalesce(${prefix}pinned, 0) as pinned` : `0 as pinned`,
     cols.has('verification_status')
       ? `coalesce(${prefix}verification_status, 'unverified') as "verificationStatus"`
       : `'unverified' as "verificationStatus"`,
@@ -670,11 +666,12 @@ router.post(
     const confidence = typeof req.body?.confidence === 'number' ? req.body.confidence : undefined;
 
     if (!VALID_INBOX_TRIAGE_ACTIONS.includes(action as any)) {
-      return res.status(400).json({ error: 'Invalid action' });
+      return res.status(400).json({ error: 'Invalid action', code: 'INBOX_TRIAGE_ACTION_INVALID' });
     }
     if (!itemKey || !itemKey.includes(':')) {
       return res.status(400).json({
         error: 'Missing itemKey (expected task:<id> | decision:<id> | notification:<id>)',
+        code: 'INBOX_TRIAGE_ITEM_KEY_REQUIRED',
       });
     }
 
@@ -729,10 +726,10 @@ router.post(
       : undefined;
 
     if (!VALID_INBOX_TRIAGE_ACTIONS.includes(action as any)) {
-      return res.status(400).json({ error: 'Invalid action' });
+      return res.status(400).json({ error: 'Invalid action', code: 'INBOX_TRIAGE_ACTION_INVALID' });
     }
     if (itemKeys.length === 0) {
-      return res.status(400).json({ error: 'Missing itemKeys[]' });
+      return res.status(400).json({ error: 'Missing itemKeys[]', code: 'INBOX_TRIAGE_ITEM_KEYS_REQUIRED' });
     }
 
     const data = await applyGovernedBulkInboxTriage({
@@ -760,7 +757,7 @@ router.post(
     const payload = InboxAiAssistItemSchema.safeParse(body.item);
 
     if (!payload.success) {
-      return res.status(400).json({ error: 'Invalid item payload' });
+      return res.status(400).json({ error: 'Invalid item payload', code: 'INBOX_AI_ASSIST_INVALID_ITEM' });
     }
 
     try {
@@ -775,7 +772,11 @@ router.post(
         meta: { version: 'v8', contract: V8_INBOX_AI_ASSIST_CONTRACT },
       });
     } catch (err: any) {
-      return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
+      return res.status(503).json({
+        error: 'AI assist unavailable',
+        code: 'INBOX_AI_ASSIST_UNAVAILABLE',
+        message: err?.message,
+      });
     }
   })
 );
@@ -908,15 +909,24 @@ router.post(
         : [req.body.tags]
       : [];
 
-    const data = await notebookService.capture(organizationId, userId, {
-      source: 'upload',
-      title: req.body.title,
-      fileBuffer: file.buffer,
-      fileMimetype: file.mimetype,
-      fileOriginalname: file.originalname,
-      tags,
-      projectId: req.body.projectId || undefined,
-    });
+    let data;
+    try {
+      data = await notebookService.capture(organizationId, userId, {
+        source: 'upload',
+        title: req.body.title,
+        fileBuffer: file.buffer,
+        fileMimetype: file.mimetype,
+        fileOriginalname: file.originalname,
+        tags,
+        projectId: req.body.projectId || undefined,
+      });
+    } catch (error) {
+      return res.status(503).json({
+        error: 'Notebook capture failed',
+        code: 'NOTEBOOK_CAPTURE_FAILED',
+        message: error instanceof Error ? error.message : 'unknown_error',
+      });
+    }
 
     return res.status(201).json({
       data,
@@ -1127,13 +1137,15 @@ router.post(
         userId,
       });
     } catch (error) {
-      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
-        error: error instanceof Error ? error.message : 'Attachment upload failed',
-        code:
-          error instanceof NotebookAttachmentMutationError
-            ? error.code
-            : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
-      });
+      return res
+        .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
+        .json({
+          error: error instanceof Error ? error.message : 'Attachment upload failed',
+          code:
+            error instanceof NotebookAttachmentMutationError
+              ? error.code
+              : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
+        });
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -1215,7 +1227,11 @@ router.delete(
       return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
     }
 
-    if (!parseNotebookAttachments(existing.attachmentsJson).some((attachment) => attachment.id === attachmentId)) {
+    if (
+      !parseNotebookAttachments(existing.attachmentsJson).some(
+        (attachment) => attachment.id === attachmentId
+      )
+    ) {
       return res
         .status(404)
         .json({ error: 'Attachment not found', code: 'NOTEBOOK_ATTACHMENT_NOT_FOUND' });
@@ -1227,13 +1243,15 @@ router.delete(
         attachmentId,
       });
     } catch (error) {
-      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
-        error: error instanceof Error ? error.message : 'Attachment delete failed',
-        code:
-          error instanceof NotebookAttachmentMutationError
-            ? error.code
-            : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
-      });
+      return res
+        .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
+        .json({
+          error: error instanceof Error ? error.message : 'Attachment delete failed',
+          code:
+            error instanceof NotebookAttachmentMutationError
+              ? error.code
+              : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
+        });
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -1532,10 +1550,29 @@ router.post(
 router.get(
   '/notebook/pages/:id/ai-proposals',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
 
     const pageId = String(req.params.id || '').trim();
+    const page = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [pageId]
+    );
+    if (!page) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (!(await canAccessNotebookRow(userId, organizationId, page))) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+
     const status = req.query.status ? String(req.query.status) : undefined;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
 
@@ -1677,6 +1714,11 @@ router.get(
       status?: string;
       priority?: string;
       description?: string;
+      visibilityClass?: string;
+      editAuthority?: string;
+      syncState?: string;
+      permissionGradient?: string;
+      etag?: string;
     }> = [];
 
     if (requestedSources.includes('task')) {
@@ -2163,6 +2205,56 @@ router.get(
       }
     }
 
+    // P02 §2.3.13: Bridge external calendar items from calendarInteropService
+    try {
+      const { getCalendarItems, getCalendarSources } =
+        await import('../../services/v8/calendarInteropService.js');
+      const p02Sources = await getCalendarSources(organizationId);
+      const p02Items = await getCalendarItems(organizationId, {
+        startAt: start ?? undefined,
+        endAt: end ?? undefined,
+      });
+
+      const sourceMap = new Map(p02Sources.map((s: any) => [s.calendarSourceId, s]));
+
+      for (const item of p02Items) {
+        if (item.sourceSystem === 'consultify') continue;
+
+        const source = sourceMap.get(item.sourceId);
+        const eventSource: string =
+          item.sourceSystem === 'google_calendar'
+            ? 'google'
+            : item.sourceSystem === 'outlook_calendar'
+              ? 'outlook'
+              : 'consultify';
+
+        if (!requestedSources.includes(eventSource)) continue;
+
+        events.push({
+          id: item.calendarItemId,
+          title:
+            item.visibilityClass === 'free_busy_only' ? 'Busy' : (item.title ?? 'External event'),
+          start: item.startAt,
+          end: item.endAt || undefined,
+          allDay: item.allDay,
+          source: eventSource,
+          sourceId: item.sourceObjectRef || item.calendarItemId,
+          color: undefined,
+          status: item.syncState,
+          description: item.visibilityClass === 'free_busy_only' ? undefined : undefined,
+          visibilityClass: item.visibilityClass,
+          editAuthority: item.editAuthority,
+          syncState: item.syncState,
+          permissionGradient: source?.permissionGradient ?? 'read',
+          etag: item.etag ?? undefined,
+        });
+      }
+    } catch (p02Err: any) {
+      // P02 external items are optional; log but don't fail the entire endpoint
+      const p02Logger = await import('../../utils/Logger.js');
+      p02Logger.default.warn('[MyWork/Calendar] P02 external events unavailable:', p02Err?.message);
+    }
+
     events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
     return res.json({
@@ -2311,8 +2403,10 @@ router.get(
       myWorkRoofService.getCalendarPhases(organizationId).catch(() => []),
     ]);
 
-    const blockMap = new Map(storedBlocks.map((block) => [block.blockName, block]));
-    const calendarMap = new Map(storedCalendarPhases.map((phase) => [phase.phaseName, phase]));
+    const blockMap = new Map(storedBlocks.map((block) => [block.blockName, block] as const));
+    const calendarMap = new Map(
+      storedCalendarPhases.map((phase) => [phase.phaseName, phase] as const)
+    );
 
     const homeBlocks = DERIVED_HOME_BLOCKS.map((block) => {
       const stored = blockMap.get(block.blockName);

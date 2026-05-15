@@ -1,374 +1,272 @@
-/**
- * AdminSettingsModule - Organization Settings
- *
- * Two-column layout with sidebar navigation (matching Settings pattern)
- */
-
-import { Menu, MessageSquare, Share2, Users, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Menu, MoveRight, X } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminInitiativeSectionTypesPanel } from '../../components/Admin/AdminInitiativeSectionTypesPanel';
-import { AdminInitiativeTemplatesPanel } from '../../components/Admin/AdminInitiativeTemplatesPanel';
+import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
+import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminEnterpriseOverviewPanel } from '../../components/Admin/AdminEnterpriseOverviewPanel';
+import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
+import { AdminOrganizationOperationsPanel } from '../../components/Admin/AdminOrganizationOperationsPanel';
+import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
-import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
-import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
-import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
-import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
 import { UnifiedSyncHub } from '../../components/Admin/UnifiedSyncHub';
-import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
-import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
-import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
-import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
-import { BlockTypesManager } from '../../components/ReportBuilder/BlockTypesManager';
-import { TemplatesManager } from '../../components/ReportBuilder/TemplatesManager';
-import { OrganizationProfileForm } from '../../components/settings/OrganizationProfileForm';
-import { SecuritySettings } from '../../components/settings/SecuritySettings';
 import { Button } from '../../components/ui/primitives/Button';
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
-import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
-import { ApiKeysManagementView } from './ApiKeysManagementView';
 
 interface AdminSettingsModuleProps {
   initialTab?: AdminSettingsSection;
   currentUser: User;
 }
 
-// Section metadata for headers
-const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
+const PRIMARY_SECTIONS: AdminSettingsSection[] = [
+  'overview',
+  'people',
+  'security',
+  'billing',
+  'ai',
+  'integrations',
+  'audit',
+  'operations',
+];
+
+const LEGACY_HANDOFFS: Record<
+  string,
+  { title: string; description: string; targetPath: string; targetLabel: string }
+> = {
   organization: {
-    title: 'Strategic Profile',
-    subtitle: 'Define your organization context for AI-powered strategic insights',
+    title: 'Deep organization profile stays available outside Admin',
+    description:
+      'P32 now owns tenant operations, but the business profile workspace remains available for deeper organizational context editing.',
+    targetPath: ROUTES.ORGANIZATION.PROFILE,
+    targetLabel: 'Open Organization profile',
   },
-  branding: { title: 'Branding', subtitle: "Customize your organization's visual identity" },
-  billing: { title: 'Plans', subtitle: 'Manage your subscription and plan details' },
-  payment: { title: 'Payment', subtitle: 'Manage payment methods and billing information' },
-  tax: { title: 'Tax', subtitle: 'Configure tax settings and VAT information' },
-  alerts: { title: 'Alerts', subtitle: 'Configure spending and usage alerts' },
-  security: { title: 'Security', subtitle: 'Manage security settings and access controls' },
-  governance: { title: 'Governance', subtitle: 'Configure data governance policies' },
-  audit: { title: 'Audit', subtitle: 'View and export audit logs' },
-  'report-creator': {
-    title: 'Report Templates',
-    subtitle: 'Manage report templates for your organization',
+  feedback: {
+    title: 'Feedback is outside the tenant admin command center',
+    description:
+      'Operational tenant administration is handled in P32, while feedback remains a separate product workflow.',
+    targetPath: ROUTES.ADMIN.OVERVIEW,
+    targetLabel: 'Open Admin overview',
   },
-  'block-library': {
-    title: 'Block Library',
-    subtitle: 'Define block types (render + prompt) reusable across reports',
-  },
-  'initiative-templates': {
-    title: 'Initiative Templates',
-    subtitle: 'Manage initiative templates and process blueprints',
-  },
-  'initiative-sections': {
-    title: 'Initiative Section Library',
-    subtitle: 'Define section types (render + prompt) reusable across initiatives',
-  },
-  integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
-  api: { title: 'API', subtitle: 'Manage API keys and access' },
-  feedback: { title: 'Feedback', subtitle: 'View and manage user feedback' },
-  members: { title: 'Members & Roles', subtitle: 'Manage organization members, roles, and access' },
-  collaboration: { title: 'Collaboration Controls', subtitle: 'Configure guest access, external sharing, and collaboration policies' },
-  'sync-hub': { title: 'Sync Hub', subtitle: 'Monitor integration sync status and remediation' },
 };
 
-// Simple Feedback View Component
-const AdminFeedbackView: React.FC = () => {
-  const { t } = useTranslation();
-  const [feedback, setFeedback] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
+  overview: {
+    title: 'Overview',
+    subtitle:
+      'Enterprise command center for tenant posture across people, security, billing, AI, and risk.',
+  },
+  people: {
+    title: 'People & Access',
+    subtitle:
+      'Membership operations, role changes, ownership transfer, and tenant access governance.',
+  },
+  security: {
+    title: 'Security & Identity',
+    subtitle:
+      'Tenant-level MFA, SSO, collaboration controls, API access, and delegated IAM posture.',
+  },
+  billing: {
+    title: 'Billing, Limits & FinOps',
+    subtitle: 'Plans, commercial posture, quota usage, and spend controls for the tenant.',
+  },
+  ai: {
+    title: 'AI Governance & Operations',
+    subtitle: 'Model policy, AI settings, health posture, and token economy in one place.',
+  },
+  integrations: {
+    title: 'Integrations & Sync',
+    subtitle: 'Connector health, remediation, and ownership-aware sync operations.',
+  },
+  audit: {
+    title: 'Audit, Compliance & Risk',
+    subtitle: 'Admin events, risk visibility, and evidence posture for high-risk actions.',
+  },
+  operations: {
+    title: 'Organization Operations',
+    subtitle: 'Domains, branding, competencies, and tenant operational surfaces managed from P32.',
+  },
+};
 
-  useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const data = await Api.getFeedback();
-        setFeedback(data);
-      } catch (err) {
-        console.error('Failed to fetch feedback:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeedback();
-  }, []);
+const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
+  members: 'people',
+  team: 'people',
+  users: 'people',
+  workspace: 'operations',
+  organization: 'operations',
+  branding: 'operations',
+  domains: 'operations',
+  competencies: 'operations',
+  governance: 'security',
+  collaboration: 'security',
+  api: 'security',
+  billing: 'billing',
+  payment: 'billing',
+  tax: 'billing',
+  alerts: 'billing',
+  ai: 'ai',
+  llm: 'ai',
+  'token-management': 'ai',
+  'sync-hub': 'integrations',
+  compliance: 'audit',
+};
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-      </div>
-    );
+function resolveAdminState(
+  pathname: string,
+  search: string,
+  initialTab?: AdminSettingsSection
+): { section: AdminSettingsSection; legacyKey?: string } {
+  const pathSegment = pathname.replace(/^\/admin\/?/, '').split('/')[0];
+  const tabParam = new URLSearchParams(search).get('tab') || '';
+  const candidate = pathSegment || tabParam || initialTab || 'members';
+
+  if (PRIMARY_SECTIONS.includes(candidate as AdminSettingsSection)) {
+    return { section: candidate as AdminSettingsSection };
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {t('admin.feedback.title', 'User Feedback')}
-        </h3>
-        <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full">
-          {feedback.length} {t('admin.feedback.items', 'items')}
-        </span>
-      </div>
+  if (candidate && SECTION_ALIASES[candidate]) {
+    return { section: SECTION_ALIASES[candidate] };
+  }
 
-      {feedback.length === 0 ? (
-        <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-xl">
-          <MessageSquare className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">
-            {t('admin.feedback.empty', 'No feedback received yet')}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {feedback.slice(0, 20).map((item: any) => (
-            <div
-              key={item.id}
-              className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={`px-2 py-0.5 text-xs rounded-full ${
-                        item.status === 'new'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300'
-                          : item.status === 'resolved'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300'
-                            : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {item.type || 'General'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    {item.message || item.content}
-                  </p>
-                </div>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {new Date(item.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+  if (candidate && LEGACY_HANDOFFS[candidate]) {
+    return { section: 'overview', legacyKey: candidate };
+  }
+
+  return { section: initialTab && PRIMARY_SECTIONS.includes(initialTab) ? initialTab : 'overview' };
+}
+
+const LegacyAdminHandoffPanel: React.FC<{
+  title: string;
+  description: string;
+  targetPath: string;
+  targetLabel: string;
+}> = ({ title, description, targetPath, targetLabel }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
+      <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">{description}</p>
+      <button
+        onClick={() => navigate(targetPath)}
+        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+      >
+        {targetLabel}
+        <MoveRight className="h-4 w-4" />
+      </button>
     </div>
   );
-};
-
-// Members & Directory Panel — P32 §2.3
-const AdminMembersPanel: React.FC = () => {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {t('admin.members.title', 'Members & Directory')}
-        </h3>
-      </div>
-      <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-xl">
-        <Users className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">
-          {t('admin.members.placeholder', 'Member management coming soon. Use organization settings to manage members.')}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// Collaboration Controls Panel — P32 §2.3
-const AdminCollaborationPanel: React.FC = () => {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {t('admin.collaboration.title', 'Collaboration Controls')}
-        </h3>
-      </div>
-      <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-xl">
-        <Share2 className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">
-          {t('admin.collaboration.placeholder', 'Guest access, external sharing, and collaboration policies configuration coming soon.')}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// Admin Templates Panel - Wrapper for TemplatesManager
-const AdminTemplatesPanel: React.FC = () => {
-  return <TemplatesManager />;
-};
-
-// Admin Initiatives Panel - Uses the Initiative Templates manager
-const AdminInitiativesPanel: React.FC = () => {
-  return <AdminInitiativeTemplatesPanel />;
 };
 
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   initialTab,
   currentUser,
 }) => {
-  const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
 
-  const activeSection = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    const section = params.get('tab');
-    const fallback = initialTab || 'organization';
-    return (
-      section && Object.keys(sectionMeta).includes(section) ? section : fallback
-    ) as AdminSettingsSection;
-  }, [initialTab, location.search]);
-
-  // Fetch pending feedback count
-  useEffect(() => {
-    const fetchPendingCount = async () => {
-      try {
-        const feedback = await Api.getFeedback();
-        const pending = feedback.filter(
-          (f: any) => f.status === 'new' || f.status === 'pending'
-        ).length;
-        setPendingFeedbackCount(pending);
-      } catch (err) {
-        // Silently fail
-      }
-    };
-    fetchPendingCount();
-  }, [activeSection]);
-
-  // Handle section change
-  const handleSectionChange = useCallback(
-    (section: AdminSettingsSection) => {
-      const params = new URLSearchParams(location.search);
-      params.set('tab', section);
-      navigate({ pathname: location.pathname, search: params.toString() });
-      setSidebarOpen(false);
-    },
-    [location.pathname, location.search, navigate]
+  const resolvedState = useMemo(
+    () => resolveAdminState(location.pathname, location.search, initialTab),
+    [initialTab, location.pathname, location.search]
   );
 
-  // Handle back to main app (Chat)
+  const handleSectionChange = useCallback(
+    (section: AdminSettingsSection) => {
+      navigate(`/admin/${section}`);
+      setSidebarOpen(false);
+    },
+    [navigate]
+  );
+
   const handleBackToDashboard = useCallback(() => {
     setCurrentView(AppView.AI_CHAT);
     navigate(ROUTES.AI_CHAT);
   }, [navigate, setCurrentView]);
 
-  // Get current section metadata
-  const currentMeta = useMemo(() => {
-    const meta = sectionMeta[activeSection];
-    return {
-      title: t(`admin.sections.${activeSection}.title`, meta.title),
-      subtitle: t(`admin.sections.${activeSection}.subtitle`, meta.subtitle),
-    };
-  }, [activeSection, t]);
+  const content = useMemo(() => {
+    if (resolvedState.legacyKey) {
+      return <LegacyAdminHandoffPanel {...LEGACY_HANDOFFS[resolvedState.legacyKey]} />;
+    }
 
-  // Render content based on active section
-  const renderContent = useCallback(() => {
-    switch (activeSection) {
-      case 'organization':
-        return <OrganizationProfileForm currentUser={currentUser} />;
-      case 'branding':
-        return <BrandingSettingsPanel />;
-      case 'billing':
-        return <SubscriptionManager />;
-      case 'payment':
-        return <PaymentMethodsPanel />;
-      case 'tax':
-        return <TaxSettingsForm />;
-      case 'alerts':
-        return <UsageAlertsConfig />;
+    switch (resolvedState.section) {
+      case 'overview':
+        return <AdminEnterpriseOverviewPanel />;
+      case 'people':
+        return <AdminMembersRolesPanel />;
       case 'security':
-        return <SecuritySettings currentUser={currentUser} />;
-      case 'governance':
-        return <DataGovernancePanel />;
-      case 'audit':
-        return <AuditExportPanel />;
-      case 'report-creator':
-        return <AdminTemplatesPanel />;
-      case 'block-library':
-        return <BlockTypesManager embedded />;
-      case 'initiative-templates':
-        return <AdminInitiativesPanel />;
-      case 'initiative-sections':
-        return <AdminInitiativeSectionTypesPanel />;
+        return <AdminSecurityIdentityPanel />;
+      case 'billing':
+        return <AdminBillingFinOpsPanel />;
+      case 'ai':
+        return <AdminAIControlCenterPanel />;
       case 'integrations':
         return <UnifiedSyncHub />;
-      case 'api':
-        return <ApiKeysManagementView />;
-      case 'feedback':
-        return <AdminFeedbackView />;
-      case 'members':
-        return <AdminMembersPanel />;
-      case 'collaboration':
-        return <AdminCollaborationPanel />;
-      case 'sync-hub':
-        return <UnifiedSyncHub />;
+      case 'audit':
+        return <AdminAuditLogPanel />;
+      case 'operations':
+        return <AdminOrganizationOperationsPanel />;
       default:
-        return <OrganizationProfileForm currentUser={currentUser} />;
+        return null;
     }
-  }, [activeSection, currentUser]);
+  }, [resolvedState]);
+
+  const meta = SECTION_META[resolvedState.section];
+  void currentUser;
 
   return (
-    <div className="flex h-full bg-slate-50 dark:bg-navy-950 relative">
-      {/* Mobile Overlay */}
+    <div className="relative flex h-full bg-slate-50 dark:bg-navy-950">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Left Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out',
-          'lg:static lg:transform-none',
+          'fixed inset-y-0 left-0 z-40 w-[300px] transform transition-transform duration-300 ease-in-out lg:static lg:transform-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         <AdminSettingsSidebar
-          activeSection={activeSection}
+          activeSection={resolvedState.section}
           onSectionChange={handleSectionChange}
-          pendingFeedbackCount={pendingFeedbackCount}
           onBack={handleBackToDashboard}
         />
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-navy-900">
-        {/* Mobile menu button - only visible on mobile */}
-        <div className="lg:hidden flex items-center px-4 py-2 border-b border-slate-200 dark:border-white/5">
+      <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
+        <div className="flex items-center border-b border-slate-200 px-4 py-2 lg:hidden dark:border-white/10">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white p-2"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="p-2 text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
 
-        {/* Content - No additional header, breadcrumbs are in MainLayout */}
         <ScrollArea className="flex-1">
-          <div className="p-2 lg:p-3 w-full space-y-3">
-            {renderContent()}
+          <div className="space-y-4 p-3 lg:p-4">
+            {!resolvedState.legacyKey && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+                  {meta.title}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{meta.subtitle}</p>
+              </div>
+            )}
+            {content}
           </div>
         </ScrollArea>
       </div>

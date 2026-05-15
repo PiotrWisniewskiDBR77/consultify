@@ -210,6 +210,32 @@ describe('V8 Assessment bounded routes', () => {
     expect(res.body.data?.assessment?.contextSnapshot?.industry).toBe('mfg');
   });
 
+  it('GET /api/v8/assessment/definitions/:methodologyId returns definition versions', async () => {
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'asdef-drd-1',
+        methodology_id: 'DRD',
+        version: '1.0',
+        title: 'DRD canonical definition',
+        status: 'published',
+        is_read_only: 1,
+        definition_json: '{}',
+        created_by: UID,
+        created_at: '2026-04-11T00:00:00.000Z',
+        updated_at: '2026-04-11T00:00:00.000Z',
+        published_at: '2026-04-11T00:00:00.000Z',
+      },
+    ]);
+
+    const res = await request(createApp())
+      .get('/api/v8/assessment/definitions/DRD')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.methodologyId).toBe('DRD');
+    expect(res.body.data?.versions?.[0]?.version).toBe('1.0');
+  });
+
   it('POST /api/v8/assessment creates a draft assessment and session', async () => {
     const res = await request(createApp())
       .post('/api/v8/assessment')
@@ -257,6 +283,29 @@ describe('V8 Assessment bounded routes', () => {
     expect(mockLogUpdate).toHaveBeenCalled();
   });
 
+  it('PUT /api/v8/assessment/:id blocks direct scoreSummary writes when P28 workbench exists', async () => {
+    mockQueryOne.mockResolvedValue({
+      answers_json: '{"existing":true}',
+      context_snapshot: '{}',
+      score_summary: '{}',
+      p28_workbench_v1: '{"runState":"running"}',
+      completion_percent: 10,
+      confidence_avg: 1,
+      current_section_id: null,
+      navigation_json: '{}',
+    });
+
+    const res = await request(createApp())
+      .put('/api/v8/assessment/a-p28')
+      .set('Authorization', 'Bearer x')
+      .send({
+        scoreSummary: { readiness: 4 },
+      });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('P28_NO_SILENT_SCORING');
+  });
+
   it('GET /api/v8/assessment/:id/my-role returns bounded permission payload', async () => {
     mockUser = { id: UID, role: 'EDITOR', organizationId: ORG, isSuperAdmin: false };
     mockQueryOne.mockResolvedValue({ id: 'a-4', created_by: 'owner-1' });
@@ -269,6 +318,25 @@ describe('V8 Assessment bounded routes', () => {
     expect(mockGetUserRole).toHaveBeenCalledWith('a-4', UID, ORG);
     expect(res.body.meta?.contract).toBe(V8_ASSESSMENT_READ_CONTRACT);
     expect(res.body.data?.role).toBe('editor');
+  });
+
+  it('GET /api/v8/assessment/:id/workbench returns permission guidance when access is denied', async () => {
+    mockUser = { id: UID, role: 'EDITOR', organizationId: ORG, isSuperAdmin: false };
+    mockQueryOne.mockResolvedValue({ assessment_type: 'DRD', created_by: UID });
+    mockGetUserRole.mockResolvedValue({
+      role: 'viewer',
+      permissions: { canView: false, canEdit: false, canApprove: false },
+      assignedAreas: null,
+      isOwner: false,
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/assessment/a-wb/workbench')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('P28_PERMISSION_DENIED');
+    expect(Array.isArray(res.body.whatNext)).toBe(true);
   });
 
   it('GET /api/v8/assessment/:id/user-state returns bounded resume state', async () => {

@@ -1,4 +1,4 @@
-import { run as dbRun, get as dbGet, all as dbAll } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 async function ensureIntegrationOwnershipTable(): Promise<void> {
   await dbRun(
@@ -94,4 +94,3 @@ export async function listIntegrationOwnershipByOrg(organizationId: string): Pro
     updatedAt: r.updated_at ?? null,
   }));
 }
-

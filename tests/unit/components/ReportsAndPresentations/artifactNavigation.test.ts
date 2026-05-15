@@ -28,10 +28,11 @@ describe('resolveArtifactOpenPath', () => {
     ).toBe(getArtifactPath('presentation', id));
   });
 
-  it('returns null for sheet (handled by sheet-specific open path)', () => {
-    expect(
-      resolveArtifactOpenPath({ kind: 'sheet', originRecordId: 'tp-1', governance: null })
-    ).toBeNull();
+  it('uses getArtifactPath for sheets when no explicit openPath', () => {
+    const id = 'tp-1';
+    expect(resolveArtifactOpenPath({ kind: 'sheet', originRecordId: id, governance: null })).toBe(
+      getArtifactPath('sheet', id)
+    );
   });
 
   it('returns null when originRecordId is empty', () => {

@@ -47,12 +47,13 @@ export const NavItem: React.FC<NavItemProps> = ({
   const hasSubItems = item.subItems && item.subItems.length > 0;
   const isActive = item.viewId === currentView;
   const isCompleted = item.viewId && completedViews.includes(item.viewId);
-  const badgeLabel = item.badge === 'soon' ? 'In development' : item.badge;
+  const badgeLabel = item.badge === 'soon' ? 'Wkrótce' : item.badge;
 
-  const isLocked =
+  const isLockedByFlow =
     item.requiresView &&
     !completedViews.includes(item.requiresView) &&
     !isAdminOwnerOrSuperAdminRole(currentUserRole);
+  const isLocked = Boolean(item.isLocked || isLockedByFlow);
 
   const isChildActive = (i: MenuItem): boolean => {
     if (i.viewId === currentView) return true;
@@ -62,6 +63,9 @@ export const NavItem: React.FC<NavItemProps> = ({
   const isParentActive = hasSubItems && isChildActive(item);
 
   const getTooltip = () => {
+    if (item.isLocked && item.lockedMessage) {
+      return item.lockedMessage;
+    }
     if (isLocked && item.requiresView) {
       return `${t('common.locked')}: ${t('common.complete')} ${getViewName(item.requiresView)} ${t('common.first')}`;
     }
@@ -89,17 +93,17 @@ export const NavItem: React.FC<NavItemProps> = ({
         type="button"
         data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
         onClick={() => onClick(item)}
-        disabled={isLocked}
-        whileTap={!isLocked ? { scale: 0.98 } : undefined}
+        whileTap={{ scale: 0.98 }}
         className={[
           'w-full flex items-center text-sm transition-all duration-150 ease-out relative group rounded-lg',
           isTouchDevice ? 'py-2.5 min-h-[44px]' : 'py-[7px]',
           showFull ? 'px-2.5 gap-2.5' : 'px-0 justify-center',
-          isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+          isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-navy-950',
           isHighlighted
-            ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium'
+            ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium ring-1 ring-inset ring-primary-200 dark:ring-transparent'
             : isParentActive
-              ? 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/[0.04]'
+              ? 'text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-white/[0.04]'
               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-slate-100',
         ].join(' ')}
         title={getTooltip()}
@@ -111,10 +115,10 @@ export const NavItem: React.FC<NavItemProps> = ({
             className={[
               'shrink-0 transition-colors',
               isHighlighted
-                ? 'text-primary-500 dark:text-primary-400'
+                ? 'text-primary-600 dark:text-primary-400'
                 : isParentActive
-                  ? 'text-slate-500 dark:text-slate-400'
-                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300',
+                  ? 'text-slate-600 dark:text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300',
             ].join(' ')}
           >
             {React.cloneElement(
@@ -143,7 +147,7 @@ export const NavItem: React.FC<NavItemProps> = ({
                     ? 'bg-amber-500/10 text-amber-400'
                     : item.badge === 'new'
                       ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-amber-400/10 text-amber-400',
+                      : 'bg-purple-500/10 text-purple-400',
                 ].join(' ')}
               >
                 {badgeLabel}

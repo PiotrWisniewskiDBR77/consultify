@@ -18,6 +18,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { API_URL, getHeaders } from '@/services/api';
+
 // ============================================
 // TYPES
 // ============================================
@@ -46,6 +48,8 @@ export interface FeatureFlagsConfig {
   flags: FeatureFlag[];
   /** Remote endpoint for fetching flags */
   remoteEndpoint?: string;
+  /** Allow local overrides (dev-only) */
+  enableLocalOverrides?: boolean;
   /** Enable DevTools panel */
   enableDevTools?: boolean;
   /** Storage key prefix */
@@ -148,6 +152,14 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'beta',
     allowLocalOverride: true,
   },
+  {
+    id: 'assessmentInitiativesWizard',
+    name: 'Assessment: Initiatives Wizard',
+    description: 'Controls the wizard flow for generated assessment initiatives',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: false,
+  },
 ];
 
 // ============================================
@@ -219,7 +231,7 @@ function isInRollout(flagId: string, userId: string, percent: number): boolean {
 // ============================================
 
 export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFeatureFlagsReturn {
-  const { flags: customFlags = [], remoteEndpoint, userId } = config;
+  const { flags: customFlags = [], remoteEndpoint, userId, enableLocalOverrides = false } = config;
 
   // Merge default and custom flags
   const flagDefinitions = useMemo(() => {
@@ -236,18 +248,21 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
 
   // Fetch remote flags
   const fetchRemoteFlags = useCallback(async () => {
-    if (!remoteEndpoint) return;
+    const endpoint = remoteEndpoint ?? `${API_URL}/feature-flags/runtime`;
+    const headers = getHeaders();
+    const hasAuthToken = Boolean(headers.Authorization && headers.Authorization.trim());
+
+    if (!remoteEndpoint && !hasAuthToken) {
+      setRemoteFlags({});
+      setError(null);
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(remoteEndpoint, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(userId && { 'X-User-Id': userId }),
-        },
-      });
+      const response = await fetch(endpoint, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch flags: ${response.statusText}`);
@@ -260,7 +275,7 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
     } finally {
       setIsLoading(false);
     }
-  }, [remoteEndpoint, userId]);
+  }, [remoteEndpoint]);
 
   // Initial fetch
   useEffect(() => {
@@ -279,7 +294,7 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
       }
 
       // Priority: local override > remote > rollout > default
-      if (flag.allowLocalOverride && flag.id in localOverrides) {
+      if (enableLocalOverrides && flag.allowLocalOverride && flag.id in localOverrides) {
         result[flag.id] = localOverrides[flag.id];
         continue;
       }
@@ -298,8 +313,14 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
       result[flag.id] = flag.defaultValue;
     }
 
+    for (const [flagId, value] of Object.entries(remoteFlags)) {
+      if (!(flagId in result)) {
+        result[flagId] = Boolean(value);
+      }
+    }
+
     return result;
-  }, [flagDefinitions, localOverrides, remoteFlags, userId]);
+  }, [enableLocalOverrides, flagDefinitions, localOverrides, remoteFlags, userId]);
 
   // Check if a flag is enabled
   const isEnabled = useCallback(
@@ -315,7 +336,7 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
       const flag = flagDefinitions.find((f) => f.id === flagId);
 
       // Only allow override if flag exists and permits it
-      if (!flag || flag.allowLocalOverride === false) {
+      if (!enableLocalOverrides || !flag || flag.allowLocalOverride === false) {
         console.warn(`Cannot override flag: ${flagId}`);
         return;
       }
@@ -326,7 +347,7 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
         return updated;
       });
     },
-    [flagDefinitions]
+    [enableLocalOverrides, flagDefinitions]
   );
 
   // Clear a single override

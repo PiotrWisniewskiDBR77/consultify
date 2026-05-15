@@ -56,6 +56,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   actions = [],
   actionsVisible = false,
   aiContextActions = [],
+  renderActionBar,
   activeSection,
   onSectionChange,
   reducedMotion = false,
@@ -76,7 +77,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-0">
           {/* ── Header ──────────────────────────────────────────── */}
@@ -94,15 +95,22 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
               {/* Properties Strip */}
               <NModePropertiesStrip fields={properties} />
 
-              {/* Action Bar (conditional) */}
-              {actionsVisible && actions.length > 0 && (
+              {/* Action Bar — custom slot or standard NModeActionBar */}
+              {renderActionBar ? (
                 <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
-                  <NModeActionBar
-                    actions={actions}
-                    aiContextActions={aiContextActions}
-                    activeSection={activeSection}
-                  />
+                  {renderActionBar()}
                 </div>
+              ) : (
+                actionsVisible &&
+                actions.length > 0 && (
+                  <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
+                    <NModeActionBar
+                      actions={actions}
+                      aiContextActions={aiContextActions}
+                      activeSection={activeSection}
+                    />
+                  </div>
+                )
               )}
 
               {/* 2-Pane: LeftNav + Canvas */}

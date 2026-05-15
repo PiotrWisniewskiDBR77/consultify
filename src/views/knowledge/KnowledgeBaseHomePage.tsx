@@ -8,90 +8,94 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
   ArrowRight,
   BookOpen,
   ChevronRight,
   Clock,
   Eye,
   Filter,
+  FolderOpen,
   GraduationCap,
   Search,
+  Sparkles,
   Tag,
-  TrendingUp,
   X,
-  Zap,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
+import { isKbCategoryForCurrentSite, KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
 import {
   KbArticleListItem,
-  KbCategory,
   useDocsArticles,
-  useDocsCategories,
   useDocsFeatured,
   useDocsSearch,
 } from '@/hooks/useDocs';
-import { useKnowledgeTags } from '@/hooks/useKnowledge';
+import {
+  KbCollection,
+  useKnowledgeCollectionArticles,
+  useKnowledgeCollections,
+  useKnowledgeTags,
+} from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
-const SECTION_ICONS: Record<string, React.ReactNode> = {
-  'consultify-why-transformations-fail': <AlertTriangle size={22} />,
-  'consultify-the-money-question': <TrendingUp size={22} />,
-  'consultify-decisions-that-ship': <Zap size={22} />,
-};
+type AccentTheme = { gradient: string; border: string; glow: string; text: string; bg: string };
 
-const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: string; text: string; bg: string }> = {
-  'consultify-why-transformations-fail': {
+const ACCENT_THEMES: AccentTheme[] = [
+  {
     gradient: 'from-rose-400 to-red-500',
     border: 'border-rose-500/20 hover:border-rose-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(244,63,94,0.35)]',
     text: 'text-rose-400',
     bg: 'bg-rose-500/10',
   },
-  'consultify-the-money-question': {
+  {
     gradient: 'from-emerald-400 to-teal-500',
     border: 'border-emerald-500/20 hover:border-emerald-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(16,185,129,0.35)]',
     text: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
   },
-  'consultify-decisions-that-ship': {
+  {
     gradient: 'from-amber-400 to-orange-500',
     border: 'border-amber-500/20 hover:border-amber-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(245,158,11,0.35)]',
     text: 'text-amber-400',
     bg: 'bg-amber-500/10',
   },
-};
+];
 
-const DEFAULT_ACCENT = SECTION_ACCENT['consultify-decisions-that-ship'];
-type SectionMetaKeys = { eyebrowKey: string; chipsKeys: string[]; statLabelKey: string };
-const SECTION_META_KEYS: Record<string, SectionMetaKeys> = {
-  'consultify-why-transformations-fail': {
-    eyebrowKey: 'kb.lane.failurePatterns',
-    chipsKeys: ['kb.chip.governance', 'kb.chip.risk', 'kb.chip.leadership'],
-    statLabelKey: 'kb.stat.warningSigns',
-  },
-  'consultify-the-money-question': {
-    eyebrowKey: 'kb.lane.boardLogic',
-    chipsKeys: ['kb.chip.roi', 'kb.chip.boardRoom', 'kb.chip.portfolio'],
-    statLabelKey: 'kb.stat.boardCases',
-  },
-  'consultify-decisions-that-ship': {
-    eyebrowKey: 'kb.lane.executionMoves',
-    chipsKeys: ['kb.chip.execution', 'kb.chip.aiStrategy', 'kb.chip.decisionSpeed'],
-    statLabelKey: 'kb.stat.executionPlays',
-  },
-};
+const DEFAULT_ACCENT = ACCENT_THEMES[2];
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function accentForSlug(slug: string | null | undefined): AccentTheme {
+  if (!slug) return DEFAULT_ACCENT;
+  return ACCENT_THEMES[hashString(slug) % ACCENT_THEMES.length] || DEFAULT_ACCENT;
+}
 
 function kbImg(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+  if (url.startsWith('/kb/') && url.endsWith('.png')) return url.slice(0, -4) + '.webp';
+  return url;
+}
+
+function kbThumb(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  const resolved = kbImg(url);
+  if (!resolved) return undefined;
+  if (resolved.endsWith('/hero.webp')) return resolved.replace('/hero.webp', '/thumb.webp');
+  return resolved;
 }
 
 const ARTICLES_PER_PAGE = 12;
@@ -111,71 +115,78 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [activeSearch, setActiveSearch] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [browseLimit, setBrowseLimit] = useState(ARTICLES_PER_PAGE);
 
   const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
-  const { data: categories } = useDocsCategories(docsLanguage);
-  const { data: allFeatured } = useDocsFeatured(docsLanguage, 20);
-  const { data: searchResults } = useDocsSearch(activeSearch, docsLanguage);
-  const { data: tags } = useKnowledgeTags(undefined, docsLanguage);
+  const { data: collections = [] } = useKnowledgeCollections(undefined, docsLanguage);
+  const { data: allFeatured = [] } = useDocsFeatured(docsLanguage, 20);
+  const { data: searchResults = [] } = useDocsSearch(activeSearch, docsLanguage);
+  const { data: tags = [] } = useKnowledgeTags(undefined, docsLanguage);
   const { data: allArticlesData } = useDocsArticles({ language: docsLanguage, limit: 100 });
-  const allArticles = allArticlesData?.articles;
+  const allArticles = allArticlesData?.articles || [];
 
-  const consultifyCategories = useMemo(() =>
-    categories?.filter((c: KbCategory) => c.slug.startsWith('consultify-')) || [],
-    [categories]
+  const siteCollections = useMemo(
+    () =>
+      (collections || [])
+        .filter((c: KbCollection) => (c.article_count || 0) > 0)
+        .filter((c: KbCollection) => c.slug?.startsWith(KNOWLEDGE_BASE_SITE.categoryPrefix))
+        .slice(0, 3),
+    [collections]
   );
 
   const featured = useMemo(
     () =>
       allFeatured
-        ?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag))
-        .slice(0, 6) || [],
+        .slice(0, 6),
     [allFeatured, selectedTag]
   );
 
   const browseArticles = useMemo(
     () =>
       allArticles
-        ?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
-        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag)) || [],
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag)),
     [allArticles, selectedTag]
   );
 
-  const { data: categoryArticlesData } = useDocsArticles({
-    language: docsLanguage,
-    categorySlug: selectedCategory || undefined,
-    limit: 50,
-  });
-  const categoryArticles = categoryArticlesData?.articles;
+  const { data: collectionArticlesData } = useKnowledgeCollectionArticles(
+    selectedCollection || undefined,
+    50,
+    0,
+    docsLanguage
+  );
+  const collectionArticles = collectionArticlesData?.articles;
 
   const displayArticles = useMemo(() => {
     if (activeSearch) {
-      return (searchResults || [])
-        .filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+      return searchResults
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
-    if (selectedCategory && categoryArticles?.length) {
-      return categoryArticles.filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
+    if (selectedCollection && collectionArticles?.length) {
+      return collectionArticles
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
     return null;
-  }, [activeSearch, searchResults, selectedCategory, categoryArticles, selectedTag]);
+  }, [activeSearch, searchResults, selectedCollection, collectionArticles, selectedTag]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setActiveSearch(searchQuery.trim());
-    setSelectedCategory(null);
+    setSelectedCollection(null);
   };
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
     const timeoutId = window.setTimeout(() => {
       setActiveSearch(trimmed);
-      if (trimmed) setSelectedCategory(null);
+      if (trimmed) setSelectedCollection(null);
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
@@ -184,11 +195,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const clearFilters = () => {
     setSearchQuery('');
     setActiveSearch('');
-    setSelectedCategory(null);
+    setSelectedCollection(null);
     setSelectedTag(null);
   };
 
-  const isFiltering = !!activeSearch || !!selectedCategory || !!selectedTag;
+  const isFiltering = !!activeSearch || !!selectedCollection || !!selectedTag;
   const isResultView = displayArticles !== null;
 
   return (
@@ -200,7 +211,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
-              backgroundImage: 'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
+              backgroundImage:
+                'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
               backgroundSize: '64px 64px',
               mask: 'radial-gradient(ellipse at 50% 30%, black 0%, transparent 72%)',
               WebkitMask: 'radial-gradient(ellipse at 50% 30%, black 0%, transparent 72%)',
@@ -219,7 +231,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm text-[11px] sm:text-xs font-bold text-primary-300 tracking-wide mb-6 sm:mb-8">
-                <span>{t('kb.hero.badge', '50+ expert articles on transformation management')}</span>
+                <span>{t('kb.hero.badge', KNOWLEDGE_BASE_SITE.heroBadge)}</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
@@ -227,13 +239,16 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </h1>
 
               <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto px-2 dark:text-white/55">
-                {t('kb.hero.subtitle', 'Read the guides leaders use before they commit budget, launch rollout, or defend ROI. Built for moments when the next decision matters more than another opinion.')}
+                {t('kb.hero.subtitle', KNOWLEDGE_BASE_SITE.heroSubtitle)}
               </p>
 
               {/* Search */}
               <form onSubmit={handleSearch} className="mt-8 sm:mt-10 max-w-xl mx-auto">
                 <div className="relative">
-                  <Search size={18} className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+                  <Search
+                    size={18}
+                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40"
+                  />
                   <input
                     type="text"
                     value={searchQuery}
@@ -244,7 +259,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                   {searchQuery && (
                     <button
                       type="button"
-                      onClick={() => { setSearchQuery(''); setActiveSearch(''); }}
+                      onClick={() => {
+                        setSearchQuery('');
+                        setActiveSearch('');
+                      }}
                       className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
                     >
                       <X size={18} />
@@ -258,103 +276,115 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
         {/* Section Navigation Cards — clickable, link to category page */}
         {!activeSearch && (
-        <section className="relative z-10 px-4 sm:px-6 pb-10 sm:pb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
-              <div>
-                <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
-                  {t('kb.sections.eyebrow', 'Choose the tension you want to solve')}
+          <section className="relative z-10 px-4 sm:px-6 pb-10 sm:pb-12">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
+                <div>
+                  <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
+                    {t('kb.sections.eyebrow', KNOWLEDGE_BASE_SITE.sectionsEyebrow)}
+                  </p>
+                  <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                    {t('kb.sections.title', KNOWLEDGE_BASE_SITE.sectionsTitle)}
+                  </h2>
+                </div>
+                <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
+                  {t('kb.sections.subtitle', KNOWLEDGE_BASE_SITE.sectionsSubtitle)}
                 </p>
-                <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                  {t('kb.sections.title', 'Three sharper ways into the library')}
-                </h2>
               </div>
-              <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
-                {t(
-                  'kb.sections.subtitle',
-                  'Each lane is framed around a real executive tension, so people can enter through failure, money, or execution instead of generic taxonomy.'
-                )}
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-              {consultifyCategories.map((category: KbCategory) => {
-                const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
-                const metaKeys = SECTION_META_KEYS[category.slug];
-                const eyebrow = metaKeys ? t(metaKeys.eyebrowKey) : t('kb.sections.defaultEyebrow', 'Category');
-                const chips = metaKeys ? metaKeys.chipsKeys.map((k) => t(k)) : [];
-                const statLabel = metaKeys ? t(metaKeys.statLabelKey) : t('kb.sections.defaultStatLabel', 'articles');
-                return (
-                  <Link
-                    key={category.id}
-                    to={`/knowledge-base/${category.slug}`}
-                    className={cn(
-                      'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
-                      'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
-                      `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
-                      accent.glow
-                    )}
-                  >
-                    <div className="pointer-events-none absolute inset-0">
-                      <div className={cn('absolute right-[-18%] top-[-10%] h-40 w-40 rounded-full blur-3xl opacity-25', accent.bg)} />
-                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/14" />
-                    </div>
-                    <div className="relative flex h-full flex-col">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
-                            {eyebrow}
-                          </p>
-                          <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
-                            {category.name}
-                          </h3>
-                        </div>
-                        <div className={cn(
-                          'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
-                          accent.gradient
-                        )}>
-                          {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
-                        </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
+                {siteCollections.map((coll: KbCollection) => {
+                  const accent = accentForSlug(coll.slug);
+                  const eyebrow = t('kb.sections.defaultEyebrow', 'Collection');
+                  const statLabel = t('kb.sections.defaultStatLabel', 'articles');
+                  return (
+                    <Link
+                      key={coll.id}
+                      to={`/knowledge-base/${coll.slug}`}
+                      className={cn(
+                        'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
+                        'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
+                        `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
+                        accent.glow
+                      )}
+                    >
+                      <div className="pointer-events-none absolute inset-0">
+                        <div
+                          className={cn(
+                            'absolute right-[-18%] top-[-10%] h-40 w-40 rounded-full blur-3xl opacity-25',
+                            accent.bg
+                          )}
+                        />
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/14" />
                       </div>
-
-                      <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
-                        {category.description}
-                      </p>
-
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {chips.map((chip) => (
-                          <span
-                            key={chip}
+                      <div className="relative flex h-full flex-col">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
+                              {eyebrow}
+                            </p>
+                            <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
+                              {coll.title}
+                            </h3>
+                          </div>
+                          <div
                             className={cn(
-                              'rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
-                              'border-slate-200 bg-slate-50 text-slate-700 dark:border-white/[0.09] dark:bg-white/[0.06] dark:text-white/78'
+                              'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
+                              accent.gradient
                             )}
                           >
-                            {chip}
-                          </span>
-                        ))}
-                      </div>
+                            <FolderOpen size={22} />
+                          </div>
+                        </div>
 
-                      <div className="mt-auto flex items-end justify-between gap-4 pt-8">
-                        <div>
-                          <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                            {category.article_count}
+                        {coll.description && (
+                          <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
+                            {coll.description}
+                          </p>
+                        )}
+
+                        {coll.featured && (
+                          <div className="mt-5">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
+                                'border-amber-400/30 bg-amber-500/10 text-amber-600 dark:border-amber-500/20 dark:text-amber-400'
+                              )}
+                            >
+                              <Sparkles size={10} />
+                              {t('kb.sections.featured', 'Featured')}
+                            </span>
                           </div>
-                          <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
-                            {statLabel}
+                        )}
+
+                        <div className="mt-auto flex items-end justify-between gap-4 pt-8">
+                          <div>
+                            <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                              {coll.article_count}
+                            </div>
+                            <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
+                              {statLabel}
+                            </div>
                           </div>
-                        </div>
-                        <div className={cn('inline-flex items-center gap-2 text-sm font-bold', accent.text)}>
-                          <span>{t('kb.sections.openLane', 'Open lane')}</span>
-                          <ChevronRight size={15} className="transition-transform group-hover:translate-x-1" />
+                          <div
+                            className={cn(
+                              'inline-flex items-center gap-2 text-sm font-bold',
+                              accent.text
+                            )}
+                          >
+                            <span>{t('kb.sections.openLane', 'Open lane')}</span>
+                            <ChevronRight
+                              size={15}
+                              className="transition-transform group-hover:translate-x-1"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* Tags */}
@@ -395,9 +425,12 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-white/50">
                   <Filter size={14} />
                   {activeSearch && <span>Search: &ldquo;{activeSearch}&rdquo;</span>}
-                  {selectedCategory && (
+                  {selectedCollection && (
                     <span className="px-2.5 py-0.5 rounded-full bg-primary-600/15 border border-primary-500/25 text-primary-300 text-xs font-semibold">
-                      {consultifyCategories.find((c: KbCategory) => c.slug === selectedCategory)?.name}
+                      {
+                        siteCollections.find((c: KbCollection) => c.slug === selectedCollection)
+                          ?.title
+                      }
                     </span>
                   )}
                   {selectedTag && (
@@ -406,7 +439,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <button onClick={clearFilters} className="text-sm text-primary-400 hover:text-primary-300 font-semibold transition-colors">
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-primary-400 hover:text-primary-300 font-semibold transition-colors"
+                >
                   {t('kb.filtering.clear', 'Clear filters')}
                 </button>
               </div>
@@ -422,7 +458,9 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 {activeSearch
                   ? t('kb.results.searchTitle', 'Search results')
                   : t('kb.results.categoryTitle', 'Articles')}
-                <span className="ml-2 text-base sm:text-lg font-normal text-slate-500 dark:text-white/40">({displayArticles.length})</span>
+                <span className="ml-2 text-base sm:text-lg font-normal text-slate-500 dark:text-white/40">
+                  ({displayArticles.length})
+                </span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {displayArticles.map((article: KbArticleListItem) => (
@@ -476,10 +514,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               )}
 
               {/* Section Previews */}
-              {consultifyCategories.map((category: KbCategory) => (
+              {siteCollections.map((coll: KbCollection) => (
                 <SectionPreview
-                  key={category.id}
-                  category={category}
+                  key={coll.id}
+                  collection={coll}
                   language={docsLanguage}
                   selectedTag={selectedTag}
                 />
@@ -499,7 +537,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                           {t('kb.browse.title', 'Browse All Articles')}
                         </h2>
                         <p className="text-xs sm:text-sm text-slate-500 dark:text-white/40">
-                          {browseArticles.length} {t('kb.articles', 'articles')} {t('kb.browse.subtitle', 'across all categories')}
+                          {browseArticles.length} {t('kb.articles', 'articles')}{' '}
+                          {t('kb.browse.subtitle', 'across all categories')}
                         </p>
                       </div>
                     </div>
@@ -525,7 +564,6 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             </div>
           )}
         </div>
-
       </div>
     </MarketingLayout>
   );
@@ -533,7 +571,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
 /* ─────────────────────────── Article Card (Featured grid) ─────────────────────────── */
 
-const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> = ({ article, featured }) => {
+const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> = ({
+  article,
+  featured,
+}) => {
   const { t } = useTranslation();
   const visibleTags = getVisibleArticleTags(article);
 
@@ -620,7 +661,10 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
-        <ArrowRight size={13} className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight
+          size={13}
+          className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform"
+        />
       </div>
     </Link>
   );
@@ -630,7 +674,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
 
 const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }) => {
   const { t } = useTranslation();
-  const accent = SECTION_ACCENT[article.category_slug || ''] || DEFAULT_ACCENT;
+  const accent = accentForSlug(article.category_slug);
   const visibleTags = getVisibleArticleTags(article);
 
   return (
@@ -677,46 +721,52 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
 
 /* ─────────────────────────── Section Preview ─────────────────────────── */
 
-const SectionPreview: React.FC<{ category: KbCategory; language: string; selectedTag: string | null }> = ({
-  category,
-  language,
-  selectedTag,
-}) => {
+const SectionPreview: React.FC<{
+  collection: KbCollection;
+  language: string;
+  selectedTag: string | null;
+}> = ({ collection, language, selectedTag }) => {
   const { t } = useTranslation();
-  const { data: articlesData } = useDocsArticles({
-    language,
-    categorySlug: category.slug,
-    limit: 4,
-  });
+  const { data: articlesData } = useKnowledgeCollectionArticles(collection.slug, 4, 0, language);
   const articles = useMemo(
-    () => (articlesData?.articles || []).filter((article) => matchesSelectedTag(article, selectedTag)),
+    () =>
+      (articlesData?.articles || []).filter((article) => matchesSelectedTag(article, selectedTag)),
     [articlesData?.articles, selectedTag]
   );
 
   if (!articles?.length) return null;
 
-  const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
+  const accent = accentForSlug(collection.slug);
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className={cn(
-            'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
-            accent.gradient
-          )}>
-            {SECTION_ICONS[category.slug] || <BookOpen size={20} />}
+          <div
+            className={cn(
+              'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
+              accent.gradient
+            )}
+          >
+            <FolderOpen size={20} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">{category.name}</h2>
-            {category.description && (
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">{category.description}</p>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">
+              {collection.title}
+            </h2>
+            {collection.description && (
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">
+                {collection.description}
+              </p>
             )}
           </div>
         </div>
         <Link
-          to={`/knowledge-base/${category.slug}`}
-          className={cn('flex items-center gap-1 text-sm font-bold transition-colors flex-shrink-0', accent.text)}
+          to={`/knowledge-base/${collection.slug}`}
+          className={cn(
+            'flex items-center gap-1 text-sm font-bold transition-colors flex-shrink-0',
+            accent.text
+          )}
         >
           {t('kb.section.viewAll', 'View all')}
           <ChevronRight size={14} />
@@ -727,16 +777,16 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
         {articles.slice(0, 4).map((article: KbArticleListItem) => (
           <Link
             key={article.id}
-            to={`/knowledge-base/${category.slug}/${article.slug}`}
+            to={`/knowledge-base/${collection.slug}/${article.slug}`}
             className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
           >
             {article.thumbnail_url && (
               <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0D0828]">
                 <img
-                  src={kbImg(article.thumbnail_url)}
+                  src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url)}
                   alt={article.title}
-                  width={1200}
-                  height={675}
+                  width={600}
+                  height={338}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                   loading="lazy"

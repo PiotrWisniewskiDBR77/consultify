@@ -40,6 +40,7 @@ import { useHelpSidePanel } from '../../contexts/HelpContext';
 import AIBudgetsView from './AIBudgetsView';
 import { ComplianceCenterView } from './ComplianceCenterView';
 import CustomRolesBuilder from './CustomRolesBuilder';
+import { GlobalSecurityPostureView } from './GlobalSecurityPostureView';
 import AdminAuditLogsView from './iam/AdminAuditLogsView';
 // Advanced IAM Module
 import AdminSessionsView from './iam/AdminSessionsView';
@@ -59,6 +60,7 @@ interface SecurityModuleProps {
 
 // Map each tab to its help card
 const TAB_HELP_CARDS: Record<string, string> = {
+  posture: 'superadmin_security_posture',
   sso: 'superadmin-security-sso',
   scim: 'superadmin-security-scim',
   roles: 'superadmin-security-roles',
@@ -76,11 +78,16 @@ const TAB_HELP_CARDS: Record<string, string> = {
 };
 
 export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || 'sso');
+  const [activeTab, setActiveTab] = useState(initialTab || 'posture');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   React.useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
+
+  React.useEffect(() => {
     const mapping: Record<string, string> = {
+      posture: 'superadmin_security_posture',
       sso: 'superadmin_sso',
       scim: 'superadmin_security_scim',
       roles: 'superadmin_security_roles',
@@ -101,6 +108,7 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
   }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
+    { id: 'posture', label: 'Posture', icon: <Shield size={16} /> },
     { id: 'sso', label: 'SSO', icon: <Key size={16} /> },
     { id: 'scim', label: 'SCIM', icon: <Link2 size={16} /> },
     { id: 'roles', label: 'Roles', icon: <Shield size={16} /> },
@@ -119,6 +127,12 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'posture':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <GlobalSecurityPostureView />
+          </div>
+        );
       case 'sso':
         return (
           <div className="p-6 overflow-y-auto h-full">
@@ -214,7 +228,7 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Security"
-      subtitle="Enterprise security, access control, and compliance"
+      subtitle="Enterprise posture, access control, incidents, and privileged session governance"
       actions={<InfoButton cardId={TAB_HELP_CARDS[activeTab] || 'superadmin-security'} />}
     >
       {renderContent()}

@@ -28,7 +28,6 @@ import {
   Flag,
   FolderOpen,
   Loader2,
-  Maximize2,
   MessageSquare,
   Scale,
   Shield,
@@ -46,13 +45,14 @@ import { useNavigate } from 'react-router-dom';
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
 import { Api } from '@/services/api';
+import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import {
   getInitiativeGateReadinessTruth,
   getInitiativeStatusPreflightTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
-import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
-import { getArtifactPath } from '@/utils/artifactLinks';
+import { ROUTES } from '@/routes/routeConfig';
+import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
 
@@ -313,7 +313,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
   const wfStatus = getWorkflowStatusForInitiative(initiative as any);
   const status = (
-    (Object.values(InitiativeStatus) as string[]).includes(wfStatus) ? wfStatus : InitiativeStatus.DRAFT
+    (Object.values(InitiativeStatus) as string[]).includes(wfStatus)
+      ? wfStatus
+      : InitiativeStatus.DRAFT
   ) as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
   const statusActions = getStatusActions(status);
@@ -463,15 +465,6 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             </h3>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            {onOpenFull && initiative && (
-              <button
-                onClick={() => onOpenFull(initiative)}
-                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-purple-500 hover:bg-purple-500/10 transition-all"
-                title={t('initiatives.compact.openFullCard')}
-              >
-                <Maximize2 size={14} />
-              </button>
-            )}
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
@@ -733,7 +726,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 onOpen={(row) => {
                   const targetPath =
                     row.kind === 'sheet'
-                      ? '/presentations?tab=sheets'
+                      ? buildMyWorkSheetTableOpenPath(row.originRecordId, row.originRecordId)
                       : getArtifactPath(
                           row.kind === 'presentation' ? 'presentation' : 'report',
                           row.originRecordId
@@ -746,19 +739,6 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           </>
         )}
       </div>
-
-      {/* Footer */}
-      {onOpenFull && initiative && (
-        <div className="flex-shrink-0 p-3 border-t border-slate-200 dark:border-navy-700">
-          <button
-            onClick={() => onOpenFull(initiative)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-violet-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold hover:from-purple-500/20 hover:to-violet-500/20 transition-all"
-          >
-            <Maximize2 size={14} />
-            {t('initiatives.compact.openFullCard')}
-          </button>
-        </div>
-      )}
     </motion.div>
   );
 
@@ -901,6 +881,20 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
           </div>
         </div>
       )}
+
+      {init.id ? (
+        <button
+          onClick={() =>
+            navigate(
+              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(String(init.id))}`
+            )
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <span>{t('initiatives.preview.resultsAndReports', 'Results & KPI reports')}</span>
+        </button>
+      ) : null}
 
       {/* Kill Criteria / Scope */}
       {init.killCriteria?.length > 0 && (

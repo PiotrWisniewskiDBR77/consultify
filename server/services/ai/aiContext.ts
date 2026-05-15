@@ -1077,42 +1077,42 @@ class ContextBuilder {
     await waitForDb();
 
     return new Promise((resolve) => {
-      // Try maturity_assessments table first (primary)
+      // Prefer canonical assessments runtime. Legacy maturity_assessments stays as fallback only.
       db.get(
         `SELECT 
-                    m.id,
-                    m.project_id,
-                    m.axis_scores as axis_data,
-                    m.overall_as_is,
-                    m.overall_to_be,
-                    m.overall_gap,
-                    m.is_complete,
-                    m.created_at,
-                    m.updated_at,
+                    a.*,
                     p.name as project_name,
                     p.context_data as project_context,
                     o.name as organization_name,
                     o.id as organization_id,
                     o.industry as org_industry
-                 FROM maturity_assessments m
-                 LEFT JOIN projects p ON m.project_id = p.id
+                 FROM assessments a
+                 LEFT JOIN projects p ON a.project_id = p.id
                  LEFT JOIN organizations o ON p.organization_id = o.id
-                 WHERE m.id = ?`,
+                 WHERE a.id = ?`,
         [assessmentId],
         (err, row) => {
           if (err || !row) {
-            // Fallback to assessments table if exists
             db.get(
               `SELECT 
-                                a.*,
+                                m.id,
+                                m.project_id,
+                                m.axis_scores as axis_data,
+                                m.overall_as_is,
+                                m.overall_to_be,
+                                m.overall_gap,
+                                m.is_complete,
+                                m.created_at,
+                                m.updated_at,
                                 p.name as project_name,
                                 p.context_data as project_context,
                                 o.name as organization_name,
+                                o.id as organization_id,
                                 o.industry as org_industry
-                             FROM assessments a
-                             LEFT JOIN projects p ON a.project_id = p.id
+                             FROM maturity_assessments m
+                             LEFT JOIN projects p ON m.project_id = p.id
                              LEFT JOIN organizations o ON p.organization_id = o.id
-                             WHERE a.id = ?`,
+                             WHERE m.id = ?`,
               [assessmentId],
               (err2, row2) => {
                 if (err2 || !row2) {
@@ -1124,7 +1124,6 @@ class ContextBuilder {
               }
             );
           } else {
-            // Parse axis data from maturity_assessments
             row.axisData = this._parseJSON(row.axis_data) || {};
             resolve(row);
           }

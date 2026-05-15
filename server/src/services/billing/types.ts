@@ -6,6 +6,7 @@ export interface BillingPlan {
   id: string;
   name: string;
   price_monthly: number;
+  billing_model?: string | null;
   token_limit?: number;
   storage_limit_gb?: number;
   token_overage_rate?: number;
@@ -28,6 +29,16 @@ export interface OrganizationBilling {
   id: string;
   organization_id: string;
   subscription_plan_id?: string | null;
+  billing_rail?: string | null;
+  contract_status?: string | null;
+  contract_type?: string | null;
+  renewal_at?: string | Date | null;
+  grace_until?: string | Date | null;
+  access_expires_at?: string | Date | null;
+  external_invoice_ref?: string | null;
+  notes?: string | null;
+  managed_by_user_id?: string | null;
+  is_manual_override?: number | boolean | null;
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
   billing_email?: string | null;
@@ -47,6 +58,7 @@ export interface OrganizationBilling {
 export interface Invoice {
   id: string;
   organization_id: string;
+  source?: string | null;
   stripe_invoice_id?: string | null;
   amount_due: number;
   amount_paid: number;
@@ -174,6 +186,18 @@ export interface UpdatePlanData {
 
 export interface UpsertBillingData {
   subscription_plan_id?: string;
+  billing_rail?: string;
+  // Nullable so callers can explicitly clear the contract status on the
+  // upsert path (used when transitioning to stripe-managed subscriptions).
+  contract_status?: string | null;
+  contract_type?: string;
+  renewal_at?: Date | string | null;
+  grace_until?: Date | string | null;
+  access_expires_at?: Date | string | null;
+  external_invoice_ref?: string | null;
+  notes?: string | null;
+  managed_by_user_id?: string | null;
+  is_manual_override?: boolean | number | null;
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
   billing_email?: string;

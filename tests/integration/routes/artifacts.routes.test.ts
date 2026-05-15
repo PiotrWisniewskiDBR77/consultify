@@ -51,6 +51,23 @@ vi.mock('../../../server/src/services/v8/reportsPresModelService.js', () => ({
   getExportHistory: (...args: any[]) => getExportHistoryMock(...args),
 }));
 
+const dbGetMock = vi.fn();
+const dbRunMock = vi.fn();
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  get: (...args: any[]) => dbGetMock(...args),
+  run: (...args: any[]) => dbRunMock(...args),
+}));
+
+vi.mock('../../../server/src/services/organizationService.js', () => ({
+  getMembers: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../../server/src/services/v8/publishReviewService.js', () => ({
+  getPublishRecord: vi.fn().mockResolvedValue(null),
+  transitionPublishState: vi.fn(),
+  submitReviewGate: vi.fn(),
+}));
+
 import artifactsRouter from '../../../server/src/routes/artifacts.routes.js';
 
 describe('artifacts access routes (HTTP contract; artifactRegistryService mocked)', () => {
@@ -72,6 +89,9 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     deriveArtifactValidationSnapshotMock.mockReset();
     getExecutionRunMock.mockReset();
     getExportHistoryMock.mockReset();
+    dbGetMock.mockReset();
+    dbRunMock.mockReset();
+    dbRunMock.mockResolvedValue(undefined);
     deriveArtifactValidationSnapshotMock.mockReturnValue({
       state: 'validated',
       checks: [],
@@ -408,5 +428,77 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
         error: 'Artifact art-5 cannot enter review before artifact validation passes',
       })
     );
+  });
+
+  it('POST /api/artifacts/:id/deprecate — deprecates a template artifact with reason + migrationHint (P24-D)', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'admin-1', organizationId: 'org-1', role: 'ADMIN' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'tmpl-1',
+      artifactFamily: 'template',
+      ownerUserId: 'admin-1',
+    });
+    dbGetMock.mockResolvedValue({
+      origin_summary_json: JSON.stringify({
+        template: {
+          scope: 'org',
+          status: 'active',
+          description: 'Old template',
+          metadata: { createdBy: 'admin-1' },
+        },
+      }),
+    });
+
+    const res = await request(app).post('/api/artifacts/tmpl-1/deprecate').send({
+      reason: 'Replaced by updated version',
+      migrationHint: 'Use tmpl-2 instead',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        artifactId: 'tmpl-1',
+        status: 'deprecated',
+        deprecationReason: 'Replaced by updated version',
+        migrationHint: 'Use tmpl-2 instead',
+      })
+    );
+    expect(dbRunMock).toHaveBeenCalledOnce();
+    const updateArgs = dbRunMock.mock.calls[0];
+    const updatedSummary = JSON.parse(updateArgs[1][0]);
+    expect(updatedSummary.template.status).toBe('deprecated');
+    expect(updatedSummary.template.deprecationReason).toBe('Replaced by updated version');
+    expect(updatedSummary.template.migrationHint).toBe('Use tmpl-2 instead');
+  });
+
+  it('POST /api/artifacts/:id/deprecate — returns 403 for non-admin users', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+
+    const res = await request(app).post('/api/artifacts/tmpl-1/deprecate').send({
+      reason: 'test',
+    });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('POST /api/artifacts/:id/deprecate — returns 409 when artifact is not a template', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'admin-1', organizationId: 'org-1', role: 'ADMIN' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'doc-1',
+      artifactFamily: 'document',
+      ownerUserId: 'admin-1',
+    });
+
+    const res = await request(app).post('/api/artifacts/doc-1/deprecate').send({
+      reason: 'test',
+    });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain('Only template artifacts');
   });
 });

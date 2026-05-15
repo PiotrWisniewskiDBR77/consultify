@@ -195,7 +195,15 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
           notes: notes || undefined,
           projectId: currentProjectId,
         });
-        toast.success(isPolish ? 'Przydzielono wywiad' : 'Interview assigned');
+        toast.success(
+          (assignment as any)?.splitAssignments
+            ? isPolish
+              ? `Utworzono ${(assignment as any)?.createdCount || assigneeIds.length} osobne przydziały`
+              : `Created ${(assignment as any)?.createdCount || assigneeIds.length} separate assignments`
+            : isPolish
+              ? 'Przydzielono wywiad'
+              : 'Interview assigned'
+        );
         onCreated(assignment);
       }
       onClose();

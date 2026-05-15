@@ -21,7 +21,9 @@ export function getWhiteboardModeCopy(
       helper: isPolish
         ? 'Rysujesz po warstwie boardu. Elementy tablicy sa chwilowo zablokowane, aby uniknac przypadkowych przesuniec.'
         : 'You are drawing on top of the board. Board elements are temporarily locked to avoid accidental moves.',
-      exitHint: isPolish ? 'Esc lub Canvas wraca do boardu.' : 'Esc or Canvas returns to board mode.',
+      exitHint: isPolish
+        ? 'Esc lub Canvas wraca do boardu.'
+        : 'Esc or Canvas returns to board mode.',
     };
   }
 
@@ -50,7 +52,9 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
     },
     {
       key: 'Escape',
-      description: isPolish ? 'Zamknij pomoc albo wyjdz z trybu rysowania' : 'Close help or leave draw mode',
+      description: isPolish
+        ? 'Zamknij pomoc albo wyjdz z trybu rysowania'
+        : 'Close help or leave draw mode',
       category: 'navigation',
     },
     {

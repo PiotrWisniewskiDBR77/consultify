@@ -13,6 +13,7 @@ import {
 } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { ActionContext, ChatActionPayload } from '@/types/domain/chatActions';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { validateActionPayload } from './chatActionRegistry';
 
@@ -208,13 +209,20 @@ export async function handleChatAction(
         if (deps.onOpenPreview) {
           deps.onOpenPreview(entityType, entityId);
         } else {
-          // Fallback: navigate to entity based on type
           if (entityType === 'initiative') {
             deps.navigate(`/initiatives?open=${encodeURIComponent(entityId)}&mode=doc`);
           } else if (entityType === 'task') {
             deps.navigate(`/my-work?openTask=${encodeURIComponent(entityId)}`);
           } else if (entityType === 'decision') {
             deps.navigate(`/my-work?openDecision=${encodeURIComponent(entityId)}`);
+          } else if (entityType === 'report' || entityType === 'document') {
+            deps.navigate(getArtifactPath('report', entityId));
+          } else if (entityType === 'presentation') {
+            deps.navigate(getArtifactPath('presentation', entityId));
+          } else if (entityType === 'sheet') {
+            deps.navigate(getArtifactPath('sheet', entityId));
+          } else if (entityType === 'artifact') {
+            deps.navigate(`/presentations?tab=all&artifactId=${encodeURIComponent(entityId)}`);
           } else {
             deps.navigate(`/my-work`);
           }
@@ -252,6 +260,70 @@ export async function handleChatAction(
         } else {
           deps.navigate(`/benefits?kpi=${encodeURIComponent(kpiId)}`);
         }
+        return { success: true };
+      }
+
+      case 'START_ARTIFACT_REVIEW': {
+        const artifactId = String(params.artifactId || '').trim();
+        if (!artifactId) {
+          return { success: false, error: 'Artifact ID is required' };
+        }
+        await Api.post(`/artifacts/${encodeURIComponent(artifactId)}/start-review`, {});
+        return { success: true };
+      }
+
+      case 'CHECK_TRUST_STATE': {
+        const artifactId = String(params.artifactId || '').trim();
+        if (!artifactId) {
+          return { success: false, error: 'Artifact ID is required' };
+        }
+        deps.navigate(`/presentations?tab=all&artifactId=${encodeURIComponent(artifactId)}`);
+        return { success: true };
+      }
+
+      case 'USE_TEMPLATE': {
+        const templateArtifactId = String(params.templateArtifactId || '').trim();
+        if (!templateArtifactId) {
+          return { success: false, error: 'Template artifact ID is required' };
+        }
+        const outputType = String(params.outputType || '').toLowerCase();
+        if (outputType === 'presentation') {
+          deps.navigate(
+            `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateArtifactId)}`
+          );
+        } else {
+          deps.navigate(
+            `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateArtifactId)}`
+          );
+        }
+        return { success: true };
+      }
+
+      case 'BROWSE_TEMPLATES': {
+        const qs = new URLSearchParams({ tab: 'templates' });
+        if (params.templateType) qs.set('type', String(params.templateType));
+        if (params.category) qs.set('category', String(params.category));
+        deps.navigate(`/presentations?${qs.toString()}`);
+        return { success: true };
+      }
+
+      case 'ANALYZE_STATEMENT': {
+        const packId = String(params.statementPackId || '').trim();
+        if (!packId) return { success: false, error: 'Statement pack ID is required' };
+        deps.navigate(`/economics/statements/${encodeURIComponent(packId)}`);
+        return { success: true };
+      }
+
+      case 'REVIEW_MODEL': {
+        const modelId = String(params.modelId || '').trim();
+        if (!modelId) return { success: false, error: 'Model ID is required' };
+        deps.navigate(`/economics/models/${encodeURIComponent(modelId)}`);
+        return { success: true };
+      }
+
+      case 'CHECK_LANE_STATUS': {
+        const runId = params.runId ? String(params.runId).trim() : '';
+        deps.navigate(runId ? `/my-work?runId=${encodeURIComponent(runId)}` : '/my-work');
         return { success: true };
       }
 

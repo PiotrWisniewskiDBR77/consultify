@@ -34,7 +34,14 @@ interface NavItem {
 export const BottomNavigation: React.FC = () => {
   const { t } = useTranslation();
   const { isMobile } = useDeviceType();
-  const { currentView, setCurrentView, setIsSidebarOpen, toggleChatCollapse, isChatCollapsed } =
+  const {
+    currentView,
+    setCurrentView,
+    setIsSidebarOpen,
+    toggleChatCollapse,
+    isChatCollapsed,
+    returnToFullChat,
+  } =
     useAppStore();
   const setDisplayMode = useConversationStore((state) => state.setDisplayMode);
 
@@ -79,7 +86,11 @@ export const BottomNavigation: React.FC = () => {
       setIsSidebarOpen(true);
     } else if (item.action === 'openChat') {
       setDisplayMode('full');
-      setCurrentView(AppView.AI_CHAT);
+      if (typeof returnToFullChat === 'function') {
+        returnToFullChat();
+      } else {
+        setCurrentView(AppView.AI_CHAT);
+      }
     } else if (item.view) {
       setCurrentView(item.view);
     }
@@ -116,7 +127,10 @@ export const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb">
+    <nav
+      aria-label={t('navigation.bottom.primary', 'Primary mobile navigation')}
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb"
+    >
       {/* Background with blur */}
       <div className="absolute inset-0 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-navy-700 shadow-2xl shadow-black/10" />
 
@@ -128,15 +142,25 @@ export const BottomNavigation: React.FC = () => {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => handleNavClick(item)}
               data-testid={`bottom-nav-${item.id}`}
+              aria-current={active ? 'page' : undefined}
+              aria-label={
+                item.action === 'openChat'
+                  ? t('navigation.bottom.openChat', 'Open AI chat')
+                  : item.action === 'openSidebar'
+                    ? t('navigation.bottom.openMenu', 'Open menu')
+                    : item.label
+              }
               className={`
                                 flex-1 flex flex-col items-center justify-center gap-0.5 
                                 transition-all duration-200 relative touch-target no-select
+                                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset
                                 ${
                                   active
-                                    ? 'text-purple-600 dark:text-purple-400'
-                                    : 'text-slate-400 dark:text-slate-500 active:text-purple-600 dark:active:text-purple-400'
+                                    ? 'text-purple-700 dark:text-purple-400'
+                                    : 'text-slate-600 dark:text-slate-500 active:text-purple-700 dark:active:text-purple-400'
                                 }
                             `}
             >

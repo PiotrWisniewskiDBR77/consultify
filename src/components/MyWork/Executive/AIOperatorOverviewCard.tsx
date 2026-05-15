@@ -7,11 +7,11 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   overview: any;
   loading?: boolean;
-  isPolish?: boolean;
   onOpenSection?: (section: string) => void;
   onProposeIntervention?: (templateKey: string) => void;
   onAcceptIntervention?: (actionId: string) => void;
@@ -39,7 +39,6 @@ const readinessTone = (score: number) =>
 export const AIOperatorOverviewCard: React.FC<Props> = ({
   overview,
   loading = false,
-  isPolish = false,
   onOpenSection,
   onProposeIntervention,
   onAcceptIntervention,
@@ -47,6 +46,8 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
   onRejectIntervention,
   busyActionId = null,
 }) => {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
@@ -91,12 +92,13 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? 'AI Operator' : 'AI Operator'}
+                  {t('executive.aiOperator.title', 'AI Operator')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Relacja, nawigacja, wykonanie i wartość w jednym cockpitcie'
-                    : 'Relationship, navigation, execution, and value in one cockpit'}
+                  {t(
+                    'executive.aiOperator.subtitle',
+                    'Relationship, navigation, execution, and value in one cockpit'
+                  )}
                 </p>
               </div>
             </div>
@@ -108,7 +110,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
               {Number(ops?.readinessScore || 0)}%
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              {isPolish ? 'operator readiness' : 'operator readiness'}
+              {t('executive.aiOperator.readiness', 'operator readiness')}
             </div>
           </div>
         </div>
@@ -118,27 +120,25 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
           <MetricCard
             icon={<Route size={15} />}
-            label={isPolish ? 'Etap' : 'Stage'}
+            label={t('executive.aiOperator.stage', 'Stage')}
             value={String(profile?.currentStage || 'discovery').replace(/_/g, ' ')}
             tone={statusTone[profile?.relationshipHealth || 'watch']}
             sublabel={`${navigator?.progressPct || 0}%`}
           />
           <MetricCard
             icon={<MessageSquareMore size={15} />}
-            label={isPolish ? 'Relacja' : 'Relationship'}
+            label={t('executive.aiOperator.relationship', 'Relationship')}
             value={profile?.relationshipHealth || 'watch'}
             tone={statusTone[profile?.relationshipHealth || 'watch']}
             sublabel={
               profile?.daysSinceLastTouch != null
-                ? `${profile.daysSinceLastTouch} ${isPolish ? 'dni od kontaktu' : 'days since touch'}`
-                : isPolish
-                  ? 'Brak kontaktu'
-                  : 'No touchpoint'
+                ? `${profile.daysSinceLastTouch} ${t('executive.aiOperator.daysSinceTouch', 'days since touch')}`
+                : t('executive.aiOperator.noTouchpoint', 'No touchpoint')
             }
           />
           <MetricCard
             icon={<TrendingUp size={15} />}
-            label={isPolish ? 'Wartość' : 'Value'}
+            label={t('executive.aiOperator.value', 'Value')}
             value={`${value?.coveragePct || 0}%`}
             tone={
               statusTone[
@@ -153,7 +153,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
           />
           <MetricCard
             icon={<ShieldCheck size={15} />}
-            label={isPolish ? 'Autonomia' : 'Autonomy'}
+            label={t('executive.aiOperator.autonomy', 'Autonomy')}
             value={`${ops?.autonomyScore || 0}%`}
             tone={
               statusTone[
@@ -172,14 +172,14 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
           <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] p-4 bg-slate-50/70 dark:bg-white/[0.03]">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Next best actions' : 'Next best actions'}
+                {t('executive.aiOperator.nextActions', 'Next best actions')}
               </h4>
               <button
                 type="button"
                 onClick={() => onOpenSection?.('tasks')}
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-500 inline-flex items-center gap-1"
               >
-                {isPolish ? 'Otwórz' : 'Open'}
+                {t('executive.aiOperator.open', 'Open')}
                 <ArrowRight size={12} />
               </button>
             </div>
@@ -209,7 +209,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak pilnych akcji operatora.' : 'No urgent operator actions.'}
+                  {t('executive.aiOperator.noActions', 'No urgent operator actions.')}
                 </div>
               )}
             </div>
@@ -217,16 +217,16 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
 
           <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] p-4 bg-slate-50/70 dark:bg-white/[0.03]">
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-              {isPolish ? 'Cadence i workstreamy' : 'Cadence and workstreams'}
+              {t('executive.aiOperator.cadence', 'Cadence and workstreams')}
             </h4>
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-3">
                 <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                  {isPolish ? 'Executive brief' : 'Executive brief'}
+                  {t('executive.aiOperator.executiveBrief', 'Executive brief')}
                 </div>
                 <div className="text-sm text-slate-800 dark:text-slate-100">
                   {communication?.executiveBrief?.summary ||
-                    (isPolish ? 'Brak briefu.' : 'No brief yet.')}
+                    t('executive.aiOperator.noBrief', 'No brief yet.')}
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {(communication?.executiveBrief?.bullets || []).slice(0, 3).join(' • ')}
@@ -251,10 +251,10 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Operator sequence' : 'Operator sequence'}
+                {t('executive.aiOperator.sequence', 'Operator sequence')}
               </h4>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {plan?.objective || (isPolish ? 'Brak planu operatora.' : 'No operator plan yet.')}
+                {plan?.objective || t('executive.aiOperator.noPlan', 'No operator plan yet.')}
               </div>
             </div>
             <span
@@ -299,7 +299,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                           }
                           className="inline-flex items-center h-7 px-2.5 rounded-full bg-violet-600 text-white text-[11px] font-medium disabled:opacity-60"
                         >
-                          {isPolish ? 'Intervene' : 'Intervene'}
+                          {t('executive.aiOperator.intervene', 'Intervene')}
                         </button>
                       ) : null}
                     </div>
@@ -307,24 +307,25 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Plan sekwencji jeszcze nie został zbudowany.'
-                    : 'Sequence plan has not been generated yet.'}
+                  {t(
+                    'executive.aiOperator.noSequence',
+                    'Sequence plan has not been generated yet.'
+                  )}
                 </div>
               )}
             </div>
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-3">
                 <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                  {isPolish ? 'Next milestone' : 'Next milestone'}
+                  {t('executive.aiOperator.nextMilestone', 'Next milestone')}
                 </div>
                 <div className="text-sm text-slate-900 dark:text-white">
-                  {plan?.nextMilestone || (isPolish ? 'Brak' : 'None')}
+                  {plan?.nextMilestone || t('executive.aiOperator.none', 'None')}
                 </div>
               </div>
               <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-3">
                 <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-                  {isPolish ? 'Plan blockers' : 'Plan blockers'}
+                  {t('executive.aiOperator.planBlockers', 'Plan blockers')}
                 </div>
                 <div className="space-y-1.5">
                   {(plan?.blockers || []).length ? (
@@ -335,14 +336,14 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                     ))
                   ) : (
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Brak aktywnych blockerów planu.' : 'No active plan blockers.'}
+                      {t('executive.aiOperator.noBlockers', 'No active plan blockers.')}
                     </div>
                   )}
                 </div>
               </div>
               <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-3">
                 <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-                  {isPolish ? 'Program summary' : 'Program summary'}
+                  {t('executive.aiOperator.programSummary', 'Program summary')}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(plan?.summary || {}).map(([key, val]) => (
@@ -367,7 +368,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] p-4 bg-slate-50/70 dark:bg-white/[0.03]">
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-              {isPolish ? 'Suggested interventions' : 'Suggested interventions'}
+              {t('executive.aiOperator.suggestedInterventions', 'Suggested interventions')}
             </h4>
             <div className="space-y-2">
               {suggestedInterventions.length ? (
@@ -392,21 +393,15 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                         className="inline-flex items-center h-8 px-3 rounded-full bg-violet-600 text-white text-xs font-medium disabled:opacity-60"
                       >
                         {busyActionId === item.templateKey
-                          ? isPolish
-                            ? 'Trwa...'
-                            : 'Working...'
-                          : isPolish
-                            ? 'Propose'
-                            : 'Propose'}
+                          ? t('executive.aiOperator.working', 'Working...')
+                          : t('executive.aiOperator.propose', 'Propose')}
                       </button>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak nowych interwencji do zaproponowania.'
-                    : 'No new interventions to propose.'}
+                  {t('executive.aiOperator.noInterventions', 'No new interventions to propose.')}
                 </div>
               )}
             </div>
@@ -414,7 +409,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
 
           <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] p-4 bg-slate-50/70 dark:bg-white/[0.03]">
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-              {isPolish ? 'Approval queue' : 'Approval queue'}
+              {t('executive.aiOperator.approvalQueue', 'Approval queue')}
             </h4>
             <div className="space-y-2">
               {interventionQueue.length ? (
@@ -460,7 +455,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                               }
                               className="inline-flex items-center h-8 px-3 rounded-full bg-emerald-600 text-white text-xs font-medium disabled:opacity-60"
                             >
-                              {isPolish ? 'Accept' : 'Accept'}
+                              {t('executive.aiOperator.accept', 'Accept')}
                             </button>
                             <button
                               type="button"
@@ -470,7 +465,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                               }
                               className="inline-flex items-center h-8 px-3 rounded-full border border-slate-200 dark:border-white/[0.08] text-xs font-medium disabled:opacity-60"
                             >
-                              {isPolish ? 'Reject' : 'Reject'}
+                              {t('executive.aiOperator.reject', 'Reject')}
                             </button>
                           </>
                         ) : null}
@@ -483,7 +478,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                             }
                             className="inline-flex items-center h-8 px-3 rounded-full bg-violet-600 text-white text-xs font-medium disabled:opacity-60"
                           >
-                            {isPolish ? 'Execute' : 'Execute'}
+                            {t('executive.aiOperator.execute', 'Execute')}
                           </button>
                         ) : null}
                       </div>
@@ -492,9 +487,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 })
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak pozycji w approval queue.'
-                    : 'No interventions in the approval queue.'}
+                  {t('executive.aiOperator.noQueue', 'No interventions in the approval queue.')}
                 </div>
               )}
             </div>

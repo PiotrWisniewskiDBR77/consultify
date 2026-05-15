@@ -1,0 +1,42 @@
+/* Whiteboard canvas styles — aligned with HIG/navy/glass design system */
+
+.dark .react-flow__background {
+  opacity: 0.5;
+}
+
+/* Selection box — primary accent, not purple neon */
+.dark .react-flow__selection {
+  border-color: rgba(var(--color-primary-500), 0.5) !important;
+  background: rgba(var(--color-primary-500), 0.06) !important;
+}
+
+/* Handle styling */
+.dark .react-flow__handle:hover {
+  box-shadow: 0 0 6px rgba(var(--color-primary-500), 0.4);
+}
+
+/* Connection line — subtle primary */
+.dark .react-flow__connection-path {
+  stroke: rgba(var(--color-primary-500), 0.6) !important;
+}
+
+/* Edge stroke in dark mode — toned down, no drop-shadow blur */
+.dark .react-flow__edge path {
+  transition: stroke-opacity 0.15s ease-out;
+}
+
+.dark .react-flow__edge:hover path {
+  stroke-opacity: 1;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node,
+  .react-flow__edge path {
+    transition: none !important;
+    animation: none !important;
+  }
+  .react-flow__edge circle {
+    display: none;
+  }
+}

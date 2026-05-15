@@ -145,11 +145,23 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       if (!tableId) return;
       setLoading(true);
       try {
-        let url = `/api/tables/${tableId}/activity?limit=50`;
+        let url = `/api/table-platform/tables/${tableId}/audit?limit=50`;
         if (since) url += `&since=${encodeURIComponent(since)}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch activity');
-        const data: AuditEvent[] = await res.json();
+        const json = await res.json();
+        const raw: any[] = json.events ?? json;
+        const data: AuditEvent[] = raw.map((r: any) => ({
+          id: r.id,
+          eventType: r.event_type ?? r.eventType,
+          entityType: r.entity_type ?? r.entityType,
+          entityId: r.entity_id ?? r.entityId,
+          actorId: r.actor_id ?? r.actorId,
+          actorName: r.actor_name ?? r.actorName ?? r.metadata?.actorName,
+          details: r.metadata ?? r.details ?? {},
+          timestamp: r.created_at ?? r.timestamp,
+          timeGroup: r.time_group ?? r.timeGroup,
+        }));
         if (since && data.length > 0) {
           setEvents((prev) => {
             const existingIds = new Set(prev.map((e) => e.id));

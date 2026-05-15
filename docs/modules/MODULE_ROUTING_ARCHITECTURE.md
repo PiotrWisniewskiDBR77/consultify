@@ -178,15 +178,18 @@ SSOT documents for v3:
 
 > Economics is a **supporting capability** (economic analysis artefact) that can feed initiatives, but it is not part of the core sequential flow order.
 
-### 9. Reports
+### 9. Outputs Library (Reports & Presentations)
 | Właściwość | Wartość |
 |------------|---------|
-| **Sidebar ID** | `MODULE_REPORTS` |
+| **Sidebar ID** | `MODULE_OUTPUTS` |
 | **AppView** | `AppView.FULL_STEP6_REPORTS` |
-| **Route** | `/reports` |
-| **Component** | `FullReportsView` → `ManagementReportsView` |
+| **Route** | `/presentations` (canonical); `/reports` redirects here |
+| **Component** | `ReportsAndPresentationsHub` |
 | **Ikona** | `BookOpen` |
-| **Lokalizacja** | `src/views/FullReportsView.tsx` |
+| **Lokalizacja** | `src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx` |
+| **Tabs** | All, Mine, Needs review, Documents, Presentations, Sheets, Templates |
+
+> Unified outputs hub (P19). The `/reports` and `/reports/management` routes redirect to `/presentations`. Tab query params managed by `outputsLibraryTabQuery.ts`.
 
 ---
 

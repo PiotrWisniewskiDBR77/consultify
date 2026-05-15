@@ -144,32 +144,35 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
     fetchSignals();
   }, [fetchSignals, isControlled]);
 
-  const handleDismiss = useCallback(async (signalId: string) => {
-    try {
-      const token = getAuthToken();
-      if (!token) return;
+  const handleDismiss = useCallback(
+    async (signalId: string) => {
+      try {
+        const token = getAuthToken();
+        if (!token) return;
 
-      await V8ExecutionControlApi.dismissRiskSignal(signalId).catch((error) => {
-        if (!shouldFallbackToLegacyExecutionControl(error)) {
-          throw error;
-        }
-        return fetch('/api/execution-control/risk-signals/dismiss', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ signalId }),
+        await V8ExecutionControlApi.dismissRiskSignal(signalId).catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetch('/api/execution-control/risk-signals/dismiss', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ signalId }),
+          });
         });
-      });
 
-      setDismissedIds((prev) => new Set([...prev, signalId]));
-      onRefresh?.();
-      trackFunnelEvent('execution_risk_signal_dismissed', { signalId });
-    } catch {
-      // noop
-    }
-  }, [onRefresh]);
+        setDismissedIds((prev) => new Set([...prev, signalId]));
+        onRefresh?.();
+        trackFunnelEvent('execution_risk_signal_dismissed', { signalId });
+      } catch {
+        // noop
+      }
+    },
+    [onRefresh]
+  );
 
   const visibleSignals = visibleSignalsSource.filter((s) => !dismissedIds.has(s.id));
 

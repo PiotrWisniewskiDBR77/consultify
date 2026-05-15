@@ -38,7 +38,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="flex items-center gap-3">
           {Icon && (
             <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 dark:border-transparent dark:bg-slate-800 flex items-center justify-center shadow-sm dark:shadow-none">
-              <Icon size={20} className="text-slate-500 dark:text-slate-400" />
+              <Icon size={20} className="text-slate-700 dark:text-slate-400" />
             </div>
           )}
           <div>
@@ -46,7 +46,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{subtitle}</p>
             )}
           </div>
         </div>
@@ -76,7 +76,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       <div>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
         {subtitle && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{subtitle}</p>
         )}
       </div>
       {action && <div>{action}</div>}
@@ -97,21 +97,28 @@ interface BreadcrumbProps {
 
 export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
   return (
-    <nav className="flex items-center gap-2 text-sm">
+    <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
       {items.map((item, index) => (
         <React.Fragment key={index}>
-          {index > 0 && <span className="text-slate-600 dark:text-slate-400">/</span>}
+          {index > 0 && (
+            <span className="text-slate-400 dark:text-slate-500" aria-hidden="true">
+              /
+            </span>
+          )}
           {item.onClick || item.href ? (
             <button
               onClick={item.onClick}
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-300 transition-colors"
+              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-sm"
             >
               {item.label}
             </button>
           ) : (
             <span
+              aria-current={index === items.length - 1 ? 'page' : undefined}
               className={
-                index === items.length - 1 ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'
+                index === items.length - 1
+                  ? 'text-slate-900 dark:text-slate-100 font-medium'
+                  : 'text-slate-600 dark:text-slate-400'
               }
             >
               {item.label}

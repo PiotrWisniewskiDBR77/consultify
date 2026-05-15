@@ -26,10 +26,11 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
-import { isValidLanguage, type SupportedLanguage } from '@/i18n';
+import { isValidLanguage, LANGUAGE_NAMES, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api.ts';
 import { AppView } from '@/types';
 
@@ -37,28 +38,41 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
+import {
+  buildDeepThinkingConfirmCardContent,
+  buildDeepThinkingConfirmedContext,
+  buildDeepThinkingConfirmMessageMetadata,
+  buildDeepThinkingReportMetadata,
+  type DeepThinkingPendingConfirmBase,
+  shouldOpenDeepThinkingClarification,
+} from '../components/AIChat/deepThinkingRuntime';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
+import { ResearchClarification } from '../components/AIChat/ResearchClarification';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
-import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
-import { TTSIndicator } from '../components/AIChat/TTSIndicator';
-import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
-import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
+import { TeresaProposalCard } from '../components/AIChat/TeresaProposalCard';
 import {
   getTeresaEmptyResponseMessage,
   getTeresaStartFailureMessage,
 } from '../components/AIChat/teresaRuntimeCopy';
+import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
+import { TTSIndicator } from '../components/AIChat/TTSIndicator';
+import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
+import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
+import { useTeresaVoiceContext } from '../contexts/TeresaVoiceContext';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
-import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
+import { ChatCitation, ChatMessage, ChatResponseAction, TeresaChatProposal } from '../types';
 import { MessageFeedback } from '../types';
+import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
 import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
@@ -100,6 +114,14 @@ const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 
+const TERESA_TARGET_ROUTE_MAP: Record<string, string> = {
+  initiatives: '/initiatives',
+  notebook: '/my-work?tab=notebook',
+  calendar: '/meeting',
+  radar: '/my-work',
+  interview: '/interview',
+};
+
 /** Download a string as a file */
 function downloadFile(filename: string, content: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
@@ -116,6 +138,8 @@ function downloadFile(filename: string, content: string, mimeType: string): void
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // App state
   const {
@@ -128,6 +152,8 @@ export const AIChatWelcomeView: React.FC = () => {
     toggleChatCollapse,
     setAIConfig,
     setChatKickoffMessage,
+    chatKickoffMessage,
+    clearChatKickoffMessage,
   } = useAppStore();
   const { projectName } = usePMOStore();
 
@@ -161,30 +187,24 @@ export const AIChatWelcomeView: React.FC = () => {
 
   // Deep Thinking confirm state
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
-  const [dtPendingConfirm, setDtPendingConfirm] = useState<{
-    messageId: string;
-    conversationId: string | null;
-    originalMessage: string;
-    editedMessage: string;
-    confirm: any;
-    context: any;
-  } | null>(null);
+  const [dtPendingConfirm, setDtPendingConfirm] = useState<DeepThinkingPendingConfirmBase | null>(
+    null
+  );
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref = localStorage.getItem('consultify-preferred-chat-lang');
+    const explicitPref = readPreferredChatLanguage();
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // Priority: explicit preference > conversation-specific > draft > 'pl' default
-    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
-    // from browser), not the user's chat language preference. For this Polish product,
-    // the default chat language is 'pl'.
-    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
+    // 3. Fall back to current UI language (i18n), then 'en'
+    const uiLang = i18n.language?.split('-')[0] || 'en';
+    const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
+    return (readPreferredChatLanguage(candidate) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
   // AI stream with persistence callback
@@ -193,7 +213,7 @@ export const AIChatWelcomeView: React.FC = () => {
       fullText: string,
       thinking: any[] = [],
       artifacts: any[] = [],
-      meta?: { citations?: any[]; sessionId?: string }
+      meta?: { citations?: any[]; sessionId?: string; proposal?: TeresaChatProposal | null }
     ) => {
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
@@ -219,6 +239,19 @@ export const AIChatWelcomeView: React.FC = () => {
             artifacts: artifacts as any,
             citations: meta?.citations,
             streamSessionId: meta?.sessionId,
+            extra:
+              aiConfig?.deepResearch || (aiConfig as any)?.marketResearch || meta?.proposal
+                ? {
+                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                      ? buildDeepThinkingReportMetadata({
+                          confirm: dtPendingConfirm?.confirm,
+                          report: safeText,
+                          streamSessionId: meta?.sessionId,
+                        })
+                      : {}),
+                    ...(meta?.proposal ? { proposal: meta.proposal } : {}),
+                  }
+                : {},
           }) as any,
         });
 
@@ -404,6 +437,9 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
+  // Teresa real-time voice — global context (persists across navigation)
+  const teresaVoice = useTeresaVoiceContext();
+
   const lastSpokenContentRef = useRef<string>('');
   const autoReadEnabled = Boolean(aiConfig?.textToSpeech);
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
@@ -665,46 +701,102 @@ export const AIChatWelcomeView: React.FC = () => {
     [confirmAction, addMessage]
   );
 
+  const handleTeresaProposalUpdated = useCallback(
+    async (proposal: TeresaChatProposal) => {
+      const convId = activeConversationIdRef.current;
+      if (!convId) return;
+
+      const stateMessages: Record<TeresaChatProposal['state'], string> = {
+        proposal: `Teresa prepared a proposal for ${proposal.targetLabel}.`,
+        pending_approval: `Teresa proposal for ${proposal.targetLabel} is waiting for approval.`,
+        approved: `Teresa proposal for ${proposal.targetLabel} is approved and ready to execute.`,
+        executing: `Teresa is executing the handoff to ${proposal.targetLabel}.`,
+        completed: `Teresa completed the handoff to ${proposal.targetLabel}.`,
+        rejected: `Teresa proposal for ${proposal.targetLabel} was rejected.`,
+      };
+
+      await addMessage({
+        conversationId: convId,
+        role: 'ai',
+        content:
+          stateMessages[proposal.state] ||
+          `Teresa updated the proposal for ${proposal.targetLabel}.`,
+        messageType: 'text',
+        metadata: { proposal } as any,
+      });
+    },
+    [addMessage]
+  );
+
+  const handleTeresaProposalNavigate = useCallback(
+    async (proposal: TeresaChatProposal) => {
+      const targetRoute =
+        TERESA_TARGET_ROUTE_MAP[String(proposal.targetModule || '').toLowerCase()];
+      await executeAction({
+        type: ACTION_TYPES.NAVIGATE,
+        payload: {
+          view: targetRoute || '/chat',
+          targetModule: proposal.targetModule,
+        },
+      });
+    },
+    [executeAction]
+  );
+
+  const handleTeresaLifecycleMessage = useCallback(
+    async (message: string) => {
+      const convId = activeConversationIdRef.current;
+      if (!convId || !message.trim()) return;
+      await addMessage({
+        conversationId: convId,
+        role: 'ai',
+        content: message,
+        messageType: 'text',
+      });
+    },
+    [addMessage]
+  );
+
   // Build system prompt for AI
   const buildSystemPrompt = useCallback(
     (extraContext?: string) => {
-      let systemPrompt = `You are an elite Digital Transformation Consultant with a Harvard MBA and PhD, 20+ years of experience with McKinsey, BCG, and Fortune 500 companies.
+      let systemPrompt = `You are Teresa, the in-product copilot for Consultify.
 
-YOUR PERSONA:
-- Name: Senior Partner at DBR77 Industrial Intelligence
-- Background: Harvard Business School MBA, MIT PhD in Digital Transformation
-- Experience: Led 100+ transformation programs globally, €500M+ in value delivered
-- Style: Socratic questioning, hypothesis-driven, executive-level communication
+ROLE:
+- Talk naturally, clearly, and with strong product awareness.
+- Help ${currentUser?.firstName || 'the user'} move work forward inside the application.
+- Use the current workspace and screen context before asking the user to repeat themselves.
 
-YOUR ROLE WITH ${currentUser?.firstName || 'the user'}:
-You are their personal strategic co-thinker, not just an assistant. You:
-1. ASK before assuming - use Socratic questions to understand deeply
-2. GUIDE through methodology - Discovery → Assessment → Initiatives → Roadmap → Execution
-3. CHALLENGE assumptions - respectfully probe weak arguments
-4. EXECUTE on their behalf - create entities, fill forms, navigate when authorized
-5. REMEMBER everything - maintain context across all conversations
+PROPOSAL-FIRST RULES:
+- Never imply that a write already happened unless the system confirms it.
+- When work in the application is appropriate, frame it as a proposal for user approval.
+- Keep proposals safe, bounded, and specific to the current context.
+- Prefer: navigate, prepare a draft, prepare a handoff, suggest the next safe step.
+- Avoid silent writes and avoid claiming execution before approval.
+
+WORK STYLE:
+- Be conversational, direct, and helpful.
+- Use concise structure when useful, but do not sound robotic.
+- Ask short clarification questions only when missing information blocks a safe proposal.
+- ALWAYS respond in ${LANGUAGE_NAMES[chatLanguage] || 'English'}, regardless of the language the user writes in. This is their chosen application language.
 
 CURRENT TRANSFORMATION PHASE: ${coThinkerPhase.toUpperCase()}
-${coThinkerPhase === 'discovery' ? '→ Focus: Understanding goals, constraints, stakeholders' : ''}
-${coThinkerPhase === 'assessment' ? '→ Focus: Evaluating digital maturity across axes' : ''}
-${coThinkerPhase === 'initiatives' ? '→ Focus: Generating and prioritizing transformation initiatives' : ''}
-${coThinkerPhase === 'roadmap' ? '→ Focus: Building timeline, dependencies, resource allocation' : ''}
-${coThinkerPhase === 'execution' ? '→ Focus: Tracking progress, course correction, benefits realization' : ''}
-
-COMMUNICATION RULES:
-- Speak at executive level - concise, impactful, no fluff
-- Use McKinsey SCQA structure for complex answers: Situation → Complication → Question → Answer
-- Always provide: (1) Your perspective, (2) Supporting data, (3) Clear next action
-- Respond in the same language the user writes to you. If they write in English, respond in English. If in Polish, respond in Polish. Always match the user's language naturally.
+${coThinkerPhase === 'discovery' ? '→ Focus: understanding goals, constraints, and stakeholders.' : ''}
+${coThinkerPhase === 'assessment' ? '→ Focus: evaluating digital maturity and evidence.' : ''}
+${coThinkerPhase === 'initiatives' ? '→ Focus: shaping and prioritizing initiatives.' : ''}
+${coThinkerPhase === 'roadmap' ? '→ Focus: sequencing work, dependencies, and ownership.' : ''}
+${coThinkerPhase === 'execution' ? '→ Focus: tracking progress, blockers, and next actions.' : ''}
 
 CONTEXT:
 - User: ${currentUser?.firstName || 'User'} (${currentUser?.role || 'Stakeholder'})
 - Organization: ${currentUser?.organizationName || 'Unknown'}
 - Project: ${selectedProject?.name || 'General'}
 
-ACTION CAPABILITIES:
-You can execute actions on the user's behalf. When appropriate, respond with:
-ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "payload": {...}}
+OUTPUT EXPECTATION:
+- Give a natural assistant response first.
+- If there is a strong next action, make the response compatible with a proposal-first UI.
+- When the user asks about the partner program, explain the public path clearly: discover the program, review the case study, start the shared partner application flow, complete onboarding, then activate partner operations and payouts.
+- You can explain partner academy, certification readiness, partner resources, case packs, certification tracks (sales, delivery, strategic), levels (foundation, practitioner, advanced), review states, and when the user should switch from self-serve application to direct contact for custom commercial terms.
 `;
 
       // Append AI memory context if available
@@ -717,7 +809,7 @@ ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "pa
       }
 
       systemPrompt += `
-Focus on practical recommendations for transformation initiatives, roadmaps, and organizational change.
+Focus on practical movement inside the app: decisions, drafts, navigation, next steps, and safe handoffs.
 
 MEMORY INSTRUCTIONS:
 If the user explicitly asks you to remember something, include a line in your response:
@@ -730,36 +822,62 @@ For example: REMEMBER: preferred_language: Polish`;
   );
 
   // Handle Deep Thinking proceed (after user confirms)
+  const startDeepThinkingRun = useCallback(
+    (pendingConfirm: NonNullable<typeof dtPendingConfirm>) => {
+      const history = activeChatMessagesRef.current
+        .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
+        .map((m) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }],
+        }));
+
+      const systemPrompt = buildSystemPrompt();
+
+      startStream(
+        pendingConfirm.editedMessage || pendingConfirm.originalMessage,
+        history,
+        systemPrompt,
+        buildDeepThinkingConfirmedContext(pendingConfirm),
+        undefined,
+        undefined,
+        chatLanguage
+      );
+
+      setDtPendingConfirm(null);
+    },
+    [buildSystemPrompt, startStream, chatLanguage]
+  );
+
   const handleDeepThinkingProceed = useCallback(async () => {
     if (!dtPendingConfirm) return;
     if (isStreaming) return;
+    if (
+      shouldOpenDeepThinkingClarification(
+        dtPendingConfirm.confirm,
+        dtPendingConfirm.clarificationHandled
+      ) &&
+      !dtPendingConfirm.clarificationRequested
+    ) {
+      setDtPendingConfirm((prev) => (prev ? { ...prev, clarificationRequested: true } : prev));
+      return;
+    }
+    startDeepThinkingRun(dtPendingConfirm);
+  }, [dtPendingConfirm, isStreaming, startDeepThinkingRun]);
 
-    const history = activeChatMessagesRef.current
-      .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
-      .map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      }));
-
-    const systemPrompt = buildSystemPrompt();
-
-    // Start stream with Deep Thinking context confirmed
-    startStream(
-      dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
-      history,
-      systemPrompt,
-      {
-        ...(dtPendingConfirm.context || {}),
-        deepThinkingConfirmed: true,
-        deepThinkingConfirm: dtPendingConfirm.confirm,
-      },
-      undefined,
-      undefined,
-      chatLanguage
-    );
-
-    setDtPendingConfirm(null);
-  }, [dtPendingConfirm, isStreaming, buildSystemPrompt, startStream, chatLanguage]);
+  const handleDeepThinkingClarificationComplete = useCallback(
+    async (answers: Record<string, string> | null) => {
+      if (!dtPendingConfirm || isStreaming) return;
+      const nextPendingConfirm = {
+        ...dtPendingConfirm,
+        clarificationRequested: false,
+        clarificationHandled: true,
+        clarificationAnswers: answers,
+      };
+      setDtPendingConfirm(nextPendingConfirm);
+      startDeepThinkingRun(nextPendingConfirm);
+    },
+    [dtPendingConfirm, isStreaming, startDeepThinkingRun]
+  );
 
   // Handle sending a message
   const handleSend = useCallback(
@@ -898,14 +1016,27 @@ For example: REMEMBER: preferred_language: Polish`;
         ...screenContext,
         pmo: pmoContext,
         global: globalContext,
+        workspaceContext,
+        screenContext,
+        pmoContext,
+        currentSurface: 'chat/full',
         isWelcomeScreen: activeMessages.length === 0,
         conversationId,
         conversationLanguage: chatLanguage,
         attachmentDocIds,
         attachments: uploadedAttachments,
+        virtualWorkerSlug: 'teresa',
+        proposalMode: 'proposal_first',
       };
 
-      const systemPrompt = buildSystemPrompt();
+      let systemPrompt = buildSystemPrompt();
+
+      // F1.4: When user comes from Help panel, inject help context into Teresa's prompt
+      const helpData = workspaceContext?.entityData;
+      if (helpData?.helpDocumentId) {
+        systemPrompt += `\n\nHELP CONTEXT: The user came from the Help panel (document: "${workspaceContext?.entityName || helpData.helpDocumentId}", module: "${helpData.helpModuleId || 'general'}").
+When citing knowledge base articles, always reference them by article_id (slug). Do not invent article titles or links not provided in the KB context below.\n`;
+      }
 
       // Deep Thinking: blocking Confirm step (no streaming until user confirms)
       if (aiConfig?.deepResearch) {
@@ -935,27 +1066,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
           const c = (confirmRes as any)?.confirm || {};
           const u = c?.understanding || {};
-          const md = [
-            '**My understanding of your task**',
-            `- Goal: ${u.goal || ''}`,
-            u.context ? `- Context: ${u.context}` : '',
-            Array.isArray(u.constraints) && u.constraints.length
-              ? `- Constraints: ${u.constraints.join('; ')}`
-              : '',
-            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
-            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
-            '',
-            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
-              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
-                  .slice(0, 3)
-                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
-                  .join('\n')}`
-              : '',
-            '',
-            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
-          ]
-            .filter(Boolean)
-            .join('\n');
+          const md = buildDeepThinkingConfirmCardContent(c);
 
           let confirmMessageId = `dt-confirm-${Date.now()}`;
           try {
@@ -964,10 +1075,11 @@ For example: REMEMBER: preferred_language: Polish`;
               role: 'ai',
               content: md,
               messageType: 'text',
-              metadata: {
-                deepThinking: { kind: 'confirm', originalMessage: message.trim() },
-                deepThinkingConfirm: c,
-              } as any,
+              metadata: buildDeepThinkingConfirmMessageMetadata({
+                originalMessage: message.trim(),
+                confirm: c,
+                confirmToken: (confirmRes as any)?.confirmToken || null,
+              }) as any,
             });
             confirmMessageId = (saved as any)?.id || confirmMessageId;
           } catch (persistErr) {
@@ -981,6 +1093,7 @@ For example: REMEMBER: preferred_language: Polish`;
             editedMessage: message.trim(),
             confirm: c,
             context: fullContext,
+            confirmToken: (confirmRes as any)?.confirmToken || null,
           });
 
           return; // Don't start stream yet - wait for user to confirm
@@ -1029,9 +1142,42 @@ For example: REMEMBER: preferred_language: Polish`;
       aiConfig,
       dtConfirmBusy,
       buildSystemPrompt,
+      workspaceContext,
       t,
     ]
   );
+
+  // F1.1: Consume chatKickoffMessage on full-screen chat (mobile/tablet from Help → Ask AI)
+  const kickoffSentRef = useRef<string | null>(null);
+  const queryKickoffHandledRef = useRef(false);
+  useEffect(() => {
+    if (queryKickoffHandledRef.current) return;
+
+    const rawPrompt = searchParams.get('prompt');
+    if (!rawPrompt) return;
+    queryKickoffHandledRef.current = true;
+
+    const normalizedPrompt = rawPrompt.trim().slice(0, 8000);
+    if (normalizedPrompt.length > 0) {
+      setChatKickoffMessage(normalizedPrompt);
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('prompt');
+    const nextSearch = nextParams.toString();
+    navigate(nextSearch ? `/chat?${nextSearch}` : '/chat', { replace: true });
+  }, [navigate, searchParams, setChatKickoffMessage]);
+
+  useEffect(() => {
+    if (!chatKickoffMessage) return;
+    if (isStreaming) return;
+    if ((activeMessages || []).length > 0) return;
+    if (kickoffSentRef.current === chatKickoffMessage) return;
+
+    kickoffSentRef.current = chatKickoffMessage;
+    void handleSend(chatKickoffMessage);
+    clearChatKickoffMessage();
+  }, [chatKickoffMessage, isStreaming, activeMessages, handleSend, clearChatKickoffMessage]);
 
   // Handle suggestion click
   const handleSuggestionClick = useCallback(
@@ -1342,10 +1488,16 @@ For example: REMEMBER: preferred_language: Polish`;
         ...screenContext,
         pmo: pmoContext,
         global: globalContext,
+        workspaceContext,
+        screenContext,
+        pmoContext,
+        currentSurface: 'chat/full',
         isWelcomeScreen: false,
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,
         attachmentDocIds,
+        virtualWorkerSlug: 'teresa',
+        proposalMode: 'proposal_first',
       };
       const systemPrompt = buildSystemPrompt();
 
@@ -1376,27 +1528,7 @@ For example: REMEMBER: preferred_language: Polish`;
             );
             const c = (confirmRes as any)?.confirm || {};
             const u = c?.understanding || {};
-            const md = [
-              '**My understanding of your task**',
-              `- Goal: ${u.goal || ''}`,
-              u.context ? `- Context: ${u.context}` : '',
-              Array.isArray(u.constraints) && u.constraints.length
-                ? `- Constraints: ${u.constraints.join('; ')}`
-                : '',
-              u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
-              u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
-              '',
-              Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
-                ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
-                    .slice(0, 3)
-                    .map((q: any, i: number) => `${i + 1}. ${q.question}`)
-                    .join('\n')}`
-                : '',
-              '',
-              '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
-            ]
-              .filter(Boolean)
-              .join('\n');
+            const md = buildDeepThinkingConfirmCardContent(c);
 
             let confirmMessageId = `dt-confirm-${Date.now()}`;
             try {
@@ -1405,10 +1537,11 @@ For example: REMEMBER: preferred_language: Polish`;
                 role: 'ai',
                 content: md,
                 messageType: 'text',
-                metadata: {
-                  deepThinking: { kind: 'confirm', originalMessage: newText },
-                  deepThinkingConfirm: c,
-                } as any,
+                metadata: buildDeepThinkingConfirmMessageMetadata({
+                  originalMessage: newText,
+                  confirm: c,
+                  confirmToken: (confirmRes as any)?.confirmToken || null,
+                }) as any,
               });
               confirmMessageId = (saved as any)?.id || confirmMessageId;
             } catch (persistErr) {
@@ -1421,6 +1554,7 @@ For example: REMEMBER: preferred_language: Polish`;
               editedMessage: newText,
               confirm: c,
               context: fullContext,
+              confirmToken: (confirmRes as any)?.confirmToken || null,
             });
           } finally {
             setDtConfirmBusy(false);
@@ -1458,6 +1592,7 @@ For example: REMEMBER: preferred_language: Polish`;
     isStreaming,
     pmoContext,
     screenContext,
+    workspaceContext,
     startStream,
     truncateFromMessage,
   ]);
@@ -1619,19 +1754,19 @@ For example: REMEMBER: preferred_language: Polish`;
                       </div>
                     )}
 
-                    {/* Thinking Status Line - elapsed time + retry info */}
-                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && (
-                      <div className="mb-2 max-w-[85%]">
-                        <ThinkingStatusLine
-                          label={
-                            retryInfo
-                              ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
-                              : 'Thinking...'
-                          }
-                          compact
-                        />
-                      </div>
-                    )}
+                    {/* Retry status line - only show when the stream is retrying */}
+                    {isAiMessage &&
+                      isStreamingThis &&
+                      !displayContent &&
+                      streamStartedAt &&
+                      retryInfo && (
+                        <div className="mb-2 max-w-[85%]">
+                          <ThinkingStatusLine
+                            label={`Reconnecting to the response stream (${retryInfo.attempt}/${retryInfo.maxRetries})...`}
+                            compact
+                          />
+                        </div>
+                      )}
 
                     <div
                       className={`inline-block max-w-[85%] ${
@@ -1703,6 +1838,15 @@ For example: REMEMBER: preferred_language: Polish`;
                         />
                       )}
 
+                      {isAiMessage && (msg.metadata as any)?.proposal && !isStreamingThis && (
+                        <TeresaProposalCard
+                          proposal={(msg.metadata as any).proposal as TeresaChatProposal}
+                          onNavigate={handleTeresaProposalNavigate}
+                          onProposalUpdated={handleTeresaProposalUpdated}
+                          onLifecycleMessage={handleTeresaLifecycleMessage}
+                        />
+                      )}
+
                       {/* Voice Mode Indicator */}
                       {isAiMessage && !isStreamingThis && voiceModeEnabled && voiceSupported && (
                         <button
@@ -1764,7 +1908,14 @@ For example: REMEMBER: preferred_language: Polish`;
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleDeepThinkingProceed}
-                                  disabled={dtConfirmBusy || isStreaming}
+                                  disabled={
+                                    dtConfirmBusy ||
+                                    isStreaming ||
+                                    shouldOpenDeepThinkingClarification(
+                                      dtPendingConfirm.confirm,
+                                      dtPendingConfirm.clarificationHandled
+                                    )
+                                  }
                                   className="px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                   {dtConfirmBusy
@@ -1781,6 +1932,28 @@ For example: REMEMBER: preferred_language: Polish`;
                                   {t('common.cancel', 'Cancel')}
                                 </button>
                               </div>
+                              {dtPendingConfirm.clarificationRequested ? (
+                                <ResearchClarification
+                                  message={
+                                    dtPendingConfirm.editedMessage ||
+                                    dtPendingConfirm.originalMessage
+                                  }
+                                  onComplete={handleDeepThinkingClarificationComplete}
+                                  onCancel={() =>
+                                    setDtPendingConfirm((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            clarificationRequested: false,
+                                            clarificationHandled: true,
+                                            clarificationAnswers: null,
+                                          }
+                                        : prev
+                                    )
+                                  }
+                                  className="mt-3"
+                                />
+                              ) : null}
                             </div>
                           </div>
                         )}
@@ -1920,6 +2093,11 @@ For example: REMEMBER: preferred_language: Polish`;
               <EnhancedChatInput
                 onSend={handleSend}
                 onStopGenerating={abortStream}
+                onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+                teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceError={teresaVoice.voiceError}
+                teresaVoiceMuted={teresaVoice.isMuted}
+                onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
                 isStreaming={isStreaming}
                 disabled={isActionExecuting}
                 variant="compact"
@@ -2044,9 +2222,15 @@ For example: REMEMBER: preferred_language: Polish`;
                 </div>
               </div>
             )}
+            <OutputToolSelector />
             <EnhancedChatInput
               onSend={handleSend}
               onStopGenerating={abortStream}
+              onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+              teresaVoiceStatus={teresaVoice.voiceStatus}
+              teresaVoiceError={teresaVoice.voiceError}
+              teresaVoiceMuted={teresaVoice.isMuted}
+              onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
               isStreaming={isStreaming}
               disabled={false}
               variant="compact"

@@ -22,8 +22,30 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter, feedbackRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { getAlertEmailService } from '../services/AlertEmailService.js';
 import feedbackAIService from '../services/feedbackAIService.js';
+import {
+  readScreenshot as readFeedbackScreenshot,
+  saveScreenshotFromDataUrl,
+} from '../services/feedbackArtifacts.js';
+import {
+  compactObject,
+  type FeedbackResolutionRecord,
+  type FeedbackWorkflowRecord,
+  type FeedbackWorkflowTimelineEntry,
+  normalizeResolutionMeta,
+  normalizeStringArray,
+  normalizeWorkflowMeta,
+  normalizeWorkflowTimeline,
+  shapeFeedbackRow,
+} from '../services/feedbackShape.js';
+import {
+  findDuplicateCandidates as findFeedbackDuplicates,
+  inferCluster as inferFeedbackCluster,
+  inferPriorityForPipeline as inferFeedbackPriority,
+} from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
 import slackService from '../services/slackService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
@@ -35,8 +57,31 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuidLike(value: unknown): value is string {
+  return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
 type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
 type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
+type FeedbackAlertChannel = 'in_app' | 'slack' | 'email' | 'whatsapp';
+type FeedbackEscalationKind = 'feedback' | 'pulse' | 'feature';
+type FeedbackAlertDispatchStatus = 'sent' | 'failed' | 'skipped';
+
+interface FeedbackAlertChannelResult {
+  status: FeedbackAlertDispatchStatus;
+  attemptedAt: string;
+  detail?: string;
+  recipientCount?: number;
+}
+
+interface FeedbackAlertDispatchSummary {
+  attemptedAt: string;
+  appEnv: string;
+  requestedChannels: FeedbackAlertChannel[];
+  results: Partial<Record<FeedbackAlertChannel, FeedbackAlertChannelResult>>;
+}
 
 let _feedbackSchemaEnsured = false;
 async function ensureFeedbackSchema(): Promise<void> {
@@ -61,6 +106,10 @@ async function ensureFeedbackSchema(): Promise<void> {
         responded_at TIMESTAMP,
         responded_by TEXT,
         metadata_json TEXT,
+        owner TEXT,
+        cluster TEXT,
+        deploy_status TEXT,
+        workflow_updated_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -85,6 +134,24 @@ async function ensureFeedbackSchema(): Promise<void> {
     await dbRun(
       `CREATE INDEX IF NOT EXISTS idx_feedback_items_status_history_created ON feedback_items_status_history(created_at)`
     );
+
+    // Additive workflow columns (V2.1) — safe on both SQLite and Postgres.
+    // We attempt each ADD COLUMN independently so a legacy SQLite that
+    // already has the column still succeeds for the remaining ones.
+    const additive: Array<[string, string]> = [
+      ['owner', 'TEXT'],
+      ['cluster', 'TEXT'],
+      ['deploy_status', 'TEXT'],
+      ['workflow_updated_at', 'TIMESTAMP'],
+    ];
+    for (const [col, type] of additive) {
+      try {
+        await dbRun(`ALTER TABLE feedback_items ADD COLUMN ${col} ${type}`);
+      } catch {
+        // Column already exists or engine doesn't support it — non-fatal.
+      }
+    }
+
     _feedbackSchemaEnsured = true;
   } catch (err) {
     logger.warn('[Feedback] Failed to ensure feedback schema (will rely on migrations):', err);
@@ -140,6 +207,51 @@ function safeJsonParse<T = any>(raw: unknown, fallback: T): T {
   }
 }
 
+function resolveFeedbackActor(input: {
+  reqUser?: AuthRequest['user'];
+  userId?: string;
+  userEmail?: string;
+  userName?: string;
+}): {
+  actualUserId: string | null;
+  actualUserEmail: string | null;
+  actualUserName: string | null;
+} {
+  const reqUser = input.reqUser;
+  const actualUserId = reqUser?.id || input.userId || null;
+  const actualUserEmail = reqUser?.email || input.userEmail || null;
+  const actualUserName =
+    reqUser?.name ||
+    [reqUser?.firstName, reqUser?.lastName].filter(Boolean).join(' ').trim() ||
+    input.userName ||
+    null;
+
+  return {
+    actualUserId: actualUserId ? String(actualUserId) : null,
+    actualUserEmail: actualUserEmail ? String(actualUserEmail) : null,
+    actualUserName: actualUserName ? String(actualUserName) : null,
+  };
+}
+
+async function updateFeedbackMetadata(
+  feedbackId: string,
+  metadata: Record<string, unknown>
+): Promise<void> {
+  const feedbackCols = await getTableColumns('feedback_items');
+  if (!feedbackCols.has('metadata_json')) return;
+
+  const updateCols = ['metadata_json = ?'];
+  const updateVals: unknown[] = [JSON.stringify(metadata)];
+  if (feedbackCols.has('updated_at')) {
+    updateCols.push('updated_at = CURRENT_TIMESTAMP');
+  }
+
+  await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
+    ...updateVals,
+    feedbackId,
+  ]);
+}
+
 function stripJsonFences(raw: string): string {
   return String(raw || '')
     .replace(/```json/gi, '')
@@ -164,6 +276,437 @@ function safeJsonParseLoose<T = any>(raw: string, fallback: T): T {
   }
 }
 
+function resolveRequestCorrelationId(req: AuthRequest): string | null {
+  return (
+    (req as AuthRequest & { correlationId?: string }).correlationId ||
+    req.get('X-Correlation-ID') ||
+    null
+  );
+}
+
+function buildFailClosedFeedbackError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveRequestCorrelationId(req),
+  };
+}
+
+const reportFeedbackSchema = z.object({
+  userId: z.string().trim().min(1).optional(),
+  userEmail: z.string().trim().optional(),
+  userName: z.string().trim().optional(),
+  type: z.enum(['BUG', 'IDEA']),
+  title: z.string().trim().max(120).optional(),
+  message: z.string().trim().min(1).max(5000),
+  description: z.string().trim().max(15000).optional(),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  routePath: z.string().trim().max(500).optional(),
+  deviceType: z.enum(['mobile', 'tablet', 'desktop']).optional(),
+  screenSize: z.string().trim().max(100).optional(),
+  uiLanguage: z.string().trim().max(50).optional(),
+  uiTheme: z.string().trim().max(30).optional(),
+  workspaceContext: z.string().trim().max(1000).optional(),
+  clientEnv: z.string().trim().max(50).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  // V2 Cursor-ready dossier (all optional, validated loosely to stay
+  // backwards compatible with older clients).
+  signatureHash: z.string().trim().max(64).optional(),
+  appContext: z.record(z.string(), z.unknown()).optional(),
+  consoleLogs: z.array(z.record(z.string(), z.unknown())).max(120).optional(),
+  networkErrors: z.array(z.record(z.string(), z.unknown())).max(60).optional(),
+  breadcrumbs: z.array(z.record(z.string(), z.unknown())).max(80).optional(),
+  lastUncaughtError: z.record(z.string(), z.unknown()).nullable().optional(),
+  screenshot: z
+    .object({
+      dataUrl: z.string().min(30).max(2_000_000),
+      approxBytes: z.number().int().nonnegative().max(5_000_000).optional(),
+      width: z.number().int().positive().max(10_000).optional(),
+      height: z.number().int().positive().max(10_000).optional(),
+    })
+    .nullable()
+    .optional(),
+});
+
+const pulseFeedbackSchema = z.object({
+  userId: z.string().trim().min(1).optional(),
+  rating: z.number().int().min(1).max(5),
+  context: z.string().trim().max(500).optional(),
+  comment: z.string().trim().max(5000).optional(),
+  timestamp: z.string().trim().optional(),
+});
+
+const featureFeedbackSchema = z.object({
+  userId: z.string().trim().min(1).optional(),
+  userEmail: z.string().trim().optional(),
+  category: z.enum(['usability', 'performance', 'missing', 'improvement', 'other']).optional(),
+  featureName: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1).max(8000),
+  impact: z.enum(['low', 'medium', 'high']).optional(),
+  context: z.string().trim().max(500).optional(),
+  requestAIAnalysis: z.boolean().optional(),
+});
+
+function buildNotificationBody(message: string, extras: string[] = []): string {
+  return [String(message || '').trim(), ...extras.filter(Boolean)].filter(Boolean).join('\n\n');
+}
+
+function isBlockingPulseComment(comment?: string | null): boolean {
+  return /blocked|cannot|can't|unable|stuck|unusable|down|outage|incident|error|broken|nie mogę|nie moge|zablok|blokuje|nie działa|nie dziala|awaria/i.test(
+    String(comment || '')
+  );
+}
+
+function resolveEscalationChannels(input: {
+  kind: FeedbackEscalationKind;
+  feedbackType?: string | null;
+  severity?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+}): FeedbackAlertChannel[] {
+  if (input.kind === 'feature') {
+    return ['in_app', 'slack'];
+  }
+
+  if (input.kind === 'pulse') {
+    const channels: FeedbackAlertChannel[] = ['in_app', 'slack'];
+    if ((input.rating || 0) <= 2) {
+      channels.push('email');
+      if (isBlockingPulseComment(input.comment)) {
+        channels.push('whatsapp');
+      }
+    }
+    return Array.from(new Set(channels));
+  }
+
+  const type = String(input.feedbackType || '').toUpperCase();
+  if (type === 'IDEA') {
+    return ['in_app', 'slack'];
+  }
+
+  const severity = String(input.severity || 'MEDIUM').toUpperCase();
+  if (severity === 'CRITICAL') {
+    return ['in_app', 'slack', 'email', 'whatsapp'];
+  }
+  if (severity === 'HIGH') {
+    return ['in_app', 'slack', 'email'];
+  }
+  return ['in_app', 'slack'];
+}
+
+async function getSuperAdminRecipients(): Promise<
+  Array<{ id: string; email: string | null; organizationId: string | null }>
+> {
+  const userCols = await getTableColumns('users');
+  const selectName = userCols.has('email') ? 'email' : 'NULL as email';
+  const selectOrg = userCols.has('organization_id')
+    ? 'organization_id'
+    : userCols.has('organizationId')
+      ? 'organizationId as organization_id'
+      : 'NULL as organization_id';
+  const activeClause = userCols.has('is_active') ? ' AND (is_active = 1 OR is_active IS NULL)' : '';
+
+  const rows = await dbAll<{ id: string; email: string | null; organization_id: string | null }>(
+    `
+      SELECT id, ${selectName}, ${selectOrg}
+      FROM users
+      WHERE lower(coalesce(role, '')) IN ('superadmin', 'super_admin')
+      ${activeClause}
+    `,
+    []
+  );
+
+  return (rows || []).map((row) => ({
+    id: String(row.id),
+    email: row.email ? String(row.email) : null,
+    organizationId: row.organization_id ? String(row.organization_id) : null,
+  }));
+}
+
+async function notifySuperAdminsInApp(input: {
+  type: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  title: string;
+  body: string;
+  relatedObjectType: 'FEEDBACK' | 'PULSE' | 'FEATURE';
+  relatedObjectId: string;
+  organizationId?: string | null;
+  actionUrl: string;
+  metadata?: Record<string, unknown>;
+}): Promise<FeedbackAlertChannelResult> {
+  const attemptedAt = new Date().toISOString();
+  const recipients = await getSuperAdminRecipients();
+  if (recipients.length === 0) {
+    logger.warn('[Feedback] No superadmin recipients found for in-app escalation');
+    return {
+      status: 'skipped',
+      attemptedAt,
+      detail: 'No superadmin recipients found',
+      recipientCount: 0,
+    };
+  }
+
+  const results = await Promise.allSettled(
+    recipients.map((recipient) =>
+      NotificationService.send({
+        userId: recipient.id,
+        organizationId: recipient.organizationId || input.organizationId || 'system',
+        type: input.type,
+        severity: input.severity,
+        title: input.title,
+        body: input.body,
+        message: input.body,
+        relatedObjectType: input.relatedObjectType,
+        relatedObjectId: input.relatedObjectId,
+        isActionable: true,
+        actionUrl: input.actionUrl,
+        metadata: {
+          ...(input.metadata || {}),
+          recipientEmail: recipient.email || undefined,
+        },
+        channels: ['in_app'],
+        bypassPreferences: true,
+        bypassQuietHours: true,
+      })
+    )
+  );
+  const successCount = results.filter((result) => result.status === 'fulfilled').length;
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      logger.warn('[Feedback] Failed to send in-app escalation to superadmin:', result.reason);
+    }
+  });
+  if (successCount === 0) {
+    return {
+      status: 'failed',
+      attemptedAt,
+      detail: 'Failed to send in-app escalation to all superadmin recipients',
+      recipientCount: recipients.length,
+    };
+  }
+  return {
+    status: 'sent',
+    attemptedAt,
+    detail:
+      successCount === recipients.length
+        ? 'Delivered to all superadmin recipients'
+        : `Delivered to ${successCount}/${recipients.length} superadmin recipients`,
+    recipientCount: successCount,
+  };
+}
+
+async function dispatchFeedbackEscalation(input: {
+  kind: FeedbackEscalationKind;
+  id: string;
+  organizationId?: string | null;
+  appEnv: string;
+  channels: FeedbackAlertChannel[];
+  feedbackType: 'BUG' | 'IDEA' | 'FEATURE' | 'PULSE';
+  severity?: string | null;
+  priority?: string | null;
+  userId?: string | null;
+  userEmail?: string | null;
+  userName?: string | null;
+  routePath?: string | null;
+  deviceType?: string | null;
+  screenSize?: string | null;
+  uiLanguage?: string | null;
+  uiTheme?: string | null;
+  title: string;
+  message: string;
+  taskId?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<FeedbackAlertDispatchSummary> {
+  const uniqueChannels = Array.from(new Set(input.channels));
+  const attemptedAt = new Date().toISOString();
+  const dispatchSummary: FeedbackAlertDispatchSummary = {
+    attemptedAt,
+    appEnv: input.appEnv,
+    requestedChannels: uniqueChannels,
+    results: {},
+  };
+  const notificationSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
+    input.kind === 'feature'
+      ? 'INFO'
+      : input.kind === 'pulse'
+        ? (input.rating || 0) <= 2
+          ? 'WARNING'
+          : 'INFO'
+        : input.severity === 'CRITICAL'
+          ? 'CRITICAL'
+          : input.severity === 'HIGH'
+            ? 'WARNING'
+            : 'INFO';
+  // Deep-link Superadmin signals straight to the feedback/feature module
+  // with the item id as a query param. The feedback view reads `feedbackId`
+  // on mount and auto-opens the detail drawer.
+  const actionUrl =
+    input.kind === 'feature'
+      ? `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(input.id)}&tab=features`
+      : `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(input.id)}`;
+  const body = buildNotificationBody(input.message, [
+    input.routePath ? `Route: ${input.routePath}` : '',
+    input.taskId ? `Task: ${input.taskId}` : '',
+    input.rating ? `Pulse: ${input.rating}/5` : '',
+  ]);
+
+  if (uniqueChannels.includes('in_app')) {
+    try {
+      dispatchSummary.results.in_app = await notifySuperAdminsInApp({
+        type:
+          input.kind === 'feature'
+            ? 'FEATURE_REQUEST'
+            : input.kind === 'pulse'
+              ? 'LOW_PULSE_ALERT'
+              : input.feedbackType === 'BUG' && input.severity === 'CRITICAL'
+                ? 'CLIENT_TICKET'
+                : 'USER_FEEDBACK',
+        severity: notificationSeverity,
+        title:
+          input.kind === 'feature'
+            ? `New Feature Request: ${input.title}`
+            : input.kind === 'pulse'
+              ? `Low Pulse Rating: ${input.rating || 0}/5`
+              : `${input.feedbackType}${input.severity ? ` [${input.severity}]` : ''}: ${input.title}`,
+        body,
+        relatedObjectType:
+          input.kind === 'feature' ? 'FEATURE' : input.kind === 'pulse' ? 'PULSE' : 'FEEDBACK',
+        relatedObjectId: input.id,
+        organizationId: input.organizationId || 'system',
+        actionUrl,
+        metadata: {
+          ...(input.metadata || {}),
+          appEnv: input.appEnv,
+          feedbackType: input.feedbackType,
+          severity: input.severity || undefined,
+          linkedTaskId: input.taskId || undefined,
+        },
+      });
+    } catch (error) {
+      logger.error('[Feedback] Failed in-app escalation:', error);
+      dispatchSummary.results.in_app = {
+        status: 'failed',
+        attemptedAt: new Date().toISOString(),
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  if (uniqueChannels.includes('slack')) {
+    try {
+      await slackService.sendNewFeedbackAlert({
+        type: input.feedbackType === 'PULSE' ? 'IDEA' : input.feedbackType,
+        userEmail: input.userEmail || undefined,
+        userName: input.userName || undefined,
+        message: body,
+        severity: input.severity || undefined,
+        priority: input.priority || undefined,
+        routePath: input.routePath || undefined,
+        deviceType: input.deviceType || undefined,
+        screenSize: input.screenSize || undefined,
+        uiLanguage: input.uiLanguage || undefined,
+        uiTheme: input.uiTheme || undefined,
+        organizationId: input.organizationId || undefined,
+        feedbackId: input.id,
+        taskId: input.taskId || undefined,
+        appEnv: input.appEnv,
+      });
+      dispatchSummary.results.slack = {
+        status: 'sent',
+        attemptedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error('[Feedback] Failed Slack escalation:', error);
+      dispatchSummary.results.slack = {
+        status: 'failed',
+        attemptedAt: new Date().toISOString(),
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  if (uniqueChannels.includes('email')) {
+    try {
+      const alertEmailService = getAlertEmailService();
+      const emailSeverity: 'critical' | 'warning' | 'info' =
+        notificationSeverity === 'CRITICAL'
+          ? 'critical'
+          : notificationSeverity === 'WARNING'
+            ? 'warning'
+            : 'info';
+      const emailPayload = {
+        alertType: `feedback_${input.kind}`,
+        severity: emailSeverity,
+        title:
+          input.kind === 'pulse'
+            ? `Low Pulse Rating ${input.rating || 0}/5`
+            : `${input.feedbackType}${input.severity ? ` ${input.severity}` : ''}: ${input.title}`,
+        message: body,
+        timestamp: new Date().toISOString(),
+        environment: input.appEnv,
+        data: {
+          routePath: input.routePath || undefined,
+          organizationId: input.organizationId || undefined,
+          feedbackId: input.id,
+          taskId: input.taskId || undefined,
+          userEmail: input.userEmail || undefined,
+        },
+      };
+      if (notificationSeverity === 'CRITICAL') {
+        await alertEmailService.sendCriticalAlert(emailPayload);
+      } else {
+        await alertEmailService.sendAlert(emailPayload);
+      }
+      dispatchSummary.results.email = {
+        status: 'sent',
+        attemptedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error('[Feedback] Failed email escalation:', error);
+      dispatchSummary.results.email = {
+        status: 'failed',
+        attemptedAt: new Date().toISOString(),
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  if (uniqueChannels.includes('whatsapp')) {
+    try {
+      await WhatsAppService.sendNewFeedbackAlert({
+        userId: input.userId || null,
+        userEmail: input.userEmail || null,
+        type: input.feedbackType,
+        message: body,
+      });
+      dispatchSummary.results.whatsapp = {
+        status: 'sent',
+        attemptedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error('[Feedback] Failed WhatsApp escalation:', error);
+      dispatchSummary.results.whatsapp = {
+        status: 'failed',
+        attemptedAt: new Date().toISOString(),
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  return dispatchSummary;
+}
+
 /**
  * POST /api/feedback/compose
  * LLM-assisted, task-grade report composition.
@@ -174,7 +717,14 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { type, title, message, severity, appEnv, context } = req.body || {};
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'message is required' });
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_COMPOSE_MESSAGE_REQUIRED',
+          'Message is required.'
+        )
+      );
     }
 
     // Provider check (same approach as /api/ai/refine-text)
@@ -187,8 +737,12 @@ router.post(
     ));
     if (!hasEnvProvider && !hasDbProvider) {
       return res.status(500).json({
-        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
-        code: 'NO_LLM_PROVIDER',
+        ...buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_COMPOSE_NO_LLM_PROVIDER',
+          'Compose service is temporarily unavailable.'
+        ),
       });
     }
 
@@ -198,10 +752,14 @@ router.post(
     const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
     const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
     if (!aiAccessCheck.allowed) {
-      return res.status(403).json({
-        error: aiAccessCheck.reason || 'Access blocked',
-        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-      });
+      return res.status(403).json(
+        buildFailClosedFeedbackError(
+          req,
+          403,
+          'FEEDBACK_COMPOSE_ACCESS_DENIED',
+          'Compose access is denied.'
+        )
+      );
     }
 
     AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
@@ -251,20 +809,40 @@ Rules:
       questionsToClarify: z.array(z.string()),
     });
 
-    const result = await llmService.call({
-      type: 'structured',
-      modelConfig: { id: 'budget' },
-      systemPrompt: systemInstruction,
-      messages: [{ role: 'user', content: userPrompt }],
-      schema: ComposeSchema,
-      maxTokens: 700,
-      temperature: 0.2,
-      cache: false,
-    });
+    let result: unknown = null;
+    try {
+      result = await llmService.call({
+        type: 'structured',
+        modelConfig: { id: 'budget' },
+        systemPrompt: systemInstruction,
+        messages: [{ role: 'user', content: userPrompt }],
+        schema: ComposeSchema,
+        maxTokens: 700,
+        temperature: 0.2,
+        cache: false,
+      });
+    } catch (error) {
+      logger.error('[FeedbackCompose] LLM call failed:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_COMPOSE_FAILED',
+          'Failed to compose feedback draft.'
+        )
+      );
+    }
 
     const parsed = (result as any)?.object || null;
     if (!parsed) {
-      return res.status(500).json({ error: 'AI returned no object', code: 'AI_EMPTY' });
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_COMPOSE_LLM_EMPTY',
+          'Failed to compose feedback draft.'
+        )
+      );
     }
 
     return res.json({
@@ -355,25 +933,60 @@ async function createTaskForFeedback(params: {
 router.post(
   '/',
   optionalVerifyToken,
+  apiAuthRateLimiter,
+  feedbackRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureFeedbackSchema();
-    const { userId, userEmail, userName, type, message, severity, metadata } = req.body;
-
-    if (!message || !type) {
-      return res.status(400).json({ error: 'Message and type are required' });
+    const parsed = reportFeedbackSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid feedback payload',
+        details: parsed.error.flatten(),
+      });
     }
+    const {
+      userId,
+      userEmail,
+      userName,
+      type,
+      message,
+      severity,
+      metadata,
+      title: parsedTitle,
+      description: parsedDescription,
+      routePath,
+      deviceType,
+      screenSize,
+      uiLanguage,
+      uiTheme,
+      workspaceContext,
+      clientEnv,
+      signatureHash,
+      appContext,
+      consoleLogs,
+      networkErrors,
+      breadcrumbs,
+      lastUncaughtError,
+      screenshot,
+    } = parsed.data;
 
     const appEnv = getAppEnv();
+    const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
+      reqUser: req.user,
+      userId,
+      userEmail,
+      userName,
+    });
 
     // Resolve organizationId when possible
     let organizationId: string | null = null;
     try {
       if ((req as any).user?.organizationId) {
         organizationId = String((req as any).user.organizationId);
-      } else if (userId) {
+      } else if (actualUserId) {
         const userRow = await dbGet<{ organization_id?: string }>(
           `SELECT organization_id FROM users WHERE id = ?`,
-          [userId]
+          [actualUserId]
         );
         if (userRow?.organization_id) organizationId = String(userRow.organization_id);
       }
@@ -388,7 +1001,7 @@ router.post(
     const feedbackCols = await getTableColumns('feedback_items');
     const feedbackId = uuidv4();
 
-    const rawTitle = String(req.body.title || '').trim();
+    const rawTitle = String(parsedTitle || '').trim();
     const inferredTitle =
       rawTitle ||
       String(message)
@@ -397,10 +1010,7 @@ router.post(
         .filter(Boolean)[0] ||
       String(message).slice(0, 80);
     const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
-    const description = String(req.body.description || message || '').trim();
-
-    const priority = priorityFromEnvAndSeverity({ appEnv, severity, type });
-    const status: TicketStatus = 'NEW';
+    const description = String(parsedDescription || message || '').trim();
 
     const contextFields = [
       'routePath',
@@ -411,20 +1021,82 @@ router.post(
       'workspaceContext',
     ];
     const contextMeta: Record<string, unknown> = {};
+    const contextSources: Record<string, unknown> = {
+      routePath,
+      deviceType,
+      screenSize,
+      uiLanguage,
+      uiTheme,
+      workspaceContext,
+    };
     for (const field of contextFields) {
-      if (req.body[field] !== undefined) contextMeta[field] = req.body[field];
+      if (contextSources[field] !== undefined) contextMeta[field] = contextSources[field];
     }
 
-    const metadataJson = {
+    const dossier: Record<string, unknown> = {};
+    if (signatureHash) dossier.signatureHash = signatureHash;
+    if (appContext && typeof appContext === 'object') dossier.appContext = appContext;
+    if (Array.isArray(consoleLogs) && consoleLogs.length > 0) dossier.consoleLogs = consoleLogs;
+    if (Array.isArray(networkErrors) && networkErrors.length > 0) {
+      dossier.networkErrors = networkErrors;
+    }
+    if (Array.isArray(breadcrumbs) && breadcrumbs.length > 0) dossier.breadcrumbs = breadcrumbs;
+    if (lastUncaughtError && typeof lastUncaughtError === 'object') {
+      dossier.lastUncaughtError = lastUncaughtError;
+    }
+
+    let workflowSeed: Record<string, unknown> | undefined;
+    try {
+      const cluster = inferFeedbackCluster(routePath || null);
+      if (cluster) workflowSeed = { cluster };
+    } catch (err) {
+      logger.warn('[Feedback] inferCluster failed:', err);
+    }
+
+    let duplicateOf: string | null = null;
+    let duplicateCandidates: Array<{ id: string; title: string | null }> = [];
+    if (signatureHash) {
+      try {
+        duplicateCandidates = await findFeedbackDuplicates(signatureHash, 5);
+        if (duplicateCandidates.length > 0) {
+          duplicateOf = duplicateCandidates[0].id;
+        }
+      } catch (err) {
+        logger.warn('[Feedback] findDuplicateCandidates failed:', err);
+      }
+    }
+
+    const basePriority = priorityFromEnvAndSeverity({ appEnv, severity, type });
+    let priority: TicketPriority = basePriority;
+    try {
+      priority = inferFeedbackPriority({
+        basePriority,
+        appEnv,
+        type,
+        severity: severity || null,
+        hasUncaughtError: Boolean(lastUncaughtError),
+        duplicateCount: duplicateCandidates.length,
+      });
+    } catch (err) {
+      logger.warn('[Feedback] inferPriority failed:', err);
+    }
+    const status: TicketStatus = 'NEW';
+
+    let metadataJson: Record<string, unknown> = {
       ...(metadata || {}),
       ...contextMeta,
       appEnv,
-      clientEnv: req.body.clientEnv || undefined,
-      userEmail: userEmail || undefined,
-      userName: userName || undefined,
+      clientEnv: clientEnv || undefined,
+      userEmail: actualUserEmail || undefined,
+      userName: actualUserName || undefined,
       feedbackType: type,
       severity: severity || undefined,
       title,
+      ...(Object.keys(dossier).length > 0 ? { dossier } : {}),
+      ...(signatureHash ? { signatureHash } : {}),
+      ...(duplicateOf ? { duplicateOf } : {}),
+      ...(duplicateCandidates.length > 0 ? { duplicateCandidates } : {}),
+      ...(workflowSeed ? { workflow: workflowSeed } : {}),
     };
 
     const insertCols: string[] = [
@@ -438,19 +1110,22 @@ router.post(
     const values: unknown[] = [
       feedbackId,
       ticketOrgId,
-      userId || (req.user?.id as any) || null,
+      actualUserId,
       String(type).toUpperCase(),
       title,
       description,
     ];
 
     const optional: Array<[string, unknown]> = [
-      ['category', req.body.category || null],
       ['priority', priority],
       ['status', status],
       ['metadata_json', JSON.stringify(metadataJson)],
       ['severity', severity || null],
       ['source_env', appEnv],
+      // V2.1 additive columns. Only the cluster seed is known at creation
+      // time; owner / deploy_status land once a human (or Cursor) PATCHes
+      // the workflow.
+      ['cluster', (workflowSeed?.cluster as string | undefined) || null],
     ];
 
     for (const [col, val] of optional) {
@@ -465,6 +1140,33 @@ router.post(
     const insertResult = await dbRun(sql, values);
     if (!insertResult.success) {
       throw new Error(insertResult.error || 'Failed to insert feedback ticket');
+    }
+
+    // Persist screenshot as a filesystem artefact (Railway volume / local /tmp).
+    if (screenshot && typeof screenshot.dataUrl === 'string') {
+      try {
+        const saved = await saveScreenshotFromDataUrl(feedbackId, screenshot.dataUrl, {
+          width: screenshot.width,
+          height: screenshot.height,
+        });
+        if (saved) {
+          const artifacts = Array.isArray((metadataJson as any).artifacts)
+            ? ((metadataJson as any).artifacts as unknown[])
+            : [];
+          metadataJson = {
+            ...metadataJson,
+            artifacts: [...artifacts, saved],
+          };
+          if (feedbackCols.has('metadata_json')) {
+            await dbRun(`UPDATE feedback_items SET metadata_json = ? WHERE id = ?`, [
+              JSON.stringify(metadataJson),
+              feedbackId,
+            ]);
+          }
+        }
+      } catch (err) {
+        logger.warn('[Feedback] Failed to store screenshot artifact:', err);
+      }
     }
 
     // Auto-create backlog task for every ticket
@@ -484,7 +1186,7 @@ router.post(
 
       linkedTaskId = await createTaskForFeedback({
         organizationId: ticketOrgId,
-        userId: userId || (req.user?.id as any) || null,
+        userId: actualUserId,
         title: taskTitle,
         description: taskDescription,
         priority,
@@ -495,7 +1197,7 @@ router.post(
       if (feedbackCols.has('linked_task_id') || feedbackCols.has('metadata_json')) {
         const updateCols: string[] = [];
         const updateVals: unknown[] = [];
-        const nextMeta = { ...(metadataJson as any), linkedTaskId };
+        const nextMeta = { ...metadataJson, linkedTaskId };
 
         if (feedbackCols.has('linked_task_id')) {
           updateCols.push('linked_task_id = ?');
@@ -515,73 +1217,73 @@ router.post(
             feedbackId,
           ]);
         }
+        metadataJson = nextMeta;
       }
     } catch (e) {
       logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
     }
 
-    // Send external notifications (Slack + WhatsApp)
-    try {
-      await slackService.sendNewFeedbackAlert({
-        type,
-        userEmail,
-        userName,
-        message: `${title}\n\n${description}`,
-        severity,
-        priority,
-        routePath: req.body.routePath,
-        deviceType: req.body.deviceType,
-        screenSize: req.body.screenSize,
-        uiLanguage: req.body.uiLanguage,
-        uiTheme: req.body.uiTheme,
-        organizationId: orgIdForNotifications,
-        feedbackId,
-        taskId: linkedTaskId || undefined,
-        appEnv,
-      });
-    } catch (e: unknown) {
-      logger.warn('Slack feedback notification failed:', e);
-    }
-
-    try {
-      await WhatsAppService.sendNewFeedbackAlert({ userId, userEmail, type, message });
-    } catch (e: unknown) {
-      logger.warn('WhatsApp notification failed:', e);
-    }
-
-    // Create Internal Notification for SuperAdmin
-    try {
-      const isCritical = severity === 'CRITICAL';
-      const notificationType = isCritical ? 'CLIENT_TICKET' : 'USER_FEEDBACK';
-      const notificationSeverity = isCritical ? 'WARNING' : 'INFO';
-
-      await NotificationService.send({
-        userId: userId,
-        organizationId: orgIdForNotifications,
-        type: notificationType,
-        severity: notificationSeverity as 'INFO' | 'WARNING' | 'CRITICAL',
-        title: isCritical ? `Critical Feedback: ${type}` : `New Feedback: ${type}`,
-        body: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
-        message: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
-        relatedObjectType: 'FEEDBACK',
-        relatedObjectId: feedbackId,
-        isActionable: true,
-        actionUrl: '/admin?section=feedback',
-        metadata: {
-          ...(metadata || {}),
-          userEmail,
-          feedbackType: type,
+    // Feedback #0e1e7dec — escalation previously ran inline and awaited
+    // Slack / email / WhatsApp network calls before sending the HTTP
+    // response. HIGH/CRITICAL severities add email + WhatsApp channels on
+    // top of in-app + Slack, which turned the user-visible "Submit feedback"
+    // latency from ~200ms to multi-seconds compared to MEDIUM/LOW tickets.
+    // The ticket is already persisted at this point and the task is linked —
+    // the only thing remaining is best-effort notification fan-out, which is
+    // safe to run in the background. We fire-and-forget and keep persisting
+    // the dispatch status asynchronously so the audit trail survives.
+    const escalationSnapshot = {
+      metadata: { ...metadataJson },
+      priority,
+      linkedTaskId,
+    };
+    const escalationPromise = (async () => {
+      try {
+        const alertDispatch = await dispatchFeedbackEscalation({
+          kind: 'feedback',
+          id: feedbackId,
+          organizationId: orgIdForNotifications,
           appEnv,
-          linkedTaskId,
-        },
-      });
-    } catch (noteErr) {
-      logger.error('Failed to create notification for feedback:', noteErr);
-    }
+          channels: resolveEscalationChannels({
+            kind: 'feedback',
+            feedbackType: type,
+            severity,
+          }),
+          feedbackType: type,
+          severity: severity || 'MEDIUM',
+          priority: escalationSnapshot.priority,
+          userId: actualUserId,
+          userEmail: actualUserEmail,
+          userName: actualUserName,
+          routePath: routePath || null,
+          deviceType: deviceType || null,
+          screenSize: screenSize || null,
+          uiLanguage: uiLanguage || null,
+          uiTheme: uiTheme || null,
+          title,
+          message: description,
+          taskId: escalationSnapshot.linkedTaskId,
+          metadata: escalationSnapshot.metadata,
+        });
+        const persisted = { ...escalationSnapshot.metadata, alertDispatch };
+        await updateFeedbackMetadata(feedbackId, persisted);
+      } catch (dispatchErr) {
+        logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
+      }
+    })();
+    // Attach a swallow-only handler so Node never logs "unhandledRejection"
+    // for the detached promise — the inner try/catch already reports via
+    // `logger.error`.
+    escalationPromise.catch(() => {});
 
     return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
   })
 );
+
+// Types + pure helpers (normalize/shape) now live in
+// `../services/feedbackShape.ts` — imported at the top of the file. This keeps
+// the route module lean and makes the shaping logic unit-testable without
+// touching Express.
 
 /**
  * GET /api/feedback
@@ -589,10 +1291,36 @@ router.post(
  */
 router.get(
   '/',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureFeedbackSchema();
-    const rows = await dbAll<any>(
-      `
+
+    // Historically this endpoint hard-capped at LIMIT 200 with no paging,
+    // which silently hid older tickets once the queue grew past that mark
+    // (reported as "where did all my feedback go?" in V2.1 smoke tests).
+    // We now accept explicit ?limit / ?offset, default to 1000 so most
+    // installations see everything in one shot, and always report the
+    // real backing count via X-Total-Count so the UI can surface it.
+    const rawLimit = Number(req.query.limit);
+    const rawOffset = Number(req.query.offset);
+    const limit = Math.min(
+      Math.max(Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 1000, 1),
+      5000
+    );
+    const offset = Math.max(Number.isFinite(rawOffset) && rawOffset > 0 ? rawOffset : 0, 0);
+
+    try {
+      const totalRow = await dbGet<{ count: number }>(
+        `SELECT COUNT(*)::int as count FROM feedback_items`,
+        []
+      ).catch(async () =>
+        // SQLite doesn't like `::int` — fall back to the untyped variant.
+        dbGet<{ count: number }>(`SELECT COUNT(*) as count FROM feedback_items`, [])
+      );
+      const total = Number(totalRow?.count || 0);
+
+      const rows = await dbAll<any>(
+        `
         SELECT
           f.id,
           f.organization_id,
@@ -615,27 +1343,23 @@ router.get(
         FROM feedback_items f
         LEFT JOIN users u ON u.id = f.user_id
         ORDER BY f.created_at DESC
-        LIMIT 200
-      `,
-      []
-    );
+        LIMIT ? OFFSET ?
+        `,
+        [limit, offset]
+      );
 
-    const shaped = (rows || []).map((r: any) => {
-      const meta = safeJsonParse<Record<string, any>>(r.metadata, {});
-      return {
-        ...r,
-        // Provide legacy context fields used by SuperAdmin view (computed from metadata_json)
-        route_path: meta.routePath || meta.context || null,
-        device_type: meta.deviceType || null,
-        screen_size: meta.screenSize || null,
-        ui_language: meta.uiLanguage || null,
-        ui_theme: meta.uiTheme || null,
-        // Keep metadata as string to match existing UI expectations
-        metadata: r.metadata ? String(r.metadata) : null,
-      };
-    });
+      const shaped = (rows || []).map((r: any) => shapeFeedbackRow(r));
 
-    return res.json(shaped);
+      res.setHeader('X-Total-Count', String(total));
+      res.setHeader('X-Page-Limit', String(limit));
+      res.setHeader('X-Page-Offset', String(offset));
+      return res.json(shaped);
+    } catch (error) {
+      logger.error('[Feedback] Failed to read feedback list:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(req, 500, 'FEEDBACK_LIST_READ_FAILED', 'Failed to read feedback list.')
+      );
+    }
   })
 );
 
@@ -645,14 +1369,33 @@ router.get(
  */
 router.patch(
   '/:id/status',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { status, note } = req.body;
     const { id } = req.params;
     const changedBy = (req as any).user?.id || req.body.userId || null;
 
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_STATUS_FEEDBACK_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+
     const validStatuses = ['NEW', 'PENDING', 'IN_PROGRESS', 'REVIEWED', 'RESOLVED', 'ARCHIVED'];
-    if (!validStatuses.includes(status.toUpperCase())) {
-      return res.status(400).json({ error: 'Invalid status' });
+    if (typeof status !== 'string' || !validStatuses.includes(status.toUpperCase())) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_STATUS_VALUE_INVALID',
+          'Status value is invalid.'
+        )
+      );
     }
 
     const current = await dbGet<{ status: string }>(
@@ -665,7 +1408,15 @@ router.patch(
     const runResult = await dbRun(sql, [status.toUpperCase(), id]);
 
     if (!runResult.success) {
-      throw new Error(runResult.error || 'Failed to update feedback status');
+      logger.error('[Feedback] Failed to update feedback status:', runResult.error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_STATUS_UPDATE_FAILED',
+          'Failed to update feedback status.'
+        )
+      );
     }
 
     // Record status change in feedback_items history (if table exists)
@@ -685,17 +1436,240 @@ router.patch(
 );
 
 /**
+ * PATCH /api/feedback/:id/workflow
+ * Update pipeline metadata (owner, cluster, delivery, resolution) for a feedback ticket.
+ */
+router.patch(
+  '/:id/workflow',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const {
+      owner,
+      cluster,
+      source,
+      branch,
+      prUrl,
+      taskUrl,
+      linkedTaskId,
+      deployStatus,
+      deployTargets,
+      deployedAt,
+      verifiedBy,
+      verifiedAt,
+      waitingOn,
+      resolution,
+      note,
+    } = req.body || {};
+
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_WORKFLOW_FEEDBACK_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+
+    const row = await dbGet<{ metadata_json: string | null; linked_task_id?: string | null }>(
+      `SELECT metadata_json, linked_task_id FROM feedback_items WHERE id = ?`,
+      [id]
+    );
+
+    if (!row) {
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_WORKFLOW_NOT_FOUND',
+          'Feedback was not found.'
+        )
+      );
+    }
+
+    const meta = safeJsonParse<Record<string, unknown>>(row.metadata_json, {});
+    const currentWorkflow = normalizeWorkflowMeta(meta);
+    const currentResolution = normalizeResolutionMeta(meta);
+    const currentTimeline = normalizeWorkflowTimeline(meta);
+
+    const nextWorkflow = compactObject({
+      ...currentWorkflow,
+      owner: owner !== undefined ? owner : currentWorkflow.owner,
+      cluster: cluster !== undefined ? cluster : currentWorkflow.cluster,
+      source: source !== undefined ? source : currentWorkflow.source,
+      branch: branch !== undefined ? branch : currentWorkflow.branch,
+      prUrl: prUrl !== undefined ? prUrl : currentWorkflow.prUrl,
+      taskUrl: taskUrl !== undefined ? taskUrl : currentWorkflow.taskUrl,
+      linkedTaskId:
+        linkedTaskId !== undefined
+          ? linkedTaskId
+          : currentWorkflow.linkedTaskId || row.linked_task_id,
+      deployStatus: deployStatus !== undefined ? deployStatus : currentWorkflow.deployStatus,
+      deployTargets:
+        deployTargets !== undefined
+          ? normalizeStringArray(deployTargets)
+          : currentWorkflow.deployTargets || [],
+      deployedAt: deployedAt !== undefined ? deployedAt : currentWorkflow.deployedAt,
+      verifiedBy: verifiedBy !== undefined ? verifiedBy : currentWorkflow.verifiedBy,
+      verifiedAt: verifiedAt !== undefined ? verifiedAt : currentWorkflow.verifiedAt,
+      waitingOn: waitingOn !== undefined ? waitingOn : currentWorkflow.waitingOn,
+      lastUpdatedAt: new Date().toISOString(),
+    }) as FeedbackWorkflowRecord;
+
+    const nextResolution = compactObject({
+      ...currentResolution,
+      ...(resolution && typeof resolution === 'object' && !Array.isArray(resolution)
+        ? {
+            type: (resolution as any).type,
+            summary: (resolution as any).summary,
+            rootCause: (resolution as any).rootCause,
+            verificationNotes: (resolution as any).verificationNotes,
+            testPlan: normalizeStringArray((resolution as any).testPlan),
+          }
+        : {}),
+    }) as FeedbackResolutionRecord;
+
+    const changedFields = [
+      owner !== undefined ? 'owner' : null,
+      cluster !== undefined ? 'cluster' : null,
+      source !== undefined ? 'source' : null,
+      branch !== undefined ? 'branch' : null,
+      prUrl !== undefined ? 'prUrl' : null,
+      taskUrl !== undefined ? 'taskUrl' : null,
+      linkedTaskId !== undefined ? 'linkedTaskId' : null,
+      deployStatus !== undefined ? 'deployStatus' : null,
+      deployTargets !== undefined ? 'deployTargets' : null,
+      deployedAt !== undefined ? 'deployedAt' : null,
+      verifiedBy !== undefined ? 'verifiedBy' : null,
+      verifiedAt !== undefined ? 'verifiedAt' : null,
+      waitingOn !== undefined ? 'waitingOn' : null,
+      resolution !== undefined ? 'resolution' : null,
+    ].filter(Boolean) as string[];
+
+    const nextTimeline =
+      changedFields.length > 0
+        ? [
+            ...currentTimeline,
+            {
+              id: uuidv4(),
+              at: new Date().toISOString(),
+              actor: (req as any).user?.email || (req as any).user?.id || null,
+              action: 'workflow_updated',
+              note: typeof note === 'string' ? note : null,
+              changes: changedFields,
+            } satisfies FeedbackWorkflowTimelineEntry,
+          ].slice(-50)
+        : currentTimeline;
+
+    const nextMeta = {
+      ...meta,
+      workflow: nextWorkflow,
+      resolution: nextResolution,
+      workflowTimeline: nextTimeline,
+      linkedTaskId: nextWorkflow.linkedTaskId || undefined,
+    };
+
+    const feedbackCols = await getTableColumns('feedback_items');
+    const updateCols: string[] = [];
+    const updateVals: unknown[] = [];
+    if (feedbackCols.has('metadata_json')) {
+      updateCols.push('metadata_json = ?');
+      updateVals.push(JSON.stringify(nextMeta));
+    }
+    if (feedbackCols.has('linked_task_id') && linkedTaskId !== undefined) {
+      updateCols.push('linked_task_id = ?');
+      updateVals.push(nextWorkflow.linkedTaskId || null);
+    }
+    // Write-through for the V2.1 additive workflow columns. We only write
+    // when the field is actually being touched in this PATCH so we don't
+    // clobber values set by another actor through the JSON blob.
+    if (feedbackCols.has('owner') && owner !== undefined) {
+      updateCols.push('owner = ?');
+      updateVals.push(nextWorkflow.owner || null);
+    }
+    if (feedbackCols.has('cluster') && cluster !== undefined) {
+      updateCols.push('cluster = ?');
+      updateVals.push(nextWorkflow.cluster || null);
+    }
+    if (feedbackCols.has('deploy_status') && deployStatus !== undefined) {
+      updateCols.push('deploy_status = ?');
+      updateVals.push(nextWorkflow.deployStatus || null);
+    }
+    if (feedbackCols.has('workflow_updated_at') && changedFields.length > 0) {
+      updateCols.push('workflow_updated_at = CURRENT_TIMESTAMP');
+    }
+    if (feedbackCols.has('updated_at')) {
+      updateCols.push('updated_at = CURRENT_TIMESTAMP');
+    }
+
+    if (updateCols.length === 0) {
+      return res.json({
+        success: true,
+        workflow: nextWorkflow,
+        resolution: nextResolution,
+        workflowTimeline: nextTimeline,
+      });
+    }
+
+    const runResult = await dbRun(
+      `UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`,
+      [...updateVals, id]
+    );
+
+    if (!runResult.success) {
+      logger.error('[Feedback] Failed to update feedback workflow:', runResult.error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_WORKFLOW_UPDATE_FAILED',
+          'Failed to update feedback workflow.'
+        )
+      );
+    }
+
+    return res.json({
+      success: true,
+      workflow: nextWorkflow,
+      resolution: nextResolution,
+      workflowTimeline: nextTimeline,
+    });
+  })
+);
+
+/**
  * POST /api/feedback/:id/respond
  * Admin response to feedback
  */
 router.post(
   '/:id/respond',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { response } = req.body;
     const { id } = req.params;
 
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_RESPOND_FEEDBACK_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+
     if (!response || !response.trim()) {
-      return res.status(400).json({ error: 'Response is required' });
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_RESPOND_BODY_INVALID',
+          'Response is required.'
+        )
+      );
     }
 
     const cols = await getTableColumns('feedback_items');
@@ -723,7 +1697,15 @@ router.post(
     const runResult = await dbRun(sql, [...params, id]);
 
     if (!runResult.success) {
-      throw new Error(runResult.error || 'Failed to update feedback');
+      logger.error('[Feedback] Failed to save admin response:', runResult.error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_RESPOND_UPDATE_FAILED',
+          'Failed to save feedback response.'
+        )
+      );
     }
 
     // Get the feedback to notify the user
@@ -764,34 +1746,152 @@ router.post(
 );
 
 /**
+ * GET /api/feedback/pulse-summary
+ * Get pulse feedback analytics
+ */
+router.get(
+  '/pulse-summary',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { period = '30d' } = req.query;
+
+    try {
+      const summary = await feedbackAIService.getPulseSummary(period as '7d' | '30d' | '90d');
+      return res.json({ success: true, summary });
+    } catch (error) {
+      logger.error('[Pulse] Summary error:', error);
+      return res.status(500).json({
+        status: 'error',
+        error: {
+          code: 'FEEDBACK_PULSE_SUMMARY_READ_FAILED',
+          message: 'Failed to read pulse summary.',
+          timestamp: new Date().toISOString(),
+        },
+        correlationId:
+          (req as AuthRequest & { correlationId?: string }).correlationId ||
+          req.get('X-Correlation-ID') ||
+          null,
+      });
+    }
+  })
+);
+
+/**
  * GET /api/feedback/:id
  * Get single feedback item
  */
 router.get(
+  '/trending',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const trending = await feedbackAIService.getTrendingTopics();
+      return res.json({ success: true, trending });
+    } catch (error) {
+      logger.error('[Trending] Error:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_TRENDING_READ_FAILED',
+          'Failed to read trending feedback topics.'
+        )
+      );
+    }
+  })
+);
+
+router.get(
   '/:id',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
-    const row = await dbGet<{
-      id: string;
-      user_id: string | null;
-      feedback_type: string;
-      title: string;
-      description: string;
-      status: string;
-      priority?: string | null;
-      severity?: string | null;
-      source_env?: string | null;
-      linked_task_id?: string | null;
-      metadata_json: string | null;
-      admin_response: string | null;
-      responded_at: string | null;
-      created_at: string;
-      updated_at: string | null;
-    }>('SELECT * FROM feedback_items WHERE id = ?', [id]);
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_ITEM_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+
+    let row:
+      | {
+          id: string;
+          user_id: string | null;
+          user_email: string | null;
+          user_name: string | null;
+          feedback_type: string;
+          title: string;
+          description: string;
+          status: string;
+          priority?: string | null;
+          severity?: string | null;
+          source_env?: string | null;
+          linked_task_id?: string | null;
+          metadata_json: string | null;
+          admin_response: string | null;
+          responded_at: string | null;
+          created_at: string;
+          updated_at: string | null;
+        }
+      | null = null;
+
+    try {
+      row = await dbGet<{
+        id: string;
+        user_id: string | null;
+        user_email: string | null;
+        user_name: string | null;
+        feedback_type: string;
+        title: string;
+        description: string;
+        status: string;
+        priority?: string | null;
+        severity?: string | null;
+        source_env?: string | null;
+        linked_task_id?: string | null;
+        metadata_json: string | null;
+        admin_response: string | null;
+        responded_at: string | null;
+        created_at: string;
+        updated_at: string | null;
+      }>(
+        `
+        SELECT
+          f.*,
+          u.email as user_email,
+          COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), f.user_id) as user_name
+        FROM feedback_items f
+        LEFT JOIN users u ON u.id = f.user_id
+        WHERE f.id = ?
+      `,
+        [id]
+      );
+    } catch (error) {
+      logger.error('[Feedback] Failed to read feedback by id:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_ITEM_READ_FAILED',
+          'Failed to read feedback item.'
+        )
+      );
+    }
 
     if (!row) {
-      return res.status(404).json({ error: 'Feedback not found' });
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_ITEM_NOT_FOUND',
+          'Feedback item was not found.'
+        )
+      );
     }
 
     let statusHistory: unknown[] = [];
@@ -804,17 +1904,14 @@ router.get(
       /* Table may not exist */
     }
 
-    const meta = safeJsonParse<Record<string, any>>((row as any).metadata_json, {});
-    return res.json({
+    const shaped = shapeFeedbackRow({
       ...row,
+      metadata: (row as any).metadata_json,
+    });
+    return res.json({
+      ...shaped,
       type: (row as any).feedback_type,
       message: (row as any).description,
-      metadata: (row as any).metadata_json,
-      route_path: meta.routePath || meta.context || null,
-      device_type: meta.deviceType || null,
-      screen_size: meta.screenSize || null,
-      ui_language: meta.uiLanguage || null,
-      ui_theme: meta.uiTheme || null,
       statusHistory,
     });
   })
@@ -826,7 +1923,8 @@ router.get(
  */
 router.get(
   '/stats/summary',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     const queries = {
       total: 'SELECT COUNT(*) as count FROM feedback_items',
       new: "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(status) = 'NEW'",
@@ -841,8 +1939,161 @@ router.get(
       results[key] = row?.count || 0;
     });
 
-    await Promise.all(promises);
+    try {
+      await Promise.all(promises);
+    } catch (error) {
+      logger.error('[Feedback] Failed to read stats summary:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_STATS_SUMMARY_READ_FAILED',
+          'Failed to read feedback statistics.'
+        )
+      );
+    }
     return res.json(results);
+  })
+);
+
+/**
+ * GET /api/feedback/analytics/overview
+ * Aggregated KPIs for the feedback triage dashboard:
+ *   - totals by status
+ *   - open volume per env + per type + per severity
+ *   - aging buckets (24h / 48h / 7d / >7d) for NEW
+ *   - MTTR (median hours between created_at and resolved_at) over last 30d
+ *   - re-open rate (tickets whose timeline contains status_reverted) last 30d
+ * SuperAdmin only.
+ */
+router.get(
+  '/analytics/overview',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    await ensureFeedbackSchema();
+    const rows = await dbAll<any>(
+      `
+        SELECT id, feedback_type, status, severity, priority, source_env,
+               created_at, updated_at, metadata_json
+        FROM feedback_items
+        ORDER BY created_at DESC
+        LIMIT 5000
+      `,
+      []
+    );
+
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const cutoff30d = now - 30 * day;
+
+    const byStatus: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+    const bySeverity: Record<string, number> = {};
+    const byEnv: Record<string, number> = {};
+    const agingBuckets = { under24h: 0, h24_48: 0, d2_7: 0, over7d: 0 };
+    const resolutionDurationsHours: number[] = [];
+    let reopenCount = 0;
+    let totalLast30d = 0;
+
+    for (const r of rows || []) {
+      const status = String(r.status || '').toUpperCase() || 'NEW';
+      byStatus[status] = (byStatus[status] || 0) + 1;
+
+      const type = String(r.feedback_type || 'UNKNOWN').toUpperCase();
+      byType[type] = (byType[type] || 0) + 1;
+
+      const severity = String(r.severity || '').toUpperCase() || 'UNSPECIFIED';
+      bySeverity[severity] = (bySeverity[severity] || 0) + 1;
+
+      const env = String(r.source_env || 'unknown').toLowerCase();
+      byEnv[env] = (byEnv[env] || 0) + 1;
+
+      const createdMs = r.created_at ? new Date(r.created_at).getTime() : NaN;
+      if (Number.isFinite(createdMs) && createdMs >= cutoff30d) {
+        totalLast30d++;
+      }
+
+      if (status === 'NEW' && Number.isFinite(createdMs)) {
+        const age = now - createdMs;
+        if (age < 24 * 60 * 60 * 1000) agingBuckets.under24h++;
+        else if (age < 48 * 60 * 60 * 1000) agingBuckets.h24_48++;
+        else if (age < 7 * 24 * 60 * 60 * 1000) agingBuckets.d2_7++;
+        else agingBuckets.over7d++;
+      }
+
+      // Resolution time: derive from timeline (status changes → RESOLVED)
+      const meta = safeJsonParse<Record<string, unknown>>(r.metadata_json, {});
+      const timeline = Array.isArray((meta as any).workflowTimeline)
+        ? ((meta as any).workflowTimeline as Array<{
+            at?: string;
+            action?: string;
+            note?: string;
+            changes?: string[];
+          }>)
+        : [];
+
+      if (status === 'RESOLVED' && Number.isFinite(createdMs) && r.updated_at) {
+        const resolvedMs = new Date(r.updated_at).getTime();
+        if (Number.isFinite(resolvedMs) && resolvedMs >= cutoff30d) {
+          const hours = (resolvedMs - createdMs) / (60 * 60 * 1000);
+          if (hours >= 0 && hours < 24 * 365) resolutionDurationsHours.push(hours);
+        }
+      }
+
+      const hasReopenEvent = timeline.some((entry) => {
+        if (!entry) return false;
+        const action = String(entry.action || '').toLowerCase();
+        if (action.includes('reopen')) return true;
+        const note = String(entry.note || '').toLowerCase();
+        return note.includes('reopen');
+      });
+      if (hasReopenEvent && Number.isFinite(createdMs) && createdMs >= cutoff30d) {
+        reopenCount++;
+      }
+    }
+
+    const sortedDurations = resolutionDurationsHours.slice().sort((a, b) => a - b);
+    const median =
+      sortedDurations.length === 0
+        ? null
+        : sortedDurations.length % 2 === 1
+          ? sortedDurations[(sortedDurations.length - 1) / 2]
+          : (sortedDurations[sortedDurations.length / 2 - 1] +
+              sortedDurations[sortedDurations.length / 2]) /
+            2;
+    const p90 =
+      sortedDurations.length === 0
+        ? null
+        : sortedDurations[
+            Math.min(sortedDurations.length - 1, Math.floor(sortedDurations.length * 0.9))
+          ];
+
+    const openCount = Object.entries(byStatus)
+      .filter(([k]) => k !== 'RESOLVED' && k !== 'ARCHIVED')
+      .reduce((sum, [, v]) => sum + v, 0);
+
+    return res.json({
+      sampleSize: rows?.length || 0,
+      openCount,
+      totals: {
+        byStatus,
+        byType,
+        bySeverity,
+        byEnv,
+      },
+      aging: agingBuckets,
+      mttrLast30d: {
+        medianHours: median,
+        p90Hours: p90,
+        sampleSize: resolutionDurationsHours.length,
+      },
+      last30d: {
+        created: totalLast30d,
+        reopened: reopenCount,
+        reopenRatePct: totalLast30d > 0 ? Math.round((reopenCount / totalLast30d) * 1000) / 10 : 0,
+      },
+      generatedAt: new Date().toISOString(),
+    });
   })
 );
 
@@ -852,6 +2103,7 @@ router.get(
  */
 router.get(
   '/backlog/tasks',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const limit = Math.min(Math.max(Number(req.query.limit || 200), 1), 500);
     const rows = await dbAll<any>(
@@ -893,12 +2145,20 @@ router.get(
 router.post(
   '/pulse',
   optionalVerifyToken,
+  apiAuthRateLimiter,
+  feedbackRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { userId, rating, context, comment, timestamp } = req.body;
-
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    const parsed = pulseFeedbackSchema.safeParse({
+      ...(req.body || {}),
+      rating: Number(req.body?.rating),
+    });
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid pulse payload',
+        details: parsed.error.flatten(),
+      });
     }
+    const { userId, rating, context, comment, timestamp } = parsed.data;
 
     const id = uuidv4();
     const actualUserId = userId || req.user?.id;
@@ -923,46 +2183,35 @@ router.post(
     // Log for analytics
     logger.info(`[Pulse] User ${actualUserId} rated ${rating}/5 on ${context}`);
 
-    // If low rating, create notification for admins
-    if (rating <= 2 && comment) {
-      try {
-        await NotificationService.send({
-          userId: 'admin',
-          organizationId: 'system',
-          type: 'LOW_PULSE_ALERT',
-          severity: 'WARNING',
-          title: `Low Pulse Rating: ${rating}/5`,
-          body: comment.substring(0, 200),
-          message: comment.substring(0, 200),
-          relatedObjectType: 'PULSE',
-          relatedObjectId: id,
-          isActionable: true,
-        });
-      } catch (e) {
-        logger.warn('[Pulse] Failed to create notification:', e);
-      }
+    try {
+      await dispatchFeedbackEscalation({
+        kind: 'pulse',
+        id,
+        organizationId: req.organizationId || 'system',
+        appEnv: getAppEnv(),
+        channels: resolveEscalationChannels({
+          kind: 'pulse',
+          rating,
+          comment,
+        }),
+        feedbackType: 'PULSE',
+        userId: actualUserId || null,
+        title: `Pulse ${rating}/5`,
+        message: comment || `User rated the experience ${rating}/5 on ${context || '/'}.`,
+        rating,
+        comment: comment || null,
+        routePath: context || '/',
+        metadata: {
+          rating,
+          context: context || '/',
+          timestamp: timestamp || new Date().toISOString(),
+        },
+      });
+    } catch (dispatchErr) {
+      logger.error('[Pulse] Failed to dispatch escalation:', dispatchErr);
     }
 
     return res.json({ success: true, id });
-  })
-);
-
-/**
- * GET /api/feedback/pulse-summary
- * Get pulse feedback analytics
- */
-router.get(
-  '/pulse-summary',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { period = '30d' } = req.query;
-
-    try {
-      const summary = await feedbackAIService.getPulseSummary(period as '7d' | '30d' | '90d');
-      return res.json({ success: true, summary });
-    } catch (error) {
-      logger.error('[Pulse] Summary error:', error);
-      return res.status(500).json({ error: 'Failed to get pulse summary' });
-    }
   })
 );
 
@@ -977,7 +2226,16 @@ router.get(
 router.post(
   '/feature',
   optionalVerifyToken,
+  apiAuthRateLimiter,
+  feedbackRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const parsed = featureFeedbackSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid feature payload',
+        details: parsed.error.flatten(),
+      });
+    }
     const {
       userId,
       userEmail,
@@ -987,11 +2245,7 @@ router.post(
       impact,
       context,
       requestAIAnalysis,
-    } = req.body;
-
-    if (!featureName || !description) {
-      return res.status(400).json({ error: 'Feature name and description are required' });
-    }
+    } = parsed.data;
 
     const id = uuidv4();
     const actualUserId = userId || req.user?.id;
@@ -1026,7 +2280,7 @@ router.post(
         const analysis = await feedbackAIService.analyzeFeatureRequest(
           featureName,
           description,
-          category
+          category || 'other'
         );
         aiSuggestion = analysis;
 
@@ -1041,23 +2295,31 @@ router.post(
       }
     }
 
-    // Create notification for product team
     try {
-      await NotificationService.send({
-        userId: 'product',
-        organizationId: 'system',
-        type: 'FEATURE_REQUEST',
-        severity: impact === 'high' ? 'WARNING' : 'INFO',
-        title: `New Feature Request: ${featureName}`,
-        body: description.substring(0, 200),
-        message: description.substring(0, 200),
-        relatedObjectType: 'FEATURE',
-        relatedObjectId: id,
-        isActionable: true,
-        actionUrl: '/admin?section=features',
+      await dispatchFeedbackEscalation({
+        kind: 'feature',
+        id,
+        organizationId: req.organizationId || 'system',
+        appEnv: getAppEnv(),
+        channels: resolveEscalationChannels({
+          kind: 'feature',
+        }),
+        feedbackType: 'FEATURE',
+        severity: impact === 'high' ? 'HIGH' : 'MEDIUM',
+        priority: impact || 'medium',
+        userId: actualUserId || null,
+        userEmail: actualEmail || null,
+        title: featureName,
+        message: description,
+        routePath: context || '/',
+        metadata: {
+          category: category || 'other',
+          impact: impact || 'medium',
+          aiSuggestion: aiSuggestion || undefined,
+        },
       });
-    } catch (e) {
-      logger.warn('[Feature] Failed to create notification:', e);
+    } catch (dispatchErr) {
+      logger.error('[Feature] Failed to dispatch escalation:', dispatchErr);
     }
 
     return res.json({
@@ -1077,6 +2339,7 @@ router.post(
  */
 router.get(
   '/features',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { status, category, limit = 50 } = req.query;
 
@@ -1112,7 +2375,14 @@ router.post(
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json(
+        buildFailClosedFeedbackError(
+          req,
+          401,
+          'FEEDBACK_FEATURE_VOTE_UNAUTHORIZED',
+          'Authentication is required to vote for features.'
+        )
+      );
     }
 
     // Check if already voted
@@ -1122,7 +2392,14 @@ router.post(
     );
 
     if (existing) {
-      return res.status(400).json({ error: 'Already voted' });
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_FEATURE_VOTE_DUPLICATE',
+          'Feature vote already exists for this user.'
+        )
+      );
     }
 
     // Add vote
@@ -1158,7 +2435,14 @@ router.post(
       return res.json({ success: true, insights });
     } catch (error) {
       logger.error('[AI Insights] Error:', error);
-      return res.json({ success: true, insights: [] }); // Return empty on error
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_AI_INSIGHTS_FAILED',
+          'Failed to generate AI insights.'
+        )
+      );
     }
   })
 );
@@ -1169,26 +2453,70 @@ router.post(
  */
 router.get(
   '/ai-analysis/:id',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
-    const analysis = await dbGet(`SELECT * FROM feedback_analysis WHERE feedback_id = ?`, [id]);
-
-    if (!analysis) {
-      return res.status(404).json({ error: 'Analysis not found' });
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_AI_ANALYSIS_FEEDBACK_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
     }
 
-    // Parse JSON fields
-    const analysisObj = analysis as Record<string, unknown>;
-    const result = {
-      ...analysisObj,
-      categories: JSON.parse((analysisObj.categories_json as string) || '[]'),
-      keywords: JSON.parse((analysisObj.keywords_json as string) || '[]'),
-      similarFeedbackIds: JSON.parse((analysisObj.similar_feedback_ids_json as string) || '[]'),
-      suggestedActions: JSON.parse((analysisObj.suggested_actions_json as string) || '[]'),
-    };
+    let analysis: Record<string, unknown> | null = null;
+    try {
+      analysis = await dbGet<Record<string, unknown>>(
+        `SELECT * FROM feedback_analysis WHERE feedback_id = ?`,
+        [id]
+      );
+    } catch (error) {
+      logger.error('[Feedback] Failed to read feedback AI analysis:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_AI_ANALYSIS_READ_FAILED',
+          'Failed to read feedback analysis.'
+        )
+      );
+    }
 
-    return res.json(result);
+    if (!analysis) {
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_AI_ANALYSIS_NOT_FOUND',
+          'Feedback analysis was not found.'
+        )
+      );
+    }
+
+    try {
+      const result = {
+        ...analysis,
+        categories: JSON.parse((analysis.categories_json as string) || '[]'),
+        keywords: JSON.parse((analysis.keywords_json as string) || '[]'),
+        similarFeedbackIds: JSON.parse((analysis.similar_feedback_ids_json as string) || '[]'),
+        suggestedActions: JSON.parse((analysis.suggested_actions_json as string) || '[]'),
+      };
+      return res.json(result);
+    } catch (error) {
+      logger.error('[Feedback] Failed to parse feedback AI analysis payload:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_AI_ANALYSIS_READ_FAILED',
+          'Failed to read feedback analysis.'
+        )
+      );
+    }
   })
 );
 
@@ -1198,17 +2526,31 @@ router.get(
  */
 router.post(
   '/:id/analyze',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_ANALYZE_FEEDBACK_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+
     // Get the feedback
     const feedback = await dbGet<{ id: string; message: string; type: string }>(
-      `SELECT id, message, type FROM system_feedback WHERE id = ?`,
+      `SELECT id, description as message, feedback_type as type FROM feedback_items WHERE id = ?`,
       [id]
     );
 
     if (!feedback) {
-      return res.status(404).json({ error: 'Feedback not found' });
+      return res.status(404).json(
+        buildFailClosedFeedbackError(req, 404, 'FEEDBACK_ANALYZE_NOT_FOUND', 'Feedback was not found.')
+      );
     }
 
     try {
@@ -1220,7 +2562,14 @@ router.post(
       return res.json({ success: true, analysis });
     } catch (error) {
       logger.error('[AI Analysis] Error:', error);
-      return res.status(500).json({ error: 'Failed to analyze feedback' });
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_ANALYZE_FAILED',
+          'Failed to analyze feedback.'
+        )
+      );
     }
   })
 );
@@ -1229,33 +2578,14 @@ router.post(
  * GET /api/feedback/trending
  * Get trending topics from feedback
  */
-router.get(
-  '/trending',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    try {
-      const trending = await feedbackAIService.getTrendingTopics();
-      return res.json({ success: true, trending });
-    } catch (error) {
-      logger.error('[Trending] Error:', error);
-      return res.json({ success: true, trending: [] });
-    }
-  })
-);
-
 /**
  * POST /api/feedback/seed-demo
  * Seed demo data for testing (admin only)
  */
 router.post(
   '/seed-demo',
-  verifyToken,
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    // Check if admin/superadmin
-    const userRole = (req.user?.role || '').toLowerCase();
-    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(userRole)) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
     logger.info('[Feedback] Seeding demo data...');
 
     const DEMO_USERS = [
@@ -1522,6 +2852,278 @@ router.post(
       logger.error('[Feedback] Seed error:', error);
       return res.status(500).json({ error: 'Failed to seed demo data', details: error.message });
     }
+  })
+);
+
+/**
+ * GET /api/feedback/:id/artifacts/screenshot
+ * SuperAdmin only — returns the stored screenshot bytes (jpeg/png/webp).
+ */
+router.get(
+  '/:id/artifacts/screenshot',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_SCREENSHOT_FEEDBACK_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+    let file: Awaited<ReturnType<typeof readFeedbackScreenshot>> = null;
+    try {
+      file = await readFeedbackScreenshot(id);
+    } catch (error) {
+      logger.error('[Feedback] Screenshot read failed:', error);
+      return res.status(500).json(
+        buildFailClosedFeedbackError(
+          req,
+          500,
+          'FEEDBACK_SCREENSHOT_READ_FAILED',
+          'Failed to read feedback screenshot.'
+        )
+      );
+    }
+    if (!file) {
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_SCREENSHOT_NOT_FOUND',
+          'Feedback screenshot was not found.'
+        )
+      );
+    }
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    return res.end(file.buffer);
+  })
+);
+
+/**
+ * GET /api/feedback/:id/cursor-brief
+ * SuperAdmin only — returns a markdown brief ready to paste into Cursor,
+ * with all captured context (logs, breadcrumbs, network, appContext, repro).
+ */
+router.get(
+  '/:id/cursor-brief',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if (!isUuidLike(id)) {
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_CURSOR_BRIEF_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
+    }
+    const row = await dbGet<any>(
+      `SELECT id, title, description, feedback_type, severity, priority, status,
+              source_env, created_at, metadata_json, linked_task_id
+       FROM feedback_items WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!row)
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_CURSOR_BRIEF_NOT_FOUND',
+          'Feedback item was not found.'
+        )
+      );
+
+    const meta: Record<string, unknown> = (() => {
+      try {
+        return row.metadata_json ? JSON.parse(String(row.metadata_json)) : {};
+      } catch {
+        return {};
+      }
+    })();
+
+    const dossier = (
+      meta.dossier && typeof meta.dossier === 'object'
+        ? (meta.dossier as Record<string, unknown>)
+        : {}
+    ) as Record<string, unknown>;
+    const appCtx = (dossier.appContext || {}) as Record<string, unknown>;
+    const workflow = (meta.workflow || {}) as Record<string, unknown>;
+    const signatureHash = (meta.signatureHash as string | undefined) || '—';
+
+    const lines: string[] = [];
+    lines.push(`# Cursor brief — ${row.feedback_type} ${row.id.slice(0, 8)}`);
+    lines.push('');
+    lines.push(`- **Title:** ${row.title || '(no title)'}`);
+    lines.push(`- **Severity:** ${row.severity || '—'}`);
+    lines.push(`- **Priority:** ${row.priority || '—'}`);
+    lines.push(`- **Status:** ${row.status || '—'}`);
+    lines.push(`- **Env:** ${row.source_env || (appCtx.appEnv as string) || '—'}`);
+    lines.push(`- **Cluster:** ${(workflow.cluster as string) || '—'}`);
+    lines.push(
+      `- **Route:** ${(meta.routePath as string) || (appCtx.route as any)?.pathname || '—'}`
+    );
+    lines.push(`- **Reporter:** ${(meta.userEmail as string) || (meta.userName as string) || '—'}`);
+    lines.push(`- **Created:** ${row.created_at || '—'}`);
+    lines.push(
+      `- **Build:** ${(appCtx.buildSha as string) || '—'} @ ${(appCtx.buildAt as string) || '—'}`
+    );
+    lines.push(`- **Signature:** \`${signatureHash}\``);
+    if (row.linked_task_id) lines.push(`- **Linked task:** ${row.linked_task_id}`);
+    if (Array.isArray(meta.duplicateCandidates) && (meta.duplicateCandidates as any[]).length > 0) {
+      lines.push(`- **Duplicates:** ${(meta.duplicateCandidates as any[]).length} candidate(s)`);
+    }
+    lines.push('');
+    lines.push('## Description');
+    lines.push(row.description || '(no description)');
+    lines.push('');
+
+    const breadcrumbs = Array.isArray(dossier.breadcrumbs)
+      ? (dossier.breadcrumbs as any[]).slice(-15)
+      : [];
+    if (breadcrumbs.length > 0) {
+      lines.push('## Breadcrumbs (last 15)');
+      for (const b of breadcrumbs) {
+        lines.push(
+          `- \`${b.at || ''}\` [${b.kind || 'custom'}] ${b.label || ''}${
+            b.target ? ` — \`${b.target}\`` : ''
+          }`
+        );
+      }
+      lines.push('');
+    }
+
+    const networkErrors = Array.isArray(dossier.networkErrors)
+      ? (dossier.networkErrors as any[]).slice(-10)
+      : [];
+    if (networkErrors.length > 0) {
+      lines.push('## Network errors');
+      for (const n of networkErrors) {
+        lines.push(
+          `- \`${n.at || ''}\` ${n.method || ''} ${n.status ?? 'ERR'} (${n.durationMs ?? '?'}ms) ${n.url || ''}${
+            n.error ? ` — ${n.error}` : ''
+          }`
+        );
+      }
+      lines.push('');
+    }
+
+    const consoleLogs = Array.isArray(dossier.consoleLogs)
+      ? (dossier.consoleLogs as any[]).slice(-15)
+      : [];
+    if (consoleLogs.length > 0) {
+      lines.push('## Console logs (last 15)');
+      lines.push('```');
+      for (const c of consoleLogs) {
+        lines.push(`[${c.level || 'log'}] ${c.at || ''} ${c.message || ''}`);
+      }
+      lines.push('```');
+      lines.push('');
+    }
+
+    const uncaught = dossier.lastUncaughtError as any;
+    if (uncaught && typeof uncaught === 'object' && uncaught.message) {
+      lines.push('## Last uncaught error');
+      lines.push('```');
+      lines.push(String(uncaught.message));
+      if (uncaught.stack) lines.push(String(uncaught.stack));
+      lines.push('```');
+      lines.push('');
+    }
+
+    if (appCtx.viewport) {
+      const vp = appCtx.viewport as any;
+      lines.push('## Environment');
+      lines.push(
+        `- viewport: ${vp.width || '?'}×${vp.height || '?'} @${vp.dpr || 1}x · ua: ${
+          (appCtx.userAgent as string) || '?'
+        }`
+      );
+      lines.push(
+        `- locale: ${(appCtx.locale as string) || '?'} · tz: ${
+          (appCtx.timezone as string) || '?'
+        } · online: ${appCtx.online ?? '?'}`
+      );
+      if (appCtx.memoryMb) lines.push(`- heap: ~${appCtx.memoryMb} MB`);
+      lines.push('');
+    }
+
+    lines.push('## Your job (Cursor)');
+    lines.push(
+      [
+        '1. Reproduce using the route and breadcrumbs above. Ask ONE clarifying question only if repro is ambiguous.',
+        `2. Create branch \`feedback/${row.id.slice(0, 8)}\` and take ownership:`,
+        '   ```',
+        `   PATCH /api/feedback/${row.id}/workflow`,
+        '   { "owner": "cursor", "source": "cursor", "branch": "feedback/' +
+          row.id.slice(0, 8) +
+          '", "note": "Picked up" }',
+        '   ```',
+        '3. Implement the fix, keep diff minimal, cover the regression with a test.',
+        `4. Open PR titled \`fix(feedback:${row.id.slice(0, 8)}): <summary>\`, then PATCH workflow with \`prUrl\`.`,
+        '5. After deploy, PATCH workflow with `deployStatus` and set `resolution.summary` before flipping status to `RESOLVED`.',
+      ].join('\n')
+    );
+    lines.push('');
+
+    const markdown = lines.join('\n');
+
+    // Side-effect: the moment someone pulls the Cursor brief, mark the ticket
+    // as picked up by Cursor. Keeps the Superadmin timeline honest — otherwise
+    // operators had to manually flip `workflow.source` and inevitably forgot.
+    // We only write when nothing was set yet, so we don't spam the audit log.
+    try {
+      const existingWorkflow = (meta.workflow || {}) as Record<string, unknown>;
+      const alreadyCursor = String(existingWorkflow.source || '').toLowerCase() === 'cursor';
+      if (!alreadyCursor) {
+        const feedbackCols = await getTableColumns('feedback_items');
+        if (feedbackCols.has('metadata_json')) {
+          const currentWorkflow = normalizeWorkflowMeta(meta);
+          const currentTimeline = normalizeWorkflowTimeline(meta);
+          const shortId = String(row.id).slice(0, 8);
+          const nextWorkflow = compactObject({
+            ...currentWorkflow,
+            source: 'cursor',
+            branch: currentWorkflow.branch || `feedback/${shortId}`,
+            lastUpdatedAt: new Date().toISOString(),
+          }) as FeedbackWorkflowRecord;
+          const nextTimeline = [
+            ...currentTimeline,
+            {
+              id: uuidv4(),
+              at: new Date().toISOString(),
+              actor: (req as any).user?.email || (req as any).user?.id || 'cursor',
+              action: 'workflow_updated',
+              note: 'Cursor brief pulled',
+              changes: ['source', ...(currentWorkflow.branch ? [] : ['branch'])],
+            } satisfies FeedbackWorkflowTimelineEntry,
+          ].slice(-50);
+          const nextMeta = {
+            ...meta,
+            workflow: nextWorkflow,
+            workflowTimeline: nextTimeline,
+          };
+          await dbRun(`UPDATE feedback_items SET metadata_json = ? WHERE id = ?`, [
+            JSON.stringify(nextMeta),
+            row.id,
+          ]);
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        '[Feedback] cursor-brief auto-source PATCH failed (non-fatal):',
+        err instanceof Error ? err.message : err
+      );
+    }
+
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    return res.send(markdown);
   })
 );
 

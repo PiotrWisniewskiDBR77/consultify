@@ -35,14 +35,16 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
     <div
       className={[
         'h-full flex flex-col overflow-hidden',
-        'rounded-xl border border-slate-200/70 dark:border-white/[0.06]',
-        'bg-white/70 dark:bg-navy-900/70',
-        'backdrop-blur',
+        // Light mode: solid border, no opacity tricks (§12 preview pane).
+        'rounded-xl border border-slate-200 dark:border-white/[0.06]',
+        'bg-white dark:bg-navy-900/70',
+        'shadow-hig-sm dark:shadow-none',
+        'dark:backdrop-blur',
         className,
       ].join(' ')}
     >
-      {/* Panel Header (KANON v3 / Golden Standard §6.10a) */}
-      <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur">
+      {/* Panel Header (KANON v3 / Golden Standard §6.10a; Light §12) */}
+      <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-900/80 dark:backdrop-blur">
         <div className="min-w-0 flex items-center gap-2">
           <div
             className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
@@ -61,7 +63,7 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
           {onClose ? (
             <button
               onClick={onClose}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-navy-900"
               aria-label={t('common.close', 'Close')}
               title={t('common.close', 'Close')}
             >
@@ -74,7 +76,7 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
       <div className={['flex-1 overflow-y-auto p-4', bodyClassName].join(' ')}>{children}</div>
 
       {footer ? (
-        <div className="shrink-0 border-t border-slate-200/70 dark:border-white/[0.06] p-4">
+        <div className="shrink-0 border-t border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-transparent p-4">
           {footer}
         </div>
       ) : null}

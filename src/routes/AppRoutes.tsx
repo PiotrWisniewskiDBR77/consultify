@@ -26,6 +26,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
@@ -165,8 +166,16 @@ const SuperAdminView = React.lazy(() =>
   import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
 );
 
-// AI Chat (Full Screen Chat View)
-const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
+// AI Chat (canonical full-screen surface)
+const AIChatWelcomeView = React.lazy(() =>
+  import('@/views/AIChatWelcomeView').then((m) => ({ default: m.AIChatWelcomeView }))
+);
+const UnifiedChatPanelView = React.lazy(() =>
+  import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
+);
+const V10RuntimeWorkspaceView = React.lazy(() =>
+  import('@/views/V10RuntimeWorkspaceView').then((m) => ({ default: m.V10RuntimeWorkspaceView }))
+);
 
 // KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
@@ -190,6 +199,7 @@ const DiscoveryConsultantView = React.lazy(() =>
 
 // Become Partner (Public Partner Recruitment Page)
 const BecomePartnerView = React.lazy(() => import('@/views/BecomePartnerView'));
+const PartnerApplicationView = React.lazy(() => import('@/views/PartnerApplicationView'));
 
 // Dashboard - DEPRECATED: Removed, redirects to Chat
 
@@ -277,17 +287,9 @@ const AboutView = React.lazy(() =>
 const ContactView = React.lazy(() =>
   import('@/views/legal/ContactView').then((m) => ({ default: m.ContactView }))
 );
-const TermsOfServiceView = React.lazy(() =>
-  import('@/views/legal/TermsOfServiceView').then((m) => ({ default: m.TermsOfServiceView }))
-);
-const PrivacyPolicyView = React.lazy(() =>
-  import('@/views/legal/PrivacyPolicyView').then((m) => ({ default: m.PrivacyPolicyView }))
-);
-const CookiePolicyView = React.lazy(() =>
-  import('@/views/legal/CookiePolicyView').then((m) => ({ default: m.CookiePolicyView }))
-);
-const SecurityView = React.lazy(() =>
-  import('@/views/legal/SecurityView').then((m) => ({ default: m.SecurityView }))
+// Standalone legal views removed — all legal documents served via LegalDocumentView (/legal/:docSlug)
+const VectorPage = React.lazy(() =>
+  import('../views/VectorPage').then((m) => ({ default: m.VectorPage }))
 );
 const LegalIndexView = React.lazy(() =>
   import('@/views/LegalIndexView').then((m) => ({ default: m.LegalIndexView }))
@@ -321,16 +323,25 @@ const AppPricingView = React.lazy(() =>
 const ExecutiveView = React.lazy(() =>
   import('@/views/ExecutiveView').then((m) => ({ default: m.ExecutiveView }))
 );
+const BusinessCasesPage = React.lazy(() =>
+  import('@/views/BusinessCasesPage').then((m) => ({ default: m.BusinessCasesPage }))
+);
 
 // Documentation Portal (Public)
 const KnowledgeBaseHomePage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({ default: m.KnowledgeBaseHomePage }))
+  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({
+    default: m.KnowledgeBaseHomePage,
+  }))
 );
 const KnowledgeBaseCategoryPage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({ default: m.KnowledgeBaseCategoryPage }))
+  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({
+    default: m.KnowledgeBaseCategoryPage,
+  }))
 );
 const KnowledgeBaseArticlePage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({ default: m.KnowledgeBaseArticlePage }))
+  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({
+    default: m.KnowledgeBaseArticlePage,
+  }))
 );
 const DocsLayout = React.lazy(() =>
   import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
@@ -363,6 +374,9 @@ const PublicFormPage = React.lazy(() =>
     default: m.PublicFormPage,
   }))
 );
+
+// Public Shared View (Table Platform)
+const PublicViewPage = React.lazy(() => import('@/components/MyWork/table/PublicViewPage'));
 
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = React.lazy(() =>
@@ -457,6 +471,23 @@ const AuthRouteWithTrialRedirect: React.FC<{
   );
 };
 
+const PublicProductionModuleDisabled: React.FC<{ moduleName: string }> = ({ moduleName }) => (
+  <div className="flex h-full items-center justify-center p-8 text-center text-slate-500 dark:text-slate-400">
+    <div>
+      <p className="text-lg font-medium">
+        {moduleName} module is not enabled for this organization.
+      </p>
+    </div>
+  </div>
+);
+
+const ProductionModuleGate: React.FC<{
+  enabled: boolean;
+  moduleName: string;
+  children: React.ReactNode;
+}> = ({ enabled, moduleName, children }) =>
+  enabled ? <>{children}</> : <PublicProductionModuleDisabled moduleName={moduleName} />;
+
 export const AppRoutes: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -464,9 +495,12 @@ export const AppRoutes: React.FC = () => {
   const {
     currentView,
     currentUser,
+    currentOrganization,
+    currentProjectId,
     setCurrentView,
     setCurrentUser,
     setCurrentOrganization,
+    setCurrentProjectId,
     setSessionMode,
     setAuthInitialStep,
     authInitialStep,
@@ -486,6 +520,10 @@ export const AppRoutes: React.FC = () => {
   const breadcrumbs = useBreadcrumbs();
 
   const isSuperAdmin = isSuperAdminRole(currentUser?.role);
+  const hideNonCoreModulesOnPublicProduction = React.useMemo(
+    () => shouldHideNonCoreModulesInPublicProduction(),
+    []
+  );
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -526,7 +564,7 @@ export const AppRoutes: React.FC = () => {
       setCurrentView(AppView.AUTH);
     } else {
       navigate('/trial/start');
-      setAuthInitialStep(AuthStep.CODE_ENTRY);
+      setAuthInitialStep(AuthStep.REGISTER);
       setCurrentView(AppView.AUTH);
     }
   };
@@ -612,6 +650,21 @@ export const AppRoutes: React.FC = () => {
       isAuthenticated: true,
     };
     setCurrentUser(authenticatedUser);
+    try {
+      sessionStorage.removeItem('attribution_invite');
+    } catch {
+      // ignore storage errors
+    }
+
+    if (
+      validUser.organizationId &&
+      currentProjectId &&
+      currentOrganization?.id &&
+      currentOrganization.id !== validUser.organizationId
+    ) {
+      // A persisted project from another org would make PMO modules appear empty.
+      setCurrentProjectId(null);
+    }
 
     if (validUser.organizationId) {
       setCurrentOrganization({
@@ -672,6 +725,26 @@ export const AppRoutes: React.FC = () => {
             </AuthLayout>
           }
         />
+        <Route
+          path={ROUTES.PARTNER.PUBLIC_APPLY}
+          element={
+            <AuthLayout>
+              <AnimationWrapper variant="fade">
+                <PartnerApplicationView />
+              </AnimationWrapper>
+            </AuthLayout>
+          }
+        />
+        <Route
+          path={ROUTES.PARTNER.PRICING}
+          element={
+            <AuthLayout>
+              <AnimationWrapper variant="fade">
+                <PartnerPricingView />
+              </AnimationWrapper>
+            </AuthLayout>
+          }
+        />
 
         {/* Documentation Portal - Public Routes */}
         <Route path="/docs" element={<DocsLayout />}>
@@ -687,7 +760,10 @@ export const AppRoutes: React.FC = () => {
         {/* Knowledge Base - Public Product KB */}
         <Route path="/knowledge-base" element={<KnowledgeBaseHomePage />} />
         <Route path="/knowledge-base/:categorySlug" element={<KnowledgeBaseCategoryPage />} />
-        <Route path="/knowledge-base/:categorySlug/:articleSlug" element={<KnowledgeBaseArticlePage />} />
+        <Route
+          path="/knowledge-base/:categorySlug/:articleSlug"
+          element={<KnowledgeBaseArticlePage />}
+        />
 
         {/* Public Form Page (Table Platform) — no auth required */}
         <Route
@@ -695,6 +771,16 @@ export const AppRoutes: React.FC = () => {
           element={
             <Suspense fallback={<LoadingScreen message="Loading form..." />}>
               <PublicFormPage />
+            </Suspense>
+          }
+        />
+
+        {/* Public Shared View (Table Platform) — no auth required */}
+        <Route
+          path="/public/views/:token"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading shared view..." />}>
+              <PublicViewPage />
             </Suspense>
           }
         />
@@ -756,6 +842,14 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* Pricing marketing page (Public) */}
+        <Route
+          path={ROUTES.CASE_STUDIES}
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading business cases..." />}>
+              <BusinessCasesPage />
+            </Suspense>
+          }
+        />
         <Route
           path="/pricing"
           element={
@@ -857,7 +951,7 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Trial Start - stable key prevents remount during auth initialization */}
+        {/* Trial Start - self-serve trial registration */}
         <Route
           path="/trial/start"
           element={
@@ -867,7 +961,7 @@ export const AppRoutes: React.FC = () => {
               <AuthLayout>
                 <AuthView
                   key="trial-form-stable"
-                  initialStep={AuthStep.CODE_ENTRY}
+                  initialStep={AuthStep.REGISTER}
                   targetMode={SessionMode.FULL}
                   onAuthSuccess={handleAuthSuccess}
                   onBack={() => navigate('/')}
@@ -961,14 +1055,19 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.MY_WORK}/*`}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['My Work']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <MyWorkView
-                    currentUser={currentUser as any}
-                    onNavigate={(view) => setCurrentView(view as AppView)}
-                  />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="My Work"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <MyWorkView
+                      currentUser={currentUser as any}
+                      onNavigate={(view) => setCurrentView(view as AppView)}
+                    />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -988,6 +1087,21 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        <Route path="/chat/v10-runtime" element={<Navigate to={ROUTES.AI_CHAT} replace />} />
+
+        <Route
+          path={ROUTES.AI_CHAT_V10_RUNTIME}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Internal', 'V10 QA']} noPadding>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <V10RuntimeWorkspaceView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
         {/* AI Chat with Conversation ID - deep link to specific conversation */}
         <Route
           path={ROUTES.AI_CHAT_CONVERSATION}
@@ -996,49 +1110,49 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanelView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
         />
 
-        {/* KIMI-style Wordy — document generation workspace (P22) */}
+        {/* KIMI Dokumenty — contact-required blocking page */}
         <Route
           path={ROUTES.WORDY}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Wordy']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]}>
                 <RouteErrorBoundary>
-                  <WordyView />
+                  <V4ComingSoonView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* KIMI-style Excele — spreadsheet generation workspace (P23) */}
+        {/* KIMI Tabele — contact-required blocking page */}
         <Route
           path={ROUTES.EXCELE}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]}>
                 <RouteErrorBoundary>
-                  <ExceleView />
+                  <V4ComingSoonView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Gamma-style Prezentacje — presentation generation workspace (P20) */}
+        {/* KIMI Prezentacje — contact-required blocking page */}
         <Route
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Prezentacje']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
                 <RouteErrorBoundary>
-                  <PrezentacjeView />
+                  <V4ComingSoonView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1097,9 +1211,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.ROOT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools']} noPadding>
-              <RouteErrorBoundary>
-                <DiscoveryToolsHub />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Tools"
+              >
+                <RouteErrorBoundary>
+                  <DiscoveryToolsHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1108,9 +1227,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis']} noPadding>
-              <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="library" initialCategory="strategic" />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Tools"
+              >
+                <RouteErrorBoundary>
+                  <DiscoveryToolsHub initialTab="library" initialCategory="strategic" />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1122,15 +1246,20 @@ export const AppRoutes: React.FC = () => {
               breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis', 'Megatrends']}
               noPadding
             >
-              <RouteErrorBoundary>
-                <div className="p-4 lg:p-6">
-                  <MegatrendsWorkspace
-                    source="tools"
-                    showHeader
-                    onBack={() => window.history.back()}
-                  />
-                </div>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Tools"
+              >
+                <RouteErrorBoundary>
+                  <div className="p-4 lg:p-6">
+                    <MegatrendsWorkspace
+                      source="tools"
+                      showHeader
+                      onBack={() => window.history.back()}
+                    />
+                  </div>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1138,9 +1267,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Operational']} noPadding>
-              <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="library" initialCategory="operational" />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Tools"
+              >
+                <RouteErrorBoundary>
+                  <DiscoveryToolsHub initialTab="library" initialCategory="operational" />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1148,9 +1282,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.DIGITAL}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Digital']} noPadding>
-              <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="library" initialCategory="digital" />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Tools"
+              >
+                <RouteErrorBoundary>
+                  <DiscoveryToolsHub initialTab="library" initialCategory="digital" />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1158,9 +1297,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.PROCESS_AUTOMATION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Process Automation']} noPadding>
-              <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="library" initialCategory="automation" />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Tools"
+              >
+                <RouteErrorBoundary>
+                  <DiscoveryToolsHub initialTab="library" initialCategory="automation" />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1237,25 +1381,30 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Licensed']} noPadding>
-                <RouteErrorBoundary>
-                  <Routes>
-                    {/* Assessment Session Editor (Workflow v2) */}
-                    <Route
-                      path=":framework/:assessmentId"
-                      element={<AssessmentSessionEditorView />}
-                    />
-                    {/* Main Assessment Hub - unified view */}
-                    <Route index element={<AssessmentHub />} />
-                    <Route path="overview" element={<AssessmentHub />} />
-                    <Route path="summary" element={<AssessmentHub />} />
-                    {/* Framework-specific routes (backward compatibility) */}
-                    <Route path="drd" element={<AssessmentHub />} />
-                    <Route path="siri" element={<AssessmentHub />} />
-                    <Route path="adma" element={<AssessmentHub />} />
-                    <Route path="cmmi" element={<AssessmentHub />} />
-                    <Route path="lean" element={<AssessmentHub />} />
-                  </Routes>
-                </RouteErrorBoundary>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Tools"
+                >
+                  <RouteErrorBoundary>
+                    <Routes>
+                      {/* Assessment Session Editor (Workflow v2) */}
+                      <Route
+                        path=":framework/:assessmentId"
+                        element={<AssessmentSessionEditorView />}
+                      />
+                      {/* Main Assessment Hub - unified view */}
+                      <Route index element={<AssessmentHub />} />
+                      <Route path="overview" element={<AssessmentHub />} />
+                      <Route path="summary" element={<AssessmentHub />} />
+                      {/* Framework-specific routes (backward compatibility) */}
+                      <Route path="drd" element={<AssessmentHub />} />
+                      <Route path="siri" element={<AssessmentHub />} />
+                      <Route path="adma" element={<AssessmentHub />} />
+                      <Route path="cmmi" element={<AssessmentHub />} />
+                      <Route path="lean" element={<AssessmentHub />} />
+                    </Routes>
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
               </MainLayout>
             </ProtectedRoute>
           }
@@ -1266,9 +1415,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.INITIATIVES}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
-              <RouteErrorBoundary>
-                <InitiativesHub />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Initiatives"
+              >
+                <RouteErrorBoundary>
+                  <InitiativesHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1276,11 +1430,16 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ROADMAP}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Roadmap']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <FullRoadmapView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Initiatives"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <FullRoadmapView />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1288,9 +1447,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PORTFOLIO}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
-              <RouteErrorBoundary>
-                <PortfolioView />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Initiatives"
+              >
+                <RouteErrorBoundary>
+                  <PortfolioView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1298,11 +1462,16 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ROI}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['ROI']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <FullROIView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Initiatives"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <FullROIView />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1310,9 +1479,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ECONOMICS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
-              <RouteErrorBoundary>
-                <EconomicsView />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Finance"
+              >
+                <RouteErrorBoundary>
+                  <EconomicsView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1320,9 +1494,59 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.FINANCE}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
-              <RouteErrorBoundary>
-                <EconomicsView />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Finance"
+              >
+                <RouteErrorBoundary>
+                  <EconomicsView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/finance/statements/:id"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Statement']} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Finance"
+              >
+                <RouteErrorBoundary>
+                  <EconomicsView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/finance/models/:id"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Model']} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Finance"
+              >
+                <RouteErrorBoundary>
+                  <EconomicsView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/finance/analyses/:id"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Analysis']} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Finance"
+              >
+                <RouteErrorBoundary>
+                  <EconomicsView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1330,13 +1554,18 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.EXECUTION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                    <FullExecutionView />
-                  </Suspense>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Implementation"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                      <FullExecutionView />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1344,13 +1573,18 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.IMPLEMENTATION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                    <ExecutionHub />
-                  </Suspense>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Implementation"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                      <ExecutionHub />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1358,13 +1592,18 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ROLLOUT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                    <FullRolloutView />
-                  </Suspense>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Implementation"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                      <FullRolloutView />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1387,16 +1626,21 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.presentations', 'Presentations'),
+                  t('sidebar.outputsLibrary', 'Outputs'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                 ]
               }
             >
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <ReportBuilderView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <ReportBuilderView />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1406,17 +1650,22 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.presentations', 'Presentations'),
+                  t('sidebar.outputsLibrary', 'Outputs'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                   t('common.edit', 'Edit'),
                 ]
               }
             >
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <ReportBuilderView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <ReportBuilderView />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1435,9 +1684,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.KPI_OKR}
           element={
             <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
-              <RouteErrorBoundary>
-                <KpiOkrView />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Results"
+              >
+                <RouteErrorBoundary>
+                  <KpiOkrView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1453,9 +1707,14 @@ export const AppRoutes: React.FC = () => {
               }
               noPadding
             >
-              <RouteErrorBoundary>
-                <ReportsAndPresentationsHub />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <ReportsAndPresentationsHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1474,24 +1733,48 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/wizard"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <PresentationWizard />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('rap.breadcrumb.presentationWizard', 'Presentation Wizard'),
+                ]
+              }
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <PresentationWizard />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
         <Route
           path="/presentations/builder/:deckId"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <DeckBuilder />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('rap.breadcrumb.deckBuilder', 'Deck Builder'),
+                ]
+              }
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <DeckBuilder />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1515,9 +1798,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.BENEFITS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
-              <RouteErrorBoundary>
-                <ResultsHub />
-              </RouteErrorBoundary>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Results"
+              >
+                <RouteErrorBoundary>
+                  <ResultsHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -1660,9 +1948,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.CONSULTANT.INVITES}
           element={
-            <AnimationWrapper variant="slideUp">
-              <ConsultantInviteView />
-            </AnimationWrapper>
+            <ProtectedRoute requireAuth={true}>
+              <AnimationWrapper variant="slideUp">
+                <ConsultantInviteView />
+              </AnimationWrapper>
+            </ProtectedRoute>
           }
         />
 
@@ -1686,6 +1976,22 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path={ROUTES.ONBOARDING_ADMIN}
+          element={
+            <AnimationWrapper variant="slideUp">
+              <OnboardingWizard />
+            </AnimationWrapper>
+          }
+        />
+        <Route
+          path={ROUTES.ONBOARDING_SEED}
+          element={
+            <AnimationWrapper variant="slideUp">
+              <OnboardingWizard />
+            </AnimationWrapper>
+          }
+        />
+        <Route
           path={ROUTES.PARTNER.ONBOARDING}
           element={
             <ProtectedRoute requireAuth={true}>
@@ -1701,8 +2007,10 @@ export const AppRoutes: React.FC = () => {
             <AnimationWrapper variant="slideUp">
               <TrialEntryView
                 onStartTrial={() => {
-                  setCurrentView(AppView.AI_CHAT);
-                  navigate('/chat');
+                  setSessionMode(SessionMode.FULL);
+                  setAuthInitialStep(AuthStep.REGISTER);
+                  setCurrentView(AppView.AUTH);
+                  navigate('/trial/start');
                 }}
               />
             </AnimationWrapper>
@@ -1738,35 +2046,16 @@ export const AppRoutes: React.FC = () => {
             </AnimationWrapper>
           }
         />
+        {/* Legacy standalone legal routes → redirect to database-backed /legal/:slug */}
+        <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
+        <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
+        <Route path="/cookies" element={<Navigate to="/legal/cookies" replace />} />
+        <Route path="/security" element={<Navigate to="/legal/security" replace />} />
         <Route
-          path={ROUTES.LEGAL.TERMS}
+          path={ROUTES.VECTOR}
           element={
             <AnimationWrapper variant="fade">
-              <TermsOfServiceView />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.LEGAL.PRIVACY}
-          element={
-            <AnimationWrapper variant="fade">
-              <PrivacyPolicyView />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.LEGAL.COOKIES}
-          element={
-            <AnimationWrapper variant="fade">
-              <CookiePolicyView />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.LEGAL.SECURITY}
-          element={
-            <AnimationWrapper variant="fade">
-              <SecurityView />
+              <VectorPage />
             </AnimationWrapper>
           }
         />

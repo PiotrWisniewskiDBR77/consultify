@@ -277,6 +277,32 @@ export const AIContextBuilder = {
       logger.warn('[AIContextBuilder] System docs layer failed:', (err as Error).message);
     }
 
+    // P23-F1: Include recent workbooks in AI context
+    let recentWorkbooks: any = null;
+    try {
+      const wbRows = await all(
+        `SELECT id, title, description, sheet_count, quality_score, created_at
+         FROM generated_workbooks WHERE organization_id = ?
+         ORDER BY created_at DESC LIMIT 5`,
+        [organizationId]
+      );
+      if (wbRows?.length) {
+        recentWorkbooks = {
+          count: wbRows.length,
+          items: wbRows.map((wb: any) => ({
+            id: wb.id,
+            title: wb.title,
+            description: wb.description,
+            sheetCount: wb.sheet_count,
+            qualityScore: wb.quality_score,
+            createdAt: wb.created_at,
+          })),
+        };
+      }
+    } catch {
+      // generated_workbooks table may not exist yet
+    }
+
     const fullContext = {
       platform,
       organization,
@@ -292,6 +318,7 @@ export const AIContextBuilder = {
       financialData,
       historicalPatterns,
       systemDocs,
+      recentWorkbooks,
     };
 
     let filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
@@ -524,6 +551,145 @@ export const AIContextBuilder = {
       .buildResolvedContext(organizationId)
       .catch(() => null);
 
+    const formattedFindings = (resolvedContext?.signals?.interviewFindings ?? []).map((f) => {
+      const tag = `[${String(f.confidenceLevel).toUpperCase()}]`;
+      const base = `${tag} ${f.findingStatement}`;
+      const limitsNote = f.limits ? ` | Limits: ${f.limits}` : '';
+      const evidenceNote =
+        f.evidenceCount > 0
+          ? ` (${f.evidenceCount} evidence pointer${f.evidenceCount === 1 ? '' : 's'})`
+          : '';
+      return `${base}${limitsNote}${evidenceNote}`;
+    });
+
+    // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — Teresa used to
+    // reply "nie mam dostępu do danych VTS / Atelier / plików" even when the
+    // org had interview answers, evidence files, and manual notes persisted
+    // in `organization_context_items` (VTS collected Q&A, uploaded PDFs,
+    // manual entries). `resolvedContext.signals.interviewFindings` only
+    // surfaces *processed* P10 findings — the raw interview answers and
+    // evidence titles never reached the prompt. This pull exposes a compact
+    // snapshot (last ~30 rows grouped by source_type) so Teresa can reason
+    // about the tenant's actual content without a project scope.
+    let contextItemsSample: {
+      interviewAnswers: Array<{ question: string; answer: string; updatedAt: string }>;
+      evidence: Array<{ title: string; fileType?: string; updatedAt: string }>;
+      manualNotes: Array<{ title: string; snippet: string; updatedAt: string }>;
+      documentExtractions: Array<{ title: string; snippet: string; updatedAt: string }>;
+      totalItems: number;
+      lastUpdated: string | null;
+    } | null = null;
+    try {
+      const rows =
+        ((await all(
+          `SELECT id, source_type, source_label, content_json, updated_at
+             FROM organization_context_items
+            WHERE organization_id = ?
+              AND (visibility_scope IS NULL OR visibility_scope IN ('organization', 'public'))
+            ORDER BY updated_at DESC
+            LIMIT 60`,
+          [organizationId]
+        )) as Array<{
+          id: string;
+          source_type: string;
+          source_label: string | null;
+          content_json: string | null;
+          updated_at: string;
+        }>) || [];
+
+      const parseRow = (raw: string | null): Record<string, any> => {
+        if (!raw) return {};
+        try {
+          const p = JSON.parse(raw);
+          return p && typeof p === 'object' ? p : {};
+        } catch {
+          return {};
+        }
+      };
+
+      const truncate = (s: unknown, max: number) => {
+        const str = typeof s === 'string' ? s : String(s ?? '');
+        return str.length > max ? `${str.slice(0, max).trim()}…` : str;
+      };
+
+      const interviewAnswers: Array<{ question: string; answer: string; updatedAt: string }> = [];
+      const evidence: Array<{ title: string; fileType?: string; updatedAt: string }> = [];
+      const manualNotes: Array<{ title: string; snippet: string; updatedAt: string }> = [];
+      const documentExtractions: Array<{ title: string; snippet: string; updatedAt: string }> = [];
+
+      for (const row of rows) {
+        const content = parseRow(row.content_json);
+        const label = row.source_label || '';
+        const updatedAt = row.updated_at;
+
+        if (row.source_type === 'interview_answer' && interviewAnswers.length < 8) {
+          const q = String(content.questionText || label || '').trim();
+          const a = String(content.answerText || content.answer || '').trim();
+          if (q && a) {
+            interviewAnswers.push({
+              question: truncate(q, 240),
+              answer: truncate(a, 360),
+              updatedAt,
+            });
+          }
+        } else if (row.source_type === 'interview_evidence' && evidence.length < 5) {
+          const title = String(content.title || content.fileName || label || 'Evidence').trim();
+          evidence.push({
+            title: truncate(title, 120),
+            fileType: content.fileType || content.evidenceType || undefined,
+            updatedAt,
+          });
+        } else if (
+          (row.source_type === 'manual_entry' || row.source_type === 'manual_context') &&
+          manualNotes.length < 5
+        ) {
+          const title = String(label || content.title || 'Manual note').trim();
+          const snippet = String(
+            content.text || content.content || content.note || content.body || ''
+          ).trim();
+          if (snippet) {
+            manualNotes.push({
+              title: truncate(title, 120),
+              snippet: truncate(snippet, 300),
+              updatedAt,
+            });
+          }
+        } else if (
+          (row.source_type === 'doc_ingestion' || row.source_type === 'document_extraction') &&
+          documentExtractions.length < 5
+        ) {
+          const title = String(label || content.title || content.fileName || 'Document').trim();
+          const snippet = String(content.text || content.summary || content.excerpt || '').trim();
+          documentExtractions.push({
+            title: truncate(title, 120),
+            snippet: truncate(snippet, 260),
+            updatedAt,
+          });
+        }
+      }
+
+      if (
+        interviewAnswers.length ||
+        evidence.length ||
+        manualNotes.length ||
+        documentExtractions.length
+      ) {
+        contextItemsSample = {
+          interviewAnswers,
+          evidence,
+          manualNotes,
+          documentExtractions,
+          totalItems: rows.length,
+          lastUpdated: rows[0]?.updated_at || null,
+        };
+      }
+    } catch (err: any) {
+      logger.warn(
+        '[AIContextBuilder] organization_context_items snapshot failed:',
+        err?.message || String(err)
+      );
+    }
+
     return {
       organizationId,
       organizationName: resolvedContext?.profile.companyName || org.name || 'Unknown',
@@ -540,12 +706,20 @@ export const AIContextBuilder = {
       notes: resolvedContext?.notes,
       metadata: resolvedContext?.metadata,
       evidence: resolvedContext?.evidence,
-      signals: resolvedContext?.signals,
+      signals: {
+        ...resolvedContext?.signals,
+        interviewFindingsFormatted: formattedFindings,
+      },
+      trust: resolvedContext?.trust,
       contextConflicts: resolvedContext?.conflicts,
       contextTimeline: resolvedContext?.timeline?.slice(0, 10),
       // Organization Memory: patterns and terminology for AI context
       orgPatterns: orgPatterns.length > 0 ? orgPatterns : undefined,
       terminology: Object.keys(terminology).length > 0 ? terminology : undefined,
+      // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — raw snapshot
+      // of the org's collected context (interview Q&As, evidence files,
+      // manual notes) so Teresa can cite actual tenant data in chat.
+      contextItemsSample: contextItemsSample || undefined,
     };
   },
 
@@ -1054,7 +1228,103 @@ export const AIContextBuilder = {
     if (!projectId) return null;
 
     try {
-      // Get the latest assessment for this project
+      const parseJson = (raw: unknown): Record<string, any> => {
+        if (!raw) return {};
+        if (typeof raw === 'object') return raw as Record<string, any>;
+        if (typeof raw !== 'string') return {};
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? (parsed as Record<string, any>) : {};
+        } catch {
+          return {};
+        }
+      };
+
+      const canonicalAssessment: any = await get(
+        `SELECT
+           id,
+           name,
+           assessment_type,
+           status,
+           completion_percent,
+           confidence_avg,
+           score_summary,
+           context_snapshot,
+           p28_workbench_v1,
+           created_at,
+           updated_at
+         FROM assessments
+         WHERE project_id = ? AND organization_id = ?
+         ORDER BY COALESCE(updated_at, created_at) DESC
+         LIMIT 1`,
+        [projectId, organizationId]
+      );
+
+      if (canonicalAssessment) {
+        const scoreSummary = parseJson(canonicalAssessment.score_summary);
+        const contextSnapshot = parseJson(canonicalAssessment.context_snapshot);
+        const workbench = parseJson(canonicalAssessment.p28_workbench_v1);
+        const scoreValues =
+          (workbench?.scoreProposal?.scoreValues as Record<string, unknown> | undefined) ||
+          (scoreSummary?.scores as Record<string, unknown> | undefined) ||
+          (scoreSummary?.scoreValues as Record<string, unknown> | undefined) ||
+          {};
+
+        const normalizedScores = Object.entries(scoreValues)
+          .map(([axis, value]) => ({
+            axis,
+            asIs:
+              typeof value === 'number'
+                ? value
+                : typeof value === 'string' && value.trim() !== ''
+                  ? Number(value)
+                  : null,
+          }))
+          .filter((entry) => Number.isFinite(entry.asIs))
+          .map((entry) => ({ ...entry, asIs: Number(entry.asIs) }));
+
+        const needsWorkTopAxes = Array.isArray(contextSnapshot?.needsWorkTopAxes)
+          ? contextSnapshot.needsWorkTopAxes
+          : [];
+
+        return {
+          assessmentId: canonicalAssessment.id,
+          name: canonicalAssessment.name,
+          framework: canonicalAssessment.assessment_type || 'DRD',
+          status: canonicalAssessment.status,
+          overallScore: scoreSummary?.overallScore ?? scoreSummary?.overall_score ?? null,
+          overallTarget: scoreSummary?.overallTarget ?? scoreSummary?.overall_target ?? null,
+          overallGap: scoreSummary?.overallGap ?? scoreSummary?.overall_gap ?? null,
+          completionPercent: canonicalAssessment.completion_percent,
+          confidenceAvg:
+            canonicalAssessment.confidence_avg ?? workbench?.scoreProposal?.confidence ?? null,
+          runState: workbench?.runState || null,
+          axisScores: normalizedScores.slice(0, 10).map((entry) => ({
+            axis: entry.axis,
+            asIs: entry.asIs,
+            toBe: null,
+            gap: null,
+          })),
+          topGaps: needsWorkTopAxes.length
+            ? needsWorkTopAxes.slice(0, 5).map((axis: any) => ({
+                axis: axis?.axisName || axis?.axisId || 'unknown',
+                gap:
+                  typeof axis?.percent === 'number'
+                    ? Math.max(0, 100 - Number(axis.percent))
+                    : null,
+              }))
+            : normalizedScores
+                .slice()
+                .sort((a, b) => Number(a.asIs) - Number(b.asIs))
+                .slice(0, 5)
+                .map((entry) => ({
+                  axis: entry.axis,
+                  gap: Number((5 - Number(entry.asIs)).toFixed(2)),
+                })),
+        };
+      }
+
+      // Fallback for legacy projects that still store DRD in maturity_assessments.
       const assessment: any = await get(
         `SELECT id, name, framework, status, overall_score, confidence_avg, completion_percent
          FROM maturity_assessments
@@ -1064,7 +1334,6 @@ export const AIContextBuilder = {
       );
       if (!assessment) return null;
 
-      // Get axis scores
       const axisScores = await all(
         `SELECT axis_id, axis_name, as_is_score, to_be_score, gap
          FROM digitization_axis_scores
@@ -1073,7 +1342,6 @@ export const AIContextBuilder = {
         [assessment.id]
       );
 
-      // Get digitization analysis if exists
       const analysis: any = await get(
         `SELECT overall_as_is, overall_to_be, overall_gap
          FROM digitization_analyses
@@ -1115,40 +1383,91 @@ export const AIContextBuilder = {
    * Provides ROI, NPV, cost data for the project portfolio.
    */
   _buildFinancialContext: async (projectId: string | null, organizationId: string) => {
-    if (!projectId) return null;
-
     try {
-      // Aggregate initiative financials
-      const financials: any = await get(
-        `SELECT 
-           COUNT(*) as initiative_count,
-           SUM(COALESCE(cost_capex, 0)) as total_capex,
-           SUM(COALESCE(cost_opex, 0)) as total_opex,
-           AVG(COALESCE(expected_roi, 0)) as avg_roi
-         FROM initiatives
-         WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
-        [projectId]
-      );
+      // Aggregate initiative financials (project-scoped)
+      let financials: any = null;
+      let analysis: any = null;
+      let scenarios: any[] = [];
+      if (projectId) {
+        financials = await get(
+          `SELECT 
+             COUNT(*) as initiative_count,
+             SUM(COALESCE(cost_capex, 0)) as total_capex,
+             SUM(COALESCE(cost_opex, 0)) as total_opex,
+             AVG(COALESCE(expected_roi, 0)) as avg_roi
+           FROM initiatives
+           WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
+          [projectId]
+        );
 
-      // Get detailed financial analysis if exists
-      const analysis: any = await get(
-        `SELECT npv, irr, roi_percentage, payback_months, total_investment, total_benefit
-         FROM analysis_financials
-         WHERE project_id = ?
-         ORDER BY created_at DESC LIMIT 1`,
-        [projectId]
-      );
+        analysis = await get(
+          `SELECT npv, irr, roi_percentage, payback_months, total_investment, total_benefit
+           FROM analysis_financials
+           WHERE project_id = ?
+           ORDER BY created_at DESC LIMIT 1`,
+          [projectId]
+        );
 
-      // Get scenario data
-      const scenarios = await all(
-        `SELECT scenario_type, npv, irr, roi_percentage, probability
-         FROM analysis_financial_scenarios
-         WHERE project_id = ?
-         ORDER BY created_at DESC LIMIT 3`,
-        [projectId]
-      );
+        scenarios = await all(
+          `SELECT scenario_type, npv, irr, roi_percentage, probability
+           FROM analysis_financial_scenarios
+           WHERE project_id = ?
+           ORDER BY created_at DESC LIMIT 3`,
+          [projectId]
+        );
+      }
 
-      if (!financials?.initiative_count && !analysis) return null;
+      // V8 Finance module live data (org-scoped, not project-scoped)
+      let v8Finance: Record<string, unknown> | null = null;
+      try {
+        const stmtCount = await get(
+          `SELECT COUNT(*) as cnt FROM financial_statement_packs WHERE organization_id = ?`,
+          [organizationId]
+        );
+        const modelCount = await get(
+          `SELECT COUNT(*) as cnt FROM financial_model_versions WHERE organization_id = ?`,
+          [organizationId]
+        );
+        const activeRun: any = await get(
+          `SELECT run_id, current_step, kpi_linkage_status, degraded_json
+           FROM v8_finance_lane_runs
+           WHERE organization_id = ? AND (current_step != 'readback' OR readback_confirmed = 0)
+           ORDER BY created_at DESC LIMIT 1`,
+          [organizationId]
+        );
+        const latestVersion: any = await get(
+          `SELECT version_type, is_finalized, created_at FROM v8_finance_version_snapshots
+           WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+          [organizationId]
+        );
+        if ((stmtCount as any)?.cnt || (modelCount as any)?.cnt || activeRun) {
+          v8Finance = {
+            statementCount: (stmtCount as any)?.cnt || 0,
+            modelCount: (modelCount as any)?.cnt || 0,
+            activeLane: activeRun
+              ? {
+                  runId: activeRun.run_id,
+                  step: activeRun.current_step,
+                  kpiLinkage: activeRun.kpi_linkage_status,
+                  degradedCount: (() => {
+                    try {
+                      return JSON.parse(activeRun.degraded_json || '[]').length;
+                    } catch {
+                      return 0;
+                    }
+                  })(),
+                }
+              : null,
+            latestVersion: latestVersion
+              ? { type: latestVersion.version_type, finalized: !!latestVersion.is_finalized }
+              : null,
+          };
+        }
+      } catch {
+        // V8 Finance tables may not exist — non-blocking
+      }
+
+      if (!financials?.initiative_count && !analysis && !v8Finance) return null;
 
       return {
         portfolio: {
@@ -1174,6 +1493,7 @@ export const AIContextBuilder = {
           roi: s.roi_percentage,
           probability: s.probability,
         })),
+        v8Finance,
       };
     } catch (err: any) {
       logger.warn('[AIContextBuilder] Financial context failed:', err?.message);

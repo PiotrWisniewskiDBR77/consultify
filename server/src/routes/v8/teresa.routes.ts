@@ -20,8 +20,9 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
+import { getWorkerWithProfile } from '../../services/ai/virtualWorkerService.js';
 import {
+  type HandoffTargetModule,
   P08_ACCEPTANCE_CHECKLIST,
   P08_ACTION_ENVELOPE_RULES,
   P08_ACTION_ENVELOPE_STATES,
@@ -37,6 +38,8 @@ import {
   P08_WRITE_OWNERSHIP,
 } from '../../services/v8/teresaCopilotCanon.js';
 import * as teresaService from '../../services/v8/teresaCopilotService.js';
+import * as teresaToolOperatorService from '../../services/v8/teresaToolOperatorService.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
 
@@ -56,16 +59,21 @@ router.post(
   '/proposal',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const { sessionId, handoffContext, targetModule, targetPayload, idempotencyKey } = req.body ?? {};
+    const { sessionId, handoffContext, targetModule, targetPayload, idempotencyKey } =
+      req.body ?? {};
 
     if (!sessionId || typeof sessionId !== 'string') {
       return res.status(400).json({ error: 'sessionId required', code: 'P08_SESSION_ID_REQUIRED' });
     }
     if (!targetModule || typeof targetModule !== 'string') {
-      return res.status(400).json({ error: 'targetModule required', code: 'P08_TARGET_MODULE_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'targetModule required', code: 'P08_TARGET_MODULE_REQUIRED' });
     }
     if (!handoffContext || typeof handoffContext !== 'object') {
-      return res.status(400).json({ error: 'handoffContext required', code: 'P08_HANDOFF_CONTEXT_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'handoffContext required', code: 'P08_HANDOFF_CONTEXT_REQUIRED' });
     }
 
     try {
@@ -74,18 +82,119 @@ router.post(
         userId,
         sessionId,
         handoffContext,
-        targetModule,
+        targetModule: targetModule as HandoffTargetModule,
         targetPayload: targetPayload ?? {},
         idempotencyKey: typeof idempotencyKey === 'string' ? idempotencyKey : undefined,
       });
-      return res.status(201).json({ data: proposal, meta: teresaMeta({ action: 'proposal_created' }) });
+      return res.status(201).json({
+        data: teresaService.toChatProposalEnvelope(proposal),
+        meta: teresaMeta({ action: 'proposal_created' }),
+      });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
         return res.status(err.statusCode).json({ error: err.message, code: err.code });
       }
       throw err;
     }
-  }),
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /operators/initiative-draft
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/operators/initiative-draft',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await teresaToolOperatorService.proposeInitiativeDraftOperator({
+        organizationId,
+        userId,
+        sessionId: String(
+          req.body?.sessionId || req.body?.conversationId || `initiative-${userId}`
+        ),
+        conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
+        contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
+        sourceSurface: 'initiatives',
+        title: String(req.body?.title || ''),
+        description: String(req.body?.description || ''),
+        category: req.body?.category ? String(req.body.category) : null,
+        estimatedRoi:
+          typeof req.body?.estimatedRoi === 'number' ? req.body.estimatedRoi : undefined,
+        priority: req.body?.priority ? String(req.body.priority) : null,
+        timelineWeeks:
+          typeof req.body?.timelineWeeks === 'number' ? req.body.timelineWeeks : undefined,
+      });
+      return res.status(201).json({ data, meta: teresaMeta({ action: 'initiative_operator' }) });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /operators/notebook-entry
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/operators/notebook-entry',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await teresaToolOperatorService.proposeNotebookEntryOperator({
+        organizationId,
+        userId,
+        sessionId: String(req.body?.sessionId || req.body?.conversationId || `notebook-${userId}`),
+        conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
+        contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
+        sourceSurface: 'notebook',
+        title: String(req.body?.title || ''),
+        content: String(req.body?.content || ''),
+        entryType: req.body?.entryType ? String(req.body.entryType) : null,
+        tags: Array.isArray(req.body?.tags) ? req.body.tags.map((tag: unknown) => String(tag)) : [],
+      });
+      return res.status(201).json({ data, meta: teresaMeta({ action: 'notebook_operator' }) });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /operators/structured-query
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/operators/structured-query',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await teresaToolOperatorService.runStructuredQueryOperator({
+        organizationId,
+        userId,
+        sessionId: String(req.body?.sessionId || req.body?.conversationId || `tables-${userId}`),
+        conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
+        contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
+        sourceSurface: 'tables',
+        question: String(req.body?.question || ''),
+        dataDomain: req.body?.dataDomain ? String(req.body.dataDomain) : null,
+        limit: typeof req.body?.limit === 'number' ? req.body.limit : undefined,
+      });
+      return res.json({ data, meta: teresaMeta({ action: 'structured_query_operator' }) });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -102,14 +211,17 @@ router.post(
         organizationId,
         userId,
       });
-      return res.json({ data: proposal, meta: teresaMeta({ action: 'approved' }) });
+      return res.json({
+        data: teresaService.toChatProposalEnvelope(proposal),
+        meta: teresaMeta({ action: 'approved' }),
+      });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
         return res.status(err.statusCode).json({ error: err.message, code: err.code });
       }
       throw err;
     }
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -128,14 +240,17 @@ router.post(
         userId,
         reason,
       });
-      return res.json({ data: proposal, meta: teresaMeta({ action: 'rejected' }) });
+      return res.json({
+        data: teresaService.toChatProposalEnvelope(proposal),
+        meta: teresaMeta({ action: 'rejected' }),
+      });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
         return res.status(err.statusCode).json({ error: err.message, code: err.code });
       }
       throw err;
     }
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -152,15 +267,22 @@ router.post(
         organizationId,
         userId,
       });
+      const proposal = await teresaService.getProposal(req.params.id, organizationId);
       const status = result.success ? 200 : 500;
-      return res.status(status).json({ data: result, meta: teresaMeta({ action: 'executed' }) });
+      return res.status(status).json({
+        data: {
+          execution: result,
+          proposal: proposal ? teresaService.toChatProposalEnvelope(proposal, result) : null,
+        },
+        meta: teresaMeta({ action: 'executed' }),
+      });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
         return res.status(err.statusCode).json({ error: err.message, code: err.code });
       }
       throw err;
     }
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -175,8 +297,8 @@ router.get(
     if (!proposal) {
       return res.status(404).json({ error: 'Proposal not found', code: 'P08_PROPOSAL_NOT_FOUND' });
     }
-    return res.json({ data: proposal, meta: teresaMeta() });
-  }),
+    return res.json({ data: teresaService.toChatProposalEnvelope(proposal), meta: teresaMeta() });
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -189,8 +311,11 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const proposals = await teresaService.getProposalHistory(organizationId, userId, limit);
-    return res.json({ data: proposals, meta: teresaMeta({ count: proposals.length }) });
-  }),
+    return res.json({
+      data: proposals.map((proposal) => teresaService.toChatProposalEnvelope(proposal)),
+      meta: teresaMeta({ count: proposals.length }),
+    });
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -210,7 +335,49 @@ router.get(
       }
       throw err;
     }
-  }),
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /voice-config
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/voice-config',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const apiKey =
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '';
+    let voiceName: string | null = null;
+    let workerVoiceEnabled = true;
+
+    try {
+      const workerConfig = await getWorkerWithProfile('teresa');
+      const configuredVoiceName = String(workerConfig?.worker?.voice_name || '').trim();
+
+      if (workerConfig?.worker) {
+        const worker = workerConfig.worker;
+        const workerSurface = worker.surface === 'in_platform' || worker.surface === 'both';
+        if (worker.voice_enabled === false || worker.status !== 'active' || !workerSurface) {
+          workerVoiceEnabled = false;
+        }
+      }
+
+      if (configuredVoiceName) {
+        voiceName = configuredVoiceName;
+      }
+    } catch {
+      // Worker table may not exist yet.
+    }
+
+    return res.json({
+      data: {
+        enabled: Boolean(apiKey) && workerVoiceEnabled,
+        apiKey: apiKey || null,
+        voiceName,
+      },
+      meta: teresaMeta({ action: 'voice_config' }),
+    });
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -230,7 +397,7 @@ router.get(
       runtimeReady,
     });
     return res.json({ data: posture, meta: teresaMeta() });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -242,10 +409,12 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const scenario = teresaService.getDegradedScenario(req.params.id);
     if (!scenario) {
-      return res.status(404).json({ error: 'Degraded scenario not found', code: 'P08_SCENARIO_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Degraded scenario not found', code: 'P08_SCENARIO_NOT_FOUND' });
     }
     return res.json({ data: scenario, meta: teresaMeta() });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -273,7 +442,7 @@ router.get(
       },
       meta: teresaMeta(),
     });
-  }),
+  })
 );
 
 export default router;

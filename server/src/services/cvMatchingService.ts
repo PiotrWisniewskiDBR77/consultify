@@ -673,5 +673,5 @@ function logAccess(
   dbRun(
     `INSERT INTO cv_access_log (id, document_id, organization_id, accessed_by, action) VALUES (?, ?, ?, ?, ?)`,
     [uuidv4(), documentId, organizationId, userId, action]
-  ).catch(() => {});
+  ).catch((err: unknown) => logger.warn('[CVMatching] access log insert failed', err));
 }

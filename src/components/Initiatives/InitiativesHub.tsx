@@ -1,20 +1,24 @@
 /**
  * InitiativesHub
  * Unified Initiatives module with ModuleHub UI pattern
- * Integrates original Portfolio components (Kanban, List, Timeline, Matrix)
+ * Integrates original Portfolio components (Kanban, List, Timeline, Grid)
  * Connected to real API endpoints
  */
 
 import {
   AlertTriangle,
   BarChart3,
+  CheckCircle2,
   Edit2,
   Filter,
+  GitBranch,
   Lightbulb,
   List,
   Plus,
   RefreshCw,
   Shield,
+  Target,
+  Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -25,20 +29,21 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import {
-  createInitiativeWriteTruth,
-  getInitiativeStatusPreflightTruth,
-  quickUpdateInitiativeWriteTruth,
-  updateInitiativeStatusWriteTruth,
-} from '@/services/initiativeWriteTruth';
-import {
   V8PlanningApi,
   type V8PlanningDecisionChain,
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import {
+  createInitiativeWriteTruth,
+  getInitiativeStatusPreflightTruth,
+  quickUpdateInitiativeWriteTruth,
+  updateInitiativeStatusWriteTruth,
+} from '@/services/initiativeWriteTruth';
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
+import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
@@ -50,20 +55,20 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
-import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
 // ModuleHub components
 import {
   FilterChip,
+  HubWorkAreaLoadError,
+  HubWorkAreaLoading,
   ModuleHub,
   ModuleTab,
   OpenDocument,
-  StatusDropdown,
+  useModuleOpenDocuments,
   ViewMode,
 } from '../shared/ModuleHub';
-import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
-import { InitiativeDocumentView } from './InitiativeDocumentView';
+import type { AnalysisSubview } from './Analysis/types';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -148,6 +153,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentProjectId, currentUser } = useAppStore();
+  const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const [searchParams, setSearchParams] = useSearchParams();
   const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
   const [handledDeepLinkNew, setHandledDeepLinkNew] = useState(false);
@@ -166,12 +172,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');
 
+  // Analysis sub-view state (lifted so chips render in Menu 3 via commandRowContent)
+  const [analysisSubview, setAnalysisSubview] = useState<AnalysisSubview>('resources');
+  const [analysisActionButtons, setAnalysisActionButtons] = useState<React.ReactNode>(null);
+  const registerAnalysisActions = useCallback(
+    (node: React.ReactNode) => setAnalysisActionButtons(node),
+    []
+  );
+
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
   const [allInitiatives, setAllInitiatives] = useState<PortfolioInitiative[]>([]); // For duplicate detection
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
+  const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
   );
@@ -301,6 +317,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       try {
         setLoadError(null);
+        setLoadErrorCode(null);
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
         // Scope-based filtering: 'active' sends only core statuses, 'all' sends everything.
@@ -353,6 +370,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
+        const isNetworkError =
+          !error?.status ||
+          error?.message?.includes('Failed to fetch') ||
+          error?.message?.includes('NetworkError');
+        if (isNetworkError && fetchRetryRef.current < 3) {
+          fetchRetryRef.current++;
+          const delay = Math.min(2000 * Math.pow(2, fetchRetryRef.current - 1), 8000);
+          console.warn(
+            `[InitiativesHub] Network error, retrying in ${delay}ms (attempt ${fetchRetryRef.current}/3)`
+          );
+          setTimeout(() => fetchData(), delay);
+          return;
+        }
         setInitiatives([]);
         setAllInitiatives([]);
         setLoadError(
@@ -361,6 +391,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             'Failed to load initiatives from the active data source.'
           )
         );
+        const code =
+          typeof error?.data?.code === 'string' && error.data.code.trim()
+            ? error.data.code.trim()
+            : null;
+        setLoadErrorCode(code);
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -380,6 +415,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   useEffect(() => {
+    fetchRetryRef.current = 0;
     fetchData();
   }, [fetchData]);
 
@@ -447,9 +483,49 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [t]
   );
 
-  // Bulk edit lives inside Filters dropdown (per contract: no extra top-level icons/buttons)
+  const PRIORITY_OPTIONS = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
+
+  const togglePriorityFilter = useCallback(
+    (priority: (typeof PRIORITY_OPTIONS)[number]) => {
+      setFilters((prev) => {
+        const current = prev.priority || [];
+        const next = current.includes(priority)
+          ? current.filter((p) => p !== priority)
+          : [...current, priority];
+        return { ...prev, priority: next.length ? next : undefined };
+      });
+      setActiveFilters((prev) => {
+        const withoutPriority = prev.filter((f) => !f.id.startsWith('priority:'));
+        const currentPriorities = filters.priority || [];
+        const next = currentPriorities.includes(priority)
+          ? currentPriorities.filter((p) => p !== priority)
+          : [...currentPriorities, priority];
+        const chips: FilterChip[] = next.map((p) => ({
+          id: `priority:${p}`,
+          column: 'priority',
+          value: p,
+          label: t(`initiatives.priority.${p.toLowerCase()}`, p),
+        }));
+        return [...withoutPriority, ...chips];
+      });
+    },
+    [filters.priority, t]
+  );
+
   const filterActions = useMemo(() => {
+    const actions = PRIORITY_OPTIONS.map((p) => ({
+      id: `priority-${p}`,
+      label: t(`initiatives.priority.${p.toLowerCase()}`, p),
+      badge: filters.priority?.includes(p) ? 1 : 0,
+      onClick: () => togglePriorityFilter(p),
+    }));
+
+    if (isPilotParticipant) {
+      return actions;
+    }
+
     return [
+      ...actions,
       {
         id: 'bulk-edit',
         label: t('initiatives.bulkEdit.title'),
@@ -464,7 +540,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         },
       },
     ];
-  }, [selectedIds.size]);
+  }, [isPilotParticipant, selectedIds.size, filters.priority, togglePriorityFilter, t]);
 
   // ============================================
   // HANDLERS
@@ -509,31 +585,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       handlePreviewSelection(initiative.id);
     },
     [handlePreviewSelection]
-  );
-
-  // Open initiative as dynamic document (DynamicTabs)
-  const handleOpenFullScreen = useCallback(
-    (initiative: PortfolioInitiative) => {
-      // Close preview first
-      setPreviewInitiativeId(null);
-
-      // Add to open documents for tab display (if not already open)
-      const existingDoc = openDocuments.find((d) => d.id === initiative.id);
-      if (!existingDoc) {
-        const newDoc: OpenDocument = {
-          id: initiative.id,
-          name: initiative.name,
-          type: 'initiative',
-          subType: initiative.axis || 'operational',
-          status: initiative.status as any,
-        };
-        setOpenDocuments((prev) => [...prev, newDoc]);
-      }
-      // Set as active document - this renders InitiativeDocumentView in ModuleHub
-      setActiveDocumentId(initiative.id);
-      requestV8InitiativeSnapshot(initiative.id);
-    },
-    [openDocuments, requestV8InitiativeSnapshot, setActiveDocumentId, setOpenDocuments]
   );
 
   // Open decision as dynamic tab (called from InitiativeDocumentView → DecisionsSection)
@@ -602,7 +653,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [openDocuments, t]
   );
 
-  // Deep link: open initiative drawer/full card via URL params
+  // Deep link: open initiative preview via URL params
   // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
   useEffect(() => {
     if (handledDeepLinkOpen) return;
@@ -634,11 +685,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           return;
         }
 
-        if (mode === 'drawer') {
-          handleInitiativeClick(initiative as any);
-        } else {
-          handleOpenFullScreen(initiative as any);
-        }
+        handleInitiativeClick(initiative as any);
       } catch (e: any) {
         toast.error(
           e?.response?.data?.error ||
@@ -663,8 +710,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     initiatives,
     initiativesDemoData,
     handleInitiativeClick,
-    handleOpenFullScreen,
   ]);
+
+  useEffect(() => {
+    setOpenDocuments((prev) => {
+      const filtered = prev.filter((document) => document.type !== 'initiative');
+      return filtered.length === prev.length ? prev : filtered;
+    });
+  }, [setOpenDocuments]);
+
+  useEffect(() => {
+    if (!activeDocumentId) return;
+    const activeDoc = openDocuments.find((document) => document.id === activeDocumentId);
+    if (activeDoc?.type === 'initiative') {
+      setActiveDocumentId(null);
+    }
+  }, [activeDocumentId, openDocuments, setActiveDocumentId]);
 
   // Deep link: open "New Initiative" modal
   // Supported: /initiatives?new=1
@@ -672,17 +733,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (handledDeepLinkNew) return;
     const isNew = searchParams.get('new') === '1';
     if (isNew) {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/initiatives',
+        });
+        const next = new URLSearchParams(searchParams);
+        next.delete('new');
+        setSearchParams(next, { replace: true });
+        setHandledDeepLinkNew(true);
+        return;
+      }
       setShowNewModal(true);
       const next = new URLSearchParams(searchParams);
       next.delete('new');
       setSearchParams(next, { replace: true });
     }
     setHandledDeepLinkNew(true);
-  }, [handledDeepLinkNew, searchParams, setSearchParams]);
+  }, [handledDeepLinkNew, isPilotParticipant, searchParams, setSearchParams]);
 
   // D3.1: Status change with approval validation
   const handleStatusChange = useCallback(
     async (initiativeId: string, newStatus: InitiativeStatus) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/initiatives',
+        });
+        return;
+      }
       // Preflight via backend gate-readiness-check (source of truth).
       // This avoids local heuristics drifting from canonical gate DoD rules.
       if (isShowcaseInitiativeId(initiativeId)) {
@@ -772,11 +849,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       }
     },
-    [fetchData, setOpenDocuments, t]
+    [fetchData, isPilotParticipant, setOpenDocuments, t]
   );
 
   const handleQuickUpdate = useCallback(
     async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/initiatives',
+        });
+        return;
+      }
       // D1.2: Block level downgrade
       if ((updates as any).level) {
         const LEVEL_ORDER: Record<string, number> = {
@@ -812,7 +895,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return;
       }
       try {
-        const truth = await quickUpdateInitiativeWriteTruth(initiativeId, updates as Record<string, unknown>);
+        const truth = await quickUpdateInitiativeWriteTruth(
+          initiativeId,
+          updates as Record<string, unknown>
+        );
         const refreshed = truth.initiative;
         setInitiatives((prev) =>
           prev.map((initiative) =>
@@ -843,18 +929,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
       }
     },
-    [setOpenDocuments, t]
+    [isPilotParticipant, setOpenDocuments, t]
   );
 
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+    if (id.startsWith('priority:')) {
+      const value = id.split(':')[1] as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+      setFilters((prev) => {
+        const next = (prev.priority || []).filter((p) => p !== value);
+        return { ...prev, priority: next.length ? next : undefined };
+      });
+    }
   }, []);
 
   const handleClearFilters = useCallback(() => {
     setActiveFilters([]);
+    setFilters({});
   }, []);
 
   const handleShowList = useCallback(() => {
+    setActiveDocumentId(null);
+  }, []);
+
+  const handleMainTabChange = useCallback((tab: ModuleTab) => {
+    setActiveTab(tab);
     setActiveDocumentId(null);
   }, []);
 
@@ -869,6 +968,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   const handleBulkApply = useCallback(async () => {
+    if (isPilotParticipant) {
+      dispatchPilotAccessBlocked({
+        href: '/initiatives',
+      });
+      return;
+    }
     if (selectedIds.size === 0) return;
 
     const ids = Array.from(selectedIds);
@@ -906,7 +1011,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setBulkOwnerBusinessId('');
     setBulkOwnerExecutionId('');
     fetchData(true);
-  }, [bulkOwnerBusinessId, bulkOwnerExecutionId, bulkPriority, bulkStatus, fetchData, selectedIds]);
+  }, [
+    bulkOwnerBusinessId,
+    bulkOwnerExecutionId,
+    bulkPriority,
+    bulkStatus,
+    fetchData,
+    isPilotParticipant,
+    selectedIds,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isPilotParticipant) return;
+    if (showNewModal) setShowNewModal(false);
+    if (showBulkModal) setShowBulkModal(false);
+  }, [isPilotParticipant, showBulkModal, showNewModal]);
 
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
@@ -920,8 +1040,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           initiatives={initiatives}
           onOpenInitiative={(id) => {
             const init = initiatives.find((i) => i.id === id);
-            if (init) handleOpenFullScreen(init);
+            if (init) handlePreviewSelection(init.id);
           }}
+          onQuickUpdate={
+            isPilotParticipant
+              ? undefined
+              : async (initiativeId, updates) => {
+                  await handleQuickUpdate(initiativeId, updates as Partial<PortfolioInitiative>);
+                }
+          }
+          users={users}
+          projectId={currentProjectId || undefined}
+          subview={analysisSubview}
+          onRegisterActions={registerAnalysisActions}
         />
       );
     }
@@ -951,52 +1082,28 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       }
 
-      // Default: initiative document view
-      return (
-        <InitiativeDocumentView
-          initiativeId={activeDocumentId}
-          onBack={handleShowList}
-          onStatusChange={() => fetchData(true)}
-          sourceModule="initiatives"
-          onOpenDecision={handleOpenDecision}
-          onOpenTask={handleOpenTask}
-        />
-      );
+      return null;
     }
 
     if (loadError) {
       return (
-        <div className="flex items-center justify-center h-full px-6">
-          <div className="max-w-xl w-full p-5 rounded-2xl border border-red-500/20 bg-red-900/10">
-            <div className="text-sm font-semibold text-red-300">
-              {t('initiatives.hub.failedToLoad')}
-            </div>
-            <div className="text-sm text-red-200/80 mt-1">{loadError}</div>
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => fetchData(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
-              >
-                {t('initiatives.hub.retry')}
-              </button>
-              <button
-                onClick={() => setLoadError(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-              >
-                {t('initiatives.hub.dismiss')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <HubWorkAreaLoadError
+          title={t('initiatives.hub.failedToLoad')}
+          message={loadError}
+          errorCode={loadErrorCode}
+          retryLabel={t('initiatives.hub.retry')}
+          dismissLabel={t('initiatives.hub.dismiss')}
+          onRetry={() => fetchData(true)}
+          onDismiss={() => {
+            setLoadError(null);
+            setLoadErrorCode(null);
+          }}
+        />
       );
     }
 
     if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     if (initiatives.length === 0) {
@@ -1008,13 +1115,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               {t('initiatives.empty.description')}
             </p>
-            <button
-              onClick={() => setShowNewModal(true)}
-              className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
-            >
-              <Plus size={14} className="inline mr-2" />
-              {t('initiatives.form.newInitiative')}
-            </button>
+            {!isPilotParticipant && (
+              <button
+                onClick={() => setShowNewModal(true)}
+                className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
+              >
+                <Plus size={14} className="inline mr-2" />
+                {t('initiatives.form.newInitiative')}
+              </button>
+            )}
           </div>
         </div>
       );
@@ -1034,67 +1143,104 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
+    type PreviewItem = PortfolioInitiative & { title: string };
+
+    const selectedInit = previewInitiativeId
+      ? searchedInitiatives.find((i) => i.id === previewInitiativeId) || null
+      : null;
+    const selectedItem: PreviewItem | null = selectedInit
+      ? ({ ...selectedInit, title: selectedInit.name } as PreviewItem)
+      : null;
+    const itemIds = searchedInitiatives.map((i) => i.id);
+
+    const getPreviewItemById = (id: string): PreviewItem | null => {
+      const x = searchedInitiatives.find((i) => i.id === id);
+      return x ? ({ ...x, title: x.name || x.id } as PreviewItem) : null;
+    };
+
+    const mapToPreviewModel = (i: PortfolioInitiative): InitiativePreviewV3Model => ({
+      id: i.id,
+      name: i.name,
+      status: i.status,
+      axis: (i as any).axis,
+      priority: (i as any).priority,
+      progress: (i as any).progress ?? null,
+      createdAt: (i as any).createdAt ?? null,
+      updatedAt: (i as any).updatedAt ?? null,
+      summary: (i as any).summary ?? null,
+      description: (i as any).description ?? null,
+      plannedStartDate: (i as any).plannedStartDate ?? null,
+      plannedEndDate: (i as any).plannedEndDate ?? null,
+      ownerBusiness: (i as any).ownerBusiness ?? null,
+      ownerExecution: (i as any).ownerExecution ?? null,
+      sourceType: (i as any).sourceType ?? (i as any).source_type ?? null,
+      sourceId: (i as any).sourceId ?? (i as any).source_id ?? null,
+    });
+
+    const openAiChat = async (initiative: PortfolioInitiative, promptText: string) => {
+      try {
+        const convId = await openChatWithContext({
+          entityType: 'initiative',
+          entityId: initiative.id,
+          entityName: initiative.name,
+          contextData: initiative as unknown as Record<string, unknown>,
+          pmoContext: { initiativeIds: [initiative.id] },
+        });
+        await addChatMessage({
+          conversationId: convId,
+          role: 'user',
+          content: promptText,
+        } as any);
+        toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+      } catch {
+        toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
+      }
+    };
+
+    const copyInitiativeLink = async (id: string) => {
+      try {
+        const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=drawer`;
+        await navigator.clipboard.writeText(url);
+        toast.success(i18n.language === 'pl' ? 'Skopiowano link' : 'Link copied');
+      } catch {
+        toast.error(i18n.language === 'pl' ? 'Nie udało się skopiować' : 'Copy failed');
+      }
+    };
+
+    const renderInitiativePreview = (item: PreviewItem) => (
+      <InitiativePreviewV3Body
+        initiative={mapToPreviewModel(item)}
+        onSummarize={() =>
+          openAiChat(
+            item,
+            i18n.language === 'pl'
+              ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+              : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+          )
+        }
+      />
+    );
+
+    const renderInitiativePreviewFooter = (item: PreviewItem) => (
+      <InitiativePreviewV3Footer
+        initiative={mapToPreviewModel(item)}
+        tasksCount={Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined}
+        onOpenChat={(prompt) => openAiChat(item, prompt)}
+        onCopyLink={() => copyInitiativeLink(item.id)}
+        extraActionsAfterSlot={
+          <button
+            type="button"
+            onClick={() => navigate(`/economics?tab=models&initiativeId=${item.id}`)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition"
+          >
+            {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
+          </button>
+        }
+      />
+    );
+
     switch (viewMode) {
       case 'table':
-        type PreviewItem = PortfolioInitiative & { title: string };
-
-        const selectedInit = previewInitiativeId
-          ? searchedInitiatives.find((i) => i.id === previewInitiativeId) || null
-          : null;
-        const selectedItem: PreviewItem | null = selectedInit
-          ? ({ ...selectedInit, title: selectedInit.name } as PreviewItem)
-          : null;
-        const itemIds = searchedInitiatives.map((i) => i.id);
-
-        const mapToPreviewModel = (i: PortfolioInitiative): InitiativePreviewV3Model => ({
-          id: i.id,
-          name: i.name,
-          status: i.status,
-          axis: (i as any).axis,
-          priority: (i as any).priority,
-          progress: (i as any).progress ?? null,
-          createdAt: (i as any).createdAt ?? null,
-          updatedAt: (i as any).updatedAt ?? null,
-          summary: (i as any).summary ?? null,
-          description: (i as any).description ?? null,
-          plannedStartDate: (i as any).plannedStartDate ?? null,
-          plannedEndDate: (i as any).plannedEndDate ?? null,
-          ownerBusiness: (i as any).ownerBusiness ?? null,
-          ownerExecution: (i as any).ownerExecution ?? null,
-          sourceType: (i as any).sourceType ?? (i as any).source_type ?? null,
-          sourceId: (i as any).sourceId ?? (i as any).source_id ?? null,
-        });
-
-        const openAiChat = async (initiative: PortfolioInitiative, promptText: string) => {
-          try {
-            const convId = await openChatWithContext({
-              entityType: 'initiative',
-              entityId: initiative.id,
-              entityName: initiative.name,
-              contextData: initiative as unknown as Record<string, unknown>,
-              pmoContext: { initiativeIds: [initiative.id] },
-            });
-            await addChatMessage({
-              conversationId: convId,
-              role: 'user',
-              content: promptText,
-            } as any);
-            toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
-          } catch {
-            toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
-          }
-        };
-
-        const copyInitiativeLink = async (id: string) => {
-          try {
-            const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=doc`;
-            await navigator.clipboard.writeText(url);
-            toast.success(i18n.language === 'pl' ? 'Skopiowano link' : 'Link copied');
-          } catch {
-            toast.error(i18n.language === 'pl' ? 'Nie udało się skopiować' : 'Copy failed');
-          }
-        };
-
         return (
           <div className="h-full overflow-hidden">
             <TableWithPreviewLayout<PreviewItem>
@@ -1102,52 +1248,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               selectedItem={selectedItem}
               onSelect={handlePreviewSelection}
               itemIds={itemIds}
-              getItemById={(id) => {
-                const x = searchedInitiatives.find((i) => i.id === id);
-                return x ? ({ ...x, title: x.name || x.id } as any) : null;
-              }}
-              onOpenFull={(id) => {
-                const init = searchedInitiatives.find((x) => x.id === id);
-                if (init) handleOpenFullScreen(init);
-              }}
-              renderPreview={(item) => (
-                <InitiativePreviewV3Body
-                  initiative={mapToPreviewModel(item)}
-                  onSummarize={() =>
-                    openAiChat(
-                      item,
-                      i18n.language === 'pl'
-                        ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
-                        : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                    )
-                  }
-                />
-              )}
-              renderPreviewFooter={(item) => (
-                <InitiativePreviewV3Footer
-                  initiative={mapToPreviewModel(item)}
-                  tasksCount={
-                    Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined
-                  }
-                  onOpenFull={() => handleOpenFullScreen(item)}
-                  onOpenChat={(prompt) => openAiChat(item, prompt)}
-                  onCopyLink={() => copyInitiativeLink(item.id)}
-                  extraActionsAfterSlot={
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/economics?tab=models&initiativeId=${item.id}`)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition"
-                    >
-                      {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
-                    </button>
-                  }
-                />
-              )}
+              getItemById={getPreviewItemById}
+              renderPreview={renderInitiativePreview}
+              renderPreviewFooter={renderInitiativePreviewFooter}
             >
               <PortfolioListView
                 initiatives={searchedInitiatives}
                 onInitiativeClick={handleInitiativeClick}
-                onOpenFull={handleOpenFullScreen}
                 onStatusChange={handleStatusChange}
                 onQuickUpdate={handleQuickUpdate}
                 onSelectionChange={setSelectedIds}
@@ -1158,46 +1265,75 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       case 'grid':
         return (
-          <div className="h-full overflow-auto p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {searchedInitiatives.map((initiative) => (
-                <InitiativeGridCard
-                  key={initiative.id}
-                  initiative={initiative}
-                  onClick={() => handleOpenFullScreen(initiative)}
-                />
-              ))}
-            </div>
-            {searchedInitiatives.length === 0 && (
-              <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-                No initiatives found
+          <div className="h-full overflow-hidden">
+            <TableWithPreviewLayout<PreviewItem>
+              selectedId={previewInitiativeId}
+              selectedItem={selectedItem}
+              onSelect={handlePreviewSelection}
+              itemIds={itemIds}
+              getItemById={getPreviewItemById}
+              renderPreview={renderInitiativePreview}
+              renderPreviewFooter={renderInitiativePreviewFooter}
+            >
+              <div className="h-full overflow-auto p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {searchedInitiatives.map((initiative) => (
+                    <InitiativeGridCard
+                      key={initiative.id}
+                      initiative={initiative}
+                      onClick={() => handleInitiativeClick(initiative)}
+                    />
+                  ))}
+                </div>
+                {searchedInitiatives.length === 0 && (
+                  <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+                    {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
+                  </div>
+                )}
               </div>
-            )}
+            </TableWithPreviewLayout>
           </div>
         );
       case 'kanban':
         return (
-          <PortfolioKanbanView
-            initiatives={searchedInitiatives}
-            onInitiativeClick={handleOpenFullScreen}
-            onStatusChange={handleStatusChange}
-            scope={scope}
-          />
+          <div className="h-full overflow-hidden">
+            <TableWithPreviewLayout<PreviewItem>
+              selectedId={previewInitiativeId}
+              selectedItem={selectedItem}
+              onSelect={handlePreviewSelection}
+              itemIds={itemIds}
+              getItemById={getPreviewItemById}
+              renderPreview={renderInitiativePreview}
+              renderPreviewFooter={renderInitiativePreviewFooter}
+            >
+              <PortfolioKanbanView
+                initiatives={searchedInitiatives}
+                onInitiativeClick={handleInitiativeClick}
+                onStatusChange={handleStatusChange}
+                scope={scope}
+              />
+            </TableWithPreviewLayout>
+          </div>
         );
       case 'timeline':
         return (
-          <InitiativesTimelineView
-            initiatives={searchedInitiatives}
-            onInitiativeClick={handleOpenFullScreen}
-            projectId={currentProjectId || undefined}
-          />
-        );
-      case 'matrix':
-        return (
-          <PortfolioMatrixView
-            initiatives={searchedInitiatives}
-            onInitiativeClick={handleOpenFullScreen}
-          />
+          <div className="h-full overflow-hidden">
+            <TableWithPreviewLayout<PreviewItem>
+              selectedId={previewInitiativeId}
+              selectedItem={selectedItem}
+              onSelect={handlePreviewSelection}
+              itemIds={itemIds}
+              getItemById={getPreviewItemById}
+              renderPreview={renderInitiativePreview}
+              renderPreviewFooter={renderInitiativePreviewFooter}
+            >
+              <InitiativesTimelineView
+                initiatives={searchedInitiatives}
+                onInitiativeClick={handleInitiativeClick}
+                projectId={currentProjectId || undefined}
+              />
+            </TableWithPreviewLayout>
+          </div>
         );
       default:
         return null;
@@ -1251,24 +1387,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const statusDropdownControl = (
-    <StatusDropdown
-      context="initiatives"
-      value={activeStatusFilter || 'all'}
-      onChange={(status) => {
-        setActiveStatusFilter(status === 'all' ? null : status);
-      }}
-      counts={statusCounts}
-      size="sm"
-    />
-  );
-
-  const rightControls = (
-    <div className="flex items-center gap-2">
-      {scopeToggle}
-      {statusDropdownControl}
-    </div>
-  );
+  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
@@ -1288,6 +1407,60 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     hasActiveV8Snapshot && !v8InitiativeSnapshot.wbsCompleteness.complete
       ? v8InitiativeSnapshot.wbsCompleteness.gaps.length
       : 0;
+
+  const ANALYSIS_SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
+    {
+      id: 'resources',
+      labelKey: 'initiatives.analysis.resources.title',
+      icon: <Users size={14} className="text-violet-400" />,
+    },
+    {
+      id: 'feasibility',
+      labelKey: 'initiatives.analysis.feasibility.title',
+      icon: <Target size={14} className="text-amber-400" />,
+    },
+    {
+      id: 'logic',
+      labelKey: 'initiatives.analysis.logic.title',
+      icon: <GitBranch size={14} className="text-cyan-400" />,
+    },
+    {
+      id: 'timeline',
+      labelKey: 'initiatives.analysis.timeline.title',
+      icon: <BarChart3 size={14} className="text-emerald-400" />,
+    },
+    {
+      id: 'completeness',
+      labelKey: 'initiatives.analysis.completeness.title',
+      icon: <CheckCircle2 size={14} className="text-rose-400" />,
+    },
+  ];
+
+  const analysisCommandRow = (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {ANALYSIS_SUBVIEWS.map((sv) => (
+          <button
+            key={sv.id}
+            type="button"
+            onClick={() => setAnalysisSubview(sv.id)}
+            className={[
+              'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap',
+              analysisSubview === sv.id
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50',
+            ].join(' ')}
+          >
+            {sv.icon}
+            {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
+          </button>
+        ))}
+      </div>
+      {analysisActionButtons && (
+        <div className="flex items-center gap-1.5 shrink-0">{analysisActionButtons}</div>
+      )}
+    </div>
+  );
 
   const commandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -1416,7 +1589,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         persistViewModeKey="initiatives"
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleMainTabChange}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
@@ -1428,11 +1601,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={() => setShowNewModal(true)}
-        newItemLabel={`+ ${t('initiatives.form.newInitiative')}`}
+        onNewItem={isPilotParticipant ? undefined : () => setShowNewModal(true)}
+        newItemLabel={isPilotParticipant ? undefined : t('initiatives.form.newInitiative')}
         filterActions={filterActions}
         rightControls={rightControls}
-        commandRowContent={activeTab === 'analysis' ? null : commandRowContent}
+        commandRowContent={activeTab === 'analysis' ? analysisCommandRow : commandRowContent}
         availableViewModes={availableViewModes}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
@@ -1590,7 +1763,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setNewLevel('standard');
                   if (createdId) {
                     try {
-                      const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
+                      const full =
+                        truth.initiative || (await V8PlanningApi.getInitiative(createdId));
                       const normalized = normalizeInitiativeForPortfolio(
                         full as Record<string, any>,
                         createdId
@@ -1617,7 +1791,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                           fetchData(true);
                         }
 
-                        handleOpenFullScreen(normalized);
+                        handleInitiativeClick(normalized);
                       } else {
                         fetchData(true);
                       }

@@ -6,6 +6,8 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
+import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
 
 const router = Router();
 
@@ -74,7 +76,8 @@ async function ensureInitiativesTable() {
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const source = req.query?.source ? String(req.query.source) : null;
     const status = req.query?.status ? String(req.query.status) : null;
     const assessmentId = req.query?.assessmentId ? String(req.query.assessmentId) : null;
@@ -110,7 +113,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     const rows = await dbAll(sql, params);
     res.json(rows);
   } catch (err: any) {
-    console.error('[initiatives] GET / error:', err?.message);
+    logger.error('[initiatives] GET / error:', err?.message);
     res.status(500).json({ error: 'Failed to fetch initiatives' });
   }
 });
@@ -121,7 +124,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const row = await dbGet(
       `SELECT 
         id, name, title, description, status, priority, impact, effort, category,
@@ -136,7 +140,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     if (!row) return res.status(404).json({ error: 'Initiative not found' });
     res.json(row);
   } catch (err: any) {
-    console.error('[initiatives] GET /:id error:', err?.message);
+    logger.error('[initiatives] GET /:id error:', err?.message);
     res.status(500).json({ error: 'Failed to fetch initiative' });
   }
 });
@@ -147,7 +151,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -210,7 +215,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ id, name: name || title, status });
   } catch (err: any) {
-    console.error('[initiatives] POST / error:', err?.message);
+    logger.error('[initiatives] POST / error:', err?.message);
     res.status(500).json({ error: 'Failed to create initiative' });
   }
 });
@@ -221,7 +226,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const now = new Date().toISOString();
 
@@ -286,7 +292,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    console.error('[initiatives] PUT /:id error:', err?.message);
+    logger.error('[initiatives] PUT /:id error:', err?.message);
     res.status(500).json({ error: 'Failed to update initiative' });
   }
 });
@@ -297,14 +303,15 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     await dbRun('DELETE FROM initiatives WHERE id = ? AND organization_id = ?', [
       req.params.id,
       organizationId,
     ]);
     res.json({ success: true });
   } catch (err: any) {
-    console.error('[initiatives] DELETE /:id error:', err?.message);
+    logger.error('[initiatives] DELETE /:id error:', err?.message);
     res.status(500).json({ error: 'Failed to delete initiative' });
   }
 });

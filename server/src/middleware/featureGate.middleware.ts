@@ -33,6 +33,94 @@ interface FeatureContext {
   role?: string;
 }
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+const safeLog = (log: () => void): void => {
+  try {
+    log();
+  } catch {
+    // Logging is best-effort and must never break feature-gate flow.
+  }
+};
+const safeAuthPredicate = (predicate: () => boolean): boolean => safeRead(predicate, true);
+const hasUsableResponseWriters = (res: Response): boolean =>
+  typeof safeRead(() => (res as Response & { status?: unknown }).status, undefined) === 'function' &&
+  typeof safeRead(() => (res as Response & { json?: unknown }).json, undefined) === 'function';
+
+const sendJsonIfHeadersOpen = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>
+): boolean => {
+  let skipReason: 'headersSent' | 'writableEnded' | 'destroyed' | 'finished' | null = null;
+  if (safeRead(() => res.headersSent, false)) skipReason = 'headersSent';
+  else if (safeRead(() => (res as { writableEnded?: boolean }).writableEnded, false)) {
+    skipReason = 'writableEnded';
+  } else if (safeRead(() => (res as { destroyed?: boolean }).destroyed, false)) skipReason = 'destroyed';
+  else if (safeRead(() => (res as { finished?: boolean }).finished, false)) skipReason = 'finished';
+  if (skipReason) {
+    safeLog(() =>
+      logger.warn('[featureGate] Skipped JSON response write (response already finalized)', {
+        skipReason,
+        statusCode,
+        errorCode: typeof payload.error === 'string' ? payload.error : undefined,
+      })
+    );
+    return false;
+  }
+  try {
+    res.status(statusCode).json(payload);
+    return true;
+  } catch (error) {
+    safeLog(() => logger.warn('[featureGate] Failed to write JSON response', error));
+    return false;
+  }
+};
+
+const invokeNext = (res: Response, next: NextFunction): void => {
+  if (typeof next !== 'function') {
+    safeLog(() => logger.error('[featureGate] next is not a function; request chain cannot continue'));
+    return;
+  }
+  try {
+    next();
+  } catch (error) {
+    safeLog(() => logger.error('[featureGate] next() threw synchronously', error));
+    sendJsonIfHeadersOpen(res, 500, {
+      error: 'FEATURE_GATE_INTERNAL',
+      message: 'Feature gate encountered an unexpected error. Contact support.',
+    });
+  }
+};
+const responseIsFinalized = (res: Response): boolean =>
+  safeRead(() => res.headersSent, false) ||
+  safeRead(() => (res as { writableEnded?: boolean }).writableEnded, false) ||
+  safeRead(() => (res as { destroyed?: boolean }).destroyed, false) ||
+  safeRead(() => (res as { finished?: boolean }).finished, false);
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const normalizeRole = (value: unknown): string | undefined =>
+  normalizeOptionalString(value)?.toUpperCase();
+const isRegisteredFeature = (featureId: string): boolean =>
+  Object.prototype.hasOwnProperty.call(FEATURE_REQUIREMENTS, featureId);
+const hasDisallowedFeatureIdChars = (featureId: string): boolean => /[\u0000-\u001F\u007F]/.test(featureId);
+const MAX_FEATURE_ID_PUBLIC = 64;
+const MAX_FEATURE_ID_INTERNAL = 256;
+const MAX_REQUIRE_ACCESS_RULE_ENTRIES = 64;
+const MAX_REQUIRE_ACCESS_TOKEN_LENGTH = 64;
+const truncateForPublicSurface = (value: string): string =>
+  value.length <= MAX_FEATURE_ID_PUBLIC ? value : `${value.slice(0, MAX_FEATURE_ID_PUBLIC)}...`;
+
 // ==========================================
 // CONSTANTS
 // ==========================================
@@ -130,6 +218,16 @@ export const FEATURE_REQUIREMENTS: Record<string, FeatureRequirements> = {
   },
 };
 
+for (const featureId of Object.keys(FEATURE_REQUIREMENTS)) {
+  const requirements = FEATURE_REQUIREMENTS[featureId];
+  if (!requirements) continue;
+  Object.freeze(requirements.phase);
+  Object.freeze(requirements.state);
+  Object.freeze(requirements.role);
+  Object.freeze(requirements);
+}
+Object.freeze(FEATURE_REQUIREMENTS);
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
@@ -140,76 +238,133 @@ export const FEATURE_REQUIREMENTS: Record<string, FeatureRequirements> = {
  * @returns Express middleware
  */
 export function requireFeature(featureId: string) {
-  const requirements = FEATURE_REQUIREMENTS[featureId];
+  const normalizedFeatureId = normalizeOptionalString(featureId) || '';
+  const publicFeatureId = truncateForPublicSurface(normalizedFeatureId || featureId);
+  if (hasDisallowedFeatureIdChars(normalizedFeatureId)) {
+    return (_req: Request, res: Response, _next: NextFunction): void => {
+      safeLog(() =>
+        logger.error(`Feature '${publicFeatureId}' rejected: feature id contains disallowed characters`)
+      );
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_ID',
+        message: 'Feature identifier is not valid. Contact support.',
+      });
+    };
+  }
+  if (normalizedFeatureId.length > MAX_FEATURE_ID_INTERNAL) {
+    return (_req: Request, res: Response, _next: NextFunction): void => {
+      safeLog(() => logger.error(`Feature '${publicFeatureId}' rejected: feature id exceeds max length`));
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'FEATURE_NOT_REGISTERED',
+        message: `Feature '${publicFeatureId}' is not properly configured. Contact support.`,
+      });
+    };
+  }
+  const requirements = isRegisteredFeature(normalizedFeatureId)
+    ? FEATURE_REQUIREMENTS[normalizedFeatureId]
+    : undefined;
 
   if (!requirements) {
     // Feature not registered - block by default (fail closed)
     return (_req: Request, res: Response, _next: NextFunction): void => {
-      logger.error(`Feature '${featureId}' not registered in FEATURE_REQUIREMENTS`);
-      res.status(500).json({
+      safeLog(() => logger.error(`Feature '${publicFeatureId}' not registered in FEATURE_REQUIREMENTS`));
+      sendJsonIfHeadersOpen(res, 500, {
         error: 'FEATURE_NOT_REGISTERED',
-        message: `Feature '${featureId}' is not properly configured. Contact support.`,
+        message: `Feature '${publicFeatureId}' is not properly configured. Contact support.`,
       });
     };
   }
 
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
-    const currentPhase = req.currentPhase;
-    const currentState = req.userState;
-    const currentRole = req.userRole || req.user?.role;
+    try {
+      if (!hasUsableResponseWriters(res)) {
+        safeLog(() => logger.error('[featureGate] Invalid or incomplete response object'));
+        return;
+      }
+      const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
+      const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
+      const currentRole =
+        normalizeRole(safeRead(() => req.userRole, undefined)) ||
+        normalizeRole(safeRead(() => req.user?.role, undefined));
 
-    const errors: Array<{ type: string; required: string[]; current: string | undefined }> = [];
+      const errors: Array<{ type: string; required: string[]; current: string | null }> = [];
 
-    // Check phase
-    if (requirements.phase.length > 0 && !requirements.phase.includes(currentPhase || '')) {
-      errors.push({
-        type: 'PHASE',
-        required: requirements.phase,
-        current: currentPhase,
-      });
-    }
+      // Check phase
+      if (
+        safeAuthPredicate(
+          () => requirements.phase.length > 0 && !requirements.phase.includes(currentPhase || '')
+        )
+      ) {
+        errors.push({
+          type: 'PHASE',
+          required: requirements.phase,
+          current: currentPhase ?? null,
+        });
+      }
 
-    // Check state
-    if (requirements.state.length > 0 && !requirements.state.includes(currentState || '')) {
-      errors.push({
-        type: 'STATE',
-        required: requirements.state,
-        current: currentState,
-      });
-    }
+      // Check state
+      if (
+        safeAuthPredicate(
+          () => requirements.state.length > 0 && !requirements.state.includes(currentState || '')
+        )
+      ) {
+        errors.push({
+          type: 'STATE',
+          required: requirements.state,
+          current: currentState ?? null,
+        });
+      }
 
-    // Check role (only if roles are specified and user has org context)
-    if (requirements.role.length > 0 && currentRole) {
-      if (!requirements.role.includes(currentRole)) {
+      // Check role (only if roles are specified and user has org context)
+      if (
+        safeAuthPredicate(
+          () => requirements.role.length > 0 && !requirements.role.includes(currentRole || '')
+        )
+      ) {
         errors.push({
           type: 'ROLE',
           required: requirements.role,
-          current: currentRole,
+          current: currentRole ?? null,
         });
       }
-    }
 
-    if (errors.length > 0) {
-      res.status(403).json({
-        error: 'FEATURE_ACCESS_DENIED',
-        feature: featureId,
-        message: `Access to '${featureId}' denied. Requirements not met.`,
-        requirements: {
-          phase: requirements.phase,
-          state: requirements.state,
-          role: requirements.role,
-        },
-        current: {
-          phase: currentPhase,
-          state: currentState,
-          role: currentRole,
-        },
-        violations: errors,
+      if (errors.length > 0) {
+        const deniedFeatureId = truncateForPublicSurface(normalizedFeatureId);
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'FEATURE_ACCESS_DENIED',
+          feature: deniedFeatureId,
+          message: `Access to '${deniedFeatureId}' denied. Requirements not met.`,
+          requirements: {
+            phase: requirements.phase,
+            state: requirements.state,
+            role: requirements.role,
+          },
+          current: {
+            phase: currentPhase ?? null,
+            state: currentState ?? null,
+            role: currentRole ?? null,
+          },
+          violations: errors,
+        });
+        return;
+      }
+      if (responseIsFinalized(res)) {
+        safeLog(() =>
+          logger.warn('[featureGate] Skipped next() (response already finalized)', {
+            featureId: truncateForPublicSurface(normalizedFeatureId),
+          })
+        );
+        return;
+      }
+
+      invokeNext(res, next);
+    } catch (error) {
+      safeLog(() => logger.error('[featureGate] Unexpected error in requireFeature handler', error));
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'FEATURE_GATE_INTERNAL',
+        message: 'Feature gate encountered an unexpected error. Contact support.',
       });
-      return;
     }
-
-    next();
   };
 }
 
@@ -219,42 +374,194 @@ export function requireFeature(featureId: string) {
  * @returns Express middleware
  */
 export function requireAccess(requirements: FeatureRequirements) {
+  if (!requirements || typeof requirements !== 'object' || Array.isArray(requirements)) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message: 'Feature requirements are not properly configured. Contact support.',
+      });
+    };
+  }
+  const hasOwn = (key: 'phase' | 'state' | 'role') =>
+    Object.prototype.hasOwnProperty.call(requirements, key);
+  if (
+    (hasOwn('phase') && !Array.isArray(safeRead(() => requirements.phase, undefined as unknown))) ||
+    (hasOwn('state') && !Array.isArray(safeRead(() => requirements.state, undefined as unknown))) ||
+    (hasOwn('role') && !Array.isArray(safeRead(() => requirements.role, undefined as unknown)))
+  ) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements must use array values for phase, state, and role. Contact support.',
+      });
+    };
+  }
+
+  const requiredPhases =
+    hasOwn('phase') && Array.isArray(safeRead(() => requirements.phase, undefined as unknown))
+      ? (safeRead(() => requirements.phase, [] as unknown) as unknown[])
+      : [];
+  const requiredStates =
+    hasOwn('state') && Array.isArray(safeRead(() => requirements.state, undefined as unknown))
+      ? (safeRead(() => requirements.state, [] as unknown) as unknown[])
+      : [];
+  const requiredRoles =
+    hasOwn('role') && Array.isArray(safeRead(() => requirements.role, undefined as unknown))
+      ? (safeRead(() => requirements.role, [] as unknown) as unknown[])
+      : [];
+
+  const phaseRules = Array.isArray(requiredPhases)
+    ? requiredPhases
+        .map((phaseRule) => normalizeOptionalString(phaseRule))
+        .filter((phaseRule): phaseRule is string => Boolean(phaseRule))
+    : [];
+  const stateRules = Array.isArray(requiredStates)
+    ? requiredStates
+        .map((stateRule) => normalizeOptionalString(stateRule))
+        .filter((stateRule): stateRule is string => Boolean(stateRule))
+    : [];
+  const roleRules = Array.isArray(requiredRoles) ? requiredRoles : [];
+  let normalizedRoleRules: string[];
+  try {
+    normalizedRoleRules = roleRules
+      .map((roleRule) => normalizeRole(roleRule))
+      .filter((roleRule): roleRule is string => Boolean(roleRule));
+  } catch {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements contain invalid role values. Contact support.',
+      });
+    };
+  }
+
+  if (
+    phaseRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
+    stateRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
+    normalizedRoleRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES
+  ) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements exceed maximum supported rule count for phase, state, or role. Contact support.',
+      });
+    };
+  }
+  const hasOversizedRuleToken =
+    phaseRules.some((phaseRule) => phaseRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
+    stateRules.some((stateRule) => stateRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
+    normalizedRoleRules.some((roleRule) => roleRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH);
+  if (hasOversizedRuleToken) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements contain oversized phase, state, or role values. Contact support.',
+      });
+    };
+  }
+  const hasDisallowedRuleChars =
+    phaseRules.some((phaseRule) => hasDisallowedFeatureIdChars(phaseRule)) ||
+    stateRules.some((stateRule) => hasDisallowedFeatureIdChars(stateRule)) ||
+    normalizedRoleRules.some((roleRule) => hasDisallowedFeatureIdChars(roleRule));
+  if (hasDisallowedRuleChars) {
+    safeLog(() =>
+      logger.error('[featureGate] requireAccess rejected requirements with disallowed control characters')
+    );
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements contain invalid control characters in phase, state, or role values. Contact support.',
+      });
+    };
+  }
+  if (phaseRules.length === 0 && stateRules.length === 0 && normalizedRoleRules.length === 0) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message: 'Feature requirements must specify at least one of phase, state, or role. Contact support.',
+      });
+    };
+  }
+
+  const phaseRulesSnapshot = Object.freeze([...phaseRules]);
+  const stateRulesSnapshot = Object.freeze([...stateRules]);
+  const roleRulesSnapshot = Object.freeze([...normalizedRoleRules]);
+
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
-    const currentPhase = req.currentPhase;
-    const currentState = req.userState;
-    const currentRole = req.userRole || req.user?.role;
+    try {
+      if (!hasUsableResponseWriters(res)) {
+        safeLog(() => logger.error('[featureGate] Invalid or incomplete response object'));
+        return;
+      }
+      const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
+      const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
+      const currentRole =
+        normalizeRole(safeRead(() => req.userRole, undefined)) ||
+        normalizeRole(safeRead(() => req.user?.role, undefined));
 
-    // Phase check
-    if (requirements.phase?.length > 0 && !requirements.phase.includes(currentPhase || '')) {
-      res.status(403).json({
-        error: 'PHASE_REQUIRED',
-        required: requirements.phase,
-        current: currentPhase,
+      // Phase check
+      if (
+        safeAuthPredicate(
+          () => phaseRulesSnapshot.length > 0 && !phaseRulesSnapshot.includes(currentPhase || '')
+        )
+      ) {
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'PHASE_REQUIRED',
+          required: phaseRulesSnapshot,
+          current: currentPhase ?? null,
+        });
+        return;
+      }
+
+      // State check
+      if (
+        safeAuthPredicate(
+          () => stateRulesSnapshot.length > 0 && !stateRulesSnapshot.includes(currentState || '')
+        )
+      ) {
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'STATE_REQUIRED',
+          required: stateRulesSnapshot,
+          current: currentState ?? null,
+        });
+        return;
+      }
+
+      // Role check
+      if (
+        safeAuthPredicate(
+          () => roleRulesSnapshot.length > 0 && !roleRulesSnapshot.includes(currentRole || '')
+        )
+      ) {
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'ROLE_REQUIRED',
+          required: roleRulesSnapshot,
+          current: currentRole ?? null,
+        });
+        return;
+      }
+      if (responseIsFinalized(res)) {
+        safeLog(() =>
+          logger.warn('[featureGate] Skipped next() (response already finalized)', {
+            featureId: 'requireAccess',
+          })
+        );
+        return;
+      }
+
+      invokeNext(res, next);
+    } catch (error) {
+      safeLog(() => logger.error('[featureGate] Unexpected error in requireAccess handler', error));
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'FEATURE_GATE_INTERNAL',
+        message: 'Feature gate encountered an unexpected error. Contact support.',
       });
-      return;
     }
-
-    // State check
-    if (requirements.state?.length > 0 && !requirements.state.includes(currentState || '')) {
-      res.status(403).json({
-        error: 'STATE_REQUIRED',
-        required: requirements.state,
-        current: currentState,
-      });
-      return;
-    }
-
-    // Role check
-    if (requirements.role?.length > 0 && !requirements.role.includes(currentRole || '')) {
-      res.status(403).json({
-        error: 'ROLE_REQUIRED',
-        required: requirements.role,
-        current: currentRole,
-      });
-      return;
-    }
-
-    next();
   };
 }
 
@@ -265,21 +572,29 @@ export function requireAccess(requirements: FeatureRequirements) {
  * @returns boolean
  */
 export function isFeatureAccessible(featureId: string, context: FeatureContext): boolean {
-  const requirements = FEATURE_REQUIREMENTS[featureId];
+  const normalizedFeatureId = normalizeOptionalString(featureId) || '';
+  if (hasDisallowedFeatureIdChars(normalizedFeatureId)) return false;
+  if (normalizedFeatureId.length > MAX_FEATURE_ID_INTERNAL) return false;
+  const requirements = isRegisteredFeature(normalizedFeatureId)
+    ? FEATURE_REQUIREMENTS[normalizedFeatureId]
+    : undefined;
   if (!requirements) return false;
 
-  const { phase, state, role } = context;
+  const phase = normalizeOptionalString(safeRead(() => context.phase, undefined)) || '';
+  const state = normalizeOptionalString(safeRead(() => context.state, undefined)) || '';
+  const role = normalizeRole(safeRead(() => context.role, undefined));
 
-  if (requirements.phase.length > 0 && !requirements.phase.includes(phase)) {
+  if (safeAuthPredicate(() => requirements.phase.length > 0 && !requirements.phase.includes(phase))) {
     return false;
   }
 
-  if (requirements.state.length > 0 && !requirements.state.includes(state)) {
+  if (safeAuthPredicate(() => requirements.state.length > 0 && !requirements.state.includes(state))) {
     return false;
   }
 
-  if (requirements.role.length > 0 && role && !requirements.role.includes(role)) {
-    return false;
+  if (requirements.role.length > 0) {
+    if (!role) return false;
+    if (safeAuthPredicate(() => !requirements.role.includes(role))) return false;
   }
 
   return true;

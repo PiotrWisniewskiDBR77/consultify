@@ -620,11 +620,13 @@ export async function generateOutline(
   organizationId: string
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
+  const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
 
   if (setup.templateId) {
-    const template = await dbGet(`SELECT outline_json FROM presentation_templates WHERE id = ?`, [
-      setup.templateId,
-    ]);
+    const template = await dbGet(
+      `SELECT outline_json FROM presentation_templates WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+      [setup.templateId, organizationId]
+    );
     if (template) {
       const templateOutline = JSON.parse((template as any).outline_json).map((o: any) => ({
         intent: o.intent as SlideIntent,
@@ -632,7 +634,7 @@ export async function generateOutline(
         keyMessage: o.keyMessage,
         enabled: true,
       }));
-      outline = generateOutlineFromTemplate(templateOutline, setup.sourceArtifacts);
+      outline = generateOutlineFromTemplate(templateOutline, sourceArtifacts);
     } else {
       outline = generateDefaultOutline(setup);
     }
@@ -642,8 +644,8 @@ export async function generateOutline(
 
   const deckId = uuidv4().replace(/-/g, '');
   const resolvedSourceType =
-    setup.sourceType || (setup.sourceArtifacts?.[0]?.type === 'tool_session' ? 'tool' : 'manual');
-  const resolvedSourceId = setup.sourceId || setup.sourceArtifacts?.[0]?.id || null;
+    setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
   await dbRun(
     `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
@@ -651,7 +653,7 @@ export async function generateOutline(
       deckId,
       organizationId,
       setup.title,
-      setup.templateId || null,
+      setup.templateId || '',
       'custom',
       setup.audience,
       setup.goal,
@@ -659,7 +661,7 @@ export async function generateOutline(
       setup.confidentiality,
       setup.theme,
       null,
-      JSON.stringify(setup.sourceArtifacts),
+      JSON.stringify(sourceArtifacts),
       JSON.stringify(outline),
       null,
       resolvedSourceType,
@@ -685,7 +687,7 @@ export async function generateOutline(
       originSummary: {
         sourceType: resolvedSourceType,
         sourceId: resolvedSourceId,
-        sourceArtifacts: setup.sourceArtifacts,
+        sourceArtifacts,
         nativeStatus: 'draft',
         sourceTable: 'presentation_decks',
       },
@@ -700,10 +702,10 @@ export async function generateOutline(
 
   const validationWarnings = validateOutline(outline, setup);
   if (validationWarnings.length > 0) {
-    await dbRun(`UPDATE presentation_decks SET validation_warnings = ? WHERE id = ?`, [
-      JSON.stringify(validationWarnings),
-      deckId,
-    ]);
+    await dbRun(
+      `UPDATE presentation_decks SET validation_warnings = ? WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(validationWarnings), deckId, organizationId]
+    );
     logger.info(
       `[PresentationGen] Outline validation: ${validationWarnings.length} warning(s) for deck ${deckId}`
     );
@@ -719,8 +721,8 @@ export async function generateDeck(
   organizationId: string
 ): Promise<GenerationResult> {
   await dbRun(
-    `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [deckId]
+    `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+    [deckId, organizationId]
   );
 
   await artifactRegistryService.registerArtifactOrigin({
@@ -735,7 +737,8 @@ export async function generateDeck(
 
   try {
     // Build structured ContextPack for AI consumption
-    const sourceRefs = setup.sourceArtifacts.map((sa) => ({
+    const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+    const sourceRefs = sourceArtifacts.map((sa) => ({
       artifact_id: sa.id || '',
       artifact_type: sa.type,
       artifact_name: sa.label,
@@ -746,7 +749,7 @@ export async function generateDeck(
       `[PresentationGen] ContextPack built: ${contextPack.key_points.length} key points, ${contextPack.data_points.length} data points, confidence=${contextPack.metadata.confidence_score.toFixed(2)}`
     );
 
-    const artifactData = await loadArtifactData(setup.sourceArtifacts, organizationId);
+    const artifactData = await loadArtifactData(sourceArtifacts, organizationId);
     // Enrich artifact data with ContextPack extracted data
     if (contextPack.key_points.length > 0 && !artifactData._keyFindings) {
       artifactData._keyFindings = contextPack.key_points.slice(0, 5);
@@ -953,7 +956,7 @@ export async function generateDeck(
     fs.default.writeFileSync(exportPath, result.buffer);
 
     await dbRun(
-      `UPDATE presentation_decks SET status = 'ready', unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      `UPDATE presentation_decks SET status = 'ready', unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [
         JSON.stringify(unifiedJson),
         result.slideCount,
@@ -961,6 +964,7 @@ export async function generateDeck(
         JSON.stringify([...(result.warnings || []), ...extraWarnings]),
         JSON.stringify(outline),
         deckId,
+        organizationId,
       ]
     );
 
@@ -1009,8 +1013,8 @@ export async function generateDeck(
   } catch (err: any) {
     logger.error(`[PresentationGen] Generation failed for ${deckId}: ${err.message}`);
     await dbRun(
-      `UPDATE presentation_decks SET status = 'failed', validation_warnings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [JSON.stringify([err.message]), deckId]
+      `UPDATE presentation_decks SET status = 'failed', validation_warnings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify([err.message]), deckId, organizationId]
     );
     await artifactRegistryService.registerArtifactOrigin({
       organizationId,

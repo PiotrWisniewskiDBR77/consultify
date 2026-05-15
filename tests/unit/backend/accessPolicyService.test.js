@@ -346,15 +346,34 @@ describe('AccessPolicyService (L1 REAL)', () => {
     );
   });
 
-  it('fails open when onboarding_status query throws (schema mismatch)', async () => {
+  it('denies AI calls when onboarding_status cannot be verified', async () => {
     limitService.getOrganizationType.mockResolvedValue(
       makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
     );
     limitService.getOrganizationLimits.mockResolvedValue(null);
-    mockDbPromiseGet.mockRejectedValueOnce(new Error('no such column'));
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('onboarding_status')) throw new Error('no such column');
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
 
     await expect(checkAccess('org-1', 'ai_call')).resolves.toEqual(
-      expect.objectContaining({ allowed: true })
+      expect.objectContaining({
+        allowed: false,
+        errorCode: 'TRIAL_ONBOARDING_STATUS_UNAVAILABLE',
+      })
+    );
+  });
+
+  it('fails closed when the access policy check throws unexpectedly', async () => {
+    limitService.getOrganizationType.mockRejectedValueOnce(new Error('db down'));
+
+    await expect(checkAccess('org-1', 'create_project')).resolves.toEqual(
+      expect.objectContaining({
+        allowed: false,
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+      })
     );
   });
 
@@ -643,10 +662,10 @@ describe('AccessPolicyService (L1 REAL)', () => {
     );
   });
 
-  it('fails open on unexpected exceptions (does not block users)', async () => {
+  it('fails closed on unexpected exceptions', async () => {
     limitService.getOrganizationType.mockRejectedValueOnce(new Error('boom'));
     await expect(checkAccess('org-1', 'create_project')).resolves.toEqual(
-      expect.objectContaining({ allowed: true })
+      expect.objectContaining({ allowed: false, errorCode: 'ACCESS_POLICY_UNAVAILABLE' })
     );
     expect(mockLogger.error).toHaveBeenCalled();
   });
@@ -803,6 +822,7 @@ describe('AccessPolicyService (L1 REAL)', () => {
     expect(snap.blockedFeatures).toContain('SSO');
     expect(snap.blockedActions).toContain('CREATE_PROJECT');
     expect(snap.messages.bannerText).toContain('demo');
+    expect(snap.upgradeCtas.urlOrRoute).toBe('/trial/start');
   });
 
   it('buildPolicySnapshot: trial expired sets banner+modal and blocks WRITE', async () => {

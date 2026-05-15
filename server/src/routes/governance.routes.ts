@@ -8,6 +8,8 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/governance.js');
 const governanceRoutesJS = module.default || module;
@@ -28,7 +30,7 @@ if (typeof governanceRoutesJS === 'function') {
   router.use(governanceRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('governance.js did not export a valid router');
+  logger.error('governance.js did not export a valid router');
 }
 
 export default router;

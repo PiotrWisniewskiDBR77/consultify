@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Settings } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { Api } from '@/services/api';
 
 import { useAppStore } from '../store/useAppStore';
@@ -143,12 +144,16 @@ export const ModelSelector: React.FC = () => {
     currentUser?.aiConfig?.apiKey,
   ]);
 
-  // Check connection on mount and every 30 seconds
+  // Check once on active model change, then only while the menu is open.
   useEffect(() => {
     checkLLMConnection();
-    const interval = setInterval(checkLLMConnection, 30000);
-    return () => clearInterval(interval);
   }, [checkLLMConnection]);
+
+  usePageAwarePolling(checkLLMConnection, {
+    enabled: isOpen && Boolean(currentModelId),
+    intervalMs: 120_000,
+    runImmediately: false,
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

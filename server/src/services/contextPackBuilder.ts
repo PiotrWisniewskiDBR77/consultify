@@ -6,6 +6,7 @@
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 export interface SourceRef {
   artifact_id: string;
@@ -75,6 +76,19 @@ export async function buildContextPack(
     },
   };
 
+  try {
+    await injectOrganizationContext(pack, organizationId);
+  } catch (error) {
+    logger.warn('[ContextPack] Failed to inject org context', { error });
+    pack.metadata.extraction_warnings.push('Organization context unavailable');
+  }
+
+  try {
+    await injectTemplateInventory(pack, organizationId);
+  } catch {
+    // Non-fatal: template inventory is supplementary context
+  }
+
   for (const ref of sourceRefs) {
     try {
       await extractFromSource(pack, ref, organizationId);
@@ -92,6 +106,80 @@ export async function buildContextPack(
   pack.metadata.confidence_score = Math.max(0, pack.metadata.confidence_score);
 
   return pack;
+}
+
+async function injectOrganizationContext(pack: ContextPack, organizationId: string): Promise<void> {
+  const resolved = await organizationContextService.buildResolvedContext(organizationId);
+  if (!resolved) return;
+
+  const p = resolved.profile;
+  const s = resolved.strategic;
+  const sys = resolved.systems;
+  const ops = resolved.operations;
+
+  if (p?.companyName) pack.headings.unshift(`Organization: ${p.companyName}`);
+  if (p?.industry)
+    pack.key_points.push(
+      `Industry: ${p.industry}${p.industrySubsector ? ` / ${p.industrySubsector}` : ''}`
+    );
+  if (p?.organizationType) pack.key_points.push(`Organization type: ${p.organizationType}`);
+  if (p?.companySize)
+    pack.key_points.push(
+      `Scale: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} employees)` : ''}`
+    );
+  if (s?.mission) pack.key_points.push(`Mission: ${s.mission}`);
+  if (s?.priorities && s.priorities.length > 0)
+    pack.key_points.push(`Strategic priorities: ${s.priorities.join(', ')}`);
+  if (s?.competitivePosition)
+    pack.key_points.push(`Competitive position: ${s.competitivePosition}`);
+  if (sys?.stack && sys.stack.length > 0)
+    pack.key_points.push(`Technology stack: ${sys.stack.join(', ')}`);
+  if (sys?.coreSystems && sys.coreSystems.length > 0)
+    pack.key_points.push(`Core systems: ${sys.coreSystems.join(', ')}`);
+  if (ops?.deliveryModel) pack.key_points.push(`Delivery model: ${ops.deliveryModel}`);
+  if (p?.revenueModel) pack.key_points.push(`Revenue model: ${p.revenueModel}`);
+  if (ops?.productionArchetype) pack.key_points.push(`Production: ${ops.productionArchetype}`);
+  if (ops?.constraints && ops.constraints.length > 0)
+    pack.key_points.push(`Constraints: ${ops.constraints.slice(0, 3).join(', ')}`);
+}
+
+async function injectTemplateInventory(pack: ContextPack, organizationId: string): Promise<void> {
+  const rows = await dbAll<{ output_type: string; origin_summary_json: string | null }>(
+    `SELECT output_type, origin_summary_json FROM v8_output_artifacts
+     WHERE organization_id = ? AND artifact_family = 'template'
+     ORDER BY last_transition_at DESC LIMIT 20`,
+    [organizationId],
+    { fallback: true }
+  );
+  if (!rows || rows.length === 0) return;
+
+  const active: string[] = [];
+  const deprecated: string[] = [];
+  for (const r of rows) {
+    let summary: any = null;
+    try {
+      summary = r.origin_summary_json ? JSON.parse(r.origin_summary_json) : null;
+    } catch {
+      /* */
+    }
+    const tpl = summary?.template;
+    const title = tpl?.metadata?.resolvedTitle || tpl?.description || r.output_type;
+    const status = String(tpl?.status || '').toLowerCase();
+    if (status === 'deprecated') {
+      deprecated.push(String(title));
+    } else {
+      active.push(String(title));
+    }
+  }
+
+  if (active.length > 0) {
+    pack.key_points.push(
+      `Available templates (${active.length}): ${active.slice(0, 5).join(', ')}${active.length > 5 ? '...' : ''}`
+    );
+  }
+  if (deprecated.length > 0) {
+    pack.key_points.push(`Deprecated templates: ${deprecated.join(', ')}`);
+  }
 }
 
 async function extractFromSource(
@@ -135,6 +223,12 @@ async function extractFromSource(
       break;
     case 'valuation':
       await extractValuationData(pack, ref, organizationId);
+      break;
+    case 'report':
+    case 'presentation':
+    case 'sheet':
+    case 'artifact':
+      await extractArtifactGovernanceData(pack, ref, organizationId);
       break;
     default:
       pack.metadata.extraction_warnings.push(`Unknown artifact type: ${ref.artifact_type}`);
@@ -583,6 +677,40 @@ async function extractEconomicAnalysisData(
       data_summary: `${budgetLines.length} budget line items`,
       source_artifact_id: ref.artifact_id,
     });
+  }
+}
+
+/**
+ * Extract P18 artifact governance data (trust-state) for AI context enrichment.
+ * Provides the AI with knowledge of artifact lifecycle state: whether it's
+ * validated, in review, published, private, etc.
+ */
+async function extractArtifactGovernanceData(
+  pack: ContextPack,
+  ref: SourceRef,
+  orgId: string
+): Promise<void> {
+  const artifact = await dbGet(
+    `SELECT artifact_id, title, artifact_type, visibility_scope,
+            publish_state, validation_state, execution_run_id, execution_state
+     FROM v8_output_artifacts
+     WHERE organization_id = ? AND artifact_id = ?`,
+    [orgId, ref.artifact_id]
+  );
+
+  if (!artifact) return;
+
+  const parts: string[] = [];
+  if (artifact.title)
+    parts.push(`Artifact "${artifact.title}" (${artifact.artifact_type || ref.artifact_type})`);
+  if (artifact.visibility_scope) parts.push(`visibility: ${artifact.visibility_scope}`);
+  if (artifact.validation_state) parts.push(`validation: ${artifact.validation_state}`);
+  if (artifact.publish_state) parts.push(`publish state: ${artifact.publish_state}`);
+  if (artifact.execution_state) parts.push(`execution: ${artifact.execution_state}`);
+  if (artifact.execution_run_id) parts.push(`execution run: ${artifact.execution_run_id}`);
+
+  if (parts.length > 0) {
+    pack.key_points.push(`[Governance] ${parts.join(' | ')}`);
   }
 }
 

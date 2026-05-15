@@ -130,19 +130,19 @@ export const DriftEventSchema = z.object({
 });
 
 export const ContextSnapshotSchema = z.object({
-  snapshotId: z.string().uuid(),
-  parentSnapshotId: z.string().uuid().nullable(),
+  snapshotId: z.string().min(1),
+  parentSnapshotId: z.string().min(1).nullable(),
   snapshotVersion: z.number().int().min(1),
   capturedAt: z.string().min(1),
-  workspaceId: z.string().uuid(),
-  organizationId: z.string().uuid(),
-  projectId: z.string().uuid().nullable(),
-  conversationId: z.string().uuid().nullable(),
-  executionRunId: z.string().uuid().nullable(),
+  workspaceId: z.string().min(1),
+  organizationId: z.string().min(1),
+  projectId: z.string().min(1).nullable(),
+  conversationId: z.string().min(1).nullable(),
+  executionRunId: z.string().min(1).nullable(),
   artifactRefs: z.array(V8ArtifactRefSchema),
   effectiveScopeRef: z.string().min(1),
   resolvedRoleRef: z.string().min(1),
-  initiatorUserId: z.string().uuid(),
+  initiatorUserId: z.string().min(1),
   consumerClass: z.enum(ConsumerClassValues),
   privacyMode: z.boolean(),
   sourceContextRefs: z.array(SourceRefSchema),
@@ -150,7 +150,7 @@ export const ContextSnapshotSchema = z.object({
 });
 
 export const RetrievalScopeTokenSchema = z.object({
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   effectiveScopeRef: z.string().min(1),
   consumerClass: z.enum(ConsumerClassValues),
   privacyMode: z.boolean(),
@@ -178,16 +178,16 @@ export interface CaptureSnapshotParams {
 }
 
 export const CaptureSnapshotParamsSchema = z.object({
-  parentSnapshotId: z.string().uuid().nullable().optional(),
-  workspaceId: z.string().uuid(),
-  organizationId: z.string().uuid(),
-  projectId: z.string().uuid().nullable().optional(),
-  conversationId: z.string().uuid().nullable().optional(),
-  executionRunId: z.string().uuid().nullable().optional(),
+  parentSnapshotId: z.string().min(1).nullable().optional(),
+  workspaceId: z.string().min(1),
+  organizationId: z.string().min(1),
+  projectId: z.string().min(1).nullable().optional(),
+  conversationId: z.string().min(1).nullable().optional(),
+  executionRunId: z.string().min(1).nullable().optional(),
   artifactRefs: z.array(V8ArtifactRefSchema),
   effectiveScopeRef: z.string().min(1),
   resolvedRoleRef: z.string().min(1),
-  initiatorUserId: z.string().uuid(),
+  initiatorUserId: z.string().min(1),
   consumerClass: z.enum(ConsumerClassValues),
   privacyMode: z.boolean().optional().default(false),
   sourceContextRefs: z.array(SourceRefSchema).optional().default([]),

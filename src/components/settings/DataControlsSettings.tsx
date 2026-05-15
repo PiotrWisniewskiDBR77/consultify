@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { cn } from '../../lib/utils';
+import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
@@ -131,10 +132,62 @@ const RETENTION_OPTIONS = [
 ];
 
 const LEGAL_DOCS = [
-  { to: '/privacy', icon: Shield, titleKey: 'settings.data.privacyPolicy', titleDefault: 'Privacy Policy', desc: 'How we handle your data' },
-  { to: '/cookies', icon: Globe, titleKey: 'settings.data.cookiePolicy', titleDefault: 'Cookie Policy', desc: 'Cookies & tracking' },
-  { to: '/legal/dpa', icon: Database, titleKey: 'settings.data.dpa', titleDefault: 'Data Processing', desc: 'GDPR DPA terms' },
-  { to: '/legal/subprocessors', icon: Lock, titleKey: 'settings.data.subprocessors', titleDefault: 'Sub-processors', desc: 'Third-party services' },
+  {
+    to: ROUTES.LEGAL.PRIVACY,
+    icon: Shield,
+    titleKey: 'settings.data.privacyPolicy',
+    titleDefault: 'Privacy Policy',
+    desc: 'How we handle your data',
+  },
+  {
+    to: ROUTES.LEGAL.TERMS,
+    icon: FileText,
+    titleKey: 'settings.data.terms',
+    titleDefault: 'Terms of Service',
+    desc: 'Core product and account terms',
+  },
+  {
+    to: ROUTES.LEGAL.SUBSCRIPTION,
+    icon: Globe,
+    titleKey: 'settings.data.subscription',
+    titleDefault: 'Subscription & Pricing',
+    desc: 'Plans, billing, seats, and AI budget',
+  },
+  {
+    to: ROUTES.LEGAL.DPA,
+    icon: Database,
+    titleKey: 'settings.data.dpa',
+    titleDefault: 'Data Processing',
+    desc: 'GDPR DPA terms',
+  },
+  {
+    to: ROUTES.LEGAL.SLA,
+    icon: Clock,
+    titleKey: 'settings.data.sla',
+    titleDefault: 'Service Levels',
+    desc: 'Support response and service commitments',
+  },
+  {
+    to: ROUTES.LEGAL.SECURITY,
+    icon: Lock,
+    titleKey: 'settings.data.security',
+    titleDefault: 'Security Overview',
+    desc: 'Security controls and review information',
+  },
+  {
+    to: ROUTES.LEGAL.SUBPROCESSORS,
+    icon: Share2,
+    titleKey: 'settings.data.subprocessors',
+    titleDefault: 'Sub-processors',
+    desc: 'Third-party services and data flow',
+  },
+  {
+    to: ROUTES.LEGAL.CENTER,
+    icon: ExternalLink,
+    titleKey: 'settings.data.legalCenter',
+    titleDefault: 'Legal Center',
+    desc: 'All legal and compliance documents',
+  },
 ];
 
 export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
@@ -193,10 +246,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await Promise.all([
-        Api.saveGdprConsents(consents),
-        Api.saveGdprRetention(retention),
-      ]);
+      await Promise.all([Api.saveGdprConsents(consents), Api.saveGdprRetention(retention)]);
       setOriginalConsents({ ...consents });
       setOriginalRetention({ ...retention });
       toast.success(t('settings.data.saved', 'Data control preferences saved'));
@@ -213,7 +263,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       const response = await Api.requestGdprExport();
       if (response?.request) {
         toast.success(
-          t('settings.data.exportRequested', 'Data export requested. You will be notified when ready.')
+          t(
+            'settings.data.exportRequested',
+            'Data export requested. You will be notified when ready.'
+          )
         );
       } else {
         const data = await Api.get('/api/user/data-export');
@@ -245,7 +298,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         setShowDeleteConfirm(false);
         setDeleteConfirmText('');
         toast.success(
-          t('settings.data.deletionRequested', 'Account deletion scheduled. You will receive a confirmation email.')
+          t(
+            'settings.data.deletionRequested',
+            'Account deletion scheduled. You will receive a confirmation email.'
+          )
         );
       }
     } catch (error) {
@@ -255,14 +311,18 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     }
   };
 
-  const sectionLabel = 'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+  const sectionLabel =
+    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
   const cardClass = 'bg-navy-900/30 border border-white/5 rounded-lg p-5';
 
   return (
     <SettingsSection
       icon={Database}
       title={t('settings.data.title', 'Data Controls')}
-      description={t('settings.data.description', 'Manage how your data is collected, used, and stored')}
+      description={t(
+        'settings.data.description',
+        'Manage how your data is collected, used, and stored'
+      )}
       cardId="settings-data-controls"
       isDirty={isDirty}
       onSave={handleSave}
@@ -301,12 +361,14 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
               const Icon = item.icon;
               return (
                 <div key={item.key} className="flex items-start gap-3">
-                  <div className={cn(
-                    'p-1.5 rounded-md flex-shrink-0 mt-0.5',
-                    consents[item.key]
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-white/5 text-slate-500'
-                  )}>
+                  <div
+                    className={cn(
+                      'p-1.5 rounded-md flex-shrink-0 mt-0.5',
+                      consents[item.key]
+                        ? 'bg-emerald-500/10 text-emerald-400'
+                        : 'bg-white/5 text-slate-500'
+                    )}
+                  >
                     <Icon size={14} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -338,7 +400,12 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {RETENTION_OPTIONS.map((option) => (
               <button
                 key={option.value}
-                onClick={() => setRetention((prev) => ({ ...prev, period: option.value as DataRetention['period'] }))}
+                onClick={() =>
+                  setRetention((prev) => ({
+                    ...prev,
+                    period: option.value as DataRetention['period'],
+                  }))
+                }
                 className={cn(
                   'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                   retention.period === option.value
@@ -462,7 +529,9 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteRequest}
-                    disabled={requestingDeletion || deleteConfirmText.toLowerCase() !== 'delete my data'}
+                    disabled={
+                      requestingDeletion || deleteConfirmText.toLowerCase() !== 'delete my data'
+                    }
                     className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     {requestingDeletion ? (
@@ -495,7 +564,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             <FileText size={14} className="text-violet-400" />
             {t('settings.data.relatedDocs', 'Legal Documents')}
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
             {LEGAL_DOCS.map((doc) => {
               const Icon = doc.icon;
               return (
@@ -504,7 +573,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                   to={doc.to}
                   className="flex items-start gap-3 p-3 bg-navy-900/30 border border-white/5 rounded-lg hover:border-violet-500/30 hover:bg-violet-600/5 transition-all group"
                 >
-                  <Icon size={14} className="text-slate-500 group-hover:text-violet-400 mt-0.5 flex-shrink-0" />
+                  <Icon
+                    size={14}
+                    className="text-slate-500 group-hover:text-violet-400 mt-0.5 flex-shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <span className="text-xs font-medium text-slate-300 group-hover:text-violet-300">

@@ -17,7 +17,8 @@ export type ArtifactRunStatus =
   | 'rejected'
   | 'retry_requested'
   | 'completed'
-  | 'failed';
+  | 'failed'
+  | 'cancelled';
 
 export type ArtifactRunPreflightState = 'passed' | 'pending' | 'attention_required';
 
@@ -25,7 +26,11 @@ export interface ArtifactRunPreflight {
   state: ArtifactRunPreflightState;
   computedAt: string;
   checks: Array<{
-    id: 'execution_run_resolvable' | 'plan_supported' | 'materialization_inputs' | 'materialization_target';
+    id:
+      | 'execution_run_resolvable'
+      | 'plan_supported'
+      | 'materialization_inputs'
+      | 'materialization_target';
     status: 'passed' | 'pending' | 'failed';
     message: string;
   }>;
@@ -64,12 +69,16 @@ export interface ArtifactRunRecord {
   failureReason: string | null;
   preflight: ArtifactRunPreflight | null;
   failurePackage: ArtifactRunFailurePackage | null;
-  materializationOrigin:
-    | {
-        originRuntime: 'report' | 'presentation' | 'sheet' | 'native_artifact' | 'report_template' | 'presentation_template';
-        originRecordId: string;
-      }
-    | null;
+  materializationOrigin: {
+    originRuntime:
+      | 'report'
+      | 'presentation'
+      | 'sheet'
+      | 'native_artifact'
+      | 'report_template'
+      | 'presentation_template';
+    originRecordId: string;
+  } | null;
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
@@ -132,13 +141,10 @@ export const ArtifactRunsApi = {
   },
 
   getHistory: async (runId: string): Promise<ArtifactRunRecord[]> => {
-    const res = await fetchWithRetry(
-      `${ARTIFACT_RUNS_BASE}/${encodeURIComponent(runId)}/history`,
-      {
-        method: 'GET',
-        headers: getHeaders(),
-      }
-    );
+    const res = await fetchWithRetry(`${ARTIFACT_RUNS_BASE}/${encodeURIComponent(runId)}/history`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
     const json = await handleResponse<{ data: ArtifactRunRecord[] }>(
       res,
       'Failed to fetch artifact run history'

@@ -32,8 +32,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {
@@ -96,28 +96,30 @@
     },
     "problemPlatform": {
       "badge": "Why this category matters",
-      "heading": "Consulting intelligence should be accessible, not locked behind elite access.",
-      "sub": "This is the missing narrative layer between the hero promise and the product surface: why access matters and why platform patterns win.",
+      "heading": "What Spotify did for music,",
+      "headingAccent": "we do for consulting.",
+      "sub": "Consulting intelligence should be accessible, not locked behind elite access.",
       "problem": {
-        "badge": "Problem",
-        "title": "Business knowledge is valuable, but access is still limited.",
-        "body": "For decades, the best consulting methods, decision frameworks, and transformation guidance were effectively reserved for the companies that could afford elite firms.",
+        "badge": "The market problem",
+        "title": "Business intelligence is still inaccessible, generic, and unsafe.",
+        "body": "The market still has not turned AI and digital tools into a scalable layer for tactical and strategic business execution.",
         "points": [
-          "World-class consulting knowledge is still expensive, fragmented, and unevenly distributed.",
-          "Most teams never get structured access to the methods used by top advisory firms.",
-          "That leaves critical business decisions dependent on guesswork, slides, and one-off advice."
-        ]
+          "Consulting remains inaccessible to most firms.",
+          "Large language models are not specialists and do not understand company context.",
+          "Most AI solutions are not secure enough for real business work."
+        ],
+        "solve": "That is exactly the gap Consultify closes."
       },
       "pattern": {
-        "badge": "Platform pattern",
-        "title": "Great platforms win by transforming access, not only by adding software.",
-        "body": "The strongest category-defining platforms made scarce value simple to reach. Consultify applies that same pattern to consulting intelligence.",
+        "badge": "The category shift",
+        "title": "What Spotify did for music: access, quality, and trust at scale.",
+        "body": "Spotify did not create more music. It made great music instantly accessible, reliable, and easy to use. Consultify applies the same shift to business intelligence.",
         "examples": [
-          "Spotify simplified access to music.",
-          "Uber simplified access to transport.",
-          "Consultify simplifies access to consulting intelligence."
+          "Direct access to business knowledge from Harvard.",
+          "Intelligence that works in the full context of your company, not in isolated prompts.",
+          "Trust and security through technology tailored to your company's requirements."
         ],
-        "summary": "Consultify is the Consulting Intelligence Platform: Spotify for consulting knowledge, delivered as a structured consulting workflow."
+        "summary": "Access. Quality. Trust. That is the shift."
       }
     },
     "valueJourney": {
@@ -211,15 +213,15 @@
     },
     "profitHero": {
       "h1": {
-        "line1": "Consultify gives teams",
-        "line2": "consulting intelligence",
-        "line3": "they can actually execute."
+        "line1": "Consultify AI.",
+        "line2": "All the world’s business knowledge.",
+        "line3": "Turned into your profits."
       },
       "sub": "For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.",
       "billboard": "We did for consulting what Spotify did for music: unlimited access — but instead of playlists, you get profit.",
       "billboardShort": "One workflow from diagnosis to execution to measurable results.",
       "ctaPrimary": "Start trial",
-      "ctaSecondary": "Watch demo",
+      "ctaSecondary": "Try demo",
       "ctaNote": "Short teasers are public. Full videos unlock after login.",
       "panel": {
         "title": "From chat → to deliverables → to profit",
@@ -293,25 +295,41 @@
           "tag": "Founders & Owners",
           "headline": "Move fast without burning cash.",
           "description": "You built something real. Now you need a strategy that scales it — without hiring a McKinsey team. Consultify is your always-on strategic partner: from market analysis to financial modeling to execution tracking, all in one place.",
-          "points": ["Business model stress-testing", "Investor-ready financial models", "Growth roadmap in days, not months"]
+          "points": [
+            "Business model stress-testing",
+            "Investor-ready financial models",
+            "Growth roadmap in days, not months"
+          ]
         },
         "executives": {
           "tag": "Executives & Change Leaders",
           "headline": "Lead transformation. Deliver results.",
           "description": "You're accountable for change. Consultify gives you a structured, data-backed approach to transformation — with human governance built in. Every decision traceable, every result measured.",
-          "points": ["Organizational diagnostic", "Initiative portfolio management", "Board-ready reporting in one click"]
+          "points": [
+            "Organizational diagnostic",
+            "Initiative portfolio management",
+            "Board-ready reporting in one click"
+          ]
         },
         "consultingFirms": {
           "tag": "Consulting Firms",
           "headline": "Deliver 10× the value in half the time.",
           "description": "Stop writing the same slides in PowerPoint. Consultify automates your analysis and deliverables so your team focuses on insight and relationships — not formatting and data gathering.",
-          "points": ["White-label client workspaces", "Automated analysis & decks", "Partner program with revenue share"]
+          "points": [
+            "White-label client workspaces",
+            "Automated analysis & decks",
+            "Partner program with revenue share"
+          ]
         },
         "aiLeaders": {
           "tag": "AI-First Leaders",
           "headline": "You think in systems. We speak your language.",
           "description": "You already know AI is the lever. Consultify is where that bet pays off — a full MCP-integrated, multi-LLM platform with proprietary consulting intelligence layered on top.",
-          "points": ["Full API & MCP access", "Custom LLM routing", "Build your own AI consulting stack"]
+          "points": [
+            "Full API & MCP access",
+            "Custom LLM routing",
+            "Build your own AI consulting stack"
+          ]
         }
       }
     },
@@ -348,37 +366,61 @@
           "badge": "AI Core",
           "title": "Strategic AI Advisor",
           "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
-          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
+          "highlights": [
+            "Diagnostic Assessment",
+            "Gap Analysis",
+            "Benchmark vs. Industry"
+          ]
         },
         "economics": {
           "badge": "Economics",
           "title": "Financial Modeling & ROI",
           "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
-          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
+          "highlights": [
+            "NPV / IRR Modeling",
+            "Sensitivity Analysis",
+            "Live ROI Tracking"
+          ]
         },
         "execution": {
           "badge": "Execution",
           "title": "Initiative Management",
           "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
-          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
+          "highlights": [
+            "Initiative Roadmap",
+            "Human Approval Gates",
+            "Risk Flagging"
+          ]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Report & Presentation Builder",
           "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
-          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
+          "highlights": [
+            "Auto-Generated Decks",
+            "Narrative Engine",
+            "Source Traceability"
+          ]
         },
         "chat": {
           "badge": "Chat",
           "title": "AI Expert Interview",
           "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
-          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
+          "highlights": [
+            "Context-Aware Chat",
+            "Framework Library",
+            "Cited Answers"
+          ]
         },
         "results": {
           "badge": "Results",
           "title": "Impact Tracking",
           "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
-          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
+          "highlights": [
+            "KPI Dashboard",
+            "Deviation Alerts",
+            "Value Attribution"
+          ]
         }
       }
     },
@@ -440,7 +482,7 @@
         },
         {
           "q": "Can I try before I buy?",
-          "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
+          "a": "Yes! We offer a 7-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
         },
         {
           "q": "What industries do you serve?",
@@ -625,7 +667,9 @@
     "footer": {
       "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
       "copyright": "All rights reserved.",
-      "trust": { "euData": "EU Data" },
+      "trust": {
+        "euData": "EU Data"
+      },
       "products": {
         "title": "Products"
       },
@@ -646,38 +690,41 @@
         "reports": "Reports",
         "podcasts": "Podcasts"
       },
+      "documentation": {
+        "title": "Documentation"
+      },
       "legal": {
         "privacy": "Privacy Policy",
         "cookies": "Cookie Policy",
         "terms": "Terms of Service",
         "acceptableUse": "Acceptable Use Policy",
         "aiPolicy": "AI Policy",
+        "subscription": "Subscription Terms",
+        "dpa": "DPA",
+        "sla": "SLA",
         "security": "Security Overview",
-        "consent": "Consent & Control"
+        "consent": "Consent & Controls"
       }
     },
     "docs": {
-      "badge": "Documentation",
-      "title": "Built for transparency",
-      "subtitle": "Everything you need to evaluate, integrate, and trust our platform.",
-      "searchPlaceholder": "Search documentation...",
+      "badge": "Help & evaluation",
+      "title": "Everything you need to evaluate Consultify",
+      "subtitle": "Use knowledge, security, pricing, and partner materials to decide whether Consultify fits your rollout.",
+      "searchPlaceholder": "Search knowledge and buyer guidance...",
       "searchBtn": "Search",
-      "gettingStarted": "Getting Started",
-      "gettingStartedDesc": "Quick guides to set up your workspace, run your first assessment, and build transformation roadmaps.",
+      "knowledgeBase": "Knowledge Base",
+      "knowledgeBaseDesc": "Expert guides on transformation, governance, ROI defense, and execution discipline.",
       "security": "Security & Compliance",
-      "securityDesc": "Enterprise-grade security architecture, certifications, data handling policies, and compliance frameworks.",
-      "apiReference": "API Reference",
-      "apiReferenceDesc": "RESTful API documentation for integrations, webhooks, and programmatic access to platform data.",
-      "changelog": "Changelog",
-      "changelogDesc": "Release notes, feature updates, and improvements. Stay current with the latest platform changes.",
+      "securityDesc": "AES-256, GDPR, data residency, and enterprise deployment options explained.",
+      "pricing": "Pricing",
+      "pricingDesc": "Seat packages, shared AI budget, licensed tools, and enterprise plans.",
+      "partnerProgram": "Partner Program",
+      "partnerProgramDesc": "Revenue share, certifications, academy access, and partner application process.",
       "legalCenter": "Legal Center",
-      "legalCenterDesc": "Terms of service, privacy policy, data processing agreements, and regulatory compliance documents.",
-      "integrations": "Integrations",
-      "integrationsDesc": "Connect with Jira, Azure DevOps, SAP, and other enterprise systems. Import and sync data seamlessly.",
-      "explore": "Explore",
-      "lastUpdated": "Last updated",
-      "lastUpdatedDate": "February 2026",
-      "whatsNew": "See what's new"
+      "legalCenterDesc": "Terms of service, privacy policy, data processing agreements, and compliance documents.",
+      "resources": "Resources",
+      "resourcesDesc": "Case studies, whitepapers, webinars, and product update announcements.",
+      "explore": "Explore"
     }
   },
   "partner": {
@@ -1020,7 +1067,8 @@
     "due": "Due",
     "loadFailed": "Load failed",
     "periodStart": "Period start",
-    "periodEnd": "Period end"
+    "periodEnd": "Period end",
+    "noOrganizations": "No organizations found"
   },
   "superadmin": {
     "confirm": {
@@ -1221,7 +1269,10 @@
     "presentations": "Presentations",
     "partnerPortal": "Partner Portal",
     "tasks": "Tasks",
-    "toolsLibrary": "Library"
+    "toolsLibrary": "Library",
+    "wordy": "Documents",
+    "excele": "Tables",
+    "prezentacje": "Presentations"
   },
   "widgets": {
     "help": {
@@ -1334,6 +1385,142 @@
           "high": "High",
           "critical": "Critical"
         }
+      }
+    },
+    "radar": {
+      "pulseLabel": "Radar · context, ideas, and a gentle steer",
+      "unavailable": "Radar is temporarily unavailable.",
+      "unavailableHint": "This does not mean the day is empty. Retry loading the home screen.",
+      "retry": "Retry",
+      "roofTruthChecking": "Roof truth: checking…",
+      "roofExpandHint": "Expand or collapse roof module list and data-coherence audit.",
+      "roofModules": "Roof · {{count}} modules",
+      "pulse": "Pulse",
+      "gentleExplanation": "Gentle explanation",
+      "explainBriefing": "Explain this briefing in plain language, no pressure — 3 bullets: what it means, why now, and one small step I can take.",
+      "explain": "Explain",
+      "calmPlan": "Help me turn this into a calm, step-by-step plan — no rush.",
+      "blocks": {
+        "aiPulseCore": "AI Pulse Core",
+        "industryLens": "Industry Lens",
+        "executionCurrent": "Execution Current",
+        "sparkField": "Spark Field",
+        "decisionTemperature": "Decision Temperature",
+        "teamSignal": "Team Signal",
+        "momentum": "Momentum"
+      },
+      "blockHints": {
+        "aiPulseCore": "Pulse summary: headline, focus, and pulse score.",
+        "momentum": "Program momentum: stats and progress signals.",
+        "sparkField": "Ideas & notes: runtime and recent outputs.",
+        "decisionTemperature": "Decisions: queue, blockers, hottest item.",
+        "industryLens": "Industry context: market, tech, benchmark, peer case.",
+        "executionCurrent": "Execution: work streams and artifacts.",
+        "teamSignal": "Team: alignment and org signals."
+      },
+      "worthNoticing": "Worth noticing",
+      "talkToAI": "Talk to AI",
+      "openExecution": "Open execution",
+      "topMove": "Top move",
+      "pulseActionPrompt": "Turn this pulse into a concrete plan for today and this week.",
+      "decisionQueue": "Decision queue",
+      "decisionQueueClear": "No queued decisions and no hard blockers — you are clear for now.",
+      "pending": "Pending",
+      "blocking": "Blocking",
+      "hottestDecision": "Hottest decision",
+      "unblockPrompt": "Help me unblock this decision: {{title}}",
+      "live": "Live",
+      "rel": "Rel",
+      "benchmark": "Benchmark",
+      "peerCase": "Peer case",
+      "peerCasePrompt": "Compare this peer case to our transformation program and give me 3 implications: {{title}}",
+      "signalPrompt": "Explain why this signal matters for our transformation: {{title}}",
+      "teamReadout": "Team readout",
+      "teamUpdatePrompt": "Prepare a short team update or alignment note based on this signal: {{title}}",
+      "momentumPrompt": "Explain what this momentum signal means for the transformation: {{title}}",
+      "outputFlow": "Output flow",
+      "visibility": {
+        "private": "Private",
+        "project": "Project",
+        "organization": "Organization",
+        "reviewShared": "Needs review",
+        "demo": "Demo"
+      },
+      "reviewState": {
+        "privateDraft": "Private draft",
+        "reviewReady": "Review ready",
+        "inReview": "In review",
+        "approved": "Approved",
+        "published": "Published"
+      },
+      "artifactType": {
+        "presentation": "Presentation",
+        "sheet": "Sheet",
+        "report": "Report"
+      },
+      "outputsLibraryNote": "Review and visibility stay aligned with the Outputs Library.",
+      "askAISequencing": "Ask AI for sequencing",
+      "sequencingPrompt": "Sequence the best execution order for me based on the current streams.",
+      "ideasWithTasks": "Ideas with tasks {{count}}",
+      "recentNotes": "Recent notes {{count}}",
+      "recentOutputs": "Recent outputs {{count}}",
+      "orgSignals": "Org signals {{count}}",
+      "expandIdea": "Expand strongest idea",
+      "expandIdeaPrompt": "Expand this idea into an initiative and suggest the first 3 moves: {{text}}",
+      "newIdea": "New idea",
+      "newIdeaSubtitle": "Start a new transformation track",
+      "noteLabel": "Note",
+      "nodes": "nodes",
+      "tasks": "tasks",
+      "stages": {
+        "spark": "spark",
+        "shaping": "shaping",
+        "growing": "growing"
+      },
+      "loadError": "Failed to load Radar",
+      "triage": {
+        "title": "Triage Cockpit",
+        "subtitle": "Ranked operational signals with decision priority",
+        "empty": "No triage signals right now. The operational radar is clear.",
+        "category": {
+          "execution_delivery": "Execution",
+          "decision_alignment": "Decision",
+          "finance_kpi": "Finance / KPI",
+          "governance_compliance": "Governance",
+          "external_change": "External Change"
+        },
+        "timeWindow": {
+          "next_24h": "Next 24h",
+          "this_week": "This week",
+          "this_month": "This month"
+        },
+        "driver": {
+          "deadline": "Deadline",
+          "blocker": "Blocker",
+          "variance": "Variance",
+          "escalation": "Escalation",
+          "opportunity": "Opportunity"
+        },
+        "whyNow": "Why now",
+        "evidence": "Evidence",
+        "evidencePartial": "Partial coverage",
+        "evidenceComplete": "Complete coverage",
+        "uncertainty": "Uncertainty boundary",
+        "missingInputs": "Missing inputs",
+        "conflicts": "Conflicts",
+        "wouldChange": "Would change ranking",
+        "owner": "Owner",
+        "nextAction": "Next action",
+        "goTo": "Go to {{module}}",
+        "fallback": "Fallback: {{fallback}}",
+        "degraded": {
+          "missing_data": "Some data is missing. Results may be incomplete.",
+          "conflict": "Conflicting data detected. Review with caution.",
+          "stale": "Data may be outdated. Consider refreshing sources.",
+          "permission": "Access restricted. Some information is hidden."
+        },
+        "hardGate": "Hard gate",
+        "score": "Score"
       }
     },
     "calendar": "Calendar",
@@ -1454,6 +1641,236 @@
         "tableTooltip": "Table view — structured list of ideas",
         "whiteboard": "Whiteboard",
         "whiteboardTooltip": "Whiteboard view — free-form canvas"
+      }
+    },
+    "whiteboard": {
+      "regionLabel": "Idea whiteboard with freeform elements",
+      "toolbar": {
+        "select": "Select",
+        "pan": "Pan / Zoom",
+        "sticky": "Sticky note",
+        "shape": "Shape",
+        "text": "Text block",
+        "frame": "Frame",
+        "image": "Image",
+        "link": "Link card",
+        "draw": "Draw",
+        "clearDrawings": "Clear drawings",
+        "undo": "Undo",
+        "redo": "Redo",
+        "export": "Export",
+        "save": "Save",
+        "shortcuts": "Keyboard shortcuts",
+        "fitView": "Fit to view",
+        "voting": "Voting",
+        "background": "Background pattern"
+      },
+      "session": {
+        "governance": "Governance mode",
+        "activityLog": "Activity log",
+        "history": "History",
+        "library": "Library",
+        "restoreLatest": "Restore latest",
+        "noActivity": "No activity yet",
+        "noHistory": "No history entries",
+        "noLibrary": "Library is empty"
+      },
+      "selection": {
+        "elementsSelected": "{{count}} elements selected",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignTop": "Align top",
+        "alignMiddle": "Align middle",
+        "alignBottom": "Align bottom",
+        "distributeH": "Distribute horizontally",
+        "distributeV": "Distribute vertically",
+        "group": "Group",
+        "ungroup": "Ungroup",
+        "duplicate": "Duplicate",
+        "lock": "Lock",
+        "delete": "Delete"
+      },
+      "empty": {
+        "title": "Empty whiteboard",
+        "subtitle": "Add sticky notes, shapes, or text from the toolbar",
+        "quickStart": "Quick start with template",
+        "addSticky": "Add blank sticky"
+      },
+      "facilitation": {
+        "start": "Start",
+        "organize": "Organize",
+        "converge": "Converge",
+        "handoff": "Handoff",
+        "advanceTo": "Advance to {{phase}}",
+        "invalidTransition": "Cannot advance from {{from}} to {{to}}"
+      },
+      "ai": {
+        "proposalTitle": "AI Proposal",
+        "apply": "Apply",
+        "reject": "Reject",
+        "acceptedProposal": "Accepted AI proposal",
+        "rejectedProposal": "Rejected AI proposal",
+        "acceptedAll": "Accepted all AI proposals",
+        "rejectedAll": "Rejected all AI proposals",
+        "generated": "AI generated proposal",
+        "proposalApplied": "Proposal applied",
+        "allProposalsApplied": "All proposals applied"
+      },
+      "errors": {
+        "saveFailed": "Save failed",
+        "loadFailed": "Failed to load whiteboard",
+        "roleChangeFailed": "Role change failed",
+        "timerFailed": "Timer update failed",
+        "votingFailed": "Voting update failed",
+        "followFailed": "Follow-me update failed",
+        "phaseChangeFailed": "Phase change failed",
+        "exportFailed": "Export failed",
+        "syncFailed": "Board sync failed",
+        "presenceFailed": "Presence update failed",
+        "disconnectFailed": "Disconnect failed",
+        "voteSyncFailed": "Vote sync failed",
+        "missingSessionId": "Missing sessionId",
+        "voteSaveFailed": "Failed to save vote",
+        "selectAtLeastTwo": "Select at least 2 elements"
+      },
+      "drawingsCleared": "Drawings cleared",
+      "boardMode": "Board mode",
+      "drawMode": "Drawing mode",
+      "presence": {
+        "you": "You"
+      },
+      "activity": {
+        "undo": "Undid change",
+        "redo": "Redid change",
+        "drawModeEnabled": "Draw mode enabled",
+        "boardModeEnabled": "Board mode enabled",
+        "sessionRole": "Session role: {{role}}",
+        "timerStarted": "Workshop timer started",
+        "timerStopped": "Workshop timer stopped",
+        "timerCompleted": "Workshop timer completed",
+        "votingOpened": "Voting opened",
+        "votingClosed": "Voting closed",
+        "followMeOn": "Follow-me enabled",
+        "followMeOff": "Follow-me disabled",
+        "phase": "Phase: {{phase}}",
+        "spotlightSet": "Spotlight set to selection",
+        "spotlightCleared": "Spotlight cleared",
+        "savedToLibrary": "Saved fragment to library",
+        "insertedFromLibrary": "Inserted library fragment",
+        "restoredSnapshot": "Restored latest snapshot",
+        "classification": "Classification: {{classification}}",
+        "pasteImport": "Inserted items from paste/import",
+        "addedElement": "Added element: {{kind}}",
+        "quickStart": "Quick start: {{mode}}",
+        "voteSaved": "Vote persisted to session",
+        "updatedObject": "Updated object properties"
+      },
+      "toast": {
+        "selectFirst": "Select elements first",
+        "libraryEmpty": "Library is empty",
+        "noSnapshot": "No snapshot to restore",
+        "importedNotes": "Imported {{count}} notes",
+        "noUnlockedSelection": "No unlocked selection",
+        "duplicated": "Duplicated",
+        "grouped": "Grouped",
+        "ungrouped": "Ungrouped",
+        "quickStartBrainstorm": "Brainstorm starter created",
+        "quickStartAffinity": "Affinity map starter created",
+        "quickStartWorkshop": "Workshop wall created",
+        "phaseChanged": "Phase: {{phase}}"
+      },
+      "history": {
+        "insertLibraryFragment": "Inserted library fragment",
+        "importExternal": "Imported external items",
+        "manualSave": "Manual save",
+        "quickStart": "Quick start: {{mode}}",
+        "checkpoint": "Whiteboard checkpoint"
+      },
+      "nodes": {
+        "groupLabel": "Group",
+        "defaultSticky": "New note",
+        "defaultText": "Text",
+        "defaultGroup": "Group",
+        "defaultShape": "Shape",
+        "defaultFrame": "Section",
+        "defaultImage": "Image",
+        "defaultLink": "Link",
+        "defaultKpi": "KPI",
+        "defaultScore": "Score",
+        "defaultProgress": "Progress",
+        "defaultSummary": "Summary"
+      },
+      "sessionPanel": {
+        "layer": "Session layer",
+        "roleFacilitator": "Facilitator",
+        "roleParticipant": "Participant",
+        "roleObserver": "Observer",
+        "timerOff": "Timer off",
+        "votingOpen": "Voting open",
+        "votingClosed": "Voting closed",
+        "followOn": "Follow-me on",
+        "followOff": "Follow-me off",
+        "spotlightActive": "Spotlight active",
+        "opsGovernance": "Ops + governance",
+        "cyclePolicy": "Cycle policy",
+        "libraryPrefix": "Library:",
+        "restorePrefix": "Restore:"
+      },
+      "phaseBar": {
+        "title": "Workshop phase",
+        "tabsAria": "Workshop phases",
+        "hint_start": "Capture ideas freely",
+        "hint_organize": "Cluster and arrange",
+        "hint_converge": "Mark top outcomes",
+        "hint_handoff": "Export and share results"
+      },
+      "toolbarExtra": {
+        "ariaLabel": "Whiteboard toolbar",
+        "title": "Whiteboard",
+        "create": "Create",
+        "role": "Role",
+        "bgDots": "Dots",
+        "bgGrid": "Grid",
+        "bgLines": "Lines",
+        "bgBlank": "Blank",
+        "saving": "Saving…"
+      },
+      "selectionBar": {
+        "ariaLabel": "Selection actions",
+        "attach": "Attach",
+        "linked": "Linked",
+        "align": "Align",
+        "distribute": "Distribute",
+        "convertDecision": "Promote to decision",
+        "convertAction": "Promote to action"
+      },
+      "emptyExtra": {
+        "toolsHint": "More organize and AI actions are available in the Tools panel on the right."
+      },
+      "outlineImport": {
+        "title": "Import outline",
+        "description": "Paste one item per line. They will be added as notes or short text blocks.",
+        "placeholder": "Item 1\nItem 2\nItem 3",
+        "confirm": "Import",
+        "cancel": "Cancel"
+      },
+      "quickStart": {
+        "brainstorm": {
+          "sessionTopic": "Session topic",
+          "idea": "Idea {{n}}"
+        },
+        "affinity": {
+          "themeA": "Theme A",
+          "themeB": "Theme B",
+          "input": "Input {{n}}"
+        },
+        "workshop": {
+          "goals": "Workshop goals",
+          "discuss": "Discuss",
+          "decisions": "Decisions",
+          "parkingLot": "Parking lot"
+        }
       }
     },
     "notebook": {
@@ -1797,7 +2214,14 @@
     "hub": {
       "failedToLoad": "Failed to load initiatives.",
       "retry": "Retry",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "noInitiativesFound": "No initiatives found"
+    },
+    "document": {
+      "failedToLoad": "Failed to load initiative card.",
+      "notFound": "Initiative not found",
+      "retry": "Retry",
+      "goBack": "Go back"
     },
     "empty": {
       "title": "No initiatives yet",
@@ -1954,6 +2378,11 @@
     "calendar": "Calendar",
     "decisions": "Decisions",
     "heatmap": "Workload Heatmap",
+    "hub": {
+      "failedToLoad": "Failed to load execution initiatives.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
     "demo": {
       "label": "Demo",
       "toggleHint": "Toggle demo data for Execution Center (local only)",
@@ -2585,10 +3014,117 @@
       "header": "Quick Tutorial",
       "moreToExplore": "More to explore",
       "videoPlaceholder": "Video placeholder"
+    },
+    "knowledge": {
+      "contentMoved": "This content has been moved or removed.",
+      "contentMovedHint": "Browse our collections to find what you need.",
+      "browseCollections": "Browse collections",
+      "deprecated": "This article has been deprecated",
+      "viewReplacement": "View replacement article",
+      "missingTranslationBanner": "No PL version — showing EN",
+      "staleTranslation": "This translation may be outdated — the original article has been updated since.",
+      "minRead": "min read",
+      "views": "views",
+      "nextAction": "Next action",
+      "backToSurface": "Back to work",
+      "relatedModules": "Related Modules",
+      "relatedArticles": "Related Articles",
+      "shareArticle": "Share Article",
+      "noArticle": "Article not found",
+      "loading": "Loading...",
+      "error": "Error loading article"
+    },
+    "search": {
+      "placeholder": "Search help... (Cmd+K)",
+      "noResults": "No results for",
+      "tryDifferentKeywords": "Try different keywords or browse categories below",
+      "types": {
+        "module": "Module",
+        "card": "Card",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "filters": {
+        "all": "All",
+        "module": "Module",
+        "card": "Card",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "suggestionsTitle": "Try searching for:",
+      "browseTitle": "Or browse:",
+      "helpOverviewLink": "Open Help overview"
+    },
+    "widget": {
+      "label": "Help",
+      "header": "Help Center",
+      "searchPlaceholder": "Search help...",
+      "noResults": "No results for \"{{query}}\"",
+      "docs": "Documentation",
+      "contact": "Contact"
+    },
+    "sidePanel": {
+      "tabs": {
+        "overview": "Overview",
+        "thisStep": "This Step",
+        "guides": "Guides",
+        "faq": "FAQ",
+        "knowledge": "Knowledge Base",
+        "updates": "Updates"
+      },
+      "whatThisIs": "What this is",
+      "whyItMatters": "Why it matters",
+      "whatYouDoHere": "What you do here",
+      "howAiHelpsHere": "How AI helps here",
+      "whatComesNext": "What comes next",
+      "askAi": "Ask AI",
+      "quickGuides": "Quick Guides",
+      "watchVideo": "Watch video",
+      "modules": {
+        "welcome": "Welcome",
+        "dashboard": "Dashboard",
+        "assessment": "Licensed Tools Hub",
+        "initiatives": "Initiatives",
+        "roadmap": "Roadmap",
+        "reports": "Reports",
+        "settings": "Settings",
+        "admin": "Administration",
+        "superadmin": "Super Admin",
+        "superadmin_ai_infrastructure": "AI Infrastructure",
+        "superadmin_ai_development": "AI Development",
+        "superadmin_ai_operations": "AI Operations",
+        "billing": "Billing & Subscription"
+      }
+    },
+    "chatbot": {
+      "title": "Teresa — Help",
+      "placeholder": "Ask Teresa a question...",
+      "send": "Send",
+      "typing": "Typing...",
+      "clear": "Clear chat",
+      "sources": "Sources",
+      "helpful": "Was this helpful?",
+      "suggestions": "Suggested questions",
+      "poweredBy": "Knowledge-grounded AI"
     }
   },
   "settings": {
     "title": "Settings",
+    "menu": {
+      "preferences": "Preferences",
+      "theme": "Theme",
+      "language": "Language",
+      "demoMode": "Open Sample Workspace",
+      "demoModeExit": "Exit Demo",
+      "demoModeExitWorkspace": "Exit Sample Workspace",
+      "demoModeOn": "Sample workspace is on - you are exploring Atelier Toys",
+      "demoModeOff": "Open the Atelier Toys sample workspace",
+      "demoReadOnly": "Sample data - read only",
+      "myProfile": "My Profile",
+      "billing": "Billing & Plans",
+      "aiConfig": "AI Configuration",
+      "switchOrg": "Switch Organization"
+    },
     "connectedAccounts": {
       "title": "Connected Accounts",
       "subtitle": "Connect external accounts for easier sign-in and enhanced features",
@@ -3978,6 +4514,11 @@
     "tomorrow": "Tomorrow"
   },
   "executive": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
     "health": {
       "title": "Portfolio Health",
       "subtitle": "Overall execution performance",
@@ -3996,6 +4537,161 @@
       "noBreakdown": "Breakdown data not yet available",
       "noBreakdownHint": "Data will appear as tasks and decisions are tracked",
       "vsLastWeek": "vs last week"
+    },
+    "kpi": {
+      "tasks": "Task Execution",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "On-time",
+      "overdue": "Overdue",
+      "decisions": "Decisions Pending",
+      "awaiting": "awaiting",
+      "critical": "Critical",
+      "avgWait": "Avg wait",
+      "team": "Team Capacity",
+      "teamCapacity": "Team Capacity",
+      "utilized": "utilized",
+      "overloaded": "Overloaded",
+      "available": "Available",
+      "risk": "Risk Level",
+      "riskLevel": "Risk Level",
+      "blockers": "Blockers",
+      "escalations": "Escalations",
+      "noData": "No data",
+      "riskLow": "Low",
+      "riskMedium": "Medium",
+      "riskHigh": "High",
+      "riskCritical": "Critical"
+    },
+    "action": {
+      "decision": "Decision",
+      "task": "Task",
+      "escalation": "Escalation",
+      "blocker": "Blocker",
+      "approve": "Approve",
+      "reject": "Reject",
+      "view": "View details",
+      "title": "Action Required",
+      "allClear": "All Clear!",
+      "noUrgent": "No urgent items requiring your attention.",
+      "viewAll": "View all"
+    },
+    "actions": {
+      "title": "Action Required",
+      "critical": "critical",
+      "highPriority": "high priority",
+      "viewAll": "View all",
+      "viewDetails": "View details",
+      "allClear": "All clear",
+      "overdue": "overdue",
+      "days": "d"
+    },
+    "urgency": {
+      "critical": "Critical",
+      "high": "High"
+    },
+    "decisions": {
+      "title": "Decision Queue",
+      "queue": "Decision Queue",
+      "noPending": "No pending decisions",
+      "allClear": "No pending decisions",
+      "approve": "Approve",
+      "reject": "Reject",
+      "delegate": "Delegate",
+      "viewAll": "View all decisions",
+      "approved": "Decision approved",
+      "rejected": "Decision rejected",
+      "error": "Failed to process decision",
+      "waiting": "waiting"
+    },
+    "team": {
+      "title": "Team Performance",
+      "members": "members",
+      "avgCapacity": "Avg Capacity",
+      "overloaded": "Overloaded",
+      "available": "Available",
+      "noMembers": "No team members found",
+      "viewAll": "View full team report",
+      "tasks": "tasks",
+      "unknown": "Unknown"
+    },
+    "teamPerf": {
+      "title": "Team Performance",
+      "noMembers": "No team members found"
+    },
+    "initiatives": {
+      "title": "Initiatives",
+      "active": "active initiatives",
+      "viewAll": "View all",
+      "empty": "No active initiatives",
+      "tasks": "tasks",
+      "overdue": "overdue",
+      "untitled": "Untitled"
+    },
+    "signals": {
+      "title": "AI Signals",
+      "subtitle": "Intelligent alerts from your portfolio",
+      "viewAll": "View all",
+      "empty": "No signals"
+    },
+    "refresh": "Refresh",
+    "lastUpdated": "Updated",
+    "loadError": "Failed to load dashboard data",
+    "patterns": {
+      "title": "Work Patterns",
+      "tasksPerWeek": "tasks/week",
+      "avgTaskTime": "avg task time",
+      "avgDecisionTime": "avg decision time",
+      "overdueRate": "overdue rate",
+      "insight": {
+        "overloaded": "You have {{openTasks}} open tasks but average {{velocity}}/week. Consider delegating or deferring.",
+        "highOverdue": "{{rate}}% of your tasks with deadlines are completed late. Try adding buffer time.",
+        "slowDecisions": "Average decision time is {{days}} days. Faster decisions could unblock teams."
+      }
+    },
+    "aiOperator": {
+      "title": "AI Operator",
+      "subtitle": "Relationship, navigation, execution, and value in one cockpit",
+      "readiness": "operator readiness",
+      "stage": "Stage",
+      "relationship": "Relationship",
+      "daysSinceTouch": "days since touch",
+      "noTouchpoint": "No touchpoint",
+      "value": "Value",
+      "autonomy": "Autonomy",
+      "nextActions": "Next best actions",
+      "open": "Open",
+      "noActions": "No urgent operator actions.",
+      "cadence": "Cadence and workstreams",
+      "executiveBrief": "Executive brief",
+      "noBrief": "No brief yet.",
+      "sequence": "Operator sequence",
+      "noPlan": "No operator plan yet.",
+      "intervene": "Intervene",
+      "noSequence": "Sequence plan has not been generated yet.",
+      "nextMilestone": "Next milestone",
+      "none": "None",
+      "planBlockers": "Plan blockers",
+      "noBlockers": "No active plan blockers.",
+      "programSummary": "Program summary",
+      "suggestedInterventions": "Suggested interventions",
+      "working": "Working...",
+      "propose": "Propose",
+      "noInterventions": "No new interventions to propose.",
+      "approvalQueue": "Approval queue",
+      "accept": "Accept",
+      "reject": "Reject",
+      "execute": "Execute",
+      "noQueue": "No interventions in the approval queue."
+    },
+    "operator": {
+      "proposed": "Operator intervention proposed.",
+      "proposeFailed": "Failed to propose intervention.",
+      "accepted": "Intervention accepted.",
+      "acceptFailed": "Failed to accept intervention.",
+      "executed": "Intervention executed.",
+      "executeFailed": "Failed to execute intervention.",
+      "rejected": "Intervention rejected.",
+      "rejectFailed": "Failed to reject intervention."
     }
   },
   "research": {
@@ -5065,6 +5761,35 @@
     "plan": "Communication Plan"
   },
   "demo": {
+    "tourComplete": {
+      "message": "You're ready to explore the sample workspace. Use it as a safe reference before repeating the workflow in your own environment."
+    },
+    "banner": {
+      "mode": "Demo Mode",
+      "sampleWorkspace": "Sample Workspace",
+      "exit": "Exit Demo",
+      "exitWorkspace": "Exit Sample Workspace",
+      "exitShort": "Exit",
+      "startTrial": "Start Trial",
+      "restartLocale": "Reload demo in {{locale}}",
+      "projects": "projects",
+      "initiatives": "initiatives",
+      "hints": "Hints",
+      "readOnlyTitle": "Read-only mode",
+      "readOnlyDesc": "Changes are not saved and the sample can be explored safely",
+      "exploreTitle": "Understand the workflow",
+      "exploreDesc": "See how dashboards, initiatives, and AI fit together",
+      "hintTitle": "What to review next",
+      "defaultHint": "Open one initiative and trace the linked tasks, decisions, and AI context",
+      "help": "Help",
+      "backToWorkspace": "Back to my workspace",
+      "readyForMore": "Ready for your own data?",
+      "readyForMoreWorkspace": "Ready to try the same flow in your own workspace?"
+    },
+    "session": {
+      "returnWorkspace": "Back to my workspace",
+      "fullAccess": "Get Full Access"
+    },
     "conversion": {
       "startTrial": "Start Free Trial",
       "persistentCta": "Start Free Trial",
@@ -5101,7 +5826,7 @@
       "passwordLabel": "Password",
       "cta": "Start Free Trial",
       "creating": "Creating your workspace...",
-      "benefit1": "14-day free trial, no credit card",
+      "benefit1": "7-day free trial, no credit card",
       "benefit2": "Your own workspace with AI capabilities",
       "benefit3": "Import your data or start fresh",
       "benefit4": "Cancel anytime, no commitment",
@@ -5120,6 +5845,36 @@
         "initiatives": "Deep Dive: Initiatives & Execution",
         "finance": "Deep Dive: Finance & ROI"
       }
+    },
+    "banner": {
+      "mode": "Demo Mode",
+      "exit": "Exit Demo",
+      "exitShort": "Exit",
+      "startTrial": "Start Trial",
+      "restartLocale": "Reload demo in {{locale}}",
+      "projects": "projects",
+      "initiatives": "initiatives",
+      "hints": "Hints",
+      "readOnlyTitle": "Read-only mode",
+      "readOnlyDesc": "Changes are not saved",
+      "exploreTitle": "Explore features",
+      "exploreDesc": "Browse all modules",
+      "hintTitle": "Hint",
+      "defaultHint": "Click on initiatives to see details",
+      "help": "Help",
+      "partnerProgram": "Partner Program",
+      "showLimitations": "Limitations",
+      "hideLimitations": "Hide",
+      "limitations": {
+        "readOnly": "Read-only mode — changes won't persist",
+        "sampleData": "Sample data — explore with realistic examples",
+        "session": "Session expires in 24h",
+        "aiQuota": "AI interactions limited ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "AI",
+      "used": "used",
+      "aiUsageTooltip": "AI calls used today / daily limit",
+      "tokenUsageTooltip": "Tokens used today / daily limit"
     }
   },
   "ui": {
@@ -5514,6 +6269,10 @@
   "feedback": {
     "title": "User Feedback & Triage",
     "subtitle": "Manage incoming reports, ideas, and feature requests.",
+    "floatingButton": {
+      "label": "Report bug",
+      "ariaLabel": "Report bug (Shift+Ctrl+B)"
+    },
     "search": "Search...",
     "allStatuses": "All Statuses",
     "allTypes": "All Types",
@@ -5521,14 +6280,58 @@
     "noResults": "No feedback found matching your criteria.",
     "backToList": "Back to list",
     "context": "Context & Metadata",
+    "contextTitle": "Context & Metadata",
     "statusHistory": "Status History",
+    "alertDelivery": "Alerts & Escalation",
+    "alertDeliveryEmpty": "No escalation data has been recorded for this item yet.",
+    "alertRequestedChannels": "Planned channels",
+    "alertAttemptedAt": "Last attempt",
+    "alertRecipientCount": "Recipients",
+    "alertStatus": {
+      "sent": "Sent",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "alertChannel": {
+      "in_app": "In-app",
+      "slack": "Slack",
+      "email": "Email",
+      "whatsapp": "WhatsApp"
+    },
     "adminResponse": "Admin Response",
     "noResponse": "No response yet",
     "responsePlaceholder": "Type your response...",
     "send": "Send",
     "confirmationId": "Confirmation ID",
     "feedbackSent": "Thank you! Your feedback has been submitted.",
-    "feedbackError": "Failed to submit feedback. Please try again."
+    "feedbackError": "Failed to submit feedback. Please try again.",
+    "panelContext": {
+      "modules": {
+        "myWork": "My work",
+        "interview": "Interview",
+        "tools": "Discovery tools",
+        "initiatives": "Initiatives",
+        "execution": "Execution",
+        "results": "Results",
+        "finance": "Finance",
+        "presentations": "Presentations",
+        "assessment": "Assessment",
+        "dashboard": "Dashboard",
+        "reports": "Reports",
+        "settings": "Settings",
+        "admin": "Admin",
+        "superadmin": "SuperAdmin",
+        "chat": "AI chat",
+        "economics": "Economics",
+        "implementation": "Implementation",
+        "home": "Home"
+      },
+      "device": {
+        "mobile": "mobile",
+        "tablet": "tablet",
+        "desktop": "desktop"
+      }
+    }
   },
   "behaviorIntelligence": {
     "journeyTracked": "Journey event tracked",
@@ -5614,6 +6417,11 @@
   },
   "results": {
     "moduleName": "Results",
+    "hub": {
+      "failedToLoadKpis": "Failed to load KPI catalog.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
     "kpi": {
       "ai": {
         "summarizePrompt": "Summarize this KPI: meaning, current status, and suggested next actions.",
@@ -5967,6 +6775,7 @@
     "heading": "Simple plans.",
     "headingAccent": "Clear usage limits.",
     "sub": "Choose the package that matches your actual usage, team size, and rollout stage.",
+    "trialPill": "Start here",
     "monthly": "Monthly",
     "annual": "Annual",
     "mostPopular": "Most popular",
@@ -5976,42 +6785,111 @@
     "plans": {
       "trial": {
         "name": "Trial",
-        "description": "14 days to validate the workflow before you commit.",
-        "features": ["1 workspace sandbox", "2 active projects", "30 AI credits total", "Basic report export", "Email support"],
+        "price": "Free",
+        "subtitle": "7 days",
+        "description": "7 days to validate the workflow before you commit.",
+        "features": [
+          "1 workspace sandbox",
+          "2 active projects",
+          "30 AI credits total",
+          "Basic report export",
+          "Email support"
+        ],
         "cta": "Start trial"
       },
       "user": {
         "name": "User",
+        "price": "EUR 29",
+        "subtitle": "per seat / month",
         "description": "For solo consultants and operators who need steady monthly usage.",
-        "features": ["1 user seat", "5 active projects", "150 AI credits / month", "Scenario builder and report drafts", "10 exports / month", "Email support"],
+        "features": [
+          "1 user seat",
+          "5 active projects",
+          "150 AI credits / month",
+          "Scenario builder and report drafts",
+          "10 exports / month",
+          "Email support"
+        ],
         "cta": "Choose User"
       },
       "manager": {
-        "name": "Manager",
+        "name": "Admin",
+        "price": "EUR 49",
+        "subtitle": "per seat / month",
         "description": "For team leads running multiple initiatives with shared visibility.",
-        "features": ["3 user seats included", "15 active projects", "500 AI credits / month", "Shared workspace and approvals", "Presentation-ready exports", "Priority support"],
-        "cta": "Choose Manager"
+        "features": [
+          "3 user seats included",
+          "15 active projects",
+          "500 AI credits / month",
+          "Shared workspace and approvals",
+          "Presentation-ready exports",
+          "Priority support"
+        ],
+        "cta": "Choose Admin"
       },
       "enterprise": {
         "name": "Enterprise",
+        "price": "Custom",
+        "subtitle": "custom setup",
         "description": "For consulting firms and enterprise teams with security and rollout needs.",
-        "features": ["Custom seats and usage packs", "SSO / SAML and advanced permissions", "API and MCP access", "Private model routing or BYOK", "Security review and SLA", "Dedicated onboarding"],
+        "features": [
+          "Custom seats and usage packs",
+          "SSO / SAML and advanced permissions",
+          "API and MCP access",
+          "Private model routing or BYOK",
+          "Security review and SLA",
+          "Dedicated onboarding"
+        ],
         "cta": "Contact sales"
       }
+    },
+    "enterpriseNote": {
+      "badge": "Enterprise details",
+      "title": "Custom deployment, governance, and commercial setup",
+      "body": "Enterprise plans are for organizations that need more than standard packaging: on-premise or dedicated deployment, custom legal flow, procurement support, partner-heavy rollout, licensed tool bundles, or negotiated AI budget structures."
     }
   },
   "pages": {
     "public": {
-      "nav": { "docs": "Docs", "signIn": "Sign In" },
-      "hero": { "title": "Strategic decisions are too complex for intuition and too important for chance." },
-      "cards": {
-        "demo": { "meta": "Instant Access", "title": "Explore Demo", "description": "Experience a live environment with fictional, realistic data." },
-        "trial": { "meta": "Primary Path", "title": "Start Free Trial", "description": "Use Consultify on your real organization data and build your transformation roadmap." },
-        "tour": { "meta": "Product Tour", "title": "How It Works", "description": "Guided by Dr. Piotr Wiśniewski" },
-        "tools": { "meta": "Education Hub", "title": "Learn Our Tools", "description": "Watch demos and masterclasses." },
-        "partner": { "meta": "Returning Users", "title": "Become Partner", "description": "Join our ecosystem." }
+      "nav": {
+        "docs": "Docs",
+        "signIn": "Sign In"
       },
-      "tagline": { "line1": "AI consulting.", "line2": "No slides.", "line3": "Just decisions." },
+      "hero": {
+        "title": "Strategic decisions are too complex for intuition and too important for chance."
+      },
+      "cards": {
+        "demo": {
+          "meta": "Instant Access",
+          "title": "Explore Demo",
+          "description": "Experience a live environment with fictional, realistic data."
+        },
+        "trial": {
+          "meta": "Primary Path",
+          "title": "Start Free Trial",
+          "description": "Use Consultify on your real organization data and build your transformation roadmap."
+        },
+        "tour": {
+          "meta": "Product Tour",
+          "title": "How It Works",
+          "description": "Guided by Dr. Piotr Wiśniewski"
+        },
+        "tools": {
+          "meta": "Education Hub",
+          "title": "Learn Our Tools",
+          "description": "Watch demos and masterclasses."
+        },
+        "partner": {
+          "meta": "Returning Users",
+          "title": "Become Partner",
+          "description": "Join our ecosystem."
+        }
+      },
+      "tagline": {
+        "line1": "AI consulting.",
+        "line2": "No slides.",
+        "line3": "Just decisions."
+      },
       "cta": {
         "noPressure": "No rush. No sales pressure.",
         "justSubstance": "Just substance.",
@@ -6041,10 +6919,22 @@
         "heading": "What You Get as a Partner",
         "sub": "Partnership with Consultify opens new opportunities for growing your consulting practice.",
         "items": {
-          "platform": { "title": "PMO + AI Platform", "description": "Access to an advanced platform combining PMO standards with AI capabilities." },
-          "certifications": { "title": "PMO Certifications", "description": "ISO 21500, PMBOK 7, PRINCE2 training and specialist assessments (DRD, SIRI, ADMA)." },
-          "billing": { "title": "Billing Portal", "description": "Transparent system for managing licenses, invoices and partner discounts." },
-          "materials": { "title": "Materials & Templates", "description": "Access to marketing materials, PMO templates, case studies and documentation." }
+          "platform": {
+            "title": "PMO + AI Platform",
+            "description": "Access to an advanced platform combining PMO standards with AI capabilities."
+          },
+          "certifications": {
+            "title": "PMO Certifications",
+            "description": "ISO 21500, PMBOK 7, PRINCE2 training and specialist assessments (DRD, SIRI, ADMA)."
+          },
+          "billing": {
+            "title": "Billing Portal",
+            "description": "Transparent system for managing licenses, invoices and partner discounts."
+          },
+          "materials": {
+            "title": "Materials & Templates",
+            "description": "Access to marketing materials, PMO templates, case studies and documentation."
+          }
         }
       },
       "tiers": {
@@ -6056,20 +6946,44 @@
           "registered": {
             "title": "Registered",
             "description": "For those starting the partnership",
-            "requirements": ["Registration", "Basic training"],
-            "benefits": ["10% discount", "Access to materials", "Email support"]
+            "requirements": [
+              "Registration",
+              "Basic training"
+            ],
+            "benefits": [
+              "10% discount",
+              "Access to materials",
+              "Email support"
+            ]
           },
           "certified": {
             "title": "Certified",
             "description": "For experienced consultants",
-            "requirements": ["Certification exam", "Min. 3 projects"],
-            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
+            "requirements": [
+              "Certification exam",
+              "Min. 3 projects"
+            ],
+            "benefits": [
+              "12% discount",
+              "Partner logo",
+              "Dedicated support",
+              "Catalog listing"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "For strategic partners",
-            "requirements": ["10+ projects", "Case study", "References"],
-            "benefits": ["14% discount", "Dedicated account manager", "Co-marketing", "Early access to new features"]
+            "requirements": [
+              "10+ projects",
+              "Case study",
+              "References"
+            ],
+            "benefits": [
+              "14% discount",
+              "Dedicated account manager",
+              "Co-marketing",
+              "Early access to new features"
+            ]
           }
         }
       },
@@ -6077,10 +6991,22 @@
         "heading": "How to Join?",
         "sub": "Simple 4-step process to start the partnership.",
         "steps": {
-          "apply": { "title": "Apply", "description": "Fill out the partner application form" },
-          "meet": { "title": "Let's Meet", "description": "Conversation about needs and goals" },
-          "onboarding": { "title": "Onboarding", "description": "Training and platform access" },
-          "grow": { "title": "Grow", "description": "Joint projects and development" }
+          "apply": {
+            "title": "Apply",
+            "description": "Fill out the partner application form"
+          },
+          "meet": {
+            "title": "Let's Meet",
+            "description": "Conversation about needs and goals"
+          },
+          "onboarding": {
+            "title": "Onboarding",
+            "description": "Training and platform access"
+          },
+          "grow": {
+            "title": "Grow",
+            "description": "Joint projects and development"
+          }
         }
       },
       "cta": {
@@ -6090,5 +7016,106 @@
         "noObligation": "No obligations • We respond within 24h"
       }
     }
+  },
+  "kimi": {
+    "taskCompleted": "Task completed",
+    "executingTask": "Executing task...",
+    "taskProgress": "Task Progress",
+    "replay": "Replay",
+    "remix": "Remix",
+    "generating": "Generating...",
+    "generatingDoc": "Building your document",
+    "generatingSheet": "Building your spreadsheet",
+    "generatingDeck": "Building your presentation",
+    "emptyWordy": "Your document will appear here",
+    "emptyExcele": "Your spreadsheet will appear here",
+    "emptyDeck": "Your presentation will appear here",
+    "emptyHint": "Describe what you need and click Generate",
+    "generateDoc": "Generate Document",
+    "generateSheet": "Generate Spreadsheet",
+    "generateDeck": "Generate Presentation",
+    "docReady": "Document ready — use Preview File or Download",
+    "showingRows": "Showing 25 of {{total}} rows",
+    "xlsxPreview": "Spreadsheet preview",
+    "deckPreview": "Presentation preview",
+    "openInBuilder": "Open in Deck Builder",
+    "previewFile": "Preview File",
+    "allFiles": "All files",
+    "viewOrDownload": "View or download files",
+    "generationFailed": "Generation failed",
+    "retry": "Try again",
+    "workspace": "Workspace",
+    "laneWordy": "Documents",
+    "laneExcele": "Tables",
+    "lanePrezentacje": "Presentations",
+    "stepSnapshot": "Capture context snapshot",
+    "stepPlan": "Create artifact plan",
+    "stepPreflight": "Validate preflight checks",
+    "stepAccept": "Accept plan & create proposal",
+    "stepReview": "Submit for review",
+    "stepApprove": "Approve execution",
+    "stepMaterialize": "Materialize artifact",
+    "stepGenerate": "Generate content",
+    "sheetReady": "Spreadsheet ready — use Preview File or Download"
+  },
+  "contact": {
+    "badge": "Get in touch",
+    "hero": {
+      "title1": "Let's talk about",
+      "title2": "your next step",
+      "subtitle": "Whether you need a demo, want to discuss enterprise deployment, or have a question — we are here to help."
+    },
+    "offices": "Offices",
+    "email": "Email",
+    "emailGeneral": "General",
+    "emailSales": "Sales",
+    "emailSupport": "Support",
+    "bookDemo": "Book a 30-min call",
+    "bookDemoSub": "Free consultation. See Consultify in action.",
+    "sla": "We respond within 1 business day. Existing customers get faster resolution through in-app support.",
+    "types": {
+      "general": "General Inquiry",
+      "sales": "Sales / Demo Request",
+      "support": "Technical Support",
+      "partnership": "Partnership",
+      "security": "Security & Compliance",
+      "press": "Press & Media"
+    },
+    "form": {
+      "title": "Send us a message",
+      "subtitle": "All fields marked with * are required",
+      "name": "Your Name",
+      "email": "Email Address",
+      "company": "Company",
+      "inquiryType": "Inquiry Type",
+      "message": "Message",
+      "messagePlaceholder": "How can we help you?",
+      "securityNote": "Your data is encrypted and processed in accordance with our Privacy Policy.",
+      "send": "Send Message",
+      "sending": "Sending..."
+    },
+    "success": {
+      "title": "Message sent",
+      "subtitle": "Thank you for reaching out. We'll get back to you within 1 business day.",
+      "another": "Send another message"
+    }
+  },
+  "moduleHome": {
+    "new": "New",
+    "recent": "Recent",
+    "saved": "Saved",
+    "templates": "Templates",
+    "heroDoc": "Reports, briefs, analyses, articles and business documents",
+    "heroSheet": "Budgets, financial models, timelines, risk matrices",
+    "heroDeck": "Executive decks, pitch, status updates, workshop presentations",
+    "startNew": "Start new",
+    "fromTemplate": "From template",
+    "viewAll": "View all"
+  },
+  "chatOutputTool": {
+    "auto": "Auto",
+    "documents": "Documents",
+    "tables": "Tables",
+    "presentations": "Presentations"
   }
 }

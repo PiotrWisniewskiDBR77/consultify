@@ -38,22 +38,44 @@ import {
 import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
+import { sendSystemAlert } from './services/systemAlertNotifier.js';
 import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
+import {
+  sendApiGatewayRateLimitedResponse,
+  sendApiMethodNotAllowed,
+  sendApiUnknownRouteNotFound,
+} from './utils/apiContractResponses.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
+import { resolveAllowedApiMethods } from './utils/apiRouteMethodAllowlist.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
 
 // Initialize app
 const app: Express = express();
+const server = http.createServer(app);
 
 const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 const skipRateLimit = process.env.DISABLE_RATE_LIMIT === 'true';
 const enableRateLimitInNonProd = process.env.ENABLE_RATE_LIMIT === 'true';
+const startServer = true; // Always start server when running via tsx
+const shouldStartHttpServer =
+  process.env.START_HTTP_SERVER !== 'false' && !process.env.VITEST && process.env.VITEST !== 'true';
+let serverListening = false;
+
+server.on('error', (err: NodeJS.ErrnoException) => {
+  logger.error('[Server] HTTP Server Error:', err);
+  if (err.code === 'EADDRINUSE') {
+    logger.error(`Port ${PORT} is already in use`);
+    if (!isTest) {
+      process.exit(1);
+    }
+  }
+});
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -86,7 +108,6 @@ import systemHealthRoutes from './routes/system-health.routes.js';
 
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
-
 
 // Test route to verify server is working
 app.get('/test-frontend-path', (req: Request, res: Response) => {
@@ -197,6 +218,9 @@ if (String(process.env.DB_READONLY || '').trim()) {
   logger.warn('[Server] DB_READONLY is enabled (writes blocked).');
 }
 
+// Bind the port before heavy async startup completes so the frontend proxy does not see ECONNREFUSED.
+startHttpListener();
+
 const databaseInitPromise: Promise<void> =
   !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
     ? (async () => {
@@ -242,8 +266,12 @@ const databaseInitPromise: Promise<void> =
             dbInitError = null;
           }
 
-          // Table Platform migrations deferred to background (non-blocking)
-          if (process.env.DISABLE_TP_MIGRATIONS !== 'true') {
+          const shouldRunTpMigrations =
+            process.env.DISABLE_TP_MIGRATIONS !== 'true' && process.env.NODE_ENV !== 'test';
+
+          // Table Platform migrations deferred to background (non-blocking).
+          // Skip in test mode to avoid non-essential schema noise and permission errors.
+          if (shouldRunTpMigrations) {
             setTimeout(async () => {
               try {
                 const { runMigrations } =
@@ -269,10 +297,15 @@ const databaseInitPromise: Promise<void> =
                 logger.warn('[Server] Table Platform migrations skipped:', migErr);
               }
             }, 5000);
+          } else if (process.env.NODE_ENV === 'test') {
+            logger.info('[Server] Skipping Table Platform migrations in test mode');
           }
 
-          // Initialize connection pool
-          if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
+          const shouldInitConnectionPool =
+            process.env.DISABLE_CONNECTION_POOL !== 'true' && process.env.NODE_ENV !== 'test';
+
+          // Initialize connection pool outside test mode.
+          if (shouldInitConnectionPool) {
             try {
               const poolTimeout = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('Connection pool init timeout (15s)')), 15000)
@@ -283,31 +316,61 @@ const databaseInitPromise: Promise<void> =
               logger.error('[Server] Connection pool initialization failed:', poolError);
               logger.warn('[Server] Continuing with singleton database connection');
             }
+          } else if (process.env.NODE_ENV === 'test') {
+            logger.info('[Server] Skipping connection pool initialization in test mode');
           } else {
             logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
           }
 
-          // Schedule periodic schema verification (every 5 minutes)
-          const healthCheckInterval = setInterval(
-            async () => {
-              try {
-                const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
-                const healthy = await verifyDatabaseHealth();
-                if (!healthy) {
-                  logger.warn('[Server] Database health check failed - schema may be incomplete');
+          // Schedule periodic schema verification (every 5 minutes) outside test mode.
+          if (process.env.NODE_ENV !== 'test') {
+            const healthCheckInterval = setInterval(
+              async () => {
+                try {
+                  const { verifyDatabaseHealth } =
+                    await import('./database/DatabaseInitializer.js');
+                  const healthy = await verifyDatabaseHealth();
+                  if (!healthy) {
+                    logger.warn('[Server] Database health check failed - schema may be incomplete');
+                    await sendSystemAlert({
+                      title: 'Database schema health degraded',
+                      message:
+                        'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
+                      severity: 'WARNING',
+                      source: 'Database',
+                      throttleKey: 'database_schema_health_failed',
+                      throttleMs: 30 * 60 * 1000,
+                    });
+                  }
+                } catch (err: any) {
+                  const error = err as Error;
+                  logger.error(`[Server] Database health check error: ${error.message}`);
+                  await sendSystemAlert({
+                    title: 'Database health check error',
+                    message: error.message,
+                    severity: 'CRITICAL',
+                    source: 'Database',
+                    throttleKey: 'database_health_check_error',
+                    throttleMs: 15 * 60 * 1000,
+                  });
                 }
-              } catch (err: any) {
-                const error = err as Error;
-                logger.error(`[Server] Database health check error: ${error.message}`);
-              }
-            },
-            5 * 60 * 1000
-          ) as NodeJS.Timeout;
+              },
+              5 * 60 * 1000
+            ) as NodeJS.Timeout;
 
-          (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
+            (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
+          }
         } catch (err: any) {
           const error = err as Error;
           logger.error(`[Server] Database initialization failed: ${error.message}`);
+          await sendSystemAlert({
+            title: 'Database initialization failed',
+            message: error.message || 'Database initialization failed',
+            severity: 'CRITICAL',
+            source: 'Database',
+            throttleKey: 'database_initialization_failed',
+            throttleMs: 15 * 60 * 1000,
+          });
           dbReady = false;
           dbInitError = error.message || 'Database initialization failed';
           if (isProduction) {
@@ -328,39 +391,71 @@ const databaseInitPromise: Promise<void> =
 // SCHEDULER & HEALTH CHECKS INITIALIZATION
 // ============================================================
 
+const deferredStartupDelayMs = Number(process.env.DEFER_NONCRITICAL_STARTUP_MS || 0);
+const llmConfigStartupDelayMs = Number(
+  process.env.DEFER_LLM_CONFIG_INIT_MS || deferredStartupDelayMs
+);
+
+const scheduleStartupTask = (
+  task: () => Promise<void>,
+  delayMs: number = deferredStartupDelayMs
+): void => {
+  const timer = setTimeout(
+    () => {
+      void task();
+    },
+    Math.max(0, delayMs)
+  );
+  timer.unref?.();
+};
+
 if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   // Init Scheduler (ES modules) - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       await Scheduler.init();
     } catch (err: any) {
       const error = err as Error;
       logger.error('[Server] Scheduler initialization failed:', error.message);
     }
-  })();
+  });
+
+  // Hourly AI Ops snapshot to Slack (non-blocking)
+  scheduleStartupTask(async () => {
+    try {
+      const { startAIOpsReportCron } = await import('./cron/AIOpsReportCron.js');
+      startAIOpsReportCron();
+    } catch (err: any) {
+      logger.warn('[Server] AI Ops report cron failed to start', { error: err?.message || err });
+    }
+  });
 
   // Init Health Check Monitor (ES modules) - non-blocking
-  (async () => {
-    try {
-      startHealthCheck();
-    } catch (err: any) {
-      const error = err as Error;
-      logger.error('[Server] Health Check initialization failed:', error.message);
-    }
-  })();
+  if (process.env.DISABLE_STARTUP_HEALTH_MONITOR !== 'true') {
+    scheduleStartupTask(async () => {
+      try {
+        startHealthCheck();
+      } catch (err: any) {
+        const error = err as Error;
+        logger.error('[Server] Health Check initialization failed:', error.message);
+      }
+    });
+  } else {
+    logger.info('[Server] Health Check monitor skipped via DISABLE_STARTUP_HEALTH_MONITOR');
+  }
 
   // Init CQRS - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
       registerCQRSHandlers();
     } catch (err: any) {
       logger.error('[Server] CQRS initialization failed:', { error: err });
     }
-  })();
+  });
 
   // V4-TASK-05: Init Automation Rules Engine - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { initAutomationRulesEngine } = await import('./services/automationRulesEngine.js');
       initAutomationRulesEngine();
@@ -368,10 +463,10 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     } catch (err: any) {
       logger.error('[Server] Automation Rules Engine initialization failed:', err?.message);
     }
-  })();
+  });
 
   // Scheduled Automations Executor (cron-based) - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { scheduledAutomationExecutor } =
         await import('./services/tablePlatform/ScheduledAutomationExecutor.js');
@@ -380,28 +475,60 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     } catch (err: any) {
       logger.error('[Server] Scheduled Automation Executor failed:', err?.message);
     }
-  })();
+  });
+
+  // Results enterprise runtime executor - non-blocking
+  scheduleStartupTask(async () => {
+    try {
+      const { resultsEnterpriseRuntimeExecutor } =
+        await import('./services/results/ResultsEnterpriseRuntimeExecutor.js');
+      resultsEnterpriseRuntimeExecutor.start(60_000);
+      logger.info('[Server] ✅ Results Enterprise Runtime Executor started (60s interval)');
+    } catch (err: any) {
+      logger.error('[Server] Results Enterprise Runtime Executor failed:', err?.message);
+    }
+  });
 
   // ============================================================
   // LLM CONFIG INITIALIZATION - Create tables & sync providers
   // ============================================================
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { llmConfigService } = await import('./services/ai/llmConfigService.js');
       await llmConfigService.initialize();
       logger.info('[Server] ✅ LLM Config Service initialized (tables + providers synced)');
+
+      // Ensure purpose routing schema + seed baseline assignments so model routing has coverage.
+      // This prevents "Purpose coverage missing" alerts on fresh/legacy DBs.
+      try {
+        const { ensureRoutingSchemaAndSeedDefaults } =
+          await import('./services/ai/aiRoutingBootstrapService.js');
+        await ensureRoutingSchemaAndSeedDefaults();
+        logger.info('[Server] ✅ AI purpose routing bootstrap complete');
+      } catch (err: any) {
+        const e = err as Error;
+        logger.warn('[Server] AI purpose routing bootstrap failed (continuing):', e.message);
+      }
     } catch (err: any) {
       const error = err as Error;
       logger.error('[Server] LLM Config initialization failed:', error.message);
+      await sendSystemAlert({
+        title: 'LLM config initialization failed',
+        message: error.message,
+        severity: 'CRITICAL',
+        source: 'LLM',
+        throttleKey: 'llm_config_initialization_failed',
+        throttleMs: 30 * 60 * 1000,
+      });
     }
-  })();
+  }, llmConfigStartupDelayMs);
 
   // ============================================================
   // LLM STARTUP VALIDATION - Single Source of Truth
   // ============================================================
   // Validate LLM configuration
   if (!process.env.SKIP_STARTUP_VALIDATOR) {
-    (async () => {
+    scheduleStartupTask(async () => {
       try {
         const startupValidatorModule = await import('./services/ai/startupValidator.js');
         // Handle both named exports and default export wrapping (CJS/ESM interop)
@@ -428,6 +555,14 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
           if (healthReport.criticalErrors && healthReport.criticalErrors.length > 0) {
             logger.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
             healthReport.criticalErrors.forEach((err: string) => logger.error(`  - ${err}`));
+            await sendSystemAlert({
+              title: 'LLM startup validation reported critical errors',
+              message: healthReport.criticalErrors.join(' | '),
+              severity: 'CRITICAL',
+              source: 'LLM',
+              throttleKey: 'llm_startup_validation_critical',
+              throttleMs: 30 * 60 * 1000,
+            });
           }
 
           if (healthReport.summary && healthReport.summary.healthy > 0) {
@@ -441,8 +576,16 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       } catch (err: any) {
         const error = err as Error;
         logger.error('[Server] LLM Startup Validation failed:', error.message);
+        await sendSystemAlert({
+          title: 'LLM startup validation failed',
+          message: error.message,
+          severity: 'CRITICAL',
+          source: 'LLM',
+          throttleKey: 'llm_startup_validation_failed',
+          throttleMs: 30 * 60 * 1000,
+        });
       }
-    })();
+    }, llmConfigStartupDelayMs);
   } else {
     logger.info('[Server] Startup validation skipped via SKIP_STARTUP_VALIDATOR');
   }
@@ -462,43 +605,50 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   }
 
   // Init AI Health Monitor (Self-Healing System) - non-blocking
-  (async () => {
-    try {
-      const healthMonitorModule = await import('./services/ai/healthMonitor.js');
-      // Debug: Log imported module keys
-      logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
-      // The module exports a Promise as default (from lazy service loader)
-      // We need to await it to get the actual healthMonitor service
-      let healthMonitor: any = null;
+  if (process.env.DISABLE_AI_HEALTH_MONITOR !== 'true') {
+    scheduleStartupTask(async () => {
+      try {
+        const healthMonitorModule = await import('./services/ai/healthMonitor.js');
+        logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
+        let healthMonitor: any = null;
 
-      // Handle case where default export is a Promise (lazy loaded service)
-      if (healthMonitorModule.default instanceof Promise) {
-        healthMonitor = await healthMonitorModule.default;
-      } else if (healthMonitorModule.default) {
-        // Direct default export
-        healthMonitor = healthMonitorModule.default;
+        if (healthMonitorModule.default instanceof Promise) {
+          healthMonitor = await healthMonitorModule.default;
+        } else if (healthMonitorModule.default) {
+          healthMonitor = healthMonitorModule.default;
+        }
+
+        if (healthMonitor) {
+          healthMonitor.start(60000);
+
+          healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
+            logger.error('[AI Health] CRITICAL ALERT:', alert.message);
+            logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
+            void sendSystemAlert({
+              title: 'AI health monitor detected persistent failures',
+              message: `${alert.message}${alert.checks?.length ? ` | Failed checks: ${alert.checks.join(', ')}` : ''}`,
+              severity: 'CRITICAL',
+              source: 'AI/LLM',
+              throttleKey: 'ai_health_monitor_persistent_failures',
+              throttleMs: 15 * 60 * 1000,
+            });
+          });
+
+          logger.info('[Server] AI Health Monitor started (self-healing enabled)');
+        } else {
+          logger.warn('[Server] AI Health Monitor not available (export not found)');
+        }
+      } catch (err: any) {
+        const error = err as Error;
+        logger.warn('[Server] AI Health Monitor not available:', error.message);
       }
-
-      if (healthMonitor) {
-        healthMonitor.start(60000);
-
-        healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
-          logger.error('[AI Health] CRITICAL ALERT:', alert.message);
-          logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
-        });
-
-        logger.info('[Server] AI Health Monitor started (self-healing enabled)');
-      } else {
-        logger.warn('[Server] AI Health Monitor not available (export not found)');
-      }
-    } catch (err: any) {
-      const error = err as Error;
-      logger.warn('[Server] AI Health Monitor not available:', error.message);
-    }
-  })();
+    }, llmConfigStartupDelayMs);
+  } else {
+    logger.info('[Server] AI Health Monitor skipped via DISABLE_AI_HEALTH_MONITOR');
+  }
 
   // Init AI Provider Sentinel (continuous provider diagnostics) - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       if (process.env.DISABLE_AI_PROVIDER_SENTINEL === 'true') return;
       const { default: providerSentinel } = await import('./services/ai/providerSentinel.js');
@@ -509,7 +659,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       const error = err as Error;
       logger.warn('[Server] AI Provider Sentinel not available:', error.message);
     }
-  })();
+  }, llmConfigStartupDelayMs);
 }
 
 // ============================================================
@@ -626,7 +776,9 @@ const apiLimiter = rateLimit({
     isTest ||
     (!isProduction && !enableRateLimitInNonProd) ||
     req.originalUrl.includes('/api/auth/'),
-  message: { error: 'Too many requests, please try again later.' },
+  handler: (req, res) => {
+    sendApiGatewayRateLimitedResponse(req, res);
+  },
   keyGenerator: (req) => {
     try {
       return buildApiLimiterKey(req);
@@ -728,6 +880,10 @@ app.use(sentryHandlers.requestHandler);
 // Sentry Tracing Handler (must be after request handler, before routes)
 app.use(sentryHandlers.tracingHandler);
 
+// Correlation & Context Tracking
+// Keep before JSON parsing so malformed/oversized JSON still gets correlation headers.
+app.use(correlationMiddleware);
+
 // Body Parsing, Cookies & Static Files
 // Stripe webhooks require the *raw* request body for signature verification.
 // Since `express.json()` consumes the stream, we conditionally route body parsing.
@@ -750,9 +906,6 @@ const kbStaticCandidates = [
 ];
 const kbStaticDir = kbStaticCandidates.find((d) => fs.existsSync(d)) || kbStaticCandidates[0];
 app.use('/kb', express.static(kbStaticDir, { maxAge: '7d', immutable: true }));
-
-// Correlation & Context Tracking
-app.use(correlationMiddleware);
 
 // ============================================================
 // INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
@@ -795,7 +948,9 @@ app.use('/api/', apiLimiter);
 import auditLogMiddleware from './middleware/auditLog.middleware.js';
 app.use('/api/', auditLogMiddleware);
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.http(`${req.method} ${req.url}`);
+  if (!isTest) {
+    logger.http(`${req.method} ${req.url}`);
+  }
   next();
 });
 
@@ -812,14 +967,18 @@ app.use('/api/auth/register', authLimiter);
 
 // Initialize API Gateway Routes
 app.use((req, res, next) => {
-  logger.info(`[Index] Pre-Gateway: ${req.method} ${req.path}`);
+  if (!isTest) {
+    logger.info(`[Index] Pre-Gateway: ${req.method} ${req.path}`);
+  }
   if (
     req.path === '/auth/login' ||
     req.path === '/api/auth/login' ||
     req.originalUrl.includes('/auth/login')
   ) {
     // Do NOT log request body/headers here (credentials/token leak risk).
-    logger.info('[Index] Login request received');
+    if (!isTest) {
+      logger.info('[Index] Login request received');
+    }
   }
   next();
 });
@@ -890,11 +1049,16 @@ try {
   logger.info(`[Server] ✓ Stored frontend dist path globally: ${frontendDistPath}`);
 } catch (e) {
   logger.error(`[Server] Error storing frontend dist path: ${e}`);
-  logger.error(`[Server] Error storing frontend dist path: ${e}`);
 }
 
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
-logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
+
+const isStaticAssetRequest = (requestPath: string): boolean =>
+  /\.[a-z0-9]+$/i.test(requestPath) ||
+  requestPath.startsWith('/assets/') ||
+  requestPath.startsWith('/icons/') ||
+  requestPath.startsWith('/locales/') ||
+  requestPath.startsWith('/manifest');
 
 // Helper function to serve index.html
 const serveIndexHtml = (req: Request, res: Response): void => {
@@ -940,6 +1104,9 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   }
 
   // Use absolute path - res.sendFile works with absolute paths
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
       logger.error(`[Server] Error sending index.html: ${err.message}`);
@@ -988,7 +1155,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
 
   // Skip static assets (they should be handled by express.static)
-  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+  if (isStaticAssetRequest(req.path)) {
     return next(); // Let 404 handler catch missing static files
   }
 
@@ -1023,6 +1190,17 @@ app.use(errorHandlerMiddleware);
 app.use((req: Request, res: Response) => {
   // Don't handle non-API routes here - they should be handled by catchall
   if (!req.path.startsWith('/api/')) {
+    if (isStaticAssetRequest(req.path)) {
+      logger.warn(`[Server] Missing static asset: ${req.path}`);
+      return res.status(404).json({
+        error: {
+          code: 'ASSET_NOT_FOUND',
+          message: `Static asset ${req.path} not found`,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+
     // This shouldn't happen if catchall is working, but log it and try to serve frontend
     logger.warn(`[Server] Non-API route reached 404 handler: ${req.path}`);
     const indexPath = path.join(frontendDistPath, 'index.html');
@@ -1032,13 +1210,13 @@ app.use((req: Request, res: Response) => {
     }
   }
 
-  res.status(404).json({
-    error: {
-      code: 'NOT_FOUND',
-      message: `Route ${req.method} ${req.path} not found`,
-      timestamp: new Date().toISOString(),
-    },
-  });
+  const allowedMethods = resolveAllowedApiMethods(app, req);
+  if (allowedMethods.length > 0 && !allowedMethods.includes(req.method.toUpperCase())) {
+    sendApiMethodNotAllowed(req, res, allowedMethods);
+    return;
+  }
+
+  sendApiUnknownRouteNotFound(req, res);
 });
 
 // ============================================================
@@ -1076,19 +1254,47 @@ if (!isTest) {
 // START SERVER (after all routes are registered)
 // ============================================================
 
-const startServer = true; // Always start server when running via tsx
 // IMPORTANT:
 // - We DO want to start an HTTP server when this file is executed directly (e.g. `tsx src/index.ts`)
 //   even if NODE_ENV=test (common for Playwright / smoke environments).
 // - We do NOT want to start an HTTP server when running unit tests under Vitest, where this module
 //   may be imported for app wiring.
-const shouldStartHttpServer =
-  process.env.START_HTTP_SERVER !== 'false' && !process.env.VITEST && process.env.VITEST !== 'true';
+
+function startHttpListener(): void {
+  if (!startServer || !shouldStartHttpServer || serverListening) return;
+  serverListening = true;
+  logger.info('[Server] Starting HTTP listener eagerly (routes may still be warming up)...');
+  server.listen(PORT, '0.0.0.0', () => {
+    logger.info('✅ Server running on http://0.0.0.0:' + PORT);
+    logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
+    logger.info(`[Server] ✅ Server started on port ${PORT}`);
+  });
+}
 
 if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
-    const server = http.createServer(app);
+
+    // Feedback artifact retention pruner (best-effort, daily, idempotent).
+    // Keeps screenshot storage bounded even when the Railway volume is not
+    // yet attached — safe to run on ephemeral dirs too.
+    try {
+      const { startArtifactPruner } = await import('./services/feedbackArtifacts.js');
+      const maxAgeDays = Number(process.env.FEEDBACK_ARTIFACTS_RETENTION_DAYS || 30);
+      startArtifactPruner({ maxAgeDays });
+      logger.info(`[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`);
+    } catch (err: any) {
+      logger.warn('[Server] Feedback artifact pruner not started:', err?.message);
+    }
+
+    // Feedback Slack digest (daily). Gated on FEEDBACK_DIGEST_ENABLED=true so
+    // non-prod / local envs stay silent by default.
+    try {
+      const { startFeedbackDigestCron } = await import('./services/feedbackDigest.js');
+      startFeedbackDigestCron();
+    } catch (err: any) {
+      logger.warn('[Server] Feedback digest cron not started:', err?.message);
+    }
 
     // V4-IDEA-02: Idea collab WebSocket /ws/collab/:ideaId (native ws for CollaborationOverlay)
     try {
@@ -1115,18 +1321,6 @@ if (startServer && shouldStartHttpServer) {
 
     // ShutdownManager will be used in graceful shutdown handler
     // const shutdownManager = getShutdownManager(30000); // 30 second timeout
-
-    // Handle server errors
-    server.on('error', (err: NodeJS.ErrnoException) => {
-      logger.error('[Server] HTTP Server Error:', err);
-      if (err.code === 'EADDRINUSE') {
-        logger.error(`Port ${PORT} is already in use`);
-        // Don't exit in test mode - let the test framework handle it
-        if (!isTest) {
-          process.exit(1);
-        }
-      }
-    });
 
     // Interval reference is stored in global scope during database initialization
 
@@ -1241,13 +1435,13 @@ if (startServer && shouldStartHttpServer) {
     });
 
     // Start listening immediately; DB-dependent routes are gated until dbReady=true.
-    logger.info('[Server] Listening immediately (API gated until DB ready)');
-    server.listen(PORT, '0.0.0.0', () => {
-      logger.info('✅ Server running on http://0.0.0.0:' + PORT);
-      logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
-      logger.info(`[Server] ✅ Server started on port ${PORT}`);
-      logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
-    });
+    startHttpListener();
+    logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
+
+    // Start conversation purge scheduler (P35 — auto-purge soft-deleted conversations)
+    import('./services/conversationPurgeScheduler.js')
+      .then((m) => m.startPurgeScheduler())
+      .catch((err) => logger.warn('[Server] Purge scheduler init failed (non-fatal):', err));
   })();
 }
 

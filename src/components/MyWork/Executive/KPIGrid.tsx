@@ -23,25 +23,25 @@ interface KPIData {
     overdueCount: number;
     onTimeRate: number;
     trend: 'up' | 'down' | 'stable';
-  };
+  } | null;
   decisions: {
     pending: number;
     avgWaitDays: number;
     critical: number;
     trend: 'up' | 'down' | 'stable';
-  };
+  } | null;
   team: {
     avgCapacity: number;
     overloaded: number;
     available: number;
     trend: 'up' | 'down' | 'stable';
-  };
+  } | null;
   risk: {
     level: 'low' | 'medium' | 'high' | 'critical';
     blockers: number;
     escalations: number;
     trend: 'up' | 'down' | 'stable';
-  };
+  } | null;
 }
 
 interface KPIGridProps {
@@ -141,28 +141,28 @@ const KPICard: React.FC<{
   );
 };
 
-// Risk Level Badge
 const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
+  const { t } = useTranslation();
   const config = {
     low: {
       bg: 'bg-emerald-100 dark:bg-emerald-900/30',
       text: 'text-emerald-700 dark:text-emerald-300',
-      label: 'Low',
+      label: t('executive.kpi.riskLow', 'Low'),
     },
     medium: {
       bg: 'bg-amber-100 dark:bg-amber-900/30',
       text: 'text-amber-700 dark:text-amber-300',
-      label: 'Medium',
+      label: t('executive.kpi.riskMedium', 'Medium'),
     },
     high: {
       bg: 'bg-orange-100 dark:bg-orange-900/30',
       text: 'text-orange-700 dark:text-orange-300',
-      label: 'High',
+      label: t('executive.kpi.riskHigh', 'High'),
     },
     critical: {
       bg: 'bg-rose-100 dark:bg-rose-900/30',
       text: 'text-rose-700 dark:text-rose-300',
-      label: 'Critical',
+      label: t('executive.kpi.riskCritical', 'Critical'),
     },
   };
 
@@ -191,47 +191,42 @@ const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
 export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavigate }) => {
   const { t } = useTranslation();
 
-  // Real data only - no mock fallbacks
-  const kpiData: KPIData = {
-    tasks: {
-      completed: data?.tasks?.completed ?? 0,
-      total: data?.tasks?.total ?? 0,
-      overdueCount: data?.tasks?.overdueCount ?? 0,
-      onTimeRate: data?.tasks?.onTimeRate ?? 0,
-      trend: data?.tasks?.trend ?? 'stable',
+  const kpiData = {
+    tasks: data?.tasks ?? {
+      completed: 0,
+      total: 0,
+      overdueCount: 0,
+      onTimeRate: 0,
+      trend: 'stable' as const,
     },
-    decisions: {
-      pending: data?.decisions?.pending ?? 0,
-      avgWaitDays: data?.decisions?.avgWaitDays ?? 0,
-      critical: data?.decisions?.critical ?? 0,
-      trend: data?.decisions?.trend ?? 'stable',
+    decisions: data?.decisions ?? {
+      pending: 0,
+      avgWaitDays: 0,
+      critical: 0,
+      trend: 'stable' as const,
     },
-    team: {
-      avgCapacity: data?.team?.avgCapacity ?? 0,
-      overloaded: data?.team?.overloaded ?? 0,
-      available: data?.team?.available ?? 0,
-      trend: data?.team?.trend ?? 'stable',
+    team: data?.team ?? {
+      avgCapacity: 0,
+      overloaded: 0,
+      available: 0,
+      trend: 'stable' as const,
     },
-    risk: {
-      level: data?.risk?.level ?? 'low',
-      blockers: data?.risk?.blockers ?? 0,
-      escalations: data?.risk?.escalations ?? 0,
-      trend: data?.risk?.trend ?? 'stable',
+    risk: data?.risk ?? {
+      level: 'low' as const,
+      blockers: 0,
+      escalations: 0,
+      trend: 'stable' as const,
     },
   };
 
-  // A1.1: Protect against division by zero – show "No data" when there are no tasks
-  const hasTaskData = kpiData.tasks.total > 0;
+  const hasTaskData = data?.tasks != null && data.tasks.total > 0;
   const completionRate = hasTaskData
     ? Math.round((kpiData.tasks.completed / kpiData.tasks.total) * 100)
     : null;
 
-  // A1.1: Detect whether real data was loaded from API
-  // The parent (ExecutiveDashboard) passes data; if the API call failed or returned empty,
-  // the values stay at their initial zeros. We check if the data prop section exists.
-  const hasDecisionData = data?.decisions !== undefined;
-  const hasTeamData = data?.team !== undefined;
-  const hasRiskData = data?.risk !== undefined;
+  const hasDecisionData = data?.decisions != null;
+  const hasTeamData = data?.team != null;
+  const hasRiskData = data?.risk != null;
 
   if (loading) {
     return (

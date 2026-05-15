@@ -40,6 +40,8 @@ import {
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
+import { ProcessFlowHealthScore } from './processflow/ProcessFlowHealthScore';
+import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
@@ -94,6 +96,30 @@ interface IdeaWorkspaceToolsProps {
   onStyleChange?: (patch: Record<string, any>) => void;
   onFitView?: () => void;
   onAutoLayout?: () => void;
+
+  processFlowLanes?: { id: string; label: string; color: string }[];
+  onProcessFlowNodeLabelChange?: (nodeId: string, label: string) => void;
+  onProcessFlowGatewayKindChange?: (nodeId: string, kind: 'xor' | 'and') => void;
+  onProcessFlowLaneChange?: (nodeId: string, laneId: string) => void;
+  onProcessFlowEdgeLabelChange?: (edgeId: string, label: string) => void;
+  onProcessFlowNodeMetricsChange?: (
+    nodeId: string,
+    metrics: { duration?: string; durationUnit?: string; cost?: string; fteCount?: string }
+  ) => void;
+  onProcessFlowEdgeConditionChange?: (edgeId: string, conditionType: string) => void;
+  onProcessFlowNodeMetadataChange?: (
+    nodeId: string,
+    metadata: { description?: string; assignee?: string; system?: string }
+  ) => void;
+
+  whiteboardSession?: {
+    role?: string;
+    phase?: string;
+    timerActive?: boolean;
+    followActive?: boolean;
+    participantCount?: number;
+  };
+  whiteboardOutcomes?: Array<{ type: string; label: string }>;
 }
 
 /* ── Collapsible section wrapper ── */
@@ -166,6 +192,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onLayoutChange,
   onThemeChange,
   onStyleChange,
+  processFlowLanes,
+  onProcessFlowNodeLabelChange,
+  onProcessFlowGatewayKindChange,
+  onProcessFlowLaneChange,
+  onProcessFlowEdgeLabelChange,
+  onProcessFlowNodeMetricsChange,
+  onProcessFlowEdgeConditionChange,
+  onProcessFlowNodeMetadataChange,
+  whiteboardSession,
+  whiteboardOutcomes,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
@@ -610,6 +646,145 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </div>
         </div>
       </Section>
+
+      {activeTool === 'whiteboard' && (
+        <Section
+          title={isPl ? 'Inspektor tablicy' : 'Whiteboard inspector'}
+          icon={<Activity size={12} />}
+          defaultOpen
+        >
+          <div className="space-y-3 text-[11px]">
+            {/* Selected node info */}
+            {selection.type === 'node' &&
+              selection.primaryId &&
+              (() => {
+                const node = (graphNodes ?? []).find((n: any) => n.id === selection.primaryId);
+                if (!node) return null;
+                return (
+                  <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
+                    <div className="font-semibold text-slate-700 dark:text-slate-200">
+                      {isPl ? 'Zaznaczony element' : 'Selected element'}
+                    </div>
+                    <div className="text-slate-600 dark:text-slate-300 truncate">
+                      {node.data?.label || (isPl ? '(bez etykiety)' : '(no label)')}
+                    </div>
+                    {node.data?.semanticType && (
+                      <div className="text-[9px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                        {String(node.data.semanticType)}
+                      </div>
+                    )}
+                    {node.data?.locked && (
+                      <div className="text-[9px] text-amber-600 dark:text-amber-400">
+                        {isPl ? 'Zablokowany' : 'Locked'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+            {/* Session info */}
+            {whiteboardSession && (
+              <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
+                <div className="font-semibold text-slate-700 dark:text-slate-200">
+                  {isPl ? 'Sesja' : 'Session'}
+                </div>
+                {whiteboardSession.role && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Rola:' : 'Role:'}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
+                      {whiteboardSession.role}
+                    </span>
+                  </div>
+                )}
+                {whiteboardSession.phase && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Faza:' : 'Phase:'}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
+                      {whiteboardSession.phase}
+                    </span>
+                  </div>
+                )}
+                {(whiteboardSession.participantCount ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Uczestnicy:' : 'Participants:'}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                      {whiteboardSession.participantCount}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Outcome registry summary */}
+            {whiteboardOutcomes && whiteboardOutcomes.length > 0 && (
+              <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
+                <div className="font-semibold text-slate-700 dark:text-slate-200">
+                  {isPl ? 'Wyniki' : 'Outcomes'} ({whiteboardOutcomes.length})
+                </div>
+                <div className="space-y-1 max-h-32 overflow-auto">
+                  {whiteboardOutcomes.slice(0, 8).map((o, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="text-[9px] font-bold uppercase text-slate-400 w-14 shrink-0">
+                        {o.type}
+                      </span>
+                      <span className="text-slate-600 dark:text-slate-300 truncate">{o.label}</span>
+                    </div>
+                  ))}
+                  {whiteboardOutcomes.length > 8 && (
+                    <div className="text-[9px] text-slate-400">
+                      +{whiteboardOutcomes.length - 8} {isPl ? 'więcej' : 'more'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {activeTool === 'process_flow' && (
+        <Section
+          title={isPl ? 'Inspektor procesu' : 'Process inspector'}
+          icon={<Activity size={12} />}
+          defaultOpen
+        >
+          <ProcessFlowPropertiesPanel
+            selectedNode={
+              selection.type === 'node' && selection.primaryId
+                ? ((graphNodes ?? []).find((n: any) => n.id === selection.primaryId) ?? null)
+                : null
+            }
+            selectedEdge={
+              selection.type === 'edge' && selection.primaryId
+                ? ((graphEdges ?? []).find((e: any) => e.id === selection.primaryId) ?? null)
+                : null
+            }
+            lanes={processFlowLanes ?? []}
+            isPl={isPl}
+            locked={saving}
+            onNodeLabelChange={onProcessFlowNodeLabelChange ?? (() => {})}
+            onGatewayKindChange={onProcessFlowGatewayKindChange ?? (() => {})}
+            onLaneChange={onProcessFlowLaneChange ?? (() => {})}
+            onEdgeLabelChange={onProcessFlowEdgeLabelChange ?? (() => {})}
+            onNodeMetricsChange={onProcessFlowNodeMetricsChange ?? (() => {})}
+            onEdgeConditionChange={onProcessFlowEdgeConditionChange as any}
+            onNodeMetadataChange={onProcessFlowNodeMetadataChange}
+          />
+        </Section>
+      )}
+
+      {activeTool === 'process_flow' && (
+        <Section title={isPl ? 'Zdrowie procesu' : 'Process health'} icon={<Activity size={13} />}>
+          <ProcessFlowHealthScore nodes={graphNodes ?? []} edges={graphEdges ?? []} isPl={isPl} />
+        </Section>
+      )}
 
       {activeTool === 'mindmap' && (
         <>

@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   locationState: { pathname: '/organization/profile' },
   setCurrentViewMock: vi.fn(),
   trackFunnelEventMock: vi.fn(),
+  currentOrganization: { id: 'org-1' },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -30,7 +31,10 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('../../../src/store/useAppStore', () => ({
-  useAppStore: () => ({ setCurrentView: h.setCurrentViewMock }),
+  useAppStore: () => ({
+    setCurrentView: h.setCurrentViewMock,
+    currentOrganization: h.currentOrganization,
+  }),
 }));
 
 vi.mock('../../../src/services/funnelAnalytics', () => ({
@@ -65,6 +69,14 @@ vi.mock('../../../src/components/Organization/OrganizationSidebar', () => ({
 vi.mock('../../../src/components/Organization/OrganizationAdminPanel', () => ({
   OrganizationAdminPanel: ({ section }: { section: string }) => (
     <div data-testid="admin-panel">{section}</div>
+  ),
+}));
+
+vi.mock('../../../src/components/settings/OrganizationContextOverview', () => ({
+  OrganizationContextOverview: ({ organizationId, canRebuild }: { organizationId: string; canRebuild?: boolean }) => (
+    <div data-testid="organization-context-overview">
+      {organizationId}:{canRebuild ? 'rebuild' : 'readonly'}
+    </div>
   ),
 }));
 
@@ -104,6 +116,7 @@ describe('OrganizationView (L2)', () => {
     const { OrganizationView } = await loadDeps();
     render(<OrganizationView />);
     expect(screen.getByText('One canonical tenant organization product')).toBeInTheDocument();
+    expect(screen.getByTestId('organization-context-overview')).toHaveTextContent('org-1:readonly');
     expect(screen.getByTestId('module-profile')).toBeInTheDocument();
     expect(screen.getAllByTestId('active-section')[0]).toHaveTextContent('profile');
   });
@@ -136,6 +149,7 @@ describe('OrganizationView (L2)', () => {
     h.locationState.pathname = '/organization/members';
     render(<OrganizationView />);
     expect(screen.getByTestId('admin-panel')).toHaveTextContent('members');
+    expect(screen.getByTestId('organization-context-overview')).toHaveTextContent('org-1:rebuild');
   });
 
   it('redirects megatrends route to Discovery Tools canonical route', async () => {

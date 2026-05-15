@@ -283,7 +283,7 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({
             rounded-xl
             shadow-[0_10px_40px_rgba(0,0,0,0.12)]
             dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)]
-            border border-slate-200/50 dark:border-navy-700
+            border border-slate-200 dark:border-navy-700
             overflow-hidden
             ${className}
           `}
@@ -344,10 +344,10 @@ export const DropdownItem = React.forwardRef<HTMLButtonElement, DropdownItemProp
           outline-none
           ${
             destructive
-              ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
+              ? 'text-danger-700 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
               : isSelected
-                ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                : 'text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 font-medium'
+                : 'text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${className}
         `}
@@ -380,7 +380,7 @@ export interface DropdownLabelProps {
 }
 
 export const DropdownLabel: React.FC<DropdownLabelProps> = ({ children }) => (
-  <div className="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+  <div className="px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
     {children}
   </div>
 );
@@ -419,21 +419,28 @@ export const Select: React.FC<SelectProps> = ({
           className={`
             flex items-center justify-between gap-2
             px-4 py-2.5
-            bg-slate-50 dark:bg-navy-900
+            bg-white dark:bg-navy-900
             text-sm
             rounded-xl
-            border border-transparent
-            hover:bg-slate-100 dark:hover:bg-navy-800
-            focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+            border border-slate-300 dark:border-navy-700
+            hover:border-slate-400 dark:hover:border-navy-600
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-navy-900
+            focus:border-primary-500
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-150
             ${fullWidth ? 'w-full' : ''}
           `}
         >
-          <span className={selectedOption ? 'text-navy-900 dark:text-white' : 'text-slate-400'}>
+          <span
+            className={
+              selectedOption
+                ? 'text-slate-900 dark:text-white'
+                : 'text-slate-500 dark:text-slate-400'
+            }
+          >
             {selectedOption?.label || placeholder}
           </span>
-          <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+          <ChevronDown size={16} className="text-slate-500 dark:text-slate-500" />
         </button>
       </DropdownTrigger>
       <DropdownContent width="trigger">

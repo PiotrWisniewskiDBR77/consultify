@@ -11,7 +11,9 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { send as sendNotification } from '../services/notificationService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -35,12 +37,17 @@ function getUserId(req: any): string {
   return req.user?.id || req.userId || 'system';
 }
 
+const EXPORT_MAX_SLIDE_COUNT = 60;
+const EXPORT_MAX_PAYLOAD_BYTES = 50_000_000;
+
 async function recordCanonicalDeckExportTrace(params: {
   organizationId: string;
   userId: string;
   roleKey: string | null;
   deckId: string;
-  format: 'pdf' | 'pptx';
+  format: 'pdf' | 'pptx' | 'png' | 'html';
+  status?: 'completed' | 'failed';
+  errorCategory?: string;
 }) {
   const artifact = await artifactRegistryService.getArtifactByOrigin({
     organizationId: params.organizationId,
@@ -50,12 +57,38 @@ async function recordCanonicalDeckExportTrace(params: {
     roleKey: params.roleKey,
   });
   if (!artifact?.artifactId) return;
+  if (params.status === 'failed') {
+    await reportsPresModelService.recordFailedExport(
+      artifact.artifactId,
+      params.organizationId,
+      params.format as any,
+      params.userId || 'system'
+    );
+    return;
+  }
   await reportsPresModelService.recordCompletedExport(
     artifact.artifactId,
     params.organizationId,
-    params.format,
+    params.format as any,
     params.userId || 'system'
   );
+}
+
+function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: string } {
+  if (cards.length > EXPORT_MAX_SLIDE_COUNT) {
+    return {
+      ok: false,
+      error: `Export limit exceeded: max ${EXPORT_MAX_SLIDE_COUNT} slides, deck has ${cards.length}`,
+    };
+  }
+  const payloadSize = JSON.stringify(deck.deck_json || deck.unified_json || '').length;
+  if (payloadSize > EXPORT_MAX_PAYLOAD_BYTES) {
+    return {
+      ok: false,
+      error: `Export limit exceeded: payload too large (${Math.round(payloadSize / 1_000_000)}MB, max ${EXPORT_MAX_PAYLOAD_BYTES / 1_000_000}MB)`,
+    };
+  }
+  return { ok: true };
 }
 
 function isSchemaMissingError(error: unknown): boolean {
@@ -320,6 +353,7 @@ router.get(
 );
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // ============================================================
 // TEMPLATES (T059)
@@ -629,8 +663,10 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const roleKey = req.user?.role ? String(req.user.role) : null;
-    if (!req.user?.id && !req.userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const authReq = req as any;
+    const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
+    if (!authReq.user?.id && !authReq.userId)
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
@@ -655,20 +691,61 @@ router.get(
     if (!fs.existsSync(deck.export_path))
       return res.status(404).json({ success: false, error: 'File not found' });
 
+    const cards = getDeckCards(deck);
+    const limitCheck = enforceExportLimits(deck, cards);
+    if (!limitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        roleKey,
+        format: 'pptx',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
+
     const filename = `${deck.title.replace(/[^a-zA-Z0-9-_ ]/g, '')}.pptx`;
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    await recordCanonicalDeckExportTrace({
-      organizationId: orgId,
-      userId,
-      deckId: req.params.id,
-      roleKey,
-      format: 'pptx',
-    }).catch(() => null);
-    res.sendFile(path.resolve(deck.export_path));
+    try {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        roleKey,
+        format: 'pptx',
+        status: 'completed',
+      }).catch(() => null);
+      sendNotification({
+        userId,
+        organizationId: orgId,
+        type: 'presentation_export',
+        title: 'Presentation exported',
+        body: `"${deck.title}" has been exported as PPTX.`,
+        entityType: 'presentation_deck',
+        entityId: String(req.params.id || ''),
+        actionUrl: `/presentations/builder/${req.params.id}`,
+      }).catch(() => null);
+      res.sendFile(path.resolve(deck.export_path));
+    } catch (exportErr: any) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        roleKey,
+        format: 'pptx',
+        status: 'failed',
+        errorCategory: exportErr?.message || 'unknown',
+      }).catch(() => null);
+      throw exportErr;
+    }
   })
 );
 
@@ -678,8 +755,10 @@ router.get(
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const roleKey = req.user?.role ? String(req.user.role) : null;
-    if (!req.user?.id && !req.userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const authReq = req as any;
+    const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
+    if (!authReq.user?.id && !authReq.userId)
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
@@ -701,53 +780,87 @@ router.get(
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
 
     const cards = getDeckCards(deck);
+    const limitCheck = enforceExportLimits(deck, cards);
+    if (!limitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'pdf',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
+
     const filename = `${String(deck.title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    const doc = new PDFDocument({ margin: 48, size: 'A4' });
-    doc.pipe(res);
+    try {
+      const doc = new PDFDocument({ margin: 48, size: 'A4' });
+      doc.pipe(res);
 
-    cards.forEach((card: any, index: number) => {
-      if (index > 0) doc.addPage();
-      doc.fontSize(22).text(String(card.title || card.key_message || `Slide ${index + 1}`));
-      doc.moveDown(0.5);
-      doc
-        .fontSize(10)
-        .fillColor('#666')
-        .text(`Slide ${index + 1}`);
-      doc.moveDown(1);
-      const blocks = Array.isArray(card.blocks) ? card.blocks : [];
-      if (blocks.length === 0) {
-        doc.fillColor('#111').fontSize(12).text('No slide content');
-        return;
-      }
-      blocks.slice(0, 8).forEach((block: any) => {
-        const text = extractBlockText(block);
-        if (!text) return;
+      cards.forEach((card: any, index: number) => {
+        if (index > 0) doc.addPage();
+        doc.fontSize(22).text(String(card.title || card.key_message || `Slide ${index + 1}`));
+        doc.moveDown(0.5);
         doc
-          .fillColor('#111')
-          .fontSize(12)
-          .text(`• ${text.slice(0, 500)}`);
-        doc.moveDown(0.35);
+          .fontSize(10)
+          .fillColor('#666')
+          .text(`Slide ${index + 1}`);
+        doc.moveDown(1);
+        const blocks = Array.isArray(card.blocks) ? card.blocks : [];
+        if (blocks.length === 0) {
+          doc.fillColor('#111').fontSize(12).text('No slide content');
+          return;
+        }
+        blocks.slice(0, 8).forEach((block: any) => {
+          const text = extractBlockText(block);
+          if (!text) return;
+          doc
+            .fillColor('#111')
+            .fontSize(12)
+            .text(`• ${text.slice(0, 500)}`);
+          doc.moveDown(0.35);
+        });
       });
-    });
 
-    await recordCanonicalDeckExportTrace({
-      organizationId: orgId,
-      userId,
-      deckId,
-      format: 'pdf',
-    }).catch(() => null);
-    doc.end();
+      doc.end();
 
-    await recordCanonicalDeckExportTrace({
-      organizationId: orgId,
-      userId,
-      deckId,
-      roleKey,
-      format: 'pdf',
-    }).catch(() => null);
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'pdf',
+        status: 'completed',
+      }).catch(() => null);
+      sendNotification({
+        userId,
+        organizationId: orgId,
+        type: 'presentation_export',
+        title: 'Presentation exported',
+        body: `"${deck.title || 'Presentation'}" has been exported as PDF.`,
+        entityType: 'presentation_deck',
+        entityId: String(deckId || ''),
+        actionUrl: `/presentations/builder/${deckId}`,
+      }).catch(() => null);
+    } catch (exportErr: any) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'pdf',
+        status: 'failed',
+        errorCategory: exportErr?.message || 'unknown',
+      }).catch(() => null);
+      throw exportErr;
+    }
   })
 );
 
@@ -827,6 +940,17 @@ router.post(
       },
       metadata: { organizationId: orgId, title: before.title },
     });
+    const shareUserId = getUserId(req);
+    sendNotification({
+      userId: shareUserId,
+      organizationId: orgId,
+      type: 'presentation_shared',
+      title: 'Presentation shared',
+      body: `"${before.title}" share link created (expires ${expiresAt}).`,
+      entityType: 'presentation_deck',
+      entityId: String(req.params.id || ''),
+      actionUrl: `/presentations/builder/${req.params.id}`,
+    }).catch(() => null);
     res.json({ success: true, data: { shareToken: token, expiresAt } });
   })
 );
@@ -859,7 +983,21 @@ router.post(
   asyncHandler(async (req, res) => {
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const authReq = req as any;
+    const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation HTML export'))) return;
+
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
+      organizationId: orgId,
+      originRuntime: 'presentation',
+      originRecordId: String(deckId || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
 
     const deck = await dbGet(
       'SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?',
@@ -877,10 +1015,26 @@ router.post(
     } catch {
       return res.status(422).json({ success: false, error: 'Invalid deck data' });
     }
+    const htmlCards = Array.isArray(deckData.cards) ? deckData.cards : [];
+    const htmlLimitCheck = enforceExportLimits(deck, htmlCards);
+    if (!htmlLimitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'html',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: htmlLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
 
     const htmlBuffer = await exportDeckAsHtml({
       title: deck.title || 'Presentation',
-      cards: deckData.cards || [],
+      cards: htmlCards,
       theme: deckData.theme || {
         primary: '#6366F1',
         secondary: '#8B5CF6',
@@ -898,6 +1052,14 @@ router.post(
       'Content-Disposition',
       `attachment; filename="${deck.title || 'presentation'}.html"`
     );
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId: String(deckId || ''),
+      roleKey,
+      format: 'html',
+      status: 'completed',
+    }).catch(() => null);
     res.send(htmlBuffer);
   })
 );
@@ -957,6 +1119,48 @@ router.post(
             _refreshed_at: new Date().toISOString(),
           };
         }
+      } else if (sourceRef.artifact_type === 'assessment' && sourceRef.artifact_id) {
+        const assessment = await dbGet(
+          'SELECT id, name, status, overall_score, framework FROM assessment_reports WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (assessment) {
+          freshContent = {
+            ...freshContent,
+            ...(assessment as any),
+            _refreshed_at: new Date().toISOString(),
+          };
+        }
+      } else if (sourceRef.artifact_type === 'tool_session' && sourceRef.artifact_id) {
+        const session = await dbGet(
+          'SELECT id, tool_type, name, answers_json FROM tool_sessions WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (session) {
+          let answers: any = {};
+          try {
+            answers = JSON.parse((session as any).answers_json || '{}');
+          } catch {}
+          freshContent = {
+            ...freshContent,
+            tool_type: (session as any).tool_type,
+            name: (session as any).name,
+            summary: answers.summary || answers.conclusion || '',
+            _refreshed_at: new Date().toISOString(),
+          };
+        }
+      } else if (sourceRef.artifact_type === 'report' && sourceRef.artifact_id) {
+        const report = await dbGet(
+          'SELECT id, title, status, report_type FROM reports WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (report) {
+          freshContent = {
+            ...freshContent,
+            ...(report as any),
+            _refreshed_at: new Date().toISOString(),
+          };
+        }
       } else {
         freshContent._refreshed_at = new Date().toISOString();
       }
@@ -977,13 +1181,27 @@ router.put(
   asyncHandler(async (req, res) => {
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const clientVersion = req.headers['x-deck-version']
+      ? Number(req.headers['x-deck-version'])
+      : null;
 
-    const deck = await dbGet(
-      'SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?',
+    const deck = (await dbGet(
+      'SELECT id, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
       [deckId, orgId]
-    );
+    )) as any;
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    if (clientVersion !== null && clientVersion < deck.version) {
+      return res.status(409).json({
+        success: false,
+        error: 'Version conflict: deck was modified by another session. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: deck.version,
+        clientVersion,
+      });
     }
 
     const bodyStr = JSON.stringify(req.body);
@@ -991,12 +1209,34 @@ router.put(
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
 
+    const newVersion = (deck.version || 1) + 1;
+
+    if (deck.deck_json) {
+      try {
+        const slideCount = (() => {
+          try {
+            const parsed = JSON.parse(deck.deck_json);
+            return Array.isArray(parsed?.cards) ? parsed.cards.length : 0;
+          } catch {
+            return 0;
+          }
+        })();
+        await dbRun(
+          `INSERT INTO presentation_deck_versions (id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          [uuidv4().replace(/-/g, ''), deckId, deck.version, deck.deck_json, slideCount, userId]
+        );
+      } catch {
+        // Version history table may not exist yet; non-blocking
+      }
+    }
+
     await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [bodyStr, deckId, orgId]
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [bodyStr, newVersion, deckId, orgId]
     );
 
-    res.json({ success: true });
+    res.json({ success: true, version: newVersion });
   })
 );
 
@@ -1089,6 +1329,21 @@ router.post(
   asyncHandler(async (req, res) => {
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const authReq = req as any;
+    const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation PNG export'))) return;
+
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
+      organizationId: orgId,
+      originRuntime: 'presentation',
+      originRecordId: String(deckId || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
 
     const deck = await dbGet(
       'SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?',
@@ -1105,6 +1360,21 @@ router.post(
       deckData = {};
     }
     const cards = deckData.cards || deckData.slides || [];
+    const pngLimitCheck = enforceExportLimits(deck, cards);
+    if (!pngLimitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'png',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: pngLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
     const title = deck.title || 'presentation';
 
     const Archiver = (await import('archiver')).default;
@@ -1133,6 +1403,14 @@ router.post(
     }
 
     await archive.finalize();
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId: String(deckId || ''),
+      roleKey,
+      format: 'png',
+      status: 'completed',
+    }).catch(() => null);
   })
 );
 
@@ -1201,6 +1479,11 @@ router.post(
     const { deckId } = req.params;
     const { viewerToken, cardIndex, durationMs } = req.body;
 
+    const deckOwner = await dbGet('SELECT id FROM presentation_decks WHERE id = ?', [deckId]);
+    if (!deckOwner) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO presentation_analytics (id, deck_id, viewer_token, event_type, card_index, duration_ms, user_agent, ip_hash, created_at)
@@ -1265,6 +1548,85 @@ function hashIp(ip: string): string {
     .digest('hex')
     .slice(0, 16);
 }
+
+// ============================================================
+// VERSION HISTORY (P20 §2.6 — server-side revert)
+// ============================================================
+
+router.get(
+  '/decks/:deckId/versions',
+  asyncHandler(async (req, res) => {
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+
+    const deck = await dbGet(
+      'SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      [deckId, orgId]
+    );
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    try {
+      const versions = await dbAll(
+        `SELECT id, deck_id, version, slide_count, created_by, created_at
+         FROM presentation_deck_versions
+         WHERE deck_id = ?
+         ORDER BY version DESC
+         LIMIT 50`,
+        [deckId]
+      );
+      res.json({ success: true, data: versions || [] });
+    } catch {
+      res.json({ success: true, data: [] });
+    }
+  })
+);
+
+router.post(
+  '/decks/:deckId/versions/:versionId/restore',
+  asyncHandler(async (req, res) => {
+    const { deckId, versionId } = req.params;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+
+    const deck = (await dbGet(
+      'SELECT id, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      [deckId, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    let versionRow: any;
+    try {
+      versionRow = await dbGet(
+        'SELECT * FROM presentation_deck_versions WHERE id = ? AND deck_id = ?',
+        [versionId, deckId]
+      );
+    } catch {
+      return res.status(404).json({ success: false, error: 'Version history not available' });
+    }
+    if (!versionRow) return res.status(404).json({ success: false, error: 'Version not found' });
+
+    const newVersion = (deck.version || 1) + 1;
+
+    if (deck.deck_json) {
+      try {
+        await dbRun(
+          `INSERT INTO presentation_deck_versions (id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          [uuidv4().replace(/-/g, ''), deckId, deck.version, deck.deck_json, 0, userId]
+        );
+      } catch {
+        /* non-blocking */
+      }
+    }
+
+    await dbRun(
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [versionRow.deck_json_snapshot, newVersion, deckId, orgId]
+    );
+
+    res.json({ success: true, version: newVersion, restoredFromVersion: versionRow.version });
+  })
+);
 
 // ============================================================
 // STYLE PROFILE

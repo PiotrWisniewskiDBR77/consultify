@@ -11,6 +11,9 @@ This document provides instructions for configuring GitHub Branch Protection Rul
 
 **Reference:** `docs/QUALITY_AND_SECURITY_STANDARD.md` Section 4
 
+> Branch protection must match the current GitHub Actions jobs from `.github/workflows/test-suite.yml`.
+> Do not use legacy check names from removed workflows.
+
 ---
 
 ## Required Branch Protection Rules
@@ -55,13 +58,15 @@ Enable the following settings:
 
 **Required status checks:**
 
-- `test:unit`
-- `test:integration`
-- `test:security`
-- `lint`
-- `typecheck`
-- `security-scan`
-- `coverage-check`
+- `🔍 Lint & Type Check`
+- `🛡️ Test Quality (Anti-Placeholder)`
+- `🚫 Skip/Only Gate`
+- `🎯 Levels Coverage Gates (L1–L3)`
+- `🔒 Security Integrity Gate`
+- `🔒 Security Tests`
+- `🔒 Critical Path Coverage Check`
+- `📈 Patch Coverage Gate (≥80%)`
+- `📋 Test Summary`
 
 **Options:**
 
@@ -82,7 +87,7 @@ Enable the following settings:
 
 #### ✅ Include administrators
 
-❌ **DISABLED** - No admin bypass (except emergency with post-mortem)
+✅ **ENABLED** - No admin bypass (except emergency with post-mortem)
 
 #### ✅ Restrict pushes that create files larger than 100 MB
 
@@ -98,17 +103,19 @@ Click **Create** or **Save changes**
 
 ## Status Check Names
 
-The following status checks are required (configured in CI/CD workflows):
+The following status checks are required (configured in active CI workflows):
 
 | Check Name         | Workflow File      | Description              |
 | ------------------ | ------------------ | ------------------------ |
-| `test:unit`        | `quality-gate.yml` | Unit tests               |
-| `test:integration` | `quality-gate.yml` | Integration tests        |
-| `test:security`    | `security.yml`     | Security tests           |
-| `lint`             | `quality-gate.yml` | ESLint validation        |
-| `typecheck`        | `quality-gate.yml` | TypeScript type checking |
-| `security-scan`    | `security.yml`     | SAST/DAST scans          |
-| `coverage-check`   | `quality-gate.yml` | Coverage threshold check |
+| `🔍 Lint & Type Check` | `test-suite.yml` | ESLint + TypeScript validation |
+| `🛡️ Test Quality (Anti-Placeholder)` | `test-suite.yml` | Test quality gate |
+| `🚫 Skip/Only Gate` | `test-suite.yml` | Guard against skipped/only tests |
+| `🎯 Levels Coverage Gates (L1–L3)` | `test-suite.yml` | Coverage threshold gate |
+| `🔒 Security Integrity Gate` | `test-suite.yml` | Security integrity checks |
+| `🔒 Security Tests` | `test-suite.yml` | Security test suite |
+| `🔒 Critical Path Coverage Check` | `test-suite.yml` | Critical path coverage |
+| `📈 Patch Coverage Gate (≥80%)` | `test-suite.yml` | Patch coverage threshold |
+| `📋 Test Summary` | `test-suite.yml` | Final CI summary |
 
 ---
 
@@ -206,7 +213,7 @@ gh auth login
 # Configure branch protection
 gh api repos/:owner/:repo/branches/main/protection \
   --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["test:unit","test:integration","test:security","lint","typecheck","security-scan","coverage-check"]}' \
+  --field required_status_checks='{"strict":true,"contexts":["🔍 Lint & Type Check","🛡️ Test Quality (Anti-Placeholder)","🚫 Skip/Only Gate","🎯 Levels Coverage Gates (L1–L3)","🔒 Security Integrity Gate","🔒 Security Tests","🔒 Critical Path Coverage Check","📈 Patch Coverage Gate (≥80%)","📋 Test Summary"]}' \
   --field enforce_admins=true \
   --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
   --field restrictions=null

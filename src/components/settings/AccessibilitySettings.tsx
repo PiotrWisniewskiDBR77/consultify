@@ -7,14 +7,7 @@
  * @version 3.0
  */
 
-import {
-  Accessibility,
-  ALargeSmall,
-  Eye,
-  Keyboard,
-  Loader2,
-  Volume2,
-} from 'lucide-react';
+import { Accessibility, ALargeSmall, Eye, Keyboard, Loader2, Volume2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import {
-  SettingsButtonGroup,
-  SettingsDivider,
-  SettingsSection,
-  SettingsToggle,
-} from './shared';
+import { SettingsButtonGroup, SettingsDivider, SettingsSection, SettingsToggle } from './shared';
 
 interface AccessibilitySettingsProps {
   currentUser: User;
@@ -150,7 +138,11 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
     root.classList.toggle('reduce-motion', prefs.reduceMotion);
     root.classList.toggle('underline-links', prefs.underlineLinks);
 
-    root.classList.remove('colorblind-protanopia', 'colorblind-deuteranopia', 'colorblind-tritanopia');
+    root.classList.remove(
+      'colorblind-protanopia',
+      'colorblind-deuteranopia',
+      'colorblind-tritanopia'
+    );
     if (prefs.colorBlindMode !== 'none') {
       root.classList.add(`colorblind-${prefs.colorBlindMode}`);
     }
@@ -170,7 +162,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
       dyslexic: 'OpenDyslexic, sans-serif',
       mono: 'ui-monospace, monospace',
     };
-    root.style.setProperty('--font-family-base', fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']);
+    root.style.setProperty(
+      '--font-family-base',
+      fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
+    );
   };
 
   const update = <K extends keyof AccessibilityPreferences>(
@@ -184,7 +179,11 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
     { value: 'small', label: t('settings.accessibility.fontSize.small', 'Small'), size: '14px' },
     { value: 'medium', label: t('settings.accessibility.fontSize.medium', 'Medium'), size: '16px' },
     { value: 'large', label: t('settings.accessibility.fontSize.large', 'Large'), size: '18px' },
-    { value: 'extra-large', label: t('settings.accessibility.fontSize.extraLarge', 'Extra Large'), size: '20px' },
+    {
+      value: 'extra-large',
+      label: t('settings.accessibility.fontSize.extraLarge', 'Extra Large'),
+      size: '20px',
+    },
   ];
 
   return (
@@ -193,7 +192,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
       <SettingsSection
         icon={ALargeSmall}
         title={t('settings.accessibility.typographyTitle', 'Typography')}
-        description={t('settings.accessibility.typographyDesc', 'Font size, family, and readability preferences')}
+        description={t(
+          'settings.accessibility.typographyDesc',
+          'Font size, family, and readability preferences'
+        )}
         cardId="settings-accessibility-typography"
         isDirty={isDirty}
         onSave={handleSave}
@@ -212,7 +214,9 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                 return (
                   <button
                     key={opt.value}
-                    onClick={() => update('fontSize', opt.value as AccessibilityPreferences['fontSize'])}
+                    onClick={() =>
+                      update('fontSize', opt.value as AccessibilityPreferences['fontSize'])
+                    }
                     className={cn(
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       'hover:scale-[1.02] active:scale-[0.98]',
@@ -230,10 +234,12 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                     >
                       Aa
                     </div>
-                    <div className={cn(
-                      'text-xs mt-2 transition-colors',
-                      isSelected ? 'text-violet-400' : 'text-slate-500'
-                    )}>
+                    <div
+                      className={cn(
+                        'text-xs mt-2 transition-colors',
+                        isSelected ? 'text-violet-400' : 'text-slate-500'
+                      )}
+                    >
                       {opt.label}
                     </div>
                   </button>
@@ -263,10 +269,12 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
-                    <span className={cn(
-                      'text-sm font-medium',
-                      isSelected ? 'text-violet-400' : 'text-slate-300'
-                    )}>
+                    <span
+                      className={cn(
+                        'text-sm font-medium',
+                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                      )}
+                    >
                       {opt.label}
                     </span>
                   </button>
@@ -289,8 +297,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             </div>
             <SettingsButtonGroup
               options={[
-                { value: 'default', label: t('settings.accessibility.lineHeight.default', 'Default') },
-                { value: 'relaxed', label: t('settings.accessibility.lineHeight.relaxed', 'Relaxed') },
+                {
+                  value: 'default',
+                  label: t('settings.accessibility.lineHeight.default', 'Default'),
+                },
+                {
+                  value: 'relaxed',
+                  label: t('settings.accessibility.lineHeight.relaxed', 'Relaxed'),
+                },
                 { value: 'loose', label: t('settings.accessibility.lineHeight.loose', 'Loose') },
               ]}
               value={preferences.lineHeight}
@@ -313,12 +327,17 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             </div>
             <SettingsButtonGroup
               options={[
-                { value: 'default', label: t('settings.accessibility.letterSpacing.default', 'Default') },
+                {
+                  value: 'default',
+                  label: t('settings.accessibility.letterSpacing.default', 'Default'),
+                },
                 { value: 'wide', label: t('settings.accessibility.letterSpacing.wide', 'Wide') },
                 { value: 'wider', label: t('settings.accessibility.letterSpacing.wider', 'Wider') },
               ]}
               value={preferences.letterSpacing}
-              onChange={(v) => update('letterSpacing', v as AccessibilityPreferences['letterSpacing'])}
+              onChange={(v) =>
+                update('letterSpacing', v as AccessibilityPreferences['letterSpacing'])
+              }
               size="sm"
             />
           </div>
@@ -332,12 +351,18 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                 {t('settings.accessibility.caretWidth', 'Text Cursor Width')}
               </span>
               <span className="text-xs text-slate-500">
-                {t('settings.accessibility.caretWidthDescription', 'Make the blinking text cursor more visible')}
+                {t(
+                  'settings.accessibility.caretWidthDescription',
+                  'Make the blinking text cursor more visible'
+                )}
               </span>
             </div>
             <SettingsButtonGroup
               options={[
-                { value: 'default', label: t('settings.accessibility.caretWidth.default', 'Default') },
+                {
+                  value: 'default',
+                  label: t('settings.accessibility.caretWidth.default', 'Default'),
+                },
                 { value: 'thick', label: t('settings.accessibility.caretWidth.thick', 'Thick') },
               ]}
               value={preferences.caretWidth}
@@ -352,7 +377,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
       <SettingsSection
         icon={Eye}
         title={t('settings.accessibility.visualTitle', 'Visual Settings')}
-        description={t('settings.accessibility.visualDesc', 'Contrast, motion, color vision, and focus indicators')}
+        description={t(
+          'settings.accessibility.visualDesc',
+          'Contrast, motion, color vision, and focus indicators'
+        )}
         cardId="settings-accessibility-visual"
         isDirty={isDirty}
         onSave={handleSave}
@@ -364,7 +392,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.highContrastMode}
             onChange={(v) => update('highContrastMode', v)}
             label={t('settings.accessibility.highContrast', 'High Contrast Mode')}
-            description={t('settings.accessibility.highContrastDescription', 'Increase contrast for better visibility')}
+            description={t(
+              'settings.accessibility.highContrastDescription',
+              'Increase contrast for better visibility'
+            )}
           />
 
           <SettingsDivider />
@@ -373,7 +404,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.reduceMotion}
             onChange={(v) => update('reduceMotion', v)}
             label={t('settings.accessibility.reduceMotion', 'Reduce Motion')}
-            description={t('settings.accessibility.reduceMotionDescription', 'Disable animations and transitions')}
+            description={t(
+              'settings.accessibility.reduceMotionDescription',
+              'Disable animations and transitions'
+            )}
           />
 
           <SettingsDivider />
@@ -382,7 +416,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.underlineLinks}
             onChange={(v) => update('underlineLinks', v)}
             label={t('settings.accessibility.underlineLinks', 'Underline Links')}
-            description={t('settings.accessibility.underlineLinksDescription', 'Always show underlines on clickable links')}
+            description={t(
+              'settings.accessibility.underlineLinksDescription',
+              'Always show underlines on clickable links'
+            )}
           />
 
           <SettingsDivider />
@@ -394,14 +431,20 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                 {t('settings.accessibility.textSpacing', 'Text Spacing')}
               </span>
               <span className="text-xs text-slate-500">
-                {t('settings.accessibility.textSpacingDescription', 'Adjust spacing between lines and letters')}
+                {t(
+                  'settings.accessibility.textSpacingDescription',
+                  'Adjust spacing between lines and letters'
+                )}
               </span>
             </div>
             <SettingsButtonGroup
               options={[
                 { value: 'default', label: t('settings.accessibility.spacing.default', 'Default') },
                 { value: 'relaxed', label: t('settings.accessibility.spacing.relaxed', 'Relaxed') },
-                { value: 'spacious', label: t('settings.accessibility.spacing.spacious', 'Spacious') },
+                {
+                  value: 'spacious',
+                  label: t('settings.accessibility.spacing.spacious', 'Spacious'),
+                },
               ]}
               value={preferences.textSpacing}
               onChange={(v) => update('textSpacing', v as AccessibilityPreferences['textSpacing'])}
@@ -417,7 +460,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
               {t('settings.accessibility.colorVisionTitle', 'Color Vision')}
             </label>
             <p className="text-xs text-slate-500 mb-3">
-              {t('settings.accessibility.colorVisionDescription', 'Adjust colors for different types of color blindness')}
+              {t(
+                'settings.accessibility.colorVisionDescription',
+                'Adjust colors for different types of color blindness'
+              )}
             </p>
             <div className="grid grid-cols-4 gap-3">
               {COLOR_BLIND_OPTIONS.map((opt) => {
@@ -425,7 +471,12 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                 return (
                   <button
                     key={opt.value}
-                    onClick={() => update('colorBlindMode', opt.value as AccessibilityPreferences['colorBlindMode'])}
+                    onClick={() =>
+                      update(
+                        'colorBlindMode',
+                        opt.value as AccessibilityPreferences['colorBlindMode']
+                      )
+                    }
                     className={cn(
                       'p-3 rounded-xl border-2 transition-all duration-200 text-left',
                       isSelected
@@ -433,10 +484,12 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
-                    <div className={cn(
-                      'text-sm font-medium',
-                      isSelected ? 'text-violet-400' : 'text-slate-300'
-                    )}>
+                    <div
+                      className={cn(
+                        'text-sm font-medium',
+                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                      )}
+                    >
                       {opt.label}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">{opt.description}</div>
@@ -454,14 +507,20 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
               {t('settings.accessibility.focusStyleTitle', 'Focus Indicator Style')}
             </label>
             <p className="text-xs text-slate-500 mb-3">
-              {t('settings.accessibility.focusStyleDescription', 'Choose how focused elements are highlighted when using keyboard navigation')}
+              {t(
+                'settings.accessibility.focusStyleDescription',
+                'Choose how focused elements are highlighted when using keyboard navigation'
+              )}
             </p>
             <div className="grid grid-cols-3 gap-3">
               {(['default', 'high-contrast', 'animated'] as const).map((style) => {
                 const isSelected = preferences.focusIndicatorStyle === style;
                 const labels: Record<string, string> = {
                   default: t('settings.accessibility.focusStyle.default', 'Default'),
-                  'high-contrast': t('settings.accessibility.focusStyle.highContrast', 'High Contrast'),
+                  'high-contrast': t(
+                    'settings.accessibility.focusStyle.highContrast',
+                    'High Contrast'
+                  ),
                   animated: t('settings.accessibility.focusStyle.animated', 'Animated'),
                 };
                 return (
@@ -475,10 +534,12 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
-                    <span className={cn(
-                      'text-sm font-medium',
-                      isSelected ? 'text-violet-400' : 'text-slate-300'
-                    )}>
+                    <span
+                      className={cn(
+                        'text-sm font-medium',
+                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                      )}
+                    >
                       {labels[style]}
                     </span>
                   </button>
@@ -493,7 +554,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
       <SettingsSection
         icon={Keyboard}
         title={t('settings.accessibility.navigationTitle', 'Navigation & Input')}
-        description={t('settings.accessibility.navigationDesc', 'Keyboard hints, focus rings, and cursor preferences')}
+        description={t(
+          'settings.accessibility.navigationDesc',
+          'Keyboard hints, focus rings, and cursor preferences'
+        )}
         cardId="settings-accessibility-navigation"
         isDirty={isDirty}
         onSave={handleSave}
@@ -505,7 +569,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.showKeyboardShortcuts}
             onChange={(v) => update('showKeyboardShortcuts', v)}
             label={t('settings.accessibility.keyboardShortcuts', 'Show Keyboard Shortcuts')}
-            description={t('settings.accessibility.keyboardShortcutsDescription', 'Display keyboard shortcut hints in tooltips')}
+            description={t(
+              'settings.accessibility.keyboardShortcutsDescription',
+              'Display keyboard shortcut hints in tooltips'
+            )}
           />
 
           <SettingsDivider />
@@ -514,7 +581,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.focusHighlight}
             onChange={(v) => update('focusHighlight', v)}
             label={t('settings.accessibility.focusHighlight', 'Enhanced Focus Indicator')}
-            description={t('settings.accessibility.focusHighlightDescription', 'Show clear visual focus rings when navigating with keyboard')}
+            description={t(
+              'settings.accessibility.focusHighlightDescription',
+              'Show clear visual focus rings when navigating with keyboard'
+            )}
           />
 
           <SettingsDivider />
@@ -546,7 +616,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
       <SettingsSection
         icon={Volume2}
         title={t('settings.accessibility.assistiveTitle', 'Assistive Technology')}
-        description={t('settings.accessibility.assistiveDesc', 'Screen reader, voice control, and speech features')}
+        description={t(
+          'settings.accessibility.assistiveDesc',
+          'Screen reader, voice control, and speech features'
+        )}
         cardId="settings-accessibility-assistive"
         isDirty={isDirty}
         onSave={handleSave}
@@ -558,7 +631,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.screenReaderOptimized}
             onChange={(v) => update('screenReaderOptimized', v)}
             label={t('settings.accessibility.screenReaderOptimized', 'Screen Reader Optimizations')}
-            description={t('settings.accessibility.screenReaderOptimizedDescription', 'Improve compatibility with screen readers like NVDA and VoiceOver')}
+            description={t(
+              'settings.accessibility.screenReaderOptimizedDescription',
+              'Improve compatibility with screen readers like NVDA and VoiceOver'
+            )}
           />
 
           <SettingsDivider />
@@ -567,7 +643,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.textToSpeechEnabled}
             onChange={(v) => update('textToSpeechEnabled', v)}
             label={t('settings.accessibility.textToSpeech', 'Text to Speech')}
-            description={t('settings.accessibility.textToSpeechDescription', 'Read selected text aloud')}
+            description={t(
+              'settings.accessibility.textToSpeechDescription',
+              'Read selected text aloud'
+            )}
           />
 
           <SettingsDivider />
@@ -576,7 +655,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.speechToTextEnabled}
             onChange={(v) => update('speechToTextEnabled', v)}
             label={t('settings.accessibility.speechToText', 'Speech to Text')}
-            description={t('settings.accessibility.speechToTextDescription', 'Use voice dictation for text input')}
+            description={t(
+              'settings.accessibility.speechToTextDescription',
+              'Use voice dictation for text input'
+            )}
           />
 
           <SettingsDivider />
@@ -585,7 +667,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
             checked={preferences.voiceCommandsEnabled}
             onChange={(v) => update('voiceCommandsEnabled', v)}
             label={t('settings.accessibility.voiceCommands', 'Voice Commands')}
-            description={t('settings.accessibility.voiceCommandsDescription', 'Control the app using voice commands')}
+            description={t(
+              'settings.accessibility.voiceCommandsDescription',
+              'Control the app using voice commands'
+            )}
           />
         </div>
       </SettingsSection>

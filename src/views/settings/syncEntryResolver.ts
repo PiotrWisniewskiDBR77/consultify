@@ -6,15 +6,24 @@ export function resolveLegacySyncSettingsEntry(
   role: string | null | undefined
 ): string | null {
   const normalized = pathname.replace(/\/+$/, '') || '/';
-  if (normalized !== ROUTES.SETTINGS.INTEGRATIONS) {
-    return null;
+  switch (normalized) {
+    case ROUTES.SETTINGS.BILLING:
+      return isAdminOrSuperAdminRole(role) ? ROUTES.ADMIN.BILLING : ROUTES.ORGANIZATION.BILLING;
+    case ROUTES.SETTINGS.AI:
+      return `${ROUTES.SETTINGS.ROOT}/ai-behavior`;
+    case ROUTES.SETTINGS.NOTIFICATIONS:
+      return `${ROUTES.SETTINGS.ROOT}/notifications-overview`;
+    case ROUTES.SETTINGS.INTEGRATIONS:
+      return isAdminOrSuperAdminRole(role)
+        ? ROUTES.ADMIN.INTEGRATIONS
+        : `${ROUTES.SETTINGS.ROOT}/connected-apps`;
+    case ROUTES.SETTINGS.ORGANIZATION:
+      return `${ROUTES.SETTINGS.ROOT}/tenant-defaults`;
+    case ROUTES.SETTINGS.SECURITY:
+      return `${ROUTES.SETTINGS.ROOT}/security-dashboard`;
+    default:
+      return null;
   }
-
-  if (isAdminOrSuperAdminRole(role)) {
-    return `${ROUTES.ADMIN.ROOT}?tab=integrations`;
-  }
-
-  return `${ROUTES.SETTINGS.ROOT}/connected-apps`;
 }
 
 const LEGACY_AI_SECTION_MAP: Record<string, string> = {
@@ -22,13 +31,11 @@ const LEGACY_AI_SECTION_MAP: Record<string, string> = {
   'ai-personality': 'ai-behavior',
   'ai-model': 'ai-model-params',
   'ai-parameters': 'ai-model-params',
+  'ai-history': 'ai-chat-history',
 };
 
 export function normalizeSettingsSectionFromPath(pathname: string): string {
-  const pathSection = pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
-  if (pathSection === 'integrations') {
-    return 'connected-apps';
-  }
+  const pathSection = pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'overview';
   if (LEGACY_AI_SECTION_MAP[pathSection]) {
     return LEGACY_AI_SECTION_MAP[pathSection];
   }

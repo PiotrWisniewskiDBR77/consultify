@@ -13,6 +13,9 @@ export interface MenuItem {
   requiresView?: AppView;
   isFloating?: boolean;
   badge?: 'beta' | 'new' | 'soon'; // Optional badge for items in development
+  isLocked?: boolean;
+  lockedMessage?: string;
+  lockedCtaHref?: string;
 }
 
 export interface FloatingMenuPosition {

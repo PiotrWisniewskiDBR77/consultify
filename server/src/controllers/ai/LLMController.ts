@@ -12,6 +12,7 @@ import circuitBreaker from '../../services/ai/circuitBreaker.js';
 import llmConfigService from '../../services/ai/llmConfigService.js';
 import { llmService } from '../../services/ai/llmService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 export class LLMController {
   private static lastHealthEventWriteAt = new Map<string, number>();
@@ -19,6 +20,11 @@ export class LLMController {
     string,
     { until: number; error: string; status: 'auth_failed' | 'rate_limited' }
   >();
+  private static providerHealthSnapshot: {
+    payload: Record<string, unknown>;
+    expiresAt: number;
+  } | null = null;
+  private static providerHealthRefreshPromise: Promise<Record<string, unknown>> | null = null;
   private static selectCoreProviders<T extends { isDefault?: boolean; provider?: string }>(
     providers: T[]
   ): T[] {
@@ -169,7 +175,7 @@ export class LLMController {
       });
       return res.json(safe);
     } catch (error: any) {
-      console.error('[LLMController] Error listing providers:', error);
+      logger.error('[LLMController] Error listing providers:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -191,7 +197,7 @@ export class LLMController {
       });
       return res.json(safe);
     } catch (error: any) {
-      console.error('[LLMController] Error listing public providers:', error);
+      logger.error('[LLMController] Error listing public providers:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -275,7 +281,7 @@ export class LLMController {
       }
       return res.status(400).json(payload);
     } catch (error: any) {
-      console.error('[LLMController] Error testing provider:', error);
+      logger.error('[LLMController] Error testing provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -388,8 +394,13 @@ export class LLMController {
           subprocessors_ref,
           tier,
           visibility,
-          is_active ? 1 : 0,
-          is_default ? 1 : 0,
+          // Feedback #5e16d214 — pass JS booleans so Postgres accepts them
+          // for the boolean `is_active` / `is_default` columns. 1/0 would
+          // raise "column is of type boolean but expression is of type
+          // integer" and, combined with DbPromise's fallback path, would
+          // silently no-op the INSERT.
+          !!is_active,
+          !!is_default,
           cost_per_1k,
           context_window,
         ]
@@ -398,7 +409,7 @@ export class LLMController {
       const newProvider = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.status(201).json(LLMController.sanitizeProvider(newProvider));
     } catch (error: any) {
-      console.error('[LLMController] Error creating provider:', error);
+      logger.error('[LLMController] Error creating provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -437,7 +448,21 @@ export class LLMController {
         'cost_per_1k',
         'markup_multiplier',
         'context_window',
+        'priority',
       ];
+      // Feedback #5e16d214 — on Postgres the boolean columns (`is_active`,
+      // `is_default`) reject integer literals with "column is of type boolean
+      // but expression is of type integer". Previously we coerced booleans
+      // to 1/0 which made the UPDATE fail silently (the DbPromise fallback
+      // returns `{ success: false }` instead of throwing, so the controller
+      // happily re-fetched and returned the UNCHANGED row — the UI showed
+      // "Provider updated" but nothing actually persisted, so toggling a
+      // model to Active never stuck).
+      // We now pass JS booleans through to `pg`, which serializes them as
+      // TRUE/FALSE, and we run the UPDATE with `fallback: false` so a real
+      // DB error actually bubbles to the HTTP response.
+      const BOOLEAN_FIELDS = new Set(['is_active', 'is_default']);
+      const JSON_FIELDS = new Set(['execution_regions', 'allowed_data_classes']);
       const setClauses: string[] = [];
       const values: any[] = [];
 
@@ -447,10 +472,23 @@ export class LLMController {
           if (field === 'api_key' && typeof updates[field] === 'string' && !updates[field].trim()) {
             continue;
           }
+          let value: any = updates[field];
+          if (BOOLEAN_FIELDS.has(field)) {
+            // Accept both booleans and the "1"/"0"/"true"/"false" stringified
+            // variants older clients might send.
+            if (typeof value === 'string') {
+              const lowered = value.toLowerCase().trim();
+              value = lowered === 'true' || lowered === '1' || lowered === 't';
+            } else if (typeof value === 'number') {
+              value = value !== 0;
+            } else {
+              value = !!value;
+            }
+          } else if (JSON_FIELDS.has(field)) {
+            value = typeof value === 'string' ? value : JSON.stringify(value ?? []);
+          }
           setClauses.push(`${field} = ?`);
-          values.push(
-            typeof updates[field] === 'boolean' ? (updates[field] ? 1 : 0) : updates[field]
-          );
+          values.push(value);
         }
       }
 
@@ -461,12 +499,24 @@ export class LLMController {
       setClauses.push('updated_at = CURRENT_TIMESTAMP');
       values.push(id);
 
-      await dbRun(`UPDATE llm_providers SET ${setClauses.join(', ')} WHERE id = ?`, values);
+      const runResult = await dbRun(
+        `UPDATE llm_providers SET ${setClauses.join(', ')} WHERE id = ?`,
+        values,
+        { fallback: false }
+      );
+      if (runResult && (runResult as any).success === false) {
+        // Defensive: even with fallback:false, extremely old DbPromise
+        // implementations may still return a failure envelope instead of
+        // throwing.
+        const reason = (runResult as any).error || 'unknown db error';
+        logger.error('[LLMController] updateProvider UPDATE failed:', reason);
+        return res.status(500).json({ error: `Failed to update provider: ${reason}` });
+      }
 
       const updated = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.json(LLMController.sanitizeProvider(updated));
     } catch (error: any) {
-      console.error('[LLMController] Error updating provider:', error);
+      logger.error('[LLMController] Error updating provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -487,7 +537,7 @@ export class LLMController {
       await dbRun('DELETE FROM llm_providers WHERE id = ?', [id]);
       return res.json({ success: true, message: 'Provider deleted' });
     } catch (error: any) {
-      console.error('[LLMController] Error deleting provider:', error);
+      logger.error('[LLMController] Error deleting provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -551,7 +601,7 @@ export class LLMController {
       const row = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.status(201).json(LLMController.sanitizeProvider(row));
     } catch (error: any) {
-      console.error('[LLMController] Error cloning provider model:', error);
+      logger.error('[LLMController] Error cloning provider model:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -596,7 +646,7 @@ export class LLMController {
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting health status:', error);
+      logger.error('[LLMController] Error getting health status:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -858,7 +908,7 @@ export class LLMController {
         },
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting detailed health:', error);
+      logger.error('[LLMController] Error getting detailed health:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -960,7 +1010,7 @@ export class LLMController {
         });
       }
     } catch (error: any) {
-      console.error('[LLMController] Error testing provider:', error);
+      logger.error('[LLMController] Error testing provider:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -1105,7 +1155,7 @@ export class LLMController {
 
       return res.json(result);
     } catch (error: any) {
-      console.error('[LLMController] Error testing capability:', error);
+      logger.error('[LLMController] Error testing capability:', error);
       return res.status(500).json({
         capability: req.params.capabilityId,
         status: 'FAILED',
@@ -1180,7 +1230,7 @@ export class LLMController {
         byDay: byDayRows.map((r: any) => ({ date: r.date, calls: r.calls, tokens: r.tokens })),
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting analytics:', error);
+      logger.error('[LLMController] Error getting analytics:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1222,7 +1272,7 @@ export class LLMController {
         },
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting logs:', error);
+      logger.error('[LLMController] Error getting logs:', error);
       return res.status(500).json({ error: error.message, logs: [] });
     }
   }
@@ -1233,218 +1283,297 @@ export class LLMController {
    */
   static async getProvidersHealth(req: Request, res: Response) {
     try {
-      // This endpoint is polled by the UI (top bar + settings). It must be fast.
-      // Older versions performed live connectivity checks for every active model row, which could take 20s+.
-      // We now:
-      // - test only distinct providers (openai/google/ollama/...) via LLMConfigService
-      // - enforce a hard timeout per provider
-      // - include circuit breaker states for debugging
-
-      // Default must be fast: this endpoint is polled by UI and should not block rendering.
-      // Default increased: 1200ms was too aggressive for OpenAI in many networks.
+      const live = String((req.query.live as string) || '').toLowerCase() === 'true';
       const timeoutMsRaw = Number((req.query.timeoutMs as string) || 4000);
       const timeoutMs = Number.isFinite(timeoutMsRaw)
         ? Math.min(8000, Math.max(300, timeoutMsRaw))
         : 4000;
+      const ttlMsRaw = Number(
+        (req.query.ttlMs as string) || process.env.LLM_PROVIDER_SNAPSHOT_TTL_MS || 90_000
+      );
+      const ttlMs = Number.isFinite(ttlMsRaw)
+        ? Math.min(300_000, Math.max(15_000, ttlMsRaw))
+        : 90_000;
+      const currentSnapshot = LLMController.providerHealthSnapshot;
+      const now = Date.now();
 
-      const providers = (await llmConfigService.getAllProviders(true)) as any[];
+      if (!live && currentSnapshot && currentSnapshot.expiresAt > now) {
+        return res.json({
+          ...currentSnapshot.payload,
+          cached: true,
+          mode: 'snapshot',
+          ttlMs,
+        });
+      }
 
-      const withTimeout = async <T>(p: Promise<T>, ms: number): Promise<T> => {
-        let timer: NodeJS.Timeout | null = null;
-        try {
-          return await Promise.race<T>([
-            p,
-            new Promise<T>((_resolve, reject) => {
-              timer = setTimeout(
-                () => reject(new Error(`Health check timed out after ${ms}ms`)),
-                ms
-              );
-            }),
-          ]);
-        } finally {
-          if (timer) clearTimeout(timer);
+      if (!live && LLMController.providerHealthRefreshPromise) {
+        if (currentSnapshot) {
+          return res.json({
+            ...currentSnapshot.payload,
+            cached: true,
+            stale: true,
+            mode: 'snapshot',
+            ttlMs,
+          });
         }
+        const pendingPayload = await LLMController.providerHealthRefreshPromise;
+        return res.json({
+          ...pendingPayload,
+          cached: true,
+          mode: 'snapshot',
+          ttlMs,
+        });
+      }
+
+      const computePayload = async (): Promise<Record<string, unknown>> => {
+        const providers = (await llmConfigService.getAllProviders(true)) as any[];
+
+        const withTimeout = async <T>(p: Promise<T>, ms: number): Promise<T> => {
+          let timer: NodeJS.Timeout | null = null;
+          try {
+            return await Promise.race<T>([
+              p,
+              new Promise<T>((_resolve, reject) => {
+                timer = setTimeout(
+                  () => reject(new Error(`Health check timed out after ${ms}ms`)),
+                  ms
+                );
+              }),
+            ]);
+          } finally {
+            if (timer) clearTimeout(timer);
+          }
+        };
+
+        const nowIso = new Date().toISOString();
+        const healthResults = await Promise.all(
+          (providers || []).map(async (provider: any) => {
+            const providerId = String(provider.provider || '').toLowerCase();
+            const cooldownKey = `${providerId}:${String(provider.id || provider.model_id || provider.provider || '')}`;
+            const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
+            const hasKey =
+              !!rawKey &&
+              !rawKey.toLowerCase().includes('placeholder') &&
+              !rawKey.startsWith('sk-demo-') &&
+              rawKey !== 'YOUR_GEMINI_API_KEY_HERE' &&
+              rawKey !== 'YOUR_OPENAI_API_KEY_HERE';
+            const isLocal = providerId === 'ollama';
+
+            if (!hasKey && !isLocal) {
+              return {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: 'unconfigured',
+                available: false,
+                lastCheck: nowIso,
+              };
+            }
+
+            const cooldown = LLMController.providerHealthCooldowns.get(cooldownKey);
+            if (cooldown && cooldown.until > Date.now()) {
+              return {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: 'unhealthy',
+                available: false,
+                error: cooldown.error,
+                lastCheck: nowIso,
+                cooldownUntil: new Date(cooldown.until).toISOString(),
+              };
+            }
+
+            try {
+              const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
+              const result = await withTimeout(
+                llmService.testConnection({
+                  provider: provider.provider,
+                  apiKey: provider.api_key,
+                  api_key: provider.api_key,
+                  endpoint: provider.endpoint,
+                  id: provider.model_id,
+                  timeoutMs: providerTimeoutMs,
+                }),
+                providerTimeoutMs
+              );
+
+              const ok = !!(result as any)?.success;
+              const resultError = String((result as any)?.error || '');
+              const httpStatus = Number((result as any)?.httpStatus || 0) || null;
+              if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
+                LLMController.providerHealthCooldowns.set(cooldownKey, {
+                  until: Date.now() + 30 * 60_000,
+                  error: resultError || 'Invalid provider credentials',
+                  status: 'auth_failed',
+                });
+              } else if (ok) {
+                LLMController.providerHealthCooldowns.delete(cooldownKey);
+              }
+              const row = {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: ok ? 'healthy' : 'unhealthy',
+                available: ok,
+                latency: (result as any)?.latency || 0,
+                lastCheck: nowIso,
+              };
+              try {
+                const providerKey = String(provider.provider || '').toLowerCase();
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      row.status,
+                      row.available ? 1 : 0,
+                      row.latency || 0,
+                      ok ? null : String((result as any)?.error || 'Unhealthy'),
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
+              }
+              return row;
+            } catch (e: any) {
+              if (LLMController.isAuthLikeProviderError(e, null)) {
+                LLMController.providerHealthCooldowns.set(cooldownKey, {
+                  until: Date.now() + 5 * 60_000,
+                  error: e?.message || String(e),
+                  status: 'auth_failed',
+                });
+              }
+              const row = {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: 'unhealthy',
+                available: false,
+                error: e?.message || String(e),
+                lastCheck: nowIso,
+              };
+              try {
+                const providerKey = String(provider.provider || '').toLowerCase();
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      'unhealthy',
+                      0,
+                      0,
+                      String(row.error || 'Unhealthy'),
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
+              }
+              return row;
+            }
+          })
+        );
+
+        const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
+        const coreProviders = LLMController.selectCoreProviders(configuredProviders);
+        const healthyCount = coreProviders.filter((p) => p.status === 'healthy').length;
+        const overall =
+          coreProviders.length === 0
+            ? 'unhealthy'
+            : healthyCount === 0
+              ? 'unhealthy'
+              : healthyCount === coreProviders.length
+                ? 'healthy'
+                : 'degraded';
+
+        const breakerStatuses = (circuitBreaker as any)?.getStatus?.() || {};
+        const circuitBreakers = Object.entries(breakerStatuses).map(([name, raw]: any) => ({
+          name,
+          state: raw?.state || raw?.status || raw?.currentState || 'unknown',
+          failures: raw?.failures ?? raw?.failureCount ?? raw?.consecutiveFailures ?? 0,
+        }));
+
+        return {
+          success: true,
+          providers: healthResults,
+          circuitBreakers,
+          overall,
+          lastCheck: Date.now(),
+          timeoutMs,
+        };
       };
 
-      const nowIso = new Date().toISOString();
-      const healthResults = await Promise.all(
-        (providers || []).map(async (provider: any) => {
-          const providerId = String(provider.provider || '').toLowerCase();
-          const cooldownKey = `${providerId}:${String(provider.id || provider.model_id || provider.provider || '')}`;
-          const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
-          const hasKey =
-            !!rawKey &&
-            !rawKey.toLowerCase().includes('placeholder') &&
-            !rawKey.startsWith('sk-demo-') &&
-            rawKey !== 'YOUR_GEMINI_API_KEY_HERE' &&
-            rawKey !== 'YOUR_OPENAI_API_KEY_HERE';
-          const isLocal = providerId === 'ollama';
+      const startSnapshotRefresh = (): Promise<Record<string, unknown>> => {
+        if (!LLMController.providerHealthRefreshPromise) {
+          LLMController.providerHealthRefreshPromise = computePayload()
+            .then((payload) => {
+              LLMController.providerHealthSnapshot = {
+                payload,
+                expiresAt: Date.now() + ttlMs,
+              };
+              return payload;
+            })
+            .finally(() => {
+              LLMController.providerHealthRefreshPromise = null;
+            });
+        }
 
-          if (!hasKey && !isLocal) {
-            const row = {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: 'unconfigured',
-              available: false,
-              lastCheck: nowIso,
-            };
-            return row;
-          }
+        return LLMController.providerHealthRefreshPromise;
+      };
 
-          const cooldown = LLMController.providerHealthCooldowns.get(cooldownKey);
-          if (cooldown && cooldown.until > Date.now()) {
-            return {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: 'unhealthy',
-              available: false,
-              error: cooldown.error,
-              lastCheck: nowIso,
-              cooldownUntil: new Date(cooldown.until).toISOString(),
-            };
-          }
+      if (!live && currentSnapshot) {
+        void startSnapshotRefresh().catch((error: any) => {
+          logger.warn('[LLMController] Background provider health refresh failed', {
+            error: error?.message || String(error),
+          });
+        });
 
-          try {
-            // Local providers can hang when the daemon isn't running; keep them extra-fast by default.
-            const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
-            const result = await withTimeout(
-              llmService.testConnection({
-                provider: provider.provider,
-                apiKey: provider.api_key,
-                api_key: provider.api_key,
-                endpoint: provider.endpoint,
-                id: provider.model_id,
-                timeoutMs: providerTimeoutMs,
-              }),
-              providerTimeoutMs
-            );
+        return res.json({
+          ...currentSnapshot.payload,
+          cached: true,
+          stale: true,
+          mode: 'snapshot',
+          ttlMs,
+        });
+      }
 
-            const ok = !!(result as any)?.success;
-            const resultError = String((result as any)?.error || '');
-            const httpStatus = Number((result as any)?.httpStatus || 0) || null;
-            if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
-              LLMController.providerHealthCooldowns.set(cooldownKey, {
-                until: Date.now() + 5 * 60_000,
-                error: resultError || 'Invalid provider credentials',
-                status: 'auth_failed',
-              });
-            } else if (ok) {
-              LLMController.providerHealthCooldowns.delete(cooldownKey);
-            }
-            const row = {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: ok ? 'healthy' : 'unhealthy',
-              available: ok,
-              latency: (result as any)?.latency || 0,
-              lastCheck: nowIso,
-            };
-            // Best-effort: persist health events (throttled ~60s/provider)
-            try {
-              const providerKey = String(provider.provider || '').toLowerCase();
-              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
-              if (Date.now() - lastAt > 60_000) {
-                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
-                void dbRun(
-                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                  [
-                    uuidv4(),
-                    providerKey,
-                    provider.model_id || null,
-                    row.status,
-                    row.available ? 1 : 0,
-                    row.latency || 0,
-                    ok ? null : String((result as any)?.error || 'Unhealthy'),
-                    nowIso,
-                  ]
-                ).catch(() => {
-                  /* ignore */
-                });
-              }
-            } catch {
-              /* ignore */
-            }
-            return row;
-          } catch (e: any) {
-            if (LLMController.isAuthLikeProviderError(e, null)) {
-              LLMController.providerHealthCooldowns.set(cooldownKey, {
-                until: Date.now() + 5 * 60_000,
-                error: e?.message || String(e),
-                status: 'auth_failed',
-              });
-            }
-            const row = {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: 'unhealthy',
-              available: false,
-              error: e?.message || String(e),
-              lastCheck: nowIso,
-            };
-            try {
-              const providerKey = String(provider.provider || '').toLowerCase();
-              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
-              if (Date.now() - lastAt > 60_000) {
-                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
-                void dbRun(
-                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                  [
-                    uuidv4(),
-                    providerKey,
-                    provider.model_id || null,
-                    'unhealthy',
-                    0,
-                    0,
-                    String(row.error || 'Unhealthy'),
-                    nowIso,
-                  ]
-                ).catch(() => {
-                  /* ignore */
-                });
-              }
-            } catch {
-              /* ignore */
-            }
-            return row;
-          }
-        })
-      );
-
-      const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
-      const coreProviders = LLMController.selectCoreProviders(configuredProviders);
-      const healthyCount = coreProviders.filter((p) => p.status === 'healthy').length;
-      const overall =
-        coreProviders.length === 0
-          ? 'unhealthy'
-          : healthyCount === 0
-            ? 'unhealthy'
-            : healthyCount === coreProviders.length
-              ? 'healthy'
-              : 'degraded';
-
-      const breakerStatuses = (circuitBreaker as any)?.getStatus?.() || {};
-      const circuitBreakers = Object.entries(breakerStatuses).map(([name, raw]: any) => ({
-        name,
-        state: raw?.state || raw?.status || raw?.currentState || 'unknown',
-        failures: raw?.failures ?? raw?.failureCount ?? raw?.consecutiveFailures ?? 0,
-      }));
+      const payloadPromise = live ? computePayload() : startSnapshotRefresh();
+      const payload = await payloadPromise;
 
       return res.json({
-        success: true,
-        providers: healthResults,
-        circuitBreakers,
-        overall,
-        lastCheck: Date.now(),
-        timeoutMs,
+        ...payload,
+        cached: !live && Boolean(currentSnapshot),
+        mode: live ? 'live' : 'snapshot',
+        ttlMs,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting providers health:', error);
+      if (LLMController.providerHealthSnapshot) {
+        return res.json({
+          ...LLMController.providerHealthSnapshot.payload,
+          cached: true,
+          stale: true,
+          mode: 'snapshot',
+        });
+      }
+      logger.error('[LLMController] Error getting providers health:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1484,7 +1613,7 @@ export class LLMController {
         },
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting recommended provider:', error);
+      logger.error('[LLMController] Error getting recommended provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1627,7 +1756,7 @@ export class LLMController {
         incidents,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting incidents:', error);
+      logger.error('[LLMController] Error getting incidents:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -1687,7 +1816,7 @@ export class LLMController {
         byProvider,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting usage stats:', error);
+      logger.error('[LLMController] Error getting usage stats:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1748,7 +1877,7 @@ export class LLMController {
         byProvider: costByProvider,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting costs:', error);
+      logger.error('[LLMController] Error getting costs:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1823,7 +1952,7 @@ export class LLMController {
         diagnostics,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error running diagnostics:', error);
+      logger.error('[LLMController] Error running diagnostics:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1849,7 +1978,7 @@ export class LLMController {
       const updated = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.json(updated);
     } catch (error: any) {
-      console.error('[LLMController] Error updating tier:', error);
+      logger.error('[LLMController] Error updating tier:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1901,7 +2030,7 @@ export class LLMController {
 
       return res.json({ assignments: grouped });
     } catch (error: any) {
-      console.error('[LLMController] Error getting tier assignments:', error);
+      logger.error('[LLMController] Error getting tier assignments:', error);
       return res.status(500).json({ error: error.message, assignments: {} });
     }
   }
@@ -1944,7 +2073,7 @@ export class LLMController {
 
       return res.json({ success: true, message: 'Provider assigned to tier' });
     } catch (error: any) {
-      console.error('[LLMController] Error assigning to tier:', error);
+      logger.error('[LLMController] Error assigning to tier:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1971,7 +2100,7 @@ export class LLMController {
 
       return res.json({ success: true, message: 'Provider removed from tier' });
     } catch (error: any) {
-      console.error('[LLMController] Error removing from tier:', error);
+      logger.error('[LLMController] Error removing from tier:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1999,7 +2128,7 @@ export class LLMController {
 
       return res.json({ success: true, message: 'Priority updated' });
     } catch (error: any) {
-      console.error('[LLMController] Error updating priority:', error);
+      logger.error('[LLMController] Error updating priority:', error);
       return res.status(500).json({ error: error.message });
     }
   }

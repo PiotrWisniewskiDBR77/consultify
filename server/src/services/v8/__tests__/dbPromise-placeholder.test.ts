@@ -1,26 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
+import { __private__ as dbPromisePrivate } from '../../../utils/DbPromise.js';
+import type { Database } from '../../../utils/DbPromise.js';
+import { run } from '../../../utils/DbPromise.js';
 
 describe('DbPromise placeholder translation', () => {
   describe('translatePlaceholders pattern', () => {
-    function translatePlaceholders(sql: string): string {
-      if (/\$\d+/.test(sql)) return sql;
-      let counter = 0;
-      let inString = false;
-      let result = '';
-      for (let i = 0; i < sql.length; i++) {
-        const char = sql[i];
-        if (char === "'" && sql[i - 1] !== '\\') {
-          inString = !inString;
-          result += char;
-        } else if (char === '?' && !inString) {
-          counter++;
-          result += `$${counter}`;
-        } else {
-          result += char;
-        }
-      }
-      return result;
-    }
+    const translatePlaceholders = dbPromisePrivate.translatePlaceholders;
 
     it('translates simple ? placeholders', () => {
       expect(translatePlaceholders('SELECT * FROM t WHERE id = ?')).toBe(
@@ -122,6 +108,33 @@ describe('DbPromise placeholder translation', () => {
       expect(
         translatePlaceholders('INSERT INTO t (data) VALUES (?) WHERE meta = \'{"key": "value?"}\'')
       ).toBe('INSERT INTO t (data) VALUES ($1) WHERE meta = \'{"key": "value?"}\'');
+    });
+  });
+
+  describe('run timeout behavior', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('rejects on timeout when fallback is false', async () => {
+      const mockDb: Pick<Database, 'run'> = {
+        run: vi.fn((_sql, _params, _cb) => {
+          // Intentionally never call callback to simulate hung driver call.
+        }),
+      };
+
+      const promise = run(mockDb as Database, 'INSERT INTO t (a) VALUES (?)', [1], {
+        timeout: 50,
+        fallback: false,
+      });
+
+      const rejection = expect(promise).rejects.toThrow(/timeout/i);
+      await vi.advanceTimersByTimeAsync(50);
+      await rejection;
     });
   });
 });

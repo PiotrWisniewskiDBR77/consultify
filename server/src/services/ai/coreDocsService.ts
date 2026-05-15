@@ -178,8 +178,8 @@ class CoreDocsService {
     } else {
       const id = crypto.randomUUID();
       await dbRun(
-        `INSERT INTO knowledge_documents (id, title, file_path, file_hash, version, scope, organization_id, processing_status, chunk_count, last_indexed_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 1, 'system', NULL, 'completed', ?, ?, ?, ?)`,
+        `INSERT INTO knowledge_documents (id, title, file_path, file_hash, version, scope, organization_id, processing_status, chunk_count, last_indexed_at, created_at, updated_at, document_type)
+         VALUES (?, ?, ?, ?, 1, 'system', NULL, 'completed', ?, ?, ?, ?, 'markdown')`,
         [id, title, relPath, fileHash, chunks.length, now, now, now]
       );
       await this._insertChunks(id, chunks);

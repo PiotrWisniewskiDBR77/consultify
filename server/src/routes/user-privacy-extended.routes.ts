@@ -8,6 +8,8 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-privacy-extended.js');
 const user_privacy_extendedRoutesJS = module.default || module;
@@ -28,6 +30,6 @@ if (typeof user_privacy_extendedRoutesJS === 'function') {
   router.use(user_privacy_extendedRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('user-privacy-extended.js did not export a valid router');
+  logger.error('user-privacy-extended.js did not export a valid router');
 }
 export default router;

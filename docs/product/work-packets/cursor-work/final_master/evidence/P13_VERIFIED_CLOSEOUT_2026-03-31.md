@@ -10,7 +10,7 @@
 - Canon frozen: toolbelt, facilitation cues, export/readback, collab boundary, AI proposals + audit, anti-duplicate, degraded posture
 
 ### P13-B: Canon + runtime closure
-- `whiteboardCanon.ts`: 9-tool frozen toolbelt (select, pan, shape, sticky, text, connector, group, align, eraser), 4-phase facilitation flow (Start → Organize → Converge → Handoff), export (PNG+JSON), collaboration boundary, AI co-building contract, anti-duplicate gate, 9 degraded scenarios, 10/10 acceptance
+- `whiteboardCanon.ts`: 9-tool frozen toolbelt (select, pan_zoom_fit, sticky, shape, text, group_ungroup, align_distribute, undo_redo, export), 4-phase facilitation flow (Start → Organize → Converge → Handoff), export (PNG+JSON), collaboration boundary, AI co-building contract, anti-duplicate gate, 9 degraded scenarios, 10/10 acceptance
 - Tests: 57 — all pass
 
 ### P13-C: Verification + rollout

@@ -1,0 +1,191 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mockApi = {
+  getConversation: vi.fn().mockResolvedValue({ messages: [] }),
+  getConversations: vi.fn().mockResolvedValue({ conversations: [] }),
+  addConversationMessage: vi.fn(),
+};
+
+vi.mock('@/services/api', () => ({ Api: mockApi }));
+
+vi.mock('@/i18n', () => ({
+  isValidLanguage: (lang: string) => ['pl', 'en', 'de'].includes(lang),
+}));
+
+describe('useConversationStore chat root rehydration', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    vi.useRealTimers();
+    localStorage.clear();
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('does not restore a stale active conversation on /chat', async () => {
+    (window.location as Location & { pathname: string }).pathname = '/chat';
+    expect(window.location.pathname).toBe('/chat');
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'stale-conversation-id',
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).not.toHaveBeenCalled();
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+  });
+
+  it('still restores a deep-linked conversation on /chat/:id', async () => {
+    (window.location as Location & { pathname: string }).pathname = '/chat/deep-linked-id';
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'deep-linked-id',
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    expect(useConversationStore.getState().activeConversationId).toBe('deep-linked-id');
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).toHaveBeenCalledWith('deep-linked-id');
+  });
+
+  it('restores persisted messages for the deep-linked conversation while backend hydration runs', async () => {
+    (window.location as Location & { pathname: string }).pathname = '/chat/deep-linked-id';
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeMessages: [
+            {
+              id: 'persisted-message-id',
+              conversationId: 'deep-linked-id',
+              role: 'user',
+              content: 'Persisted refresh fallback',
+              messageType: 'text',
+              metadata: null,
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: 'other-message-id',
+              conversationId: 'other-id',
+              role: 'user',
+              content: 'Wrong conversation',
+              messageType: 'text',
+              metadata: null,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    expect(useConversationStore.getState().activeConversationId).toBe('deep-linked-id');
+    expect(useConversationStore.getState().activeMessages).toHaveLength(1);
+    expect(useConversationStore.getState().activeMessages[0].content).toBe(
+      'Persisted refresh fallback'
+    );
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).toHaveBeenCalledWith('deep-linked-id');
+  });
+
+  it('does not restore a stale active conversation on non-chat routes', async () => {
+    (window.location as Location & { pathname: string }).pathname = '/ai/artifacts';
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'stale-conversation-id',
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).not.toHaveBeenCalled();
+  });
+
+  it('keeps the optimistic message when message persistence returns null', async () => {
+    mockApi.addConversationMessage.mockResolvedValueOnce(null);
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    useConversationStore.setState({
+      activeConversationId: 'conversation-id',
+      activeMessages: [],
+      conversations: [
+        {
+          id: 'conversation-id',
+          title: 'New conversation',
+          titleSource: 'auto',
+          messageCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any,
+      ],
+    });
+
+    const saved = await useConversationStore.getState().addMessage({
+      conversationId: 'conversation-id',
+      role: 'user',
+      content: 'QA TEST chat persistence',
+      messageType: 'text',
+      metadata: null as any,
+    });
+
+    expect(saved.content).toBe('QA TEST chat persistence');
+    expect(saved.metadata).toMatchObject({ local: true, serverAckMissing: true });
+    expect(useConversationStore.getState().activeMessages).toHaveLength(1);
+    expect(useConversationStore.getState().activeMessages[0].content).toBe(
+      'QA TEST chat persistence'
+    );
+    expect(mockApi.addConversationMessage).toHaveBeenCalledWith(
+      'conversation-id',
+      expect.objectContaining({ metadata: {} })
+    );
+  });
+});

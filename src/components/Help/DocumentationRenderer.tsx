@@ -34,7 +34,7 @@ interface DocumentationRendererProps {
   moduleId: HelpModuleId;
   contentType: ContentType;
   contentId: string;
-  language?: 'en' | 'pl';
+  language?: string;
   showFeedback?: boolean;
 }
 
@@ -46,7 +46,8 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
   showFeedback = true,
 }) => {
   const { i18n, t } = useTranslation();
-  const lang = language || (i18n.language === 'pl' ? 'pl' : 'en');
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang: 'en' | 'pl' = language === 'pl' || (!language && baseLang === 'pl') ? 'pl' : 'en';
 
   const getLocalized = (value: any, fallback = ''): string => {
     if (!value) return fallback;

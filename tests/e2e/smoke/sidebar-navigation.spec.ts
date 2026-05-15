@@ -52,6 +52,7 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
   test('sidebar shows key items', async ({ page }) => {
     const items = [
       /Chat/i,
+      /Chat V10/i,
       /My Work/i,
       /Interview/i,
       /Tools/i,
@@ -71,6 +72,12 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
   test('navigates to Chat', async ({ page }) => {
     await navItem(page, /Chat/i).click();
     await expect(page).toHaveURL(/\/chat/);
+    await expectNoRouteError(page);
+  });
+
+  test('navigates to Chat V10', async ({ page }) => {
+    await navItem(page, /Chat V10/i).click();
+    await expect(page).toHaveURL(/\/chat\/v10-runtime/);
     await expectNoRouteError(page);
   });
 

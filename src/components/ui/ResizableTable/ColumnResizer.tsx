@@ -85,8 +85,8 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
         className={[
           'absolute right-2 top-2 bottom-2 w-px rounded-full transition-colors duration-150',
           isDragging
-            ? 'bg-primary-400 dark:bg-primary-400'
-            : 'bg-slate-200/80 dark:bg-white/[0.06] group-hover/resizer:bg-slate-300 dark:group-hover/resizer:bg-white/[0.10]',
+            ? 'bg-primary-500 dark:bg-primary-400'
+            : 'bg-slate-300 dark:bg-white/[0.06] group-hover/resizer:bg-primary-500 dark:group-hover/resizer:bg-white/[0.10]',
         ].join(' ')}
       />
     </div>

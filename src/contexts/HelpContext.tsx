@@ -9,7 +9,15 @@
  * Step 6: Enterprise+ Ready
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
 import { FAQItem, getFAQsForModule } from '../config/faqContent';
@@ -160,7 +168,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isHelpSidePanelOpen = activeSidePanel === 'HELP';
   const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
   const [knowledgeModuleIdOverride, setKnowledgeModuleIdOverride] = useState<string | null>(null);
-  const [knowledgeArticleSlugOverride, setKnowledgeArticleSlugOverride] = useState<string | null>(null);
+  const [knowledgeArticleSlugOverride, setKnowledgeArticleSlugOverride] = useState<string | null>(
+    null
+  );
   const [helpDocumentIdOverride, setHelpDocumentIdOverride] = useState<string | null>(null);
 
   // Toggle help side panel
@@ -180,13 +190,18 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [activeSidePanel, toggleSidePanel]
   );
 
-  // Clear KB override when panel closes
+  // Clear KB override only when the panel transitions from open to closed.
+  // Otherwise deep-links that set overrides before opening the panel lose
+  // their target article/module during the initial closed render.
+  const wasHelpSidePanelOpenRef = useRef(isHelpSidePanelOpen);
   useEffect(() => {
-    if (!isHelpSidePanelOpen) {
+    const wasOpen = wasHelpSidePanelOpenRef.current;
+    if (wasOpen && !isHelpSidePanelOpen) {
       setKnowledgeModuleIdOverride(null);
       setKnowledgeArticleSlugOverride(null);
       setHelpDocumentIdOverride(null);
     }
+    wasHelpSidePanelOpenRef.current = isHelpSidePanelOpen;
   }, [isHelpSidePanelOpen]);
 
   // Get contextual help for a specific view

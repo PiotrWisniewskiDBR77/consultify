@@ -35,7 +35,13 @@ import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 
-type BillingTab = 'overview' | 'plans' | 'token-economy' | 'transactions' | 'analytics';
+type BillingTab =
+  | 'overview'
+  | 'plans'
+  | 'contracts'
+  | 'token-economy'
+  | 'transactions'
+  | 'analytics';
 
 // ==================== OVERVIEW TAB ====================
 interface RevenueStats {
@@ -62,6 +68,7 @@ const OverviewTab: React.FC = () => {
     items: any[];
     totalCost: number;
   } | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,11 +77,16 @@ const OverviewTab: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    setWarning(null);
     try {
       const [revenue, usage, costs] = await Promise.all([
         Api.get('/billing/admin/revenue'),
         Api.get('/billing/admin/usage'),
-        Api.get('/billing/admin/operational-costs').catch(() => ({ costs: [] })),
+        Api.get('/billing/admin/operational-costs').catch((error) => {
+          console.warn('[BillingCenterView] Operational costs unavailable', error);
+          setWarning('Operational cost metrics are temporarily unavailable.');
+          return { items: [], totalCost: 0, degraded: true };
+        }),
       ]);
       setRevenueStats(revenue);
       setUsageStats(usage);
@@ -115,6 +127,12 @@ const OverviewTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {warning && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {warning}
+        </div>
+      )}
+
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
@@ -388,6 +406,7 @@ const PlansTab: React.FC = () => {
   const [planType, setPlanType] = useState<'organization' | 'user'>('organization');
   const [orgPlans, setOrgPlans] = useState<SubscriptionPlan[]>([]);
   const [userPlans, setUserPlans] = useState<UserLicensePlan[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -401,15 +420,26 @@ const PlansTab: React.FC = () => {
 
   const fetchPlans = async () => {
     setLoading(true);
+    setNotice(null);
     try {
       const [orgData, userData] = await Promise.all([
         Api.get('/billing/admin/plans'),
         Api.get('/billing/admin/user-plans'),
       ]);
-      setOrgPlans(Array.isArray(orgData) ? orgData : []);
-      setUserPlans(Array.isArray(userData) ? userData : []);
+      const orgPayload = orgData?.data ?? orgData;
+      const userPayload = userData?.data ?? userData;
+      setOrgPlans(Array.isArray(orgPayload?.plans) ? orgPayload.plans : []);
+      setUserPlans(Array.isArray(userPayload?.plans) ? userPayload.plans : []);
+      if (orgPayload?.type === 'not_configured' || userPayload?.type === 'not_configured') {
+        setNotice(
+          'Some billing plan surfaces are not configured yet and are shown in degraded mode.'
+        );
+      }
     } catch (error) {
       console.error('Failed to fetch plans:', error);
+      setOrgPlans([]);
+      setUserPlans([]);
+      setNotice('Billing plans are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
@@ -503,6 +533,12 @@ const PlansTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
       {/* Sub-tabs */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
@@ -891,6 +927,7 @@ const TokenEconomyTab: React.FC = () => {
 // ==================== TRANSACTIONS TAB ====================
 const TransactionsTab: React.FC = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'purchase' | 'usage' | 'refund'>('all');
 
@@ -900,12 +937,18 @@ const TransactionsTab: React.FC = () => {
 
   const loadTransactions = async () => {
     setLoading(true);
+    setNotice(null);
     try {
       const data = await Api.get('/billing/admin/transactions?limit=100');
-      setTransactions(Array.isArray(data) ? data : []);
+      const payload = data?.data ?? data;
+      setTransactions(Array.isArray(payload?.transactions) ? payload.transactions : []);
+      if (payload?.type === 'not_configured') {
+        setNotice('Billing transactions are not configured yet for this environment.');
+      }
     } catch (error) {
       console.error('Failed to load transactions:', error);
       setTransactions([]);
+      setNotice('Billing transactions are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
@@ -931,6 +974,12 @@ const TransactionsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
@@ -1032,6 +1081,277 @@ const TransactionsTab: React.FC = () => {
   );
 };
 
+const ContractsTab: React.FC = () => {
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    organizationId: '',
+    subscriptionPlanId: '',
+    billingRail: 'manual_invoice',
+    contractStatus: 'active',
+    renewalAt: '',
+    accessExpiresAt: '',
+    externalInvoiceRef: '',
+    notes: '',
+    reason: '',
+    limitsOverride: {
+      maxProjects: '',
+      maxUsers: '',
+      maxAICallsPerDay: '',
+      maxInitiatives: '',
+      maxStorageMb: '',
+      maxTotalTokens: '',
+    },
+  });
+
+  const loadContracts = async () => {
+    setLoading(true);
+    try {
+      const data = await Api.getManagedContracts();
+      setContracts(Array.isArray(data) ? data : []);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to load managed contracts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadContracts();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!form.organizationId || !form.subscriptionPlanId || !form.reason) {
+      toast.error('Organization, plan, and reason are required');
+      return;
+    }
+    setSaving(true);
+    try {
+      const limitsOverride = Object.fromEntries(
+        Object.entries(form.limitsOverride).filter(([, value]) => String(value).trim() !== '')
+      );
+      await Api.upsertManualContract({
+        ...form,
+        renewalAt: form.renewalAt || null,
+        accessExpiresAt: form.accessExpiresAt || null,
+        limitsOverride: Object.keys(limitsOverride).length > 0 ? limitsOverride : null,
+      });
+      toast.success('Manual contract saved');
+      setForm((prev) => ({
+        ...prev,
+        externalInvoiceRef: '',
+        notes: '',
+        reason: '',
+        limitsOverride: {
+          maxProjects: '',
+          maxUsers: '',
+          maxAICallsPerDay: '',
+          maxInitiatives: '',
+          maxStorageMb: '',
+          maxTotalTokens: '',
+        },
+      }));
+      await loadContracts();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to save contract');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-400" />
+              Manual Contracts
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Grant paid access for invoice-based customers without Stripe auto-charging.
+            </p>
+          </div>
+          <button
+            onClick={loadContracts}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            value={form.organizationId}
+            onChange={(e) => setForm((prev) => ({ ...prev, organizationId: e.target.value }))}
+            placeholder="Organization ID"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          />
+          <input
+            value={form.subscriptionPlanId}
+            onChange={(e) => setForm((prev) => ({ ...prev, subscriptionPlanId: e.target.value }))}
+            placeholder="Plan ID"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          />
+          <select
+            value={form.billingRail}
+            onChange={(e) => setForm((prev) => ({ ...prev, billingRail: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          >
+            <option value="manual_invoice">manual_invoice</option>
+            <option value="hybrid_usage_invoice">hybrid_usage_invoice</option>
+          </select>
+          <select
+            value={form.contractStatus}
+            onChange={(e) => setForm((prev) => ({ ...prev, contractStatus: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          >
+            <option value="active">active</option>
+            <option value="renewal_due">renewal_due</option>
+            <option value="grace">grace</option>
+            <option value="suspended">suspended</option>
+          </select>
+          <input
+            type="date"
+            value={form.renewalAt}
+            onChange={(e) => setForm((prev) => ({ ...prev, renewalAt: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          />
+          <input
+            type="date"
+            value={form.accessExpiresAt}
+            onChange={(e) => setForm((prev) => ({ ...prev, accessExpiresAt: e.target.value }))}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          />
+          <input
+            value={form.externalInvoiceRef}
+            onChange={(e) => setForm((prev) => ({ ...prev, externalInvoiceRef: e.target.value }))}
+            placeholder="External invoice reference"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          />
+          <input
+            value={form.reason}
+            onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))}
+            placeholder="Reason / change summary"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+          />
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+            placeholder="Internal notes"
+            className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent min-h-[88px]"
+          />
+        </div>
+
+        <div className="mt-5 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+          <div className="mb-3">
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              Manual limit overrides
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Leave empty to inherit the selected plan package. Fill any field to pin a custom limit
+              for this invoice-managed customer.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              ['maxProjects', 'Projects'],
+              ['maxUsers', 'Users'],
+              ['maxAICallsPerDay', 'AI calls / day'],
+              ['maxInitiatives', 'Initiatives'],
+              ['maxStorageMb', 'Storage (MB)'],
+              ['maxTotalTokens', 'Total tokens'],
+            ].map(([key, label]) => (
+              <input
+                key={key}
+                type="number"
+                min="0"
+                value={(form.limitsOverride as any)[key]}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    limitsOverride: {
+                      ...prev.limitsOverride,
+                      [key]: e.target.value,
+                    },
+                  }))
+                }
+                placeholder={label}
+                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving...' : 'Save Contract'}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 dark:text-white">Managed accounts</h3>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {contracts.length} orgs
+          </span>
+        </div>
+        {loading ? (
+          <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
+            Loading contracts...
+          </div>
+        ) : contracts.length === 0 ? (
+          <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
+            No manual contracts configured yet.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {contracts.map((contract) => (
+              <div
+                key={`${contract.organization_id}-${contract.subscription_plan_id}`}
+                className="px-6 py-4 flex items-start justify-between gap-4"
+              >
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    {contract.organization_name || contract.organization_id}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {contract.plan_name || contract.subscription_plan_id} • {contract.billing_rail}{' '}
+                    • {contract.contract_status}
+                  </p>
+                  {(contract.renewal_at || contract.access_expires_at) && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Renewal: {contract.renewal_at || '-'} | Access until:{' '}
+                      {contract.access_expires_at || '-'}
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Limits: {contract.max_projects ?? '-'} projects, {contract.max_users ?? '-'}{' '}
+                    users, {contract.max_ai_calls_per_day ?? '-'} AI/day,{' '}
+                    {contract.max_total_tokens ?? '-'} tokens, {contract.max_storage_mb ?? '-'} MB
+                  </p>
+                </div>
+                <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                  <p>{contract.external_invoice_ref || 'No invoice ref'}</p>
+                  <p className="mt-1">{contract.updated_at || ''}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN COMPONENT ====================
 export const BillingCenterView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BillingTab>('overview');
@@ -1039,6 +1359,7 @@ export const BillingCenterView: React.FC = () => {
   const tabs: { id: BillingTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <TrendingUp size={18} /> },
     { id: 'plans', label: 'Subscription Plans', icon: <Package size={18} /> },
+    { id: 'contracts', label: 'Manual Contracts', icon: <Building2 size={18} /> },
     { id: 'token-economy', label: 'Token Economy', icon: <Coins size={18} /> },
     { id: 'transactions', label: 'Transactions', icon: <Receipt size={18} /> },
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={18} /> },
@@ -1090,6 +1411,7 @@ export const BillingCenterView: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'overview' && <OverviewTab />}
       {activeTab === 'plans' && <PlansTab />}
+      {activeTab === 'contracts' && <ContractsTab />}
       {activeTab === 'token-economy' && <TokenEconomyTab />}
       {activeTab === 'transactions' && <TransactionsTab />}
       {activeTab === 'analytics' && <SubscriptionAnalytics />}

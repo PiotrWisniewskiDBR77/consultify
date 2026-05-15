@@ -1,0 +1,316 @@
+name: Railway Deploy
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile*'
+      - 'railway*.json'
+      - 'infrastructure/**'
+      - 'scripts/deploy-gate.sh'
+      - 'scripts/validate-deploy-target.sh'
+      - '.github/workflows/railway-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+      confirm_production:
+        description: 'Type yes to allow production deployment'
+        required: false
+        default: 'no'
+        type: string
+
+concurrency:
+  group: railway-deploy-${{ github.event_name == 'push' && 'staging' || github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging
+    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    environment: staging
+    permissions:
+      contents: write
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+      PROJECT_ID: ${{ vars.RAILWAY_STAGING_PROJECT_ID }}
+      TARGET_ENVIRONMENT: ${{ vars.RAILWAY_STAGING_ENVIRONMENT }}
+      # Backwards-compatible naming: APP_SERVICE/SECONDARY_SERVICE are canonical,
+      # *_BACKEND_SERVICE/*_FRONTEND_SERVICE are legacy docs aliases.
+      APP_SERVICE: ${{ vars.RAILWAY_STAGING_APP_SERVICE || vars.RAILWAY_STAGING_BACKEND_SERVICE }}
+      SECONDARY_SERVICE: ${{ vars.RAILWAY_STAGING_SECONDARY_SERVICE || vars.RAILWAY_STAGING_FRONTEND_SERVICE }}
+      API_HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
+      FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+    steps:
+      - name: Install git (required for checkout + tagging)
+        run: |
+          apk add --no-cache git >/dev/null
+
+      - uses: actions/checkout@v5.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Install bash (required by gate scripts)
+        run: |
+          apk add --no-cache bash >/dev/null
+
+      - name: Validate staging configuration
+        run: |
+          test -n "$RAILWAY_TOKEN"
+          test -n "$PROJECT_ID"
+          test -n "$TARGET_ENVIRONMENT"
+          test -n "$APP_SERVICE"
+
+      - name: Validate staging target mapping
+        env:
+          DEPLOY_ENVIRONMENT: staging
+          GIT_REF: ${{ github.ref }}
+        run: |
+          chmod +x scripts/validate-deploy-target.sh
+          bash scripts/validate-deploy-target.sh
+
+      - name: Deploy app to staging
+        run: |
+          DEPLOY_MESSAGE="staging app ${GITHUB_SHA}"
+          railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$DEPLOY_MESSAGE"
+          attempt=0
+          while [ "$attempt" -lt 60 ]; do
+            deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
+              attempt=$((attempt + 1))
+              sleep 5
+              continue
+            fi
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
+            echo "staging app deployment status: $status"
+            case "$status" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED)
+                printf '%s\n' "$deployment_json"
+                exit 1
+                ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          [ "$attempt" -lt 60 ] || (echo "Timed out waiting for staging app deployment" >&2; exit 1)
+
+      - name: Deploy secondary service to staging
+        if: env.SECONDARY_SERVICE != ''
+        run: |
+          DEPLOY_MESSAGE="staging secondary ${GITHUB_SHA}"
+          railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" --detach -m "$DEPLOY_MESSAGE"
+          attempt=0
+          while [ "$attempt" -lt 60 ]; do
+            deployment_json="$(railway deployment list --service "$SECONDARY_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
+              attempt=$((attempt + 1))
+              sleep 5
+              continue
+            fi
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
+            echo "staging secondary deployment status: $status"
+            case "$status" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED)
+                printf '%s\n' "$deployment_json"
+                exit 1
+                ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          [ "$attempt" -lt 60 ] || (echo "Timed out waiting for staging secondary deployment" >&2; exit 1)
+
+      - name: Verify staging deployment
+        run: |
+          if ! command -v curl >/dev/null 2>&1; then
+            apk add --no-cache curl >/dev/null
+          fi
+          fetch_url() {
+            url="$1"
+            attempt=0
+            while [ "$attempt" -lt 12 ]; do
+              if curl -fsSL "$url" >/dev/null; then
+                return 0
+              fi
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+            echo "Healthcheck failed for $url" >&2
+            return 1
+          }
+          if [ -n "${API_HEALTH_URL:-}" ]; then
+            fetch_url "$API_HEALTH_URL"
+          fi
+          if [ -n "${FRONTEND_URL:-}" ]; then
+            fetch_url "$FRONTEND_URL"
+          fi
+
+      - name: Record successful staging SHA (tag)
+        env:
+          STAGING_TAG: staging-deployed
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git tag -f "$STAGING_TAG" "$GITHUB_SHA"
+          git push origin -f "refs/tags/$STAGING_TAG"
+
+  deploy-production:
+    name: Deploy Production
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production' && github.event.inputs.confirm_production == 'yes'
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    environment: production
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
+      PROJECT_ID: ${{ vars.RAILWAY_PRODUCTION_PROJECT_ID }}
+      TARGET_ENVIRONMENT: ${{ vars.RAILWAY_PRODUCTION_ENVIRONMENT }}
+      APP_SERVICE: ${{ vars.RAILWAY_PRODUCTION_APP_SERVICE || vars.RAILWAY_PRODUCTION_BACKEND_SERVICE }}
+      SECONDARY_SERVICE: ${{ vars.RAILWAY_PRODUCTION_SECONDARY_SERVICE || vars.RAILWAY_PRODUCTION_FRONTEND_SERVICE }}
+      API_HEALTH_URL: ${{ vars.PRODUCTION_API_HEALTH_URL }}
+      FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+    steps:
+      - name: Install git (required for checkout + tags)
+        run: |
+          apk add --no-cache git >/dev/null
+
+      - uses: actions/checkout@v5.0.1
+
+      - name: Install bash (required by gate scripts)
+        run: |
+          apk add --no-cache bash >/dev/null
+
+      - name: Validate production configuration
+        run: |
+          test -n "$RAILWAY_TOKEN"
+          test -n "$PROJECT_ID"
+          test -n "$TARGET_ENVIRONMENT"
+          test -n "$APP_SERVICE"
+
+      - name: Verify promotion source (must match last staging deploy)
+        env:
+          STAGING_TAG: staging-deployed
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --tags origin
+          if ! git show-ref --verify --quiet "refs/tags/$STAGING_TAG"; then
+            echo "Missing required staging tag '$STAGING_TAG'. Deploy to staging first." >&2
+            exit 1
+          fi
+          tag_sha="$(git rev-parse "refs/tags/$STAGING_TAG")"
+          if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+            echo "Production deploy blocked: $GITHUB_SHA is not the last staged revision ($STAGING_TAG=$tag_sha)." >&2
+            echo "Deploy this SHA to staging (develop) and try again." >&2
+            exit 1
+          fi
+
+      - name: Deploy gate (quality checks)
+        run: |
+          # Needed for npm + build tooling inside the railway CLI container.
+          apk add --no-cache nodejs npm git python3 make g++ >/dev/null
+          npm ci
+          chmod +x scripts/deploy-gate.sh
+          bash scripts/deploy-gate.sh
+
+      - name: Validate production target mapping
+        env:
+          DEPLOY_ENVIRONMENT: production
+          GIT_REF: ${{ github.ref }}
+        run: |
+          chmod +x scripts/validate-deploy-target.sh
+          bash scripts/validate-deploy-target.sh
+
+      - name: Deploy app to production
+        run: |
+          DEPLOY_MESSAGE="production app ${GITHUB_SHA}"
+          railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$DEPLOY_MESSAGE"
+          attempt=0
+          while [ "$attempt" -lt 60 ]; do
+            deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
+              attempt=$((attempt + 1))
+              sleep 5
+              continue
+            fi
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
+            echo "production app deployment status: $status"
+            case "$status" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED)
+                printf '%s\n' "$deployment_json"
+                exit 1
+                ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          [ "$attempt" -lt 60 ] || (echo "Timed out waiting for production app deployment" >&2; exit 1)
+
+      - name: Deploy secondary service to production
+        if: env.SECONDARY_SERVICE != ''
+        run: |
+          DEPLOY_MESSAGE="production secondary ${GITHUB_SHA}"
+          railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" --detach -m "$DEPLOY_MESSAGE"
+          attempt=0
+          while [ "$attempt" -lt 60 ]; do
+            deployment_json="$(railway deployment list --service "$SECONDARY_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
+              attempt=$((attempt + 1))
+              sleep 5
+              continue
+            fi
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
+            echo "production secondary deployment status: $status"
+            case "$status" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED)
+                printf '%s\n' "$deployment_json"
+                exit 1
+                ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          [ "$attempt" -lt 60 ] || (echo "Timed out waiting for production secondary deployment" >&2; exit 1)
+
+      - name: Verify production deployment
+        run: |
+          if ! command -v curl >/dev/null 2>&1; then
+            apk add --no-cache curl >/dev/null
+          fi
+          fetch_url() {
+            url="$1"
+            attempt=0
+            while [ "$attempt" -lt 12 ]; do
+              if curl -fsSL "$url" >/dev/null; then
+                return 0
+              fi
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+            echo "Healthcheck failed for $url" >&2
+            return 1
+          }
+          if [ -n "${API_HEALTH_URL:-}" ]; then
+            fetch_url "$API_HEALTH_URL"
+          fi
+          if [ -n "${FRONTEND_URL:-}" ]; then
+            fetch_url "$FRONTEND_URL"
+          fi

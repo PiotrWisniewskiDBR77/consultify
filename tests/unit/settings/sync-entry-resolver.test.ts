@@ -8,10 +8,10 @@ import {
 describe('sync settings entry resolver', () => {
   it('redirects admin legacy sync settings entry to the admin integrations hub', () => {
     expect(resolveLegacySyncSettingsEntry('/settings/integrations', 'ADMIN')).toBe(
-      '/admin?tab=integrations',
+      '/admin/integrations',
     );
     expect(resolveLegacySyncSettingsEntry('/settings/integrations/', 'SUPER_ADMIN')).toBe(
-      '/admin?tab=integrations',
+      '/admin/integrations',
     );
   });
 

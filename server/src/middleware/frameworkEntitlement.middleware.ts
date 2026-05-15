@@ -12,62 +12,432 @@ interface AuthRequest extends Request {
   frameworkAccess?: { allowed: boolean; accessLevel: string; requiresLegalNotice: boolean };
 }
 
-export function requireFrameworkAccess(frameworkId: string) {
-  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const orgId = req.user?.organizationId;
-    if (!orgId) {
-      res.status(401).json({ error: 'UNAUTHORIZED' });
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+const invokeNext = (next: NextFunction, error?: unknown): void => {
+  if (typeof next !== 'function') return;
+  try {
+    if (error !== undefined) {
+      next(error as Error);
       return;
     }
-    const result = await FrameworkEntitlementService.checkAccess(orgId, frameworkId);
-    if (!result.allowed) {
-      logger.info(`[FrameworkGate] Blocked org=${orgId} from ${frameworkId}: ${result.reason}`);
-      res.status(403).json({
-        error: 'FRAMEWORK_ACCESS_DENIED',
-        framework: frameworkId,
-        accessLevel: result.accessLevel,
-        reason: result.reason,
-        upgradeCTA: result.upgradeCTA,
-      });
-      return;
-    }
-    req.frameworkAccess = {
-      allowed: true,
-      accessLevel: result.accessLevel,
-      requiresLegalNotice: result.requiresLegalNotice,
-    };
     next();
+  } catch (caught) {
+    logger.warn('[FrameworkGate] next() threw', caught);
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+const FRAMEWORK_ID_MAX_LEN = 64;
+const ORG_ID_MAX_LEN = 128;
+const FRAMEWORK_PARAM_NAME_MAX_LEN = 64;
+const FRAMEWORK_ACCESS_LEVEL_MAX_LEN = 32;
+const FRAMEWORK_REASON_MAX_LEN = 512;
+const FRAMEWORK_UPGRADE_CTA_MAX_LEN = 512;
+const VALID_FRAMEWORK_ACCESS_LEVELS = new Set(['locked', 'trial', 'full', 'educational']);
+const FRAMEWORK_ID_PATTERN = /^[A-Z0-9][A-Z0-9._-]*$/;
+const FRAMEWORK_CHECK_TIMEOUT_MS = 8000;
+class FrameworkEntitlementCheckTimeoutError extends Error {
+  code = 'FRAMEWORK_CHECK_TIMEOUT';
+
+  constructor(timeoutMs: number) {
+    super(`Framework entitlement check timed out after ${timeoutMs}ms`);
+    this.name = 'FrameworkEntitlementCheckTimeoutError';
+  }
+}
+
+const sendJsonIfHeadersOpen = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>
+): boolean => {
+  if (isResponseCommitted(res)) return false;
+  try {
+    res.status(statusCode).json(payload);
+    return true;
+  } catch (error) {
+    logger.warn('[FrameworkGate] Failed to write JSON response', error);
+    return false;
+  }
+};
+const isResponseCommitted = (res: Response): boolean =>
+  safeRead(
+    () =>
+      res.headersSent ||
+      (res as Response & { writableEnded?: boolean }).writableEnded === true,
+    false
+  );
+const isClientGone = (req: Request): boolean =>
+  safeRead(
+    () =>
+      (req as Request & { aborted?: boolean; destroyed?: boolean }).aborted === true ||
+      (req as Request & { aborted?: boolean; destroyed?: boolean }).destroyed === true ||
+      ((req as Request & { socket?: { destroyed?: boolean } }).socket?.destroyed === true),
+    false
+  );
+
+const withTimeout = async <T>(operation: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new FrameworkEntitlementCheckTimeoutError(timeoutMs));
+    }, timeoutMs);
+    timeoutHandle.unref?.();
+  });
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
+};
+
+const respondOrNextOnWriteFailure = (
+  res: Response,
+  next: NextFunction,
+  statusCode: number,
+  payload: Record<string, unknown>,
+  fallbackMessage: string
+): void => {
+  const sent = sendJsonIfHeadersOpen(res, statusCode, payload);
+  if (!sent && !isResponseCommitted(res)) {
+    invokeNext(next, new Error(fallbackMessage));
+  }
+};
+
+const isSafeParamName = (value: string): boolean =>
+  value.length > 0 &&
+  value.length <= FRAMEWORK_PARAM_NAME_MAX_LEN &&
+  /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value);
+const isWellFormedFrameworkId = (frameworkId: string): boolean =>
+  frameworkId.length > 0 &&
+  frameworkId.length <= FRAMEWORK_ID_MAX_LEN &&
+  FRAMEWORK_ID_PATTERN.test(frameworkId);
+const clampOptionalString = (value: unknown, maxChars: number): string | undefined => {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) return undefined;
+  return normalized.slice(0, maxChars);
+};
+const isEntitlementResultRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+const sanitizeAccessLevel = (value: unknown): string => {
+  const normalized = clampOptionalString(value, FRAMEWORK_ACCESS_LEVEL_MAX_LEN)?.toLowerCase();
+  if (!normalized || !VALID_FRAMEWORK_ACCESS_LEVELS.has(normalized)) return 'locked';
+  return normalized;
+};
+const buildFrameworkDeniedPayload = (framework: string, result: Record<string, unknown>) => ({
+  error: 'FRAMEWORK_ACCESS_DENIED',
+  framework,
+  accessLevel: sanitizeAccessLevel(result.accessLevel),
+  reason: clampOptionalString(result.reason, FRAMEWORK_REASON_MAX_LEN),
+  upgradeCTA: clampOptionalString(result.upgradeCTA, FRAMEWORK_UPGRADE_CTA_MAX_LEN),
+});
+const buildFrameworkAccessAttachment = (result: Record<string, unknown>) => ({
+  allowed: true,
+  accessLevel: sanitizeAccessLevel(result.accessLevel),
+  requiresLegalNotice: result.requiresLegalNotice === true,
+});
+
+const readOrgId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => (req as Request & { organizationId?: string }).organizationId, undefined)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
+  normalizeOptionalString(
+    safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
+  );
+const readBoundedOrgId = (req: AuthRequest): string | undefined => {
+  const orgId = readOrgId(req);
+  if (!orgId) return undefined;
+  if (orgId.length > ORG_ID_MAX_LEN) return undefined;
+  return orgId;
+};
+const readOwnBodyValue = (body: unknown, key: string): unknown => {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined;
+  if (!Object.prototype.hasOwnProperty.call(body, key)) return undefined;
+  return (body as Record<string, unknown>)[key];
+};
+
+export function requireFrameworkAccess(frameworkId: string) {
+  const normalizedFrameworkId = normalizeOptionalString(frameworkId);
+  const canonicalFrameworkId = safeRead(
+    () => normalizedFrameworkId?.toLocaleUpperCase('en-US'),
+    undefined as string | undefined
+  );
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    if (
+      !canonicalFrameworkId ||
+      canonicalFrameworkId.length > FRAMEWORK_ID_MAX_LEN ||
+      !isWellFormedFrameworkId(canonicalFrameworkId)
+    ) {
+      respondOrNextOnWriteFailure(
+        res,
+        next,
+        500,
+        {
+          error: 'FRAMEWORK_GATE_MISCONFIGURED',
+        },
+        'Failed to write framework gate misconfiguration response'
+      );
+      return;
+    }
+    const orgId = readBoundedOrgId(req);
+    if (!orgId) {
+      respondOrNextOnWriteFailure(
+        res,
+        next,
+        401,
+        { error: 'UNAUTHORIZED' },
+        'Failed to write framework gate unauthorized response'
+      );
+      return;
+    }
+    if (isClientGone(req)) {
+      logger.warn('[FrameworkGate] client gone before checkAccess', {
+        framework: canonicalFrameworkId,
+        orgId: clampOptionalString(orgId, 128),
+      });
+      const sent = sendJsonIfHeadersOpen(res, 503, {
+        error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+        framework: canonicalFrameworkId,
+      });
+      if (!sent && !isResponseCommitted(res)) {
+        invokeNext(next, new Error('Framework access check aborted'));
+      }
+      return;
+    }
+    try {
+      const result = await withTimeout(
+        FrameworkEntitlementService.checkAccess(orgId, canonicalFrameworkId),
+        FRAMEWORK_CHECK_TIMEOUT_MS
+      );
+      if (!isEntitlementResultRecord(result)) {
+        logger.warn('[FrameworkGate] checkAccess returned non-object result', {
+          framework: canonicalFrameworkId,
+        });
+        const sent = sendJsonIfHeadersOpen(res, 503, {
+          error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+          framework: canonicalFrameworkId,
+        });
+        if (!sent && !isResponseCommitted(res)) {
+          invokeNext(next, new Error('Framework access check returned invalid payload'));
+        }
+        return;
+      }
+      if (typeof result.allowed !== 'boolean') {
+        logger.warn('[FrameworkGate] checkAccess returned malformed allowed flag', {
+          framework: canonicalFrameworkId,
+        });
+        const sent = sendJsonIfHeadersOpen(res, 503, {
+          error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+          framework: canonicalFrameworkId,
+        });
+        if (!sent && !isResponseCommitted(res)) {
+          invokeNext(next, new Error('Framework access check returned invalid payload'));
+        }
+        return;
+      }
+      if (!result.allowed) {
+        safeRead(() => {
+          logger.info(
+            `[FrameworkGate] Blocked org=${clampOptionalString(orgId, 128) ?? '(unknown)'} from ${canonicalFrameworkId}: ${
+              clampOptionalString(result.reason, FRAMEWORK_REASON_MAX_LEN) ?? ''
+            }`
+          );
+        }, undefined);
+        respondOrNextOnWriteFailure(
+          res,
+          next,
+          403,
+          buildFrameworkDeniedPayload(canonicalFrameworkId, result),
+          'Failed to write framework gate denied response'
+        );
+        return;
+      }
+      if (isResponseCommitted(res)) {
+        logger.warn('[FrameworkGate] Response already committed before gate success', {
+          framework: canonicalFrameworkId,
+        });
+        invokeNext(next, new Error('FRAMEWORK_GATE_HEADERS_ALREADY_SENT'));
+        return;
+      }
+      req.frameworkAccess = buildFrameworkAccessAttachment(result);
+      invokeNext(next);
+    } catch (error) {
+      if (error instanceof FrameworkEntitlementCheckTimeoutError) {
+        logger.warn('[FrameworkGate] checkAccess timed out', {
+          framework: canonicalFrameworkId,
+          timeoutMs: FRAMEWORK_CHECK_TIMEOUT_MS,
+          orgId: clampOptionalString(orgId, 128),
+        });
+      } else {
+        logger.warn('[FrameworkGate] checkAccess failed', error);
+      }
+      const sent = sendJsonIfHeadersOpen(res, 503, {
+        error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+        framework: canonicalFrameworkId,
+      });
+      if (!sent && !isResponseCommitted(res)) {
+        invokeNext(next, error instanceof Error ? error : new Error('Framework access check failed'));
+      }
+    }
   };
 }
 
 export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
+  const normalizedParamName = normalizeOptionalString(paramName);
+  if (!normalizedParamName || !isSafeParamName(normalizedParamName)) {
+    return async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+      respondOrNextOnWriteFailure(
+        res,
+        next,
+        500,
+        {
+          error: 'FRAMEWORK_GATE_MISCONFIGURED',
+        },
+        'Failed to write dynamic framework gate misconfiguration response'
+      );
+    };
+  }
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const orgId = req.user?.organizationId;
-    const fwId = req.params[paramName] || req.body?.frameworkId;
+    const orgId = readBoundedOrgId(req);
+    const fwId =
+      normalizeOptionalString(safeRead(() => req.params?.[normalizedParamName], undefined)) ||
+      normalizeOptionalString(
+        safeRead(() => {
+          const body = req.body;
+          return readOwnBodyValue(body, normalizedParamName) ?? readOwnBodyValue(body, 'frameworkId');
+        }, undefined)
+      );
     if (!orgId) {
-      res.status(401).json({ error: 'UNAUTHORIZED' });
+      respondOrNextOnWriteFailure(
+        res,
+        next,
+        401,
+        { error: 'UNAUTHORIZED' },
+        'Failed to write dynamic framework gate unauthorized response'
+      );
       return;
     }
     if (!fwId) {
-      res.status(400).json({ error: 'BAD_REQUEST', message: 'Framework ID required' });
+      respondOrNextOnWriteFailure(
+        res,
+        next,
+        400,
+        { error: 'BAD_REQUEST', message: 'Framework ID required' },
+        'Failed to write dynamic framework id required response'
+      );
       return;
     }
-    const result = await FrameworkEntitlementService.checkAccess(orgId, fwId.toUpperCase());
-    if (!result.allowed) {
-      res.status(403).json({
-        error: 'FRAMEWORK_ACCESS_DENIED',
-        framework: fwId,
-        accessLevel: result.accessLevel,
-        reason: result.reason,
-        upgradeCTA: result.upgradeCTA,
+    const canonicalFwId = safeRead(() => fwId.toLocaleUpperCase('en-US'), '');
+    if (
+      !canonicalFwId ||
+      canonicalFwId.length > FRAMEWORK_ID_MAX_LEN ||
+      !isWellFormedFrameworkId(canonicalFwId)
+    ) {
+      respondOrNextOnWriteFailure(
+        res,
+        next,
+        400,
+        { error: 'BAD_REQUEST', message: 'Invalid framework ID' },
+        'Failed to write dynamic invalid framework id response'
+      );
+      return;
+    }
+    if (isClientGone(req)) {
+      logger.warn('[FrameworkGate] dynamic client gone before checkAccess', {
+        framework: canonicalFwId,
+        orgId: clampOptionalString(orgId, 128),
       });
+      const sent = sendJsonIfHeadersOpen(res, 503, {
+        error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+        framework: canonicalFwId,
+      });
+      if (!sent && !isResponseCommitted(res)) {
+        invokeNext(next, new Error('Dynamic framework access check aborted'));
+      }
       return;
     }
-    req.frameworkAccess = {
-      allowed: true,
-      accessLevel: result.accessLevel,
-      requiresLegalNotice: result.requiresLegalNotice,
-    };
-    next();
+    try {
+      const result = await withTimeout(
+        FrameworkEntitlementService.checkAccess(orgId, canonicalFwId),
+        FRAMEWORK_CHECK_TIMEOUT_MS
+      );
+      if (!isEntitlementResultRecord(result)) {
+        logger.warn('[FrameworkGate] dynamic checkAccess returned non-object result', {
+          framework: canonicalFwId,
+        });
+        const sent = sendJsonIfHeadersOpen(res, 503, {
+          error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+          framework: canonicalFwId,
+        });
+        if (!sent && !isResponseCommitted(res)) {
+          invokeNext(next, new Error('Dynamic framework access check returned invalid payload'));
+        }
+        return;
+      }
+      if (typeof result.allowed !== 'boolean') {
+        logger.warn('[FrameworkGate] dynamic checkAccess returned malformed allowed flag', {
+          framework: canonicalFwId,
+        });
+        const sent = sendJsonIfHeadersOpen(res, 503, {
+          error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+          framework: canonicalFwId,
+        });
+        if (!sent && !isResponseCommitted(res)) {
+          invokeNext(next, new Error('Dynamic framework access check returned invalid payload'));
+        }
+        return;
+      }
+      if (!result.allowed) {
+        safeRead(() => {
+          logger.info(
+            `[FrameworkGate] Blocked org=${clampOptionalString(orgId, 128) ?? '(unknown)'} from ${canonicalFwId}: ${
+              clampOptionalString(result.reason, FRAMEWORK_REASON_MAX_LEN) ?? ''
+            }`
+          );
+        }, undefined);
+        respondOrNextOnWriteFailure(
+          res,
+          next,
+          403,
+          buildFrameworkDeniedPayload(canonicalFwId, result),
+          'Failed to write dynamic framework gate denied response'
+        );
+        return;
+      }
+      if (isResponseCommitted(res)) {
+        logger.warn('[FrameworkGate] Response already committed before dynamic gate success', {
+          framework: canonicalFwId,
+        });
+        invokeNext(next, new Error('FRAMEWORK_GATE_HEADERS_ALREADY_SENT'));
+        return;
+      }
+      req.frameworkAccess = buildFrameworkAccessAttachment(result);
+      invokeNext(next);
+    } catch (error) {
+      if (error instanceof FrameworkEntitlementCheckTimeoutError) {
+        logger.warn('[FrameworkGate] dynamic checkAccess timed out', {
+          framework: canonicalFwId,
+          timeoutMs: FRAMEWORK_CHECK_TIMEOUT_MS,
+          orgId: clampOptionalString(orgId, 128),
+        });
+      } else {
+        logger.warn('[FrameworkGate] dynamic checkAccess failed', error);
+      }
+      const sent = sendJsonIfHeadersOpen(res, 503, {
+        error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+        framework: canonicalFwId,
+      });
+      if (!sent && !isResponseCommitted(res)) {
+        invokeNext(next, error instanceof Error ? error : new Error('Dynamic framework access check failed'));
+      }
+    }
   };
 }

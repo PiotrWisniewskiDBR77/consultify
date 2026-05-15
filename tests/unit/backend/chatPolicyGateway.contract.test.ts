@@ -16,7 +16,7 @@ describe('P34-B Chat policy gateway (contract)', () => {
     expect(res.decision).toMatchObject({
       version: 'p34b-v1',
       allowed: false,
-      outcome: 'deny',
+      outcome: 'refuse',
       category: 'prompt_injection',
     });
     expect(String(res.decision.rationale || '')).toContain('Prompt injection');

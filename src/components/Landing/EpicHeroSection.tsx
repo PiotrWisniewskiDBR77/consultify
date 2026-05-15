@@ -18,64 +18,25 @@ function clampNum(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
-/** Browser-chrome frame around the real app screenshot */
+/** Real product screenshot with browser-style frame and glow */
 const AppScreenshotFrame: React.FC = () => (
   <div
-    className="rounded-2xl overflow-hidden"
+    className="rounded-2xl overflow-hidden select-none"
     style={{
-      background: 'rgba(10,8,30,0.85)',
-      border: '1px solid rgba(124,58,237,0.30)',
+      border: '1px solid rgba(124,58,237,0.25)',
       boxShadow:
-        '0 0 0 1px rgba(255,255,255,0.06), 0 0 80px -20px rgba(124,58,237,0.50), 0 40px 80px -20px rgba(0,0,0,0.70)',
+        '0 0 0 1px rgba(255,255,255,0.04), 0 0 80px -20px rgba(124,58,237,0.45), 0 40px 80px -20px rgba(0,0,0,0.70)',
     }}
   >
-    {/* Chrome top bar */}
-    <div
-      className="flex items-center gap-3 px-4 py-3"
-      style={{
-        background: 'rgba(0,0,0,0.45)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
-      {/* Traffic lights */}
-      <div className="flex gap-1.5 shrink-0">
-        <div className="w-3 h-3 rounded-full bg-red-500/80" />
-        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-        <div className="w-3 h-3 rounded-full bg-green-500/70" />
-      </div>
-
-      {/* URL bar */}
-      <div
-        className="flex-1 h-6 rounded-md flex items-center gap-2 px-3"
-        style={{
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-        <span className="text-[10px] text-white/30 font-mono">consultify.ai/workspace</span>
-      </div>
-
-      {/* Sparkle icon */}
-      <Sparkles size={13} className="text-primary-400 shrink-0" />
-    </div>
-
-    {/* Screenshot */}
-    <div className="relative">
-      <img
-        src="/assets/landing/app-screenshot-hero.png"
-        alt="Consultify AI workspace"
-        className="w-full block"
-        style={{ maxHeight: '340px', objectFit: 'cover', objectPosition: 'top' }}
-      />
-      {/* Subtle bottom fade so it blends into dark bg */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-        style={{
-          background: 'linear-gradient(to bottom, transparent, rgba(10,8,30,0.90))',
-        }}
-      />
-    </div>
+    <img
+      src="/images/app-hero-chat.png"
+      alt="Consultify AI Chat — Teresa consulting assistant interface"
+      width={1024}
+      height={590}
+      className="w-full h-auto block"
+      loading="eager"
+      decoding="async"
+    />
   </div>
 );
 
@@ -255,8 +216,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               transition={{ duration: 0.45 }}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm"
             >
-              <Sparkles size={12} className="text-primary-300" />
-              <span className="text-xs font-bold text-primary-300 tracking-wide">
+              <Sparkles size={12} className="text-primary-600 dark:text-primary-300" />
+              <span className="text-xs font-bold text-primary-600 dark:text-primary-300 tracking-wide">
                 {t('landing.epicHero.eyebrow', 'Consulting Intelligence Platform')}
               </span>
             </motion.div>
@@ -269,9 +230,9 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               className="font-black tracking-tight leading-[1.0] text-slate-900 dark:text-white"
               style={{ fontSize: 'clamp(40px, 5.5vw, 88px)' }}
             >
-              <span className="block">{t('landing.profitHero.h1.line1', 'Consultify gives teams')}</span>
+              <span className="block">{t('landing.profitHero.h1.line1', 'Consultify AI.')}</span>
               <span className="block text-slate-700 dark:text-white/75 mt-1">
-                {t('landing.profitHero.h1.line2', 'consulting intelligence')}
+                {t('landing.profitHero.h1.line2', 'All the world’s business knowledge.')}
               </span>
               <span
                 className="block mt-1"
@@ -282,7 +243,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   backgroundClip: 'text',
                 }}
               >
-                {t('landing.profitHero.h1.line3', 'they can actually execute.')}
+                {t('landing.profitHero.h1.line3', 'Turned into your profits.')}
               </span>
             </motion.h1>
 
@@ -345,8 +306,8 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 }}
                 className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-slate-900 dark:text-white
                   transition-all duration-300 active:scale-[0.98]
-                  bg-slate-100 dark:bg-white/05 border border-slate-300 dark:border-white/18
-                  hover:bg-slate-200 hover:border-violet-400/45 dark:hover:bg-white/[0.09] dark:hover:border-[rgba(168,85,247,0.45)]"
+                  bg-slate-100 dark:bg-white/[0.10] border border-slate-300 dark:border-white/[0.22]
+                  hover:bg-slate-200 hover:border-violet-400/45 dark:hover:bg-white/[0.14] dark:hover:border-[rgba(168,85,247,0.50)]"
               >
                 <Play size={14} className="text-slate-600 dark:text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Try demo')}</span>
@@ -359,7 +320,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               transition={{ duration: 0.5, delay: 0.28 }}
               className="max-w-xl rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] p-4 backdrop-blur-sm"
             >
-              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary-300">
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary-600 dark:text-primary-300">
                 <Sparkles size={12} />
                 <span>{t('landing.epicHero.annaBadge', 'Start with Anna')}</span>
               </div>

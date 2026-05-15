@@ -67,6 +67,9 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
   finance: '/economics',
   mywork: '/my-work',
   'my-work': '/my-work',
+  notebook: '/my-work?tab=notebook',
+  calendar: '/meeting',
+  radar: '/my-work',
 };
 
 const normalizeValue = (value: unknown): string => String(value || '').trim();
@@ -254,9 +257,58 @@ export const useActionHandler = () => {
 
   const executeAction = useCallback(
     async (action: ActionPayload): Promise<ActionResult> => {
+      const normalizedType = String(action.type || '')
+        .trim()
+        .toUpperCase();
+      const payload = (action.payload || {}) as NavigateContract & {
+        apiCall?: string;
+        data?: Record<string, unknown>;
+        copyText?: string;
+      };
+
+      if (payload.apiCall || normalizedType === 'EXECUTE') {
+        setIsExecuting(true);
+        try {
+          const result = await Api.genericPost(payload.apiCall || '', payload.data || {});
+          return {
+            status: result?.success === false ? 'cancelled' : 'success',
+            result: {
+              message:
+                result?.message ||
+                result?.data?.message ||
+                (result?.success === false ? 'API action failed' : 'Action executed'),
+            },
+          };
+        } catch (error) {
+          toast.error('Failed to execute action');
+          return {
+            status: 'cancelled',
+            result: {
+              message: error instanceof Error ? error.message : 'Failed to execute action',
+            },
+          };
+        } finally {
+          setIsExecuting(false);
+        }
+      }
+
+      if (normalizedType === 'COPY') {
+        const textToCopy = String(payload.copyText || '');
+        if (textToCopy) {
+          await navigator.clipboard.writeText(textToCopy);
+          toast.success('Copied');
+          return { status: 'success', result: { message: 'Copied to clipboard' } };
+        }
+      }
+
       // Handle navigation actions immediately (no confirmation needed)
-      if (action.type === ACTION_TYPES.NAVIGATE || action.type === ACTION_TYPES.OPEN_VIEW) {
-        const payload = (action.payload || {}) as NavigateContract;
+      if (
+        normalizedType === ACTION_TYPES.NAVIGATE ||
+        normalizedType === ACTION_TYPES.OPEN_VIEW ||
+        String(action.type || '')
+          .trim()
+          .toLowerCase() === 'navigate'
+      ) {
         const view = String(
           payload.view || payload.target || payload.targetModule || payload.module || ''
         );
@@ -307,7 +359,7 @@ export const useActionHandler = () => {
         const initiativeId = String(action.payload?.initiativeId || '');
         const initiativeName = String(action.payload?.name || action.payload?.title || '');
         if (initiativeId) {
-          navigate(`/initiatives?id=${initiativeId}`);
+          navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
           toast.success(`Opening initiative: ${initiativeName || initiativeId}`, {
             duration: 2000,
             icon: '🎯',

@@ -21,6 +21,9 @@ export interface TransformTrace {
   sourceBranchKey?: string;
   sourceStatus?: string;
   sourceTags?: string[];
+  sourceRefs?: string[];
+  validationState?: string;
+  selected?: boolean;
   evidenceCount: number;
   artifactLinkCount: number;
 }
@@ -59,12 +62,27 @@ function getSelectedNodes(input: TransformInput): Node[] {
 }
 
 function buildTrace(node: Node, sourceTool: CanvasToolType): TransformTrace {
+  const sourceRefs = Array.isArray(node.data?.sourceRefs)
+    ? node.data.sourceRefs.map((ref: any) => String(ref))
+    : Array.isArray(node.data?.artifactLinks)
+      ? node.data.artifactLinks
+          .map((link: any) => String(link?.artifactRef?.id || link?.id || ''))
+          .filter(Boolean)
+      : [];
   return {
     sourceNodeId: node.id,
     sourceTool,
     sourceBranchKey: typeof node.data?.branchKey === 'string' ? node.data.branchKey : undefined,
     sourceStatus: typeof node.data?.status === 'string' ? node.data.status : undefined,
     sourceTags: Array.isArray(node.data?.tags) ? node.data.tags.map((tag: any) => String(tag)) : [],
+    sourceRefs,
+    validationState:
+      typeof node.data?.validationState === 'string'
+        ? node.data.validationState
+        : typeof node.data?.status === 'string'
+          ? node.data.status
+          : undefined,
+    selected: true,
     evidenceCount: Array.isArray(node.data?.evidenceLinks) ? node.data.evidenceLinks.length : 0,
     artifactLinkCount: Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks.length : 0,
   };
@@ -124,6 +142,9 @@ export function toTable(input: TransformInput): TableOutput {
         sourceNodeId: n.id,
         sourceTool: input.sourceTool,
         sourceTrace: buildTrace(n, input.sourceTool),
+        sourceRefs: Array.isArray(n.data?.sourceRefs) ? n.data.sourceRefs : [],
+        validationState: n.data?.validationState || n.data?.status || 'candidate',
+        selected: true,
         artifactLinks: Array.isArray(n.data?.artifactLinks) ? n.data.artifactLinks : [],
         tags: Array.isArray(n.data?.tags) ? n.data.tags : [],
       },
@@ -246,6 +267,103 @@ export function toProcessFlow(input: TransformInput): ProcessFlowOutput {
 }
 
 /**
+ * Flow-aware enrichment for nodes leaving Process Flow.
+ * Preserves shape semantics, lane info, and gateway type in the output trace.
+ */
+function enrichProcessFlowTrace(node: Node, trace: TransformTrace): Record<string, unknown> {
+  return {
+    ...trace,
+    flowShape: node.data?.shape || 'action',
+    flowLaneId: node.data?.laneId || null,
+    flowLaneName: node.data?.laneName || null,
+    flowGatewayKind: node.data?.gatewayKind || null,
+    flowIsDecision: ['decision', 'bpmn_gateway', 'org_handoff', 'auto_condition'].includes(
+      String(node.data?.shape || '')
+    ),
+  };
+}
+
+/**
+ * Build enriched labels when transforming FROM process flow.
+ * Adds flow shape context so the target tool retains PF meaning.
+ */
+export function fromProcessFlowToMindMap(input: TransformInput): MindMapOutput {
+  const selected = getSelectedNodes(input);
+  if (selected.length === 0) return { nodes: [], edges: [] };
+
+  const flowEdges = input.edges.filter(
+    (e) =>
+      new Set(selected.map((n) => n.id)).has(e.source) ||
+      new Set(selected.map((n) => n.id)).has(e.target)
+  );
+
+  const ordered = orderByFlow(selected, flowEdges);
+
+  const newNodes: Node[] = ordered.map((n, i) => {
+    const trace = buildTrace(n, 'process_flow');
+    const enriched = enrichProcessFlowTrace(n, trace);
+    const shape = String(n.data?.shape || 'action');
+    const prefix =
+      shape === 'decision' ? '◇ ' : shape === 'start' ? '▶ ' : shape === 'end' ? '⏹ ' : '';
+    return {
+      id: `xf-mm-${uid()}`,
+      type: 'idea',
+      position: { x: 250, y: 80 + i * 70 },
+      data: {
+        label: `${prefix}${n.data?.label || `Step ${i + 1}`}`,
+        branchKey: 'process_steps',
+        sourceType: 'xform_process_flow',
+        priority: 50,
+        sourceTrace: enriched,
+        artifactLinks: Array.isArray(n.data?.artifactLinks) ? n.data.artifactLinks : [],
+        tags: Array.isArray(n.data?.tags) ? [...n.data.tags, `flow:${shape}`] : [`flow:${shape}`],
+        notes: n.data?.laneName ? `Lane: ${n.data.laneName}` : undefined,
+      },
+    };
+  });
+
+  const newEdges: Edge[] = newNodes.map((n) => ({
+    id: `xf-edge-${uid()}`,
+    source: 'root',
+    target: n.id,
+    type: 'smoothstep',
+    animated: true,
+    data: { userCreated: true },
+  }));
+
+  return { nodes: newNodes, edges: newEdges };
+}
+
+function orderByFlow(nodes: Node[], edges: Edge[]): Node[] {
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const inDegree = new Map<string, number>();
+  for (const n of nodes) inDegree.set(n.id, 0);
+  for (const e of edges) {
+    if (nodeMap.has(e.target)) {
+      inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
+    }
+  }
+  const queue = nodes.filter((n) => (inDegree.get(n.id) || 0) === 0);
+  const result: Node[] = [];
+  const visited = new Set<string>();
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current.id)) continue;
+    visited.add(current.id);
+    result.push(current);
+    for (const e of edges) {
+      if (e.source === current.id && nodeMap.has(e.target) && !visited.has(e.target)) {
+        queue.push(nodeMap.get(e.target)!);
+      }
+    }
+  }
+  for (const n of nodes) {
+    if (!visited.has(n.id)) result.push(n);
+  }
+  return result;
+}
+
+/**
  * Dispatch the appropriate transform based on target tool.
  */
 export function transformSelection(
@@ -261,7 +379,11 @@ export function transformSelection(
 
   switch (targetTool) {
     case 'mindmap':
-      return { type: 'mindmap', data: toMindMap(input) };
+      return {
+        type: 'mindmap',
+        data:
+          input.sourceTool === 'process_flow' ? fromProcessFlowToMindMap(input) : toMindMap(input),
+      };
     case 'table':
       return { type: 'table', data: toTable(input) };
     case 'whiteboard':

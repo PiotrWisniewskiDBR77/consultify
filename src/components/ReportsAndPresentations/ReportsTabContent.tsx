@@ -4,12 +4,21 @@
  * Connected to /api/report-builder backend
  */
 
-import { Archive, Download, ExternalLink, FileText, Loader2, Share2 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Archive,
+  Download,
+  ExternalLink,
+  FileText,
+  Loader2,
+  MessageCircle,
+  Share2,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { API_URL, getHeaders } from '../../services/api';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+
 import {
   FilterableTable,
   type FilterChip,
@@ -24,6 +33,7 @@ import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNav
 import { ReportPreviewBody, ReportPreviewFooter } from './previews/ReportPreview';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
+import { useTrustState } from './useTrustState';
 
 interface ReportsTabContentProps {
   viewMode: ViewMode;
@@ -35,6 +45,7 @@ interface ReportsTabContentProps {
   error?: string | null;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
+  initialArtifactId?: string | null;
 }
 
 export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
@@ -47,14 +58,14 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedGovernance, setSelectedGovernance] = useState<ReportItem['governance'] | null>(
-    null
-  );
+  const deepLinkConsumed = useRef(false);
   const [reviewBusyArtifactId, setReviewBusyArtifactId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
@@ -233,6 +244,19 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       onClick: () => openReport(row),
     },
     {
+      id: 'discuss',
+      label: t('rap.actions.discuss', 'Discuss'),
+      icon: MessageCircle,
+      onClick: () => {
+        void openChatWithContext({
+          entityType: 'report',
+          entityId: row.id,
+          entityName: row.title,
+          pmoContext: { reportId: row.id },
+        });
+      },
+    },
+    {
       id: 'export',
       label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
       icon: Download,
@@ -267,7 +291,17 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     },
   ];
 
+  useEffect(() => {
+    if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
+    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    if (match) {
+      setSelectedId(match.id);
+      deepLinkConsumed.current = true;
+    }
+  }, [initialArtifactId, filteredData]);
+
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
+  const selectedGovernance = useTrustState(selectedItem?.artifactId, selectedItem?.governance);
   const previewItem = selectedItem
     ? {
         ...selectedItem,
@@ -283,69 +317,6 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       previewItem.governance.validationState !== 'validated') ||
     (!!previewItem?.governance?.publishState &&
       previewItem.governance.publishState !== 'private_draft');
-
-  useEffect(() => {
-    let isMounted = true;
-    setSelectedGovernance(selectedItem?.governance || null);
-
-    async function fetchGovernance() {
-      if (!selectedItem?.artifactId) {
-        setSelectedGovernance(selectedItem?.governance || null);
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/trust-state`, {
-          headers: getHeaders(),
-        });
-        if (!res.ok) {
-          if (isMounted) setSelectedGovernance(selectedItem.governance || null);
-          return;
-        }
-        const data = await res.json();
-        const payload = data?.data || data;
-        if (!isMounted) return;
-        setSelectedGovernance({
-          ...(selectedItem.governance || {}),
-          visibilityScope: payload.visibilityScope,
-          publishState: payload.publishState,
-          validationState: payload.validationState || null,
-          validationChecks: Array.isArray(payload.validationChecks) ? payload.validationChecks : [],
-          publishReviewers: Array.isArray(payload.reviewers) ? payload.reviewers : [],
-          reviewGateCount:
-            typeof payload.reviewGateCount === 'number' ? payload.reviewGateCount : 0,
-          projectId: payload.projectId || null,
-          executionRunId: payload.executionRunId || null,
-          executionState: payload.executionState || null,
-          contextSnapshotId: payload.contextSnapshotId || null,
-          canonicalHome: payload.canonicalHome || null,
-          lastTransitionAt: payload.lastTransitionAt || null,
-          sourceRefs: Array.isArray(payload.sourceRefs) ? payload.sourceRefs : [],
-          originSummary:
-            payload.originSummary && typeof payload.originSummary === 'object'
-              ? payload.originSummary
-              : null,
-          openPath: payload.openPath || null,
-          exportPath: payload.exportPath || null,
-          authority: payload.authority || null,
-          manageAccessPath: payload.manageAccessPath || null,
-          canManageAccess: Boolean(payload.canManageAccess),
-          exportHistory: Array.isArray(payload.exportHistory) ? payload.exportHistory : [],
-          reviewAuthority: payload.reviewAuthority || 'artifact_review',
-          executionAuthority: payload.executionAuthority || 'execution_spine',
-          accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
-          originLinks: Array.isArray(payload.originLinks) ? payload.originLinks : [],
-        });
-      } catch {
-        if (isMounted) setSelectedGovernance(selectedItem.governance || null);
-      }
-    }
-
-    void fetchGovernance();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedItem?.artifactId, selectedItem?.governance]);
 
   if (loading) {
     return (
@@ -458,9 +429,22 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         selectedId={selectedId}
         selectedItem={previewItem}
         onSelect={setSelectedId}
+        onOpenFull={(id) => {
+          const row = filteredData.find((x) => x.id === id);
+          if (row) openReport(row);
+        }}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => <ReportPreviewBody report={item} />}
+        renderPreview={(item) => (
+          <ReportPreviewBody
+            report={item}
+            trustProps={{
+              governance: item.governance,
+              artifactId: item.artifactId,
+              exportFormats: item.exportFormats,
+            }}
+          />
+        )}
         renderPreviewFooter={(item) => (
           <ReportPreviewFooter
             report={item}
@@ -476,7 +460,6 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
                 : undefined
             }
             reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
-            onOpen={() => openReport(item)}
             onExport={() => actions.exportReportPdf(item)}
           />
         )}

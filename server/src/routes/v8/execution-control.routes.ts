@@ -29,13 +29,17 @@ import {
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
 import {
+  applyManagerSuggestion,
+  executeManagerProblemAction,
+} from '../../services/v8/managerActionExecutionService.js';
+import {
   getExecutionControlTowerItemDetail,
   getExecutionControlTowerQueues,
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../../services/v8ExecutionControlTowerService.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -56,14 +60,7 @@ function executionControlTowerMeta() {
   return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_TOWER_CONTRACT };
 }
 
-const CONTROL_TOWER_QUEUES = new Set([
-  'late',
-  'at_risk',
-  'blocked',
-  'overloaded',
-  'stale',
-  'all',
-]);
+const CONTROL_TOWER_QUEUES = new Set(['late', 'at_risk', 'blocked', 'overloaded', 'stale', 'all']);
 
 const firstQueryString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
@@ -231,8 +228,16 @@ router.get(
       queueRaw && CONTROL_TOWER_QUEUES.has(queueRaw)
         ? (queueRaw as 'late' | 'at_risk' | 'blocked' | 'overloaded' | 'stale' | 'all')
         : 'all';
+    const windowRaw = firstQueryString(req.query.overloadWindow);
+    const overloadWindow = (
+      windowRaw && ['day', 'week', 'month'].includes(windowRaw) ? windowRaw : 'week'
+    ) as 'day' | 'week' | 'month';
 
-    const payload = await getExecutionControlTowerQueues(organizationId, { projectId, queue });
+    const payload = await getExecutionControlTowerQueues(organizationId, {
+      projectId,
+      queue,
+      overloadWindow,
+    });
     return res.json({
       data: payload,
       meta: executionControlTowerMeta(),
@@ -443,7 +448,21 @@ router.get(
   '/capacity/timeline',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const initiativeId = firstQueryString(req.query.initiativeId);
+    const initiativeRaw = firstQueryString(req.query.initiativeId);
+    const initiativeId = initiativeRaw && initiativeRaw.trim() ? initiativeRaw.trim() : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
     const weeks = await getCapacityTimeline(organizationId, initiativeId);
     return res.json({
       data: { weeks },
@@ -496,6 +515,21 @@ router.post(
   validateBody(CreateBudgetEntrySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
+    const initiativeId =
+      typeof req.body?.initiativeId === 'string' && req.body.initiativeId.trim()
+        ? req.body.initiativeId.trim()
+        : '';
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
     const id = await createBudgetEntry(organizationId, { ...req.body, createdBy: userId });
     return res.json({
       data: { success: true, id },
@@ -617,26 +651,53 @@ async function auditLog(
   }
 }
 
+function checkInterventionPermission(req: AuthRequest): { allowed: boolean; reason?: string } {
+  if (!req.user) {
+    return { allowed: false, reason: 'Authentication required' };
+  }
+  const role = String(req.userRole || req.user?.role || '').toUpperCase();
+  if (role === 'VIEWER' || role === 'READONLY') {
+    return {
+      allowed: false,
+      reason: `Role "${role}" does not have write access to execution interventions`,
+    };
+  }
+  return { allowed: true };
+}
+
 async function refreshControlTower(
   organizationId: string,
   projectId?: string,
   entityType?: 'INITIATIVE' | 'TASK',
   entityId?: string
 ) {
-  const queues = await getExecutionControlTowerQueues(organizationId, {
-    projectId,
-    queue: 'all',
-  });
-  let drillDown = null;
-  if (entityType && entityId) {
-    drillDown = await getExecutionControlTowerItemDetail(
-      organizationId,
-      entityType,
-      entityId,
-      projectId
-    );
+  const refreshedAt = new Date().toISOString();
+  try {
+    const queues = await getExecutionControlTowerQueues(organizationId, {
+      projectId,
+      queue: 'all',
+    });
+    let drillDown = null;
+    if (entityType && entityId) {
+      drillDown = await getExecutionControlTowerItemDetail(
+        organizationId,
+        entityType,
+        entityId,
+        projectId
+      );
+    }
+    return { queues, drillDown, stale: false, refreshedAt };
+  } catch {
+    return {
+      queues: null,
+      drillDown: null,
+      stale: true,
+      refreshedAt,
+      degradedNote:
+        'Partial refresh failure: some views may be stale. Retry or check control tower directly.',
+      retryHint: 'GET /api/v8/execution-control/control-tower/queues',
+    };
   }
-  return { queues, drillDown };
 }
 
 /**
@@ -648,6 +709,16 @@ router.post(
   '/interventions/reassign',
   validateBody(ReassignSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, newOwnerId, reason } = req.body;
 
@@ -657,26 +728,46 @@ router.post(
         [entityId, organizationId]
       )) as { assignee_id: string | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       await dbRun(
         `UPDATE tasks SET assignee_id = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
         [newOwnerId, entityId, organizationId]
       );
-      await auditLog(organizationId, null, 'assignee_id', old[0].assignee_id, newOwnerId, reason || null, userId);
+      await auditLog(
+        organizationId,
+        null,
+        'assignee_id',
+        old[0].assignee_id,
+        newOwnerId,
+        reason || null,
+        userId
+      );
     } else {
       const old = (await dbAll(
         `SELECT owner_execution_id FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
       )) as { owner_execution_id: string | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       await dbRun(
         `UPDATE initiatives SET owner_execution_id = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
         [newOwnerId, entityId, organizationId]
       );
-      await auditLog(organizationId, entityId, 'owner_execution_id', old[0].owner_execution_id, newOwnerId, reason || null, userId);
+      await auditLog(
+        organizationId,
+        entityId,
+        'owner_execution_id',
+        old[0].owner_execution_id,
+        newOwnerId,
+        reason || null,
+        userId
+      );
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
@@ -703,6 +794,16 @@ router.post(
   '/interventions/smooth',
   validateBody(SmoothSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, forecastStartDate, forecastEndDate, allocatedHours, reason } =
       req.body;
@@ -713,7 +814,9 @@ router.post(
         [entityId, organizationId]
       )) as { due_date: string | null; estimated_hours: number | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
@@ -726,7 +829,9 @@ router.post(
         params.push(allocatedHours);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -734,27 +839,44 @@ router.post(
         `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, null, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, allocatedHours }), reason || null, userId);
+      await auditLog(
+        organizationId,
+        null,
+        'smooth',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastEndDate, allocatedHours }),
+        reason || null,
+        userId
+      );
     } else {
       const old = (await dbAll(
-        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
-      )) as { planned_start_date: string | null; planned_end_date: string | null }[];
+      )) as {
+        forecast_start_date: string | null;
+        forecast_end_date: string | null;
+        planned_start_date: string | null;
+        planned_end_date: string | null;
+      }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
       if (forecastStartDate) {
-        sets.push('planned_start_date = ?');
+        sets.push('forecast_start_date = ?');
         params.push(forecastStartDate);
       }
       if (forecastEndDate) {
-        sets.push('planned_end_date = ?');
+        sets.push('forecast_end_date = ?');
         params.push(forecastEndDate);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -762,7 +884,15 @@ router.post(
         `UPDATE initiatives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, entityId, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastStartDate, forecastEndDate }), reason || null, userId);
+      await auditLog(
+        organizationId,
+        entityId,
+        'smooth',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastStartDate, forecastEndDate }),
+        reason || null,
+        userId
+      );
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
@@ -781,9 +911,25 @@ router.post(
   '/interventions/replan',
   validateBody(ReplanSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
-    const { entityType, entityId, forecastStartDate, forecastEndDate, forecastEffortHours, reason } =
-      req.body;
+    const {
+      entityType,
+      entityId,
+      forecastStartDate,
+      forecastEndDate,
+      forecastEffortHours,
+      reason,
+    } = req.body;
 
     if (entityType === 'TASK') {
       const old = (await dbAll(
@@ -791,7 +937,9 @@ router.post(
         [entityId, organizationId]
       )) as { due_date: string | null; estimated_hours: number | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
@@ -804,7 +952,9 @@ router.post(
         params.push(forecastEffortHours);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -812,27 +962,44 @@ router.post(
         `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, null, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, forecastEffortHours }), reason, userId);
+      await auditLog(
+        organizationId,
+        null,
+        'replan',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastEndDate, forecastEffortHours }),
+        reason,
+        userId
+      );
     } else {
       const old = (await dbAll(
-        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
-      )) as { planned_start_date: string | null; planned_end_date: string | null }[];
+      )) as {
+        forecast_start_date: string | null;
+        forecast_end_date: string | null;
+        planned_start_date: string | null;
+        planned_end_date: string | null;
+      }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
       if (forecastStartDate) {
-        sets.push('planned_start_date = ?');
+        sets.push('forecast_start_date = ?');
         params.push(forecastStartDate);
       }
       if (forecastEndDate) {
-        sets.push('planned_end_date = ?');
+        sets.push('forecast_end_date = ?');
         params.push(forecastEndDate);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -840,7 +1007,15 @@ router.post(
         `UPDATE initiatives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, entityId, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastStartDate, forecastEndDate }), reason, userId);
+      await auditLog(
+        organizationId,
+        entityId,
+        'replan',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastStartDate, forecastEndDate }),
+        reason,
+        userId
+      );
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
@@ -859,6 +1034,16 @@ router.post(
   '/interventions/escalate',
   validateBody(EscalateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, escalationType, title, description, ownerId, dueDate } = req.body;
 
@@ -866,10 +1051,10 @@ router.post(
       entityType === 'INITIATIVE'
         ? entityId
         : ((
-            (await dbAll(
-              `SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`,
-              [entityId, organizationId]
-            )) as { initiative_id: string | null }[]
+            (await dbAll(`SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`, [
+              entityId,
+              organizationId,
+            ])) as { initiative_id: string | null }[]
           )?.[0]?.initiative_id ?? null);
 
     const raidId = `raid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -915,6 +1100,101 @@ router.post(
 );
 
 // ────────────────────────────────────────────────────────────────
+// P03-F §2.4.4 — Dependency link/unlink with mandatory readback
+// ────────────────────────────────────────────────────────────────
+
+const DependencySchema = z.object({
+  action: z.enum(['link', 'unlink']),
+  fromEntityType: z.enum(['INITIATIVE', 'TASK']),
+  fromEntityId: z.string().min(1),
+  toEntityType: z.enum(['INITIATIVE', 'TASK']),
+  toEntityId: z.string().min(1),
+  semantics: z.enum(['blocking', 'waiting_on']),
+  reason: z.string().optional(),
+});
+
+router.post(
+  '/interventions/dependency',
+  validateBody(DependencySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
+    const { organizationId, userId } = getV8Context(req);
+    const { action, fromEntityType, fromEntityId, toEntityType, toEntityId, semantics, reason } =
+      req.body;
+
+    if (fromEntityType === 'TASK' && toEntityType === 'TASK') {
+      if (action === 'link') {
+        const depId = `dep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        await dbRun(
+          `INSERT OR IGNORE INTO task_dependencies (id, from_task_id, to_task_id, dependency_type, created_at)
+           VALUES (?, ?, ?, ?, NOW())`,
+          [depId, fromEntityId, toEntityId, semantics]
+        );
+      } else {
+        await dbRun(`DELETE FROM task_dependencies WHERE from_task_id = ? AND to_task_id = ?`, [
+          fromEntityId,
+          toEntityId,
+        ]);
+      }
+    } else if (fromEntityType === 'INITIATIVE' && toEntityType === 'INITIATIVE') {
+      if (action === 'link') {
+        const depId = `dep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        await dbRun(
+          `INSERT OR IGNORE INTO initiative_dependencies (id, from_initiative_id, to_initiative_id, type, organization_id, created_at)
+           VALUES (?, ?, ?, ?, ?, NOW())`,
+          [depId, fromEntityId, toEntityId, semantics, organizationId]
+        );
+      } else {
+        await dbRun(
+          `DELETE FROM initiative_dependencies WHERE from_initiative_id = ? AND to_initiative_id = ? AND organization_id = ?`,
+          [fromEntityId, toEntityId, organizationId]
+        );
+      }
+    } else {
+      return res.status(400).json({
+        error:
+          'Cross-type dependencies (INITIATIVE↔TASK) are not supported in bounded dependency interventions',
+        code: 'EXECUTION_DEPENDENCY_CROSS_TYPE',
+      });
+    }
+
+    await auditLog(
+      organizationId,
+      null,
+      `dependency_${action}`,
+      JSON.stringify({ fromEntityType, fromEntityId, toEntityType, toEntityId }),
+      JSON.stringify({ semantics }),
+      reason || null,
+      userId
+    );
+
+    const readback = await refreshControlTower(organizationId);
+    return res.json({
+      data: {
+        success: true,
+        action: `dependency_${action}`,
+        fromEntityType,
+        fromEntityId,
+        toEntityType,
+        toEntityId,
+        semantics,
+        readback,
+      },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
 // P03-B §2.4.5 — Baseline / forecast / variance read
 // ────────────────────────────────────────────────────────────────
 
@@ -930,19 +1210,24 @@ router.get(
     const { initiativeId } = req.params;
 
     const inits = (await dbAll(
-      `SELECT planned_start_date, planned_end_date, start_date, actual_end_date, progress
+      `SELECT planned_start_date, planned_end_date, forecast_start_date, forecast_end_date,
+              start_date, actual_end_date, progress
        FROM initiatives WHERE id = ? AND organization_id = ?`,
       [initiativeId, organizationId]
     )) as {
       planned_start_date: string | null;
       planned_end_date: string | null;
+      forecast_start_date: string | null;
+      forecast_end_date: string | null;
       start_date: string | null;
       actual_end_date: string | null;
       progress: number | null;
     }[];
 
     if (!inits?.length) {
-      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
     }
 
     const init = inits[0];
@@ -962,8 +1247,8 @@ router.get(
     const baselineSnapshot = snapshots.length > 0 ? snapshots[0] : null;
     const hasBaseline = !!(init.planned_start_date || init.planned_end_date);
 
-    const forecastStart = init.start_date || init.planned_start_date;
-    const forecastEnd = init.actual_end_date || init.planned_end_date;
+    const forecastStart = init.forecast_start_date || init.start_date || init.planned_start_date;
+    const forecastEnd = init.forecast_end_date || init.actual_end_date || init.planned_end_date;
 
     let startVarianceDays: number | null = null;
     let endVarianceDays: number | null = null;
@@ -991,9 +1276,7 @@ router.get(
           startDate: forecastStart,
           endDate: forecastEnd,
         },
-        variance: hasBaseline
-          ? { startDays: startVarianceDays, endDays: endVarianceDays }
-          : null,
+        variance: hasBaseline ? { startDays: startVarianceDays, endDays: endVarianceDays } : null,
         progress: init.progress,
         taskBaselineSnapshot: baselineSnapshot
           ? { snapshotAt: baselineSnapshot.snapshot_at, available: true }
@@ -1085,6 +1368,393 @@ router.get(
       },
       meta: executionControlTowerMeta(),
     });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
+// Manager 6-Lane Cockpit — analysis, decision, execution, verify
+// ────────────────────────────────────────────────────────────────
+
+import {
+  getAiManageAll,
+  getAiRecommendation,
+  getAiTriage,
+} from '../../services/v8/managerAiService.js';
+import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
+import { getManagerProblems } from '../../services/v8/managerProblemsService.js';
+
+const VALID_LANES = new Set([
+  'action-queue',
+  'decisions',
+  'blockers',
+  'workload',
+  'risk',
+  'people-change',
+]);
+
+const LaneDecisionSchema = z.object({
+  suggestionId: z.string().min(1),
+  state: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+const ManagerProblemActionSchema = z.object({
+  problemId: z.string().min(1),
+  actionId: z.string().min(1),
+});
+
+const ManagerSuggestionApplySchema = z.object({
+  suggestionId: z.string().min(1),
+});
+
+const LaneExecuteSchema = z.object({
+  decisionId: z.string().min(1),
+});
+
+/**
+ * GET /api/v8/execution-control/manager/lanes/:laneId/problems
+ * Flat list of ManagerProblemRow[] for the given lane — real data from DB.
+ */
+router.get(
+  '/manager/lanes/:laneId/problems',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const problems = await getManagerProblems(organizationId, laneId, projectId);
+    return res.json({
+      data: { problems, count: problems.length },
+      meta: executionControlMeta(),
+    });
+  })
+);
+
+router.post(
+  '/manager/lanes/:laneId/problem-actions/execute',
+  validateBody(ManagerProblemActionSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const { problemId, actionId } = req.body;
+    const result = await executeManagerProblemAction({
+      organizationId,
+      userId,
+      laneId,
+      problemId,
+      actionId,
+      projectId,
+    });
+    return res.json({
+      data: result,
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+router.post(
+  '/manager/lanes/:laneId/suggestions/apply',
+  validateBody(ManagerSuggestionApplySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const { suggestionId } = req.body;
+    const result = await applyManagerSuggestion({
+      organizationId,
+      userId,
+      laneId,
+      suggestionId,
+      projectId,
+    });
+    return res.json({
+      data: result,
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/execution-control/manager/lanes/:laneId/analysis
+ * Full 6-section analysis for a lane.
+ */
+router.get(
+  '/manager/lanes/:laneId/analysis',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const analysis = await analyzeLane(organizationId, laneId, projectId);
+    return res.json({
+      data: analysis,
+      meta: executionControlMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/decisions
+ * Submit a decision on a suggestion.
+ */
+router.post(
+  '/manager/lanes/:laneId/decisions',
+  validateBody(LaneDecisionSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const { suggestionId, state, notes } = req.body;
+    let decisionId = `ldec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      const existing = await dbAll<{ id: string }>(
+        `SELECT id
+         FROM lane_decisions
+         WHERE organization_id = ? AND lane_id = ? AND suggestion_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [organizationId, laneId, suggestionId]
+      );
+      if (existing[0]?.id) {
+        decisionId = existing[0].id;
+      }
+
+      await dbRun(
+        `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
+        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null]
+      );
+    } catch {
+      // table may not exist — create it on the fly
+      await dbRun(
+        `
+        CREATE TABLE IF NOT EXISTS lane_decisions (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          lane_id TEXT NOT NULL,
+          suggestion_id TEXT NOT NULL,
+          state TEXT NOT NULL DEFAULT 'proposed',
+          decided_by TEXT,
+          decided_at TIMESTAMPTZ,
+          notes TEXT,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `,
+        []
+      );
+      try {
+        await dbRun(
+          `CREATE UNIQUE INDEX IF NOT EXISTS lane_decisions_org_lane_suggestion_idx
+           ON lane_decisions (organization_id, lane_id, suggestion_id)`,
+          []
+        );
+      } catch {
+        // best effort for older DBs
+      }
+      await dbRun(
+        `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+         ON CONFLICT (organization_id, lane_id, suggestion_id)
+         DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
+        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null]
+      );
+    }
+
+    return res.json({
+      data: { success: true, decisionId },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/execute
+ * Create execution plan from an approved decision.
+ */
+router.post(
+  '/manager/lanes/:laneId/execute',
+  validateBody(LaneExecuteSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const { decisionId } = req.body;
+    const planId = `lep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      await dbRun(
+        `
+        CREATE TABLE IF NOT EXISTS lane_execution_plans (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          lane_id TEXT NOT NULL,
+          decision_id TEXT NOT NULL,
+          tasks_json TEXT DEFAULT '[]',
+          before_state TEXT,
+          after_state TEXT,
+          verification_status TEXT DEFAULT 'pending',
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `,
+        []
+      );
+    } catch {
+      // table exists
+    }
+
+    await dbRun(
+      `INSERT INTO lane_execution_plans (id, organization_id, lane_id, decision_id, tasks_json, verification_status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, '[]', 'pending', NOW(), NOW())`,
+      [planId, organizationId, laneId, decisionId]
+    );
+
+    // Update the decision state to in_execution
+    try {
+      await dbRun(
+        `UPDATE lane_decisions SET state = 'in_execution', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        [decisionId, organizationId]
+      );
+    } catch {
+      // best effort
+    }
+
+    return res.json({
+      data: { success: true, planId },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/execution-control/manager/lanes/:laneId/verification
+ * Get execution plans for verification readback.
+ */
+router.get(
+  '/manager/lanes/:laneId/verification',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+
+    let plans: any[] = [];
+    try {
+      plans = ((await dbAll(
+        `SELECT id, decision_id as "decisionId", tasks_json as "tasksJson",
+                before_state as "beforeState", after_state as "afterState",
+                verification_status as "verificationStatus"
+         FROM lane_execution_plans
+         WHERE organization_id = ? AND lane_id = ?
+         ORDER BY created_at DESC`,
+        [organizationId, laneId]
+      )) || []) as any[];
+
+      plans = plans.map((p) => ({
+        ...p,
+        tasks: p.tasksJson ? JSON.parse(p.tasksJson) : [],
+      }));
+    } catch {
+      // table may not exist
+    }
+
+    return res.json({
+      data: { plans },
+      meta: executionControlMeta(),
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
+// Manager AI endpoints
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/ai/recommend
+ * AI recommendation for a single problem.
+ */
+router.post(
+  '/manager/lanes/:laneId/ai/recommend',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const { problemId } = req.body;
+    if (!problemId) {
+      return res.status(400).json({ error: 'problemId required', code: 'MISSING_PARAM' });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const recommendation = await getAiRecommendation(organizationId, laneId, problemId, projectId);
+    return res.json({ data: recommendation, meta: executionControlMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/ai/triage
+ * AI clustering and prioritization of all problems in a lane.
+ */
+router.post(
+  '/manager/lanes/:laneId/ai/triage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const triage = await getAiTriage(organizationId, laneId, projectId);
+    return res.json({ data: triage, meta: executionControlMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/manager/lanes/:laneId/ai/manage-all
+ * Comprehensive AI management plan for an entire lane.
+ */
+router.post(
+  '/manager/lanes/:laneId/ai/manage-all',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const plan = await getAiManageAll(organizationId, laneId, projectId);
+    return res.json({ data: plan, meta: executionControlMeta() });
   })
 );
 

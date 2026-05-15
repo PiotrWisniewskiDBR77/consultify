@@ -39,7 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
 import { cn } from '@/utils/cn';
@@ -81,6 +81,14 @@ export interface InitiativeBatch {
   generatedBy: string;
   generatedByName: string;
   createdAt: string;
+  provenance?: {
+    assessmentRunId?: string | null;
+    assessmentDefinitionId?: string | null;
+    assessmentDefinitionVersion?: string | null;
+    workbenchRunState?: string | null;
+    interpretationReviewState?: string | null;
+    scoreReviewState?: string | null;
+  } | null;
 }
 
 export interface InitiativesManagementPanelProps {
@@ -708,7 +716,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [batches, setBatches] = useState<InitiativeBatch[]>([]);
@@ -749,7 +757,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         fetch(`/api/assessment-workflow-v2/${assessmentId}/generated-initiatives`, {
           headers: { Authorization: `Bearer ${token}` },
         }).catch(() => null),
-        fetch(`/api/assessment-workflow-v2/${assessmentId}/initiative-batches`, {
+        fetch(`/api/assessment-workflow-v2/${assessmentId}/initiative-generation-runs`, {
           headers: { Authorization: `Bearer ${token}` },
         }).catch(() => null),
       ]);
@@ -760,7 +768,20 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       }
       if (batchesResp?.ok) {
         const data = await batchesResp.json();
-        setBatches(data.batches || []);
+        setBatches(
+          Array.isArray(data.runs)
+            ? data.runs.map((run: any) => ({
+                id: String(run.id),
+                methodologyId: String(run.methodologyId || 'impact-feasibility'),
+                initiativesCount: Number(run.requestedCount || 0),
+                includeChatContext: true,
+                generatedBy: String(run.createdBy || 'system'),
+                generatedByName: String(run.createdBy || 'AI'),
+                createdAt: String(run.createdAt || new Date().toISOString()),
+                provenance: run.provenance || null,
+              }))
+            : []
+        );
       }
     } catch (err) {
       console.error('[InitiativesManagementPanel] Error:', err);
@@ -889,7 +910,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   };
 
   const handleOpenInitiative = (initiativeId: string) => {
-    navigate(`/initiatives?id=${initiativeId}`);
+    navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
   };
 
   // Close status filter popover on outside click / ESC
@@ -1289,9 +1310,19 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs"
                 >
                   <Zap size={12} className="text-purple-500" />
-                  <span className="text-slate-700 dark:text-slate-300">
-                    {batch.methodologyId} • {batch.initiativesCount} items
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-slate-700 dark:text-slate-300">
+                      {batch.methodologyId} • {batch.initiativesCount} items
+                    </span>
+                    {batch.provenance?.assessmentRunId ? (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        run {batch.provenance.assessmentRunId}
+                        {batch.provenance.workbenchRunState
+                          ? ` • ${String(batch.provenance.workbenchRunState).replace(/_/g, ' ')}`
+                          : ''}
+                      </span>
+                    ) : null}
+                  </div>
                   <span className="text-slate-400 dark:text-slate-500">
                     {new Date(batch.createdAt).toLocaleDateString('pl-PL')}
                   </span>

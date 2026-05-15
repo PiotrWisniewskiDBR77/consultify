@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import { Api } from '../../services/api';
 import { Button } from '../ui/primitives/Button';
 
 interface CapabilityResult {
@@ -44,17 +45,8 @@ export const AIMissionControl: React.FC = () => {
 
   const fetchStatus = async () => {
     try {
-      // Using direct fetch or Api service if available
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/llm/health/status', {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : '',
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const data = await response.json();
+      const response = await Api.get('/api/llm/health/status');
+      const data = response?.data ?? response;
       setStatus({
         providers: Array.isArray(data?.providers) ? data.providers : [],
         metrics: {
@@ -72,17 +64,8 @@ export const AIMissionControl: React.FC = () => {
   const testCapability = async (capId: string) => {
     setLoading((prev) => ({ ...prev, [capId]: true }));
     try {
-      const response = await fetch(`/api/llm/health/test/${capId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: localStorage.getItem('token')
-            ? `Bearer ${localStorage.getItem('token')}`
-            : '',
-        },
-        body: JSON.stringify({ context: {} }),
-      });
-      const data = await response.json();
+      const response = await Api.post(`/api/llm/health/test/${capId}`, { context: {} });
+      const data = response?.data ?? response;
       setResults((prev) => ({ ...prev, [capId]: data }));
     } catch (err: any) {
       setResults((prev) => ({

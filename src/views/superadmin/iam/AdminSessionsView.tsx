@@ -34,6 +34,10 @@ interface AdminSession {
   createdAt: string;
   expiresAt: string;
   isActive: boolean;
+  sessionType?: 'standard' | 'jit' | 'break_glass' | string;
+  requestedCapability?: string | null;
+  justification?: string | null;
+  breakGlassReason?: string | null;
   admin: {
     email: string;
     firstName: string;
@@ -46,6 +50,8 @@ interface SessionStats {
   activeSessions: number;
   mfaVerifiedSessions: number;
   uniqueAdmins: number;
+  jitActive: number;
+  breakGlassActive: number;
 }
 
 const AdminSessionsView: React.FC = () => {
@@ -76,6 +82,8 @@ const AdminSessionsView: React.FC = () => {
         activeSessions: mappedStats.active || 0,
         mfaVerifiedSessions: mappedStats.mfaVerified || 0,
         uniqueAdmins: mappedStats.uniqueAdmins || 0,
+        jitActive: mappedStats.jitActive || 0,
+        breakGlassActive: mappedStats.breakGlassActive || 0,
       });
     } catch (err: any) {
       setError(err.message || 'Failed to load sessions');
@@ -144,7 +152,7 @@ const AdminSessionsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <Card variant="bordered" className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg">
@@ -189,6 +197,30 @@ const AdminSessionsView: React.FC = () => {
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400">Unique Admins</p>
               <p className="text-xl font-semibold">{stats?.uniqueAdmins || 0}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card variant="bordered" className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-sky-500/10 rounded-lg">
+              <Clock className="w-5 h-5 text-sky-500" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">JIT Active</p>
+              <p className="text-xl font-semibold">{stats?.jitActive || 0}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card variant="bordered" className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-rose-500/10 rounded-lg">
+              <ShieldX className="w-5 h-5 text-rose-500" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Break-glass</p>
+              <p className="text-xl font-semibold">{stats?.breakGlassActive || 0}</p>
             </div>
           </div>
         </Card>

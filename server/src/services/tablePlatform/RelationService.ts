@@ -94,6 +94,36 @@ const relationService = {
         throw new Error(`Field ${fromFieldId} is not a linkedRecord field`);
       }
 
+      // Cardinality enforcement
+      const cardinality =
+        ((fieldOpts.options as Record<string, unknown>)?.cardinality as string | undefined) ??
+        'many-to-many';
+      if (cardinality === 'one-to-one' || cardinality === 'one-to-many') {
+        const existingCount = await db.query(
+          'SELECT COUNT(*)::int AS cnt FROM tp_record_links WHERE from_record_id = $1 AND from_field_id = $2',
+          [fromRecordId, fromFieldId]
+        );
+        const cnt = (existingCount.rows[0] as { cnt: number }).cnt;
+        if (cardinality === 'one-to-one' && cnt + toRecordIds.length > 1) {
+          throw new Error(
+            `Cardinality violation: field ${fromFieldId} allows only one-to-one links (existing: ${cnt}, adding: ${toRecordIds.length})`
+          );
+        }
+        if (cardinality === 'one-to-many' && toRecordIds.length > 0) {
+          for (const toRecordId of toRecordIds) {
+            const reverseCount = await db.query(
+              `SELECT COUNT(*)::int AS cnt FROM tp_record_links WHERE to_record_id = $1 AND from_field_id = $2 AND from_record_id != $3`,
+              [toRecordId, fromFieldId, fromRecordId]
+            );
+            if ((reverseCount.rows[0] as { cnt: number }).cnt > 0) {
+              throw new Error(
+                `Cardinality violation: target record ${toRecordId} is already linked from another record (one-to-many constraint on field ${fromFieldId})`
+              );
+            }
+          }
+        }
+      }
+
       const sourceRecord = (
         await db.query('SELECT table_id FROM tp_records WHERE id = $1', [fromRecordId])
       ).rows[0] as { table_id: string } | undefined;
@@ -234,9 +264,33 @@ const relationService = {
     }
   },
 
-  async getLinkedRecords(recordId: string, fieldId: string): Promise<any[]> {
+  async getLinkedRecords(recordId: string, fieldId: string, includeStale = false): Promise<any[]> {
     const db = getDatabase();
     try {
+      if (includeStale) {
+        // LEFT JOIN to return degraded placeholders for stale/deleted records
+        const result = await db.query(
+          `SELECT l.to_record_id,
+                  r.id IS NOT NULL AS record_exists,
+                  CASE WHEN r.id IS NOT NULL THEN r.id ELSE l.to_record_id END AS id,
+                  CASE WHEN r.id IS NOT NULL THEN r.table_id ELSE NULL END AS table_id,
+                  CASE WHEN r.id IS NOT NULL THEN r.data ELSE '{}' END AS data,
+                  CASE WHEN r.id IS NOT NULL THEN r.created_at ELSE l.created_at END AS created_at,
+                  CASE WHEN r.id IS NOT NULL THEN r.updated_at ELSE l.created_at END AS updated_at,
+                  CASE WHEN r.id IS NULL THEN true ELSE false END AS __stale
+           FROM tp_record_links l
+           LEFT JOIN tp_records r ON r.id = l.to_record_id
+           WHERE l.from_record_id = $1 AND l.from_field_id = $2
+           ORDER BY l.created_at ASC`,
+          [recordId, fieldId]
+        );
+        return (result.rows ?? []).map((row: any) => ({
+          ...row,
+          __stale: row.__stale ?? false,
+          __display: row.__stale ? '[Deleted Record]' : undefined,
+        }));
+      }
+
       const result = await db.query(
         `SELECT r.* FROM tp_record_links l
          JOIN tp_records r ON r.id = l.to_record_id

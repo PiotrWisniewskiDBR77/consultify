@@ -107,7 +107,10 @@ const ActionChip: React.FC<{
     onClick={onClick}
     className="group flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/[0.12] hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all text-sm"
   >
-    <Icon size={14} className="text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+    <Icon
+      size={14}
+      className="text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+    />
     <span className="text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
       {label}
     </span>
@@ -116,7 +119,10 @@ const ActionChip: React.FC<{
         {badge}
       </span>
     )}
-    <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
+    <ChevronRight
+      size={12}
+      className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
+    />
   </button>
 );
 
@@ -202,9 +208,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     const system = signals.filter((s) => s.type === 'SYSTEM_ALERT');
     const tickets = signals.filter((s) => s.type === 'CLIENT_TICKET');
     const feedback = signals.filter((s) => s.type === 'USER_FEEDBACK');
-    const critical = signals.filter(
-      (s) => String(s.severity || '').toUpperCase() === 'CRITICAL'
-    );
+    const critical = signals.filter((s) => String(s.severity || '').toUpperCase() === 'CRITICAL');
     return { system, tickets, feedback, critical, total: signals.length };
   }, [signals]);
 
@@ -257,16 +261,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         />
         <MetricPill icon={Users} label="Active 7d" value={stats.activeUsers7d} />
         <MetricPill icon={Brain} label="AI Calls 7d" value={stats.aiCalls.toLocaleString()} />
-        <MetricPill
-          icon={Zap}
-          label="Tokens 7d"
-          value={`${(stats.tokens / 1000).toFixed(1)}k`}
-        />
-        <MetricPill
-          icon={DollarSign}
-          label="MRR Est"
-          value={`$${stats.revenue.toFixed(0)}`}
-        />
+        <MetricPill icon={Zap} label="Tokens 7d" value={`${(stats.tokens / 1000).toFixed(1)}k`} />
+        <MetricPill icon={DollarSign} label="MRR Est" value={`$${stats.revenue.toFixed(0)}`} />
       </div>
 
       {/* Row 3: Two-column — Signals summary + Activity */}
@@ -316,7 +312,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             ) : (
               topSignals.map((s) => (
                 <div key={s.id} className="px-4 py-2.5 flex items-start gap-2.5">
-                  <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${severityDot(s.severity)}`} />
+                  <span
+                    className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${severityDot(s.severity)}`}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
                       {s.title || 'Untitled'}
@@ -360,9 +358,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 No recent activity recorded yet.
               </p>
             ) : (
-              activities.slice(0, 20).map((act, idx) => (
-                <ActivityRow key={act.id || idx} activity={act} />
-              ))
+              activities
+                .slice(0, 20)
+                .map((act, idx) => <ActivityRow key={act.id || idx} activity={act} />)
             )}
           </div>
         </div>

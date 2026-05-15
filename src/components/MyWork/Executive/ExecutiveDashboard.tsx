@@ -70,8 +70,8 @@ const getGreetingText = (t: (key: string, fallback: string) => string): string =
   return t('executive.greeting.evening', 'Good evening');
 };
 
-const formatDate = (): string => {
-  return new Date().toLocaleDateString('en-US', {
+const formatDate = (locale: string = 'en-US'): string => {
+  return new Date().toLocaleDateString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -84,6 +84,7 @@ const InitiativeCard: React.FC<{
   initiative: InitiativeProgress;
   onClick?: () => void;
 }> = ({ initiative, onClick }) => {
+  const { t } = useTranslation();
   const statusColors: Record<string, string> = {
     ACTIVE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
     IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -139,12 +140,12 @@ const InitiativeCard: React.FC<{
 
       <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
         <span>
-          {initiative.tasksDone}/{initiative.tasksTotal} tasks
+          {initiative.tasksDone}/{initiative.tasksTotal} {t('executive.initiatives.tasks', 'tasks')}
         </span>
         {initiative.overdueCount > 0 && (
           <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
             <AlertTriangle size={10} />
-            {initiative.overdueCount} overdue
+            {initiative.overdueCount} {t('executive.actions.overdue', 'overdue')}
           </span>
         )}
       </div>
@@ -197,7 +198,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   onDecisionReject,
   refreshTrigger,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAppStore((state) => state.currentUser);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -225,15 +226,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       overdueCount: number;
       onTimeRate: number;
       trend: TrendDir;
-    };
-    decisions: { pending: number; avgWaitDays: number; critical: number; trend: TrendDir };
-    team: { avgCapacity: number; overloaded: number; available: number; trend: TrendDir };
-    risk: { level: RiskLevel; blockers: number; escalations: number; trend: TrendDir };
+    } | null;
+    decisions: { pending: number; avgWaitDays: number; critical: number; trend: TrendDir } | null;
+    team: { avgCapacity: number; overloaded: number; available: number; trend: TrendDir } | null;
+    risk: { level: RiskLevel; blockers: number; escalations: number; trend: TrendDir } | null;
   }>({
-    tasks: { completed: 0, total: 0, overdueCount: 0, onTimeRate: 0, trend: 'stable' },
-    decisions: { pending: 0, avgWaitDays: 0, critical: 0, trend: 'stable' },
-    team: { avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable' },
-    risk: { level: 'low', blockers: 0, escalations: 0, trend: 'stable' },
+    tasks: null,
+    decisions: null,
+    team: null,
+    risk: null,
   });
 
   const [actionItems, setActionItems] = useState<any[]>([]);
@@ -245,9 +246,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [operatorOverview, setOperatorOverview] = useState<any>(null);
   const [operatorActionBusyId, setOperatorActionBusyId] = useState<string | null>(null);
 
-  const isPolish =
-    t('language', 'en') === 'pl' ||
-    (typeof navigator !== 'undefined' && navigator.language?.startsWith('pl'));
+  const currentLang = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+
+  const dateLocaleMap: Record<string, string> = {
+    en: 'en-US',
+    pl: 'pl-PL',
+    de: 'de-DE',
+    es: 'es-ES',
+    ar: 'ar-SA',
+    jp: 'ja-JP',
+  };
+  const dateLocale = dateLocaleMap[currentLang] || 'en-US';
 
   const greetingText = getGreetingText(t);
   const userName =
@@ -294,47 +303,47 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               : 0;
           const prevOnTimeRate = stats.previous?.onTimeRate || 0;
 
-          const currentHealthScore = Math.round((completionRate + onTimeRate) / 2);
-          const previousHealthScore = Math.round((prevCompletionRate + prevOnTimeRate) / 2);
+          const executionScore = completionRate;
+
+          let decisionsScore = 50;
+          if (decisionsRes.status === 'fulfilled' && Array.isArray(decisionsRes.value)) {
+            const pendingCount = decisionsRes.value.length;
+            decisionsScore =
+              pendingCount === 0 ? 100 : Math.round(Math.max(20, 100 - pendingCount * 10));
+          }
+
+          let capacityScore = 0;
+          if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)) {
+            const team = teamRes.value || [];
+            if (team.length > 0) {
+              const avgUtil =
+                team.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) / team.length;
+              capacityScore = Math.round(Math.min(100, avgUtil));
+            }
+          }
+
+          const blockedCount = stats.byStatus?.blocked || 0;
+          const riskScore =
+            stats.total > 0
+              ? Math.round(Math.max(0, 100 - (blockedCount / Math.max(1, stats.total)) * 100))
+              : 80;
+
+          const currentHealthScore = Math.round(
+            executionScore * 0.4 + decisionsScore * 0.2 + capacityScore * 0.2 + riskScore * 0.2
+          );
+          const previousHealthScore = Math.round(
+            prevCompletionRate * 0.4 + 50 * 0.2 + 0 * 0.2 + 80 * 0.2
+          );
 
           setHealthScore({
             score: currentHealthScore,
             previousScore: previousHealthScore,
             trend: stats.trend || 'stable',
             breakdown: {
-              execution: completionRate,
-              decisions:
-                decisionsRes.status === 'fulfilled' && Array.isArray(decisionsRes.value)
-                  ? (() => {
-                      const decs = decisionsRes.value || [];
-                      const resolved = decs.filter((d: any) =>
-                        ['APPROVED', 'RESOLVED', 'COMPLETED'].includes(
-                          String(d.status).toUpperCase()
-                        )
-                      );
-                      return decs.length > 0
-                        ? Math.round((resolved.length / decs.length) * 100)
-                        : 0;
-                    })()
-                  : 0,
-              capacity:
-                teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
-                  ? (() => {
-                      const team = teamRes.value || [];
-                      if (team.length === 0) return 0;
-                      const avgUtil =
-                        team.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) /
-                        team.length;
-                      return Math.round(Math.min(100, avgUtil));
-                    })()
-                  : 0,
-              risk: stats.byStatus?.blocked
-                ? Math.round(
-                    Math.max(0, 100 - (stats.byStatus.blocked / Math.max(1, stats.total)) * 100)
-                  )
-                : completionRate > 0
-                  ? Math.round(completionRate * 0.9)
-                  : 0,
+              execution: executionScore,
+              decisions: decisionsScore,
+              capacity: capacityScore,
+              risk: riskScore,
             },
           });
 
@@ -521,7 +530,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const progressItems: InitiativeProgress[] = Array.isArray(analytics?.initiativeBreakdown)
             ? analytics.initiativeBreakdown.slice(0, 6).map((i: any) => ({
                 id: i.id,
-                name: i.name || i.title || 'Untitled',
+                name: i.name || i.title || t('executive.initiatives.untitled', 'Untitled'),
                 status: i.status || 'DRAFT',
                 priority: i.priority || 'MEDIUM',
                 tasksDone: Math.max(0, Number(i.tasksTotal || 0) - Number(i.tasksOpen || 0)),
@@ -537,11 +546,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             setKpiData((prev) => ({
               ...prev,
               team: {
-                ...prev.team,
                 avgCapacity: Number(analytics.capacity.avgUtilization || 0),
                 overloaded: Array.isArray(analytics.overloads)
                   ? analytics.overloads.length
-                  : prev.team.overloaded,
+                  : (prev.team?.overloaded ?? 0),
                 available: availableCount,
                 trend:
                   Number(analytics.capacity.shortfallHours || 0) > 0 ||
@@ -575,16 +583,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         setLastUpdated(new Date());
 
         try {
-          const token = localStorage.getItem('token');
-          const pRes = await fetch('/api/my-work/work-patterns', {
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          });
-          if (pRes.ok) setPatterns(await pRes.json());
+          const pRes = await Api.get('/my-work/work-patterns');
+          if (pRes) setPatterns(pRes);
         } catch {
           /* ignore */
         }
       } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
         setLoadError(t('executive.loadError', 'Failed to load dashboard data'));
         toast.error(t('executive.loadError', 'Failed to load dashboard data'));
       } finally {
@@ -635,21 +639,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       try {
         setOperatorActionBusyId(templateKey);
         await Api.proposeAIOperatorIntervention({ templateKey });
-        toast.success(
-          isPolish
-            ? 'Interwencja operatora została zaproponowana.'
-            : 'Operator intervention proposed.'
-        );
+        toast.success(t('executive.operator.proposed', 'Operator intervention proposed.'));
         await fetchDashboardData(true);
       } catch {
-        toast.error(
-          isPolish ? 'Nie udało się zaproponować interwencji.' : 'Failed to propose intervention.'
-        );
+        toast.error(t('executive.operator.proposeFailed', 'Failed to propose intervention.'));
       } finally {
         setOperatorActionBusyId(null);
       }
     },
-    [fetchDashboardData, isPolish]
+    [fetchDashboardData, t]
   );
 
   const handleAcceptOperatorIntervention = useCallback(
@@ -657,17 +655,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       try {
         setOperatorActionBusyId(actionId);
         await Api.acceptAIOperatorIntervention(actionId);
-        toast.success(isPolish ? 'Interwencja została zaakceptowana.' : 'Intervention accepted.');
+        toast.success(t('executive.operator.accepted', 'Intervention accepted.'));
         await fetchDashboardData(true);
       } catch {
-        toast.error(
-          isPolish ? 'Nie udało się zaakceptować interwencji.' : 'Failed to accept intervention.'
-        );
+        toast.error(t('executive.operator.acceptFailed', 'Failed to accept intervention.'));
       } finally {
         setOperatorActionBusyId(null);
       }
     },
-    [fetchDashboardData, isPolish]
+    [fetchDashboardData, t]
   );
 
   const handleExecuteOperatorIntervention = useCallback(
@@ -675,17 +671,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       try {
         setOperatorActionBusyId(actionId);
         await Api.executeAIOperatorIntervention(actionId);
-        toast.success(isPolish ? 'Interwencja została wykonana.' : 'Intervention executed.');
+        toast.success(t('executive.operator.executed', 'Intervention executed.'));
         await fetchDashboardData(true);
       } catch {
-        toast.error(
-          isPolish ? 'Nie udało się wykonać interwencji.' : 'Failed to execute intervention.'
-        );
+        toast.error(t('executive.operator.executeFailed', 'Failed to execute intervention.'));
       } finally {
         setOperatorActionBusyId(null);
       }
     },
-    [fetchDashboardData, isPolish]
+    [fetchDashboardData, t]
   );
 
   const handleRejectOperatorIntervention = useCallback(
@@ -693,17 +687,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       try {
         setOperatorActionBusyId(actionId);
         await Api.rejectAIOperatorIntervention(actionId);
-        toast.success(isPolish ? 'Interwencja została odrzucona.' : 'Intervention rejected.');
+        toast.success(t('executive.operator.rejected', 'Intervention rejected.'));
         await fetchDashboardData(true);
       } catch {
-        toast.error(
-          isPolish ? 'Nie udało się odrzucić interwencji.' : 'Failed to reject intervention.'
-        );
+        toast.error(t('executive.operator.rejectFailed', 'Failed to reject intervention.'));
       } finally {
         setOperatorActionBusyId(null);
       }
     },
-    [fetchDashboardData, isPolish]
+    [fetchDashboardData, t]
   );
 
   return (
@@ -727,14 +719,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
             <Calendar size={14} />
-            {formatDate()}
+            {formatDate(dateLocale)}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-400 dark:text-slate-500 mr-2">
             {t('executive.lastUpdated', 'Updated')}:{' '}
-            {lastUpdated.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+            {lastUpdated.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
           </span>
 
           <button
@@ -784,7 +776,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       <AIOperatorOverviewCard
         overview={operatorOverview}
         loading={loading}
-        isPolish={isPolish}
         onOpenSection={(section) => onNavigate?.(section)}
         onProposeIntervention={handleProposeOperatorIntervention}
         onAcceptIntervention={handleAcceptOperatorIntervention}
@@ -797,14 +788,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       {patterns && (
         <div className="mt-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
           <h3 className="text-sm font-semibold mb-3 text-slate-700 dark:text-slate-200">
-            {isPolish ? 'Twoje wzorce pracy' : 'Your Work Patterns'}
+            {t('executive.patterns.title', 'Work Patterns')}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
             {patterns.avgVelocity != null && (
               <div className="text-center">
                 <div className="text-lg font-bold text-purple-600">{patterns.avgVelocity}</div>
                 <div className="text-[10px] text-slate-500">
-                  {isPolish ? 'tasków/tydzień' : 'tasks/week'}
+                  {t('executive.patterns.tasksPerWeek', 'tasks/week')}
                 </div>
               </div>
             )}
@@ -812,7 +803,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               <div className="text-center">
                 <div className="text-lg font-bold text-blue-600">{patterns.avgCompletionDays}d</div>
                 <div className="text-[10px] text-slate-500">
-                  {isPolish ? 'śr. czas zadania' : 'avg task time'}
+                  {t('executive.patterns.avgTaskTime', 'avg task time')}
                 </div>
               </div>
             )}
@@ -820,7 +811,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               <div className="text-center">
                 <div className="text-lg font-bold text-amber-600">{patterns.avgDecisionDays}d</div>
                 <div className="text-[10px] text-slate-500">
-                  {isPolish ? 'śr. czas decyzji' : 'avg decision time'}
+                  {t('executive.patterns.avgDecisionTime', 'avg decision time')}
                 </div>
               </div>
             )}
@@ -828,18 +819,28 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               <div className="text-center">
                 <div className="text-lg font-bold text-red-600">{patterns.overdueRate}%</div>
                 <div className="text-[10px] text-slate-500">
-                  {isPolish ? 'spóźnień' : 'overdue rate'}
+                  {t('executive.patterns.overdueRate', 'overdue rate')}
                 </div>
               </div>
             )}
           </div>
           {patterns.insights?.length > 0 && (
             <div className="space-y-1">
-              {patterns.insights.map((insight: string, i: number) => (
-                <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
-                  💡 {insight}
-                </p>
-              ))}
+              {patterns.insights.map((insight: any, i: number) => {
+                const text =
+                  typeof insight === 'string'
+                    ? insight
+                    : t(`executive.patterns.insight.${insight.key}`, insight.key, insight.params);
+                const renderedText =
+                  typeof text === 'string' || typeof text === 'number'
+                    ? text
+                    : JSON.stringify(text);
+                return (
+                  <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
+                    💡 {renderedText}
+                  </p>
+                );
+              })}
             </div>
           )}
         </div>

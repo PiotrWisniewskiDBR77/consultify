@@ -17,62 +17,34 @@ const STATUS_META = {
 };
 
 const VISIBILITY_META = {
-  private: {
-    labelEn: 'Private',
-    labelPl: 'Prywatne',
-    className: 'border-slate-500/30 bg-slate-500/10 text-slate-200',
-  },
-  project: {
-    labelEn: 'Project',
-    labelPl: 'Projekt',
-    className: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200',
-  },
-  organization: {
-    labelEn: 'Organization',
-    labelPl: 'Organizacja',
-    className: 'border-violet-500/30 bg-violet-500/10 text-violet-200',
-  },
-  review_shared: {
-    labelEn: 'Needs review',
-    labelPl: 'Do przegladu',
-    className: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
-  },
-  demo: {
-    labelEn: 'Demo',
-    labelPl: 'Demo',
-    className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
-  },
+  private: { className: 'border-slate-500/30 bg-slate-500/10 text-slate-200' },
+  project: { className: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200' },
+  organization: { className: 'border-violet-500/30 bg-violet-500/10 text-violet-200' },
+  review_shared: { className: 'border-amber-500/30 bg-amber-500/10 text-amber-200' },
+  demo: { className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' },
 } as const;
 
-const REVIEW_META = {
-  private_draft: {
-    labelEn: 'Private draft',
-    labelPl: 'Szkic prywatny',
-  },
-  reviewable_share: {
-    labelEn: 'Review ready',
-    labelPl: 'Gotowe do review',
-  },
-  in_review: {
-    labelEn: 'In review',
-    labelPl: 'W review',
-  },
-  approved: {
-    labelEn: 'Approved',
-    labelPl: 'Zatwierdzone',
-  },
-  published: {
-    labelEn: 'Published',
-    labelPl: 'Opublikowane',
-  },
-} as const;
+const VISIBILITY_I18N_KEY: Record<string, string> = {
+  private: 'myWork.radar.visibility.private',
+  project: 'myWork.radar.visibility.project',
+  organization: 'myWork.radar.visibility.organization',
+  review_shared: 'myWork.radar.visibility.reviewShared',
+  demo: 'myWork.radar.visibility.demo',
+};
+
+const REVIEW_I18N_KEY: Record<string, string> = {
+  private_draft: 'myWork.radar.reviewState.privateDraft',
+  reviewable_share: 'myWork.radar.reviewState.reviewReady',
+  in_review: 'myWork.radar.reviewState.inReview',
+  approved: 'myWork.radar.reviewState.approved',
+  published: 'myWork.radar.reviewState.published',
+};
 
 export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
   block,
   onAction,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const payload = block.payload;
   const orderedArtifactOutputs = [...(payload.artifactOutputs || [])].sort((left, right) => {
     const leftScore = left.visibilityScope === 'review_shared' ? 0 : 1;
@@ -123,7 +95,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
         {orderedArtifactOutputs.length > 0 ? (
           <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
-              {isPolish ? 'Strumień outputów' : 'Output flow'}
+              {t('myWork.radar.outputFlow')}
             </div>
             {orderedArtifactOutputs.map((artifact) => {
               const openTarget =
@@ -133,10 +105,9 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                     ? ('sheet' as const)
                     : ('report' as const);
               const visibilityMeta = VISIBILITY_META[artifact.visibilityScope];
-              const reviewMeta =
-                artifact.publishState &&
-                artifact.publishState in REVIEW_META
-                  ? REVIEW_META[artifact.publishState as keyof typeof REVIEW_META]
+              const reviewI18nKey =
+                artifact.publishState && artifact.publishState in REVIEW_I18N_KEY
+                  ? REVIEW_I18N_KEY[artifact.publishState]
                   : null;
               return (
                 <button
@@ -165,11 +136,11 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                       <span
                         className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] ${visibilityMeta.className}`}
                       >
-                        {isPolish ? visibilityMeta.labelPl : visibilityMeta.labelEn}
+                        {t(VISIBILITY_I18N_KEY[artifact.visibilityScope])}
                       </span>
-                      {reviewMeta ? (
+                      {reviewI18nKey ? (
                         <span className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-200">
-                          {isPolish ? reviewMeta.labelPl : reviewMeta.labelEn}
+                          {t(reviewI18nKey)}
                           {artifact.reviewGateCount && artifact.reviewGateCount > 0
                             ? ` · ${artifact.reviewGateCount}`
                             : ''}
@@ -178,22 +149,14 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                     </div>
                     <div className="mt-1 text-xs text-slate-300/70">
                       {artifact.originRuntime === 'presentation'
-                        ? isPolish
-                          ? `Prezentacja · ${artifact.deliveryState}`
-                          : `Presentation · ${artifact.deliveryState}`
+                        ? `${t('myWork.radar.artifactType.presentation')} · ${artifact.deliveryState}`
                         : artifact.originRuntime === 'sheet'
-                          ? isPolish
-                            ? `Arkusz · ${artifact.deliveryState}`
-                            : `Sheet · ${artifact.deliveryState}`
-                          : isPolish
-                            ? `Raport · ${artifact.deliveryState}`
-                            : `Report · ${artifact.deliveryState}`}
+                          ? `${t('myWork.radar.artifactType.sheet')} · ${artifact.deliveryState}`
+                          : `${t('myWork.radar.artifactType.report')} · ${artifact.deliveryState}`}
                     </div>
                     {artifact.publishState ? (
                       <div className="mt-1 text-[11px] text-slate-400">
-                        {isPolish
-                          ? 'Review i visibility są spójne z Outputs Library.'
-                          : 'Review and visibility stay aligned with the Outputs Library.'}
+                        {t('myWork.radar.outputsLibraryNote')}
                       </div>
                     ) : null}
                   </div>
@@ -211,9 +174,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                 sourceBlock: 'executionCurrent',
                 intent: 'sequence_execution',
                 title: block.title,
-                starterPrompt: isPolish
-                  ? 'Ułóż mi najlepszą kolejność działań wykonawczych na podstawie bieżących strumieni.'
-                  : 'Sequence the best execution order for me based on the current streams.',
+                starterPrompt: t('myWork.radar.sequencingPrompt'),
                 entityType: 'home',
                 entityId: 'execution-current',
                 contextData: {
@@ -230,7 +191,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
           }
           className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/[0.08]"
         >
-          {isPolish ? 'Poproś AI o sequencing' : 'Ask AI for sequencing'}
+          {t('myWork.radar.askAISequencing')}
         </button>
       </div>
     </HomeBlockShell>

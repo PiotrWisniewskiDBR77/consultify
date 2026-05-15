@@ -23,13 +23,29 @@
 
 export const P08_COPILOT_CONTRACT = 'teresa_copilot_v1';
 
-export type HandoffTargetModule = 'radar' | 'initiatives' | 'calendar' | 'notebook';
+export type HandoffTargetModule =
+  | 'radar'
+  | 'initiatives'
+  | 'calendar'
+  | 'notebook'
+  | 'interview'
+  | 'ideas_table'
+  | 'excele';
 
 export interface TeresaHandoffContext {
   origin: 'teresa';
   user_intent: string;
   active_surface: string;
   org_context_ref: string;
+  operation_contract_ref?: string | null;
+  runtime_binding?: {
+    conversation_id?: string | null;
+    session_id?: string | null;
+    context_snapshot_id?: string | null;
+    execution_run_id?: string | null;
+    artifact_run_id?: string | null;
+    tool_invocation_id?: string | null;
+  };
   bounded_context_pack: Array<{
     ref: string;
     type: string;
@@ -101,6 +117,25 @@ export interface NotebookHandoffPayload {
   evidence_pointers: string[];
 }
 
+export interface InterviewHandoffPayload {
+  interview_handoff_context: {
+    action: 'generate_insight' | 'submit_review' | 'export_initiative' | 'view_evidence';
+    session_ids?: string[];
+    insight_id?: string;
+    title?: string;
+  };
+  evidence_pointers: string[];
+}
+
+export interface IdeasTableHandoffPayload {
+  ideas_table_intent: {
+    workspace_id: string;
+    message: string;
+    target_table_id?: string | null;
+  };
+  proposal_only: true;
+}
+
 export const P08_HANDOFF_TARGETS = {
   radar: {
     module: 'Radar' as const,
@@ -121,10 +156,7 @@ export const P08_HANDOFF_TARGETS = {
     contract_ref: 'P11',
     description: 'Living object (triage→plan→execute) with write-truth governance',
     required_common_payload: true,
-    required_extra_fields: [
-      'initiative_seed',
-      'proposal_only',
-    ] as const,
+    required_extra_fields: ['initiative_seed', 'proposal_only'] as const,
   },
   calendar: {
     module: 'Kalendarz' as const,
@@ -149,9 +181,38 @@ export const P08_HANDOFF_TARGETS = {
       'evidence_pointers',
     ] as const,
   },
+  interview: {
+    module: 'Wywiady' as const,
+    contract_ref: 'P10',
+    description: 'Interview insights — generate, review, export, evidence map',
+    required_common_payload: true,
+    required_extra_fields: ['interview_handoff_context', 'evidence_pointers'] as const,
+  },
+  ideas_table: {
+    module: 'My Work Ideas Table' as const,
+    contract_ref: 'MW_IDEAS_TABLE',
+    description: 'Governed proposal -> approval -> execute for Idea table creation/update',
+    required_common_payload: true,
+    required_extra_fields: ['ideas_table_intent', 'proposal_only'] as const,
+  },
+  excele: {
+    module: 'Excele Workbooks' as const,
+    contract_ref: 'P23',
+    description: 'Workbook generation handoff lane',
+    required_common_payload: true,
+    required_extra_fields: ['prompt'] as const,
+  },
 } as const;
 
-export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = ['radar', 'initiatives', 'calendar', 'notebook'];
+export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
+  'radar',
+  'initiatives',
+  'calendar',
+  'notebook',
+  'interview',
+  'ideas_table',
+  'excele',
+];
 
 export const P08_COMMON_PAYLOAD_FIELDS = [
   'origin',
@@ -194,16 +255,13 @@ export const P08_ACTION_ENVELOPE_TRANSITIONS: Record<ActionEnvelopeState, Action
 export const P08_ACTION_ENVELOPE_RULES = {
   approve_not_review:
     'approve(run) ≠ review(artifact): user must explicitly approve execution, not just review the proposal',
-  no_silent_writes:
-    'No auto-apply, no background save. Every mutation requires explicit approval.',
+  no_silent_writes: 'No auto-apply, no background save. Every mutation requires explicit approval.',
   no_parallel_approvals:
     'Only one active approval request per user/session. New proposals must cancel/version previous.',
-  idempotency_posture:
-    'Retry must not create duplicates, especially for create operations.',
+  idempotency_posture: 'Retry must not create duplicates, especially for create operations.',
   truth_preserving_failure:
     'If audit/traces cannot be written, the action is blocked or marked degraded(audit_unavailable) — never claim success.',
-  audit_required:
-    'Every action has a trace: who/when/what input/what outcome. No ghost actions.',
+  audit_required: 'Every action has a trace: who/when/what input/what outcome. No ghost actions.',
 } as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -219,7 +277,12 @@ export const P08_VOICE_POSTURE = {
   },
   fallback_to_text: {
     rule: 'When voice is degraded/unavailable, all critical actions fall back to text (readable proposal + Approve button)',
-    trigger_conditions: ['voice_degraded', 'voice_unavailable', 'mic_permission_denied', 'network_unstable'],
+    trigger_conditions: [
+      'voice_degraded',
+      'voice_unavailable',
+      'mic_permission_denied',
+      'network_unstable',
+    ],
   },
   recovery_grammar: [
     'Przechodzę na tekst, bo voice jest niestabilny. Oto proposal.',
@@ -281,12 +344,14 @@ export const P08_ANNA_BOUNDARY = {
       'Be used as a policy escape for Teresa limitations',
     ],
   },
-  no_bypass: 'No copy/paste policy escape between Teresa and Anna. They are separate runtimes with separate data access.',
+  no_bypass:
+    'No copy/paste policy escape between Teresa and Anna. They are separate runtimes with separate data access.',
 } as const;
 
 export const P08_WRITE_OWNERSHIP = {
   rule: 'Teresa initiates handoff, module owns writes',
-  detail: 'The only place where writes happen are target modules (Radar/Inicjatywy/Kalendarz/Notatki) per their own canon. Teresa does not create side-writes or parallel models.',
+  detail:
+    'The only place where writes happen are target modules (Radar/Inicjatywy/Kalendarz/Notatki/Wywiady) per their own canon. Teresa does not create side-writes or parallel models.',
   teresa_role: 'initiator' as const,
   module_role: 'writer' as const,
   forbidden: [
@@ -303,12 +368,14 @@ export const P08_WRITE_OWNERSHIP = {
 
 export const P08_ANTI_DUPLICATE_RULES = {
   run_grammar_source: 'P17 — run grammar is not duplicated in P08',
-  single_payload_core: 'Handoff payloads have 1 shared core (teresa_handoff_context) + per-target extensions; no payload v2 per module',
+  single_payload_core:
+    'Handoff payloads have 1 shared core (teresa_handoff_context) + per-target extensions; no payload v2 per module',
   near_duplicate_detection: {
     rule: 'If Teresa detects near-duplicate (parallel initiatives/notes for same problem statement), she must stop execution, indicate conflict, and propose merge/select-canonical',
     actions: ['stop_execution', 'indicate_conflict', 'propose_merge_or_select_canonical'],
   },
-  no_parallel_approvals: 'Only one active approval per user/session. New proposals cancel/version previous.',
+  no_parallel_approvals:
+    'Only one active approval per user/session. New proposals cancel/version previous.',
   no_parallel_grammars: 'No per-module custom grammar; all modules consume the same envelope.',
 } as const;
 
@@ -378,7 +445,8 @@ export const P08_DEGRADED_SCENARIOS: DegradedScenario[] = [
     id: 'D08',
     scenario: 'Audit/traces unavailable',
     visible_state: 'degraded(audit_unavailable)',
-    safe_next_action: 'Block execution or mark degraded with explicit warning; never claim completion',
+    safe_next_action:
+      'Block execution or mark degraded with explicit warning; never claim completion',
     no_silent_data_loss: true,
   },
   {
@@ -407,17 +475,74 @@ export const P08_ACCEPTANCE_CHECKLIST: Array<{
   section: string;
   testable: boolean;
 }> = [
-  { id: 1, requirement: 'P0 targets list (3-5) frozen: Radar/P11/P02/P07', section: '§2.3.1', testable: true },
-  { id: 2, requirement: 'Each target has required payload: common teresa_handoff_context + per-target additions', section: '§2.3.1', testable: true },
-  { id: 3, requirement: 'Action envelope: proposal→explicit approval→execution→audit/traces (per P17)', section: '§2.3.2', testable: true },
-  { id: 4, requirement: 'approve(run) ≠ review(artifact) is explicit; no silent writes', section: '§2.3.2', testable: true },
-  { id: 5, requirement: 'No parallel approvals is a hard rule (anti-duplicate governance)', section: '§2.3.2', testable: true },
-  { id: 6, requirement: 'Voice posture: availability + fallback to text + recovery grammar', section: '§2.3.3', testable: true },
-  { id: 7, requirement: 'Evidence pointers/citations posture is explicit; missing source = uncertainty boundary', section: '§2.3.4', testable: true },
-  { id: 8, requirement: 'Hard boundary vs Anna/public assistant is documented; no bypass', section: '§2.3.5', testable: true },
-  { id: 9, requirement: 'Module-owned writes: Teresa initiates handoff, not owner of writes', section: '§2.3.5', testable: true },
-  { id: 10, requirement: 'Degraded/error posture has minimum 8 scenarios with safe next action', section: '§2.3.7', testable: true },
-  { id: 11, requirement: 'Anti-duplicate: near-duplicate stop + merge/select-canonical', section: '§2.3.6', testable: true },
+  {
+    id: 1,
+    requirement: 'P0 targets list (3-5) frozen: Radar/P11/P02/P07',
+    section: '§2.3.1',
+    testable: true,
+  },
+  {
+    id: 2,
+    requirement:
+      'Each target has required payload: common teresa_handoff_context + per-target additions',
+    section: '§2.3.1',
+    testable: true,
+  },
+  {
+    id: 3,
+    requirement: 'Action envelope: proposal→explicit approval→execution→audit/traces (per P17)',
+    section: '§2.3.2',
+    testable: true,
+  },
+  {
+    id: 4,
+    requirement: 'approve(run) ≠ review(artifact) is explicit; no silent writes',
+    section: '§2.3.2',
+    testable: true,
+  },
+  {
+    id: 5,
+    requirement: 'No parallel approvals is a hard rule (anti-duplicate governance)',
+    section: '§2.3.2',
+    testable: true,
+  },
+  {
+    id: 6,
+    requirement: 'Voice posture: availability + fallback to text + recovery grammar',
+    section: '§2.3.3',
+    testable: true,
+  },
+  {
+    id: 7,
+    requirement:
+      'Evidence pointers/citations posture is explicit; missing source = uncertainty boundary',
+    section: '§2.3.4',
+    testable: true,
+  },
+  {
+    id: 8,
+    requirement: 'Hard boundary vs Anna/public assistant is documented; no bypass',
+    section: '§2.3.5',
+    testable: true,
+  },
+  {
+    id: 9,
+    requirement: 'Module-owned writes: Teresa initiates handoff, not owner of writes',
+    section: '§2.3.5',
+    testable: true,
+  },
+  {
+    id: 10,
+    requirement: 'Degraded/error posture has minimum 8 scenarios with safe next action',
+    section: '§2.3.7',
+    testable: true,
+  },
+  {
+    id: 11,
+    requirement: 'Anti-duplicate: near-duplicate stop + merge/select-canonical',
+    section: '§2.3.6',
+    testable: true,
+  },
   { id: 12, requirement: 'Evidence ledger filled for P08', section: '§10', testable: true },
 ];
 
@@ -444,7 +569,9 @@ export function validateHandoffContext(ctx: Record<string, unknown>): {
   }
   const bcp = ctx.bounded_context_pack;
   if (Array.isArray(bcp) && bcp.length > P08_BOUNDED_CONTEXT_PACK_MAX) {
-    warnings.push(`bounded_context_pack exceeds max ${P08_BOUNDED_CONTEXT_PACK_MAX} (got ${bcp.length})`);
+    warnings.push(
+      `bounded_context_pack exceeds max ${P08_BOUNDED_CONTEXT_PACK_MAX} (got ${bcp.length})`
+    );
   }
   return { valid: missing.length === 0, missing, warnings };
 }
@@ -454,9 +581,9 @@ export function validateHandoffContext(ctx: Record<string, unknown>): {
  */
 export function validateTargetPayload(
   target: HandoffTargetModule,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): { valid: boolean; missing: string[] } {
-  const targetDef = P08_HANDOFF_TARGETS[target];
+  const targetDef = (P08_HANDOFF_TARGETS as any)[target];
   const missing: string[] = [];
   for (const field of targetDef.required_extra_fields) {
     if (payload[field] === undefined || payload[field] === null) {
@@ -471,7 +598,7 @@ export function validateTargetPayload(
  */
 export function isValidEnvelopeTransition(
   from: ActionEnvelopeState,
-  to: ActionEnvelopeState,
+  to: ActionEnvelopeState
 ): boolean {
   return P08_ACTION_ENVELOPE_TRANSITIONS[from]?.includes(to) ?? false;
 }
@@ -499,7 +626,10 @@ export function isTeresaInitiated(actor: string): boolean {
 /**
  * Validate that Teresa is not the writer — only the initiator.
  */
-export function validateWriteOwnership(initiator: string, writer: string): {
+export function validateWriteOwnership(
+  initiator: string,
+  writer: string
+): {
   valid: boolean;
   reason?: string;
 } {

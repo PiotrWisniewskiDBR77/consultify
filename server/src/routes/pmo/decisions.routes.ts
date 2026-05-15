@@ -13,6 +13,7 @@ import DecisionPlaybookControllerRaw from '../../controllers/DecisionPlaybookCon
 const DecisionPlaybookController = DecisionPlaybookControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import { PlaybookSchema } from '../../services/decisionPlaybookService.js';
 import {
@@ -28,6 +29,7 @@ const router = Router();
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // ==========================================
 // PLAYBOOK CRUD (before /:id to avoid conflicts)

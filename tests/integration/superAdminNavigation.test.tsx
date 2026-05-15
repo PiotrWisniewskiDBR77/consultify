@@ -13,6 +13,7 @@ describe('SuperAdmin routes', () => {
     expect(ROUTES.SUPERADMIN.OVERVIEW).toBe('/superadmin/overview');
     expect(ROUTES.SUPERADMIN.CUSTOMERS).toBe('/superadmin/customers');
     expect(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION).toBe('/superadmin/customers/communication');
+    expect(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL).toBe('/superadmin/customers/commercial');
     expect(ROUTES.SUPERADMIN.AI_PLATFORM).toBe('/superadmin/ai-platform');
   });
 
@@ -22,7 +23,20 @@ describe('SuperAdmin routes', () => {
     expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_COMMUNICATION]).toBe(
       ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION,
     );
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_REVENUE]).toBe(
+      ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL,
+    );
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_BILLING]).toBe(
+      ROUTES.SUPERADMIN.CUSTOMERS_BILLING,
+    );
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_INVOICES]).toBe(
+      ROUTES.SUPERADMIN.CUSTOMERS_INVOICES,
+    );
     expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_AI_PLATFORM]).toBe(ROUTES.SUPERADMIN.AI_PLATFORM);
     expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_SYSTEM]).toBe(ROUTES.SUPERADMIN.SYSTEM);
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_CONFIGURATION]).toBe(
+      ROUTES.SUPERADMIN.CONFIGURATION,
+    );
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_ANALYTICS]).toBe(ROUTES.SUPERADMIN.ANALYTICS);
   });
 });

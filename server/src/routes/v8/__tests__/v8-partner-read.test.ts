@@ -17,12 +17,16 @@ const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
 const mockGetPartnerPayoutSettings = vi.fn();
 const mockUpdatePartnerPayoutSettings = vi.fn();
+const mockGetProgramStatusDetail = vi.fn();
+const mockTransitionLifecycle = vi.fn();
+const mockAppendLedgerEntry = vi.fn();
 const mockCreateCampaignLink = vi.fn();
 const mockDeleteCampaignLink = vi.fn();
 const mockAcceptDocuments = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbTransaction = vi.fn();
+const mockEnsureUserOnboardingStatusTable = vi.fn();
 const mockGetActivePartnerOrgIdForUser = vi.fn();
 const mockIsV8Enabled = vi.fn();
 const mockIsV8ShadowMode = vi.fn();
@@ -56,6 +60,17 @@ vi.mock('../../../services/partnerCommissionService.js', () => ({
 vi.mock('../../../services/partnerPayoutSettingsService.js', () => ({
   getPartnerPayoutSettings: (...args: unknown[]) => mockGetPartnerPayoutSettings(...args),
   updatePartnerPayoutSettings: (...args: unknown[]) => mockUpdatePartnerPayoutSettings(...args),
+  isPartnerPayoutDestinationComplete: (settings: any) =>
+    Boolean(settings?.payoutAccount?.accountHolderName && settings?.payoutAccount?.iban),
+}));
+
+vi.mock('../../../services/partnerProgramLedgerService.js', () => ({
+  default: {
+    getProgramStatusDetail: (...args: unknown[]) => mockGetProgramStatusDetail(...args),
+    transitionLifecycle: (...args: unknown[]) => mockTransitionLifecycle(...args),
+    appendEntry: (...args: unknown[]) => mockAppendLedgerEntry(...args),
+    listEntries: vi.fn(),
+  },
 }));
 
 vi.mock('../../../services/legalService.js', () => ({
@@ -72,6 +87,11 @@ vi.mock('../../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => mockDbGet(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
   transaction: (...args: unknown[]) => mockDbTransaction(...args),
+}));
+
+vi.mock('../../../utils/ensureUserOnboardingStatusTable.js', () => ({
+  ensureUserOnboardingStatusTable: (...args: unknown[]) =>
+    mockEnsureUserOnboardingStatusTable(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -95,7 +115,16 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
       _res.status(401).json({ error: 'No token provided' });
       return;
     }
-    req.userId = mockUser.id;
+    if (req.headers['x-test-throw-userid-getter'] === '1') {
+      Object.defineProperty(req, 'userId', {
+        configurable: true,
+        get: () => {
+          throw new Error('userId getter failed');
+        },
+      });
+    } else {
+      req.userId = mockUser.id;
+    }
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
     req.user = mockUser;
@@ -107,7 +136,16 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
       _res.status(401).json({ error: 'No token provided' });
       return;
     }
-    req.userId = mockUser.id;
+    if (req.headers['x-test-throw-userid-getter'] === '1') {
+      Object.defineProperty(req, 'userId', {
+        configurable: true,
+        get: () => {
+          throw new Error('userId getter failed');
+        },
+      });
+    } else {
+      req.userId = mockUser.id;
+    }
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
     req.user = mockUser;
@@ -245,7 +283,12 @@ describe('V8 partner read bridge', () => {
       minimumThreshold: 100,
       payoutMethod: 'BANK_TRANSFER',
       autoPayoutEnabled: false,
-      payoutAccount: null,
+      payoutAccount: {
+        accountHolderName: 'Partner Co',
+        iban: 'DE123',
+        bicSwift: 'COBADEFF',
+        bankName: 'Commerzbank',
+      },
     });
     mockUpdatePartnerPayoutSettings.mockResolvedValue({
       minimumThreshold: 250,
@@ -285,6 +328,7 @@ describe('V8 partner read bridge', () => {
     });
     mockDeleteCampaignLink.mockResolvedValue(true);
     mockAcceptDocuments.mockResolvedValue(undefined);
+    mockEnsureUserOnboardingStatusTable.mockResolvedValue(undefined);
     mockDbGet.mockResolvedValue({
       terms_accepted: 1,
       privacy_accepted: 1,
@@ -294,6 +338,24 @@ describe('V8 partner read bridge', () => {
     });
     mockDbRun.mockResolvedValue({ changes: 1 });
     mockDbTransaction.mockResolvedValue({ success: true });
+    mockGetProgramStatusDetail.mockResolvedValue({
+      runtime: {
+        lifecycle_phase: 'earn',
+        partner_status: 'active',
+        onboard_checklist_json: '{"termsAccepted":true}',
+      },
+      balances: {
+        grossEarned: 100,
+        paidOut: 70,
+        heldAmount: 0,
+        availableToPayout: 30,
+        currency: 'EUR',
+      },
+      whatNext: ['Request payout'],
+      hold: null,
+    });
+    mockTransitionLifecycle.mockResolvedValue({ ok: true, from: 'earn', to: 'payout' });
+    mockAppendLedgerEntry.mockResolvedValue({ id: 'ledger-1' });
   });
 
   it('GET /api/v8/partner/referral-analytics resolves partnerOrgId from user and calls service', async () => {
@@ -460,13 +522,24 @@ describe('V8 partner read bridge', () => {
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
-  it('GET /api/v8/partner/earnings-summary returns earnings with partner meta', async () => {
+  it('GET /api/v8/partner/program/status returns governed lifecycle + balances', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/program/status');
+    expect(res.status).toBe(200);
+    expect(mockGetProgramStatusDetail).toHaveBeenCalledWith('partner-org-resolved', 'partner');
+    expect(res.body.data.lifecyclePhase).toBe('earn');
+    expect(res.body.data.payoutSettingsComplete).toBe(true);
+    expect(res.body.meta.contract).toBe('partner_program_p29_v1');
+  });
+
+  it('GET /api/v8/partner/earnings-summary returns governed earnings with partner meta', async () => {
     const app = createApp();
     const res = await request(app).get('/api/v8/partner/earnings-summary');
     expect(res.status).toBe(200);
     expect(mockGetEarningsSummary).toHaveBeenCalledWith('partner-org-resolved');
     expect(res.body.data.earnings.totalEarned).toBe(100);
-    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+    expect(res.body.data.earnings.readyForPayout).toBe(30);
+    expect(res.body.meta.contract).toBe('partner_program_p29_v1');
   });
 
   it('GET /api/v8/partner/commission-transactions returns transactions with partner meta', async () => {
@@ -512,21 +585,36 @@ describe('V8 partner read bridge', () => {
     expect(mockGetEarningsSummary).not.toHaveBeenCalled();
   });
 
-  it('POST /api/v8/partner/payouts/request delegates to requestPayout with partnerOrgId', async () => {
+  it('POST /api/v8/partner/payouts/request transitions payout lifecycle and appends governed ledger request', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/partner/payouts/request').send({
       notes: 'Please process this cycle',
     });
 
     expect(res.status).toBe(201);
+    expect(mockTransitionLifecycle).toHaveBeenCalledWith({
+      partnerOrgId: 'partner-org-resolved',
+      toPhase: 'payout',
+      actor: 'partner',
+      actorId: 'user-partner-1',
+      reason: 'Please process this cycle',
+    });
     expect(mockRequestPayout).toHaveBeenCalledWith({
       partnerOrgId: 'partner-org-resolved',
       payoutAccountId: undefined,
       requestedBy: 'user-partner-1',
       notes: 'Please process this cycle',
     });
+    expect(mockAppendLedgerEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        partnerOrgId: 'partner-org-resolved',
+        entryType: 'payout.requested',
+        actor: 'partner',
+        actorId: 'user-partner-1',
+      })
+    );
     expect(res.body.data.payout.id).toBe('payout-1');
-    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+    expect(res.body.meta.contract).toBe('partner_program_p29_v1');
   });
 
   it('POST /api/v8/partner/campaign-links delegates to createCampaignLink with partnerOrgId', async () => {
@@ -563,7 +651,7 @@ describe('V8 partner read bridge', () => {
     expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
   });
 
-  it('PUT /api/v8/partner/organization updates company info with partnerOrgId', async () => {
+  it('PUT /api/v8/partner/organization updates only program-owned profile fields', async () => {
     const app = createApp();
     const res = await request(app).put('/api/v8/partner/organization').send({
       name: 'Test Partner Co',
@@ -577,20 +665,14 @@ describe('V8 partner read bridge', () => {
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.anything(),
       `UPDATE partner_organizations
-       SET name = ?, tax_id = ?, contact_email = ?, contact_phone = ?, website = ?, updated_at = NOW()
+       SET contact_phone = ?, website = ?, updated_at = NOW()
        WHERE id = ?`,
-      [
-        'Test Partner Co',
-        'DE123456789',
-        'partner@example.com',
-        '+49 30 12345',
-        'https://test.example.com',
-        'partner-org-resolved',
-      ]
+      ['+49 30 12345', 'https://test.example.com', 'partner-org-resolved']
     );
     expect(res.body.data).toEqual({
       success: true,
-      message: 'Organization updated successfully',
+      message: 'Partner-program profile updated successfully',
+      ignoredFields: ['name', 'taxId', 'contactEmail'],
     });
     expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
   });

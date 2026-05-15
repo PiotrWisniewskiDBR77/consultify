@@ -30,8 +30,6 @@ export { InitiativeDrawer } from './InitiativeDrawer';
 export { InitiativesHub } from './InitiativesHub';
 export { InitiativesTimelineView } from './InitiativesTimelineView';
 
-// Legacy exports (deprecated - use InitiativeDocumentView instead)
-/** @deprecated Use InitiativeDocumentView instead */
-export { InitiativeDetailCard } from './InitiativeDetailCard';
-/** @deprecated Use InitiativeDocumentView instead */
-export { InitiativeFullView } from './InitiativeFullView';
+// Legacy exports removed (P11 contract §2.7 — InitiativeDocumentView is the canonical full view).
+// InitiativeDetailCard and InitiativeFullView are deprecated and no longer exported.
+// If you need these, import directly from the file (not recommended).

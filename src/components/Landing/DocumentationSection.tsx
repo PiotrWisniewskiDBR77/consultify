@@ -1,21 +1,4 @@
-/**
- * DocumentationSection (T094)
- *
- * Landing page section showcasing documentation resources.
- * Shortcuts: Getting Started, Security, API Reference, Changelog, Legal Center, Integrations.
- * Includes search CTA and "freshness" signal.
- */
-
-import {
-  ArrowRight,
-  BookOpen,
-  FileText,
-  Gavel,
-  History,
-  Search,
-  Shield,
-  Terminal,
-} from 'lucide-react';
+import { ArrowRight, BookOpen, FileText, Gavel, Search, Shield, Users, Wallet } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -24,93 +7,54 @@ import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 const DOC_CARDS = [
   {
-    titleKey: 'gettingStarted',
-    descKey: 'gettingStartedDesc',
+    titleKey: 'knowledgeBase',
+    descKey: 'knowledgeBaseDesc',
     icon: BookOpen,
-    href: '/docs',
-    color: 'violet',
-    target: 'getting_started',
+    href: '/knowledge-base',
+    gradient: 'from-violet-500 to-purple-600',
+    glow: 'rgba(139,92,246,0.25)',
   },
   {
     titleKey: 'security',
     descKey: 'securityDesc',
     icon: Shield,
-    href: '/docs/security',
-    color: 'emerald',
-    target: 'security',
+    href: '/security',
+    gradient: 'from-emerald-500 to-teal-600',
+    glow: 'rgba(16,185,129,0.25)',
   },
   {
-    titleKey: 'apiReference',
-    descKey: 'apiReferenceDesc',
-    icon: Terminal,
-    href: '/docs/api',
-    color: 'blue',
-    target: 'api',
+    titleKey: 'pricing',
+    descKey: 'pricingDesc',
+    icon: Wallet,
+    href: '/pricing',
+    gradient: 'from-cyan-500 to-blue-600',
+    glow: 'rgba(6,182,212,0.25)',
   },
   {
-    titleKey: 'changelog',
-    descKey: 'changelogDesc',
-    icon: History,
-    href: '/docs/changelog',
-    color: 'amber',
-    target: 'changelog',
+    titleKey: 'partnerProgram',
+    descKey: 'partnerProgramDesc',
+    icon: Users,
+    href: '/become-partner',
+    gradient: 'from-amber-500 to-orange-600',
+    glow: 'rgba(245,158,11,0.25)',
   },
   {
     titleKey: 'legalCenter',
     descKey: 'legalCenterDesc',
     icon: Gavel,
     href: '/legal',
-    color: 'slate',
-    target: 'legal',
+    gradient: 'from-slate-400 to-slate-600',
+    glow: 'rgba(148,163,184,0.20)',
   },
   {
-    titleKey: 'integrations',
-    descKey: 'integrationsDesc',
+    titleKey: 'resources',
+    descKey: 'resourcesDesc',
     icon: FileText,
-    href: '/docs/integrations',
-    color: 'purple',
-    target: 'integrations',
+    href: '/resources',
+    gradient: 'from-fuchsia-500 to-pink-600',
+    glow: 'rgba(217,70,239,0.25)',
   },
 ] as const;
-
-const COLOR_MAP: Record<string, { bg: string; text: string; border: string; hover: string }> = {
-  violet: {
-    bg: 'bg-violet-500/10',
-    text: 'text-violet-400',
-    border: 'border-violet-500/20',
-    hover: 'hover:border-violet-500/40 hover:bg-violet-500/15',
-  },
-  emerald: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/20',
-    hover: 'hover:border-emerald-500/40 hover:bg-emerald-500/15',
-  },
-  blue: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-400',
-    border: 'border-blue-500/20',
-    hover: 'hover:border-blue-500/40 hover:bg-blue-500/15',
-  },
-  amber: {
-    bg: 'bg-amber-500/10',
-    text: 'text-amber-400',
-    border: 'border-amber-500/20',
-    hover: 'hover:border-amber-500/40 hover:bg-amber-500/15',
-  },
-  slate: {
-    bg: 'bg-slate-500/10',
-    text: 'text-slate-400',
-    border: 'border-slate-500/20',
-    hover: 'hover:border-slate-500/40 hover:bg-slate-500/15',
-  },
-  purple: {
-    bg: 'bg-purple-500/10',
-    text: 'text-purple-400',
-    border: 'border-purple-500/20',
-    hover: 'hover:border-purple-500/40 hover:bg-purple-500/15',
-  },
-};
 
 interface DocumentationSectionProps {
   className?: string;
@@ -139,93 +83,101 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
     e.preventDefault();
     if (searchQuery.trim()) {
       trackFunnelEvent('landing_docs_search_used', { queryLength: searchQuery.trim().length });
-      navigate(`/docs/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/knowledge-base?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
   return (
-    <section className={`py-20 md:py-28 ${className}`} onMouseEnter={handleSectionView}>
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-medium mb-6">
+    <section
+      className={`relative py-24 md:py-32 overflow-hidden ${className}`}
+      onMouseEnter={handleSectionView}
+    >
+      <div className="absolute inset-0 bg-[#0A0A1F]" />
+      <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.10)_0%,transparent_65%)] blur-[80px]" />
+      <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.06)_0%,transparent_65%)] blur-[90px]" />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/10 backdrop-blur-sm text-xs font-bold text-violet-300 tracking-wide mb-8">
             <BookOpen size={14} />
-            {tp('badge', 'Documentation')}
+            <span>{tp('badge', 'Help & evaluation')}</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {tp('title', 'Built for transparency')}
+
+          <h2
+            className="font-black tracking-tight text-white leading-[1.1]"
+            style={{ fontSize: 'clamp(28px, 4vw, 48px)' }}
+          >
+            {tp('title', 'Everything you need to evaluate Consultify')}
           </h2>
-          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-            {tp('subtitle', 'Everything you need to evaluate, integrate, and trust our platform.')}
+
+          <p className="mt-4 text-base text-white/40 max-w-2xl mx-auto leading-relaxed">
+            {tp(
+              'subtitle',
+              'Use knowledge, security, pricing, and partner materials to decide whether Consultify fits your rollout.'
+            )}
           </p>
         </div>
 
         <form onSubmit={handleSearch} className="max-w-xl mx-auto mb-14 flex items-center gap-2">
           <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/25" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={tp('searchPlaceholder', 'Search documentation...')}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-700 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition-shadow backdrop-blur-sm"
+              placeholder={tp('searchPlaceholder', 'Search knowledge and buyer guidance...')}
+              className="w-full pl-11 pr-4 h-[48px] rounded-xl bg-white/[0.04] border border-white/[0.10] text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/30 transition-all backdrop-blur-sm"
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors flex items-center gap-2"
+            className="h-[48px] px-6 rounded-xl text-sm font-semibold text-white transition-all flex items-center gap-2"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+              boxShadow: '0 0 24px -6px rgba(124,58,237,0.50)',
+            }}
           >
             <Search size={14} />
             {tp('searchBtn', 'Search')}
           </button>
         </form>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {DOC_CARDS.map((card) => {
-            const colors = COLOR_MAP[card.color];
             const IconComp = card.icon;
             return (
               <Link
-                key={card.target}
+                key={card.titleKey}
                 to={card.href}
-                onClick={() => handleCardClick(card.target)}
-                className={`group p-6 rounded-xl border transition-all duration-300 ${colors.border} ${colors.hover} bg-white/50 dark:bg-navy-900/50 backdrop-blur-sm`}
+                onClick={() => handleCardClick(card.titleKey)}
+                className="group rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6 transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.14]"
+                style={{ boxShadow: `0 0 0 0 transparent` }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = `0 0 40px -12px ${card.glow}`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 0 transparent';
+                }}
               >
                 <div
-                  className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center mb-4`}
+                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center mb-4 shadow-lg`}
+                  style={{ boxShadow: `0 4px 16px -4px ${card.glow}` }}
                 >
-                  <IconComp size={20} className={colors.text} />
+                  <IconComp size={18} className="text-white" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">
-                  {tp(card.titleKey)}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+
+                <h3 className="text-sm font-bold text-white mb-1.5">{tp(card.titleKey)}</h3>
+                <p className="text-xs text-white/35 leading-relaxed mb-4 line-clamp-2">
                   {tp(card.descKey)}
                 </p>
-                <span
-                  className={`inline-flex items-center gap-1 text-xs font-medium ${colors.text} group-hover:gap-2 transition-all`}
-                >
+
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400 group-hover:text-violet-300 group-hover:gap-2.5 transition-all">
                   {tp('explore', 'Explore')}
                   <ArrowRight size={12} />
                 </span>
               </Link>
             );
           })}
-        </div>
-
-        <div className="mt-10 text-center">
-          <Link
-            to="/docs/changelog"
-            onClick={() => handleCardClick('whats_new')}
-            className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-violet-400 transition-colors"
-          >
-            <History size={14} />
-            <span>
-              {tp('lastUpdated', 'Last updated')}: {tp('lastUpdatedDate', 'February 2026')}
-            </span>
-            <span className="text-violet-400 font-medium">
-              \u2014 {tp('whatsNew', "See what's new")}
-            </span>
-          </Link>
         </div>
       </div>
     </section>

@@ -8,6 +8,7 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
 
 // ==========================================
 // TOOL DEFINITIONS (OpenAI Function Calling format)
@@ -261,6 +262,138 @@ export const AI_TOOLS: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'create_initiative_draft',
+      description:
+        'Create a draft initiative proposal for user review. Does NOT save to database — returns a structured proposal that the user must approve before it becomes an initiative.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Initiative title' },
+          description: { type: 'string', description: 'Detailed description of the initiative' },
+          category: {
+            type: 'string',
+            enum: ['technology', 'process', 'organizational', 'strategic', 'financial'],
+          },
+          estimated_roi: { type: 'number', description: 'Estimated ROI percentage' },
+          priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+          timeline_weeks: { type: 'number', description: 'Estimated timeline in weeks' },
+        },
+        required: ['title', 'description'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'generate_report_section',
+      description:
+        'Generate a structured report section with data, analysis, and recommendations. Returns formatted content ready for inclusion in a report document.',
+      parameters: {
+        type: 'object',
+        properties: {
+          section_title: { type: 'string', description: 'Title of the report section' },
+          section_type: {
+            type: 'string',
+            enum: [
+              'executive_summary',
+              'analysis',
+              'recommendations',
+              'financial',
+              'risk',
+              'appendix',
+            ],
+          },
+          data_sources: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'Data sources to draw from (e.g., "assessment", "financials", "initiatives")',
+          },
+          format: {
+            type: 'string',
+            enum: ['narrative', 'table', 'bullet_points', 'mixed'],
+            description: 'Output format preference',
+          },
+        },
+        required: ['section_title', 'section_type'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'schedule_meeting',
+      description:
+        'Propose scheduling a meeting. Creates a meeting proposal for user approval — does NOT directly create a calendar event.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Meeting title' },
+          description: { type: 'string', description: 'Meeting agenda and objectives' },
+          duration_minutes: { type: 'number', description: 'Meeting duration in minutes' },
+          suggested_attendees: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Suggested attendee roles or names',
+          },
+          urgency: { type: 'string', enum: ['low', 'medium', 'high'] },
+        },
+        required: ['title', 'duration_minutes'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'create_notebook_entry',
+      description:
+        'Propose creating a notebook entry with insights, notes, or action items. Returns the entry for user approval before saving to the Notebook module.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Entry title' },
+          content: { type: 'string', description: 'Entry content in markdown format' },
+          entry_type: {
+            type: 'string',
+            enum: ['insight', 'action_item', 'meeting_note', 'decision', 'research'],
+          },
+          tags: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Tags for categorization',
+          },
+        },
+        required: ['title', 'content'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'query_structured_data',
+      description:
+        'Query structured organizational data using natural language. Translates the query into SQL, executes against read-only database views, and returns formatted results. Use for questions like "which initiatives have ROI > 200%?" or "show me budget allocation by department".',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: {
+            type: 'string',
+            description: 'Natural language question about organizational data',
+          },
+          data_domain: {
+            type: 'string',
+            enum: ['initiatives', 'assessments', 'financials', 'tasks', 'decisions', 'kpis'],
+            description: 'Data domain to query',
+          },
+          limit: { type: 'number', description: 'Maximum rows to return (default 25)' },
+        },
+        required: ['question'],
+      },
+    },
+  },
 ];
 
 // ==========================================
@@ -271,6 +404,9 @@ export interface ToolExecutionContext {
   userId: string;
   organizationId: string;
   projectId?: string;
+  sessionId?: string;
+  conversationId?: string;
+  contextSnapshotId?: string;
 }
 
 /**
@@ -306,6 +442,92 @@ export async function executeToolCall(
         return await executeFindDecisions(args, context);
       case 'get_stakeholder_analysis':
         return await executeStakeholderAnalysis(args, context);
+      case 'create_initiative_draft':
+        return JSON.stringify(
+          await (
+            await import('../v8/teresaToolOperatorService.js')
+          ).proposeInitiativeDraftOperator({
+            organizationId: context.organizationId,
+            userId: context.userId,
+            sessionId:
+              context.sessionId || context.conversationId || `initiative-tool-${context.userId}`,
+            conversationId: context.conversationId || context.sessionId || null,
+            contextSnapshotId: context.contextSnapshotId || null,
+            sourceSurface: 'agent',
+            title: String(args.title || ''),
+            description: String(args.description || ''),
+            category: args.category || null,
+            estimatedRoi:
+              typeof args.estimated_roi === 'number' ? Number(args.estimated_roi) : undefined,
+            priority: args.priority || null,
+            timelineWeeks:
+              typeof args.timeline_weeks === 'number' ? Number(args.timeline_weeks) : undefined,
+          })
+        );
+      case 'generate_report_section':
+        return JSON.stringify({
+          type: 'content',
+          action: 'report_section',
+          section: {
+            title: args.section_title,
+            type: args.section_type,
+            format: args.format || 'mixed',
+            dataSources: args.data_sources || [],
+          },
+          message: `Report section "${args.section_title}" generated.`,
+        });
+      case 'schedule_meeting':
+        return JSON.stringify({
+          type: 'proposal',
+          action: 'schedule_meeting',
+          requiresApproval: true,
+          meeting: {
+            title: args.title,
+            description: args.description || '',
+            durationMinutes: args.duration_minutes,
+            suggestedAttendees: args.suggested_attendees || [],
+            urgency: args.urgency || 'medium',
+          },
+          message: `Meeting "${args.title}" proposed. Approve to schedule.`,
+        });
+      case 'create_notebook_entry':
+        return JSON.stringify(
+          await (
+            await import('../v8/teresaToolOperatorService.js')
+          ).proposeNotebookEntryOperator({
+            organizationId: context.organizationId,
+            userId: context.userId,
+            sessionId:
+              context.sessionId || context.conversationId || `notebook-tool-${context.userId}`,
+            conversationId: context.conversationId || context.sessionId || null,
+            contextSnapshotId: context.contextSnapshotId || null,
+            sourceSurface: 'agent',
+            title: String(args.title || ''),
+            content: String(args.content || ''),
+            entryType: args.entry_type || null,
+            tags: Array.isArray(args.tags) ? args.tags.map((tag: unknown) => String(tag)) : [],
+          })
+        );
+      case 'query_structured_data': {
+        try {
+          const result = await (
+            await import('../v8/teresaToolOperatorService.js')
+          ).runStructuredQueryOperator({
+            question: args.question,
+            organizationId: context.organizationId,
+            userId: context.userId,
+            sessionId:
+              context.sessionId || context.conversationId || `tables-tool-${context.userId}`,
+            conversationId: context.conversationId || context.sessionId || null,
+            contextSnapshotId: context.contextSnapshotId || null,
+            dataDomain: args.data_domain,
+            limit: args.limit || 25,
+          });
+          return JSON.stringify(result);
+        } catch (err: any) {
+          return JSON.stringify({ error: `Text-to-SQL query failed: ${err?.message}` });
+        }
+      }
       default:
         return JSON.stringify({ error: `Unknown tool: ${toolName}` });
     }
@@ -349,8 +571,8 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
       });
     }
 
-    const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
-    const tavily = new TavilyWebSearchService(process.env.TAVILY_API_KEY || '');
+    const { RuntimeWebSearchService } = await import('./runtimeWebSearchService.js');
+    const webSearch = new RuntimeWebSearchService();
     const cleanQuery =
       typeof sanitizeQuery === 'function' ? sanitizeQuery(String(args.query || '')) : args.query;
 
@@ -358,9 +580,10 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
       typeof getCached === 'function' ? getCached(orgId, cleanQuery, (ctx as any)?.language) : null;
     const results =
       cached ||
-      (await tavily.search(cleanQuery, {
+      (await webSearch.search(cleanQuery, {
         maxResults: Math.min(args.max_results || 5, policy.maxCitations || 8),
         searchDepth: 'basic',
+        language: (ctx as any)?.language,
       }));
     const rawResults = Array.isArray((results as any)?.results) ? (results as any).results : [];
     const filtered =
@@ -393,6 +616,34 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
 }
 
 async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
+  try {
+    const policyResult = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'agent',
+      query: args.query,
+      organizationId: ctx.organizationId || 'system',
+      userId: ctx.userId || 'tool:kb_search',
+    });
+    logger.info(
+      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
+    );
+    if (!policyResult.decision.allowed) {
+      return JSON.stringify({
+        source: 'knowledge_base',
+        results: [],
+        note: 'Blocked by policy gateway',
+      });
+    }
+  } catch (policyErr: any) {
+    logger.warn(
+      `[executeKBSearch] Policy gateway error (fail-closed): ${policyErr?.message || String(policyErr)}`
+    );
+    return JSON.stringify({
+      source: 'knowledge_base',
+      results: [],
+      note: 'Blocked by policy gateway',
+    });
+  }
+
   try {
     const ragMod = await import('../ragService.js');
     const ragService = (ragMod.default || ragMod) as {

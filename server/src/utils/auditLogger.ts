@@ -4,6 +4,8 @@
  * Outputs logs in a consistent format for monitoring, debugging, and SOC2 compliance.
  */
 
+import logger from './Logger.js';
+
 export const LOG_LEVELS = {
   DEBUG: 'DEBUG',
   INFO: 'INFO',
@@ -110,18 +112,18 @@ export function log(params: AuditLogParams): AuditLogEntry {
   // Output based on level
   switch (level) {
     case LOG_LEVELS.ERROR:
-      console.error(`[AUDIT] ${jsonLine}`);
+      logger.error(`[AUDIT] ${jsonLine}`);
       break;
     case LOG_LEVELS.WARN:
-      console.warn(`[AUDIT] ${jsonLine}`);
+      logger.warn(`[AUDIT] ${jsonLine}`);
       break;
     case LOG_LEVELS.DEBUG:
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[AUDIT] ${jsonLine}`);
+        logger.info(`[AUDIT] ${jsonLine}`);
       }
       break;
     default:
-      console.log(`[AUDIT] ${jsonLine}`);
+      logger.info(`[AUDIT] ${jsonLine}`);
   }
 
   return cleanEntry;

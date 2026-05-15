@@ -7,12 +7,20 @@
 import express from 'express';
 
 import { getDatabase } from '../database/Database.js';
-import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin,
+} from '../middleware/superAdmin.middleware.js';
 import { budgetTrackingService } from '../services/budgetTrackingService.js';
 import logger from '../utils/Logger.js';
 
 const router = express.Router();
 const db = getDatabase();
+
+router.use(verifyToken);
+router.use(verifySuperAdmin);
+router.use(requireSuperAdminCapability('billing_ops', 'platform_ops'));
 
 // ==========================================
 // SUBSCRIPTION PLANS MANAGEMENT
@@ -22,7 +30,7 @@ const db = getDatabase();
  * GET /api/superadmin/subscription-plans
  * List all subscription plans
  */
-router.get('/subscription-plans', verifyToken, requireSuperAdmin, async (req, res) => {
+router.get('/subscription-plans', async (req, res) => {
   try {
     const plans = await db.all(`
             SELECT id, name, price_monthly, token_limit, storage_limit_gb, 
@@ -44,7 +52,7 @@ router.get('/subscription-plans', verifyToken, requireSuperAdmin, async (req, re
  * POST /api/superadmin/subscription-plans
  * Create new subscription plan
  */
-router.post('/subscription-plans', verifyToken, requireSuperAdmin, async (req, res) => {
+router.post('/subscription-plans', async (req, res) => {
   try {
     const {
       name,
@@ -95,7 +103,7 @@ router.post('/subscription-plans', verifyToken, requireSuperAdmin, async (req, r
  * PUT /api/superadmin/subscription-plans/:id
  * Update subscription plan
  */
-router.put('/subscription-plans/:id', verifyToken, requireSuperAdmin, async (req, res) => {
+router.put('/subscription-plans/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -148,7 +156,7 @@ router.put('/subscription-plans/:id', verifyToken, requireSuperAdmin, async (req
  * DELETE /api/superadmin/subscription-plans/:id
  * Delete subscription plan
  */
-router.delete('/subscription-plans/:id', verifyToken, requireSuperAdmin, async (req, res) => {
+router.delete('/subscription-plans/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -184,7 +192,7 @@ router.delete('/subscription-plans/:id', verifyToken, requireSuperAdmin, async (
  * GET /api/superadmin/organizations/:id/resources
  * Get organization resource usage and limits
  */
-router.get('/organizations/:id/resources', verifyToken, requireSuperAdmin, async (req, res) => {
+router.get('/organizations/:id/resources', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -229,7 +237,7 @@ router.get('/organizations/:id/resources', verifyToken, requireSuperAdmin, async
  * PUT /api/superadmin/organizations/:id/budget
  * Update organization budget
  */
-router.put('/organizations/:id/budget', verifyToken, requireSuperAdmin, async (req, res) => {
+router.put('/organizations/:id/budget', async (req, res) => {
   try {
     const { id } = req.params;
     const { monthlyBudgetUsd, alertThreshold } = req.body;
@@ -253,7 +261,7 @@ router.put('/organizations/:id/budget', verifyToken, requireSuperAdmin, async (r
  * PUT /api/superadmin/organizations/:id/quotas
  * Update organization resource quotas (override plan limits)
  */
-router.put('/organizations/:id/quotas', verifyToken, requireSuperAdmin, async (req, res) => {
+router.put('/organizations/:id/quotas', async (req, res) => {
   try {
     const { id } = req.params;
     const { memoryLimitMb, cpuQuotaPercent, tokenBalance } = req.body;
@@ -296,7 +304,7 @@ router.put('/organizations/:id/quotas', verifyToken, requireSuperAdmin, async (r
 router.post(
   '/organizations/:id/charge-resource-change',
   verifyToken,
-  requireSuperAdmin,
+  verifySuperAdmin,
   async (req, res) => {
     try {
       const { id } = req.params;

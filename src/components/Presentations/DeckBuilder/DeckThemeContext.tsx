@@ -20,13 +20,13 @@ export interface DeckTheme extends CuratedColorSet {
   cardBackdropValue?: string;
 }
 
-interface BrandKit {
-  primary_color: string;
-  secondary_color: string;
-  accent_color: string;
-  logo_url?: string;
-  font_title?: string;
-  font_body?: string;
+export interface BrandKit {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  logoUrl?: string;
+  fontTitle?: string;
+  fontBody?: string;
 }
 
 const DEFAULT_FONTS: DeckTheme['fonts'] = {
@@ -58,9 +58,9 @@ export function useDeckTheme(): DeckThemeContextValue {
  * Computes chart palette, contrast-safe text colors, and style tags.
  */
 export function generateDeckThemeFromBrandKit(kit: BrandKit): DeckTheme {
-  const primary = normalizeHex(kit.primary_color);
-  const secondary = normalizeHex(kit.secondary_color);
-  const accent = normalizeHex(kit.accent_color);
+  const primary = normalizeHex(kit.primaryColor);
+  const secondary = normalizeHex(kit.secondaryColor);
+  const accent = normalizeHex(kit.accentColor);
 
   const bgLightness = getLightness(primary);
   const isDark = bgLightness < 40;
@@ -81,13 +81,13 @@ export function generateDeckThemeFromBrandKit(kit: BrandKit): DeckTheme {
     chartPalette: generateChartPalette(primary, secondary, accent),
     styleTags: isDark ? ['dark', 'branded', 'professional'] : ['light', 'branded', 'professional'],
     fonts: {
-      headingFamily: kit.font_title || 'Inter',
-      bodyFamily: kit.font_body || 'Inter',
+      headingFamily: kit.fontTitle || 'Inter',
+      bodyFamily: kit.fontBody || 'Inter',
       headingWeight: 700,
       bodyWeight: 400,
       headingSizeScale: 'M',
     },
-    logoUrl: kit.logo_url,
+    logoUrl: kit.logoUrl,
     cardBackdropStyle: 'none',
   };
 }

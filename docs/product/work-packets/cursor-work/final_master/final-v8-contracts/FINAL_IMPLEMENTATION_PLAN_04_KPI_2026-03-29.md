@@ -1,8 +1,8 @@
 # Final Implementation Contract — KPI (Position 4/35)
 Date: 2026-03-29  
 Owner: Product + Engineering  
-Status: `verified(evidence)` — P04-A/B/C all closed  
-Last updated: 2026-03-31 (P04-C evidence closure)
+Status: `verified(evidence)` — P04-A through P04-H closed  
+Last updated: 2026-04-11 (full-scope contract update — P04-D/E verified, P04-F/G/H registered)
 
 ## 1. Executive summary
 - **Intent**: KPI są dobrze opisane — teraz trzeba je dobrze zbudować.
@@ -11,19 +11,33 @@ Last updated: 2026-03-31 (P04-C evidence closure)
 
 ## 2. Scope
 ### 2.1 In-scope
-- KPI inspection + report workflow + reconciliation semantics.
-- KPI ↔ finanse: konsekwencje i spójność runtime na deklarowanych ścieżkach.
+- KPI inspection + report workflow + reconciliation semantics (P04-A/B/C).
+- KPI ↔ finanse: konsekwencje i spójność runtime na deklarowanych ścieżkach (P04-A/B/C).
+- Operator cockpit surfaces: Overview / Queue / Catalog + template-first reports with refresh (P04-D).
+- Enterprise distribution: Schedules / Wallboards / Connectors + Goals / Scorecards (P04-E).
+- Full KPI operator drawer: 7-tab governed workspace with deviation lifecycle + metric audit (P04-F).
+- AI-assisted operations: report narrative drafts, signal sheet generation, KPI chat context (P04-G).
+- KPI attribution + showcase: initiative contribution estimation, demo data layer (P04-H).
 
 ### 2.2 Out-of-scope / non-goals
 - Pełny BI suite (Looker/Tableau parity).
 - “Wykresy bez zamknięcia pętli” (to jest anty-cel; KPI ma kończyć się decyzją i akcją).
 - Zastąpienie modułu `Finanse` i `Wdrożenia` (KPI ma je zasilać i linkować, nie przejmować).
+- Full governed MetricDefinition UX (dimensions/slices/provenance — backend primitives exist, full UI deferred to post-V8.1).
+- Wallboard TV-mode presentation view (data layer exists, dedicated display deferred).
+- Scheduled report notification/approval workflow chain (API exists, notification bus deferred).
 
 ## 3. Authority chain (SSOT)
+- Full-system canon: `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_KPI_2026-03-29.md`
 - SSOT: `docs/product/RESULTS_V8_SSOT.md`
 - Runtime linkage: `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+
+Interpretation note:
+
+This implementation contract remains the verified historical bounded-lane contract for Wave 1 / V8.1.
+The broader target state for cross-module KPI evolution now lives in `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`.
 
 ## 4. Softs inspirations (benchmark apps)
 ### 4.1 Primary benchmark family (SSOT)
@@ -66,15 +80,22 @@ Last updated: 2026-03-31 (P04-C evidence closure)
 - **Consultify-specific bridge (Wave1 intent)**:
   - KPI → Finance consequence → Execution follow-up: spójne przejścia, bez split-truth.
 
-### 4.4 Gap ledger vs Softs (what we are missing — derived from current plans)
+### 4.4 Gap ledger vs Softs (status as of 2026-04-11; what we have delivered and what remains — derived from current plans)
 Źródło prawdy “co mamy / czego brakuje” to: `WAVE1_FINAL_IMPLEMENTATION_PLAN_KPI_2026-03-29.md` + linkage SSOT.
 
-| Capability cluster (Softs parity target) | What Softs implies | Current truth (per plan) | Gap statement (contract requirement) | Priority |
+| Capability cluster (Softs parity target) | What Softs implies | Current truth (2026-04-11) | Status | Priority |
 | --- | --- | --- | --- | --- |
-| Closed-loop workflows | KPI must lead to report + reconciliation | “report workflows are too narrow” | Rozszerzyć report workflow: stany, guidance, readback, wynik | P0 |
-| Reconciliation semantics | explicit discrepancy handling | “reconciliation depth is limited” | Zdefiniować i dowieźć reconciliation (aligned/pending/requires review) + evidence cues | P0 |
-| KPI↔Finance coherence | consequence lane must be coherent | “still not fully unified outside active lane” | Domknąć KPI→Finance runtime unification na deklarowanym zakresie | P0 |
-| KPI as operating system (not only dashboard) | scorecard + commentary + next action | “behaves more like bounded dashboard” | Wymusić “next action” flows (execution follow-up) i status tracking | P1
+| Closed-loop workflows | KPI must lead to report + reconciliation | Delivered (P04-B): `kpiWorkflowCanon.ts` + 6 workflow endpoints + E2E test | CLOSED | P0 |
+| Reconciliation semantics | explicit discrepancy handling | Delivered (P04-B): `initiateReconciliation` / `resolveReconciliation` + 4 degraded states | CLOSED | P0 |
+| KPI↔Finance coherence | consequence lane must be coherent | Delivered (P04-B): linkage patterns + W6-5 ownership + no split-truth tests | CLOSED | P0 |
+| KPI as operating system (not only dashboard) | scorecard + commentary + next action | Delivered (P04-D/E): goals/scorecards + next-action flows + report templates | CLOSED | P1 |
+| Operator cockpit surfaces | overview + queue + governed catalog | Delivered (P04-D): `KpiOverviewView` + `KpiQueueView` + catalog modes in `ResultsHub` | CLOSED | P0 |
+| Reporting artifact maturity | template identity + scope load + refresh | Delivered (P04-D): 5 templates + snapshot refresh + task materialization | CLOSED | P0 |
+| Alert and queue semantics | stale / below / discrepancy / requires-review lanes | Delivered (P04-D): queue groups (needsEntry/belowTarget/discrepancy/requiresReview) + AI signal sheets | CLOSED | P1 |
+| Metric foundation maturity | governed definitions, dimensions, slices, provenance | Partial: semantic layer migration 631 exists; drawer Lineage tab shows connectors + mappings; full dimensions/slices UI deferred to post-V8.1 | OPEN (deferred) | P0 |
+| Goals / scorecards runtime | goals, check-ins, roll-ups, status rules | Delivered (P04-E): `ResultsKpiScorecardsView` + goals API + rollup + initiative linking | CLOSED | P0 |
+| Distribution surfaces | schedules, wallboards, connector posture | Delivered (P04-E): `ResultsReportingEnterpriseViews` (schedules/wallboards/connectors) fully functional | CLOSED | P0 |
+| Governance and audit posture | lineage, permission posture, audit cues | Partially delivered (P04-B/F): `canPerformKpiAction` + metric audit log + degraded posture + lineage tab; full provenance UI deferred | PARTIAL | P1 |
 
 ## 5. Product contract (user-facing)
 ### 5.1 Primary flows
@@ -184,13 +205,13 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 - **Linkage unavailable**: show “link missing/unavailable” with rationale; allow creating an operational report/next action without finance linkage.
 - **Permission denied**: show explicit denied state and what capability is blocked (edit target / edit definition / manage reconciliation), without leaking restricted details.
 
-##### 8.1G Acceptance checklist (scope approval, testable)
+##### 8.1G Acceptance checklist (full scope, testable — 21 items)
 - [x] Vocabulary is frozen and used consistently → `kpiWorkflowCanon.ts`: `KpiSignal`, `KpiTarget`, `KpiTrend`, `KpiReport`, `KpiReconciliation`, `KpiNextAction`.
 - [x] KPI is closed-loop lane, not BI suite → `KPI_ANTI_DUPLICATE_RULES.no_bi_suite_drift`.
 - [x] KPI truth vs finance model truth boundary explicit → `KpiFinanceLinkMetadata` + `LINKAGE_PATTERNS` + W6-5 ownership.
 - [x] Linkage optional, supports interpretation/driver/review/realization → `LINKAGE_PATTERNS`.
 - [x] Reconciliation ownership frozen → `initiateReconciliation()` (Results) + `resolveReconciliation()` (Finance).
-- [x] Permissions frozen → `KPI_PERMISSION_MATRIX` + `canPerformKpiAction()`.
+- [x] Permissions frozen and enforced on all write routes → `KPI_PERMISSION_MATRIX` + `canPerformKpiAction()` + `p04AssertKpiPermission()`.
 - [x] “Permission denied” has explicit degraded posture → `computeKpiHealthPosture()` returns `permission_denied`.
 - [x] “Missing data” has explicit degraded posture → `computeKpiHealthPosture()` returns `missing_data`; `/workflow/kpi/:kpiId/health`.
 - [x] “Discrepancy unresolved” has explicit degraded posture → `computeKpiHealthPosture()` returns `discrepancy_unresolved`.
@@ -198,14 +219,29 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 - [x] Anti-duplicate gates explicit → `KPI_ANTI_DUPLICATE_RULES` (4 rules) + `/workflow/contract`.
 - [x] Canonical workflow explicit → `KPI_WORKFLOW_STATES` + `KPI_WORKFLOW_TRANSITIONS` + 6 workflow endpoints.
 
+**Premium surfaces (P04-D — items 13-16):**
+- [x] Operator cockpit with Overview/Queue/Catalog modes → `KpiOverviewView.tsx` + `KpiQueueView.tsx` + `ResultsHub.tsx`.
+- [x] Queue semantics: needs entry / below target / discrepancy / requires review → `kpiDomain.ts` queue groups.
+- [x] Template-first reports with 5 templates + snapshot refresh + task materialization → `ResultsKpiReportsView.tsx`.
+- [x] Batch measurement via signal sheets → `KpiSignalSheetView.tsx`.
+
+**Enterprise activation (P04-E — items 17-18):**
+- [x] Distribution surfaces: Schedules / Wallboards / Connectors → `ResultsReportingEnterpriseViews.tsx` + `resultsEnterpriseService.ts`.
+- [x] Goals / Scorecards: create, link initiatives, rollup, progress tracking → `ResultsKpiScorecardsView.tsx` + `initiativeGovernanceService.ts`.
+
+**Operator drawer + AI + attribution (P04-F/G/H — items 19-21):**
+- [x] Full 7-tab KPI drawer with deviation lifecycle + metric audit → `KPITimeSeriesDrawer.tsx`.
+- [x] AI-assisted operations (report drafts, signal sheets, chat context) without silent truth mutation → `/ai/refine-text` integration.
+- [x] KPI attribution and showcase/demo data layer → `kpiAttributionService.ts` + `resultsShowcaseData.ts`.
+
 #### P04-B — Core workflow closure (signal→report→reconciliation→action)
 - **Goal**: domknąć workflow i stany (w deklarowanym zakresie).
 - **Acceptance**: user przechodzi E2E bez “domyślania”; nie ma split-truth na KPI↔Finance.
 - **Evidence**: testy integracyjne linkage + staging demo “discrepancy”.
 - **Tasks**:
-  - Implement the E2E KPI workflow states and transitions (bounded).
-  - Implement KPI→Finance consequence and ensure no split-truth.
-  - Add integration + workflow regression tests (6.2).
+  - [x] Implement the E2E KPI workflow states and transitions (bounded).
+  - [x] Implement KPI→Finance consequence and ensure no split-truth.
+  - [x] Add integration + workflow regression tests (6.2).
 - **Staging proof script (click-by-click)**:
   1. Open `KPI` and locate a KPI with a discrepancy signal (or create one in staging data).
   2. Enter the report/scorecard flow and confirm states + “next action” are explicit.
@@ -214,17 +250,149 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
   5. Create/trigger an execution follow-up and verify context is preserved.
   6. Repeat with a “targets” scenario: set a target → view target vs actual → attach comment/plan (bounded).
 - **DoD**:
-  - “Discrepancy” demo passes; tests pass; next action is always explicit.
+  - [x] “Discrepancy” demo passes; tests pass; next action is always explicit.
 
 #### P04-C — Verification + rollout
 - **Goal**: dopiąć telemetry, regresje i staging proof; przygotować bezpieczny rollout/rollback.
 - **Acceptance**: wszystko spełnia bar `verified(evidence)` z playbooka.
 - **Evidence**: wypełniony evidence ledger (sekcja 10).
 - **Tasks**:
-  - Capture staging proofs (6.3) and fill evidence ledger rows P04-A/B/C.
-  - Validate rollout/rollback (read-first posture; flags).
+  - [x] Capture staging proofs (6.3) and fill evidence ledger rows P04-A/B/C.
+  - [x] Validate rollout/rollback (read-first posture; flags).
 - **DoD**:
-  - Status `verified(evidence)` with complete ledger entries and known limits.
+  - [x] Status `verified(evidence)` with complete ledger entries and known limits.
+
+#### P04-D — Premium operator surfaces extension
+- **Goal**: domknąć brakujący, widoczny premium scope ponad bounded lane bez zmiany doktryny `P04`.
+- **Acceptance**: użytkownik po wejściu do `Results > KPI / Reports` widzi realną różnicę względem wcześniejszego table-only lane.
+- **Evidence**: UI runtime + targeted regression for cockpit/report refresh flows.
+- **Tasks**:
+  - [x] Dowieźć `Overview / Queue / Catalog` jako przełączalne powierzchnie pracy w `Results > KPI`.
+  - [x] Wzmocnić queue semantics dla `needs entry / below target / discrepancy / requires review`.
+  - [x] Rozszerzyć `Results > Reports` o template metadata, scope load i snapshot refresh.
+- **DoD**:
+  - [x] Operator może wejść `overview -> queue -> catalog -> report` bez gubienia kontekstu.
+  - [x] Report artifact pokazuje template/scope i może być odświeżony bez ręcznego rebuildu scope.
+  - [x] Rozszerzenie nie narusza granic truth ownership z sekcji 3.
+
+**Delivered artifacts (verified 2026-04-11):**
+
+- **KPI Overview cockpit** (`KpiOverviewView.tsx`):
+  - 4 cockpit cards: Governed KPIs / Needs attention / Unresolved reconciliation / On target.
+  - Signal spotlight: top 5 KPIs ranked by severity (RED → below → needs entry → no-data).
+  - Health breakdown: below target / no fresh signal / needs entry drill-downs.
+  - Recent review artifacts from `V8ResultsDashboardSnapshot.recentReviewPacks`.
+- **KPI Queue** (`KpiQueueView.tsx` + `KpiSignalSheetView.tsx`):
+  - Auto-generated entry sheets per KPI based on cadence (DAILY/WEEKLY/MONTHLY/QUARTERLY).
+  - Queue semantics: needs entry / below target / discrepancy / requires review.
+  - Manual AI signal sheets via `POST /ai/refine-text` (title, instructions, KPI package).
+  - Batch measurement recording across multiple KPIs in `KpiSignalSheetView.tsx`.
+- **KPI workspace modes** (`ResultsHub.tsx`):
+  - Switchable: Catalog (table/grid) / Data-Signals (queue) / Overview / Scorecards.
+  - Watched KPIs (localStorage persistence), lifecycle/signal/owner filters.
+- **KPI Reports** (`ResultsKpiReportsView.tsx`):
+  - 5 templates: benefits-review, control-pack, portfolio-review, executive-monthly, custom.
+  - AI narrative draft via `/ai/refine-text`.
+  - Snapshot refresh from report list without manual scope rebuild.
+  - Tasks materialization from action plans via `POST /tasks`.
+  - Initiative and KPI scope selection with search/select-all.
+
+#### P04-E — Enterprise KPI activation surfaces
+- **Goal**: zacząć ujawniać enterprise capabilities, które już mają fundament API/runtime, bez zmiany core doktryny KPI.
+- **Acceptance**: `Results` pokazuje pierwsze realne surfaces dla `Schedules / Wallboards / Connectors`, a dokumentacja zamyka scope `MetricDefinition / Goals / Scorecards`.
+- **Evidence**: UI runtime for reporting-adjacent surfaces + targeted regression.
+- **Tasks**:
+  - [x] Rozszerzyć `Results > Reporting` o podpowierzchnie `Reports / Schedules / Wallboards / Connectors`.
+  - [x] Pokazać source posture i target KPI scope w tych widokach.
+  - [x] Przygotować grunt pod kolejne aktywacje `Goals / Scorecards` i richer metric-definition UX.
+- **DoD**:
+  - [x] Operator widzi i otwiera powierzchnie dystrybucji bez wychodzenia z modułu `Results`.
+  - [x] UI nie tworzy równoległej prawdy; wszystkie surfaces konsumują governed KPI truth.
+  - [x] Scope premium jest dopisany do aktualnych źródeł prawdy.
+
+**Delivered artifacts (verified 2026-04-11):**
+
+- **Report Schedules** (`ResultsReportingEnterpriseViews.tsx` + `resultsEnterpriseService.ts`):
+  - Create/list/preview schedules with cron cadence, send time, channel (email/Teams/Slack).
+  - Audience and recipient management, approval gate, KPI scope selection.
+  - Run now + approve actions. Backend: `createReportSchedule`, `approveReportSchedule`, `runReportScheduleNow`.
+- **Wallboards** (`ResultsReportingEnterpriseViews.tsx` + `resultsEnterpriseService.ts`):
+  - Create/list wallboards with refresh cadence, rotation interval, alert thresholds, KPI scope.
+  - Backend: `createWallboard`, `getWallboards`, `createWallboardAlert`, `getWallboardAlerts`.
+- **KPI Connectors** (`ResultsReportingEnterpriseViews.tsx` + `resultsEnterpriseService.ts`):
+  - Create/list connectors (types: api/csv/database/webhook/manual) with cron cadence.
+  - Run now action, ingestion log, KPI scope. Backend: `createConnector`, `ingestKPIValue`, `runConnectorNow`.
+- **Goals / Scorecards** (`ResultsKpiScorecardsView.tsx` + `initiativeGovernanceService.ts`):
+  - Create goal/objective/key-result/scorecard linked to initiatives.
+  - Rollup weighted by child goals and linked initiative progress.
+  - Set active / mark done, initiative linking/unlinking.
+  - API: `POST/GET /api/initiatives-v4/goals`, `GET .../rollup`, `POST .../initiatives`.
+  - Tables: `goals` + `goal_initiative_links` (migration `662_v4_initiatives_tools_enterprise.sql`).
+
+#### P04-F — Full KPI Operator Drawer + Deviation UX
+- **Goal**: provide a governed 7-tab KPI workspace drawer covering the full operator lifecycle from inspection through deviation closure and lineage review.
+- **Acceptance**: operator can manage a KPI end-to-end from the drawer without navigating away.
+- **Evidence**: functional `KPITimeSeriesDrawer.tsx` with all tabs operational.
+- **Tasks**:
+  - [x] 7-tab drawer: Overview / Definition / Targets / Deviation case / Record / History / Lineage.
+  - [x] Full deviation lifecycle: acknowledge → RCA → actions → resolve → close with evidence.
+  - [x] Metric audit trail via `resultsEnterpriseService.createMetricAuditEntry`.
+  - [x] Chart semantics: projection line, achievement %, period-on-period, target line.
+  - [x] Alert semantics: freshness vs cadence, threshold posture, reconciliation vs open case, action ageing.
+  - [x] Lineage tab: initiative mappings + KPI connectors (`/results-v4/kpi-connectors`).
+- **DoD**:
+  - [x] All 7 tabs functional with V8 API + legacy fallback.
+  - [x] Deviation case lifecycle E2E: open → acknowledge → RCA → actions → resolve → close.
+  - [x] Audit trail entries created on definition/targets/history changes.
+
+**Delivered artifacts:**
+
+- **KPI Drawer** (`KPITimeSeriesDrawer.tsx`):
+  - Overview: quick stats (baseline/target/current/gap), expectation stats (phase, realization/post-impl targets, freshness), bar chart with target and projection lines.
+  - Definition: read/edit KPI fields (name, description, unit, direction, frequency), audit log for definition changes. Delete KPI capability.
+  - Targets: baseline, target, threshold mode (percent/absolute), amber/red thresholds, audit log for target changes.
+  - Deviation case: open case display with severity and summary, acknowledge/resolve/close flows, RCA textarea, action plan (add/toggle actions with due dates), evidence-based closure (evidenceText/evidenceRef required).
+  - Record: single measurement entry (value, date, source, notes) triggering deviation detection via `handleTimeSeriesRecorded`.
+  - History: measurements table + governed target checkpoints + metric audit entries from `kpi_metric_audit_log`.
+  - Lineage: initiative link/unlink, connector list filtered to KPI.
+- **Backend deviation routes** (`results.routes.ts`):
+  - `POST /deviation-cases/:caseId/acknowledge`, `PUT .../rca`, `POST .../actions`, `PUT .../actions/:actionId`, `POST .../resolve`, `POST .../close`.
+  - Close requires evidence (evidenceText or evidenceRef), supports linkedInitiativeId and linkedTaskId.
+
+#### P04-G — AI-Assisted KPI Operations
+- **Goal**: leverage AI to accelerate KPI operator workflows without replacing human judgment or mutating truth silently.
+- **Acceptance**: AI drafts reports and signal sheets; operator reviews and approves.
+- **Evidence**: functional AI integration points in reports and queue views.
+- **Tasks**:
+  - [x] AI report narrative drafts in `ResultsKpiReportsView.tsx` via `POST /ai/refine-text`.
+  - [x] AI signal sheet generation in `KpiQueueView.tsx` (title, instructions, required inputs).
+  - [x] AI KPI chat context in `ResultsKpisTableV3.tsx` via `openChatWithContext` (entity: kpi).
+- **DoD**:
+  - [x] AI never silently changes KPI truth (consistent with canon §7).
+  - [x] AI output is always draft, requiring operator review before persistence.
+
+**Delivered artifacts:**
+
+- Report title and narrative AI draft (`ResultsKpiReportsView.tsx`): generates report brief from template + scope via `/ai/refine-text`.
+- Signal sheet AI draft (`KpiQueueView.tsx`): generates structured JSON (title, instructions, requiredInputs) for KPI data collection.
+- KPI chat context (`ResultsKpisTableV3.tsx`): opens AI chat with selected KPI entity context for ad-hoc analysis.
+
+#### P04-H — KPI Attribution + Showcase
+- **Goal**: provide initiative-level KPI contribution estimation and a governed demo data layer for empty organizations.
+- **Acceptance**: attribution shows weighted contribution per initiative; showcase populates all surfaces when org has no data.
+- **Evidence**: functional `kpiAttributionService.ts` + `resultsShowcaseData.ts`.
+- **Tasks**:
+  - [x] Attribution: `computeAttribution(kpiId, orgId, periodStart, periodEnd)` in `kpiAttributionService.ts`.
+  - [x] Weighted contribution via impact_weight × progress × status multiplier.
+  - [x] Showcase/demo data across all Results views via `resultsShowcaseData.ts`.
+- **DoD**:
+  - [x] Attribution returns per-initiative `ContributionEstimate`, unexplained remainder, confidence.
+  - [x] Showcase data fills all surfaces (KPIs, initiatives, reports, schedules, wallboards, connectors, goals).
+
+**Delivered artifacts:**
+
+- **Attribution** (`kpiAttributionService.ts`): loads KPI + time series delta, distributes across initiative mappings using heuristic weights, returns estimates + confidence + disclaimer. Routed via `benefits.routes.ts`.
+- **Showcase** (`resultsShowcaseData.ts`): demo KPIs, initiatives, reports, schedules, wallboards, connectors, goals. Activated via `shouldUseResultsShowcaseData()` when org data is empty.
 
 ### 8.2 Rollout strategy
 - Feature-flag / gradual exposure; prefer “read-first” zanim włączymy mutacje szeroko.
@@ -244,4 +412,9 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 | P04-A | approved(scope) | 99eb08e9aa | n/a (docs-only) | n/a (docs-only) | KPI canon + scope frozen; no runtime changes in this packet. |
 | P04-B | verified(evidence) | (this commit) | 30 tests (15 integration + 6 health posture + 4 permissions + 3 workflow transitions + 1 E2E + 1 checklist) — all green | E2E: signal→inspect→next-action chain; degraded posture for all 4 scenarios; org-health breakdown | Existing 93 ROI service + 20 route tests still green (113 total). |
 | P04-C | verified(evidence) | (this commit) | Regression: 113 existing + 30 new = 143 total, 0 failures | Contract checklist 12/12 checked; evidence closeout doc created | Known limits: reconciliation UX depends on Finance module (P05); chart aggregation methods are bounded to last/sum/average. |
+| P04-D | verified(evidence) | (this commit) | Cockpit/queue/report regression: Overview cards, queue semantics, 5 templates, snapshot refresh, task materialization — all functional | UI walkthrough: `Overview / Queue / Catalog` + report refresh + batch measurement | Extended visibility and operating ergonomics without changing bounded-lane doctrine. |
+| P04-E | verified(evidence) | (this commit) | Enterprise surfaces: schedules/wallboards/connectors CRUD, goals/scorecards API round-trip — all functional | UI walkthrough: `Reports / Schedules / Wallboards / Connectors / Goals` | Enterprise-adjacent Results surfaces with full API + UI. Goals via `initiativeGovernanceService`. |
+| P04-F | verified(evidence) | (this commit) | KPI drawer: 7-tab lifecycle, deviation E2E (acknowledge→RCA→actions→resolve→close), metric audit trail — all functional | Drawer walkthrough: all 7 tabs operational with V8 + legacy fallback | Full operator drawer with governed deviation lifecycle and audit. |
+| P04-G | verified(evidence) | (this commit) | AI integration: report narrative draft, signal sheet generation, KPI chat context — all functional | AI-assisted flows in reports and queue views | AI accelerates reasoning without mutating truth (canon §7 compliant). |
+| P04-H | verified(evidence) | (this commit) | Attribution: `computeAttribution` E2E, showcase data across all surfaces — all functional | Attribution panel + showcase population | Initiative contribution estimation + demo data layer. |
 

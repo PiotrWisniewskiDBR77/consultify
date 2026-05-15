@@ -17,6 +17,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyPartner,
@@ -174,10 +175,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   };
 
   const handleSetupPayment = async () => {
-    // TODO: Integrate Stripe Elements here
-    toast('Contact sales for billing setup.', { icon: 'ℹ️' });
-    // For now, just skip to completion
-    handleSkipPayment();
+    toast('Skontaktuj sie z zespołem partnerskim, aby uzgodnic payout i billing.', {
+      icon: 'ℹ️',
+    });
+    navigate(ROUTES.LEGAL.CONTACT);
   };
 
   // Step 1: Terms & Privacy
@@ -190,10 +191,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400" />
             </div>
             <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
-              Welcome to Consultify!
+              Start your partner application
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
-              Before we begin, please review and accept our terms
+              To jest ta sama sciezka aplikacyjna uruchamiana z LP i z produktu.
             </p>
           </div>
 
@@ -201,7 +202,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-purple-600 dark:text-purple-400 font-medium">Step 1 of 4</span>
-              <span className="text-slate-500 dark:text-slate-400">Legal Agreement</span>
+              <span className="text-slate-500 dark:text-slate-400">Partner agreement</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
               <div className="h-full bg-purple-600 w-1/4 transition-all duration-300" />
@@ -211,9 +212,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="space-y-6">
             {/* Terms & Conditions */}
             <div className="border border-slate-200 dark:border-navy-700 rounded-xl p-6 bg-slate-50 dark:bg-navy-900/50">
-              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">
-                Terms & Conditions
-              </h3>
+              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">Warunki programu</h3>
               <div className="max-h-40 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-2">
                 <p>By using Consultify, you agree to our enterprise service agreement...</p>
                 <p>• Professional services and AI-powered consulting tools</p>
@@ -228,14 +227,16 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                   className="mt-1 w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-purple-600 focus:ring-purple-500"
                 />
                 <span className="text-sm text-slate-700 dark:text-slate-300">
-                  I have read and accept the Terms & Conditions
+                  Akceptuje warunki programu partnerskiego
                 </span>
               </label>
             </div>
 
             {/* Privacy Policy */}
             <div className="border border-slate-200 dark:border-navy-700 rounded-xl p-6 bg-slate-50 dark:bg-navy-900/50">
-              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">Privacy Policy</h3>
+              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">
+                Polityka prywatnosci
+              </h3>
               <div className="max-h-40 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-2">
                 <p>We respect your privacy and protect your data...</p>
                 <p>• We collect only necessary business information</p>
@@ -250,7 +251,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                   className="mt-1 w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-purple-600 focus:ring-purple-500"
                 />
                 <span className="text-sm text-slate-700 dark:text-slate-300">
-                  I have read and accept the Privacy Policy
+                  Akceptuje polityke prywatnosci
                 </span>
               </label>
             </div>
@@ -268,7 +269,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               </>
             ) : (
               <>
-                Accept & Continue
+                Potwierdz i przejdz dalej
                 <ArrowRight className="w-5 h-5" />
               </>
             )}
@@ -355,10 +356,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <DollarSign className="w-8 h-8 text-purple-600 dark:text-purple-400" />
             </div>
             <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
-              Choose Your Plan
+              Choose your partner track
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
-              Select the perfect tier for your organization
+              Wybierz model wejscia, ktory najlepiej pasuje do planu wspolpracy.
             </p>
           </div>
 
@@ -366,7 +367,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="mb-12 max-w-2xl mx-auto">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-purple-600 dark:text-purple-400 font-medium">Step 2 of 4</span>
-              <span className="text-slate-500 dark:text-slate-400">Pricing Selection</span>
+              <span className="text-slate-500 dark:text-slate-400">Partner track</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
               <div className="h-full bg-purple-600 w-2/4 transition-all duration-300" />
@@ -443,7 +444,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     );
   }
 
-  // Step 3: Payment Setup
+  // Step 3: Payout readiness
   if (step === 3) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
@@ -452,9 +453,11 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <CreditCard className="w-8 h-8 text-purple-600 dark:text-purple-400" />
             </div>
-            <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">Payment Setup</h1>
+            <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
+              Payout and billing readiness
+            </h1>
             <p className="text-slate-600 dark:text-slate-300">
-              Add your payment method to continue
+              Ustal dane do rozliczen teraz albo przejdz dalej i dopnij je z zespołem partnerskim.
             </p>
           </div>
 
@@ -462,7 +465,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-purple-600 dark:text-purple-400 font-medium">Step 3 of 4</span>
-              <span className="text-slate-500 dark:text-slate-400">Payment Method</span>
+              <span className="text-slate-500 dark:text-slate-400">Payout readiness</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
               <div className="h-full bg-purple-600 w-3/4 transition-all duration-300" />
@@ -474,11 +477,11 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <Shield className="w-6 h-6 text-blue-600 flex-shrink-0" />
               <div>
                 <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
-                  Secure Payment Processing
+                  Rozliczenia partnera
                 </h3>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Your payment information is encrypted and processed securely by Stripe. We never
-                  store your full card details.
+                  Finalne dane payout i billing mozna uzgodnic automatycznie w flow albo manualnie z
+                  zespołem partnerskim dla niestandardowych warunkow.
                 </p>
               </div>
             </div>
@@ -487,9 +490,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Placeholder for Stripe Elements */}
           <div className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-12 mb-8 text-center">
             <CreditCard className="w-16 h-16 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 mb-2">Stripe Payment Form</p>
+            <p className="text-slate-500 dark:text-slate-400 mb-2">Payout and billing setup</p>
             <p className="text-sm text-slate-400 dark:text-slate-500">
-              (Integration with Stripe Elements pending)
+              (Automated payout setup can be expanded in the next rollout)
             </p>
           </div>
 
@@ -498,7 +501,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               onClick={handleSkipPayment}
               className="flex-1 border-2 border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-semibold py-4 rounded-xl transition-all"
             >
-              Skip for Now
+              Continue and finish later
             </button>
             <button
               onClick={handleSetupPayment}
@@ -512,7 +515,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                 </>
               ) : (
                 <>
-                  Add Payment Method
+                  Contact partner team
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -530,15 +533,17 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
         </div>
-        <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">Welcome Aboard!</h1>
+        <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">
+          Partner application completed
+        </h1>
         <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
-          Your account is ready. Let's get started with Consultify!
+          Twoj workspace jest gotowy do kolejnego kroku aktywacji i pracy w programie.
         </p>
         <button
           onClick={() => navigate('/app')}
           className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-4 rounded-xl transition-all inline-flex items-center gap-2"
         >
-          Go to Dashboard
+          Go to workspace
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>

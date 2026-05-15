@@ -7,8 +7,12 @@
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin,
+} from '../middleware/superAdmin.middleware.js';
 import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -16,6 +20,58 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 router.use(defaultRateLimiter);
+router.use(verifyToken);
+router.use(verifySuperAdmin);
+router.use(requireSuperAdminCapability('platform_ops'));
+
+function analyticsFailure(
+  res: Response,
+  status: number,
+  error: string,
+  fallback: Record<string, unknown>
+) {
+  return res.status(status).json({
+    error,
+    degraded: true,
+    ...fallback,
+  });
+}
+
+function isSqlReportExecutionEnabled(): boolean {
+  return (
+    process.env.ENABLE_SUPERADMIN_SQL_REPORTS === 'true' && process.env.NODE_ENV !== 'production'
+  );
+}
+
+function isReadOnlyAnalyticsQuery(querySql: string): boolean {
+  const normalized = String(querySql || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  if (!normalized.startsWith('select')) return false;
+  if (normalized.includes(';')) return false;
+
+  const blockedPatterns = [
+    ' insert ',
+    ' update ',
+    ' delete ',
+    ' drop ',
+    ' alter ',
+    ' create ',
+    ' truncate ',
+    ' attach ',
+    ' detach ',
+    ' pragma ',
+    ' vacuum ',
+    '--',
+    '/*',
+    ' pg_',
+    ' information_schema.',
+  ];
+
+  return !blockedPatterns.some((pattern) => normalized.includes(pattern));
+}
 
 // ==========================================
 // DEMO & TRIAL CONVERSION ANALYTICS
@@ -27,8 +83,6 @@ router.use(defaultRateLimiter);
  */
 router.get(
   '/anna-funnel',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const analytics = await getPublicAnnaFunnelSummary(30);
@@ -44,8 +98,6 @@ router.get(
 
 router.get(
   '/demo-trial',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const days = 30;
@@ -137,8 +189,6 @@ router.get(
  */
 router.get(
   '/dashboards',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const dashboards = await dbAll(`
@@ -158,7 +208,7 @@ router.get(
       return res.json({ dashboards: parsed });
     } catch (error: any) {
       logger.error('[Analytics] Get dashboards error:', error);
-      return res.json({ dashboards: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch dashboards', { dashboards: [] });
     }
   })
 );
@@ -168,8 +218,6 @@ router.get(
  */
 router.get(
   '/dashboards/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -200,8 +248,6 @@ router.get(
  */
 router.get(
   '/dashboards/:id/data',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -230,7 +276,7 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Analytics] Get dashboard data error:', error);
-      return res.json({ data: {} });
+      return analyticsFailure(res, 500, 'Failed to fetch dashboard data', { data: {} });
     }
   })
 );
@@ -240,8 +286,6 @@ router.get(
  */
 router.post(
   '/dashboards',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, description, layout, widgets } = req.body;
@@ -275,8 +319,6 @@ router.post(
  */
 router.put(
   '/dashboards/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -314,8 +356,6 @@ router.put(
  */
 router.delete(
   '/dashboards/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -333,8 +373,6 @@ router.delete(
  */
 router.post(
   '/dashboards/:id/share',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -366,8 +404,6 @@ router.post(
  */
 router.get(
   '/reports',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const reports = await dbAll(`
@@ -387,7 +423,7 @@ router.get(
       return res.json({ reports: parsed });
     } catch (error: any) {
       logger.error('[Analytics] Get reports error:', error);
-      return res.json({ reports: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch reports', { reports: [] });
     }
   })
 );
@@ -397,8 +433,6 @@ router.get(
  */
 router.get(
   '/reports/:id/executions',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -415,7 +449,7 @@ router.get(
       return res.json({ executions: executions || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get report executions error:', error);
-      return res.json({ executions: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch report executions', { executions: [] });
     }
   })
 );
@@ -425,8 +459,6 @@ router.get(
  */
 router.post(
   '/reports',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, description, report_type, query_sql, parameters, visualization_type } =
@@ -463,8 +495,6 @@ router.post(
  */
 router.post(
   '/reports/:id/execute',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -475,19 +505,32 @@ router.post(
         return res.status(404).json({ error: 'Report not found' });
       }
 
-      // Execute the report query (with proper sanitization in production)
+      // Enterprise-safe posture: operator-executed SQL is disabled by default and only
+      // allowed in explicitly gated non-production environments for reviewed read-only reports.
       let results: any[] = [];
-      if (
-        report.query_sql &&
-        !report.query_sql.toLowerCase().includes('drop') &&
-        !report.query_sql.toLowerCase().includes('delete')
-      ) {
+      if (report.query_sql && !isSqlReportExecutionEnabled()) {
+        return res.status(422).json({
+          error: 'Operator-executed SQL reports are disabled in enterprise-safe environments.',
+          code: 'ANALYTICS_SQL_DISABLED',
+          guidance:
+            'Use curated report jobs or reviewed backend read models instead of direct SQL execution.',
+        });
+      }
+      if (report.query_sql && isReadOnlyAnalyticsQuery(report.query_sql)) {
         try {
           results = (await dbAll(report.query_sql, [])) || [];
         } catch (queryError) {
           logger.warn('[Analytics] Report query error:', queryError);
           results = [];
         }
+      } else if (report.query_sql) {
+        return res.status(422).json({
+          error:
+            'Only single-statement read-only SELECT reports can be executed from Superadmin analytics.',
+          code: 'ANALYTICS_QUERY_NOT_ALLOWED',
+          guidance:
+            'Move complex or mutating SQL to reviewed backend jobs instead of operator-executed reports.',
+        });
       }
 
       // Log execution
@@ -513,8 +556,6 @@ router.post(
  */
 router.post(
   '/reports/:id/schedule',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -542,8 +583,6 @@ router.post(
  */
 router.delete(
   '/reports/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -566,8 +605,6 @@ router.delete(
  */
 router.get(
   '/metrics',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const metrics = await dbAll(`
@@ -581,7 +618,7 @@ router.get(
       return res.json({ metrics: metrics || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics error:', error);
-      return res.json({ metrics: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch metrics', { metrics: [] });
     }
   })
 );
@@ -591,8 +628,6 @@ router.get(
  */
 router.get(
   '/metrics/stats',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const stats = (await dbGet(
@@ -639,7 +674,7 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics stats error:', error);
-      return res.json({
+      return analyticsFailure(res, 500, 'Failed to fetch metric stats', {
         totalMetrics: 0,
         activeMetrics: 0,
         categories: 0,
@@ -656,8 +691,6 @@ router.get(
  */
 router.get(
   '/metrics/:id/history',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -675,7 +708,7 @@ router.get(
       return res.json({ history: history || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get metric history error:', error);
-      return res.json({ history: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch metric history', { history: [] });
     }
   })
 );
@@ -685,8 +718,6 @@ router.get(
  */
 router.post(
   '/metrics',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const {
@@ -733,8 +764,6 @@ router.post(
  */
 router.post(
   '/metrics/:id/calculate',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -786,8 +815,6 @@ router.post(
  */
 router.delete(
   '/metrics/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -810,8 +837,6 @@ router.delete(
  */
 router.get(
   '/models',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const models = await dbAll(`
@@ -831,7 +856,7 @@ router.get(
       return res.json({ models: parsed });
     } catch (error: any) {
       logger.error('[Analytics] Get models error:', error);
-      return res.json({ models: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch predictive models', { models: [] });
     }
   })
 );
@@ -841,8 +866,6 @@ router.get(
  */
 router.get(
   '/models/:id/predictions',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -859,7 +882,9 @@ router.get(
       return res.json({ predictions: predictions || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get predictions error:', error);
-      return res.json({ predictions: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch model predictions', {
+        predictions: [],
+      });
     }
   })
 );
@@ -869,8 +894,6 @@ router.get(
  */
 router.post(
   '/models',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, description, model_type, target_metric, features, model_parameters } = req.body;
@@ -906,8 +929,6 @@ router.post(
  */
 router.post(
   '/models/:id/train',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -1002,8 +1023,6 @@ router.post(
  */
 router.post(
   '/models/:id/predict',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -1092,8 +1111,6 @@ router.post(
  */
 router.delete(
   '/models/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;

@@ -198,6 +198,21 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical report types, RAG logic, escalation rules, reporting UX
   - **Authority**: Highest for reporting behavior and management layer outputs
 
+- `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical cross-module doctrine for KPI across Initiatives, Results, Reporting, Goals/Scorecards, distribution surfaces, Finance linkage, alerts, action workflow and AI support
+  - **Authority**: Highest for full-system KPI architecture, documentation read-order, cross-module ownership split and the premium rollout delta that remains above the historical bounded `P04` lane, including metric foundation, scorecards and reporting-adjacent enterprise surfaces
+
+- `docs/product/RESULTS_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical Results ownership for KPI, scorecards, deviations, ROI, executive review and intervention flows
+  - **Authority**: Highest for Results-native KPI truth and Results module doctrine
+
+- `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical optional KPI-to-Finance linkage, reconciliation ownership and runtime bridge semantics
+  - **Authority**: Highest for KPI to Finance linkage and reconciliation boundaries
+
 ### My Work and Radar
 
 - `docs/product/MYWORK_RADAR_V8_READINESS_AUDIT.md`

@@ -112,8 +112,38 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should deny when permission service returns truthy non-boolean value', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue([] as any);
+
+      const middleware = requirePermission('PROJECT_CREATE');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should return 401 when no user on request', async () => {
       mockReq.user = undefined;
+
+      const middleware = requirePermission('PROJECT_CREATE');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should return 401 when user accessor throws during auth context read', async () => {
+      Object.defineProperty(mockReq, 'user', {
+        configurable: true,
+        get: () => {
+          throw new Error('user getter failed');
+        },
+      });
 
       const middleware = requirePermission('PROJECT_CREATE');
       await middleware(mockReq, mockRes, mockNext);
@@ -190,6 +220,62 @@ describe('Permission Middleware - Real Production Tests', () => {
       );
       expect(mockNext).toHaveBeenCalled();
     });
+
+    it('should deny without permission service call when permission key is blank', async () => {
+      const middleware = requirePermission('   ');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should deny without permission service call when permission key is empty string', async () => {
+      const middleware = requirePermission('');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies oversized permission key without calling permission service', async () => {
+      const middleware = requirePermission('A'.repeat(129));
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('sanitizes invisible and control chars in permission key before permission check', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      const middleware = requirePermission('  ADMIN_\u200BACCESS\u0000  ');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-456',
+        'ADMIN_ACCESS',
+        'USER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('requireAnyPermission', () => {
@@ -220,7 +306,7 @@ describe('Permission Middleware - Real Production Tests', () => {
       await middleware(mockReq, mockRes, mockNext);
 
       // Empty permissions = immediate denial
-      expect(mockRes.status).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -252,6 +338,130 @@ describe('Permission Middleware - Real Production Tests', () => {
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns a stable copy of requiredAny in denied payload', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(false);
+      const keys = ['ADMIN_ACCESS', 'SUPERADMIN_ACCESS'];
+      const middleware = requireAnyPermission(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      const payload = mockRes.json.mock.calls[0][0];
+      keys.push('MUTATED_AFTER_CALL');
+
+      expect(payload.requiredAny).toEqual(['ADMIN_ACCESS', 'SUPERADMIN_ACCESS']);
+      expect(payload.requiredAny).not.toBe(keys);
+    });
+
+    it('denies and skips permission service when all required-any keys are blank', async () => {
+      const middleware = requireAnyPermission(['  ', '\t']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: [],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('normalizes permission keys before requireAny checks', async () => {
+      mockPermissionService.hasPermission.mockResolvedValueOnce(true);
+      const middleware = requireAnyPermission(['  ADMIN_ACCESS  ']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-456',
+        'ADMIN_ACCESS',
+        'USER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('denies safely when requireAnyPermission receives non-array permission key input', async () => {
+      const middleware = requireAnyPermission(null as any);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Invalid permission key list input for requireAnyPermission',
+        expect.objectContaining({ inputType: 'object' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies and skips checks when any normalized requireAny key exceeds max length', async () => {
+      const middleware = requireAnyPermission(['VALID_KEY', 'B'.repeat(129)]);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: [],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies and skips checks when requireAny key list exceeds max count', async () => {
+      const keys = Array.from({ length: 33 }, (_, index) => `P_${index}`);
+      const middleware = requireAnyPermission(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Denied: permission key list exceeds max count',
+        expect.objectContaining({ count: 33, max: 32 })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies when requireAnyPermission receives truthy non-boolean grant values', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue([] as any);
+      const middleware = requireAnyPermission(['ADMIN_ACCESS', 'PROJECT_CREATE']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: ['ADMIN_ACCESS', 'PROJECT_CREATE'],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('dedupes normalized keys before evaluating requireAny permissions', async () => {
+      mockReq.user.role = 'USER';
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const middleware = requireAnyPermission(['A', '  A  ', 'A']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -296,6 +506,269 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('should deny when permission list is empty as misconfiguration guard', async () => {
+      const middleware = requireAllPermissions([]);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('normalizes permission keys before requireAll checks', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      const middleware = requireAllPermissions(['  PROJECT_VIEW  ']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-456',
+        'PROJECT_VIEW',
+        'USER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('denies and skips permission service when all required-all keys are blank', async () => {
+      const middleware = requireAllPermissions(['  ', '\n']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies safely when requireAllPermissions receives non-array permission key input', async () => {
+      const middleware = requireAllPermissions(undefined as any);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Invalid permission key list input for requireAllPermissions',
+        expect.objectContaining({ inputType: 'undefined' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies and skips checks when any normalized requireAll key exceeds max length', async () => {
+      const middleware = requireAllPermissions(['VALID_KEY', 'C'.repeat(129)]);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies and skips checks when requireAll key list exceeds max count', async () => {
+      const keys = Array.from({ length: 33 }, (_, index) => `Q_${index}`);
+      const middleware = requireAllPermissions(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Denied: permission key list exceeds max count',
+        expect.objectContaining({ count: 33, max: 32 })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies when requireAllPermissions receives truthy non-boolean grant values', async () => {
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce([] as any);
+
+      const middleware = requireAllPermissions(['PROJECT_VIEW', 'PROJECT_DELETE']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: ['PROJECT_DELETE'],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('dedupes normalized keys before evaluating requireAll permissions', async () => {
+      mockReq.user.role = 'USER';
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const middleware = requireAllPermissions(['PROJECT_VIEW', '  PROJECT_VIEW  ']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+      expect(mockNext).toHaveBeenCalled();
+    });
+  });
+
+  describe('response safety when headers already sent', () => {
+    it('requirePermission does not write a second response when headers are already sent', async () => {
+      mockReq.user = undefined; // triggers 401 path
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+      const middleware = requirePermission('PROJECT_CREATE');
+
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped response write: headers already sent',
+        expect.objectContaining({ statusCode: 401 })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('requirePermission handles response writer failures without throwing', async () => {
+      mockReq.user = undefined;
+      mockRes.status.mockReturnValueOnce({
+        json: () => {
+          throw new Error('json write failed');
+        },
+      });
+
+      const middleware = requirePermission('PROJECT_CREATE');
+
+      await expect(middleware(mockReq, mockRes, mockNext)).resolves.toBeUndefined();
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Failed response write',
+        expect.objectContaining({ statusCode: 401, code: 'AUTH_REQUIRED' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('requirePermission skips permission service when response is already committed', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requirePermission('PROJECT_CREATE');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requirePermission',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+    });
+
+    it('requirePermission skips before blank-key validation when response is already committed', async () => {
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requirePermission('   ');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requirePermission',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+      expect(mockLogger.info).not.toHaveBeenCalledWith(
+        expect.stringContaining('blank permission key')
+      );
+    });
+
+    it('requireAnyPermission skips permission service when response is already committed', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requireAnyPermission(['PROJECT_CREATE', 'PROJECT_VIEW']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requireAnyPermission',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+    });
+
+    it('requireAllPermissions skips permission service when response is already committed', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requireAllPermissions(['PROJECT_CREATE', 'PROJECT_VIEW']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requireAllPermissions',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+    });
   });
 
   describe('Role-based scenarios', () => {
@@ -316,6 +789,7 @@ describe('Permission Middleware - Real Production Tests', () => {
 
     it('should handle user without organizationId', async () => {
       mockReq.user.organizationId = undefined;
+      (mockReq.user as any).organization_id = undefined;
       mockPermissionService.hasPermission.mockResolvedValue(true);
 
       const middleware = requirePermission('PUBLIC_ACCESS');
@@ -328,6 +802,23 @@ describe('Permission Middleware - Real Production Tests', () => {
         'USER'
       );
     });
+
+    it('should use legacy organization_id when organizationId is missing', async () => {
+      mockReq.user.organizationId = undefined;
+      (mockReq.user as any).organization_id = 'org-legacy';
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+
+      const middleware = requirePermission('PUBLIC_ACCESS');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-legacy',
+        'PUBLIC_ACCESS',
+        'USER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('role normalization helpers (private)', () => {
@@ -339,6 +830,7 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(__private__.normalizeRoleForDb('member')).toBe('TEAM_MEMBER');
       expect(__private__.normalizeRoleForDb('client')).toBe('VIEWER');
       expect(__private__.normalizeRoleForDb('  custom_role  ')).toBe('CUSTOM_ROLE');
+      expect(__private__.normalizeRoleForDb('   ')).toBe('VIEWER');
     });
 
     it('bridges legacy USER <-> TEAM_MEMBER role candidates', () => {
@@ -376,6 +868,25 @@ describe('Permission Middleware - Real Production Tests', () => {
           correlationId: 'corr-1',
         })
       );
+    });
+
+    it('wraps response json only once when middleware is mounted twice', async () => {
+      const middleware = auditAction({ action: 'UPDATE', resourceType: 'PROJECT' });
+      const req: any = {
+        user: { id: 'user-123', role: 'ADMIN', organizationId: 'org-456' },
+        get: () => undefined,
+      };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await middleware(req, res, next);
+      await res.json({ ok: true });
+
+      expect(next).toHaveBeenCalledTimes(2);
+      expect(mockAuditService.logAudit).toHaveBeenCalledTimes(1);
+      expect(originalJson).toHaveBeenCalledTimes(1);
     });
 
     it('prefers req.userId over req.user.id for actorId', async () => {
@@ -468,6 +979,163 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockAuditService.logAudit).toHaveBeenCalledWith(
         expect.objectContaining({ correlationId: undefined })
       );
+    });
+
+    it('keeps audit flow when req.get throws while resolving correlation id', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = {
+        user: { id: 'user-123' },
+        get: () => {
+          throw new Error('header getter failed');
+        },
+      };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await res.json({ ok: true });
+      expect(mockAuditService.logAudit).toHaveBeenCalledWith(
+        expect.objectContaining({ correlationId: undefined, actorId: 'user-123' })
+      );
+    });
+
+    it('keeps request flow when response json binder throws before wrapping', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' } };
+      const res: any = {};
+      Object.defineProperty(res, 'json', {
+        configurable: true,
+        get: () => {
+          throw new Error('json binder failed');
+        },
+      });
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(mockAuditService.logAudit).not.toHaveBeenCalled();
+    });
+
+    it('skips audit logging when headers are already sent before wrapped json execution', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson, headersSent: false };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      res.headersSent = true;
+      await res.json({ ok: true });
+
+      expect(mockAuditService.logAudit).not.toHaveBeenCalled();
+      expect(originalJson).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps audit flow when res.statusCode accessor throws inside wrapped json', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const resObj: any = { json: originalJson };
+      Object.defineProperty(resObj, 'statusCode', {
+        configurable: true,
+        get: () => {
+          throw new Error('statusCode getter failed');
+        },
+      });
+      const res: any = resObj;
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await expect(res.json({ ok: true })).resolves.toEqual({ ok: true });
+
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(mockAuditService.logAudit).toHaveBeenCalledWith(
+        expect.objectContaining({ actorId: 'user-123' })
+      );
+      expect(originalJson).toHaveBeenCalledTimes(1);
+    });
+
+    it('logs and propagates when wrapped original json rejects', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const res: any = {
+        statusCode: 200,
+        json: vi.fn().mockReturnValue(Promise.reject(new Error('serialize failed'))),
+      };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await expect(res.json({ ok: true })).rejects.toThrow('serialize failed');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        '[AuditMiddleware] Response json handler failed',
+        expect.any(Error)
+      );
+    });
+
+    it('logs and propagates when wrapped original json throws synchronously', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const res: any = {
+        statusCode: 200,
+        json: vi.fn(() => {
+          throw new Error('sync serialize failed');
+        }),
+      };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await expect(res.json({ ok: true })).rejects.toThrow('sync serialize failed');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        '[AuditMiddleware] Response json handler failed',
+        expect.any(Error)
+      );
+    });
+
+    it('keeps audit logging when getResourceId accessor throws', async () => {
+      const middleware = auditAction({
+        action: 'UPDATE',
+        resourceType: 'PROJECT',
+        getResourceId: () => {
+          throw new Error('resource id failed');
+        },
+      });
+      const req: any = { user: { id: 'user-123', role: 'ADMIN', organizationId: 'org-456' }, get: vi.fn() };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await res.json({ ok: true });
+
+      expect(mockAuditService.logAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorId: 'user-123',
+          resourceId: null,
+        })
+      );
+      expect(originalJson).toHaveBeenCalledTimes(1);
+    });
+
+    it('emits at most one audit record when wrapped res.json is called multiple times', async () => {
+      const middleware = auditAction({ action: 'UPDATE', resourceType: 'PROJECT' });
+      const req: any = {
+        user: { id: 'user-123', role: 'ADMIN', organizationId: 'org-456' },
+        get: () => undefined,
+      };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await res.json({ first: true });
+      await res.json({ second: true });
+
+      expect(mockAuditService.logAudit).toHaveBeenCalledTimes(1);
+      expect(originalJson).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -135,6 +135,13 @@ At minimum, the public surface must handle these scenarios with explicit, recove
 - [ ] Unsupported languages are handled with a clear supported-language list and a safe fallback.
 - [ ] No parallel “public Anna canon” exists elsewhere without linking to this SSOT.
 
+#### 2.3.10 Superadmin control-plane authority
+- Anna is a `Virtual Worker` and her operator-facing configuration authority lives in `Superadmin -> Virtual Workers`.
+- Public LP runtime code may contain bounded defaults and fallbacks, but those are not the long-term source of truth for Anna operations.
+- Anna's managed profile should include persona/tone, system prompt, knowledge assignments, memory policy, channel policy, analytics visibility and release posture.
+- Public product knowledge for Anna should be governed through assigned `knowledge pills` and section-level controls rather than only through hidden prompt prose or raw weighted product slugs.
+- Operators should be able to inspect how many conversations Anna handled, what their main themes were, how long they lasted, what products were discussed and where public knowledge gaps appeared.
+
 ---
 
 ## 3. Conversation contract (what Anna can/cannot do on LP)
@@ -196,6 +203,7 @@ Anna should guide visitors toward authenticated entry points:
 - Anna's knowledge base is limited to **public product information**: feature descriptions, value proposition, use cases, platform overview
 - Anna MUST NOT access or reference: tenant data, user data, internal documentation, pricing databases, or any non-public material
 - Knowledge updates to Anna's base require editorial review (not auto-ingested)
+- Anna's public product knowledge should be administered through the `Virtual Workers` control plane as governed `knowledge pills` with explicit assignment and release semantics
 - When both Polish and English public knowledge are available, Anna should prefer the visitor's current conversation language and fall back cross-language only when matching public material is not available
 - When dedicated Spanish public knowledge is not yet available, Anna may still answer in Spanish using the same approved public EN/PL knowledge boundaries rather than inventing new claims
 - When dedicated German public knowledge is not yet available, Anna may still answer in German using the same approved public EN/PL knowledge boundaries rather than inventing new claims
@@ -208,8 +216,10 @@ Anna should guide visitors toward authenticated entry points:
 - **No persistence:** When the session ends, all conversation state is discarded
 - **No cross-session identification:** Anna cannot recognize returning visitors
 - For short follow-up questions inside the same session, Anna should use the latest visible topic as local conversation context instead of answering like a brand new conversation
+- The implementation should prefer compact session summaries and structured topic continuity over blindly replaying long raw transcript windows
 - Live voice turns should feed the same visible session transcript used by typed Anna so a typed follow-up after voice still behaves like one public Anna conversation
 - When a visitor switches from typed Anna into live voice inside the same session, the visible typed transcript should bootstrap the live voice context rather than starting a disconnected public conversation
+- Operator analytics for Anna may retain privacy-first structured conversation intelligence such as topic, duration, channel, outcome, products discussed and knowledge gaps, without turning Anna into a cross-session identity memory system
 
 ### 5.3 Output governance
 
@@ -259,5 +269,8 @@ If the AI backend is unavailable:
 | `HELP_KNOWLEDGE_BASE_TERESA_GUIDED_EXPERIENCE_RUNTIME_V8.md` | Teresa's guided experience model (Anna's post-handoff counterpart) |
 | `AI_TENANT_MEMORY_BOOTSTRAP_AND_ASSIGNMENT_V8.md` | Tenant memory model that Anna explicitly does NOT participate in |
 | `CHAT_V8_MEMORY_AND_PERSONALIZATION.md` | Memory semantics that apply to Teresa but not to Anna |
+| `VIRTUAL_WORKERS_SUPERADMIN_CONTROL_PLANE_V8.md` | Canonical target control plane for operating Anna as a virtual worker |
+| `VIRTUAL_WORKERS_CONVERSATION_INTELLIGENCE_AND_PRIVACY_ANALYTICS_V8.md` | Canonical analytics contract for Anna themes, durations, outcomes and knowledge-gap visibility |
+| `VIRTUAL_WORKERS_SUPERADMIN_IMPLEMENTATION_PLAN_V8.md` | Phased implementation sequence for making Anna fully operable from Virtual Workers |
 | `WP-W7-ROOF-03_LANDING_SUPERADMIN.md` | Gap analysis for remaining Landing and SuperAdmin coverage work |
 | `DECISION_LOG_WAVE_7.md` (Decision W7-9) | Decision mandating recreation of this contract |

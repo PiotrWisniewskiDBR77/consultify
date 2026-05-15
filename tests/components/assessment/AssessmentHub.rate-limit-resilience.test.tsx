@@ -25,6 +25,10 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
   useTranslation: () => ({
     t: tMock,
     i18n: { language: 'en' },
@@ -51,8 +55,17 @@ vi.mock('../../../src/hooks/useFeatureFlags', () => ({
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  ModuleHub: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="assessment-module-hub">{children}</div>
+  ModuleHub: ({
+    children,
+    commandRowContent,
+  }: {
+    children: React.ReactNode;
+    commandRowContent?: React.ReactNode;
+  }) => (
+    <div data-testid="assessment-module-hub">
+      {commandRowContent}
+      {children}
+    </div>
   ),
   FilterableTable: ({ data, emptyMessage }: { data: Array<{ id: string; name: string }>; emptyMessage: string }) => (
     <div>
@@ -168,5 +181,29 @@ describe('AssessmentHub rate limit resilience', () => {
         'Assessment data is temporarily rate limited. Showing the last available list while staging recovers.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('renders the canonical Menu 3 AI actions in the hub', async () => {
+    apiMock.listAssessments.mockResolvedValue({
+      items: [
+        {
+          id: 'asm_1',
+          name: 'Canonical DRD',
+          type: 'DRD',
+          status: 'DRAFT',
+          updatedAt: '2026-04-11T08:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/assessment']}>
+        <AssessmentHub />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('AI Triage')).toBeInTheDocument();
+    expect(screen.getByText('Chat')).toBeInTheDocument();
+    expect(screen.getByText('Interpretation Draft')).toBeInTheDocument();
   });
 });

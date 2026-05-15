@@ -2,7 +2,7 @@ name: IRIS 6.0 Automated Test Suite
 
 on:
   push:
-    branches: [main, develop, Londyn]
+    branches: [main, develop]
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -83,6 +83,28 @@ jobs:
           name: test-impact
           path: test-results/test-impact.txt
           retention-days: 30
+
+  module-contract-pr-gate:
+    name: 📚 Module Contract PR Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    needs: lint-typecheck
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Enforce runtime-contract sync gate
+        run: npx tsx scripts/testing/module-contract-pr-gate.ts --base ${{ github.event.pull_request.base.sha }}
+        env:
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
 
   # ═══════════════════════════════════════════════════════════════
   # TEST QUALITY (Anti-Placeholder)
@@ -611,7 +633,7 @@ jobs:
           NODE_ENV: test
           E2E_USE_WEB_SERVER: 'true'
           E2E_BACKEND_RUNNER: build
-          E2E_MODE: 'false'
+          E2E_MODE: 'true'
           E2E_API_URL: http://127.0.0.1:3001
           E2E_BASE_URL: http://127.0.0.1:3000
           TEST_SUPPORT_KEY: local-test-support-key-change-me
@@ -633,6 +655,108 @@ jobs:
           name: e2e-screenshots
           path: test-results/
           retention-days: 7
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
+  readiness-paths:
+    name: 🧭 Readiness Smoke Scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run_readiness: ${{ steps.decide.outputs.run_readiness }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect readiness-related changes
+        if: ${{ github.event_name == 'pull_request' }}
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            readiness:
+              - 'src/views/SettingsView.tsx'
+              - 'src/views/settings/**'
+              - 'src/views/admin/**'
+              - 'src/views/superadmin/**'
+              - 'src/components/Admin/**'
+              - 'src/components/Organization/**'
+              - 'src/components/layout/SuperAdminSidebar.tsx'
+              - 'src/routes/**'
+              - 'src/services/api.ts'
+              - 'src/services/api/**'
+              - 'server/src/routes/testSupport.routes.ts'
+              - 'tests/e2e/smoke/admin-settings-superadmin-readiness.spec.ts'
+              - 'tests/e2e/smoke/global-setup.ts'
+              - 'tests/e2e/smoke/global-teardown.ts'
+              - 'playwright.config.ts'
+              - 'playwright.smoke.config.ts'
+              - 'package.json'
+              - '.github/workflows/test-suite.yml'
+
+      - name: Decide readiness smoke scope
+        id: decide
+        env:
+          GH_EVENT: ${{ github.event_name }}
+          GH_REF_NAME: ${{ github.ref_name }}
+          READINESS_CHANGED: ${{ steps.filter.outputs.readiness || 'false' }}
+        run: |
+          if [ "$GH_EVENT" != "pull_request" ]; then
+            echo "run_readiness=true" >> "$GITHUB_OUTPUT"
+            echo "Readiness smoke enabled: non-PR run." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$READINESS_CHANGED" = "true" ]; then
+            echo "run_readiness=true" >> "$GITHUB_OUTPUT"
+            echo "Readiness smoke enabled: relevant files changed in PR." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "run_readiness=false" >> "$GITHUB_OUTPUT"
+            echo "Readiness smoke skipped: PR does not touch settings/admin/superadmin readiness surface." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  readiness-smoke:
+    name: ✅ Readiness Smoke (Settings/Admin/SuperAdmin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [unit-tests, component-tests, readiness-paths]
+    if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture job start
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run readiness smoke gate
+        run: npm run test:e2e:readiness
+        env:
+          CI: true
+          NODE_ENV: test
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
+
+      - name: Upload readiness smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-smoke-artifacts
+          path: |
+            e2e-results.xml
+            test-results/
+          retention-days: 30
+
       - name: Job duration
         if: always()
         run: |
@@ -955,8 +1079,8 @@ jobs:
   # ═══════════════════════════════════════════════════════════════
   # FINAL REPORT
   # ═══════════════════════════════════════════════════════════════
-  test-summary:
-    name: 📋 Test Summary
+  pr-gate:
+    name: ✅ PR Gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
@@ -969,11 +1093,100 @@ jobs:
         component-tests,
         integration-tests,
         security-integrity,
+        e2e-tests,
+        readiness-smoke,
+        patch-coverage,
+        module-contract-pr-gate,
+      ]
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Fail if any required job failed
+        env:
+          LINT: ${{ needs.lint-typecheck.result }}
+          TEST_QUALITY: ${{ needs.test-quality-check.result }}
+          SKIP_GATE: ${{ needs.skip-scan-gate.result }}
+          LEVELS: ${{ needs.levels-coverage-gates.result }}
+          UNIT: ${{ needs.unit-tests.result }}
+          COMPONENT: ${{ needs.component-tests.result }}
+          INTEGRATION: ${{ needs.integration-tests.result }}
+          SECURITY_INTEGRITY: ${{ needs.security-integrity.result }}
+          E2E_TIER0: ${{ needs.e2e-tests.result }}
+          READINESS: ${{ needs.readiness-smoke.result }}
+          PATCH_COVERAGE: ${{ needs.patch-coverage.result }}
+          MODULE_CONTRACT_GATE: ${{ needs.module-contract-pr-gate.result }}
+        run: |
+          echo "PR Gate results:"
+          echo "  lint-typecheck=$LINT"
+          echo "  test-quality-check=$TEST_QUALITY"
+          echo "  skip-scan-gate=$SKIP_GATE"
+          echo "  levels-coverage-gates=$LEVELS"
+          echo "  unit-tests=$UNIT"
+          echo "  component-tests=$COMPONENT"
+          echo "  integration-tests=$INTEGRATION"
+          echo "  security-integrity=$SECURITY_INTEGRITY"
+          echo "  e2e-tests=$E2E_TIER0"
+          echo "  readiness-smoke=$READINESS"
+          echo "  patch-coverage=$PATCH_COVERAGE"
+          echo "  module-contract-pr-gate=$MODULE_CONTRACT_GATE"
+
+          fail=0
+
+          req_ok () {
+            name="$1"
+            val="$2"
+            if [ "$val" != "success" ]; then
+              echo "::error::$name is $val (expected success)"
+              fail=1
+            fi
+          }
+
+          # readiness-smoke may be scoped out on PRs; skipped is acceptable.
+          req_ok_or_skipped () {
+            name="$1"
+            val="$2"
+            if [ "$val" != "success" ] && [ "$val" != "skipped" ]; then
+              echo "::error::$name is $val (expected success or skipped)"
+              fail=1
+            fi
+          }
+
+          req_ok "lint-typecheck" "$LINT"
+          req_ok "test-quality-check" "$TEST_QUALITY"
+          req_ok "skip-scan-gate" "$SKIP_GATE"
+          req_ok "levels-coverage-gates" "$LEVELS"
+          req_ok "unit-tests" "$UNIT"
+          req_ok "component-tests" "$COMPONENT"
+          req_ok "integration-tests" "$INTEGRATION"
+          req_ok "security-integrity" "$SECURITY_INTEGRITY"
+          req_ok "e2e-tests" "$E2E_TIER0"
+          req_ok_or_skipped "readiness-smoke" "$READINESS"
+          req_ok "patch-coverage" "$PATCH_COVERAGE"
+          req_ok "module-contract-pr-gate" "$MODULE_CONTRACT_GATE"
+
+          exit "$fail"
+
+  test-summary:
+    name: 📋 Test Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      [
+        pr-gate,
+        lint-typecheck,
+        test-quality-check,
+        skip-scan-gate,
+        levels-coverage-gates,
+        unit-tests,
+        component-tests,
+        integration-tests,
+        security-integrity,
         security-tests,
         e2e-tests,
+        readiness-smoke,
         performance-tests,
         critical-path-coverage,
         patch-coverage,
+        module-contract-pr-gate,
       ]
     if: always()
     steps:
@@ -1004,7 +1217,9 @@ jobs:
           echo "| Component Tests | ${{ needs.component-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Tests (Tier-0) | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Readiness Smoke (Settings/Admin/SuperAdmin) | ${{ needs.readiness-smoke.result == 'success' && '✅' || (needs.readiness-smoke.result == 'skipped' && '⏭️ scoped out' || '❌') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Patch Coverage (≥80%) | ${{ needs.patch-coverage.result == 'success' && '✅' || (needs.patch-coverage.result == 'skipped' && '⏭️ non-PR' || '❌') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Module Contract PR Gate | ${{ needs.module-contract-pr-gate.result == 'success' && '✅' || (needs.module-contract-pr-gate.result == 'skipped' && '⏭️ non-PR' || '❌') }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Nightly/non-PR suites

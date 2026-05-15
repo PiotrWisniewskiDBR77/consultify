@@ -31,6 +31,58 @@ export const ProposalMessageTypeValues = [
 ] as const;
 export type ProposalMessageType = (typeof ProposalMessageTypeValues)[number];
 
+/**
+ * Source governance table for a unified `ChatProposalView`.
+ *
+ * - `ai_actions`          — the legacy governance table, driven by
+ *                           `AIActionExecutor` (approve/reject/execute).
+ * - `v8_action_proposals` — the canonical V8 governance table, driven by
+ *                           `executionSpineService`.
+ * - `archived`            — the governance row no longer exists; the view is
+ *                           reconstructed from the chat-message snapshot only.
+ */
+export const ProposalGovernanceSourceValues = [
+  'ai_actions',
+  'v8_action_proposals',
+  'archived',
+] as const;
+export type ProposalGovernanceSource = (typeof ProposalGovernanceSourceValues)[number];
+
+/**
+ * Unified read view over proposals, merging governance truth with chat
+ * surface rendering and thread context. This is the canonical shape returned
+ * by `GET /api/ai/conversations/:conversationId/proposals`.
+ *
+ * Contract (Chat V8 / Wave A6):
+ * - `lifecycleState` is sourced from the governance row when available,
+ *   falling back to the latest chat-message snapshot otherwise.
+ * - `messageIds` preserves the chronological chain of thread messages
+ *   (`execution_proposal` → `execution_progress` → `execution_result`).
+ * - Consumers MUST treat this view as read-only; writes still flow through
+ *   the established approve/reject/execute endpoints.
+ */
+export interface ChatProposalView {
+  proposalId: string;
+  source: ProposalGovernanceSource;
+  conversationId: string;
+  chatProposalId?: string;
+  messageIds: string[];
+  latestMessageType?: ProposalMessageType;
+  lifecycleState: V8LifecycleState;
+  actionType?: string;
+  planSummary: string;
+  stepCount?: number;
+  steps?: Array<{ id?: string; label?: string; description?: string }>;
+  risk?: string;
+  renderingHints?: Record<string, unknown>;
+  reviewer?: { userId?: string; name?: string } | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  resolvedAt?: string | null;
+  expiresAt?: string | null;
+}
+
 export const RenderingHintStyleValues = [
   'inline_compact',
   'card_expanded',
@@ -38,6 +90,98 @@ export const RenderingHintStyleValues = [
   'diff_view',
 ] as const;
 export type RenderingHintStyle = (typeof RenderingHintStyleValues)[number];
+
+/**
+ * V8 canonical action lifecycle vocabulary (Chat V8 §ACTIONS_AND_APPROVALS).
+ *
+ * Public/user-visible states exposed to clients. This is the single canonical
+ * vocabulary for the proposal → approval → execution → audit lifecycle as
+ * defined by CHAT_V8_ACTIONS_AND_APPROVALS.md.
+ *
+ * - `proposed`       — AI has produced a proposal, not yet visible as review.
+ * - `pending_review` — queued for explicit human approval in the chat thread.
+ * - `approved`       — reviewer accepted; execution allowed but not yet started.
+ * - `rejected`       — reviewer declined; terminal.
+ * - `executing`      — side-effectful execution is in flight.
+ * - `executed`       — side-effect applied successfully.
+ * - `failed`         — execution attempted but failed.
+ * - `audited`        — post-execution audit record closed; terminal success.
+ *
+ * This vocabulary is exposed ALONGSIDE the legacy DB enum (PENDING/APPROVED/
+ * REJECTED/EXECUTED) via `mapDbActionStatusToV8Lifecycle` — the DB storage
+ * remains unchanged until a dedicated migration lands.
+ */
+export const V8LifecycleStateValues = [
+  'proposed',
+  'pending_review',
+  'approved',
+  'rejected',
+  'executing',
+  'executed',
+  'failed',
+  'audited',
+] as const;
+export type V8LifecycleState = (typeof V8LifecycleStateValues)[number];
+
+/**
+ * Map legacy DB ai_actions.status values to the V8 canonical vocabulary.
+ *
+ * The mapping is intentionally conservative and lossy-forward only:
+ *   PENDING  → pending_review   (an AI proposal awaiting human review)
+ *   APPROVED → approved
+ *   REJECTED → rejected
+ *   EXECUTED → executed         (audited promotion happens post-log externally)
+ *
+ * Callers that have additional signal (e.g. an audit entry exists, or the
+ * executor is actively running) may override the result to `executing`,
+ * `failed`, or `audited`.
+ */
+export function mapDbActionStatusToV8Lifecycle(
+  dbStatus: string | null | undefined
+): V8LifecycleState {
+  switch ((dbStatus || '').toUpperCase()) {
+    case 'PENDING':
+      return 'pending_review';
+    case 'APPROVED':
+      return 'approved';
+    case 'REJECTED':
+      return 'rejected';
+    case 'EXECUTED':
+      return 'executed';
+    case 'FAILED':
+      return 'failed';
+    case 'EXECUTING':
+      return 'executing';
+    default:
+      return 'proposed';
+  }
+}
+
+/**
+ * Inverse mapping for write paths that still target the legacy DB enum.
+ * Any V8 state that does not exist in the DB enum collapses to the nearest
+ * legacy equivalent so we never corrupt the storage contract.
+ */
+export function mapV8LifecycleToDbActionStatus(
+  state: V8LifecycleState
+): 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXECUTED' {
+  switch (state) {
+    case 'proposed':
+    case 'pending_review':
+      return 'PENDING';
+    case 'approved':
+    case 'executing':
+      return 'APPROVED';
+    case 'rejected':
+      return 'REJECTED';
+    case 'executed':
+    case 'audited':
+    case 'failed':
+      return 'EXECUTED';
+    default:
+      return 'PENDING';
+  }
+}
 
 // ==========================================
 // INTERFACES
@@ -137,7 +281,7 @@ export const ChatActionProposalSchema = z.object({
   conversationId: z.string().uuid(),
   messageId: z.string().uuid(),
   underlyingProposalId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   displaySummary: z.string().min(1),
   renderingHints: RenderingHintsSchema,
   createdAt: z.string().min(1),
@@ -157,7 +301,7 @@ export const ChatExecutionHandoffSchema = z.object({
   conversationId: z.string().uuid(),
   contextSnapshotId: z.string().uuid(),
   executionRunId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   initiatorUserId: z.string().uuid(),
   intentClassification: IntentClassificationSchema,
   goal: z.string().min(1),
@@ -177,7 +321,7 @@ export interface ClassifyIntentParams {
 export const ClassifyIntentParamsSchema = z.object({
   message: z.string().min(1),
   contextSnapshotId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
 });
 
 export interface InitiateHandoffParams {
@@ -192,7 +336,7 @@ export const InitiateHandoffParamsSchema = z.object({
   conversationId: z.string().uuid(),
   contextSnapshotId: z.string().uuid(),
   userId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   goal: z.string().min(1),
 });
 
@@ -209,7 +353,7 @@ export const CreateChatActionProposalParamsSchema = z.object({
   conversationId: z.string().uuid(),
   messageId: z.string().uuid(),
   underlyingProposalId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   displaySummary: z.string().min(1),
   renderingHints: RenderingHintsSchema,
 });

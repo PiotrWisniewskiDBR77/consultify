@@ -241,4 +241,48 @@ describe('V8 Multiplayer read-only routes', () => {
     expect(res.body.data?.locks).toHaveLength(1);
     expect(res.body.meta?.readScope).toBe('persisted_database');
   });
+
+  it('returns coded 503 when resource mapping read fails', async () => {
+    mockGetResourceTypeMapping.mockRejectedValueOnce(new Error('db-down'));
+
+    const res = await request(createApp())
+      .get('/api/v8/multiplayer/resource-mappings/whiteboard')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('MULTIPLAYER_RESOURCE_MAPPING_READ_FAILED');
+  });
+
+  it('returns coded 503 when room binding read fails', async () => {
+    mockResolveRoomBinding.mockRejectedValueOnce(new Error('db-down'));
+
+    const res = await request(createApp())
+      .get('/api/v8/multiplayer/room-binding?resourceType=whiteboard&resourceId=wb-1')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('MULTIPLAYER_ROOM_BINDING_READ_FAILED');
+  });
+
+  it('returns coded 503 when room presence read fails', async () => {
+    mockGetWorkspacePresence.mockRejectedValueOnce(new Error('db-down'));
+
+    const res = await request(createApp())
+      .get('/api/v8/multiplayer/rooms/room-a/presence')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('MULTIPLAYER_PRESENCE_READ_FAILED');
+  });
+
+  it('returns coded 503 when room locks read fails', async () => {
+    mockGetActiveLocks.mockRejectedValueOnce(new Error('db-down'));
+
+    const res = await request(createApp())
+      .get('/api/v8/multiplayer/rooms/room-a/locks')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('MULTIPLAYER_LOCKS_READ_FAILED');
+  });
 });

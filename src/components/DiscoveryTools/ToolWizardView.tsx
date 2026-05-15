@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { useAppStore } from '@/store/useAppStore';
 
 import {
   createEmptyWizardSession,
@@ -36,7 +35,6 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
   onOpenInitiative,
 }) => {
   const { t } = useTranslation();
-  const { currentProjectId } = useAppStore();
 
   const [sessionData, setSessionData] = useState<WizardSessionData>(() =>
     createEmptyWizardSession(sessionId, toolType)
@@ -44,6 +42,31 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const config = useMemo(() => getToolWizardConfig(toolType), [toolType]);
+  const normalizeWizardStatus = useCallback(
+    (status?: string | null): WizardSessionData['status'] => {
+      const normalized = String(status || 'DRAFT')
+        .trim()
+        .toUpperCase();
+      if (normalized === 'REVIEW') return 'REVIEW';
+      if (normalized === 'IN_PROGRESS') return 'IN_PROGRESS';
+      if (normalized === 'FINALIZED' || normalized === 'APPROVED' || normalized === 'GENERATED') {
+        return 'FINALIZED';
+      }
+      return 'DRAFT';
+    },
+    []
+  );
+  const normalizeWizardMissingItems = useCallback(
+    (items: WizardSessionData['review']['missingItems']) =>
+      (items || []).map((item) => ({
+        id: item.id,
+        label: item.label?.en || item.label?.pl || item.id,
+        severity: item.severity === 'required' ? 'blocker' : 'warning',
+        stepId: item.stepId,
+        resolved: Boolean(item.resolved),
+      })),
+    []
+  );
 
   const renderWorkSurface = useMemo(() => {
     if (toolType !== 'process-automation') return undefined;
@@ -67,20 +90,24 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
         const apiSession = await Api.getToolSession(sessionId);
         if (cancelled) return;
 
-        const wizardState = apiSession.wizard_state as Partial<WizardSessionData> | undefined;
+        const baseSession = createEmptyWizardSession(sessionId, toolType);
+        const wizardState = apiSession.wizardState as Partial<WizardSessionData> | undefined;
+        const normalizedStatus = normalizeWizardStatus(apiSession.status);
 
         setSessionData({
-          ...createEmptyWizardSession(sessionId, toolType),
+          ...baseSession,
           ...wizardState,
           sessionId,
           toolType,
-          status:
-            apiSession.status === 'COMPLETED' || apiSession.status === 'APPROVED'
-              ? 'FINALIZED'
-              : apiSession.status === 'REVIEW'
-                ? 'REVIEW'
-                : 'DRAFT',
-          locked: apiSession.status === 'COMPLETED' || apiSession.status === 'APPROVED',
+          status: normalizedStatus,
+          review: {
+            ...baseSession.review,
+            ...(wizardState?.review || {}),
+            missingItems: Array.isArray(apiSession.missingItems)
+              ? apiSession.missingItems
+              : wizardState?.review?.missingItems || [],
+          },
+          locked: normalizedStatus === 'FINALIZED',
           createdAt: apiSession.createdAt || apiSession.created_at || new Date().toISOString(),
           updatedAt: apiSession.updatedAt || apiSession.updated_at || new Date().toISOString(),
         });
@@ -93,20 +120,28 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [sessionId, toolType]);
+  }, [normalizeWizardStatus, sessionId, toolType]);
 
   const handleSessionUpdate = useCallback(
     (partial: Partial<WizardSessionData>) => {
       setSessionData((prev) => {
         const updated = { ...prev, ...partial, updatedAt: new Date().toISOString() };
+        const persistedStatus =
+          updated.locked || updated.status === 'FINALIZED'
+            ? 'FINALIZED'
+            : updated.status === 'REVIEW'
+              ? 'REVIEW'
+              : 'IN_PROGRESS';
         // Debounced save to API
         Api.updateToolSession(sessionId, {
-          wizard_state: updated,
+          wizardState: updated as unknown as Record<string, unknown>,
+          missingItems: normalizeWizardMissingItems(updated.review?.missingItems || []),
+          status: persistedStatus,
         }).catch((err) => console.warn('[ToolWizardView] Auto-save failed:', err));
         return updated;
       });
     },
-    [sessionId]
+    [normalizeWizardMissingItems, sessionId]
   );
 
   const handleStepChange = useCallback(
@@ -117,92 +152,82 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
   );
 
   const handleFinalize = useCallback(async () => {
+    const unresolvedMissingItems = (sessionData.review?.missingItems || []).filter(
+      (item) => !item.resolved
+    );
+    if (unresolvedMissingItems.length > 0) {
+      toast.error(t('tools.wizard.finalizeBlocked', 'Resolve missing items before finalizing'));
+      return;
+    }
+
     try {
-      await Api.updateToolSession(sessionId, { status: 'COMPLETED' });
-      setSessionData((prev) => ({
-        ...prev,
+      const finalizedSession: WizardSessionData = {
+        ...sessionData,
         status: 'FINALIZED',
         locked: true,
         currentStep: 'outputs',
-      }));
+        updatedAt: new Date().toISOString(),
+      };
+      await Api.updateToolSession(sessionId, {
+        status: 'FINALIZED',
+        wizardState: finalizedSession as unknown as Record<string, unknown>,
+        missingItems: normalizeWizardMissingItems(finalizedSession.review?.missingItems || []),
+      });
+      setSessionData(finalizedSession);
       trackFunnelEvent('tools_wizard_finalized', { toolType });
       toast.success(t('tools.wizard.finalized', 'Session finalized'));
     } catch (error) {
       toast.error(t('tools.wizard.finalizeError', 'Failed to finalize session'));
     }
-  }, [sessionId, toolType, t]);
+  }, [normalizeWizardMissingItems, sessionData, sessionId, toolType, t]);
 
   const handleCreateOutput = useCallback(
     async (type: OutputType) => {
       try {
-        if (type === 'initiative') {
-          const result = await Api.post('/initiatives', {
-            title: `${config.toolName.en} — Initiative`,
-            description: sessionData.review?.summaries?.[0] || '',
-            sourceType: 'tool',
-            sourceId: sessionId,
-            projectId: currentProjectId,
-            status: 'DRAFT',
-          });
-          trackFunnelEvent('tools_wizard_output_created', { toolType, outputType: type });
-          toast.success(t('tools.wizard.initiativeCreated', 'Initiative created'));
+        const description =
+          sessionData.review?.summaries?.[0] ||
+          sessionData.define?.intent ||
+          `${config.toolName.en} output created from tool session ${sessionId}.`;
+        const result = await Api.promoteToolOutput(sessionId, {
+          outputType: type as 'initiative' | 'report' | 'presentation' | 'idea',
+          title: `${config.toolName.en} — ${type.charAt(0).toUpperCase()}${type.slice(1)}`,
+          description,
+        });
 
-          setSessionData((prev) => ({
-            ...prev,
-            outputs: [
-              ...prev.outputs,
-              {
-                id: result.id,
-                type: 'initiative',
-                title: result.title || result.name,
-                status: 'created',
-                sourceType: 'tool',
-                sourceId: sessionId,
-                createdAt: new Date().toISOString(),
-              },
-            ],
-          }));
+        trackFunnelEvent('tools_wizard_output_created', { toolType, outputType: type });
+        toast.success(
+          type === 'initiative'
+            ? t('tools.wizard.initiativeCreated', 'Initiative created')
+            : type === 'idea'
+              ? t('tools.wizard.ideaCreated', 'Idea created')
+              : t('tools.wizard.outputCreated', 'Output created')
+        );
 
-          if (onOpenInitiative) {
-            onOpenInitiative(result.id);
-          }
-        } else if (type === 'idea') {
-          const result = await Api.createMyIdea({
-            title: `${config.toolName.en} — Idea`,
-            body:
-              sessionData.review?.summaries?.[0] ||
-              sessionData.define?.intent ||
-              `${config.toolName.en} idea created from tool session ${sessionId}.`,
-            tags: [toolType, 'tool-output', 'idea'],
-            sourceType: 'tool',
-          });
-          trackFunnelEvent('tools_wizard_output_created', { toolType, outputType: type });
-          toast.success(t('tools.wizard.ideaCreated', 'Idea created'));
+        setSessionData((prev) => ({
+          ...prev,
+          outputs: [
+            ...prev.outputs,
+            {
+              id: result.id,
+              type,
+              title: result.title,
+              status: 'created',
+              sourceType: 'tool',
+              sourceId: sessionId,
+              sourceVersion: result.sourceVersion,
+              createdAt: result.createdAt || new Date().toISOString(),
+            },
+          ],
+        }));
 
-          setSessionData((prev) => ({
-            ...prev,
-            outputs: [
-              ...prev.outputs,
-              {
-                id: result.id,
-                type: 'idea',
-                title: result.title,
-                status: 'created',
-                sourceType: 'tool',
-                sourceId: sessionId,
-                createdAt: new Date().toISOString(),
-              },
-            ],
-          }));
-        } else {
-          toast.success(t('tools.wizard.outputCreated', 'Output created'));
-          trackFunnelEvent('tools_wizard_output_created', { toolType, outputType: type });
+        if (type === 'initiative' && onOpenInitiative) {
+          onOpenInitiative(result.id);
         }
       } catch (error) {
         toast.error(t('tools.wizard.outputError', 'Failed to create output'));
       }
     },
-    [config, sessionData, sessionId, toolType, currentProjectId, t, onOpenInitiative]
+    [config, sessionData, sessionId, toolType, t, onOpenInitiative]
   );
 
   if (isLoading) {

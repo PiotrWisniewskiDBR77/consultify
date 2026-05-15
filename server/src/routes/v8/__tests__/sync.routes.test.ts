@@ -276,7 +276,7 @@ describe('V8 sync read-only routes', () => {
     });
     mockGetUnresolvedConflicts.mockResolvedValue([]);
     mockGetIntegrationHealth.mockResolvedValue({ status: 'healthy', errorRate: 0 });
-    mockResolveError.mockResolvedValue(undefined);
+    mockResolveError.mockResolvedValue(true);
     mockCheckRateLimit.mockResolvedValue({
       allowed: true,
       warnings: [],
@@ -652,7 +652,16 @@ describe('V8 sync read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.success).toBe(true);
-    expect(mockResolveError).toHaveBeenCalledWith('err-1');
+    expect(mockResolveError).toHaveBeenCalledWith('err-1', ORG);
+  });
+
+  it('POST /api/v8/sync/errors/:errorId/resolve returns not found when record is not in org scope', async () => {
+    mockResolveError.mockResolvedValueOnce(false);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/errors/err-1/resolve').send({});
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('NOT_FOUND');
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/pause pauses an integration through the governed mutation seam', async () => {
@@ -1166,6 +1175,23 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.code).toBe('RATE_LIMITED');
     expect(mockRecordRequest).not.toHaveBeenCalled();
     expect(mockSyncIntegration).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync returns failure payload even when telemetry logging fails', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      { connector_id: 'jira', is_paused: false, status: 'connected' },
+    ]);
+    mockSyncIntegration.mockRejectedValueOnce('string failure');
+    mockLogSyncError.mockRejectedValueOnce(new Error('telemetry down'));
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('SYNC_FAILED');
+    expect(res.body.error).toBe('string failure');
+    expect(res.body.syncRunId).toBeTruthy();
+    expect(mockLogSyncError).toHaveBeenCalled();
   });
 
   it('GET /api/v8/sync/audit-log returns governed audit envelope', async () => {

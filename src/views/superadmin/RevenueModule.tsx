@@ -8,9 +8,11 @@ import {
   BarChart3,
   Calculator,
   CreditCard,
+  HandCoins,
   Layers,
   Receipt,
   RefreshCw,
+  ShieldCheck,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
@@ -22,7 +24,9 @@ import { UsageStatsPanel } from '../../components/SuperAdmin/UsageStatsPanel';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { BillingCenterView } from './BillingCenterView';
 import { InvoiceCenterView } from './InvoiceCenterView';
+import { PartnerProgramConfig } from './partners';
 import {
+  PartnerSettlementsView,
   PaymentMethodsView,
   PricingPlansAdvancedView,
   RevenueForecastView,
@@ -44,11 +48,19 @@ const TAB_HELP_CARDS: Record<string, string> = {
   recognition: 'superadmin-revenue-recognition',
   forecasts: 'superadmin-revenue-forecast',
   payments: 'superadmin-revenue-payments',
+  'partner-config': 'superadmin_partner_program_config',
+  'partner-settlements': 'superadmin_partner_settlements',
 };
 
 export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'billing');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   React.useEffect(() => {
     const mapping: Record<string, string> = {
@@ -74,6 +86,8 @@ export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
     { id: 'recognition', label: 'Revenue Recognition', icon: <Calculator size={16} /> },
     { id: 'forecasts', label: 'Forecasts', icon: <TrendingUp size={16} /> },
     { id: 'payments', label: 'Payments', icon: <Wallet size={16} /> },
+    { id: 'partner-config', label: 'Partner Config', icon: <ShieldCheck size={16} /> },
+    { id: 'partner-settlements', label: 'Partner Settlements', icon: <HandCoins size={16} /> },
   ];
 
   const renderContent = () => {
@@ -98,6 +112,10 @@ export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
         return <RevenueForecastView />;
       case 'payments':
         return <PaymentMethodsView />;
+      case 'partner-config':
+        return <PartnerProgramConfig />;
+      case 'partner-settlements':
+        return <PartnerSettlementsView />;
       default:
         return null;
     }

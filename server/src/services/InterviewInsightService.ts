@@ -27,7 +27,13 @@ export type InsightPromptType =
   | 'opportunity_scan'
   | 'maturity'
   | 'stakeholder_map';
-export type InsightStatus = 'generating' | 'completed' | 'failed';
+export type InsightStatus =
+  | 'generating'
+  | 'completed'
+  | 'failed'
+  | 'draft'
+  | 'in_review'
+  | 'published';
 
 export interface CreateInsightInput {
   organizationId: string;
@@ -54,6 +60,8 @@ export interface InsightTheme {
   evidence_refs: string[];
   strength: 'strong' | 'moderate' | 'weak';
   crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 export interface InsightIssue {
@@ -62,6 +70,8 @@ export interface InsightIssue {
   severity: 'high' | 'medium' | 'low';
   evidence_refs: string[];
   crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 export interface InsightOpportunity {
@@ -70,6 +80,8 @@ export interface InsightOpportunity {
   impact: 'high' | 'medium' | 'low';
   evidence_refs: string[];
   crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 export interface InsightSignal {
@@ -102,6 +114,9 @@ export interface Insight {
   evidenceMap?: InsightEvidenceMapEntry[];
   missingData?: string[];
   status: InsightStatus;
+  reviewStatus?: 'draft' | 'in_review' | 'published';
+  publishedAt?: string;
+  reviewedBy?: string;
   errorMessage?: string;
   sourceSessionCount: number;
   tokensUsed: number;
@@ -438,7 +453,9 @@ class InterviewInsightService {
 
     const crossSessionBlock = isMultiSession
       ? `
-      "cross_session_pattern": true or false (boolean indicating if this spans multiple sessions)`
+      "cross_session_pattern": true or false (boolean indicating if this spans multiple sessions),
+      "perspective_labels": ["Role / department / respondent lens that supports or challenges this"],
+      "divergence_note": "Optional note when roles or respondents see the topic differently"`
       : '';
 
     const crossSessionInstructions = isMultiSession
@@ -451,6 +468,8 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
 - Distinguish single-respondent observations from cross-session patterns
 - In each theme/issue/opportunity, note which sessions support it (by respondent name or session name)
 - Add a "cross_session_pattern" boolean to each theme/issue/opportunity indicating if it spans multiple sessions
+- Populate "perspective_labels" with the roles, departments, or respondent lenses most relevant to the topic
+- Use "divergence_note" when the same topic looks different across roles, departments, or respondents
 `
       : '';
 
@@ -512,6 +531,7 @@ Rules:
 - Ground every theme, issue, and opportunity in specific answer_ids from the data.
 - "signals" capture tensions, gaps, contradictions, or emerging patterns that don't fit neatly into themes/issues.
 - Include at least one entry in evidence_map for each answer that contributed to a theme or issue.
+- Preserve perspective nuance: if executives, managers, frontline users, or departments see a topic differently, encode that in perspective_labels and divergence_note instead of flattening it into one claim.
 - Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, owners, or mitigation plans.
 - If evidence is weak or incomplete, note it in missing_data.
 - Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume).
@@ -546,11 +566,25 @@ Rules:
 
     const mapCrossSession = <T extends Record<string, any>>(items: T[]): T[] =>
       items.map((item) => {
-        if ('cross_session_pattern' in item) {
-          const { cross_session_pattern, ...rest } = item;
-          return { ...rest, crossSessionPattern: Boolean(cross_session_pattern) } as unknown as T;
-        }
-        return item;
+        const { cross_session_pattern, perspective_labels, divergence_note, ...rest } = item;
+        return {
+          ...rest,
+          ...('cross_session_pattern' in item
+            ? { crossSessionPattern: Boolean(cross_session_pattern) }
+            : {}),
+          ...('perspective_labels' in item
+            ? {
+                perspective_labels: Array.isArray(perspective_labels)
+                  ? perspective_labels.map((entry) => String(entry || '').trim()).filter(Boolean)
+                  : [],
+              }
+            : {}),
+          ...('divergence_note' in item
+            ? {
+                divergence_note: String(divergence_note || '').trim() || undefined,
+              }
+            : {}),
+        } as unknown as T;
       });
 
     return {
@@ -580,6 +614,12 @@ Rules:
       lines.push('## Themes', '');
       for (const t of data.themes) {
         lines.push(`### ${t.title} _(${t.strength})_`, '', t.description, '');
+        if (Array.isArray(t.perspective_labels) && t.perspective_labels.length > 0) {
+          lines.push(`Perspective lenses: ${t.perspective_labels.join(', ')}`, '');
+        }
+        if (t.divergence_note) {
+          lines.push(`Divergence: ${t.divergence_note}`, '');
+        }
       }
     }
 
@@ -587,6 +627,12 @@ Rules:
       lines.push('## Issues', '');
       for (const i of data.issues) {
         lines.push(`### ${i.title} _(severity: ${i.severity})_`, '', i.description, '');
+        if (Array.isArray(i.perspective_labels) && i.perspective_labels.length > 0) {
+          lines.push(`Perspective lenses: ${i.perspective_labels.join(', ')}`, '');
+        }
+        if (i.divergence_note) {
+          lines.push(`Divergence: ${i.divergence_note}`, '');
+        }
       }
     }
 
@@ -594,6 +640,12 @@ Rules:
       lines.push('## Opportunities', '');
       for (const o of data.opportunities) {
         lines.push(`### ${o.title} _(impact: ${o.impact})_`, '', o.description, '');
+        if (Array.isArray(o.perspective_labels) && o.perspective_labels.length > 0) {
+          lines.push(`Perspective lenses: ${o.perspective_labels.join(', ')}`, '');
+        }
+        if (o.divergence_note) {
+          lines.push(`Divergence: ${o.divergence_note}`, '');
+        }
       }
     }
 
@@ -851,6 +903,12 @@ ${answerText}
       evidenceMap: safeJsonArray<InsightEvidenceMapEntry>(row.evidence_map_json),
       missingData: safeJsonArray<string>(row.missing_data_json),
       status: row.status as InsightStatus,
+      reviewStatus:
+        row.status === 'in_review' || row.status === 'published'
+          ? (row.status as 'in_review' | 'published')
+          : 'draft',
+      publishedAt: row.published_at || undefined,
+      reviewedBy: row.reviewed_by || undefined,
       errorMessage: row.error_message || undefined,
       sourceSessionCount:
         typeof row.source_session_count === 'number'

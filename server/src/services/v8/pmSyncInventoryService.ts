@@ -119,7 +119,10 @@ function mapOnboardingStatus(
     return 'pending_external_auth';
   }
 
-  return hasAllRequiredFields
+  const hasAllConfigFields =
+    configFields.length === 0 || configuredFields.length >= configFields.length;
+
+  return hasAllConfigFields
     ? 'configuration_submitted_pending_validation'
     : 'pending_configuration';
 }

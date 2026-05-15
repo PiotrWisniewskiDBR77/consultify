@@ -24,6 +24,68 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* ============================================================
+     * LIGHT MODE SEMANTIC TOKENS (v3.2)
+     * SSOT: docs/ui-standards/00-foundation/light-mode-readability.md §16
+     * Reguła: moduły konsumują TOKENY, nie bezpośrednie kolory.
+     * ============================================================ */
+
+    /* Tekst (4 poziomy, zgodne z §2) */
+    --text-primary: 15 23 42;          /* slate-900 */
+    --text-secondary: 51 65 85;        /* slate-700 */
+    --text-supportive: 71 85 105;      /* slate-600 */
+    --text-metadata: 100 116 139;      /* slate-500 */
+    --text-inverted: 255 255 255;
+
+    /* Surface (4 warstwy, zgodne z §3) */
+    --surface-app: 241 245 249;        /* slate-100 — tło aplikacji */
+    --surface-default: 255 255 255;    /* white — primary cards */
+    --surface-subtle: 248 250 252;     /* slate-50 — nested / section */
+    --surface-hover: 248 250 252;      /* slate-50 — hover rows */
+    --surface-selected: 245 243 255;   /* primary-50 — selected row/tab */
+    --surface-strong: 241 245 249;     /* slate-100 — headers / grouped */
+
+    /* Borders (zgodne z §3, §5) */
+    --border-default: 226 232 240;     /* slate-200 */
+    --border-strong: 203 213 225;      /* slate-300 */
+    --border-subtle: 241 245 249;      /* slate-100 — tylko dekoracyjne */
+    --border-selected: 221 214 254;    /* primary-200 */
+
+    /* Status surfaces (zgodne z §4, §5) */
+    --status-info-bg: 219 234 254;     /* blue-100 */
+    --status-info-border: 191 219 254; /* blue-200 */
+    --status-info-text: 30 64 175;     /* blue-800 */
+    --status-info-icon: 37 99 235;     /* blue-600 */
+
+    --status-success-bg: 209 250 229;    /* emerald-100 */
+    --status-success-border: 167 243 208;/* emerald-200 */
+    --status-success-text: 6 95 70;      /* emerald-800 */
+    --status-success-icon: 5 150 105;    /* emerald-600 */
+
+    --status-warning-bg: 254 243 199;    /* amber-100 */
+    --status-warning-border: 252 211 77; /* amber-300 */
+    --status-warning-text: 120 53 15;    /* amber-900 */
+    --status-warning-icon: 180 83 9;     /* amber-700 */
+
+    --status-danger-bg: 254 226 226;     /* red-100 */
+    --status-danger-border: 254 202 202; /* red-200 */
+    --status-danger-text: 153 27 27;     /* red-800 */
+    --status-danger-icon: 220 38 38;     /* red-600 */
+
+    --status-primary-bg: 237 233 254;    /* primary-100 */
+    --status-primary-border: 221 214 254;/* primary-200 */
+    --status-primary-text: 91 33 182;    /* primary-800 */
+    --status-primary-icon: 124 58 237;   /* primary-600 */
+
+    --status-neutral-bg: 241 245 249;    /* slate-100 */
+    --status-neutral-border: 226 232 240;/* slate-200 */
+    --status-neutral-text: 30 41 59;     /* slate-800 */
+    --status-neutral-icon: 71 85 105;    /* slate-600 */
+
+    /* Focus ring (zgodne z §10) */
+    --focus-ring: 124 58 237;          /* primary-500/600 */
+    --focus-ring-offset: 255 255 255;  /* white — app surface */
   }
 
   .dark {
@@ -46,6 +108,62 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    /* Dark mode counterparts of semantic tokens.
+     * Intentionally not inverses of light tokens — dark mode has its own SSOT
+     * in visual-language.md (DBR77). Tokens here are kept for API parity so
+     * components that consume tokens can work in both modes. */
+    --text-primary: 248 250 252;       /* slate-50 */
+    --text-secondary: 226 232 240;     /* slate-200 */
+    --text-supportive: 203 213 225;    /* slate-300 */
+    --text-metadata: 148 163 184;      /* slate-400 */
+    --text-inverted: 15 23 42;
+
+    --surface-app: 10 15 30;           /* navy-950 */
+    --surface-default: 15 23 42;       /* navy-900 */
+    --surface-subtle: 21 30 50;        /* navy-800 */
+    --surface-hover: 42 54 85;         /* navy-700/50 */
+    --surface-selected: 46 16 101;     /* primary-950 */
+    --surface-strong: 21 30 50;
+
+    --border-default: 42 54 85;        /* navy-700 */
+    --border-strong: 55 65 81;         /* navy-600 */
+    --border-subtle: 21 30 50;
+    --border-selected: 124 58 237;
+
+    /* Status in dark mode: lighter text, tinted bg with transparency */
+    --status-info-bg: 30 58 138;       /* blue-900 */
+    --status-info-border: 30 64 175;
+    --status-info-text: 147 197 253;   /* blue-300 */
+    --status-info-icon: 96 165 250;
+
+    --status-success-bg: 6 78 59;
+    --status-success-border: 6 95 70;
+    --status-success-text: 110 231 183;
+    --status-success-icon: 52 211 153;
+
+    --status-warning-bg: 120 53 15;
+    --status-warning-border: 180 83 9;
+    --status-warning-text: 253 230 138;
+    --status-warning-icon: 251 191 36;
+
+    --status-danger-bg: 127 29 29;
+    --status-danger-border: 153 27 27;
+    --status-danger-text: 252 165 165;
+    --status-danger-icon: 248 113 113;
+
+    --status-primary-bg: 76 29 149;
+    --status-primary-border: 91 33 182;
+    --status-primary-text: 196 181 253;
+    --status-primary-icon: 167 139 250;
+
+    --status-neutral-bg: 30 41 59;
+    --status-neutral-border: 51 65 85;
+    --status-neutral-text: 203 213 225;
+    --status-neutral-icon: 148 163 184;
+
+    --focus-ring: 167 139 250;         /* primary-400 w dark */
+    --focus-ring-offset: 15 23 42;     /* navy-900 */
   }
 }
 
@@ -67,41 +185,123 @@
   }
 }
 
-/* Admin Module Styles - Clean Enterprise Design */
+/* ============================================================
+ * LIGHT MODE SYSTEM v3.2 — Shared component classes
+ * SSOT: docs/ui-standards/00-foundation/light-mode-readability.md
+ *
+ * These utilities are consumed by primitives, admin views, modules.
+ * Rule: edit values HERE once, propagates everywhere.
+ * ============================================================ */
 @layer components {
 
-  /* Admin Card - Base container (v2.0: border-free, bg-layer separation) */
-  .admin-card {
-    @apply bg-slate-50 dark:bg-navy-900/50 rounded-xl;
+  /* --------------------------------------------------------------
+   * Focus (§10 State matrix)
+   * -------------------------------------------------------------- */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-primary-400 dark:focus-visible:ring-offset-navy-950;
   }
 
-  /* Admin Metric Card - Stats display (v2.0: hover bg-only, no border) */
+  /* --------------------------------------------------------------
+   * Status badges (§5 Status chips — kanoniczne klasy)
+   *
+   * Reguła: w light mode zawsze tło-50/100 + border-200 + tekst-800.
+   * Dark mode: lżejsze tło + jaśniejszy tekst.
+   * -------------------------------------------------------------- */
+  .lm-badge {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border;
+  }
+
+  .lm-badge-neutral {
+    @apply lm-badge
+           bg-slate-100 border-slate-200 text-slate-800
+           dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-200;
+  }
+
+  .lm-badge-info {
+    @apply lm-badge
+           bg-blue-100 border-blue-200 text-blue-800
+           dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-200;
+  }
+
+  .lm-badge-success {
+    @apply lm-badge
+           bg-emerald-100 border-emerald-200 text-emerald-800
+           dark:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-200;
+  }
+
+  .lm-badge-warning {
+    /* §4 uwaga: amber wymaga text-900 żeby spełnić kontrast */
+    @apply lm-badge
+           bg-amber-100 border-amber-300 text-amber-900
+           dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-200;
+  }
+
+  .lm-badge-danger {
+    @apply lm-badge
+           bg-red-100 border-red-200 text-red-800
+           dark:bg-red-900/40 dark:border-red-800 dark:text-red-200;
+  }
+
+  .lm-badge-primary {
+    @apply lm-badge
+           bg-primary-100 border-primary-200 text-primary-800
+           dark:bg-primary-900/40 dark:border-primary-800 dark:text-primary-200;
+  }
+
+  /* --------------------------------------------------------------
+   * Surface helpers (§3)
+   * -------------------------------------------------------------- */
+  .lm-surface-default {
+    @apply bg-white border border-slate-200
+           dark:bg-navy-900 dark:border-navy-700;
+  }
+
+  .lm-surface-subtle {
+    @apply bg-slate-50 border border-slate-200
+           dark:bg-navy-950 dark:border-navy-800;
+  }
+
+  .lm-surface-selected {
+    @apply bg-primary-50 border border-primary-200 ring-1 ring-inset ring-primary-200
+           dark:bg-primary-950/40 dark:border-primary-700 dark:ring-primary-700/60;
+  }
+
+  /* --------------------------------------------------------------
+   * Admin Module Styles (v3.2 — zgodne z light-mode-readability)
+   * -------------------------------------------------------------- */
+
+  .admin-card {
+    @apply bg-white border border-slate-200 rounded-xl
+           dark:bg-navy-900/50 dark:border-navy-700/50;
+  }
+
   .admin-metric {
-    @apply bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 transition-all hover:bg-slate-100 dark:hover:bg-navy-800/50;
+    @apply bg-white border border-slate-200 rounded-xl p-4 transition-all
+           hover:bg-slate-50 hover:border-slate-300
+           dark:bg-navy-900/50 dark:border-navy-700/50 dark:hover:bg-navy-800/50;
   }
 
   .admin-metric-label {
-    @apply text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide;
+    @apply text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide;
   }
 
   .admin-metric-value {
-    @apply text-2xl font-semibold text-slate-800 dark:text-slate-100 mt-2;
+    @apply text-2xl font-semibold text-slate-900 dark:text-slate-100 mt-2;
   }
 
   .admin-metric-subtitle {
-    @apply text-xs text-slate-500 dark:text-slate-500 mt-0.5;
+    @apply text-xs text-slate-600 dark:text-slate-500 mt-0.5;
   }
 
-  /* Admin Section Headers (v2.0: spacing separator, no border) */
   .admin-section-header {
     @apply flex items-center justify-between pb-3 mb-3;
   }
 
   .admin-section-title {
-    @apply flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100;
+    @apply flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100;
   }
 
-  /* Admin Table Styles */
+  /* Admin Table — light-mode parity §6 / §12 */
   .admin-table {
     @apply w-full border-collapse;
   }
@@ -111,80 +311,164 @@
   }
 
   .admin-table th {
-    @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200/60 dark:border-white/5;
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider
+           text-slate-600 dark:text-slate-400
+           border-b border-slate-200 dark:border-white/5;
   }
 
   .admin-table td {
-    @apply px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-100/60 dark:border-white/[0.03];
+    @apply px-4 py-3 text-sm
+           text-slate-700 dark:text-slate-300
+           border-b border-slate-200 dark:border-white/[0.03];
   }
 
   .admin-table tbody tr:hover {
-    @apply bg-slate-100/50 dark:bg-white/[0.03];
+    @apply bg-slate-50 dark:bg-white/[0.03];
+  }
+
+  .admin-table tbody tr[aria-selected="true"],
+  .admin-table tbody tr.is-selected {
+    @apply bg-primary-50 dark:bg-primary-950/40;
   }
 
   .admin-table tbody tr:last-child td {
     @apply border-b-0;
   }
 
-  /* Admin List Items with separator */
   .admin-list {
-    @apply divide-y divide-slate-100 dark:divide-white/5;
+    @apply divide-y divide-slate-200 dark:divide-white/5;
   }
 
   .admin-list-item {
     @apply py-3 first:pt-0 last:pb-0;
   }
 
-  /* Admin Button Styles */
   .admin-btn {
     @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all;
   }
 
   .admin-btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white shadow-sm;
+    @apply bg-primary-600 hover:bg-primary-700 text-white shadow-sm;
   }
 
   .admin-btn-subtle {
-    @apply bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300;
+    @apply bg-slate-100 hover:bg-slate-200 text-slate-800
+           dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300;
   }
 
-  /* Admin Status Badges */
+  /* Admin Status Badges (v3.2 — zgodne z §5 badge taxonomy)
+   * Light: bg-100 + border-200 + text-800 (kontrast ≥ 4.5:1).
+   * Dark: subdued bg + border + text-200.
+   */
   .admin-badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border;
   }
 
   .admin-badge-success {
-    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400;
+    @apply bg-emerald-100 border-emerald-200 text-emerald-800
+           dark:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-200;
   }
 
   .admin-badge-warning {
-    @apply bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400;
+    @apply bg-amber-100 border-amber-300 text-amber-900
+           dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-200;
   }
 
   .admin-badge-error {
-    @apply bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400;
+    @apply bg-red-100 border-red-200 text-red-800
+           dark:bg-red-900/40 dark:border-red-800 dark:text-red-200;
   }
 
   .admin-badge-info {
-    @apply bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400;
+    @apply bg-blue-100 border-blue-200 text-blue-800
+           dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-200;
   }
 
-  /* Admin Data Grid - Better visual separation */
   .admin-data-grid {
     @apply grid gap-4;
   }
 
   .admin-data-item {
-    @apply bg-slate-50 dark:bg-white/[0.02] rounded-lg p-4 border border-slate-100 dark:border-white/5;
+    @apply bg-white border border-slate-200 rounded-lg p-4
+           dark:bg-white/[0.02] dark:border-white/5;
   }
 
-  /* Admin Stats Row with clear dividers */
   .admin-stats-row {
     @apply flex items-center divide-x divide-slate-200 dark:divide-white/10;
   }
 
   .admin-stats-row>* {
     @apply px-4 first:pl-0 last:pr-0;
+  }
+
+  @keyframes menu3AiCue {
+    0%,
+    72%,
+    100% {
+      filter: brightness(1);
+    }
+    80% {
+      filter: brightness(1.06);
+    }
+    88% {
+      filter: brightness(1.02);
+    }
+  }
+
+  @keyframes menu3AiRing {
+    0%,
+    72%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
+    }
+    80% {
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.14);
+    }
+    92% {
+      box-shadow: 0 0 0 7px rgba(34, 211, 238, 0);
+    }
+  }
+
+  @keyframes menu3AiIconCue {
+    0%,
+    72%,
+    100% {
+      transform: scale(1);
+      opacity: 0.92;
+      filter: drop-shadow(0 0 0 rgba(34, 211, 238, 0));
+    }
+    80% {
+      transform: scale(1.05);
+      opacity: 1;
+      filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.25));
+    }
+    88% {
+      transform: scale(1.02);
+      opacity: 0.98;
+      filter: drop-shadow(0 0 3px rgba(34, 211, 238, 0.12));
+    }
+  }
+
+  .menu3-ai-button {
+    position: relative;
+  }
+
+  .menu3-ai-opportunity:not(:disabled) {
+    animation: menu3AiCue 4.8s ease-in-out infinite;
+  }
+
+  .menu3-ai-opportunity:not(:disabled)::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 9999px;
+    pointer-events: none;
+    animation: menu3AiRing 4.8s ease-in-out infinite;
+  }
+
+  .menu3-ai-opportunity:not(:disabled) > svg:first-child {
+    transform-origin: center;
+    animation: menu3AiIconCue 4.8s ease-in-out infinite;
   }
 }
 
@@ -254,4 +538,28 @@
   .text-lg {
     font-size: 12pt !important;
   }
+}
+
+/*
+ * Feedback Pipeline V2 — redact styles applied while a screenshot is captured.
+ * Marking <html data-feedback-redact-active="1"> blocks out elements that opt
+ * into redaction (`data-feedback-redact`) or that are obviously sensitive
+ * inputs, without touching the live page.
+ */
+html[data-feedback-redact-active="1"] [data-feedback-redact],
+html[data-feedback-redact-active="1"] input[type="password"],
+html[data-feedback-redact-active="1"] input[type="email"],
+html[data-feedback-redact-active="1"] input[autocomplete*="password"],
+html[data-feedback-redact-active="1"] input[autocomplete*="email"] {
+  color: transparent !important;
+  background: #111 !important;
+  caret-color: transparent !important;
+  text-shadow: none !important;
+  filter: blur(6px) saturate(0) !important;
+}
+
+html[data-feedback-redact-active="1"] [data-feedback-redact]::before {
+  content: "■■■■■■■■" !important;
+  color: #111 !important;
+  letter-spacing: 0.1em !important;
 }

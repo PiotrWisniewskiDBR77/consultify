@@ -12,17 +12,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
 import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
-import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
+import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
+import { OrganizationContextOverview } from '../components/settings/OrganizationContextOverview';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { ChallengeMapModule } from './ContextBuilder/modules/ChallengeMapModule';
-import { CompanyProfileModule } from './ContextBuilder/modules/CompanyProfileModule';
 import { GoalsExpectationsModule } from './ContextBuilder/modules/GoalsExpectationsModule';
+import { OrganizationProfileModule } from './ContextBuilder/modules/OrganizationProfileModule';
 import { StrategicSynthesisModule } from './ContextBuilder/modules/StrategicSynthesisModule';
 
 const ADMIN_SECTIONS: OrganizationSection[] = [
@@ -33,6 +34,15 @@ const ADMIN_SECTIONS: OrganizationSection[] = [
   'domains',
   'branding',
 ];
+
+const ADMIN_REDIRECTS: Partial<Record<OrganizationSection, string>> = {
+  members: ROUTES.ADMIN.PEOPLE,
+  competencies: ROUTES.ADMIN.OPERATIONS,
+  billing: ROUTES.ADMIN.BILLING,
+  limits: ROUTES.ADMIN.BILLING,
+  domains: ROUTES.ADMIN.OPERATIONS,
+  branding: ROUTES.ADMIN.OPERATIONS,
+};
 
 const sectionMeta: Record<
   OrganizationSection,
@@ -116,7 +126,7 @@ export const OrganizationView: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { setCurrentView } = useAppStore();
+  const { setCurrentView, currentOrganization } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -139,6 +149,13 @@ export const OrganizationView: React.FC = () => {
 
   const handleSectionChange = useCallback(
     (section: OrganizationSection) => {
+      const adminRedirect = ADMIN_REDIRECTS[section];
+      if (adminRedirect) {
+        navigate(adminRedirect);
+        setSidebarOpen(false);
+        trackFunnelEvent('org_workspace_admin_handoff', { section, target: adminRedirect });
+        return;
+      }
       navigate(`${ROUTES.ORGANIZATION.ROOT}/${section}`);
       setSidebarOpen(false);
       trackFunnelEvent('org_workspace_opened', { section });
@@ -169,7 +186,7 @@ export const OrganizationView: React.FC = () => {
       case 'knowledge-graph':
         return <KnowledgeGraphExplorer />;
       default:
-        return <CompanyProfileModule />;
+        return <OrganizationProfileModule />;
     }
   }, [activeSection]);
 
@@ -233,6 +250,14 @@ export const OrganizationView: React.FC = () => {
         </div>
         <div className="px-4 lg:px-6 pb-0">
           <OrganizationV8CanonPanel compact className="mb-4" />
+          {currentOrganization?.id ? (
+            <div className="mb-4">
+              <OrganizationContextOverview
+                organizationId={currentOrganization.id}
+                canRebuild={ADMIN_SECTIONS.includes(activeSection)}
+              />
+            </div>
+          ) : null}
         </div>
         <div className="px-4 lg:px-6 pb-6 pt-0">{renderContent()}</div>
       </div>

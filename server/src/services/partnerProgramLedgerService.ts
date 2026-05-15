@@ -10,18 +10,21 @@ import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
-export type PartnerLedgerEntryType =
-  | 'accrual.posted'
-  | 'accrual.adjustment'
-  | 'accrual.reversal'
-  | 'hold.placed'
-  | 'hold.released'
-  | 'payout.requested'
-  | 'payout.approved'
-  | 'payout.executed'
-  | 'payout.failed'
-  | 'payout.reconciled'
-  | 'lifecycle.transition';
+export const PARTNER_LEDGER_ENTRY_TYPES = [
+  'accrual.posted',
+  'accrual.adjustment',
+  'accrual.reversal',
+  'hold.placed',
+  'hold.released',
+  'payout.requested',
+  'payout.approved',
+  'payout.executed',
+  'payout.failed',
+  'payout.reconciled',
+  'lifecycle.transition',
+] as const;
+
+export type PartnerLedgerEntryType = (typeof PARTNER_LEDGER_ENTRY_TYPES)[number];
 
 export type PartnerLifecyclePhase = 'onboard' | 'activate' | 'earn' | 'payout';
 
@@ -145,6 +148,61 @@ export interface AppendLedgerEntryInput {
 
 let schemaEnsured = false;
 
+export function isPartnerLedgerEntryType(value: unknown): value is PartnerLedgerEntryType {
+  return (
+    typeof value === 'string' &&
+    PARTNER_LEDGER_ENTRY_TYPES.includes(value as PartnerLedgerEntryType)
+  );
+}
+
+function parseChecklist(raw: string | null | undefined): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function buildOnboardChecklistSnapshot(
+  db: IDatabase,
+  partnerOrgId: string
+): Promise<Record<string, unknown>> {
+  const row = await DbPromise.get<{
+    terms_accepted?: boolean | number | null;
+    privacy_accepted?: boolean | number | null;
+    pricing_tier?: string | null;
+    completed?: boolean | number | null;
+  }>(
+    db,
+    `SELECT uos.terms_accepted, uos.privacy_accepted, uos.pricing_tier, uos.completed
+     FROM partner_users pu
+     LEFT JOIN user_onboarding_status uos ON uos.user_id = pu.user_id
+     WHERE pu.partner_org_id = ? AND pu.status = 'active'
+     ORDER BY pu.joined_at ASC, pu.created_at ASC
+     LIMIT 1`,
+    [partnerOrgId]
+  );
+
+  return {
+    termsAccepted: Boolean(row?.terms_accepted),
+    privacyAccepted: Boolean(row?.privacy_accepted),
+    pricingTierSelected: Boolean(String(row?.pricing_tier || '').trim()),
+    onboardingCompleted: Boolean(row?.completed),
+    verifiedAt: new Date().toISOString(),
+  };
+}
+
+function isOnboardChecklistComplete(checklist: Record<string, unknown>): boolean {
+  return Boolean(
+    checklist.termsAccepted &&
+    checklist.privacyAccepted &&
+    checklist.pricingTierSelected &&
+    checklist.onboardingCompleted
+  );
+}
+
 async function ensurePartnerProgramSchema(db: IDatabase): Promise<void> {
   if (schemaEnsured) return;
   try {
@@ -219,7 +277,7 @@ export function deriveBalancesFromEntries(
       case 'hold.released':
         held -= a;
         break;
-      case 'payout.executed':
+      case 'payout.reconciled':
         paid += Math.abs(a);
         break;
       default:
@@ -263,9 +321,21 @@ export function requiresDualControl(
 }
 
 export class PartnerProgramLedgerService {
-  static async appendEntry(input: AppendLedgerEntryInput): Promise<{ id: string; duplicate?: boolean }> {
+  static async appendEntry(
+    input: AppendLedgerEntryInput
+  ): Promise<{ id: string; duplicate?: boolean }> {
     const db = getDatabase();
     await ensurePartnerProgramSchema(db);
+
+    if (!isPartnerLedgerEntryType(input.entryType)) {
+      throw Object.assign(
+        new Error(`Unsupported partner ledger entry type: ${String(input.entryType)}`),
+        {
+          code: 'P29_LEDGER_ENTRY_TYPE_INVALID',
+          entryType: input.entryType,
+        }
+      );
+    }
 
     if (requiresDualControl(input.entryType, input.amount, false)) {
       const prevPayout = await DbPromise.get<{ id: string }>(
@@ -275,7 +345,8 @@ export class PartnerProgramLedgerService {
       );
       const isFirst = !prevPayout;
       if (requiresDualControl(input.entryType, input.amount, isFirst)) {
-        const confirmed = (input.sourceRef as Record<string, unknown> | undefined)?.elevatedRiskConfirmed;
+        const confirmed = (input.sourceRef as Record<string, unknown> | undefined)
+          ?.elevatedRiskConfirmed;
         if (!confirmed) {
           throw Object.assign(
             new Error(
@@ -353,7 +424,10 @@ export class PartnerProgramLedgerService {
     return rows;
   }
 
-  static async getBalances(partnerOrgId: string, currency = 'EUR'): Promise<PartnerProgramBalances> {
+  static async getBalances(
+    partnerOrgId: string,
+    currency = 'EUR'
+  ): Promise<PartnerProgramBalances> {
     const db = getDatabase();
     await ensurePartnerProgramSchema(db);
     const rows = await DbPromise.all<{ entry_type: string; amount: number }>(
@@ -411,11 +485,18 @@ export class PartnerProgramLedgerService {
       balances = await this.getBalances(partnerOrgId);
     } catch (e) {
       logger.warn('[PartnerProgramLedger] getBalances failed — returning zero snapshot', e);
-      balances = { grossEarned: 0, paidOut: 0, heldAmount: 0, availableToPayout: 0, currency: 'EUR' };
+      balances = {
+        grossEarned: 0,
+        paidOut: 0,
+        heldAmount: 0,
+        availableToPayout: 0,
+        currency: 'EUR',
+      };
       degraded = { reason: 'ledger_unavailable', snapshotAt: new Date().toISOString() };
     }
 
-    const latestHold = balances.heldAmount > 0 ? await this.getLatestHoldPlaced(partnerOrgId) : null;
+    const latestHold =
+      balances.heldAmount > 0 ? await this.getLatestHoldPlaced(partnerOrgId) : null;
     const activeHoldForGuidance =
       latestHold && balances.heldAmount > 0
         ? {
@@ -463,18 +544,32 @@ export class PartnerProgramLedgerService {
       [partnerOrgId]
     );
     const partnerStatus = po?.status ?? null;
+    const derivedChecklist = await buildOnboardChecklistSnapshot(db, partnerOrgId);
+    const derivedChecklistJson = JSON.stringify(derivedChecklist);
+
     if (!row) {
-      const initialPhase: PartnerLifecyclePhase =
-        partnerStatus === 'active' ? 'earn' : 'onboard';
+      const initialPhase: PartnerLifecyclePhase = partnerStatus === 'active' ? 'earn' : 'onboard';
       const ts = new Date().toISOString();
       await DbPromise.run(
         db,
         `INSERT INTO partner_program_runtime (
           partner_org_id, lifecycle_phase, onboard_checklist_json, updated_at
         ) VALUES (?, ?, ?, ?)`,
-        [partnerOrgId, initialPhase, '{}', ts]
+        [partnerOrgId, initialPhase, derivedChecklistJson, ts]
       );
-      row = { lifecycle_phase: initialPhase, onboard_checklist_json: '{}' };
+      row = { lifecycle_phase: initialPhase, onboard_checklist_json: derivedChecklistJson };
+    } else {
+      await DbPromise.run(
+        db,
+        `UPDATE partner_program_runtime
+         SET onboard_checklist_json = ?, updated_at = ?
+         WHERE partner_org_id = ?`,
+        [derivedChecklistJson, new Date().toISOString(), partnerOrgId]
+      );
+      row = {
+        ...row,
+        onboard_checklist_json: derivedChecklistJson,
+      };
     }
     return {
       lifecycle_phase: row.lifecycle_phase as PartnerLifecyclePhase,
@@ -502,10 +597,23 @@ export class PartnerProgramLedgerService {
       );
     }
     if (rule.actor === 'operator' && params.actor !== 'operator') {
-      throw Object.assign(new Error('Operator-only transition'), { code: 'P29_LIFECYCLE_FORBIDDEN' });
+      throw Object.assign(new Error('Operator-only transition'), {
+        code: 'P29_LIFECYCLE_FORBIDDEN',
+      });
     }
     if (rule.actor === 'partner' && params.actor !== 'partner') {
-      throw Object.assign(new Error('Partner-only transition'), { code: 'P29_LIFECYCLE_FORBIDDEN' });
+      throw Object.assign(new Error('Partner-only transition'), {
+        code: 'P29_LIFECYCLE_FORBIDDEN',
+      });
+    }
+    if (from === 'onboard' && params.toPhase === 'activate') {
+      const checklist = parseChecklist(rt.onboard_checklist_json);
+      if (!isOnboardChecklistComplete(checklist)) {
+        throw Object.assign(new Error('Onboarding checklist incomplete'), {
+          code: 'P29_ONBOARDING_INCOMPLETE',
+          checklist,
+        });
+      }
     }
     const ts = new Date().toISOString();
     await DbPromise.run(

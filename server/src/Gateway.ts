@@ -2,18 +2,21 @@ import type { Express } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
+import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
+import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
-import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
+import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
+import adminP32Routes from './routes/adminP32.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';
@@ -39,7 +42,6 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
-import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
@@ -139,6 +141,7 @@ import megatrendRoutes from './routes/megatrend.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
+import moduleInterestRoutes from './routes/module-interest.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
@@ -154,6 +157,7 @@ import organizationDataRoutes from './routes/organization/organization-data.rout
 import orgLimitsRoutes from './routes/organization/organization-limits.routes.js';
 import organizationProfilesRoutes from './routes/organization/organization-profiles.routes.js';
 import organizationRoutes from './routes/organization/organizations.routes.js';
+import ownershipRoutes from './routes/organization/ownership.routes.js';
 import rbacRoutes from './routes/organization/rbac.routes.js';
 import teamsRoutes from './routes/organization/teams.routes.js';
 import organizationContextRoutes from './routes/organization-context.routes.js';
@@ -192,6 +196,8 @@ import publicAnnaRoutes from './routes/public-anna.routes.js';
 import publicContactRoutes from './routes/public-contact.routes.js';
 import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
 import publicOutreachRoutes from './routes/public-outreach.routes.js';
+import publicPartnerApplicationsRoutes from './routes/public-partner-applications.routes.js';
+import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import realtimePlatformRoutes from './routes/realtime-platform.routes.js';
@@ -232,7 +238,6 @@ import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
-import workbookRoutes from './routes/workbook.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
 import sessionsRoutes from './routes/user/sessions.routes.js';
@@ -249,12 +254,15 @@ import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
+import v10Router from './routes/v10/index.js';
 import verifyRoutes from './routes/verify.routes.js';
 import videoRoutes from './routes/videos.routes.js';
 import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
 import voiceRoutes from './routes/voice.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
+import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
+import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
@@ -273,7 +281,14 @@ export class ApiGateway {
   }
 
   public initializeRoutes(app: Express) {
-    console.log('[ApiGateway] Initializing gateway routes...');
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const logInfo = (...args: unknown[]) => {
+      if (!isTestEnv) {
+        logger.info(...args);
+      }
+    };
+
+    logInfo('[ApiGateway] Initializing gateway routes...');
 
     // Test-only helpers (hard-guarded). Used by Playwright L4 remote/local bootstrapping.
     if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_SUPPORT === 'true') {
@@ -294,47 +309,49 @@ export class ApiGateway {
     };
 
     try {
+      // T113: API request logging (no PII) must wrap the whole gateway,
+      // otherwise early-mounted high-traffic routes bypass logging entirely.
+      app.use(apiLoggingMiddleware);
+
       // TypeScript routes (migrated)
-      console.log('[ApiGateway] Mounting /api/auth');
+      logInfo('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
-      console.log('[ApiGateway] Mounting /api/billing');
+      logInfo('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
       app.use('/api/superadmin/billing', billingAdminRoutes);
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       // V8 shadow mode: check flag and intercept legacy AI routes for comparison
       app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
 
-      console.log('[ApiGateway] Mounting /api/ai');
+      logInfo('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);
       // Aggregated AI sub-routes (reduces drift & duplication)
       app.use('/api/ai', aiDomainRoutes);
       app.use('/api/ai/performance', performanceRoutes);
-      console.log('[ApiGateway] Mounting /api/tools');
+      logInfo('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
-      console.log('[ApiGateway] Mounting /api/workbook');
+      logInfo('[ApiGateway] Mounting /api/workbook');
       app.use('/api/workbook', workbookRoutes);
-      console.log('[ApiGateway] Mounting /api/known-tools');
+      logInfo('[ApiGateway] Mounting /api/known-tools');
       app.use('/api/known-tools', knownToolsRoutes);
-      console.log('[ApiGateway] Mounting /api/tool-assets');
+      logInfo('[ApiGateway] Mounting /api/tool-assets');
       app.use('/api/tool-assets', toolAssetsRoutes);
-      console.log('[ApiGateway] Mounting /api/assessment-evidence');
+      logInfo('[ApiGateway] Mounting /api/assessment-evidence');
       app.use('/api/assessment-evidence', assessmentEvidenceRoutes);
-      console.log('[ApiGateway] Mounting /api/consulting-templates');
+      logInfo('[ApiGateway] Mounting /api/consulting-templates');
       app.use('/api/consulting-templates', consultingTemplatesRoutes);
-      console.log('[ApiGateway] Mounting /api/portfolio-optimization');
+      logInfo('[ApiGateway] Mounting /api/portfolio-optimization');
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
-      console.log('[ApiGateway] Mounting /api/assessment-workflow');
+      logInfo('[ApiGateway] Mounting /api/assessment-workflow');
       app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
-      console.log('[ApiGateway] Mounting /api/assessment-workflow-v2');
+      logInfo('[ApiGateway] Mounting /api/assessment-workflow-v2');
       app.use('/api/assessment-workflow-v2', assessmentWorkflowV2Routes);
 
       // Register routes
-      console.log('[ApiGateway] Mounting /api/admin-data');
+      logInfo('[ApiGateway] Mounting /api/admin-data');
       app.use('/api/admin-data', adminDataRoutes);
       app.use('/api/admin', adminBulkRoutes);
-
-      // T113: API request logging (no PII)
-      app.use(apiLoggingMiddleware);
+      app.use('/api/admin', adminP32Routes);
 
       // Demo Mode middleware - switches context and protects against writes
       app.use(demoContextMiddleware);
@@ -345,7 +362,7 @@ export class ApiGateway {
         })
       );
 
-      console.log('[ApiGateway] Mounting /api/users');
+      logInfo('[ApiGateway] Mounting /api/users');
       app.use('/api/users', userRoutes);
 
       // User profile routes
@@ -370,7 +387,9 @@ export class ApiGateway {
       app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/public/anna', publicAnnaRoutes); // Public landing assistant
       app.use('/api/public/contact', publicContactRoutes); // Public contact form intake (LP)
+      app.use('/api/public/partner-applications', publicPartnerApplicationsRoutes); // Public partner qualification form
       app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes); // Public V8 KB preview/featured
+      app.use('/api/legal', legalRoutes); // Legal documents (public GET + auth'd POST)
 
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
@@ -431,13 +450,16 @@ export class ApiGateway {
       mountStub('/api/integrations/automation', automationRoutes, 'automationRoutes');
       mountStub('/api/mcp', mcpRoutes, 'mcpRoutes');
 
+      // Module interest / waitlist
+      app.use('/api/module-interest', moduleInterestRoutes);
+
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
       app.use('/api/superadmin', resourceManagementRoutes);
+      app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
 
       // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
       app.use('/api/test-support', testSupportRoutes);
-      app.use('/api/admin', resourceManagementRoutes);
       mountStub('/api/audit-logs', auditLogRoutes, 'auditLogRoutes');
       app.use('/api/feature-flags', featureFlagsRoutes);
       mountStub('/api/integrations', integrationsRoutes, 'integrationsRoutes');
@@ -517,14 +539,15 @@ export class ApiGateway {
 
       // Webhook routes (stripe webhook is handled by webhookRoutes)
       app.use('/api/webhooks', sellixInboundWebhookRoutes);
+      app.use('/api/webhooks/v8-sync', v8SyncInboundWebhookRoutes);
       app.use('/api/webhooks', webhookRoutes);
 
       // Billing routes
       app.use('/api/revenue', revenueRoutes);
-      console.log('[ApiGateway] Mounting /api/revenue');
+      logInfo('[ApiGateway] Mounting /api/revenue');
       app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
       app.use('/api/superadmin/ai/core-docs', coreDocsRoutes);
-      console.log('[ApiGateway] Mounting /api/superadmin/analytics');
+      logInfo('[ApiGateway] Mounting /api/superadmin/analytics');
       app.use('/api/token-billing', tokenBillingRoutes);
       app.use('/api/budgets', budgetsRoutes);
       mountStub('/api/pricing', pricingRoutes, 'pricingRoutes');
@@ -532,6 +555,7 @@ export class ApiGateway {
       // Organization routes
       app.use('/api/megatrends', megatrendRoutes);
       app.use('/api/organizations', organizationRoutes);
+      app.use('/api/organizations', ownershipRoutes);
       mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
@@ -574,7 +598,7 @@ export class ApiGateway {
       app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
       app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
       app.use('/api/preview-ai', previewAiRoutes);
-      app.use('/api/notebook', notebookV4Routes);
+      app.use('/api/notebook', deprecationHeader('/api/v8/notebook'), notebookV4Routes);
 
       // Governance routes
       app.use('/api/governance', governanceRoutes);
@@ -649,7 +673,7 @@ export class ApiGateway {
       app.use('/api/executive', executiveAggregateRoutes);
 
       // Analytics routes
-      console.log(
+      logInfo(
         '[Gateway] economicsRoutes type:',
         typeof economicsRoutes,
         'stack:',
@@ -679,17 +703,16 @@ export class ApiGateway {
       // Chaos engineering endpoints (development only) - disabled
 
       // Other routes
-      app.use('/api/legal', legalRoutes);
       app.use('/api/demo', demoRoutes);
       mountStub('/api/promo', promoRoutes, 'promoRoutes');
-      app.use('/api/partners', partnerRoutes);
+      app.use('/api/partners', deprecationHeader('/api/v8/partner'), partnerRoutes);
       app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
       app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
       app.use('/api/superadmin/partner-outreach', partnerOutreachRoutes); // SuperAdmin partner outreach campaigns
       mountStub('/api/settlements', settlementRoutes, 'settlementRoutes');
       app.use('/api/access-codes', accessCodeRoutes);
-      app.use('/api/help', helpRoutes);
-      mountStub('/api/help', helpFeedbackRoutes, 'helpFeedbackRoutes');
+      app.use('/api/help', deprecationHeader('/api/v8/help'), helpRoutes);
+      app.use('/api/help', helpFeedbackRoutes);
       app.use('/api/help', helpChatRoutes);
       app.use('/api/updates', featureUpdatesRoutes);
       mountStub('/api/help-analytics', helpAnalyticsRoutes, 'helpAnalyticsRoutes');
@@ -700,14 +723,14 @@ export class ApiGateway {
       app.use('/api/preferences', preferencesRoutes);
       mountStub('/api/features', featureFlagRoutes, 'featureFlagRoutes');
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
-      app.use('/api/sync-hub', syncHubRoutes);
+      app.use('/api/sync-hub', deprecationHeader('/api/v8/sync'), syncHubRoutes);
       app.use('/api/table-platform', tablePlatformRoutes);
       app.use('/api/table-platform', publicFormRouter);
       app.use('/api/table-platform', dataCollectionRoutes);
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
       app.use('/api/sponsor-reports', sponsorReportsRoutes);
-      app.use('/api/interview', interviewRoutes);
+      app.use('/api/interview', deprecationHeader('/api/v8/interview'), interviewRoutes);
       app.use('/api/interview-v4', interviewEnterpriseRoutes);
       app.use('/api/agents', agentsRoutes);
       app.use('/api/ai-operator', aiOperatorRoutes);
@@ -717,18 +740,30 @@ export class ApiGateway {
       mountStub('/api/audit', auditRoutes, 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
       app.use('/api/raid', raidRoutes);
-      app.use('/api/execution-control', executionControlRoutes);
+      app.use(
+        '/api/execution-control',
+        deprecationHeader('/api/v8/execution-control'),
+        executionControlRoutes
+      );
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       app.use('/api/budget', budgetRoutes);
       app.use('/api/benefits', benefitsRoutes);
-      app.use('/api/finance-statements', financeStatementsRoutes);
+      app.use(
+        '/api/finance-statements',
+        deprecationHeader('/api/v8/finance'),
+        financeStatementsRoutes
+      );
       app.use('/api/financial-modeling', financialModelingRoutes);
-      app.use('/api/finance-v4', financeEnterpriseRoutes);
+      app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
 
       // V8 API namespace — feature-gated
-      console.log('[ApiGateway] Mounting /api/v8');
+      logInfo('[ApiGateway] Mounting /api/v8');
       app.use('/api/v8', v8FeatureGate, v8Router);
+
+      // V10 API namespace — authenticated by each router, default-off by flags internally.
+      logInfo('[ApiGateway] Mounting /api/v10');
+      app.use('/api/v10', v10Router);
 
       // Catch-all RBAC or 404 for /api
       app.use('/api', rbacRoutes);

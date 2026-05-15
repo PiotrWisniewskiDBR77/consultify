@@ -21,11 +21,13 @@ const MODULE_ICONS: Record<TargetModule, React.ElementType> = {
   initiatives: ExternalLink,
   reports: ExternalLink,
   presentations: ExternalLink,
+  excele: ExternalLink,
   results: ExternalLink,
   assessment: ExternalLink,
   interview: ExternalLink,
   mywork: ExternalLink,
   economics: ExternalLink,
+  process_flow: ExternalLink,
 };
 
 export interface ChatActionButtonProps {

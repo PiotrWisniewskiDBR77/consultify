@@ -6,22 +6,7 @@
  */
 
 import bcrypt from 'bcryptjs';
-import {
-  AlignmentType,
-  BorderStyle,
-  Document,
-  Footer,
-  Header,
-  HeadingLevel,
-  Packer,
-  PageNumber,
-  Paragraph,
-  Table,
-  TableCell,
-  TableRow,
-  TextRun,
-  WidthType,
-} from 'docx';
+import * as docxModule from 'docx';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
@@ -38,6 +23,23 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { exportReportToNotion } from '../services/ai/integrationHubService.js';
+
+const {
+  AlignmentType,
+  BorderStyle,
+  Document,
+  Footer,
+  Header,
+  HeadingLevel,
+  Packer,
+  PageNumber,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+} = docxModule as any;
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
@@ -136,7 +138,7 @@ async function syncArtifactRegistryForReport(
   const sourceType = report?.sourceType ? String(report.sourceType) : null;
   const sourceId = report?.sourceId ? String(report.sourceId) : null;
 
-  await artifactRegistryService.registerArtifactOrigin({
+  const registeredArtifact = await artifactRegistryService.registerArtifactOrigin({
     organizationId,
     outputType: 'report',
     artifactFamily: 'document',
@@ -157,6 +159,22 @@ async function syncArtifactRegistryForReport(
       sourceTable: 'report_builder_reports',
     },
   });
+
+  if (registeredArtifact && report?.templateId) {
+    const templateArtifactId = String(report.templateArtifactId || report.templateId || '');
+    if (templateArtifactId) {
+      try {
+        await artifactRegistryService.addSecondaryOriginLink({
+          artifactId: registeredArtifact.artifactId,
+          organizationId,
+          originRuntime: 'source_template',
+          originRecordId: templateArtifactId,
+        });
+      } catch {
+        // Non-fatal: template link is supplementary
+      }
+    }
+  }
 }
 
 async function enforceQualityGatesForExport(
@@ -176,6 +194,27 @@ async function enforceQualityGatesForExport(
 
 const router = Router();
 
+function resolveReportBuilderCorrelationId(req: Request): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildReportBuilderFailClosedError(
+  req: Request,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveReportBuilderCorrelationId(req),
+  };
+}
+
 // Apply middleware (use default API limiter – 1000 req/15min in dev, not the restrictive auth limiter)
 router.use(defaultRateLimiter);
 router.use(verifyToken);
@@ -192,7 +231,8 @@ async function recordCanonicalExportTrace(params: {
   organizationId: string;
   userId: string;
   reportId: string;
-  format: 'pdf' | 'pptx';
+  format: 'pdf' | 'pptx' | 'docx';
+  status?: 'completed' | 'failed';
 }) {
   const artifact = await artifactRegistryService.getArtifactByOrigin({
     organizationId: params.organizationId,
@@ -202,6 +242,15 @@ async function recordCanonicalExportTrace(params: {
     roleKey: null,
   });
   if (!artifact?.artifactId) return;
+  if (params.status === 'failed') {
+    await reportsPresModelService.recordFailedExport(
+      artifact.artifactId,
+      params.organizationId,
+      params.format,
+      params.userId || 'system'
+    );
+    return;
+  }
   await reportsPresModelService.recordCompletedExport(
     artifact.artifactId,
     params.organizationId,
@@ -1183,7 +1232,14 @@ router.post('/block-types', async (req: Request, res: Response, next: NextFuncti
     res.status(201).json({ block: created });
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating block type:', err);
-    res.status(500).json({ error: err?.message || 'Failed to create block type' });
+    res.status(500).json(
+      buildReportBuilderFailClosedError(
+        req,
+        500,
+        'REPORT_BUILDER_BLOCK_TYPE_CREATE_FAILED',
+        'Failed to create report block type.'
+      )
+    );
   }
 });
 
@@ -3043,8 +3099,8 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
 /**
  * Parse inline markdown (bold, italic, code, links) into TextRun children.
  */
-const parseInlineMarkdown = (text: string): TextRun[] => {
-  const runs: TextRun[] = [];
+const parseInlineMarkdown = (text: string): any[] => {
+  const runs: any[] = [];
   const regex = /(\*\*\*(.*?)\*\*\*|\*\*(.*?)\*\*|\*(.*?)\*|`(.*?)`|\[(.*?)\]\((.*?)\))/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -3075,7 +3131,7 @@ const parseInlineMarkdown = (text: string): TextRun[] => {
 /**
  * Parse a markdown table block (array of lines starting with |) into a docx Table.
  */
-const parseMarkdownTable = (tableLines: string[]): Table => {
+const parseMarkdownTable = (tableLines: string[]): any => {
   const rows: string[][] = [];
   for (const line of tableLines) {
     const trimmed = line.trim();
@@ -3089,7 +3145,9 @@ const parseMarkdownTable = (tableLines: string[]): Table => {
   }
 
   if (rows.length === 0) {
-    return new Table({ rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('')] })] })] });
+    return new Table({
+      rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('')] })] })],
+    });
   }
 
   const thinBorder = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
@@ -3097,29 +3155,32 @@ const parseMarkdownTable = (tableLines: string[]): Table => {
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: rows.map((cells, rowIdx) =>
-      new TableRow({
-        children: cells.map((cellText) =>
-          new TableCell({
-            borders,
-            children: [
-              new Paragraph({
-                children: rowIdx === 0
-                  ? [new TextRun({ text: cellText, bold: true, size: 20 })]
-                  : parseInlineMarkdown(cellText),
-              }),
-            ],
-          })
-        ),
-      })
+    rows: rows.map(
+      (cells, rowIdx) =>
+        new TableRow({
+          children: cells.map(
+            (cellText) =>
+              new TableCell({
+                borders,
+                children: [
+                  new Paragraph({
+                    children:
+                      rowIdx === 0
+                        ? [new TextRun({ text: cellText, bold: true, size: 20 })]
+                        : parseInlineMarkdown(cellText),
+                  }),
+                ],
+              })
+          ),
+        })
     ),
   });
 };
 
-const markdownToDocxParagraphs = (markdown: string): (Paragraph | Table)[] => {
+const markdownToDocxParagraphs = (markdown: string): any[] => {
   const text = String(markdown || '');
   const lines = text.split('\n');
-  const out: (Paragraph | Table)[] = [];
+  const out: any[] = [];
   let i = 0;
 
   while (i < lines.length) {
@@ -3184,7 +3245,12 @@ const markdownToDocxParagraphs = (markdown: string): (Paragraph | Table)[] => {
 
     // Horizontal rule
     if (/^[-*_]{3,}$/.test(line.trim())) {
-      out.push(new Paragraph({ text: '', border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' } } }));
+      out.push(
+        new Paragraph({
+          text: '',
+          border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' } },
+        })
+      );
       continue;
     }
 
@@ -3206,7 +3272,7 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
     .filter((s) => s && s.enabled)
     .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
-  const children: (Paragraph | Table)[] = [];
+  const children: any[] = [];
 
   // Cover page
   children.push(
@@ -3226,7 +3292,11 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
   }
   children.push(
     new Paragraph({
-      text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      text: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
       alignment: AlignmentType.CENTER,
     })
   );
@@ -3234,9 +3304,7 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
 
   // Table of Contents
   if (enabledSections.length >= 3) {
-    children.push(
-      new Paragraph({ text: 'Table of Contents', heading: HeadingLevel.HEADING_1 })
-    );
+    children.push(new Paragraph({ text: 'Table of Contents', heading: HeadingLevel.HEADING_1 }));
     for (let idx = 0; idx < enabledSections.length; idx++) {
       const secTitle = enabledSections[idx].title || enabledSections[idx].sectionKey || 'Section';
       children.push(
@@ -3270,15 +3338,19 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
 
   const doc = new Document({
     numbering: {
-      config: [{
-        reference: 'default-numbering',
-        levels: [{
-          level: 0,
-          format: 'decimal' as any,
-          text: '%1.',
-          alignment: AlignmentType.LEFT,
-        }],
-      }],
+      config: [
+        {
+          reference: 'default-numbering',
+          levels: [
+            {
+              level: 0,
+              format: 'decimal' as any,
+              text: '%1.',
+              alignment: AlignmentType.LEFT,
+            },
+          ],
+        },
+      ],
     },
     sections: [
       {
@@ -3380,15 +3452,21 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
     return res.json({ success: true, url: result.url });
   } catch (err: any) {
     logger.error('[ReportBuilder] Error exporting to Notion:', err);
-    return res.status(500).json({ error: 'Failed to export to Notion', message: err.message });
+    return res.status(500).json(
+      buildReportBuilderFailClosedError(
+        req,
+        500,
+        'REPORT_BUILDER_EXPORT_NOTION_FAILED',
+        'Failed to export report to Notion.'
+      )
+    );
   }
 });
 
 router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunction) => {
+  const id = paramStr(req.params.id);
+  const { userId, organizationId } = getAuthContext(req);
   try {
-    const id = paramStr(req.params.id);
-    const { userId, organizationId } = getAuthContext(req);
-
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
@@ -3431,8 +3509,22 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
     );
     return res.sendFile(filePath);
   } catch (err: any) {
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'pdf',
+      status: 'failed',
+    }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting PDF:', err);
-    return res.status(500).json({ error: 'Failed to export PDF', message: err.message });
+    return res.status(500).json(
+      buildReportBuilderFailClosedError(
+        req,
+        500,
+        'REPORT_BUILDER_EXPORT_PDF_FAILED',
+        'Failed to export report as PDF.'
+      )
+    );
   }
 });
 
@@ -3441,10 +3533,9 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
  * Export report as a Word document (.docx)
  */
 const exportDocx = async (req: Request, res: Response) => {
+  const id = paramStr(req.params.id);
+  const { userId, organizationId } = getAuthContext(req);
   try {
-    const id = paramStr(req.params.id);
-    const { userId, organizationId } = getAuthContext(req);
-
     if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
@@ -3470,6 +3561,12 @@ const exportDocx = async (req: Request, res: Response) => {
       language: 'pl',
       exportedBy: userId,
     });
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'docx',
+    }).catch(() => null);
 
     logger.info('[ReportBuilder] Word (.docx) exported', { reportId: id, userId });
 
@@ -3483,6 +3580,13 @@ const exportDocx = async (req: Request, res: Response) => {
     );
     return res.sendFile(filePath);
   } catch (err: any) {
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'docx',
+      status: 'failed',
+    }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting Word (.docx):', err);
     return res.status(500).json({ error: 'Failed to export Word', message: err.message });
   }
@@ -3503,10 +3607,10 @@ router.get('/:id/export/docx', exportDocx);
  *   ?confidentiality=confidential — confidential | internal | public
  */
 router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFunction) => {
+  const id = paramStr(req.params.id);
+  const { userId, organizationId } = getAuthContext(req);
   try {
-    const id = paramStr(req.params.id);
-    const { userId, organizationId } = getAuthContext(req);
-    const roleKey = req.user?.role ? String(req.user.role) : null;
+    const roleKey = (req as any).user?.role ? String((req as any).user.role) : null;
     const { template, language, version, confidentiality } = req.query;
     const useV2 = version === '2' || version === 'v2';
 
@@ -3692,7 +3796,6 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     await recordCanonicalExportTrace({
       organizationId,
       userId,
-      roleKey,
       reportId: id,
       format: 'pptx',
     }).catch(() => null);
@@ -3707,6 +3810,13 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     );
     return res.sendFile(filePath);
   } catch (err: any) {
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'pptx',
+      status: 'failed',
+    }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting PPTX:', err);
     return res.status(500).json({ error: 'Failed to export PPTX', message: err.message });
   }
@@ -3722,15 +3832,15 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
  *  - version?: '2' | 'v2' (optional for pptx; defaults to v1)
  */
 router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Response) => {
+  const id = paramStr(req.params.id);
+  const cloudSourceId = paramStr(req.params.cloudSourceId);
+  const { userId, organizationId } = getAuthContext(req);
+  const format = String(req.body?.format || '')
+    .trim()
+    .toLowerCase();
   try {
-    const id = paramStr(req.params.id);
-    const cloudSourceId = paramStr(req.params.cloudSourceId);
-    const { userId, organizationId } = getAuthContext(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const format = String(req.body?.format || '')
-      .trim()
-      .toLowerCase();
     const folderId = req.body?.folderId ? String(req.body.folderId).trim() : undefined;
     const version = String(req.body?.version || req.query?.version || '').trim();
     const useV2 = version === '2' || version === 'v2';
@@ -3741,6 +3851,7 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) return res.status(404).json({ error: 'Report not found' });
+    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const exportDir = await ensureExportDir();
     const safeTitle = String(reportData.report.title || 'report')
@@ -3945,9 +4056,24 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
       language: 'en',
       exportedBy: userId,
     }).catch(() => null);
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: format as 'pdf' | 'docx' | 'pptx',
+    }).catch(() => null);
 
     return res.json({ success: true, uploaded });
   } catch (err: any) {
+    if (format === 'pdf' || format === 'docx' || format === 'pptx') {
+      await recordCanonicalExportTrace({
+        organizationId,
+        userId,
+        reportId: id,
+        format,
+        status: 'failed',
+      }).catch(() => null);
+    }
     logger.error('[ReportBuilder] Error publishing to cloud:', err);
     return res.status(500).json({ error: 'Failed to publish to cloud', message: err.message });
   }
@@ -4927,24 +5053,73 @@ router.post(
 
       const initiativeId = uuidv4();
       const now = new Date().toISOString();
+      let initiativeColumns: string[] = [];
+      try {
+        const info = await dbAll<Array<{ name?: string }>>(`PRAGMA table_info(initiatives)`, []);
+        initiativeColumns = (info || []).map((row: any) => String(row?.name || '')).filter(Boolean);
+      } catch {
+        initiativeColumns = [];
+      }
 
-      await dbRun(
-        `INSERT INTO initiatives (
-          id, organization_id, project_id, name, summary, status,
-          report_id, owner_business_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          organizationId,
-          reportData.report.projectId || null,
-          initiativeTitle,
-          initiativeDescription,
-          id,
-          userId,
-          now,
-          now,
-        ]
-      );
+      const staticColumnMapping: Record<string, unknown> = {
+        id: initiativeId,
+        organization_id: organizationId,
+        project_id: reportData.report.projectId || null,
+        report_id: id,
+        title: initiativeTitle,
+        name: initiativeTitle,
+        summary: initiativeDescription,
+        description: initiativeDescription,
+        status: 'DRAFT',
+        owner_business_id: userId || null,
+        owner_execution_id: userId || null,
+        created_by: userId || 'system',
+        updated_by: userId || 'system',
+        created_at: now,
+        updated_at: now,
+      };
+
+      if (initiativeColumns.length === 0) {
+        await dbRun(
+          `INSERT INTO initiatives (
+            id, organization_id, project_id, name, summary, status,
+            report_id, owner_business_id, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)`,
+          [
+            initiativeId,
+            organizationId,
+            reportData.report.projectId || null,
+            initiativeTitle,
+            initiativeDescription,
+            id,
+            userId,
+            now,
+            now,
+          ]
+        );
+      } else {
+        const insertCols: string[] = [];
+        const insertVals: unknown[] = [];
+        for (const column of initiativeColumns) {
+          if (column === 'metadata_json') continue;
+          insertCols.push(column);
+          if (Object.prototype.hasOwnProperty.call(staticColumnMapping, column)) {
+            insertVals.push(staticColumnMapping[column]);
+            continue;
+          }
+          const defaultNullColumnPrefixes = ['custom_', 'meta_', 'attr_', 'x_'];
+          if (defaultNullColumnPrefixes.some((prefix) => column.startsWith(prefix))) {
+            insertVals.push(null);
+            continue;
+          }
+          insertVals.push(null);
+        }
+        const placeholders = insertCols.map(() => '?').join(', ');
+        await dbRun(
+          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${placeholders})`,
+          insertVals
+        );
+      }
 
       logger.info('[ReportBuilder] Initiative created from section', {
         reportId: id,
@@ -4998,10 +5173,62 @@ router.get('/:id/entity-links', async (req: Request, res: Response, next: NextFu
       [organizationId, id]
     );
 
+    const kpis = await dbAll<{
+      id: string;
+      initiativeId: string;
+      name: string;
+      targetValue: number | null;
+      unit: string | null;
+    }>(
+      `SELECT k.id,
+              k.initiative_id AS initiativeId,
+              k.name,
+              k.target_value AS targetValue,
+              k.unit
+       FROM initiative_kpis k
+       JOIN initiatives i ON i.id = k.initiative_id
+       WHERE i.organization_id = ? AND i.report_id = ?
+       ORDER BY k.updated_at DESC, k.created_at DESC`,
+      [organizationId, id]
+    );
+
+    const milestones = await dbAll<{
+      id: string;
+      initiativeId: string;
+      name: string;
+      status: string | null;
+      targetDate: string | null;
+    }>(
+      `SELECT m.id,
+              m.initiative_id AS initiativeId,
+              m.name,
+              m.status,
+              m.target_date AS targetDate
+       FROM initiative_milestones m
+       JOIN initiatives i ON i.id = m.initiative_id
+       WHERE m.organization_id = ? AND i.report_id = ?
+       ORDER BY m.target_date DESC, m.created_at DESC`,
+      [organizationId, id]
+    );
+
     res.json({
       initiatives: initiatives.map((i) => ({ id: i.id, title: i.name, status: i.status })),
       tasks: tasks.map((t) => ({ id: t.id, title: t.title, status: t.status })),
       decisions: decisions.map((d) => ({ id: d.id, title: d.title, status: d.status })),
+      kpis: kpis.map((k) => ({
+        id: k.id,
+        initiativeId: k.initiativeId,
+        title: k.name,
+        targetValue: k.targetValue ?? null,
+        unit: k.unit ?? null,
+      })),
+      milestones: milestones.map((m) => ({
+        id: m.id,
+        initiativeId: m.initiativeId,
+        title: m.name,
+        status: m.status ?? 'PENDING',
+        targetDate: m.targetDate ?? null,
+      })),
     });
   } catch (err) {
     logger.error('[ReportBuilder] Error getting entity links:', err);

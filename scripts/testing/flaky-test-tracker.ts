@@ -46,12 +46,15 @@ interface FlakyTestRegistry {
   tests: FlakyTestEntry[];
 }
 
-const REGISTRY_FILE = 'test-results/flaky-tests.json';
+const REGISTRY_FILE =
+  process.env.FLAKY_TRACKER_REGISTRY_PATH?.trim() || 'test-results/flaky-tests.json';
 const QUARANTINE_THRESHOLD = 0.7; // 70% pass rate = flaky
 const AUTO_QUARANTINE_THRESHOLD = 0.5; // 50% pass rate = auto-quarantine
 
 function loadRegistry(): FlakyTestRegistry {
-  const registryPath = path.join(process.cwd(), REGISTRY_FILE);
+  const registryPath = path.isAbsolute(REGISTRY_FILE)
+    ? REGISTRY_FILE
+    : path.join(process.cwd(), REGISTRY_FILE);
   try {
     if (fs.existsSync(registryPath)) {
       return JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
@@ -67,13 +70,16 @@ function loadRegistry(): FlakyTestRegistry {
 }
 
 function saveRegistry(registry: FlakyTestRegistry): void {
-  const outputDir = path.dirname(path.join(process.cwd(), REGISTRY_FILE));
+  const targetPath = path.isAbsolute(REGISTRY_FILE)
+    ? REGISTRY_FILE
+    : path.join(process.cwd(), REGISTRY_FILE);
+  const outputDir = path.dirname(targetPath);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
   registry.lastUpdated = new Date().toISOString();
-  fs.writeFileSync(path.join(process.cwd(), REGISTRY_FILE), JSON.stringify(registry, null, 2));
+  fs.writeFileSync(targetPath, JSON.stringify(registry, null, 2));
 }
 
 function recordTestResult(registry: FlakyTestRegistry, result: TestResult): void {

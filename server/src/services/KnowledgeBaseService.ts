@@ -43,6 +43,13 @@ export interface KbArticle {
   thumbnail_url?: string;
   video_url?: string;
   video_teaser_url?: string;
+  hero_asset_refs?: Array<{
+    type: 'image' | 'video' | 'embed';
+    url: string;
+    alt?: string;
+    caption?: string;
+    poster?: string;
+  }>;
   related_modules: string[];
   target_audience: string[];
   next_action?: unknown | null;
@@ -60,6 +67,7 @@ export interface KbArticle {
   requested_language?: string;
   resolved_language?: string;
   is_fallback?: boolean;
+  translation_status?: 'native' | 'translated' | 'stale' | 'missing';
 }
 
 export interface KbArticleListItem {
@@ -93,11 +101,12 @@ class KnowledgeBaseService {
       return [];
     }
 
-    const articleIds = rows
-      .map((row) => String(row?.id || '').trim())
-      .filter(Boolean);
+    const articleIds = rows.map((row) => String(row?.id || '').trim()).filter(Boolean);
 
-    let tagsByArticleId = new Map<string, Array<{ id: string; slug: string; kind: string; label: string }>>();
+    let tagsByArticleId = new Map<
+      string,
+      Array<{ id: string; slug: string; kind: string; label: string }>
+    >();
 
     if (articleIds.length > 0) {
       try {
@@ -151,7 +160,11 @@ class KnowledgeBaseService {
   private resolveLanguage(language: string, hasRequestedTranslation: boolean) {
     const requested = language || 'en';
     const resolved = requested === 'en' || hasRequestedTranslation ? requested : 'en';
-    return { requested_language: requested, resolved_language: resolved, is_fallback: resolved !== requested };
+    return {
+      requested_language: requested,
+      resolved_language: resolved,
+      is_fallback: resolved !== requested,
+    };
   }
 
   /**
@@ -159,10 +172,19 @@ class KnowledgeBaseService {
    */
   async getCategories(
     language: string = 'en',
-    includePrivate: boolean = false
+    includePrivate: boolean = false,
+    categoryPrefix?: string
   ): Promise<KbCategory[]> {
     try {
-      const publicFilter = includePrivate ? '' : 'AND c.is_public = 1';
+      const conditions = ['c.is_active = 1'];
+      const extraParams: any[] = [];
+      if (!includePrivate) {
+        conditions.push('c.is_public = 1');
+      }
+      if (categoryPrefix) {
+        conditions.push('c.slug LIKE ?');
+        extraParams.push(categoryPrefix + '%');
+      }
 
       const sql = `
         SELECT 
@@ -174,11 +196,11 @@ class KnowledgeBaseService {
         FROM kb_categories c
         LEFT JOIN kb_category_translations t ON c.id = t.category_id AND t.language = ?
         LEFT JOIN kb_category_translations te ON c.id = te.category_id AND te.language = 'en'
-        WHERE c.is_active = 1 ${publicFilter}
+        WHERE ${conditions.join(' AND ')}
         ORDER BY c.sort_order ASC
       `;
 
-      const rows = await dbAll(sql, [language]);
+      const rows = await dbAll(sql, [language, ...extraParams]);
       return rows.map((row: any) => {
         const { requested_name, ...rest } = row;
         return {
@@ -206,6 +228,7 @@ class KnowledgeBaseService {
       offset?: number;
       publicOnly?: boolean;
       moduleId?: string;
+      categoryPrefix?: string;
     } = {}
   ): Promise<{ articles: KbArticleListItem[]; total: number }> {
     try {
@@ -217,6 +240,7 @@ class KnowledgeBaseService {
         offset = 0,
         publicOnly = false,
         moduleId,
+        categoryPrefix,
       } = params;
 
       const whereConditions = ['a.status = ?'];
@@ -224,6 +248,11 @@ class KnowledgeBaseService {
 
       if (publicOnly) {
         whereConditions.push('a.is_public = 1');
+      }
+
+      if (categoryPrefix) {
+        whereConditions.push('c.slug LIKE ?');
+        queryParams.push(categoryPrefix + '%');
       }
 
       if (categorySlug) {
@@ -312,6 +341,8 @@ class KnowledgeBaseService {
           COALESCE(t.summary, te.summary) as summary,
           COALESCE(t.content, te.content) as content,
           COALESCE(t.video_script, te.video_script) as video_script,
+          t.translation_status,
+          t.source_version,
           c.slug as category_slug,
           COALESCE(ct.name, cte.name) as category_name,
           c.icon as category_icon
@@ -392,7 +423,25 @@ class KnowledgeBaseService {
            WHERE atg.article_id = ? AND tg.status = 'active'`,
           [language, rest.id]
         )) as any[];
-      } catch { /* tags table may not exist yet */ }
+      } catch {
+        /* tags table may not exist yet */
+      }
+
+      let translationStatus = row.translation_status as string | undefined;
+      const sourceVersion = row.source_version as number | undefined;
+
+      if (
+        translationStatus === 'translated' &&
+        typeof row.version === 'number' &&
+        typeof sourceVersion === 'number' &&
+        row.version > sourceVersion
+      ) {
+        translationStatus = 'stale';
+      }
+
+      if (langMeta.is_fallback) {
+        translationStatus = 'missing';
+      }
 
       return {
         ...rest,
@@ -401,11 +450,21 @@ class KnowledgeBaseService {
         content,
         video_script,
         ...langMeta,
+        translation_status: translationStatus,
         next_action: parsedNextAction,
         is_featured: Boolean(row.is_featured),
         is_public: Boolean(row.is_public),
         related_modules: JSON.parse(row.related_modules || '[]'),
         target_audience: JSON.parse(row.target_audience || '[]'),
+        hero_asset_refs: (() => {
+          const raw = rest.hero_asset_refs;
+          if (!raw) return [];
+          try {
+            return typeof raw === 'string' ? JSON.parse(raw) : raw;
+          } catch {
+            return [];
+          }
+        })(),
         tags,
       };
     } catch (error) {
@@ -417,8 +476,19 @@ class KnowledgeBaseService {
   /**
    * Get public articles for landing page preview
    */
-  async getPublicPreview(language: string = 'en', limit: number = 3): Promise<KbArticleListItem[]> {
+  async getPublicPreview(
+    language: string = 'en',
+    limit: number = 3,
+    categoryPrefix?: string
+  ): Promise<KbArticleListItem[]> {
     try {
+      const conditions = ['a.status = ?', 'a.is_public = 1'];
+      const params: any[] = ['published'];
+      if (categoryPrefix) {
+        conditions.push('c.slug LIKE ?');
+        params.push(categoryPrefix + '%');
+      }
+
       const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
@@ -435,12 +505,12 @@ class KnowledgeBaseService {
         LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
         LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
         LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
-        WHERE a.status = 'published' AND a.is_public = 1
+        WHERE ${conditions.join(' AND ')}
         ORDER BY a.is_featured DESC, a.view_count DESC
         LIMIT ?
       `;
 
-      const articles = await dbAll(sql, [language, language, limit]);
+      const articles = await dbAll(sql, [language, language, ...params, limit]);
       return await this.attachTagsToArticleListItems(language, articles);
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting public preview:', error);
@@ -486,14 +556,102 @@ class KnowledgeBaseService {
   }
 
   /**
-   * Search articles with full-text search
+   * FTS5-powered search returning matching article IDs with relevance ranking.
+   * Returns { available: false } when the FTS virtual table is absent so callers
+   * can fall back to LIKE-based search transparently.
+   */
+  private async searchArticlesFTS(
+    query: string,
+    _language: string,
+    limit: number
+  ): Promise<{ ids: string[]; available: boolean }> {
+    try {
+      const check = await dbGet(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='kb_articles_fts'`,
+        []
+      );
+      if (!check) return { ids: [], available: false };
+
+      const ftsQuery = query
+        .replace(/['"]/g, '')
+        .split(/\s+/)
+        .filter((w) => w.length > 1)
+        .map((w) => `"${w}"*`)
+        .join(' OR ');
+
+      if (!ftsQuery) return { ids: [], available: true };
+
+      const rows = await dbAll(
+        `SELECT DISTINCT article_id, rank
+         FROM kb_articles_fts
+         WHERE kb_articles_fts MATCH ?
+         ORDER BY rank
+         LIMIT ?`,
+        [ftsQuery, limit]
+      );
+
+      return { ids: rows.map((r: any) => String(r.article_id)), available: true };
+    } catch (err) {
+      logger.debug('[KnowledgeBaseService] FTS5 not available, falling back to LIKE');
+      return { ids: [], available: false };
+    }
+  }
+
+  /**
+   * Search articles — prefers FTS5 when available, falls back to LIKE
    */
   async searchArticles(
     query: string,
     language: string = 'en',
-    limit: number = 10
+    limit: number = 10,
+    categoryPrefix?: string
   ): Promise<KbArticleListItem[]> {
     try {
+      if (!query || query.trim().length < 2) return [];
+
+      const siteFilter = categoryPrefix ? 'AND c.slug LIKE ?' : '';
+      const siteParam = categoryPrefix ? [categoryPrefix + '%'] : [];
+
+      // Try FTS5 first
+      const fts = await this.searchArticlesFTS(query.trim(), language, limit * 2);
+      if (fts.available && fts.ids.length > 0) {
+        const placeholders = fts.ids.map(() => '?').join(',');
+        const searchPattern = `%${query}%`;
+        const sql = `
+          SELECT a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
+                 t.title as requested_title,
+                 COALESCE(t.title, te.title) as title,
+                 COALESCE(t.summary, te.summary) as summary,
+                 c.slug as category_slug,
+                 COALESCE(ct.name, cte.name) as category_name,
+                 c.icon as category_icon
+          FROM kb_articles a
+          JOIN kb_categories c ON a.category_id = c.id
+          LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
+          LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
+          LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
+          LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
+          WHERE a.id IN (${placeholders}) AND a.status = 'published' ${siteFilter}
+          ORDER BY
+            CASE WHEN LOWER(COALESCE(t.title, te.title)) = LOWER(?) THEN 0
+                 WHEN COALESCE(t.title, te.title) LIKE ? THEN 1
+                 ELSE 2 END,
+            a.is_featured DESC, a.view_count DESC
+          LIMIT ?
+        `;
+        const articles = await dbAll(sql, [
+          language,
+          language,
+          ...fts.ids,
+          ...siteParam,
+          query,
+          searchPattern,
+          limit,
+        ]);
+        return await this.attachTagsToArticleListItems(language, articles);
+      }
+
+      // Fall back to LIKE-based search
       const searchPattern = `%${query}%`;
 
       const sql = `
@@ -511,7 +669,7 @@ class KnowledgeBaseService {
         LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
         LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
         LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
-        WHERE a.status = 'published' 
+        WHERE a.status = 'published' ${siteFilter}
           AND (t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?
                OR te.title LIKE ? OR te.summary LIKE ? OR te.content LIKE ?)
         ORDER BY 
@@ -523,6 +681,7 @@ class KnowledgeBaseService {
       const articles = await dbAll(sql, [
         language,
         language,
+        ...siteParam,
         searchPattern,
         searchPattern,
         searchPattern,
@@ -572,7 +731,7 @@ class KnowledgeBaseService {
 
   async getCollections(
     language: string = 'en',
-    params: { parentId?: string; visibility?: string; featured?: boolean } = {}
+    params: { parentId?: string; visibility?: string; featured?: boolean; slugPrefix?: string } = {}
   ): Promise<any[]> {
     try {
       const conditions = ['c.status = ?'];
@@ -592,6 +751,11 @@ class KnowledgeBaseService {
 
       if (params.featured) {
         conditions.push('c.featured = TRUE');
+      }
+
+      if (params.slugPrefix) {
+        conditions.push('c.slug LIKE ?');
+        queryParams.push(params.slugPrefix + '%');
       }
 
       const sql = `
@@ -687,7 +851,7 @@ class KnowledgeBaseService {
 
   async getTags(
     language: string = 'en',
-    params: { kind?: string; articleId?: string } = {}
+    params: { kind?: string; articleId?: string; sitePrefix?: string } = {}
   ): Promise<any[]> {
     try {
       const conditions = ['tg.status = ?'];
@@ -705,11 +869,30 @@ class KnowledgeBaseService {
         queryParams.push(params.articleId);
       }
 
+      if (params.sitePrefix) {
+        joinClause += `
+          JOIN kb_article_tags at_site ON tg.id = at_site.tag_id
+          JOIN kb_articles a_site ON at_site.article_id = a_site.id AND a_site.status = 'published'
+          JOIN kb_categories c_site ON a_site.category_id = c_site.id AND c_site.slug LIKE ?`;
+        queryParams.push(params.sitePrefix + '%');
+      }
+
+      const articleCountSubquery = params.sitePrefix
+        ? `(SELECT COUNT(DISTINCT at3.article_id) FROM kb_article_tags at3
+            JOIN kb_articles a3 ON at3.article_id = a3.id AND a3.status = 'published'
+            JOIN kb_categories c3 ON a3.category_id = c3.id AND c3.slug LIKE ?
+            WHERE at3.tag_id = tg.id)`
+        : '(SELECT COUNT(*) FROM kb_article_tags at3 WHERE at3.tag_id = tg.id)';
+
+      if (params.sitePrefix) {
+        queryParams.push(params.sitePrefix + '%');
+      }
+
       const sql = `
-        SELECT tg.id, tg.slug, tg.kind, tg.synonyms, tg.visibility,
+        SELECT DISTINCT tg.id, tg.slug, tg.kind, tg.synonyms, tg.visibility,
                COALESCE(tt.label, tte.label) as label,
                COALESCE(tt.description, tte.description) as description,
-               (SELECT COUNT(*) FROM kb_article_tags at3 WHERE at3.tag_id = tg.id) as article_count
+               ${articleCountSubquery} as article_count
         FROM kb_tags tg
         ${joinClause}
         LEFT JOIN kb_tag_translations tt ON tg.id = tt.tag_id AND tt.language = ?
@@ -774,6 +957,7 @@ class KnowledgeBaseService {
     articles: KbArticleListItem[];
     facets: { collections: any[]; tags: any[] };
     total: number;
+    degraded?: boolean;
   }> {
     try {
       const limit = params.limit || 20;
@@ -782,7 +966,9 @@ class KnowledgeBaseService {
       const queryParams: any[] = ['published'];
 
       if (params.surface) {
-        conditions.push(`EXISTS (SELECT 1 FROM kb_surface_bindings sb WHERE sb.article_id = a.id AND sb.surface = ?)`);
+        conditions.push(
+          `EXISTS (SELECT 1 FROM kb_surface_bindings sb WHERE sb.article_id = a.id AND sb.surface = ?)`
+        );
         queryParams.push(params.surface);
       }
 
@@ -805,11 +991,73 @@ class KnowledgeBaseService {
         queryParams.push(...params.tagSlugs);
       }
 
-      conditions.push(
-        `(t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?
-          OR te.title LIKE ? OR te.summary LIKE ? OR te.content LIKE ?)`
-      );
-      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+      // Try FTS5 prefilter for faster, more tolerant search
+      const fts = await this.searchArticlesFTS(query, language, 100);
+      if (fts.available && fts.ids.length > 0) {
+        const ftsPlaceholders = fts.ids.map(() => '?').join(',');
+        conditions.push(`a.id IN (${ftsPlaceholders})`);
+        queryParams.push(...fts.ids);
+      } else {
+        // Fall back to LIKE + synonym expansion when FTS5 is unavailable
+
+        // P26 §2.3.2 synonym expansion: if query matches a tag synonym, also include articles tagged with that tag
+        const synonymExpandedTagIds: string[] = [];
+        try {
+          const allTags = await dbAll(
+            `SELECT id, synonyms FROM kb_tags WHERE status = 'active' AND synonyms IS NOT NULL`,
+            []
+          );
+          const queryLower = query.toLowerCase().trim();
+          for (const tag of allTags) {
+            let syns: string[] = [];
+            try {
+              syns =
+                typeof tag.synonyms === 'string' ? JSON.parse(tag.synonyms) : tag.synonyms || [];
+            } catch {
+              continue;
+            }
+            if (
+              Array.isArray(syns) &&
+              syns.some((s: string) => String(s).toLowerCase() === queryLower)
+            ) {
+              synonymExpandedTagIds.push(String(tag.id));
+            }
+          }
+        } catch {
+          // kb_tags table may not exist yet; ignore
+        }
+
+        if (synonymExpandedTagIds.length > 0) {
+          const synPlaceholders = synonymExpandedTagIds.map(() => '?').join(',');
+          conditions.push(
+            `((t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?
+              OR te.title LIKE ? OR te.summary LIKE ? OR te.content LIKE ?)
+             OR EXISTS (SELECT 1 FROM kb_article_tags at_syn WHERE at_syn.article_id = a.id AND at_syn.tag_id IN (${synPlaceholders})))`
+          );
+          queryParams.push(
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            ...synonymExpandedTagIds
+          );
+        } else {
+          conditions.push(
+            `(t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?
+              OR te.title LIKE ? OR te.summary LIKE ? OR te.content LIKE ?)`
+          );
+          queryParams.push(
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            searchPattern,
+            searchPattern
+          );
+        }
+      }
 
       const whereClause = conditions.join(' AND ');
 
@@ -849,7 +1097,15 @@ class KnowledgeBaseService {
         LIMIT ?
       `;
 
-      const articles = await dbAll(dataSql, [language, language, ...queryParams, query, searchPattern, searchPattern, limit]);
+      const articles = await dbAll(dataSql, [
+        language,
+        language,
+        ...queryParams,
+        query,
+        searchPattern,
+        searchPattern,
+        limit,
+      ]);
 
       // Build facets from result set
       const articleIds = articles.map((a: any) => a.id);
@@ -871,7 +1127,9 @@ class KnowledgeBaseService {
             ORDER BY count DESC
           `;
           collectionFacets = await dbAll(collFacetSql, [language, ...articleIds]);
-        } catch { /* collections table may not exist yet */ }
+        } catch {
+          /* collections table may not exist yet */
+        }
 
         try {
           const tagFacetSql = `
@@ -885,7 +1143,9 @@ class KnowledgeBaseService {
             ORDER BY count DESC
           `;
           tagFacets = await dbAll(tagFacetSql, [language, ...articleIds]);
-        } catch { /* tags table may not exist yet */ }
+        } catch {
+          /* tags table may not exist yet */
+        }
       }
 
       return {
@@ -898,7 +1158,7 @@ class KnowledgeBaseService {
       };
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error in searchWithFacets:', error);
-      return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+      return { articles: [], facets: { collections: [], tags: [] }, total: 0, degraded: true };
     }
   }
 
@@ -912,10 +1172,9 @@ class KnowledgeBaseService {
     limit: number = 5
   ): Promise<KbArticleListItem[]> {
     try {
-      const article = (await dbGet(
-        `SELECT related_article_ids FROM kb_articles WHERE id = ?`,
-        [articleId]
-      )) as any;
+      const article = (await dbGet(`SELECT related_article_ids FROM kb_articles WHERE id = ?`, [
+        articleId,
+      ])) as any;
 
       if (!article?.related_article_ids) return [];
 
@@ -981,7 +1240,9 @@ class KnowledgeBaseService {
   // P26-B: DEPRECATION / REDIRECT
   // ============================================
 
-  async resolveArticleRedirect(slug: string): Promise<{ redirectSlug: string | null; deprecationReason: string | null }> {
+  async resolveArticleRedirect(
+    slug: string
+  ): Promise<{ redirectSlug: string | null; deprecationReason: string | null }> {
     try {
       const article = (await dbGet(
         `SELECT a.redirect_to_article_id, a.deprecated_at, a.deprecation_reason, a.replacement_article_id
@@ -993,7 +1254,9 @@ class KnowledgeBaseService {
 
       const targetId = article.redirect_to_article_id || article.replacement_article_id;
       if (targetId) {
-        const target = (await dbGet(`SELECT slug FROM kb_articles WHERE id = ?`, [targetId])) as any;
+        const target = (await dbGet(`SELECT slug FROM kb_articles WHERE id = ?`, [
+          targetId,
+        ])) as any;
         return {
           redirectSlug: target?.slug || null,
           deprecationReason: article.deprecation_reason || null,
@@ -1002,7 +1265,9 @@ class KnowledgeBaseService {
 
       return {
         redirectSlug: null,
-        deprecationReason: article.deprecated_at ? (article.deprecation_reason || 'This article has been deprecated.') : null,
+        deprecationReason: article.deprecated_at
+          ? article.deprecation_reason || 'This article has been deprecated.'
+          : null,
       };
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error resolving redirect:', error);
@@ -1064,9 +1329,17 @@ class KnowledgeBaseService {
    */
   async getFeaturedArticles(
     language: string = 'en',
-    limit: number = 4
+    limit: number = 4,
+    categoryPrefix?: string
   ): Promise<KbArticleListItem[]> {
     try {
+      const conditions = ['a.status = ?', 'a.is_featured = 1'];
+      const params: any[] = ['published'];
+      if (categoryPrefix) {
+        conditions.push('c.slug LIKE ?');
+        params.push(categoryPrefix + '%');
+      }
+
       const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
@@ -1082,12 +1355,12 @@ class KnowledgeBaseService {
         LEFT JOIN kb_article_translations te ON a.id = te.article_id AND te.language = 'en'
         LEFT JOIN kb_category_translations ct ON c.id = ct.category_id AND ct.language = ?
         LEFT JOIN kb_category_translations cte ON c.id = cte.category_id AND cte.language = 'en'
-        WHERE a.status = 'published' AND a.is_featured = 1
+        WHERE ${conditions.join(' AND ')}
         ORDER BY a.view_count DESC
         LIMIT ?
       `;
 
-      const articles = await dbAll(sql, [language, language, limit]);
+      const articles = await dbAll(sql, [language, language, ...params, limit]);
       return await this.attachTagsToArticleListItems(language, articles);
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting featured articles:', error);

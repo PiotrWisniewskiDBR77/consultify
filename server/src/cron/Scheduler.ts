@@ -27,18 +27,17 @@ export const Scheduler = {
     logger.info('[Scheduler] Initializing Cron Jobs...');
 
     // Resolve lazy services
+    const learningSystemPath = '../services/ai/learningSystem' + '.js';
     const [ls_p, amms_p, accs_p, slas_p, tass_p, decs_p, amm_p, fs_p] = await Promise.all([
-      import('../services/ai/learningSystem').then(
-        (m) => (m as any).learningSystem || (m as any).default
-      ),
-      import('../services/ai/aiMemoryMetricsService').then((m) => m.default),
-      import('../services/aiCostControlService').then((m) => m.default),
-      import('../services/slaService').then((m) => m.default),
-      import('../services/taskAssignmentService').then((m) => m.default),
-      import('../services/decisionEscalationChainService').then((m) => m.default),
+      import(learningSystemPath).then((m) => (m as any).learningSystem || (m as any).default),
+      import('../services/ai/aiMemoryMetricsService.js').then((m) => m.default),
+      import('../services/aiCostControlService.js').then((m) => m.default),
+      import('../services/slaService.js').then((m) => m.default),
+      import('../services/taskAssignmentService.js').then((m) => m.default),
+      import('../services/decisionEscalationChainService.js').then((m) => m.default),
       // import('../services/storageReconciliationService').then((m) => m.default),
-      import('../services/aiMemoryManager').then((m) => m.default),
-      import('../services/feedbackService').then((m) => m.default),
+      import('../services/aiMemoryManager.js').then((m) => m.default),
+      import('../services/feedbackService.js').then((m) => m.default),
     ]);
 
     learningSystem = ls_p;
@@ -496,6 +495,17 @@ export const Scheduler = {
       }
     });
     this.jobs.push(job27);
+
+    // 28. P02 Calendar Sync — Run every 5 minutes
+    const job28 = cron.schedule('*/5 * * * *', async () => {
+      try {
+        const { syncAllSources } = await import('../services/v8/calendarSyncRuntime.js');
+        await syncAllSources();
+      } catch (err: any) {
+        logger.error('[Scheduler] Calendar sync tick failed:', err?.message);
+      }
+    });
+    this.jobs.push(job28);
 
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM)'

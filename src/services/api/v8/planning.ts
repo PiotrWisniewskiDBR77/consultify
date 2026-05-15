@@ -232,6 +232,7 @@ export interface V8PlanningGateReadinessCheck {
 export interface V8PlanningKpi {
   id: string;
   initiativeId?: string;
+  mappingId?: string | null;
   name: string;
   description?: string;
   category?: string;
@@ -247,6 +248,21 @@ export interface V8PlanningKpi {
   isOnTarget?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+  realizationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
+  postImplementationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
 }
 
 export interface V8PlanningBudgetItem {
@@ -404,7 +420,10 @@ export const V8PlanningApi = {
   getPendingDecisions: () =>
     v8Get<{ pendingDecisionChains: V8PlanningDecisionChain[] }>('/planning/pending-decisions'),
   /** P11 outbound handoff envelope (read-only) */
-  getInitiativeHandoff: (initiativeId: string, kind: 'execution' | 'kpi' | 'calendar' = 'execution') =>
+  getInitiativeHandoff: (
+    initiativeId: string,
+    kind: 'execution' | 'kpi' | 'calendar' = 'execution'
+  ) =>
     v8Get<{ handoff: Record<string, unknown> }>(
       `/planning/initiatives/${encodeURIComponent(initiativeId)}/handoff?kind=${encodeURIComponent(kind)}`
     ).then((r) => r.handoff),

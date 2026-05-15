@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { hasColumn } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
+import { listFindings as listP10Findings } from '../v8/interviewInsightFindingsService.js';
 
 export const ORGANIZATION_CONTEXT_SCHEMA_VERSION = 1;
 
@@ -45,10 +46,25 @@ export const ORGANIZATION_CONTEXT_CLAIM_PATHS = [
   'evidence.interview',
   'evidence.documentExtraction',
   'signals.interviewInsights',
+  'signals.interviewFindings',
   'tools.sessionOutput',
   'myWork.idea',
   'chat.explicitContext',
   'integrations.signal',
+  'profile.organizationType',
+  'profile.revenueModel',
+  'profile.foundingYear',
+  'operations.deliveryModel',
+  'operations.productionArchetype',
+  'operations.shiftPattern',
+  'operations.automationLevel',
+  'systems.coreSystems',
+  'profile.communicationStyle',
+  'profile.industryJargonLevel',
+  'finance.statements',
+  'finance.models',
+  'finance.laneStatus',
+  'finance.versionStatus',
 ] as const;
 
 export type OrganizationContextClaimPath = (typeof ORGANIZATION_CONTEXT_CLAIM_PATHS)[number];
@@ -122,6 +138,11 @@ export interface ResolvedOrganizationContext {
     customDomain: string | null;
     brandColor: string | null;
     accentColor: string | null;
+    organizationType: string | null;
+    revenueModel: string | null;
+    foundingYear: number | null;
+    communicationStyle: string | null;
+    industryJargonLevel: string | null;
   };
   strategic: {
     goals: string[];
@@ -137,11 +158,16 @@ export interface ResolvedOrganizationContext {
     constraints: string[];
     gaps: Array<Record<string, unknown>>;
     interviewAnswers: Array<Record<string, unknown>>;
+    deliveryModel: string | null;
+    productionArchetype: string | null;
+    shiftPattern: string | null;
+    automationLevel: string | null;
   };
   systems: {
     stack: string[];
     cloudAdoption: string | null;
     integrations: string[];
+    coreSystems: string[];
   };
   stakeholders: Array<Record<string, unknown>>;
   notes: {
@@ -153,9 +179,46 @@ export interface ResolvedOrganizationContext {
   evidence: Array<Record<string, unknown>>;
   signals: {
     interviewInsights: string[];
+    interviewFindings: Array<{
+      findingStatement: string;
+      confidenceLevel: string;
+      limits: string;
+      nextAction: string;
+      evidenceCount: number;
+      insightId: string;
+    }>;
+  };
+  trust: {
+    mfa: {
+      required: boolean;
+      gracePeriodDays: number;
+      managedBy: 'admin';
+    };
+    sso: {
+      configured: boolean;
+      provider: string | null;
+      enforced: boolean;
+      allowPasswordLogin: boolean;
+      active: boolean;
+      managedBy: 'admin';
+    };
+    security: {
+      passwordPolicy: string;
+      sessionTimeout: number;
+      ipWhitelist: boolean;
+      managedBy: 'admin';
+    };
   };
   conflicts: OrganizationContextConflict[];
   timeline: OrganizationContextTimelineItem[];
+  finance: {
+    statementCount: number;
+    modelCount: number;
+    activeLaneRunId: string | null;
+    activeLaneStep: string | null;
+    latestVersionType: string | null;
+    degradedCount: number;
+  };
 }
 
 type ClaimRow = {
@@ -248,13 +311,14 @@ async function getClaimQueryShape(): Promise<{
   isExplicitSql: string;
   activeWhereSql: string;
 }> {
-  const [hasClaimType, hasReviewStatus, hasSourceLabel, hasIsExplicit, hasStatus] = await Promise.all([
-    hasColumn('organization_context_claims', 'claim_type').catch(() => false),
-    hasColumn('organization_context_claims', 'review_status').catch(() => false),
-    hasColumn('organization_context_items', 'source_label').catch(() => false),
-    hasColumn('organization_context_items', 'is_explicit').catch(() => false),
-    hasColumn('organization_context_claims', 'status').catch(() => false),
-  ]);
+  const [hasClaimType, hasReviewStatus, hasSourceLabel, hasIsExplicit, hasStatus] =
+    await Promise.all([
+      hasColumn('organization_context_claims', 'claim_type').catch(() => false),
+      hasColumn('organization_context_claims', 'review_status').catch(() => false),
+      hasColumn('organization_context_items', 'source_label').catch(() => false),
+      hasColumn('organization_context_items', 'is_explicit').catch(() => false),
+      hasColumn('organization_context_claims', 'status').catch(() => false),
+    ]);
 
   return {
     claimTypeSql: hasClaimType ? 'c.claim_type' : `'fact' as claim_type`,
@@ -419,6 +483,16 @@ function buildOrganizationProfileClaims(input: Record<string, unknown>): Context
   add('strategic.riskAppetite', asString(input.risk_appetite));
   add('systems.stack', input.technology_stack);
   add('systems.cloudAdoption', asString(input.cloud_adoption_level));
+  add('profile.organizationType', asString(input.organization_type));
+  add('profile.revenueModel', asString(input.revenue_model));
+  add('profile.foundingYear', asNumber(input.founding_year));
+  add('operations.deliveryModel', asString(input.delivery_model));
+  add('operations.productionArchetype', asString(input.production_archetype));
+  add('operations.shiftPattern', asString(input.shift_pattern));
+  add('operations.automationLevel', asString(input.automation_level));
+  add('systems.coreSystems', input.core_systems);
+  add('profile.communicationStyle', asString(input.communication_style));
+  add('profile.industryJargonLevel', asString(input.industry_jargon_level));
   return claims;
 }
 
@@ -686,6 +760,7 @@ export class OrganizationContextService {
       metadata: resolved.metadata,
       evidence: resolved.evidence,
       signals: resolved.signals,
+      trust: resolved.trust,
       conflicts: resolved.conflicts,
       counts: resolved.counts,
     };
@@ -796,6 +871,8 @@ export class OrganizationContextService {
       organization,
       organizationProfile,
       brandingSettingsRow,
+      securitySettingsRow,
+      ssoConfigurationRow,
       interviewContext,
       metadataRows,
       aiContexts,
@@ -808,7 +885,8 @@ export class OrganizationContextService {
       snapshotRow,
     ] = await Promise.all([
       safeGet<Record<string, unknown>>(
-        `SELECT id, name, default_language, default_timezone FROM organizations WHERE id = ?`,
+        `SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days
+         FROM organizations WHERE id = ?`,
         [organizationId]
       ),
       safeGet<Record<string, unknown>>(
@@ -817,6 +895,14 @@ export class OrganizationContextService {
       ),
       safeGet<{ setting_value?: string }>(
         `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'branding'`,
+        [organizationId]
+      ),
+      safeGet<{ setting_value?: string }>(
+        `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'security'`,
+        [organizationId]
+      ),
+      safeGet<Record<string, unknown>>(
+        `SELECT * FROM sso_configurations WHERE organization_id = ? LIMIT 1`,
         [organizationId]
       ),
       safeGet<Record<string, unknown>>(
@@ -865,6 +951,10 @@ export class OrganizationContextService {
 
     const brandingSettings = safeParseJson<Record<string, unknown>>(
       brandingSettingsRow?.setting_value,
+      {}
+    );
+    const securitySettings = safeParseJson<Record<string, unknown>>(
+      securitySettingsRow?.setting_value,
       {}
     );
     const conflicts = buildConflicts(claimRows);
@@ -980,6 +1070,38 @@ export class OrganizationContextService {
       .map((row) => asString(row.title) || asString(row.content) || asString(row.description))
       .filter((value): value is string => Boolean(value));
 
+    const publishedInsightIds = interviewInsights
+      .filter((row) => asString(row.status) === 'published')
+      .map((row) => asString(row.id))
+      .filter((id): id is string => Boolean(id));
+
+    const p10Findings: Array<{
+      findingStatement: string;
+      confidenceLevel: string;
+      limits: string;
+      nextAction: string;
+      evidenceCount: number;
+      insightId: string;
+    }> = [];
+    for (const insightId of publishedInsightIds) {
+      try {
+        const findings = await listP10Findings(insightId);
+        for (const f of findings) {
+          const activePointers = f.evidence_pointers.filter((p) => !p.isTombstone);
+          p10Findings.push({
+            findingStatement: f.finding_statement,
+            confidenceLevel: f.confidence_level,
+            limits: f.limits,
+            nextAction: f.next_action,
+            evidenceCount: activePointers.length,
+            insightId: f.insightId,
+          });
+        }
+      } catch {
+        // findings service may not have data for this insight
+      }
+    }
+
     const customMetadataRows = metadataRows.map((row) => ({
       key: asString(row.key),
       value: row.value,
@@ -1056,6 +1178,21 @@ export class OrganizationContextService {
         customDomain: asString(customDomainClaim?.value) || asString(brandingSettings.customDomain),
         brandColor: asString(brandColorClaim?.value) || asString(brandingSettings.brandColor),
         accentColor: asString(accentColorClaim?.value) || asString(brandingSettings.accentColor),
+        organizationType:
+          asString(pickBestClaim(claimRows, 'profile.organizationType')?.value) ||
+          asString(organizationProfile?.organization_type),
+        revenueModel:
+          asString(pickBestClaim(claimRows, 'profile.revenueModel')?.value) ||
+          asString(organizationProfile?.revenue_model),
+        foundingYear:
+          asNumber(pickBestClaim(claimRows, 'profile.foundingYear')?.value) ||
+          asNumber(organizationProfile?.founding_year),
+        communicationStyle:
+          asString(pickBestClaim(claimRows, 'profile.communicationStyle')?.value) ||
+          asString(organizationProfile?.communication_style),
+        industryJargonLevel:
+          asString(pickBestClaim(claimRows, 'profile.industryJargonLevel')?.value) ||
+          asString(organizationProfile?.industry_jargon_level),
       },
       strategic: {
         goals: uniqStrings([...strategicGoalValues, ...legacyStrategicPriorities]),
@@ -1071,7 +1208,10 @@ export class OrganizationContextService {
           asString(riskAppetiteClaim?.value) || asString(organizationProfile?.risk_appetite),
       },
       operations: {
-        keyMetrics: mergeUniqueObjects(metricValues, legacyKeyMetrics),
+        keyMetrics: await this.enrichKeyMetricsWithKpiHealth(
+          organizationId,
+          mergeUniqueObjects(metricValues, legacyKeyMetrics)
+        ),
         constraints: uniqStrings([
           ...constraintValues,
           asString(organizationProfile?.budget_constraints),
@@ -1079,6 +1219,18 @@ export class OrganizationContextService {
         ]),
         gaps: mergeUniqueObjects(gapValues, legacyGaps),
         interviewAnswers: interviewAnswerValues,
+        deliveryModel:
+          asString(pickBestClaim(claimRows, 'operations.deliveryModel')?.value) ||
+          asString(organizationProfile?.delivery_model),
+        productionArchetype:
+          asString(pickBestClaim(claimRows, 'operations.productionArchetype')?.value) ||
+          asString(organizationProfile?.production_archetype),
+        shiftPattern:
+          asString(pickBestClaim(claimRows, 'operations.shiftPattern')?.value) ||
+          asString(organizationProfile?.shift_pattern),
+        automationLevel:
+          asString(pickBestClaim(claimRows, 'operations.automationLevel')?.value) ||
+          asString(organizationProfile?.automation_level),
       },
       systems: {
         stack: uniqStrings([...systemStackValues, ...legacyTechStack]),
@@ -1086,6 +1238,10 @@ export class OrganizationContextService {
           asString(cloudAdoptionClaim?.value) ||
           asString(organizationProfile?.cloud_adoption_level),
         integrations: uniqStrings(integrationValues),
+        coreSystems: normalizeArrayOfStrings(
+          pickBestClaim(claimRows, 'systems.coreSystems')?.value ??
+            safeParseJson(organizationProfile?.core_systems, [])
+        ),
       },
       stakeholders: mergeUniqueObjects(stakeholderValues, legacyStakeholders),
       notes: {
@@ -1103,10 +1259,117 @@ export class OrganizationContextService {
       ),
       signals: {
         interviewInsights: uniqStrings([...insightValues, ...signalsFromRows]),
+        interviewFindings: p10Findings,
+      },
+      trust: {
+        mfa: {
+          required: Boolean(organization?.mfa_required),
+          gracePeriodDays: asNumber(organization?.mfa_grace_period_days) ?? 7,
+          managedBy: 'admin',
+        },
+        sso: {
+          configured: Boolean(ssoConfigurationRow),
+          provider:
+            asString(ssoConfigurationRow?.provider) ||
+            asString(ssoConfigurationRow?.provider_name) ||
+            asString(ssoConfigurationRow?.provider_type) ||
+            asString(securitySettings.ssoProvider),
+          enforced: Boolean(
+            ssoConfigurationRow?.enforce_sso ??
+            ssoConfigurationRow?.sso_enforced ??
+            securitySettings.ssoEnforced ??
+            false
+          ),
+          allowPasswordLogin: Boolean(
+            ssoConfigurationRow?.allow_password_login ?? securitySettings.allowPasswordLogin ?? true
+          ),
+          active: Boolean(
+            ssoConfigurationRow?.enabled ??
+            ssoConfigurationRow?.is_active ??
+            ssoConfigurationRow?.is_enabled ??
+            securitySettings.ssoEnabled ??
+            false
+          ),
+          managedBy: 'admin',
+        },
+        security: {
+          passwordPolicy: asString(securitySettings.passwordPolicy) || 'standard',
+          sessionTimeout: asNumber(securitySettings.sessionTimeout) ?? 3600,
+          ipWhitelist: Array.isArray(securitySettings.ipWhitelist)
+            ? securitySettings.ipWhitelist.length > 0
+            : Boolean(securitySettings.ipWhitelist),
+          managedBy: 'admin',
+        },
       },
       conflicts,
       timeline,
+      finance: await this._collectFinanceContext(organizationId),
     };
+  }
+
+  private async _collectFinanceContext(organizationId: string): Promise<{
+    statementCount: number;
+    modelCount: number;
+    activeLaneRunId: string | null;
+    activeLaneStep: string | null;
+    latestVersionType: string | null;
+    degradedCount: number;
+  }> {
+    try {
+      const counts = await dbGet<{ stmt_count?: number; model_count?: number }>(
+        `SELECT
+          (SELECT COUNT(*) FROM financial_statement_packs WHERE organization_id = ?) as stmt_count,
+          (SELECT COUNT(*) FROM financial_model_versions WHERE organization_id = ?) as model_count`,
+        [organizationId, organizationId]
+      ).catch(() => null);
+
+      const activeRun = await dbGet<{
+        run_id?: string;
+        current_step?: string;
+        degraded_json?: string;
+      }>(
+        `SELECT run_id, current_step, degraded_json FROM v8_finance_lane_runs
+         WHERE organization_id = ? AND (current_step != 'readback' OR readback_confirmed = 0)
+         ORDER BY created_at DESC LIMIT 1`,
+        [organizationId]
+      ).catch(() => null);
+
+      const latestVersion = await dbGet<{ version_type?: string }>(
+        `SELECT version_type FROM v8_finance_version_snapshots
+         WHERE organization_id = ? AND is_finalized = 1
+         ORDER BY created_at DESC LIMIT 1`,
+        [organizationId]
+      ).catch(() => null);
+
+      let degradedCount = 0;
+      if (activeRun?.degraded_json) {
+        try {
+          const arr = JSON.parse(String(activeRun.degraded_json));
+          degradedCount = Array.isArray(arr) ? arr.length : 0;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      return {
+        statementCount: Number(counts?.stmt_count ?? 0),
+        modelCount: Number(counts?.model_count ?? 0),
+        activeLaneRunId: activeRun?.run_id ? String(activeRun.run_id) : null,
+        activeLaneStep: activeRun?.current_step ? String(activeRun.current_step) : null,
+        latestVersionType: latestVersion?.version_type ? String(latestVersion.version_type) : null,
+        degradedCount,
+      };
+    } catch (err) {
+      logger.warn('[OrgContext] Finance context collection failed (non-blocking)', err);
+      return {
+        statementCount: 0,
+        modelCount: 0,
+        activeLaneRunId: null,
+        activeLaneStep: null,
+        latestVersionType: null,
+        degradedCount: 0,
+      };
+    }
   }
 
   async recordOrganizationProfile(params: {
@@ -1300,6 +1563,60 @@ export class OrganizationContextService {
         snippet: extractedText.slice(0, 2000),
       }),
     });
+  }
+
+  private async enrichKeyMetricsWithKpiHealth(
+    organizationId: string,
+    existingMetrics: Array<Record<string, unknown>>
+  ): Promise<Array<Record<string, unknown>>> {
+    try {
+      const [totalRow, onTargetRow, openDeviationsRow, openReconciliationsRow] = await Promise.all([
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM initiative_kpis WHERE organization_id = ?`,
+          [organizationId]
+        ),
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM initiative_kpis WHERE organization_id = ? AND is_on_target = 1`,
+          [organizationId]
+        ),
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM kpi_deviation_cases dc
+           JOIN initiative_kpis ik ON ik.id = dc.kpi_id
+           WHERE ik.organization_id = ? AND dc.status NOT IN ('CLOSED', 'RESOLVED')`,
+          [organizationId]
+        ),
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM v8_kpi_finance_reconciliations
+           WHERE organization_id = ? AND reconciliation_status = 'pending'`,
+          [organizationId]
+        ),
+      ]);
+
+      const total = totalRow?.cnt ?? 0;
+      if (total === 0) return existingMetrics;
+
+      const onTarget = onTargetRow?.cnt ?? 0;
+      const pctOnTarget = total > 0 ? Math.round((onTarget / total) * 100) : 0;
+
+      return [
+        ...existingMetrics,
+        {
+          name: 'KPI Health',
+          source: 'kpi_module',
+          totalKpis: total,
+          onTarget,
+          pctOnTarget,
+          openDeviations: openDeviationsRow?.cnt ?? 0,
+          pendingReconciliations: openReconciliationsRow?.cnt ?? 0,
+        },
+      ];
+    } catch (err) {
+      logger.debug(
+        '[OrganizationContextService] KPI health enrichment skipped:',
+        (err as Error)?.message
+      );
+      return existingMetrics;
+    }
   }
 }
 

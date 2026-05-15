@@ -20,10 +20,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 // Profile components
-import { MFASetup } from '../components/Profile/MFASetup';
 // Settings components
 import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
-import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
 // Advanced settings (existing components)
 import { SettingsExportImport } from '../components/settings/advanced/SettingsExportImport';
 import { SettingsHistory } from '../components/settings/advanced/SettingsHistory';
@@ -36,31 +34,28 @@ import { AIPrivacySettings } from '../components/settings/AIPrivacySettings';
 import { AIPromptLibrarySettings } from '../components/settings/AIPromptLibrarySettings';
 import { AIUsageDashboard } from '../components/settings/AIUsageDashboard';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
+import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
 import { AvatarPhotoSettings } from '../components/settings/AvatarPhotoSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
 import { DataControlsSettings } from '../components/settings/DataControlsSettings';
-import { DeveloperSettings } from '../components/settings/DeveloperSettings';
 import { DesktopSoundsSettings } from '../components/settings/DesktopSoundsSettings';
+import { DeveloperSettings } from '../components/settings/DeveloperSettings';
 import { EmailDigestSettings } from '../components/settings/EmailDigestSettings';
 import { EmailSignaturesSettings } from '../components/settings/EmailSignaturesSettings';
+import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
-import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
-import { PasswordSettings } from '../components/settings/PasswordSettings';
 import { PrivacySettings } from '../components/settings/PrivacySettings';
 import { ProfileSettings } from '../components/settings/ProfileSettings';
 // QuickProfileCard removed - using Admin-style layout
-import { RecoveryOptionsSettings } from '../components/settings/RecoveryOptionsSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import { AuthenticationAccessPage } from '../components/settings/security/AuthenticationAccessPage';
 import { SecurityOverviewPage } from '../components/settings/security/SecurityOverviewPage';
-import { SecurityOverviewSettings } from '../components/settings/SecurityOverviewSettings';
-import { SessionsActivitySettings } from '../components/settings/SessionsActivitySettings';
+import SettingsOwnershipPanels from '../components/settings/SettingsOwnershipPanels';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
-import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
@@ -73,6 +68,11 @@ import { ROUTES } from '../routes/routeConfig';
 // Store and types
 import { useAppStore } from '../store/useAppStore';
 import { AppView, User } from '../types';
+import {
+  getPilotDefaultSettingsRoute,
+  isPilotAllowedSettingsSection,
+  isPilotParticipantRole,
+} from '../utils/pilotAccess';
 import {
   normalizeSettingsSectionFromPath,
   resolveLegacySyncSettingsEntry,
@@ -87,6 +87,27 @@ interface SettingsViewProps {
 
 // Section metadata for headers
 const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> = {
+  overview: {
+    title: 'Settings Overview',
+    subtitle: 'One root for personal settings, tenant handoff, and module preferences',
+  },
+  'tenant-defaults': {
+    title: 'Tenant Defaults',
+    subtitle:
+      'Read organization defaults and shared runtime impact without duplicating P30 ownership',
+  },
+  'tenant-branding': {
+    title: 'Branding Handoff',
+    subtitle: 'Branding is consumed read-only from Organization and linked to the owning surface',
+  },
+  'tenant-security': {
+    title: 'Security Handoff',
+    subtitle: 'Security policy stays visible here, but all writes route to Admin',
+  },
+  'module-preferences': {
+    title: 'Module Preferences',
+    subtitle: 'Discover module-level defaults and where they inherit from the root ownership model',
+  },
   // My Settings
   profile: { title: 'Profile', subtitle: 'Manage your personal information and account details' },
   avatar: { title: 'Avatar & Photo', subtitle: 'Upload and manage your profile picture' },
@@ -114,6 +135,10 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   },
   'ai-autocomplete': { title: 'Auto-Complete', subtitle: 'Configure AI-powered suggestions' },
   'ai-memory': { title: 'Memory & Context', subtitle: 'Control AI memory and context retention' },
+  'ai-chat-history': {
+    title: 'Chat History',
+    subtitle: 'Manage conversation history retention, export, and cleanup',
+  },
   'ai-privacy': {
     title: 'AI Data & Privacy',
     subtitle: 'Control data access, retention, and compliance settings',
@@ -175,8 +200,14 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   'api-keys': { title: 'API Keys', subtitle: 'Manage your API access keys' },
   webhooks: { title: 'Webhooks', subtitle: 'Configure webhook endpoints' },
   // Data & Privacy
-  'data-controls': { title: 'Data & Consent', subtitle: 'GDPR compliance, consent management, data retention, and account actions' },
-  privacy: { title: 'Privacy & Visibility', subtitle: 'Control who can see your information and activity' },
+  'data-controls': {
+    title: 'Data & Consent',
+    subtitle: 'GDPR compliance, consent management, data retention, and account actions',
+  },
+  privacy: {
+    title: 'Privacy & Visibility',
+    subtitle: 'Control who can see your information and activity',
+  },
   // Appearance
   theme: { title: 'Theme', subtitle: 'Choose your preferred color theme' },
   accessibility: { title: 'Accessibility', subtitle: 'Configure accessibility options' },
@@ -203,6 +234,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
+  const pilotAllowedSections = useMemo(
+    () => ['profile', 'auth-access', 'language', 'theme'] as SettingsSection[],
+    []
+  );
 
   useEffect(() => {
     const redirectTarget = resolveLegacySyncSettingsEntry(location.pathname, currentUser?.role);
@@ -214,17 +250,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const activeSection = useMemo(() => {
     const pathSection = normalizeSettingsSectionFromPath(location.pathname);
     return (
-      Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile'
+      Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'overview'
     ) as SettingsSection;
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isPilotParticipant) return;
+    if (isPilotAllowedSettingsSection(activeSection)) return;
+    navigate(getPilotDefaultSettingsRoute(), { replace: true });
+  }, [activeSection, isPilotParticipant, navigate]);
 
   // Handle section change - update URL
   const handleSectionChange = useCallback(
     (section: SettingsSection) => {
+      if (isPilotParticipant && !isPilotAllowedSettingsSection(section)) {
+        navigate(getPilotDefaultSettingsRoute());
+        setSidebarOpen(false);
+        return;
+      }
       navigate(`${ROUTES.SETTINGS.ROOT}/${section}`);
       setSidebarOpen(false);
     },
-    [navigate]
+    [isPilotParticipant, navigate]
   );
 
   // Handle back to main app (Chat)
@@ -246,6 +293,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const renderContent = useCallback(() => {
     switch (activeSection) {
       // My Settings
+      case 'overview':
+        return <SettingsOwnershipPanels mode="overview" onOpenSection={handleSectionChange} />;
+      case 'tenant-defaults':
+        return (
+          <SettingsOwnershipPanels mode="tenant-defaults" onOpenSection={handleSectionChange} />
+        );
+      case 'tenant-branding':
+        return (
+          <SettingsOwnershipPanels mode="tenant-branding" onOpenSection={handleSectionChange} />
+        );
+      case 'tenant-security':
+        return (
+          <SettingsOwnershipPanels mode="tenant-security" onOpenSection={handleSectionChange} />
+        );
+      case 'module-preferences':
+        return (
+          <SettingsOwnershipPanels mode="module-preferences" onOpenSection={handleSectionChange} />
+        );
       case 'profile':
         return <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
       case 'avatar':
@@ -276,6 +341,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return <AIAutoCompleteSettings />;
       case 'ai-memory':
         return <AIMemorySettings />;
+      case 'ai-chat-history':
+        return <ChatHistorySettings />;
       case 'ai-privacy':
         return <AIPrivacySettings />;
       case 'ai-prompt-library':
@@ -318,9 +385,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       case 'calendar-sync':
         return <CalendarSyncSettings />;
       case 'api-keys':
-        return <APIAccessSettings currentUser={currentUser} />;
+        return <APIAccessSettings />;
       case 'webhooks':
-        return <WebhooksSettings currentUser={currentUser} />;
+        return <WebhooksSettings />;
 
       // Data & Privacy
       case 'data-controls':
@@ -379,6 +446,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
           onBack={handleBackToDashboard}
+          allowedSections={isPilotParticipant ? pilotAllowedSections : undefined}
         />
       </div>
 
@@ -413,9 +481,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Content */}
         <ScrollArea className="flex-1">
-          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full space-y-6">
-            {renderContent()}
-          </div>
+          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full space-y-6">{renderContent()}</div>
         </ScrollArea>
       </div>
     </div>

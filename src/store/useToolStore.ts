@@ -61,6 +61,14 @@ export type SWOTSignalState = 'accepted' | 'proposed' | 'needs-evidence';
 export type SWOTCardStatus = 'accepted' | 'proposed';
 export type ProposalStatus = 'ai-proposed' | 'accepted' | 'rejected' | 'rethinking';
 export type SessionGenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
+export type CanonicalToolSessionStatus =
+  | 'DRAFT'
+  | 'IN_PROGRESS'
+  | 'REVIEW'
+  | 'FINALIZED'
+  | 'FAILED'
+  | 'APPROVED'
+  | 'GENERATED';
 
 export type ProposalCardType =
   | 'signal'
@@ -179,6 +187,9 @@ export interface SWOTData {
   recommendedMoves: SWOTMove[];
   outputCandidates: SWOTOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -415,8 +426,16 @@ export interface ToolSession {
     | Record<string, unknown>;
   chatHistory: ToolChatMessage[];
   generatedInitiatives: InitiativeDraft[];
-  status: 'draft' | 'in_progress' | 'completed';
+  status: CanonicalToolSessionStatus;
   sessionGenerationStatus?: SessionGenerationStatus;
+  wizardState?: Record<string, unknown>;
+  missingItems?: Array<{
+    id: string;
+    label: string;
+    severity?: string;
+    stepId?: string;
+    resolved?: boolean;
+  }>;
 }
 
 // ==================== STEP DEFINITIONS ====================
@@ -1353,6 +1372,25 @@ const TOOL_INITIAL_DATA: Record<
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const normalizeCanonicalStatus = (status?: string | null): CanonicalToolSessionStatus => {
+  const normalized = String(status || 'DRAFT')
+    .trim()
+    .toUpperCase();
+  if (
+    normalized === 'DRAFT' ||
+    normalized === 'IN_PROGRESS' ||
+    normalized === 'REVIEW' ||
+    normalized === 'FINALIZED' ||
+    normalized === 'FAILED' ||
+    normalized === 'APPROVED' ||
+    normalized === 'GENERATED'
+  ) {
+    return normalized;
+  }
+  if (normalized === 'COMPLETED') return 'FINALIZED';
+  return 'DRAFT';
+};
+
 const DYNAMIC_SWOT_PHASE_SEQUENCE: DynamicSwotPhaseId[] = [
   'mission',
   'input',
@@ -1702,11 +1740,15 @@ const normalizeDynamicSwotSession = (session: ToolSession): ToolSession => {
 };
 
 const normalizeSessionForRuntime = (session: ToolSession): ToolSession => {
+  const normalizedBase = {
+    ...session,
+    status: normalizeCanonicalStatus(session.status),
+  };
   if (session.toolType === 'dynamic-swot') {
-    return normalizeDynamicSwotSession(session);
+    return normalizeDynamicSwotSession(normalizedBase);
   }
 
-  return session;
+  return normalizedBase;
 };
 
 const withRecomputedSteps = (
@@ -1745,7 +1787,7 @@ export const useToolStore = create<ToolStoreState>()(
           inputData: initialData,
           chatHistory: [],
           generatedInitiatives: [],
-          status: 'draft',
+          status: 'DRAFT',
         };
 
         set({ currentSession: session, currentStep: 1 });
@@ -2064,7 +2106,7 @@ export const useToolStore = create<ToolStoreState>()(
           inputData: normalizedAnswers as any,
           chatHistory: [],
           generatedInitiatives: [],
-          status: (payload.status || 'draft') as any,
+          status: normalizeCanonicalStatus(payload.status),
         };
 
         const normalizedSession = normalizeSessionForRuntime(session);
@@ -2219,7 +2261,10 @@ export const useToolStore = create<ToolStoreState>()(
         set({
           currentSession: withRecomputedSteps(currentSession, {
             ...swotData,
-            summary,
+            summary: {
+              ...summary,
+              proposalId: summary?.proposalId || swotData.summary?.proposalId || generateId(),
+            },
           }),
         });
       },
@@ -2304,6 +2349,9 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if (cardType === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'conclusion' && swotData.summary) {
+          updated.summary = { ...swotData.summary, proposalStatus: 'accepted' as ProposalStatus };
+        }
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2323,6 +2371,9 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if (cardType === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'conclusion' && swotData.summary) {
+          updated.summary = { ...swotData.summary, proposalStatus: 'rejected' as ProposalStatus };
+        }
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2340,6 +2391,9 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if (cardType === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'conclusion' && swotData.summary) {
+          updated.summary = { ...swotData.summary, userComment: comment };
+        }
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2359,6 +2413,9 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if (cardType === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'conclusion' && swotData.summary) {
+          updated.summary = { ...swotData.summary, proposalStatus: 'rethinking' as ProposalStatus };
+        }
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2380,6 +2437,13 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if (cardType === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
+        else if (cardType === 'conclusion' && swotData.summary) {
+          updated.summary = {
+            ...swotData.summary,
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          };
+        }
         set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
       },
 
@@ -2401,6 +2465,9 @@ export const useToolStore = create<ToolStoreState>()(
           updated.correlations = acceptAll(swotData.correlations);
           updated.recommendedMoves = acceptAll(swotData.recommendedMoves);
         } else if (phaseId === 'outputs') {
+          if (updated.summary?.proposalStatus === 'ai-proposed') {
+            updated.summary = { ...updated.summary, proposalStatus: 'accepted' as ProposalStatus };
+          }
           updated.outputCandidates = acceptAll(swotData.outputCandidates);
         }
         set({ currentSession: withRecomputedSteps(currentSession, updated) });

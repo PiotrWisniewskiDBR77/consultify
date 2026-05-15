@@ -26,9 +26,11 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import type { InitiativeKPI } from '@/types/core';
 
-import { InitiativeKPI, InitiativeStatus } from '../../types';
+import { InitiativeStatus } from '../../types';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import { extractInitiativeKpiRows } from '../Initiatives/initiativeKpiContract';
 import {
   FilterableTable,
   FilterChip,
@@ -192,7 +194,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         const kpiPromises = doneInitiatives.map(async (i) => {
           try {
             const kpiResponse = await Api.get(`/initiatives/${i.id}/kpis`);
-            return { initiative: i, kpis: kpiResponse.kpis || [] };
+            return { initiative: i, kpis: extractInitiativeKpiRows(kpiResponse) };
           } catch {
             return { initiative: i, kpis: [] };
           }

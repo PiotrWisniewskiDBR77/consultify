@@ -110,7 +110,10 @@ export const HowItWorksPage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/55 max-w-2xl mx-auto mb-10"
           >
-            {t('pages.howItWorks.hero.subtitle', 'No consulting firm. No 6-month project. No slides assembled manually at 2am. Just intelligence turning into execution and results.')}
+            {t(
+              'pages.howItWorks.hero.subtitle',
+              'No consulting firm. No 6-month project. No slides assembled manually at 2am. Just intelligence turning into execution and results.'
+            )}
           </motion.p>
 
           <motion.div
@@ -273,10 +276,16 @@ export const HowItWorksPage: React.FC = () => {
                   </span>
                 </div>
                 <h2 className="text-3xl font-black text-white mb-5">
-                  {t('pages.howItWorks.tech.title', 'Powered by DBR77 Vector, our proprietary AI model.')}
+                  {t(
+                    'pages.howItWorks.tech.title',
+                    'Powered by DBR77 Vector, our proprietary AI model.'
+                  )}
                 </h2>
                 <p className="text-white/55 leading-relaxed mb-6">
-                  {t('pages.howItWorks.tech.description', 'Built on 1,000+ real transformation engagements and delivered through secure deployment options. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation from data ingestion to final output.')}
+                  {t(
+                    'pages.howItWorks.tech.description',
+                    'Built on 1,000+ real transformation engagements and delivered through secure deployment options. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation from data ingestion to final output.'
+                  )}
                 </p>
                 <a
                   href="https://vector.dbr77.com"

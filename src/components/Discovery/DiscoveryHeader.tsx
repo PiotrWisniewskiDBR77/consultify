@@ -35,21 +35,34 @@ const PhaseIndicator: React.FC<{ currentPhase: DiscoveryPhase }> = ({ currentPha
             <div
               className={`
                                 flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all
-                                ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : ''}
-                                ${isPast ? 'text-green-600 dark:text-green-400' : ''}
-                                ${isFuture ? 'text-slate-400 dark:text-slate-500' : ''}
+                                ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700' : ''}
+                                ${isPast ? 'text-green-700 dark:text-green-400' : ''}
+                                ${isFuture ? 'text-slate-500 dark:text-slate-500' : ''}
                             `}
               title={config?.description}
             >
-              {isPast && <span className="text-green-500">✓</span>}
-              {isActive && <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />}
+              {isPast && (
+                <span className="text-green-700 dark:text-green-500" aria-hidden="true">
+                  ✓
+                </span>
+              )}
+              {isActive && (
+                <span
+                  className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-pulse"
+                  aria-hidden="true"
+                />
+              )}
               <span className="hidden md:inline">
                 {t(`discovery.phases.${phase}`, config?.title ?? phase)}
               </span>
               <span className="md:hidden">{index + 1}</span>
             </div>
             {index < mainPhases.length - 1 && (
-              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600" />
+              <ChevronRight
+                size={14}
+                className="text-slate-400 dark:text-slate-600"
+                aria-hidden="true"
+              />
             )}
           </React.Fragment>
         );
@@ -71,22 +84,22 @@ const ClientBadge: React.FC = () => {
     <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
       {clientContext.companyName && (
         <div className="flex items-center gap-1.5">
-          <Building2 size={14} className="text-slate-400 dark:text-slate-500" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          <Building2 size={14} className="text-slate-600 dark:text-slate-500" />
+          <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
             {clientContext.companyName}
           </span>
         </div>
       )}
       {clientContext.industry && (
-        <span className="text-xs text-slate-500 dark:text-slate-400 px-2 py-0.5 bg-slate-100 dark:bg-navy-700 rounded">
+        <span className="text-xs text-slate-700 dark:text-slate-400 px-2 py-0.5 bg-slate-100 dark:bg-navy-700 border border-slate-200 dark:border-transparent rounded">
           {clientContext.industry}
         </span>
       )}
       {clientContext.size && (
-        <span className="text-xs text-slate-500 dark:text-slate-400">{clientContext.size}</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">{clientContext.size}</span>
       )}
       {clientContext.role && (
-        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
           <User size={12} />
           {clientContext.role}
         </div>
@@ -108,10 +121,10 @@ export const DiscoveryHeader: React.FC<DiscoveryHeaderProps> = ({ onNewSession }
       {/* Left: Title and phase */}
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">
             {t('discovery.title', 'Discovery Consultant')}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {t('discovery.subtitle', 'AI-powered consultant conversation')}
           </p>
         </div>
@@ -125,7 +138,7 @@ export const DiscoveryHeader: React.FC<DiscoveryHeaderProps> = ({ onNewSession }
         <ClientBadge />
         <button
           onClick={onNewSession}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200 dark:border-transparent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         >
           <Plus size={16} />
           <span className="hidden sm:inline">{t('discovery.header.newSession', 'New')}</span>

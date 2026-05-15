@@ -1,6 +1,7 @@
 import { AlertTriangle, TrendingUp, Zap } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
+import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { Api } from '@/services/api';
 
 interface UsageData {
@@ -29,32 +30,30 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUsage = async () => {
-      try {
-        setLoading(true);
-        const data = await Api.getUserAIUsage();
-        setUsage({
-          daily: data.tokensUsed,
-          monthly: data.tokensUsed, // Fallback if monthly not available
-          dailyLimit: data.tokensLimit,
-          monthlyLimit: data.tokensLimit * 30, // Fallback
-          percentage: (data.tokensUsed / data.tokensLimit) * 100,
-        });
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch AI usage:', err);
-        setError('Connection error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsage();
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchUsage, 60000);
-    return () => clearInterval(interval);
+  const fetchUsage = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await Api.getUserAIUsage();
+      setUsage({
+        daily: data.tokensUsed,
+        monthly: data.tokensUsed,
+        dailyLimit: data.tokensLimit,
+        monthlyLimit: data.tokensLimit * 30,
+        percentage: (data.tokensUsed / data.tokensLimit) * 100,
+      });
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch AI usage:', err);
+      setError('Connection error');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  usePageAwarePolling(fetchUsage, {
+    intervalMs: 120_000,
+    runImmediately: true,
+  });
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

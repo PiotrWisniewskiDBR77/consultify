@@ -1,7 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type FinanceModelPreviewDetail, type FinanceModelRow } from './financeTypes';
+import { V8FinanceApi, type V8FinanceModelOutputsResult } from '../../services/api/v8/finance';
+import {
+  type FinanceModelForecastLine,
+  type FinanceModelPreviewDetail,
+  type FinanceModelRow,
+} from './financeTypes';
 
 type Props = {
   row: FinanceModelRow;
@@ -15,6 +20,33 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
     'base'
   );
   const [selectedStatement, setSelectedStatement] = useState<'P&L' | 'BS' | 'CF'>('P&L');
+  const [serverOutputs, setServerOutputs] = useState<V8FinanceModelOutputsResult | null>(null);
+  const [isEstimated, setIsEstimated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadOutputs() {
+      try {
+        const result = await V8FinanceApi.getModelOutputs(row.id, { scenario: selectedVariant });
+        if (!cancelled && result?.grouped && Object.keys(result.grouped).length > 0) {
+          setServerOutputs(result);
+          setIsEstimated(false);
+        } else {
+          setServerOutputs(null);
+          setIsEstimated(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setServerOutputs(null);
+          setIsEstimated(true);
+        }
+      }
+    }
+    loadOutputs();
+    return () => {
+      cancelled = true;
+    };
+  }, [row.id, selectedVariant]);
 
   const activeVariant = useMemo(() => {
     if (!detail) return 'base';
@@ -23,8 +55,40 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
       : detail.variants[0] || 'base';
   }, [detail, selectedVariant]);
 
-  const rows = detail?.scenarioTables[activeVariant]?.[selectedStatement] || [];
-  const forecastYears = detail?.forecastYears || [];
+  const serverRows = useMemo((): FinanceModelForecastLine[] | null => {
+    if (!serverOutputs?.grouped) return null;
+    const statementKey = selectedStatement === 'P&L' ? 'PL' : selectedStatement;
+    const periodGroups =
+      serverOutputs.grouped[statementKey] || serverOutputs.grouped[selectedStatement];
+    if (!periodGroups) return null;
+    const periods = Object.keys(periodGroups);
+    if (periods.length === 0) return null;
+    const allLines = periods.flatMap((p) => periodGroups[p].map((l) => l.lineCode));
+    const uniqueLines = [...new Set(allLines)];
+    return uniqueLines.map((code) => {
+      const firstLine = periods
+        .map((p) => periodGroups[p].find((l) => l.lineCode === code))
+        .find(Boolean);
+      const values: Record<string, number> = {};
+      for (const p of periods) {
+        const found = periodGroups[p].find((l) => l.lineCode === code);
+        values[p] = found?.value ?? 0;
+      }
+      return {
+        lineCode: code,
+        lineName: firstLine?.lineName || code,
+        level: firstLine?.level ?? 0,
+        isTotal: firstLine?.isTotal ?? false,
+        isSubtotal: firstLine?.isSubtotal ?? false,
+        values,
+      };
+    });
+  }, [serverOutputs, selectedStatement]);
+
+  const rows = serverRows || detail?.scenarioTables[activeVariant]?.[selectedStatement] || [];
+  const forecastYears = serverOutputs?.grouped
+    ? Object.keys(Object.values(serverOutputs.grouped)[0] || {})
+    : detail?.forecastYears || [];
 
   const variantLabels = {
     base: 'Base',
@@ -124,6 +188,12 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
         </div>
 
         <div className="h-5 w-px bg-white/[0.08]" />
+
+        {isEstimated && (
+          <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20">
+            estimated
+          </span>
+        )}
 
         <div className="flex flex-wrap gap-2">
           {(['P&L', 'BS', 'CF'] as const).map((statement) => (

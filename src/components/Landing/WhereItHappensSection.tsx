@@ -13,15 +13,22 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const FEATURE_KEYS = ['aiCore', 'economics', 'execution', 'deliverables', 'chat', 'results'] as const;
+const FEATURE_KEYS = [
+  'aiCore',
+  'economics',
+  'execution',
+  'deliverables',
+  'chat',
+  'results',
+] as const;
 
 const FEATURE_VISUALS = [
-  { icon: Brain,          accentColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.25)' },
-  { icon: BarChart3,      accentColor: '#0891b2', glowColor: 'rgba(8,145,178,0.22)' },
-  { icon: Layers,         accentColor: '#059669', glowColor: 'rgba(5,150,105,0.22)' },
-  { icon: FileText,       accentColor: '#c026d3', glowColor: 'rgba(192,38,211,0.22)' },
-  { icon: MessageSquare,  accentColor: '#d97706', glowColor: 'rgba(217,119,6,0.20)' },
-  { icon: TrendingUp,     accentColor: '#0d9488', glowColor: 'rgba(13,148,136,0.22)' },
+  { icon: Brain, accentColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.25)' },
+  { icon: BarChart3, accentColor: '#0891b2', glowColor: 'rgba(8,145,178,0.22)' },
+  { icon: Layers, accentColor: '#059669', glowColor: 'rgba(5,150,105,0.22)' },
+  { icon: FileText, accentColor: '#c026d3', glowColor: 'rgba(192,38,211,0.22)' },
+  { icon: MessageSquare, accentColor: '#d97706', glowColor: 'rgba(217,119,6,0.20)' },
+  { icon: TrendingUp, accentColor: '#0d9488', glowColor: 'rgba(13,148,136,0.22)' },
 ];
 
 export const WhereItHappensSection: React.FC = () => {
@@ -38,8 +45,8 @@ export const WhereItHappensSection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary-500/30 bg-primary-600/10 mb-5"
           >
-            <Zap size={12} className="text-primary-300" />
-            <span className="text-xs font-bold text-primary-300 uppercase tracking-wider">
+            <Zap size={12} className="text-primary-600 dark:text-primary-300" />
+            <span className="text-xs font-bold text-primary-600 dark:text-primary-300 uppercase tracking-wider">
               {t('landing.whereItHappens.badge', 'What Consultify does')}
             </span>
           </motion.div>
@@ -75,7 +82,8 @@ export const WhereItHappensSection: React.FC = () => {
             const visual = FEATURE_VISUALS[idx];
             const Icon = visual.icon;
             const prefix = `landing.whereItHappens.features.${key}`;
-            const highlights = (t(`${prefix}.highlights`, { returnObjects: true }) || []) as string[];
+            const highlights = (t(`${prefix}.highlights`, { returnObjects: true }) ||
+              []) as string[];
             return (
               <motion.div
                 key={key}
@@ -83,22 +91,18 @@ export const WhereItHappensSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.07, duration: 0.35 }}
-                className="group relative p-6 rounded-2xl transition-all duration-300 hover:scale-[1.02]"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.02)',
-                }}
+                className="group relative p-6 rounded-2xl transition-all duration-300 hover:scale-[1.02]
+                  bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08]
+                  shadow-sm dark:shadow-none"
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    `0 0 40px -12px ${visual.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
-                  (e.currentTarget as HTMLDivElement).style.borderColor =
-                    `${visual.accentColor}40`;
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.boxShadow = `0 0 40px -12px ${visual.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
+                  el.style.borderColor = `${visual.accentColor}40`;
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    'inset 0 0 0 1px rgba(255,255,255,0.02)';
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.boxShadow = '';
+                  el.style.borderColor = '';
                 }}
               >
                 <div
@@ -127,7 +131,9 @@ export const WhereItHappensSection: React.FC = () => {
                   {t(`${prefix}.title`)}
                 </h3>
 
-                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">{t(`${prefix}.description`)}</p>
+                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">
+                  {t(`${prefix}.description`)}
+                </p>
 
                 <div className="space-y-1.5">
                   {(Array.isArray(highlights) ? highlights : []).map((h, i) => (
@@ -137,7 +143,9 @@ export const WhereItHappensSection: React.FC = () => {
                         style={{ color: visual.accentColor }}
                         className="shrink-0"
                       />
-                      <span className="text-xs text-slate-500 dark:text-white/50 font-medium">{h}</span>
+                      <span className="text-xs text-slate-500 dark:text-white/50 font-medium">
+                        {h}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -165,13 +173,10 @@ export const WhereItHappensSection: React.FC = () => {
           className="text-center mt-14"
         >
           <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-slate-400 dark:text-white/35 font-medium"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-slate-400 dark:text-white/35 font-medium
+              bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]"
           >
-            <Target size={12} className="text-primary-400" />
+            <Target size={12} className="text-primary-600 dark:text-primary-400" />
             {t(
               'landing.whereItHappens.closingNote',
               'One category promise, one product surface, one path from understanding to measurable results.'

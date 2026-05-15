@@ -9,8 +9,16 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { tokenService } from '@/services/tokenService';
 
+import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
+import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
+import { ChatV9FlagsResetHandler } from './components/Admin/ChatV9FlagsResetHandler';
+import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
+import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
+import { BackToChatShortcut } from './components/navigation/BackToChatShortcut';
 import { RouterSync } from './components/RouterSync';
+import { EnvironmentBadge } from './components/layout/EnvironmentBadge';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';
@@ -26,6 +34,48 @@ const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicR
 const InviteRouteWrapper = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
+  const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
+
+  const clearClientSessionForInviteHandoff = () => {
+    tokenService.clearTokens();
+    localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('consultify-storage');
+    localStorage.removeItem('consultify_demo_session');
+    localStorage.removeItem('consultify_current_org_id');
+    localStorage.removeItem('demo_events');
+    try {
+      sessionStorage.removeItem('isDemo');
+      sessionStorage.removeItem('demo_session_id');
+      sessionStorage.removeItem('demo_events');
+    } catch {
+      // best effort: continue handoff even if storage access fails
+    }
+    setCurrentUser(null);
+    setCurrentOrganization(null);
+  };
+
+  const normalizedToken = token?.trim() || '';
+  if (!normalizedToken) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="max-w-md w-full bg-white dark:bg-navy-900 rounded-xl shadow p-6 text-center">
+          <h1 className="text-xl font-semibold mb-2">Invalid invitation link</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+            This invitation URL is incomplete. Please request a new invitation link.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/login', { replace: true })}
+            className="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Go to login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <React.Suspense
@@ -36,8 +86,11 @@ const InviteRouteWrapper = () => {
       }
     >
       <AcceptInvitationView
-        token={token || ''}
-        onAccepted={() => navigate('/login')}
+        token={normalizedToken}
+        onAccepted={() => {
+          clearClientSessionForInviteHandoff();
+          navigate('/login', { replace: true });
+        }}
         onError={(error) => console.error('Invitation error:', error)}
       />
     </React.Suspense>
@@ -131,9 +184,14 @@ function AppContent() {
         return;
       }
 
-      // 1. Immediate restore from localStorage (synchronous, no re-render needed)
+      // 1. Immediate restore from storage (synchronous, no re-render needed)
+      // Prefer the dedicated mirror key used by auth flows; fall back to the
+      // already-rehydrated Zustand user if this tab has it but the mirror key is stale/missing.
       const storedUser = localStorage.getItem('user');
-      let restoredUser: User | null = null;
+      let restoredUser: User | null =
+        currentUser && currentUser.id && currentUser.email
+          ? { ...currentUser, isAuthenticated: true }
+          : null;
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
@@ -161,7 +219,6 @@ function AppContent() {
             restoredUser.role !== user.role
           ) {
             setCurrentUser(authenticatedUser);
-            localStorage.setItem('user', JSON.stringify(user));
 
             if (user.organizationId) {
               setCurrentOrganization({
@@ -213,6 +270,49 @@ function AppContent() {
       <ImpersonationBanner />
       {/* Single source of truth for URL ↔ State sync */}
       <RouterSync />
+      {/* Chat V9 / ADMIN AG1 — URL-triggered flag dashboard. Mounted
+          globally so `?v9flags=1` opens it on any route without a new
+          route definition. Returns null when inactive (zero cost). */}
+      <ChatV9FlagsOverlay />
+      {/* Chat V9 / ADMIN AG1 v1.3 — URL reset one-liner handler.
+          Runs once on mount: if `?v9flags=reset` is present and the
+          user is authorised, nukes every V9 override and rewrites
+          the query to `?v9flags=1` so the overlay opens as visible
+          confirmation. Mounted AFTER the overlay so the overlay's
+          event listener is attached before the handler dispatches
+          `chat-v9-flags:open` (effects fire in JSX declaration
+          order during commit). Returns null. */}
+      <ChatV9FlagsResetHandler />
+      {/* Chat V9 / ADMIN AG1 v1.1 — admin-only chip that renders in the
+          bottom-right corner when one or more V9 flags are overridden
+          in this session. Clicking it dispatches the same open event
+          the overlay listens to. Returns null for non-admins and for
+          sessions with zero overrides — no chrome by default. */}
+      <ChatV9FlagsIndicator />
+      {/* Chat V9 / NAV NAV-M1.1 — headless Alt+Shift+C shortcut that
+          triggers the same `returnToFullChat()` action. Shares the
+          same view / conversation gates as the button, plus a
+          focus-in-editable-element guard so it never hijacks typing.
+          Kill-switch: flag OFF detaches the listener entirely. */}
+      <BackToChatShortcut />
+      {/* Chat V9 / VOICE VM3.1 — global Alt+Shift+V opens the voice-
+          modes legend popover from anywhere. Headless; dispatches a
+          `chat-v9-voice-legend:open` CustomEvent that the mounted
+          `VoiceModeLegend` in `EnhancedChatInput` listens for. Same
+          focus-in-editable + open-modal guards as NAV-M1.1, so the
+          chord never hijacks typing. Kill-switch: flag OFF detaches
+          the listener entirely — the help button keeps working. */}
+      <VoiceLegendShortcut />
+      {/* Chat V9 / TRUST T-PM2-lite — headless post-send PII
+          heuristic toast. Listens on `chat-v9-pii-check` dispatched
+          by `EnhancedChatInput.handleSend` right after submit. Runs
+          a local, pure detector (email / phone / IBAN) on the
+          outgoing text and shows a one-shot advisory toast when any
+          category hits. Telemetry payload is closed-enum categories
+          only — never the raw message. Kill-switch: flag OFF
+          detaches the listener; the dispatch is a no-op. */}
+      <PiiHeuristicToast />
+      <EnvironmentBadge />
       <Routes>
         <Route path="/invite/:token" element={<InviteRouteWrapper />} />
         <Route

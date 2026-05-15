@@ -104,6 +104,12 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
     if (action === 'wb_library_insert_last') handlers.insertLatestLibraryItem?.();
     if (action === 'wb_history_restore_latest') handlers.restoreLatestHistory?.();
     if (action === 'wb_governance_cycle') handlers.cycleGovernance?.();
+
+    // Convert actions are forwarded back to the workspace event bus
+    // so handleQuickAction's CONVERT_PREFIX_MAP can route them
+    if (action === 'wb_convert_decision' || action === 'wb_convert_action') {
+      return;
+    }
   };
 
   useEffect(() => {

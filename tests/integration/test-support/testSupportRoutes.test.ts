@@ -181,4 +181,37 @@ describe('Test-support routes', () => {
     expect(cleanup2.status).toBe(200);
     expect(cleanup2.body).toEqual(expect.objectContaining({ ok: true, deleted: false }));
   });
+
+  it('bootstrap can mint a SUPERADMIN test session when requested', async () => {
+    process.env.ENABLE_TEST_SUPPORT = 'true';
+    process.env.TEST_SUPPORT_KEY = 'super-secret-key-123';
+
+    const boot = await request(mount())
+      .post(`${basePath}/bootstrap`)
+      .set('x-test-support-key', process.env.TEST_SUPPORT_KEY)
+      .send({ runId: 'run-superadmin', role: 'SUPERADMIN' });
+
+    expect(boot.status).toBe(200);
+    const userId = String(boot.body.userId);
+    const orgId = String(boot.body.organizationId);
+    const token = String(boot.body.token);
+
+    const decoded = jwt.verify(token, config.JWT_SECRET) as any;
+    expect(decoded).toEqual(
+      expect.objectContaining({
+        id: userId,
+        organizationId: orgId,
+        role: 'SUPERADMIN',
+      })
+    );
+
+    const user = await db.get<{ role?: string }>(`SELECT role FROM users WHERE id = ?`, [userId]);
+    const membership = await db.get<{ role?: string }>(
+      `SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    );
+
+    expect(user?.role).toBe('SUPERADMIN');
+    expect(membership?.role).toBe('ADMIN');
+  });
 });

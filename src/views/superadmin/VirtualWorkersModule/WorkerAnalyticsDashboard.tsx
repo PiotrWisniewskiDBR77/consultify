@@ -10,8 +10,14 @@ interface AnalyticsData {
   avgMessagesPerConversation: number;
   outcomeDistribution: Record<string, number>;
   channelDistribution: Record<string, number>;
+  intentDistribution: Record<string, number>;
+  topicDistribution: Record<string, number>;
+  fallbackReasons: Record<string, number>;
+  qualityFlagDistribution: Record<string, number>;
   conversationsPerDay: Array<{ date: string; count: number }>;
   topKnowledgeSources: Array<{ source: string; count: number }>;
+  topKnowledgePills: Array<{ pillId: string; count: number }>;
+  topProducts: Array<{ product: string; count: number }>;
 }
 
 interface AnnaFunnelSummaryData {
@@ -319,6 +325,77 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
         </section>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SummaryList
+          title="Top Topics"
+          emptyLabel="No topics yet."
+          items={data.topicDistribution}
+          className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
+        />
+        <SummaryList
+          title="Intent Distribution"
+          emptyLabel="No intents yet."
+          items={data.intentDistribution}
+          className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <SummaryList
+          title="Fallback Reasons"
+          emptyLabel="No fallback usage yet."
+          items={data.fallbackReasons}
+          className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
+        />
+        <SummaryList
+          title="Quality Flags"
+          emptyLabel="No quality flags yet."
+          items={data.qualityFlagDistribution}
+          className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
+        />
+        <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            Top Products
+          </h4>
+          {data.topProducts.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">No product data yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {data.topProducts.map((item) => (
+                <div key={item.product} className="flex items-center justify-between">
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{item.product}</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                    {item.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+          Top Knowledge Pills
+        </h4>
+        {data.topKnowledgePills.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">No pill usage yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {data.topKnowledgePills.map((item) => (
+              <div key={item.pillId} className="flex items-center justify-between">
+                <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[300px]">
+                  {item.pillId}
+                </span>
+                <span className="text-xs font-medium text-slate-900 dark:text-white">
+                  {item.count}×
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Conversations per Day */}
       {data.conversationsPerDay.length > 0 && (
         <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
@@ -376,11 +453,12 @@ const SummaryList: React.FC<{
   title: string;
   emptyLabel: string;
   items: Record<string, number>;
-}> = ({ title, emptyLabel, items }) => {
+  className?: string;
+}> = ({ title, emptyLabel, items, className }) => {
   const entries = Object.entries(items).sort(([, a], [, b]) => b - a);
 
   return (
-    <div>
+    <div className={className}>
       <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{title}</h4>
       {entries.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</p>

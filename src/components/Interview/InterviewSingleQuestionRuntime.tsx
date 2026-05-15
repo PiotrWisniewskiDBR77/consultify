@@ -161,7 +161,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   immersive = false,
 }) => {
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const isPolish = i18n.language?.startsWith('pl');
 
   const orderedQuestions = useMemo(() => {
     return [...questions].sort((a, b) => {
@@ -671,7 +671,27 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       }
 
       if (typeof MediaRecorder !== 'undefined') {
-        const recorder = new MediaRecorder(stream);
+        const pickSupportedMimeType = (): string | undefined => {
+          const candidates = [
+            'audio/webm;codecs=opus',
+            'audio/webm',
+            'audio/ogg;codecs=opus',
+            'audio/ogg',
+            // Safari often supports MediaRecorder only as audio/mp4.
+            'audio/mp4',
+          ];
+          for (const c of candidates) {
+            try {
+              if ((MediaRecorder as any).isTypeSupported?.(c)) return c;
+            } catch {
+              // ignore
+            }
+          }
+          return undefined;
+        };
+
+        const mimeHint = pickSupportedMimeType();
+        const recorder = new MediaRecorder(stream, mimeHint ? { mimeType: mimeHint } : undefined);
         mediaRecorderRef.current = recorder;
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) chunksRef.current.push(event.data);
@@ -683,9 +703,18 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           mediaStreamRef.current = null;
           if (!currentQuestion) return;
 
-          const mimeType = recorder.mimeType || 'audio/webm';
+          const mimeType = recorder.mimeType || mimeHint || 'audio/webm';
+          const extensionForMime = (mt: string): string => {
+            const m = String(mt || '').toLowerCase();
+            if (m.includes('audio/mp4') || m.includes('video/mp4') || m.includes('mp4'))
+              return 'm4a';
+            if (m.includes('ogg')) return 'ogg';
+            if (m.includes('webm')) return 'webm';
+            return 'webm';
+          };
+          const ext = extensionForMime(mimeType);
           const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-          const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.webm`, {
+          const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.${ext}`, {
             type: mimeType,
           });
           const browserTranscript = liveTranscriptRef.current.trim();
@@ -966,7 +995,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         rows={QUESTION_INPUT_TYPES.shortText.has(normalizedType) ? 2 : immersive ? 5 : 7}
         className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 ${
           immersive
-            ? 'border-white/[0.06] bg-white/[0.03] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500'
+            ? 'border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/[0.06] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500'
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
         }`}
         placeholder={
@@ -979,7 +1008,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   }, [currentQuestion, currentQuestionOptions, answerDraft, readOnly, isPolish, dropdownOpen]);
 
   const activeCategoryConfig = currentQuestion
-    ? CATEGORY_CONFIG[currentQuestion.category]
+    ? CATEGORY_CONFIG[currentQuestion.category] || CATEGORY_CONFIG.general
     : undefined;
   const answeredCount = orderedQuestions.filter(
     (question) => question.status === 'answered'
@@ -1071,7 +1100,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <div className="space-y-1">
             {immersive ? (
               /* Flat question list for immersive mode */
-              <div className="rounded-xl border border-slate-100 dark:border-navy-800 overflow-hidden divide-y divide-slate-100 dark:divide-navy-800">
+              <div className="rounded-xl border border-slate-200 dark:border-navy-800 overflow-hidden divide-y divide-slate-200 dark:divide-navy-800">
                 {orderedQuestions.map((q, idx) => {
                   const answered = q.status === 'answered';
                   const snippet = q.answerText
@@ -1095,7 +1124,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                             : q.isRequired
                               ? 'bg-rose-500/10 text-rose-500'
-                              : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {answered ? <Check size={10} /> : idx + 1}
@@ -1105,7 +1134,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           {q.questionText}
                         </p>
                         {snippet && (
-                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-500 truncate mt-0.5">
                             {snippet}
                           </p>
                         )}
@@ -1124,7 +1153,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 return (
                   <div
                     key={cat}
-                    className="rounded-xl border border-slate-100 dark:border-navy-800 overflow-hidden"
+                    className="rounded-xl border border-slate-200 dark:border-navy-800 overflow-hidden"
                   >
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 dark:bg-navy-950/40">
                       <span
@@ -1133,7 +1162,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         <catConfig.icon size={11} />
                         {isPolish ? catConfig.labelPl : catConfig.labelEn}
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-600 dark:text-slate-500">
                         {catInfo.answered}/{catInfo.total}
                       </span>
                       {catInfo.answered === catInfo.total && catInfo.total > 0 && (
@@ -1173,7 +1202,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 {q.questionText}
                               </p>
                               {snippet && (
-                                <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                                <p className="text-xs text-slate-600 dark:text-slate-500 truncate mt-0.5">
                                   {snippet}
                                 </p>
                               )}
@@ -1189,25 +1218,27 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setRuntimeView('answering')}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200"
-            >
-              <ArrowLeft size={16} />
-              {isPolish ? 'Wróć do pytań' : 'Back to questions'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onSubmitSession()}
-              disabled={readOnly || isPersisting}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/20"
-            >
-              <Check size={16} />
-              {isPolish ? 'Zatwierdź i wyślij' : 'Submit'}
-            </button>
+        <div className="sticky bottom-0 z-20 -mx-6 px-6 pb-4 pt-3 bg-gradient-to-t from-white via-white dark:from-navy-950 dark:via-navy-950 to-transparent">
+          <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl p-4 shadow-xl shadow-slate-200/40 dark:shadow-navy-950/60">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setRuntimeView('answering')}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                <ArrowLeft size={16} />
+                {isPolish ? 'Wróć do pytań' : 'Back to questions'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void onSubmitSession()}
+                disabled={readOnly || isPersisting}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/25 transition-colors"
+              >
+                <Check size={16} />
+                {isPolish ? 'Zatwierdź i wyślij' : 'Submit'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1224,27 +1255,27 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         /* ── Immersive: flat question list nav ── */
         <nav
           ref={navRef}
-          className="hidden md:flex flex-col w-72 shrink-0 border-r border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.01]"
+          className="hidden md:flex flex-col w-72 shrink-0 border-r border-slate-200 bg-white/80 dark:border-white/[0.06] dark:bg-white/[0.01]"
           role="navigation"
           aria-label={isPolish ? 'Nawigacja pytań' : 'Question navigation'}
         >
           {/* Header with progress */}
-          <div className="px-4 py-3 border-b border-white/[0.06]">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06]">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Pytania' : 'Questions'}
               </p>
               <span
                 className={`text-[10px] font-semibold tabular-nums ${
                   answeredCount === orderedQuestions.length
                     ? 'text-emerald-500'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
               >
                 {answeredCount}/{orderedQuestions.length}
               </span>
             </div>
-            <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden mt-2">
+            <div className="h-1 rounded-full bg-slate-200 overflow-hidden mt-2 dark:bg-white/[0.06]">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${answeredCount === orderedQuestions.length ? 'bg-emerald-500' : 'bg-primary-500'}`}
                 style={{
@@ -1253,7 +1284,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               />
             </div>
             {answeredCount < orderedQuestions.length && (
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1.5">
                 {orderedQuestions.length - answeredCount}{' '}
                 {isPolish ? 'do uzupełnienia' : 'remaining'}
               </p>
@@ -1275,7 +1306,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     isCurrent
                       ? 'bg-primary-500/10 dark:bg-primary-500/15 ring-1 ring-primary-500/20'
                       : isAnswered
-                        ? 'opacity-50 hover:opacity-80'
+                        ? 'opacity-75 hover:opacity-95'
                         : 'hover:bg-slate-50 dark:hover:bg-navy-900/50'
                   }`}
                 >
@@ -1296,14 +1327,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         isCurrent
                           ? 'text-primary-700 dark:text-primary-300 font-medium'
                           : isAnswered
-                            ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
+                            ? 'text-slate-500 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
                             : 'text-slate-700 dark:text-slate-200 font-medium'
                       }`}
                     >
                       {q.questionText}
                     </span>
                     {isAnswered && q.answerText && (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block mt-0.5">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-500 truncate block mt-0.5">
                         {q.answerText.length > 50 ? q.answerText.slice(0, 50) + '…' : q.answerText}
                       </span>
                     )}
@@ -1350,7 +1381,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           aria-label={isPolish ? 'Nawigacja kategorii' : 'Category navigation'}
         >
           {sessionName && (
-            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 truncate">
+            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500 truncate">
               {sessionName}
             </p>
           )}
@@ -1460,7 +1491,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
               </span>
             )}
-            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
               {currentIndex + 1} / {orderedQuestions.length}
             </span>
             <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
@@ -1471,7 +1502,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 }}
               />
             </div>
-            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
               {answeredCount}/{orderedQuestions.length}
             </span>
           </div>
@@ -1488,7 +1519,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               key={currentQuestion.id}
               className={`w-full ${immersive ? 'max-w-4xl' : 'max-w-3xl'} ${
                 immersive
-                  ? 'bg-white/[0.03] dark:bg-white/[0.02] border border-white/[0.04] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
+                  ? 'bg-white border border-slate-200 shadow-xl shadow-slate-200/60 dark:bg-white/[0.02] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
                   : 'rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50'
               }`}
             >
@@ -1507,7 +1538,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       >
                         {currentIndex + 1}
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                      <span className="text-xs text-slate-600 dark:text-slate-500 tabular-nums">
                         {isPolish ? 'z' : 'of'} {orderedQuestions.length}
                       </span>
                     </div>
@@ -1526,7 +1557,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                               immersive
-                                ? 'bg-white/[0.04] text-slate-400 ring-1 ring-white/[0.06]'
+                                ? 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-white/[0.04] dark:text-slate-400 dark:ring-white/[0.06]'
                                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                             }`}
                           >
@@ -1550,24 +1581,100 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   </div>
 
-                  {/* Question text */}
+                  {/* Question text — adaptive size for long descriptive questions */}
                   <h2
                     className={`font-semibold leading-snug text-slate-900 dark:text-white ${
-                      immersive ? 'text-2xl md:text-[28px]' : 'text-2xl md:text-3xl'
+                      currentQuestion.questionText.length > 120
+                        ? immersive
+                          ? 'text-lg md:text-xl'
+                          : 'text-lg md:text-xl'
+                        : immersive
+                          ? 'text-2xl md:text-[28px]'
+                          : 'text-2xl md:text-3xl'
                     }`}
                   >
                     {currentQuestion.questionText}
                   </h2>
 
-                  {/* Helper text / description (with helpHint fallback) */}
-                  {(currentQuestion.description || (currentQuestion as any).helpHint) && (
-                    <p className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                      <HelpCircle
-                        size={14}
-                        className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500"
-                      />
-                      {currentQuestion.description || (currentQuestion as any).helpHint}
-                    </p>
+                  {/* Guidance block — hint + evidence grouped before answer */}
+                  {(currentQuestion.description ||
+                    (currentQuestion as any).helpHint ||
+                    currentQuestion.evidencePrompt) && (
+                    <div className="space-y-2.5">
+                      {(currentQuestion.description || (currentQuestion as any).helpHint) && (
+                        <div
+                          className={`rounded-xl px-4 py-3 border ${
+                            immersive
+                              ? 'bg-amber-500/[0.06] border-amber-500/10'
+                              : 'bg-amber-100/80 dark:bg-amber-500/[0.06] border-amber-300 dark:border-amber-500/10 shadow-sm shadow-amber-200/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <HelpCircle
+                              size={15}
+                              className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-400"
+                            />
+                            <div className="space-y-1 min-w-0">
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                  immersive
+                                    ? 'text-amber-400/70'
+                                    : 'text-amber-800 dark:text-amber-400/70'
+                                }`}
+                              >
+                                {isPolish ? 'Wskazówka' : 'Hint'}
+                              </span>
+                              <p
+                                className={`text-sm leading-relaxed ${
+                                  immersive
+                                    ? 'text-amber-200/90'
+                                    : 'text-amber-950 dark:text-amber-200/90'
+                                }`}
+                              >
+                                {currentQuestion.description || (currentQuestion as any).helpHint}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {currentQuestion.evidencePrompt && (
+                        <div
+                          className={`rounded-xl px-4 py-3 border ${
+                            immersive
+                              ? 'bg-sky-500/[0.06] border-sky-500/10'
+                              : 'bg-sky-100/80 dark:bg-sky-500/[0.06] border-sky-300 dark:border-sky-500/10 shadow-sm shadow-sky-200/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <Paperclip
+                              size={14}
+                              className="mt-0.5 shrink-0 text-sky-500 dark:text-sky-400"
+                            />
+                            <div className="space-y-1 min-w-0">
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                  immersive
+                                    ? 'text-sky-400/70'
+                                    : 'text-sky-800 dark:text-sky-400/70'
+                                }`}
+                              >
+                                {isPolish ? 'Czego szukamy' : 'What we look for'}
+                              </span>
+                              <p
+                                className={`text-sm leading-relaxed ${
+                                  immersive
+                                    ? 'text-sky-200/90'
+                                    : 'text-sky-950 dark:text-sky-200/90'
+                                }`}
+                              >
+                                {currentQuestion.evidencePrompt}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Expected answer shape */}
@@ -1576,11 +1683,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${
                         immersive
                           ? 'bg-primary-500/[0.06] border-primary-500/10'
-                          : 'bg-primary-500/5 dark:bg-primary-500/10 border-primary-500/10 dark:border-primary-500/15'
+                          : 'bg-primary-100/80 dark:bg-primary-500/10 border-primary-300 dark:border-primary-500/15 shadow-sm shadow-primary-500/10'
                       }`}
                     >
-                      <Sparkles size={13} className="text-primary-500 shrink-0" />
-                      <span className="text-xs text-primary-700 dark:text-primary-300">
+                      <Sparkles
+                        size={13}
+                        className="shrink-0 text-primary-600 dark:text-primary-400"
+                      />
+                      <span className="text-xs text-primary-900 dark:text-primary-300">
                         {isPolish ? 'Oczekiwany format:' : 'Expected format:'}{' '}
                         <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
                       </span>
@@ -1596,7 +1706,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
                         aiExplainResult
                           ? 'text-violet-600 dark:text-violet-400'
-                          : 'text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
+                          : 'text-slate-600 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
                       }`}
                     >
                       {aiExplaining ? (
@@ -1891,13 +2001,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   )}
 
-                  {/* Evidence prompt */}
-                  {currentQuestion.evidencePrompt && (
-                    <div className="rounded-xl border border-sky-200/50 dark:border-sky-500/15 bg-sky-50/50 dark:bg-sky-500/5 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
-                      <Paperclip size={13} className="inline mr-1.5 -mt-0.5" />
-                      {currentQuestion.evidencePrompt}
-                    </div>
-                  )}
+                  {/* Evidence prompt is now shown above the answer in the guidance block */}
                 </div>
 
                 {/* ── Context capture section (always visible) ── */}

@@ -1,25 +1,20 @@
 /**
  * SuperAdminView - Main Super Admin Panel
  *
- * Unified AI Platform structure (6 main tabs with sub-tabs):
- * - Overview (Dashboard, Metrics, Signals)
- * - Customers (Organizations, Users, Feedback, Bulk Ops)
- * - AI Platform (unified with 6 tabs):
- *   - Configuration (LLM Providers, Model Tiers, Routing Rules, Global Settings)
- *   - Development (Prompts Library, Prompt Builder, Experiments, Model Registry)
- *   - Operations (Mission Control, Health Monitoring, Performance, SLA)
- *   - Analytics (Usage, Costs, Performance Metrics, Custom Reports)
- *   - Security (API Keys, Access Control, Audit Logs, Compliance)
- *   - Knowledge (Knowledge Base, Documents RAG, Strategic Directions)
- * - System (Health, Audit Log, Feature Flags, Integrations)
- * - Content (Playbooks, Email Templates)
- * - Revenue (Billing, Invoices, Usage)
- * - Security (SSO, Policies, API Keys, Compliance)
- * - Configuration (Settings, White-label, Legal)
+ * Canonical root information architecture:
+ * - Tenant & User Ops
+ * - AI Operations
+ * - Connector Ops
+ * - Governance & Compliance
+ * - Platform Security
+ *
+ * Legacy views are remapped into one of the mounted branches instead of
+ * rendering as additional top-level destinations.
  */
 
 import { RefreshCw, Shield } from 'lucide-react';
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DocumentSidePanel } from '../../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../../components/documents/DocumentToggleButton';
@@ -35,49 +30,24 @@ import {
   SuperAdminSidebar,
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
-import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
-import { SuperadminRootClosurePanel } from '../../components/SuperAdmin/SuperadminRootClosurePanel';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
+import { getRouteFromAppView } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
 
 // Lazy load heavy modules
-// Legacy AI modules - kept for backward compatibility redirects
-const AIDevelopmentModule = React.lazy(() =>
-  import('./AIDevelopmentModule').then((m) => ({ default: m.AIDevelopmentModule }))
-);
-const AIInfrastructureModule = React.lazy(() =>
-  import('./AIInfrastructureModule').then((m) => ({ default: m.AIInfrastructureModule }))
-);
-const AIOperationsModule = React.lazy(() =>
-  import('./AIOperationsModule').then((m) => ({ default: m.AIOperationsModule }))
-);
-// NEW: Unified AI Platform Module with 6 main tabs
-const AIPlatformModule = React.lazy(() =>
-  import('./AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
-);
-// NEW: AI Platform Module from new folder structure
 const NewAIPlatformModule = React.lazy(() =>
   import('./AIPlatformModule/AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
-);
-const AnalyticsModuleView = React.lazy(() =>
-  import('./analytics').then((m) => ({ default: m.AnalyticsModuleView }))
-);
-const ConfigurationModule = React.lazy(() =>
-  import('./ConfigurationModule').then((m) => ({ default: m.ConfigurationModule }))
-);
-const ContentModule = React.lazy(() =>
-  import('./ContentModule').then((m) => ({ default: m.ContentModule }))
 );
 const CustomersModule = React.lazy(() =>
   import('./CustomersModule').then((m) => ({ default: m.CustomersModule }))
 );
-const OverviewModule = React.lazy(() =>
-  import('./OverviewModule').then((m) => ({ default: m.OverviewModule }))
+const GovernanceModule = React.lazy(() =>
+  import('./GovernanceModule').then((m) => ({ default: m.GovernanceModule }))
 );
-const RevenueModule = React.lazy(() =>
-  import('./RevenueModule').then((m) => ({ default: m.RevenueModule }))
+const ConfigurationModule = React.lazy(() =>
+  import('./ConfigurationModule').then((m) => ({ default: m.ConfigurationModule }))
 );
 const SecurityModule = React.lazy(() =>
   import('./SecurityModule').then((m) => ({ default: m.SecurityModule }))
@@ -96,30 +66,31 @@ interface SuperAdminViewProps {
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
   const { isSidebarCollapsed, currentView, setCurrentView, logout } = useAppStore();
+  const navigate = useNavigate();
 
   // Derive activeSection from currentView
-  const activeSection: SuperAdminSection = appViewToSection[currentView] || 'overview';
+  const activeSection: SuperAdminSection = appViewToSection[currentView] || 'customers';
 
   // Helper to set section (updates currentView in store)
   const setActiveSection = (section: SuperAdminSection) => {
-    setCurrentView(sectionToAppView[section]);
+    const targetView = sectionToAppView[section];
+    setCurrentView(targetView);
+    navigate(getRouteFromAppView(targetView));
   };
 
-  // Initialize to overview if not a superadmin view
+  // Normalize all entry points to the mounted root branches.
   useEffect(() => {
     if (!currentView.startsWith('SUPERADMIN_')) {
-      setCurrentView(AppView.SUPERADMIN_OVERVIEW);
+      const rootView = AppView.SUPERADMIN_CUSTOMERS;
+      setCurrentView(rootView);
+      navigate(getRouteFromAppView(rootView), { replace: true });
     }
-  }, [currentView, setCurrentView]);
+  }, [currentView, navigate, setCurrentView]);
 
   const handleLogout = () => {
     logout();
     onNavigate(AppView.WELCOME);
-  };
-
-  // Navigate to a specific section (for inter-module navigation)
-  const handleNavigateToSection = (section: string) => {
-    setActiveSection(section as SuperAdminSection);
+    navigate('/');
   };
 
   // Render content based on currentView (Modular AI Platform - Variant A)
@@ -135,7 +106,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         {(() => {
           switch (currentView) {
             case AppView.SUPERADMIN_OVERVIEW:
-              return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
+            case AppView.SUPERADMIN_DASHBOARD:
+              return <CustomersModule initialTab="command-center" />;
 
             case AppView.SUPERADMIN_CUSTOMERS:
               return <CustomersModule />;
@@ -158,10 +130,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               return <SystemModule />;
 
             case AppView.SUPERADMIN_CONTENT:
-              return <ContentModule />;
-
-            case AppView.SUPERADMIN_REVENUE:
-              return <RevenueModule />;
+              return <GovernanceModule />;
 
             case AppView.SUPERADMIN_SECURITY:
               return <SecurityModule />;
@@ -170,15 +139,19 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               return <ConfigurationModule />;
 
             case AppView.SUPERADMIN_ANALYTICS:
-              return <AnalyticsModuleView />;
+              return <SystemModule initialTab="analytics" />;
+
+            case AppView.SUPERADMIN_REVENUE:
+              return <CustomersModule initialTab="commercial" initialCommercialTab="usage" />;
+            case AppView.SUPERADMIN_BILLING:
+              return <CustomersModule initialTab="commercial" initialCommercialTab="billing" />;
+            case AppView.SUPERADMIN_INVOICES:
+              return <CustomersModule initialTab="commercial" initialCommercialTab="invoices" />;
 
             case AppView.SUPERADMIN_VIRTUAL_WORKERS:
               return <VirtualWorkersModule />;
 
             // Legacy view redirects - redirect to appropriate module with initial tab
-            case AppView.SUPERADMIN_DASHBOARD:
-              return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
-
             case AppView.SUPERADMIN_ORGANIZATIONS:
             case AppView.SUPERADMIN_USERS:
             case AppView.SUPERADMIN_COMMUNICATION:
@@ -229,31 +202,19 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 />
               );
 
-            case AppView.SUPERADMIN_BILLING:
-            case AppView.SUPERADMIN_INVOICES:
-              return (
-                <RevenueModule
-                  initialTab={currentView === AppView.SUPERADMIN_INVOICES ? 'invoices' : 'billing'}
-                />
-              );
+            case AppView.SUPERADMIN_API_MANAGEMENT:
+              return <SystemModule initialTab="api-keys" />;
 
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
-            case AppView.SUPERADMIN_API_MANAGEMENT:
-            case AppView.SUPERADMIN_COMPLIANCE:
               return (
                 <SecurityModule
-                  initialTab={
-                    currentView === AppView.SUPERADMIN_SSO
-                      ? 'sso'
-                      : currentView === AppView.SUPERADMIN_SECURITY_POLICIES
-                        ? 'policies'
-                        : currentView === AppView.SUPERADMIN_API_MANAGEMENT
-                          ? 'api-keys'
-                          : 'compliance'
-                  }
+                  initialTab={currentView === AppView.SUPERADMIN_SSO ? 'sso' : 'policies'}
                 />
               );
+
+            case AppView.SUPERADMIN_COMPLIANCE:
+              return <GovernanceModule initialTab="compliance" />;
 
             case AppView.SUPERADMIN_SETTINGS:
             case AppView.SUPERADMIN_WHITELABEL:
@@ -266,11 +227,11 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               );
 
             case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
-              return <ContentModule initialTab="playbooks" />;
+            case AppView.SUPERADMIN_PLAYBOOK_EDITOR:
+              return <CustomersModule initialTab="playbooks" />;
 
             default:
-              // Fallback - show overview
-              return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
+              return <CustomersModule initialTab="command-center" />;
           }
         })()}
       </React.Suspense>
@@ -314,12 +275,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">
-          <div className="px-4 pt-4">
-            <SuperadminRootClosurePanel compact />
-          </div>
-          {renderContent()}
-        </main>
+        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">{renderContent()}</main>
       </div>
 
       {/* Floating Action Buttons - Order: Help, Feedback, Docs */}
@@ -332,9 +288,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </div>
         <div className="pointer-events-auto">
           <DocumentToggleButton />
-        </div>
-        <div className="pointer-events-auto">
-          <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
       <HelpSidePanel />

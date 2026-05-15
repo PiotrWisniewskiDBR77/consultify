@@ -1,7 +1,20 @@
 // @ts-nocheck
+/**
+ * @deprecated This monolithic API client (16k+ lines) is being migrated to typed
+ * modules under ./api/ (e.g. api/tasks.api.ts, api/v8/client.ts).
+ *
+ * For NEW code, import from:
+ *   import { someApi } from '@/services/api/moduleName.api';
+ *   import { v8Client } from '@/services/api/v8/client';
+ *
+ * Migration tracker: ~1000 files still import from this file.
+ * Target: remove @ts-nocheck once all methods are migrated to typed modules.
+ */
 import i18n from '@/i18n';
 
+import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
 import { trackFunnelEvent } from './funnelAnalytics';
@@ -77,7 +90,11 @@ async function waitForApiReady(timeoutMs = 15000): Promise<boolean> {
 // localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
 // when the app polls multiple endpoints (notifications, onboarding, etc.).
 // ---------------------------------------------------------------------------
-export type DemoFlags = { isDemoMode: boolean; isDemoSession: boolean };
+export type DemoFlags = {
+  isDemoMode: boolean;
+  isDemoSession: boolean;
+  demoSessionOrgId: string | null;
+};
 
 export type DataContextSummary = {
   status: string;
@@ -104,7 +121,11 @@ export type DataContextSummary = {
 };
 
 let _cachedStorageRaw: string | null | undefined = undefined;
-let _cachedDemoFlags: DemoFlags = { isDemoMode: false, isDemoSession: false };
+let _cachedDemoFlags: DemoFlags = {
+  isDemoMode: false,
+  isDemoSession: false,
+  demoSessionOrgId: null,
+};
 
 export function getDemoFlags(): DemoFlags {
   const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
@@ -121,10 +142,12 @@ export function getDemoFlags(): DemoFlags {
 
   let isDemoMode = false;
   let isDemoSession = false;
+  let demoSessionOrgId: string | null = null;
   try {
     if (raw) {
       const parsed = JSON.parse(raw);
       isDemoMode = parsed?.state?.isDemoMode === true;
+      demoSessionOrgId = parsed?.state?.demoSessionOrgId || null;
       const persistedUser = parsed?.state?.currentUser;
       isDemoSession =
         persistedUser?.isDemo === true ||
@@ -135,7 +158,7 @@ export function getDemoFlags(): DemoFlags {
     // Ignore parsing errors
   }
 
-  _cachedDemoFlags = { isDemoMode, isDemoSession };
+  _cachedDemoFlags = { isDemoMode, isDemoSession, demoSessionOrgId };
   return _cachedDemoFlags;
 }
 
@@ -176,10 +199,18 @@ function getCachedUserLanguage(): string {
   return _cachedLang;
 }
 
+function getStoredOrganizationContextId(): string {
+  try {
+    return localStorage.getItem('consultify_current_org_id') || '';
+  } catch {
+    return '';
+  }
+}
+
 export const getHeaders = () => {
   const token = tokenService.getToken();
 
-  const { isDemoMode, isDemoSession } = getDemoFlags();
+  const { isDemoMode, demoSessionOrgId } = getDemoFlags();
   const userLanguage = getCachedUserLanguage();
 
   const headers: Record<string, string> = {
@@ -197,6 +228,14 @@ export const getHeaders = () => {
   // Previously only sent when isDemoSession (demo account email), which meant real users' writes persisted.
   if (isDemoMode) {
     headers['X-Demo-Mode'] = 'true';
+    if (demoSessionOrgId) {
+      headers['X-Demo-Session-Org'] = demoSessionOrgId;
+    }
+  }
+
+  const orgContextId = getStoredOrganizationContextId();
+  if (orgContextId) {
+    headers['x-org-context'] = orgContextId;
   }
 
   return headers;
@@ -366,7 +405,8 @@ const handleResponse = async (res: Response, defaultError: string) => {
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
   if (res.status === 403) {
-    const code = data.code || data.errorCode;
+    const featureAccessDenied = data?.error === 'FEATURE_ACCESS_DENIED';
+    const code = featureAccessDenied ? 'FEATURE_ACCESS_DENIED' : data.code || data.errorCode;
     const accessBlockedCodes = new Set([
       'TRIAL_PROFILE_INCOMPLETE',
       'TRIAL_EXPIRED',
@@ -374,6 +414,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       'AI_TOKEN_BUDGET_EXCEEDED',
       'INSUFFICIENT_TOKENS',
       'DEMO_READ_ONLY',
+      'FEATURE_ACCESS_DENIED',
     ]);
     if (accessBlockedCodes.has(code)) {
       try {
@@ -381,7 +422,10 @@ const handleResponse = async (res: Response, defaultError: string) => {
           new CustomEvent('access:blocked', {
             detail: {
               code,
-              message: data.message || data.error || defaultError,
+              message:
+                data.message ||
+                (featureAccessDenied ? 'Access to this feature is restricted.' : data.error) ||
+                defaultError,
             },
           })
         );
@@ -398,6 +442,75 @@ const handleResponse = async (res: Response, defaultError: string) => {
   err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
   throw err;
+};
+
+const handleDataResponse = async <T = unknown>(res: Response, defaultError: string): Promise<T> => {
+  const payload = await handleResponse(res, defaultError);
+  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
+    const err: any = new Error(`${defaultError}: invalid response envelope`);
+    err.data = payload;
+    throw err;
+  }
+  if (typeof (payload as any).data === 'undefined') {
+    const err: any = new Error(`${defaultError}: missing response data`);
+    err.data = payload;
+    throw err;
+  }
+  return (payload as any).data as T;
+};
+
+type CachedApiEntry = {
+  expiresAt: number;
+  value?: unknown;
+  inflight?: Promise<unknown>;
+};
+
+const cachedApiGets = new Map<string, CachedApiEntry>();
+
+const invalidateCachedApiByPrefix = (prefix: string): void => {
+  for (const key of cachedApiGets.keys()) {
+    if (key.startsWith(prefix)) {
+      cachedApiGets.delete(key);
+    }
+  }
+};
+
+const getCachedJson = async <T = any>(
+  url: string,
+  ttlMs: number,
+  defaultError: string
+): Promise<T> => {
+  const now = Date.now();
+  const cached = cachedApiGets.get(url);
+
+  if (cached?.value !== undefined && cached.expiresAt > now) {
+    return cached.value as T;
+  }
+
+  if (cached?.inflight) {
+    return cached.inflight as Promise<T>;
+  }
+
+  const inflight = (async () => {
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const value = await handleResponse(res, defaultError);
+    cachedApiGets.set(url, {
+      value,
+      expiresAt: Date.now() + Math.max(0, ttlMs),
+    });
+    return value as T;
+  })().catch((error) => {
+    cachedApiGets.delete(url);
+    throw error;
+  });
+
+  cachedApiGets.set(url, {
+    value: cached?.value,
+    expiresAt: cached?.expiresAt || 0,
+    inflight,
+  });
+
+  return inflight;
 };
 
 /**
@@ -508,6 +621,8 @@ export const Api = {
     email: string;
     password: string;
     firstName?: string;
+    acceptedLegalDocs?: string[];
+    legalConsentAt?: string;
   }): Promise<{ user: User; token: string; refreshToken: string; isDemo: boolean }> => {
     let res: Response;
     try {
@@ -518,6 +633,8 @@ export const Api = {
           email: params.email,
           password: params.password,
           firstName: params.firstName,
+          acceptedLegalDocs: params.acceptedLegalDocs,
+          legalConsentAt: params.legalConsentAt,
         }),
       });
     } catch (e: any) {
@@ -764,21 +881,25 @@ export const Api = {
     return data;
   },
 
-  updateUser: async (id: string, updates: any): Promise<void> => {
+  updateUser: async (id: string, updates: any): Promise<User> => {
     const res = await fetch(`${API_URL}/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    return handleResponse(res, 'Failed to update user');
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    // Feedback #406b042a — route through fetchWithRetry + handleResponse so
+    // backend errors (e.g. "Cannot delete Account Owner", "User not found",
+    // stale token / 401) surface to the UI with actionable messages instead
+    // of a generic "Failed to delete user" toast.
+    const res = await fetchWithRetry(`${API_URL}/users/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to delete user');
+    await handleResponse(res, 'Failed to delete user');
   },
 
   checkSystemHealth: async (): Promise<{
@@ -790,10 +911,7 @@ export const Api = {
     apiCallsUsed?: number;
     apiCallsLimit?: number;
   }> => {
-    // Use the same robust request path as the rest of the API layer.
-    // This avoids false "Offline" when a proxy returns non-JSON errors, etc.
-    const res = await fetchWithRetry(`${API_URL}/health`, { headers: getHeaders() });
-    return handleResponse(res, 'Health check failed');
+    return getCachedJson(`${API_URL}/health`, 30_000, 'Health check failed');
   },
 
   // --- ANALYTICS (Leadership Dashboard) ---
@@ -825,6 +943,7 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to mark notification as read');
+    invalidateCachedApiByPrefix(`${API_URL}/notifications`);
   },
 
   markAllNotificationsRead: async (): Promise<void> => {
@@ -834,6 +953,7 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to mark all notifications as read');
+    invalidateCachedApiByPrefix(`${API_URL}/notifications`);
   },
 
   deleteNotification: async (id: string): Promise<void> => {
@@ -842,6 +962,7 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to delete notification');
+    invalidateCachedApiByPrefix(`${API_URL}/notifications`);
   },
 
   dismissNotification: async (id: string): Promise<void> => {
@@ -1176,6 +1297,51 @@ export const Api = {
     return data;
   },
 
+  agentAuditListRuns: async (args?: {
+    conversationId?: string;
+    dtSessionId?: string;
+    acceptedOnly?: boolean;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (args?.conversationId) params.set('conversationId', args.conversationId);
+    if (args?.dtSessionId) params.set('dtSessionId', args.dtSessionId);
+    if (typeof args?.acceptedOnly === 'boolean')
+      params.set('acceptedOnly', String(args.acceptedOnly));
+    if (typeof args?.limit === 'number') params.set('limit', String(args.limit));
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${API_URL}/ai/agent-audit/runs${suffix}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  agentRuntimeQueryRunLedger: async (query: Record<string, unknown>) => {
+    const response = await fetch(`${API_URL}/v10/agent-runtime/run-ledger/query`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ query }),
+    });
+    return handleDataResponse(response, 'Failed to query agent runtime ledger');
+  },
+
+  agentRuntimeSummarizeRunLedger: async (args: { tenantId: string; runId: string }) => {
+    const response = await fetch(`${API_URL}/v10/agent-runtime/run-ledger/summarize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    return handleDataResponse(response, 'Failed to summarize agent runtime ledger');
+  },
+
   // Chat Traces (Admin)
   listChatTraces: async (args?: { limit?: number; offset?: number }) => {
     const limit = typeof args?.limit === 'number' ? args!.limit : 50;
@@ -1319,6 +1485,51 @@ export const Api = {
     }
     console.log('[Api.chatConfirm] Success:', { hasConfirm: !!data?.confirm });
     return data;
+  },
+
+  getTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}`,
+      {
+        method: 'GET',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to load Teresa proposal');
+  },
+
+  approveTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/approve`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to approve Teresa proposal');
+  },
+
+  rejectTeresaProposal: async (proposalId: string, reason?: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/reject`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(reason ? { reason } : {}),
+      }
+    );
+    return handleResponse(res, 'Failed to reject Teresa proposal');
+  },
+
+  executeTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/execute`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to execute Teresa proposal');
   },
 
   chatWithAIStream: async (
@@ -1691,16 +1902,62 @@ export const Api = {
                               ? uiLang === 'pl'
                                 ? '⚠️ Lokalny provider AI jest niedozwolony w tym środowisku.'
                                 : '⚠️ Local AI provider is not allowed in this environment.'
-                              : dataCode === 'STREAM_ERROR' ||
-                                  dataCode === 'AI_STREAM_ERROR' ||
-                                  dataCode === 'AI_PIPELINE_ERROR'
-                                ? uiLang === 'pl'
-                                  ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
-                                  : '⚠️ An error occurred while generating the response. Please try again.'
-                                : null;
+                              : // Feedback #a9fcdd99 / #3b6c0287 — circuit breaker is open
+                                // for the LLM provider (e.g. OpenRouter temporarily down or
+                                // rate-limited). Previously we had no mapping so the raw
+                                // text "Circuit [openrouter] is OPEN. Retry in 18s" leaked
+                                // into the chat bubble. Try to parse the cooldown seconds
+                                // from the message so we can show the user a concrete
+                                // "try again in N seconds" hint.
+                                dataCode === 'CIRCUIT_OPEN'
+                                ? (() => {
+                                    const rawMsg = String(data.error || '');
+                                    const retryMatch = rawMsg.match(/Retry in (\d+)s/i);
+                                    const seconds = retryMatch ? retryMatch[1] : null;
+                                    if (uiLang === 'pl') {
+                                      return seconds
+                                        ? `⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za ${seconds} s lub wybierz inny model.`
+                                        : '⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za chwilę lub wybierz inny model.';
+                                    }
+                                    return seconds
+                                      ? `⚠️ The AI provider is temporarily unavailable. Please try again in ${seconds}s or switch to a different model.`
+                                      : '⚠️ The AI provider is temporarily unavailable. Please try again in a moment or switch to a different model.';
+                                  })()
+                                : dataCode === 'STREAM_ERROR' ||
+                                    dataCode === 'AI_STREAM_ERROR' ||
+                                    dataCode === 'AI_PIPELINE_ERROR' ||
+                                    // Feedback #a9fcdd99 / #3b6c0287 — legacy generic code
+                                    // the backend used to emit for any uncategorized
+                                    // pipeline error. Map it here so we never fall through
+                                    // to dumping `String(data.error)` into the bubble.
+                                    dataCode === 'AI_ERROR'
+                                  ? uiLang === 'pl'
+                                    ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
+                                    : '⚠️ An error occurred while generating the response. Please try again.'
+                                  : null;
 
                   hasAnyVisibleOutput = true;
-                  onChunk(friendlyByCode || String(data.error));
+                  // Feedback #a9fcdd99 / #3b6c0287 — never surface raw backend
+                  // error strings (e.g. "Circuit [openrouter] is OPEN. Retry in
+                  // 18s") directly in the chat. If we don't recognize the code,
+                  // fall back to a generic friendly message and log the raw text
+                  // to the console so ops can still debug from browser logs.
+                  if (!friendlyByCode) {
+                    try {
+                      console.warn(
+                        '[AI Stream] Unmapped error code surfaced:',
+                        dataCode,
+                        String(data.error || '').slice(0, 240)
+                      );
+                    } catch {
+                      /* ignore */
+                    }
+                  }
+                  const genericFallback =
+                    uiLang === 'pl'
+                      ? '⚠️ Wystąpił nieoczekiwany błąd AI. Spróbuj ponownie za chwilę.'
+                      : '⚠️ An unexpected AI error occurred. Please try again in a moment.';
+                  onChunk(friendlyByCode || genericFallback);
 
                   if (sid) {
                     console.info('[AI Stream] sessionId:', sid);
@@ -1879,10 +2136,11 @@ export const Api = {
   },
 
   getSuperAdminPlatformStats: async (): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/superadmin/platform-stats`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to fetch super admin platform stats');
+    return getCachedJson(
+      `${API_URL}/superadmin/platform-stats`,
+      45_000,
+      'Failed to fetch super admin platform stats'
+    );
   },
 
   getActivities: async (limit: number = 50): Promise<any[]> => {
@@ -1932,23 +2190,52 @@ export const Api = {
     return handleResponse(res, 'Failed to update legal document');
   },
 
-  getSuperAdminUsers: async (): Promise<User[]> => {
-    const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+  getSuperAdminUsers: async (filters?: {
+    organizationId?: string;
+    role?: string;
+    status?: string;
+  }): Promise<User[]> => {
+    const params = new URLSearchParams();
+    if (filters?.organizationId) params.set('organizationId', filters.organizationId);
+    if (filters?.role) params.set('role', filters.role);
+    if (filters?.status) params.set('status', filters.status);
+    const query = params.toString();
+    const res = await fetch(`${API_URL}/superadmin/users${query ? `?${query}` : ''}`, {
+      headers: getHeaders(),
+    });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error((data as any)?.error || 'Failed to fetch super admin users');
-    return (Array.isArray(data) ? data : []) as User[];
+    // API may return a bare User[] (legacy) or { users, total } per SUPERADMIN_API docs.
+    if (Array.isArray(data)) return data as User[];
+    if (data && typeof data === 'object' && Array.isArray((data as { users?: unknown }).users)) {
+      return (data as { users: User[] }).users;
+    }
+    return [];
   },
 
   updateSuperAdminUser: async (
     id: string,
-    updates: { organizationId?: string; role?: string; status?: string }
+    updates: {
+      organizationId?: string;
+      role?: string;
+      status?: string;
+      email?: string;
+      firstName?: string;
+      lastName?: string;
+      licensePlanId?: string | null;
+    }
   ): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
+    // Feedback #1e3d749a / #682d4134 / #76ef6831 — surface the specific backend
+    // reason ("Target organization not found", Zod validation detail, 404
+    // "User not found", etc.) to the UI instead of collapsing everything into
+    // a generic "Failed to update user" toast.
+    const res = await fetchWithRetry(`${API_URL}/superadmin/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to update user');
   },
 
   createSuperAdminUser: async (user: any): Promise<User> => {
@@ -2065,14 +2352,36 @@ export const Api = {
     return data;
   },
 
-  impersonateUser: async (userId: string): Promise<{ user: User; token: string }> => {
+  impersonateUser: async (
+    userId: string,
+    reason?: string
+  ): Promise<{ user: User; token: string }> => {
+    // Feedback #b8bf4422 — the `/superadmin/impersonate` route is gated by
+    // `requireConfirmation('impersonate_user', 'critical')` + `requireAudit`,
+    // so the payload MUST include `confirmation: true` and a non-empty
+    // `reason` (>= 3 chars). Previously we only sent `{ userId }`, which the
+    // middleware rejected with 428 CONFIRMATION_REQUIRED and the UI surfaced
+    // as "Failed to impersonate user" with no hint. We default the reason to
+    // a generic "Superadmin support session" when the caller doesn't pass one
+    // so the action still works without forcing every call site to prompt.
+    const finalReason =
+      typeof reason === 'string' && reason.trim().length >= 3
+        ? reason.trim()
+        : 'Superadmin support session';
     const res = await fetch(`${API_URL}/superadmin/impersonate`, {
       method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ userId }),
+      headers: {
+        ...getHeaders(),
+        'X-Audit-Reason': finalReason,
+      },
+      body: JSON.stringify({ userId, confirmation: true, reason: finalReason }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to impersonate user');
+    const data = await res.json().catch(() => ({}) as any);
+    if (!res.ok) {
+      const msg =
+        (data && (data.error || data.message)) || `Failed to impersonate user (HTTP ${res.status})`;
+      throw new Error(msg);
+    }
     return data;
   },
 
@@ -2298,8 +2607,7 @@ export const Api = {
   },
 
   getLLMHealthDetailed: async (): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/llm/health/detailed`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch LLM health');
+    return getCachedJson(`${API_URL}/llm/health/detailed`, 60_000, 'Failed to fetch LLM health');
   },
 
   getLLMControlUsage: async (): Promise<any> => {
@@ -2664,8 +2972,9 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update provider');
-    return res.json();
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(payload?.error || 'Failed to update provider');
+    return payload;
   },
 
   applyRecommendedAiModelPresetV3: async (params?: {
@@ -2811,9 +3120,11 @@ export const Api = {
   },
 
   getPublicLLMProviders: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch public LLM providers');
-    return res.json();
+    return getCachedJson(
+      `${API_URL}/llm/providers/public`,
+      5 * 60_000,
+      'Failed to fetch public LLM providers'
+    );
   },
 
   getLLMAuditStats: async (): Promise<any> => {
@@ -2924,7 +3235,7 @@ export const Api = {
     overall?: string;
   }> => {
     // Keep it fast in UI polls (local providers like Ollama can hang if not running).
-    const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=1200`, {
+    const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=4000`, {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Health check failed');
@@ -3009,9 +3320,7 @@ export const Api = {
     tokensLimit: number;
     recentUsage?: Array<{ date: string; tokens: number; requests: number }>;
   }> => {
-    const res = await fetch(`${API_URL}/llm/user/usage`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch user AI usage');
-    return res.json();
+    return getCachedJson(`${API_URL}/llm/user/usage`, 60_000, 'Failed to fetch user AI usage');
   },
 
   // Get user's currently active AI model
@@ -3472,6 +3781,56 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch idea map metrics');
+  },
+
+  // --- V8 Mindmap (audit trail, export, health) ---
+  createMindmapAIProposal: async (
+    mindmapId: string,
+    proposal: { summary?: string; plan?: string; operations?: any[]; diff_summary?: any }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/ai-proposals`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(proposal),
+    });
+    return handleResponse(res, 'Failed to create AI proposal');
+  },
+
+  resolveMindmapAIProposal: async (
+    proposalId: string,
+    action: 'accept' | 'reject'
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/v8/mindmap/ai-proposals/${encodeURIComponent(proposalId)}/resolve`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ action }),
+      }
+    );
+    return handleResponse(res, 'Failed to resolve AI proposal');
+  },
+
+  exportMindmapJSON: async (mindmapId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/export/json`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to export mindmap JSON');
+  },
+
+  exportMindmapMarkdown: async (mindmapId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/export/markdown`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to export mindmap markdown');
+  },
+
+  getMindmapHealth: async (mindmapId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/health`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to get mindmap health');
   },
 
   // --- Snapshots ---
@@ -3975,17 +4334,19 @@ export const Api = {
     const params = new URLSearchParams();
     if (unreadOnly) params.append('unreadOnly', 'true');
     params.append('limit', limit.toString());
-    const res = await fetch(`${API_URL}/notifications?${params.toString()}`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to fetch notifications');
-    return res.json();
+    return getCachedJson(
+      `${API_URL}/notifications?${params.toString()}`,
+      15_000,
+      'Failed to fetch notifications'
+    );
   },
 
   getUnreadNotificationCount: async (): Promise<number> => {
-    const res = await fetch(`${API_URL}/notifications/unread-count`, { headers: getHeaders() });
-    if (!res.ok) return 0;
-    const data = await res.json();
+    const data = await getCachedJson<{ count: number }>(
+      `${API_URL}/notifications/unread-count`,
+      10_000,
+      'Failed to fetch unread notification count'
+    ).catch(() => ({ count: 0 }));
     return data.count;
   },
 
@@ -4871,7 +5232,13 @@ export const Api = {
       wizard_state?: Record<string, unknown>;
       wizardState?: Record<string, unknown>;
       status?: string;
-      missingItems?: Array<{ id: string; label: string; severity?: string; stepId?: string; resolved?: boolean }>;
+      missingItems?: Array<{
+        id: string;
+        label: string;
+        severity?: string;
+        stepId?: string;
+        resolved?: boolean;
+      }>;
       failureReason?: string;
     }
   ): Promise<any> => {
@@ -4942,7 +5309,11 @@ export const Api = {
 
   promoteToolOutput: async (
     toolId: string,
-    payload: { outputType: 'report' | 'presentation' | 'idea'; title: string; description?: string }
+    payload: {
+      outputType: 'initiative' | 'report' | 'presentation' | 'idea';
+      title: string;
+      description?: string;
+    }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/promote`, {
       method: 'POST',
@@ -5689,17 +6060,19 @@ export const Api = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const headers = getHeaders();
-    delete (headers as any)['Content-Type'];
+    // Intentionally skip default JSON headers so the browser sets multipart/form-data
+    // boundary. We still want auth header + 401→refresh retry via fetchWithRetry.
+    const authHeader: Record<string, string> = {};
+    const token = tokenService.getToken();
+    if (token) authHeader['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_URL}/ai/attachments/ingest`, {
+    const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest`, {
       method: 'POST',
-      headers,
+      headers: authHeader,
       body: formData,
+      skipDefaultHeaders: true,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest attachment');
-    return data;
+    return handleResponse(res, 'Failed to ingest attachment');
   },
 
   ingestChatUrlAttachment: async (
@@ -5714,7 +6087,7 @@ export const Api = {
     totalChunks?: number;
     embeddedChunks?: number;
   }> => {
-    const res = await fetch(`${API_URL}/ai/attachments/ingest-url`, {
+    const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest-url`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -5722,9 +6095,7 @@ export const Api = {
         title: options?.title,
       }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest URL');
-    return data;
+    return handleResponse(res, 'Failed to ingest URL');
   },
 
   // --- GENERIC DOCUMENT UPLOAD (For Context Builder) ---
@@ -5753,25 +6124,128 @@ export const Api = {
   },
   // --- FEEDBACK ---
   sendFeedback: async (data: {
-    user_id: string;
-    type: string;
+    userId?: string;
+    userEmail?: string;
+    userName?: string;
+    type: 'BUG' | 'IDEA';
+    title?: string;
     message: string;
-    screenshot?: string;
-    url?: string;
-  }): Promise<void> => {
-    const res = await fetch(`${API_URL}/feedback`, {
+    description?: string;
+    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    routePath?: string;
+    deviceType?: 'mobile' | 'tablet' | 'desktop';
+    screenSize?: string;
+    uiLanguage?: string;
+    uiTheme?: string;
+    workspaceContext?: string;
+    clientEnv?: string;
+    metadata?: Record<string, unknown>;
+    signatureHash?: string;
+    appContext?: Record<string, unknown>;
+    consoleLogs?: Array<Record<string, unknown>>;
+    networkErrors?: Array<Record<string, unknown>>;
+    breadcrumbs?: Array<Record<string, unknown>>;
+    lastUncaughtError?: Record<string, unknown> | null;
+    screenshot?: {
+      dataUrl: string;
+      approxBytes?: number;
+      width?: number;
+      height?: number;
+    } | null;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to submit feedback');
+    return handleResponse(res, 'Failed to submit feedback');
   },
 
-  getFeedback: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/feedback`, { headers: getHeaders() });
+  composeFeedback: async (data: {
+    type: 'BUG' | 'IDEA';
+    title?: string;
+    message: string;
+    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    appEnv?: string;
+    context?: Record<string, unknown>;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/compose`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'AI compose failed');
+  },
+
+  submitPulseFeedback: async (data: {
+    userId?: string;
+    rating: number;
+    context?: string;
+    comment?: string;
+    timestamp?: string;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/pulse`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to submit pulse feedback');
+  },
+
+  submitFeatureFeedback: async (data: {
+    userId?: string;
+    userEmail?: string;
+    category?: 'usability' | 'performance' | 'missing' | 'improvement' | 'other';
+    featureName: string;
+    description: string;
+    impact?: 'low' | 'medium' | 'high';
+    context?: string;
+    requestAIAnalysis?: boolean;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/feature`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to submit feature feedback');
+  },
+
+  getFeedbackAIInsights: async (data: { context: string; userId?: string }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/ai-insights`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to fetch feedback AI insights');
+  },
+
+  getFeedback: async (opts?: { limit?: number; offset?: number }): Promise<any[]> => {
+    // Thin wrapper kept for backward compat — returns just the array so
+    // existing call sites (pending-badge count, dashboards) keep working.
+    const page = await Api.getFeedbackPage(opts);
+    return page.items;
+  },
+
+  /**
+   * Paginated feedback list. Returns items + total (read from X-Total-Count)
+   * so the Superadmin UI can show "N / total" and offer Load more.
+   */
+  getFeedbackPage: async (opts?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ items: any[]; total: number; limit: number; offset: number }> => {
+    const params = new URLSearchParams();
+    if (opts?.limit != null) params.set('limit', String(opts.limit));
+    if (opts?.offset != null) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    const url = `${API_URL}/feedback${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch feedback');
-    const data = await res.json();
-    return data || [];
+    const items = (await res.json()) || [];
+    const total = Number(res.headers.get('X-Total-Count') || items.length);
+    const limit = Number(res.headers.get('X-Page-Limit') || items.length);
+    const offset = Number(res.headers.get('X-Page-Offset') || 0);
+    return { items, total, limit, offset };
   },
 
   updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
@@ -5783,13 +6257,92 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update feedback status');
   },
 
+  updateFeedbackWorkflow: async (
+    id: string,
+    payload: {
+      owner?: string | null;
+      cluster?: string | null;
+      source?: string | null;
+      branch?: string | null;
+      prUrl?: string | null;
+      taskUrl?: string | null;
+      linkedTaskId?: string | null;
+      deployStatus?: string | null;
+      deployTargets?: string[];
+      deployedAt?: string | null;
+      verifiedBy?: string | null;
+      verifiedAt?: string | null;
+      waitingOn?: string | null;
+      resolution?: {
+        type?: string | null;
+        summary?: string | null;
+        rootCause?: string | null;
+        verificationNotes?: string | null;
+        testPlan?: string[];
+      };
+      note?: string | null;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/feedback/${id}/workflow`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error((data as any)?.error || 'Failed to update feedback workflow');
+    }
+    return data;
+  },
+
   getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
     const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
     const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch feedback backlog tasks');
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      const err: any = new Error('Failed to fetch feedback backlog tasks');
+      err.status = res.status;
+      err.code = payload?.error?.code || payload?.code || null;
+      err.correlationId = payload?.correlationId || null;
+      err.data = payload;
+      throw err;
+    }
     const data = await res.json();
     return data || [];
   },
+
+  getFeedbackAnalyticsOverview: async (): Promise<{
+    sampleSize: number;
+    openCount: number;
+    totals: {
+      byStatus: Record<string, number>;
+      byType: Record<string, number>;
+      bySeverity: Record<string, number>;
+      byEnv: Record<string, number>;
+    };
+    aging: { under24h: number; h24_48: number; d2_7: number; over7d: number };
+    mttrLast30d: { medianHours: number | null; p90Hours: number | null; sampleSize: number };
+    last30d: { created: number; reopened: number; reopenRatePct: number };
+    generatedAt: string;
+  }> => {
+    const res = await fetch(`${API_URL}/feedback/analytics/overview`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch feedback analytics overview');
+    return res.json();
+  },
+
+  getFeedbackCursorBrief: async (id: string): Promise<string> => {
+    const res = await fetch(`${API_URL}/feedback/${encodeURIComponent(id)}/cursor-brief`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data as any)?.error || 'Failed to fetch Cursor brief');
+    }
+    return res.text();
+  },
+
+  getFeedbackScreenshotUrl: (id: string): string =>
+    `${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`,
 
   // ==========================================
   // ACCESS CONTROL
@@ -5880,12 +6433,14 @@ export const Api = {
   },
 
   acceptAccessCode: async (code: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/access-codes/${code}/accept`, {
+    const res = await fetch(`${API_URL}/access-codes/accept`, {
       method: 'POST',
       headers: getHeaders(),
+      body: JSON.stringify({ code }),
     });
-    if (!res.ok) throw new Error('Failed to accept access code');
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to accept access code');
+    return json;
   },
 
   generateAccessCode: async (data: {
@@ -6026,6 +6581,26 @@ export const Api = {
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Plan change failed');
+    return json;
+  },
+
+  getManagedContracts: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/superadmin/billing/contracts`, {
+      headers: getHeaders(),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any).error || 'Failed to fetch managed contracts');
+    return Array.isArray((json as any).data) ? (json as any).data : [];
+  },
+
+  upsertManualContract: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/superadmin/billing/manual-contract`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any).error || 'Failed to save manual contract');
     return json;
   },
 
@@ -6454,18 +7029,281 @@ export const Api = {
   },
 
   addOrganizationMember: async (orgId: string, email: string, role: string): Promise<any> => {
-    // NOTE: Backend currently expects targetUserId, but UI workflow implies email invite.
-    // We will pass email as targetUserId/email field and update backend if needed,
-    // OR we just rely on ID if we have a picker.
-    // For MVP skeleton, we assume we might be adding by ID if we don't have invite flow,
-    // BUT to be user friendly, we should probably implement invite.
-    // I'll stick to passing the body as is, and update backend later if needed.
     const res = await fetch(`${API_URL}/organizations/${orgId}/members`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ targetUserId: email, role }),
+      body: JSON.stringify(
+        email.includes('@') ? { targetEmail: email, role } : { targetUserId: email, role }
+      ),
     });
     return handleResponse(res, 'Failed to add member');
+  },
+
+  updateOrganizationMemberRole: async (
+    orgId: string,
+    memberId: string,
+    role: string
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/organizations/${orgId}/members/${memberId}/role`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ role }),
+    });
+    return handleResponse(res, 'Failed to update member role');
+  },
+
+  removeOrganizationMember: async (orgId: string, memberId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/organizations/${orgId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to remove member');
+  },
+
+  getAdminSecurityPolicy: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/security`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load admin security policy');
+  },
+
+  updateAdminSecurityPolicy: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/security`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save admin security policy');
+  },
+
+  getAdminCollaborationControls: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/collaboration`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load collaboration controls');
+  },
+
+  updateAdminCollaborationControls: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/collaboration`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save collaboration controls');
+  },
+
+  getTenantAdminAuditLogs: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.actionType) params.set('actionType', String(filters.actionType));
+    if (filters?.status) params.set('status', String(filters.status));
+    if (filters?.riskScoreMin !== undefined && filters?.riskScoreMin !== '')
+      params.set('riskScoreMin', String(filters.riskScoreMin));
+    if (filters?.search) params.set('search', String(filters.search));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    if (filters?.offset !== undefined) params.set('offset', String(filters.offset));
+    const res = await fetch(`${API_URL}/admin/audit-logs?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch admin audit logs');
+  },
+
+  getAdminOverview: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/overview`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin overview');
+  },
+
+  getAdminBillingSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing summary');
+  },
+
+  getAdminAISummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/ai/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin AI summary');
+  },
+
+  getAdminIAMPolicy: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/policy`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin IAM policy');
+  },
+
+  updateAdminIAMPolicy: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/policy`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update admin IAM policy');
+  },
+
+  getAdminIAMAssignments: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/assignments`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin IAM assignments');
+  },
+
+  createAdminIAMAssignment: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/assignments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create admin IAM assignment');
+  },
+
+  deleteAdminIAMAssignment: async (assignmentId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/iam/assignments/${encodeURIComponent(assignmentId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete admin IAM assignment');
+  },
+
+  getAdminBillingPaymentMethods: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/payment-methods`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing payment methods');
+  },
+
+  addAdminBillingPaymentMethod: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/payment-methods`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to add admin billing payment method');
+  },
+
+  setAdminBillingDefaultPaymentMethod: async (paymentMethodId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/billing/payment-methods/${encodeURIComponent(paymentMethodId)}/default`,
+      { method: 'PUT', headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to set default admin billing payment method');
+  },
+
+  removeAdminBillingPaymentMethod: async (paymentMethodId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/billing/payment-methods/${encodeURIComponent(paymentMethodId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to remove admin billing payment method');
+  },
+
+  getAdminBillingInvoices: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/invoices`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing invoices');
+  },
+
+  getAdminBillingUsageDetails: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/usage-details`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing usage details');
+  },
+
+  getAdminBillingAlerts: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/alerts`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing alerts');
+  },
+
+  updateAdminBillingAlerts: async (alerts: any[]): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/alerts`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ alerts }),
+    });
+    return handleResponse(res, 'Failed to update admin billing alerts');
+  },
+
+  getAdminBillingTaxSettings: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/tax-settings`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing tax settings');
+  },
+
+  updateAdminBillingTaxSettings: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/tax-settings`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update admin billing tax settings');
+  },
+
+  getAdminComplianceSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/compliance/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin compliance summary');
+  },
+
+  updateAdminComplianceDataRetention: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/compliance/data-retention`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update admin data retention');
+  },
+
+  getAdminScimSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin SCIM summary');
+  },
+
+  createAdminScimToken: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim/tokens`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create admin SCIM token');
+  },
+
+  deleteAdminScimToken: async (tokenId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/identity/scim/tokens/${encodeURIComponent(tokenId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete admin SCIM token');
+  },
+
+  createAdminScimGroupMapping: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim/group-mappings`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create admin SCIM group mapping');
+  },
+
+  deleteAdminScimGroupMapping: async (mappingId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/identity/scim/group-mappings/${encodeURIComponent(mappingId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete admin SCIM group mapping');
+  },
+
+  getAdminRiskSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/risk/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin risk summary');
+  },
+
+  getTenantAdminAuditStats: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/audit-logs/stats`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin audit stats');
+  },
+
+  exportTenantAdminAuditLogs: async (): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/admin/audit-logs/export`, { headers: getHeaders() });
+    if (!res.ok) {
+      const out = await res.json().catch(() => ({}));
+      throw new Error((out as any)?.error || 'Failed to export admin audit logs');
+    }
+    return res.blob();
   },
 
   createOrganization: async (name: string): Promise<any> => {
@@ -7621,6 +8459,7 @@ export const Api = {
   createConversation: async (data?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: Record<string, any>;
     language?: string;
   }): Promise<any> => {
@@ -8322,8 +9161,17 @@ export const Api = {
     return (data as any)?.logs || [];
   },
   // AI Actions
-  rejectAIAction: async (actionId: string, reason?: string) => {
-    return { success: true };
+  rejectAIAction: async (actionId: string, reason?: string, conversationId?: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason, conversationId }),
+      });
+      return handleResponse(res, 'Failed to reject action');
+    } catch (err: any) {
+      console.error('[Api] rejectAIAction error:', err);
+      return { success: false, error: err.message };
+    }
   },
   // Billing
   createSetupIntent: async () => {
@@ -8397,18 +9245,84 @@ export const Api = {
   updateApiKey: async (keyId: string, data: any): Promise<any> => {
     return { id: keyId, ...data };
   },
-  // Calendar Sync
+  // Calendar Sync — wired to settings integration OAuth engine
   getCalendars: async (): Promise<any[]> => {
-    return [];
+    try {
+      const res = await fetch(`${API_URL}/settings/integrations`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const integrations = data?.data?.integrations || data?.integrations || [];
+      const calendarIds = ['google_calendar', 'outlook_calendar', 'apple_calendar'];
+      const calendarProviders = (data?.data?.providers || data?.providers || []).filter((p: any) =>
+        calendarIds.includes(p.id)
+      );
+
+      const ICONS: Record<string, string> = {
+        google_calendar: '📅',
+        outlook_calendar: '📆',
+        apple_calendar: '🍎',
+      };
+      const NAMES: Record<string, string> = {
+        google_calendar: 'Google Calendar',
+        outlook_calendar: 'Outlook Calendar',
+        apple_calendar: 'Apple Calendar (iCal)',
+      };
+
+      const result = calendarIds.map((cid) => {
+        const provider = calendarProviders.find((p: any) => p.id === cid);
+        const integration = integrations.find((i: any) => i.provider === cid);
+        return {
+          id: cid,
+          name: NAMES[cid] || cid,
+          icon: ICONS[cid] || '📅',
+          connected: provider?.isConnected || integration?.status === 'active',
+          connection: integration
+            ? {
+                externalEmail: integration.externalEmail || integration.externalAccountName || '',
+                calendarName: integration.providerName || NAMES[cid] || cid,
+                lastSyncAt: integration.lastSyncAt || null,
+                syncTasks: true,
+                syncMeetings: true,
+              }
+            : null,
+        };
+      });
+      return result;
+    } catch {
+      return [];
+    }
   },
   getCalendarSettings: async (): Promise<any> => {
-    return { syncEnabled: false, calendars: [] };
+    try {
+      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return { syncTasks: true, syncMeetings: true };
+      const data = await res.json();
+      return data?.data || { syncTasks: true, syncMeetings: true };
+    } catch {
+      return { syncTasks: true, syncMeetings: true };
+    }
   },
-  connectCalendar: async (provider: string, credentials?: any): Promise<any> => {
-    return { id: '', provider, connected: true };
+  connectCalendar: async (provider: string, _credentials?: any): Promise<any> => {
+    try {
+      const res = await fetch(`${API_URL}/settings/integrations/oauth/start/${provider}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to start OAuth');
+      const data = await res.json();
+      return { authUrl: data.authUrl };
+    } catch {
+      return {};
+    }
   },
   disconnectCalendar: async (calendarId: string): Promise<void> => {
-    return;
+    await fetch(`${API_URL}/settings/integrations/${calendarId}/oauth-disconnect`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
   },
   shouldFallbackToLegacyMyWorkCalendar: (error: any) => {
     const status = Number(error?.status);
@@ -8510,8 +9424,7 @@ export const Api = {
   },
   // System
   getSystemHealth: async () => {
-    const res = await fetchWithRetry(`${API_URL}/system-health`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch system health');
+    return getCachedJson(`${API_URL}/system-health`, 30_000, 'Failed to fetch system health');
   },
   getRecognitionSchedule: async (id: string) => {
     const res = await fetchWithRetry(`${API_URL}/revenue/revenue-recognition/${id}/schedule`, {
@@ -8583,6 +9496,13 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch feature flags');
+    return res.json();
+  },
+  getRuntimeFeatureFlags: async () => {
+    const res = await fetch(`${API_URL}/feature-flags/runtime`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch runtime feature flags');
     return res.json();
   },
   // API Key usage
@@ -8723,7 +9643,7 @@ export const Api = {
     return res.json();
   },
   updatePermission: async (roleId: string, permission: string): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions/${roleId}`, {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/${roleId}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify({ permission }),
@@ -8732,7 +9652,7 @@ export const Api = {
     return res.json();
   },
   createAdminPermission: async (data: any): Promise<{ success: boolean; id: string }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions`, {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -8800,7 +9720,19 @@ export const Api = {
   getUserApiKeys: async () => [],
   deleteUserApiKey: async (keyId: string) => ({ success: true }),
   // Calendar
-  updateCalendarSettings: async (settings: any) => ({ success: true }),
+  updateCalendarSettings: async (settings: any) => {
+    try {
+      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(settings),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      return { success: true };
+    } catch {
+      return { success: true };
+    }
+  },
   // Permission requests
   getPermissionRequests: async () => [],
   // Feature flags (additional)
@@ -9152,21 +10084,21 @@ export const Api = {
     );
     return handleResponse(res, 'Failed to check domain reputation');
   },
-  // Chat projects - Real API implementations
+  // Chat projects (folders) - unified through fetchWithRetry + handleResponse so
+  // server-side error details (403 permissions, 404, 409 etc.) reach the UI.
+  // chat-history fix 2026-04-18 (feedback #407a17df, #84f6e58f, #fb2d4e30).
   getChatProjects: async (options?: { scope?: 'personal' | 'team' }) => {
     const params = new URLSearchParams();
     if (options?.scope) params.append('scope', options.scope);
     const qs = params.toString();
-    const response = await fetch(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch chat projects');
-    return response.json();
+    return handleResponse(res, 'Failed to fetch chat projects');
   },
   getChatProject: async (id: string) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch chat project');
-    return response.json();
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch chat project');
   },
   createChatProject: async (data: {
     name: string;
@@ -9175,44 +10107,40 @@ export const Api = {
     icon?: string;
     scope?: 'personal' | 'team';
   }) => {
-    const response = await fetch(`${API_URL}/chat-projects`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to create chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to create chat folder');
   },
   updateChatProject: async (
     id: string,
     data: { name?: string; description?: string; color?: string; icon?: string }
   ) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to update chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to update chat folder');
   },
   deleteChatProject: async (id: string) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to delete chat folder');
   },
   moveConversationToProject: async (projectId: string, conversationId: string) => {
-    const response = await fetch(
+    const res = await fetchWithRetry(
       `${API_URL}/chat-projects/${projectId}/conversations/${conversationId}`,
       {
         method: 'POST',
         headers: getHeaders(),
       }
     );
-    if (!response.ok) throw new Error('Failed to move conversation to project');
-    return response.json();
+    return handleResponse(res, 'Failed to move conversation to folder');
   },
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {
@@ -9389,7 +10317,6 @@ export const Api = {
     });
     return res.json();
   },
-  executeSuccessAction: async (actionId: string) => ({ success: true }),
   deleteSuccessPlaybook: async (id: string) => {
     const res = await fetch(`${API_URL}/superadmin/playbooks/${id}`, {
       method: 'DELETE',
@@ -9487,6 +10414,27 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch admin session stats');
+  },
+  getSuperAdminOperatorOverview: async () => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/operator/overview`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch operator overview');
+  },
+  getSuperAdminOperatorTimeline: async (limit = 50) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/superadmin/operator/timeline?limit=${encodeURIComponent(String(limit))}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch operator timeline');
+  },
+  getSuperAdminPolicyEnforcement: async () => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/operator/policy-enforcement`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch policy enforcement state');
   },
   revokeAdminSession: async (sessionId: string): Promise<{ message?: string }> => {
     const res = await fetchWithRetry(`${API_URL}/superadmin/admin/sessions/${sessionId}`, {
@@ -10362,6 +11310,25 @@ export const Api = {
       throw err;
     }
   },
+  getSupportTicketComments: async (ticketId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets/${ticketId}/comments`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch support ticket comments');
+    return res.json();
+  },
+  addSupportTicketComment: async (
+    ticketId: string,
+    data: { commentText: string; isInternal?: boolean }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets/${ticketId}/comments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to add support ticket comment');
+    return res.json();
+  },
   // LLM Routing Rules (persisted)
   getLLMRoutingRules: async (params?: { organizationId?: string; includeInactive?: boolean }) => {
     const q = new URLSearchParams();
@@ -10619,7 +11586,7 @@ export const Api = {
     role?: string;
     reason?: string | null;
   }> => {
-    const res = await fetch(`${API_URL}/access-control/codes/${encodeURIComponent(code)}/info`);
+    const res = await fetch(`${API_URL}/access-codes/validate/${encodeURIComponent(code)}`);
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
       if (res.status === 404) return { valid: false, type: '', organizationId: '' };
@@ -10627,11 +11594,11 @@ export const Api = {
     }
     return {
       valid: Boolean((json as any)?.valid),
-      type: String((json as any)?.role || ''),
+      type: String((json as any)?.type || ''),
       organizationId: '',
-      organizationName: (json as any)?.organizationName,
-      role: (json as any)?.role,
-      reason: (json as any)?.reason ?? null,
+      organizationName: undefined,
+      role: undefined,
+      reason: (json as any)?.valid ? null : 'Invalid or expired access code',
     };
   },
 
@@ -10690,10 +11657,20 @@ export const Api = {
    * Toggle demo mode on/off
    */
   toggleDemoMode: async (
-    enabled: boolean
+    enabled: boolean,
+    source: string = 'demo_toggle'
   ): Promise<{
     success: boolean;
     isDemoMode: boolean;
+    demoExperienceType?: DemoExperienceType;
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+    demoLocale?: 'en' | 'pl';
     demoOrganization?: {
       id: string;
       name: string;
@@ -10708,15 +11685,23 @@ export const Api = {
       projects: number;
       initiatives: number;
       tasks: number;
-      assessments: number;
+      decisions?: number;
+      users?: number;
     };
+    coverage?: Array<{
+      tool: string;
+      seededRecords: string[];
+      userGoal: string;
+      ahaMoment: string;
+      cta: string;
+    }>;
     hints?: string[];
     message?: string;
   }> => {
     const res = await fetch(`${API_URL}/demo/toggle`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ enabled }),
+      body: JSON.stringify({ enabled, source }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -10731,6 +11716,15 @@ export const Api = {
   getDemoStatus: async (): Promise<{
     success: boolean;
     isDemoMode: boolean;
+    demoExperienceType?: DemoExperienceType;
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+    demoLocale?: 'en' | 'pl';
     demoOrganization?: {
       id: string;
       name: string;
@@ -10741,8 +11735,16 @@ export const Api = {
       projects: number;
       initiatives: number;
       tasks: number;
-      assessments: number;
+      decisions?: number;
+      users?: number;
     };
+    coverage?: Array<{
+      tool: string;
+      seededRecords: string[];
+      userGoal: string;
+      ahaMoment: string;
+      cta: string;
+    }>;
   }> => {
     const res = await fetch(`${API_URL}/demo/status`, {
       headers: getHeaders(),
@@ -10765,30 +11767,40 @@ export const Api = {
    */
   getDemoOrganization: async (): Promise<{
     success: boolean;
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+    demoLocale?: 'en' | 'pl';
     organization: {
       id: string;
       name: string;
       slug: string;
-      industry: string;
-      size: string;
-      region: string;
       description: string;
-      branding: {
-        primaryColor: string;
-        secondaryColor: string;
-        logo: string;
-      };
     };
     stats: {
       projects: number;
       initiatives: number;
       tasks: number;
-      assessments: number;
+      decisions?: number;
+      users?: number;
     };
     scenarios: Array<{
-      name: string;
-      description: string;
-      highlight: string;
+      id: string;
+      title: string;
+      duration?: string;
+      audience?: string;
+      persona?: string;
+    }>;
+    coverage?: Array<{
+      tool: string;
+      seededRecords: string[];
+      userGoal: string;
+      ahaMoment: string;
+      cta: string;
     }>;
   } | null> => {
     const res = await fetch(`${API_URL}/demo/organization`, {
@@ -11393,10 +12405,311 @@ export const Api = {
     }
   },
 
-  approveAIAction: async (actionId: string) => {
+  /**
+   * V8 / Wave A6 — fetch the unified list of proposals referenced in a
+   * conversation, with lifecycle state sourced from the governance row when
+   * available. Returns `{ proposals: ChatProposalView[] }`.
+   */
+  getConversationProposals: async (conversationId: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/conversations/${conversationId}/proposals`, {
+        method: 'GET',
+      });
+      return handleResponse(res, 'Failed to load conversation proposals');
+    } catch (err: any) {
+      console.error('[Api] getConversationProposals error:', err);
+      return { proposals: [] };
+    }
+  },
+
+  /**
+   * V8 / Wave A7.4 — Operator lookup over a persisted message's trust
+   * bundle. Returns the canonical bundle + any available `routingTrace`.
+   * Falsy on network/permission failure so the UI can gracefully fallback
+   * to the inline (message-attached) bundle.
+   */
+  getMessageTrustTrace: async (messageId: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/trust/${encodeURIComponent(messageId)}/trace`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as {
+        messageId: string;
+        conversationId: string;
+        createdAt: string;
+        modelUsed: string | null;
+        trustBundle: unknown;
+        trace: unknown[];
+        traceRef: string | null;
+      };
+    } catch (err: any) {
+      console.error('[Api] getMessageTrustTrace error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B9 — Feedback summary (admin view).
+   *
+   * Returns aggregates over `ai_response_feedback` for the admin Runs
+   * dashboard. Requires admin/owner role on the server; callers should
+   * 403-handle.
+   */
+  getAiFeedbackSummary: async (params?: {
+    windowDays?: number;
+    topNegativeLimit?: number;
+    scope?: 'org' | 'global';
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.windowDays) qs.set('windowDays', String(params.windowDays));
+      if (params?.topNegativeLimit) qs.set('topNegativeLimit', String(params.topNegativeLimit));
+      if (params?.scope) qs.set('scope', params.scope);
+      const s = qs.toString();
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`, {
+        method: 'GET',
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { summary: any };
+    } catch (err: any) {
+      console.error('[Api] getAiFeedbackSummary error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B9 follow-up — Prompt-tuning tickets.
+   *
+   * Admin-only helpers to turn negative feedback into durable tuning
+   * tasks without leaving the dashboard.
+   */
+  listPromptTuningTickets: async (params?: {
+    status?: Array<'open' | 'in_progress' | 'resolved' | 'dismissed'>;
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status && params.status.length > 0) {
+        qs.set('status', params.status.join(','));
+      }
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const s = qs.toString();
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`, {
+        method: 'GET',
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { tickets: any[] };
+    } catch (err: any) {
+      console.error('[Api] listPromptTuningTickets error:', err);
+      return null;
+    }
+  },
+
+  createPromptTuningTicket: async (input: {
+    title: string;
+    notes?: string;
+    feedbackId?: string;
+    responseModeHint?: string;
+    capabilityHint?: string;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/tuning-tickets`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { ticket: any };
+    } catch (err: any) {
+      console.error('[Api] createPromptTuningTicket error:', err);
+      return null;
+    }
+  },
+
+  updatePromptTuningTicketStatus: async (
+    id: string,
+    status: 'open' | 'in_progress' | 'resolved' | 'dismissed'
+  ) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/tuning-tickets/${encodeURIComponent(id)}/status`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ status }),
+        }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { ticket: any };
+    } catch (err: any) {
+      console.error('[Api] updatePromptTuningTicketStatus error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B5 — AI runs (scheduled agents + background jobs).
+   *
+   * Read-only list/detail for the Runs view. `status` is a
+   * comma-separated list; leaving it blank returns everything.
+   */
+  listAiRuns: async (params?: { status?: string[]; kind?: string; limit?: number }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status?.length) qs.set('status', params.status.join(','));
+      if (params?.kind) qs.set('kind', params.kind);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const s = qs.toString();
+      const res = await fetchWithRetry(`${API_URL}/ai/runs${s ? `?${s}` : ''}`, { method: 'GET' });
+      if (!res.ok) return { runs: [] as any[] };
+      return (await res.json()) as { runs: any[] };
+    } catch (err: any) {
+      console.error('[Api] listAiRuns error:', err);
+      return { runs: [] as any[] };
+    }
+  },
+
+  getAiRun: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/runs/${encodeURIComponent(id)}`, {
+        method: 'GET',
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { run: any };
+    } catch (err: any) {
+      console.error('[Api] getAiRun error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B1 — Agent catalog.
+   *
+   * Returns the six MVP agents visible in the composer picker. The
+   * server owns the canonical list; the client just renders it. Falls
+   * back to an empty array on network failure so the composer still
+   * shows "Default" and the user isn't blocked.
+   */
+  listAgents: async () => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/agents`, {
+        method: 'GET',
+      });
+      if (!res.ok) return { agents: [] as any[] };
+      return (await res.json()) as { agents: any[] };
+    } catch (err: any) {
+      console.error('[Api] listAgents error:', err);
+      return { agents: [] as any[] };
+    }
+  },
+
+  /**
+   * V8 / Wave B3 — Org memory retrieval.
+   *
+   * Lexical search over the caller's organization memory. Hits are
+   * tagged with `source_class: 'org_memory'` on the server so the
+   * trust bundle citation roll-up treats them as a first-class source.
+   */
+  searchOrgMemory: async (params: { q: string; limit?: number; sourceType?: string }) => {
+    try {
+      const qs = new URLSearchParams();
+      qs.set('q', params.q);
+      if (params.limit) qs.set('limit', String(params.limit));
+      if (params.sourceType) qs.set('sourceType', params.sourceType);
+      const res = await fetchWithRetry(`${API_URL}/ai/org-memory/search?${qs.toString()}`, {
+        method: 'GET',
+      });
+      if (!res.ok) return { hits: [] as any[], count: 0 };
+      return (await res.json()) as { hits: any[]; count: number };
+    } catch (err: any) {
+      console.error('[Api] searchOrgMemory error:', err);
+      return { hits: [] as any[], count: 0 };
+    }
+  },
+
+  /**
+   * V8 / Wave A8 — research sessions.
+   *
+   * These endpoints back the ResearchSessionsDock UI. All calls are
+   * organization-scoped on the server side (`req.organizationId`); the
+   * client sends no extra filters beyond status / limit.
+   */
+  listResearchSessions: async (params?: {
+    status?: string[];
+    userScope?: 'me' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const q = new URLSearchParams();
+      if (params?.status?.length) q.set('status', params.status.join(','));
+      if (params?.userScope) q.set('userScope', params.userScope);
+      if (params?.limit) q.set('limit', String(params.limit));
+      const qs = q.toString();
+      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`, {
+        method: 'GET',
+      });
+      if (!res.ok) return { sessions: [] as any[] };
+      return (await res.json()) as { sessions: any[] };
+    } catch (err: any) {
+      console.error('[Api] listResearchSessions error:', err);
+      return { sessions: [] as any[] };
+    }
+  },
+
+  getResearchSession: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] getResearchSession error:', err);
+      return null;
+    }
+  },
+
+  createResearchSession: async (body: {
+    topic: string;
+    conversationId?: string;
+    messageId?: string;
+    workloadClass?: 'deep_research' | 'long_job' | 'background';
+    plan?: unknown;
+    stepCount?: number;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] createResearchSession error:', err);
+      return null;
+    }
+  },
+
+  cancelResearchSession: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}/cancel`,
+        { method: 'POST' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] cancelResearchSession error:', err);
+      return null;
+    }
+  },
+
+  approveAIAction: async (actionId: string, conversationId?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/approve`, {
         method: 'POST',
+        body: JSON.stringify({ conversationId }),
       });
       return handleResponse(res, 'Failed to approve action');
     } catch (err: any) {
@@ -11405,58 +12718,52 @@ export const Api = {
     }
   },
 
-  // ==================== SETTINGS API STUBS ====================
-  // These are stub implementations for settings management
+  // ==================== SETTINGS API BRIDGE ====================
+  // Delegates legacy callers to the typed settings client.
 
   getAccessibilitySettings: async () => {
-    return {
-      preferences: {
-        highContrast: false,
-        largeText: false,
-        reduceMotion: false,
-        screenReaderOptimized: false,
-      },
-    };
+    return SettingsApi.getAccessibilityPreferences();
   },
 
   updateAccessibilitySettings: async (settings: any) => {
-    return { success: true, preferences: settings };
+    return SettingsApi.updateAccessibilityPreferences(settings);
   },
 
-  exportSettings: async (_filters?: any) => {
-    return {
-      data: { version: '1.0', settings: {} },
-      filename: `settings-export-${Date.now()}.json`,
-    };
+  exportSettings: async (filters?: any) => {
+    const categories = Array.isArray(filters)
+      ? filters
+      : Array.isArray(filters?.categories)
+        ? filters.categories
+        : undefined;
+    return SettingsApi.exportSettings(categories);
   },
 
-  importSettings: async (data: any, _overwrite?: boolean) => {
-    const imported = Array.isArray(data) ? data : [data];
-    return { success: true, imported };
+  importSettings: async (data: any, overwrite?: boolean) => {
+    return SettingsApi.importSettings(data, overwrite);
   },
 
-  getSettingsHistory: async (_category?: string, _days?: number) => {
-    return { entries: [], total: 0 };
+  getSettingsHistory: async (category?: string, days?: number) => {
+    return SettingsApi.getSettingsHistory(category, days);
   },
 
   restoreSettingsEntry: async (entryId: string) => {
-    return { success: true, entryId };
+    return SettingsApi.restoreSettingsHistoryEntry(entryId);
   },
 
   getSettingsTemplates: async () => {
-    return { templates: [] };
+    return SettingsApi.getSettingsTemplates();
   },
 
   applySettingsTemplate: async (templateId: string) => {
-    return { success: true, templateId };
+    return SettingsApi.applySettingsTemplate(templateId);
   },
 
   createSettingsTemplate: async (data: any) => {
-    return { success: true, template: { id: `template-${Date.now()}`, ...data } };
+    return SettingsApi.createSettingsTemplate(data);
   },
 
   deleteSettingsTemplate: async (templateId: string) => {
-    return { success: true, templateId };
+    return SettingsApi.deleteSettingsTemplate(templateId);
   },
 
   // ── AI Settings: backed by /api/ai-settings/* (real endpoints) ──
@@ -11536,7 +12843,8 @@ export const Api = {
 
   saveAIMemory: async (settings: any) => {
     return Api.updateAIUserSettings({
-      context_retention: settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
+      context_retention:
+        settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
     });
   },
 
@@ -11567,6 +12875,8 @@ export const Api = {
       preferences: {
         temperature: userSettings?.model_temperature ?? 0.7,
         maxTokens: userSettings?.max_tokens ?? 4096,
+        contextWindowSize: userSettings?.max_context_length ?? 4000,
+        responseSpeed: userSettings?.response_speed ?? 'balanced',
         topP: userSettings?.top_p ?? 1,
       },
     };
@@ -11576,6 +12886,8 @@ export const Api = {
     return Api.updateAIUserSettings({
       model_temperature: params.temperature ?? 0.7,
       max_tokens: params.maxTokens ?? 4096,
+      max_context_length: params.contextWindowSize ?? 4000,
+      response_speed: params.responseSpeed ?? 'balanced',
       top_p: params.topP ?? 1,
     });
   },
@@ -11584,9 +12896,17 @@ export const Api = {
     const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        tone: userSettings?.writing_tone || 'professional',
-        formality: 'balanced',
-        verbosity: 'concise',
+        tone: (userSettings?.writing_tone || 'professional') as
+          | 'professional'
+          | 'friendly'
+          | 'casual'
+          | 'academic',
+        formality: (userSettings?.formality || 'balanced') as 'formal' | 'balanced' | 'informal',
+        verbosity: (userSettings?.verbosity || 'concise') as
+          | 'minimal'
+          | 'concise'
+          | 'detailed'
+          | 'comprehensive',
       },
     };
   },
@@ -11594,6 +12914,8 @@ export const Api = {
   saveAIPersonality: async (personality: any) => {
     return Api.updateAIUserSettings({
       writing_tone: personality.tone || 'professional',
+      formality: personality.formality || 'balanced',
+      verbosity: personality.verbosity || 'concise',
     });
   },
 
@@ -11606,7 +12928,15 @@ export const Api = {
       return handleResponse(res, 'Failed to fetch AI usage stats');
     } catch {
       return {
-        stats: { totalTokens: 0, totalCost: 0, totalRequests: 0, avgResponseTime: 0, successRate: 100, limit: 10000, used: 0 },
+        stats: {
+          totalTokens: 0,
+          totalCost: 0,
+          totalRequests: 0,
+          avgResponseTime: 0,
+          successRate: 100,
+          limit: 10000,
+          used: 0,
+        },
         usageByFeature: [],
         dailyUsage: [],
       };
@@ -11641,83 +12971,51 @@ export const Api = {
   },
 
   getGdprConsents: async () => {
-    return { consents: [] };
+    return Api.get('/api/gdpr/consents');
   },
 
   updateGdprConsents: async (consents: any) => {
-    return { success: true, consents };
+    return Api.put('/api/gdpr/consents', { consents });
   },
 
   getGdprRetention: async () => {
-    return {
-      retention: {
-        period: '365' as const,
-        autoDelete: false,
-      },
-    };
+    return Api.get('/api/gdpr/retention');
   },
 
   updateGdprRetention: async (settings: any) => {
-    return { success: true, ...settings };
+    return Api.put('/api/gdpr/retention', { retention: settings });
   },
 
   saveGdprConsents: async (consents: any) => {
-    return { success: true, consents };
+    return Api.put('/api/gdpr/consents', { consents });
   },
 
   saveGdprRetention: async (settings: any) => {
-    return { success: true, settings };
+    return Api.put('/api/gdpr/retention', { retention: settings });
   },
 
   getGdprExportStatus: async () => {
-    return { status: 'none', lastExport: null, request: null };
+    return Api.get('/api/gdpr/export-status');
   },
 
   requestGdprExport: async () => {
-    return {
-      success: true,
-      request: {
-        id: `export-${Date.now()}`,
-        status: 'pending' as const,
-        requestedAt: new Date().toISOString(),
-      },
-    };
+    return Api.post('/api/gdpr/export-request', {});
   },
 
   requestGdprDeletion: async () => {
-    return {
-      success: true,
-      request: {
-        id: `delete-${Date.now()}`,
-        status: 'pending' as const,
-        requestedAt: new Date().toISOString(),
-      },
-    };
+    return Api.post('/api/gdpr/deletion-request', {});
   },
 
   cancelGdprDeletion: async (_requestId?: string) => {
-    return { success: true };
+    return Api.post('/api/gdpr/cancel-deletion', { requestId: _requestId });
   },
 
   getDeveloperSettings: async () => {
-    return {
-      settings: {
-        debugMode: false,
-        verboseLogging: false,
-        apiMocking: false,
-        experimentalFeatures: false,
-        apiEndpoint: '',
-        developerMode: false,
-        apiLogging: false,
-        showDebugInfo: false,
-        verboseErrors: false,
-        betaFeatures: [] as string[],
-      },
-    };
+    return SettingsApi.getDeveloperSettings();
   },
 
   saveDeveloperSettings: async (settings: any) => {
-    return { success: true, settings };
+    return SettingsApi.saveDeveloperSettings(settings);
   },
 
   // Integration Settings
@@ -11877,64 +13175,53 @@ export const Api = {
 
   // Keyboard Shortcuts
   getShortcuts: async () => {
-    return {
-      preferences: {
-        preset: 'default' as const,
-        enabled: true,
-        showHints: true,
-        customShortcuts: {} as Record<string, string>,
-        disabledShortcuts: [] as string[],
-      },
-    };
+    return SettingsApi.getShortcutsPreferences();
   },
 
   saveShortcuts: async (shortcuts: any) => {
-    return { success: true, shortcuts };
+    return SettingsApi.updateShortcutsPreferences(shortcuts);
   },
 
   // Privacy
   getPrivacyPreferences: async () => {
-    return {
-      preferences: {
-        analytics: true,
-        marketing: false,
-        thirdParty: false,
-      },
-    };
+    return SettingsApi.getPrivacyPreferences();
   },
 
   savePrivacyPreferences: async (preferences: any) => {
-    return { success: true, preferences };
+    return SettingsApi.updatePrivacyPreferences(preferences);
   },
 
   // Theme/Appearance
   getAppearancePreferences: async () => {
-    return {
-      preferences: {
-        theme: 'system',
-        accentColor: 'blue',
-        fontSize: 'medium',
-        compactMode: false,
-      },
-    };
+    return SettingsApi.getAppearancePreferences();
   },
 
   saveAppearancePreferences: async (preferences: any) => {
-    return { success: true, preferences };
+    return SettingsApi.updateAppearancePreferences(preferences);
   },
 
-  // Voice Settings — stored client-side (no backend table for voice prefs yet)
   getAIVoice: async () => {
-    try {
-      const stored = localStorage.getItem('ai-voice-preferences');
-      if (stored) return { preferences: JSON.parse(stored) };
-    } catch { /* ignore */ }
-    return { preferences: { ttsEnabled: false, sttEnabled: false, voice: 'alloy', speed: 1.0, autoPlay: false } };
+    return SettingsApi.getAIVoicePreferences();
   },
 
   saveAIVoice: async (settings: any) => {
-    localStorage.setItem('ai-voice-preferences', JSON.stringify(settings));
-    return { success: true, settings };
+    return SettingsApi.updateAIVoicePreferences(settings);
+  },
+
+  getAIPrivacyPreferences: async () => {
+    return SettingsApi.getAIPrivacyPreferences();
+  },
+
+  saveAIPrivacyPreferences: async (preferences: any) => {
+    return SettingsApi.updateAIPrivacyPreferences(preferences);
+  },
+
+  getPromptLibrary: async () => {
+    return SettingsApi.getPromptLibrary();
+  },
+
+  savePromptLibrary: async (prompts: any[]) => {
+    return SettingsApi.savePromptLibrary(prompts);
   },
 
   // System/Enterprise
@@ -12147,8 +13434,25 @@ export const Api = {
     return normalized;
   },
 
-  // Get connected cloud providers
+  // Get connected cloud providers.
+  // Primary path: `/api/cloud/providers` returns the V8 Wave B8 shape
+  // (`{ id, label, connected, capabilities: { connect|browse|freshness } }`).
+  // Fallback: `/api/cloud/sources` (old behavior) for deployments that
+  // haven't been redeployed yet.
   getCloudProviders: async () => {
+    try {
+      const res = await fetch(`${API_URL}/cloud/providers`, {
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        if (Array.isArray(payload?.providers) && payload.providers.length > 0) {
+          return { providers: payload.providers, sources: [] };
+        }
+      }
+    } catch {
+      // fall through to legacy path
+    }
     const res = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to load cloud providers');
     const payload = await res.json();
@@ -12161,6 +13465,7 @@ export const Api = {
         { id: 'google-drive', name: 'Google Drive', connected: connected.has('google_drive') },
         { id: 'onedrive', name: 'OneDrive', connected: connected.has('onedrive') },
         { id: 'dropbox', name: 'Dropbox', connected: connected.has('dropbox') },
+        { id: 'notion', name: 'Notion', connected: connected.has('notion') },
       ],
       sources,
     };
@@ -12505,12 +13810,16 @@ export const Api = {
     };
 
     try {
-      return await downloadFrom(`${API_URL}/v8/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`);
+      return await downloadFrom(
+        `${API_URL}/v8/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`
+      );
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
         throw error;
       }
-      return downloadFrom(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`);
+      return downloadFrom(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`
+      );
     }
   },
 
@@ -12558,11 +13867,14 @@ export const Api = {
       }
       const formData = new FormData();
       Array.from(files).forEach((file) => formData.append('files', file));
-      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`, {
-        method: 'POST',
-        headers: getHeaders(true),
-        body: formData,
-      });
+      const res = await fetch(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`,
+        {
+          method: 'POST',
+          headers: getHeaders(true),
+          body: formData,
+        }
+      );
       return handleResponse(res, 'Failed to upload notebook attachments');
     }
   },
@@ -14267,6 +15579,13 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to get ingestion log');
   },
+  resultsRunKPIConnector: async (connectorId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-connectors/${connectorId}/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run KPI connector');
+  },
   resultsCreateROIEvidence: async (data: {
     value: number;
     period: string;
@@ -14303,6 +15622,8 @@ export const Api = {
     kpiIds: string[];
     recipientPolicy: Record<string, unknown>;
     scheduleCron?: string;
+    sendAt?: string;
+    templateConfig?: Record<string, unknown>;
     approvalRequired?: boolean;
   }) => {
     const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules`, {
@@ -14318,6 +15639,15 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to get report schedules');
   },
+  resultsGetReportScheduleDeliveryLog: async (scheduleId: string) => {
+    const res = await fetch(
+      `${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/delivery-log`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to get report schedule delivery log');
+  },
   resultsApproveReportSchedule: async (scheduleId: string) => {
     const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/approve`, {
       method: 'POST',
@@ -14325,11 +15655,26 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to approve report schedule');
   },
+  resultsRunReportSchedule: async (scheduleId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run report schedule');
+  },
+  resultsRunDueEnterpriseWork: async () => {
+    const res = await fetch(`${API_URL}/results-v4/runtime/run-due`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run enterprise work');
+  },
   resultsCreateWallboard: async (data: {
     name: string;
     kpiIds: string[];
     refreshIntervalSeconds?: number;
     autoRotationSeconds?: number;
+    alertThresholds?: Record<string, unknown>;
   }) => {
     const res = await fetch(`${API_URL}/results-v4/wallboards`, {
       method: 'POST',

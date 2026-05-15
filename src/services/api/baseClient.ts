@@ -14,13 +14,26 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
+const getStoredOrganizationContextId = (): string => {
+  try {
+    return localStorage.getItem('consultify_current_org_id') || '';
+  } catch {
+    return '';
+  }
+};
+
 export const getHeaders = (): Record<string, string> => {
   const token = tokenService.getToken();
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Authorization: token ? `Bearer ${token}` : '',
     'X-Correlation-ID': correlationId as string,
   };
+  const orgContextId = getStoredOrganizationContextId();
+  if (orgContextId) {
+    headers['x-org-context'] = orgContextId;
+  }
+  return headers;
 };
 
 /**
@@ -38,8 +51,23 @@ export const fetchWithRetry = async (
   const headers = skipDefaultHeaders
     ? { ...((requestOptions.headers as Record<string, string>) || {}) }
     : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
-  // Ensure cookie-based sessions work even when API is cross-origin.
-  let res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+
+  const doFetch = () =>
+    fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+
+  let res: Response;
+  try {
+    res = await doFetch();
+  } catch (networkError: any) {
+    // Retry once on network errors (e.g., proxy down, ECONNREFUSED)
+    if (networkError?.name === 'TypeError' || networkError?.message?.includes('Failed to fetch')) {
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await doFetch();
+    } else {
+      throw networkError;
+    }
+  }
+
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
@@ -48,9 +76,12 @@ export const fetchWithRetry = async (
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+      res = await fetch(url, {
+        ...requestOptions,
+        headers,
+        credentials: options.credentials ?? 'include',
+      });
     } else {
-      // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
     }
   }
@@ -133,6 +164,28 @@ export const handleResponse = async <T = unknown>(
   throw err;
 };
 
+export const handleDataResponse = async <T = unknown>(
+  res: Response,
+  defaultError: string
+): Promise<T> => {
+  const payload = await handleResponse<unknown>(res, defaultError);
+
+  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
+    const err: any = new Error(`${defaultError}: invalid response envelope`);
+    err.data = payload;
+    throw err;
+  }
+
+  const data = (payload as { data?: T }).data;
+  if (typeof data === 'undefined') {
+    const err: any = new Error(`${defaultError}: missing response data`);
+    err.data = payload;
+    throw err;
+  }
+
+  return data;
+};
+
 /**
  * HTTP method helpers
  */
@@ -142,6 +195,61 @@ export const apiGet = async <T = unknown>(
 ): Promise<T> => {
   const res = await fetchWithRetry(`${API_URL}${endpoint}`);
   return handleResponse<T>(res, defaultError);
+};
+
+type CachedGetEntry = {
+  expiresAt: number;
+  value?: unknown;
+  inflight?: Promise<unknown>;
+};
+
+const cachedGetStore = new Map<string, CachedGetEntry>();
+
+export const invalidateApiCacheByPrefix = (prefix: string): void => {
+  for (const key of cachedGetStore.keys()) {
+    if (key.startsWith(prefix)) {
+      cachedGetStore.delete(key);
+    }
+  }
+};
+
+export const apiGetCached = async <T = unknown>(
+  endpoint: string,
+  ttlMs: number,
+  defaultError = 'Request failed'
+): Promise<T> => {
+  const key = `${API_URL}${endpoint}`;
+  const now = Date.now();
+  const cached = cachedGetStore.get(key);
+
+  if (cached?.value !== undefined && cached.expiresAt > now) {
+    return cached.value as T;
+  }
+
+  if (cached?.inflight) {
+    return cached.inflight as Promise<T>;
+  }
+
+  const inflight = (async () => {
+    const res = await fetchWithRetry(key);
+    const value = await handleResponse<T>(res, defaultError);
+    cachedGetStore.set(key, {
+      value,
+      expiresAt: Date.now() + Math.max(0, ttlMs),
+    });
+    return value;
+  })().catch((error) => {
+    cachedGetStore.delete(key);
+    throw error;
+  });
+
+  cachedGetStore.set(key, {
+    value: cached?.value,
+    expiresAt: cached?.expiresAt || 0,
+    inflight,
+  });
+
+  return inflight;
 };
 
 export const apiPost = async <T = unknown>(

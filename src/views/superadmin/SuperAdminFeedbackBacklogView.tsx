@@ -1,6 +1,7 @@
-import { ExternalLink, Filter, Loader2, Tag } from 'lucide-react';
+import { ChevronDown, ChevronRight, Filter, Loader2, Tag } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
@@ -20,21 +21,31 @@ interface FeedbackBacklogTask {
 
 export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<FeedbackBacklogTask[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<string>('ALL');
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
+      setError(null);
+      setErrorCode(null);
       try {
         const data = await Api.getFeedbackBacklogTasks(300);
         if (!mounted) return;
         setTasks((data || []) as FeedbackBacklogTask[]);
       } catch (e) {
-        // silent fail for superadmin dashboards
+        if (!mounted) return;
+        console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
+        setTasks([]);
+        setError('Feedback backlog is temporarily unavailable.');
+        const code = (e as { code?: unknown })?.code;
+        setErrorCode(typeof code === 'string' && code.trim() ? code.trim() : null);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -67,9 +78,17 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
     });
   }, [tasks, query, priority]);
 
-  const openTask = (taskId: string) => {
-    const url = `/my-work/tasks/${taskId}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+  // Feedback #5e5a86c4 — previously this opened `/my-work/tasks/:id` in a new
+  // tab. That route doesn't exist (the `/my-work/*` wildcard just re-renders
+  // the generic My Work dashboard), so the user was dumped into an unrelated
+  // task list in production — losing the superadmin context and seeing tasks
+  // that had nothing to do with the feedback they clicked on. We now expand
+  // the row in place with the full description, tags, and a direct link to
+  // the originating feedback ticket, so the admin stays inside the console.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpanded = (taskId: string) => {
+    setExpandedId((curr) => (curr === taskId ? null : taskId));
   };
 
   const envFromTags = (tags?: string[]) =>
@@ -119,6 +138,23 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
         </select>
       </div>
 
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+        >
+          {error}
+          {errorCode ? (
+            <div
+              data-testid="feedback-backlog-error-code"
+              className="mt-1 text-[11px] font-medium text-amber-700/90 dark:text-amber-300/90"
+            >
+              Code: {errorCode}
+            </div>
+          ) : null}
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 py-8">
           <Loader2 size={16} className="animate-spin" />
@@ -134,45 +170,99 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
             <div className="divide-y divide-slate-100 dark:divide-navy-800">
               {filtered.map((item) => {
                 const env = envFromTags(item.tags);
+                const isExpanded = expandedId === item.id;
+                const otherTags = (item.tags || []).filter(
+                  (tg) => typeof tg === 'string' && !tg.startsWith('env:')
+                );
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => openTask(item.id)}
-                    className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                            {item.title}
-                          </span>
-                          {env && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
-                              {env.toUpperCase()}
+                  <div key={item.id}>
+                    <button
+                      onClick={() => toggleExpanded(item.id)}
+                      className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                              {item.title}
                             </span>
-                          )}
+                            {env && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                                {env.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                            <span>
+                              {t('common.priority', 'Priority')}:{' '}
+                              <b>{String(item.priority || 'medium')}</b>
+                            </span>
+                            <span>
+                              {t('common.status', 'Status')}: <b>{String(item.status || 'todo')}</b>
+                            </span>
+                            {item.feedbackId && (
+                              <span className="flex items-center gap-1">
+                                <Tag size={12} />
+                                {t('feedback.ticket', 'Ticket')}: <b>{item.feedbackId}</b>
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                          <span>
-                            {t('common.priority', 'Priority')}:{' '}
-                            <b>{String(item.priority || 'medium')}</b>
-                          </span>
-                          <span>
-                            {t('common.status', 'Status')}: <b>{String(item.status || 'todo')}</b>
-                          </span>
-                          {item.feedbackId && (
-                            <span className="flex items-center gap-1">
-                              <Tag size={12} />
-                              {t('feedback.ticket', 'Ticket')}: <b>{item.feedbackId}</b>
-                            </span>
-                          )}
+                        <div className="shrink-0 text-slate-400 dark:text-slate-500">
+                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </div>
                       </div>
-                      <div className="shrink-0 text-slate-400 dark:text-slate-500">
-                        <ExternalLink size={16} />
+                    </button>
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-0 -mt-1 text-xs text-slate-600 dark:text-slate-300 space-y-2 bg-slate-50/60 dark:bg-navy-800/40">
+                        {item.description ? (
+                          <div className="whitespace-pre-wrap leading-relaxed">
+                            {item.description}
+                          </div>
+                        ) : (
+                          <div className="italic text-slate-400">
+                            {t('feedback.backlog.noDescription', 'No description recorded.')}
+                          </div>
+                        )}
+                        {otherTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {otherTags.map((tg) => (
+                              <span
+                                key={tg}
+                                className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-[10px]"
+                              >
+                                {tg}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {item.feedbackId && (
+                          <div className="pt-1">
+                            <a
+                              href={`#/superadmin/feedback?feedbackId=${encodeURIComponent(
+                                item.feedbackId
+                              )}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                              onClick={(e) => {
+                                // Keep it within the SPA — navigate to the
+                                // feedback registry and deep-link to this ticket.
+                                e.preventDefault();
+                                const targetHash = `#/superadmin/feedback?feedbackId=${encodeURIComponent(
+                                  String(item.feedbackId)
+                                )}`;
+                                if (window.location.hash !== targetHash) {
+                                  window.location.hash = targetHash;
+                                }
+                              }}
+                            >
+                              {t('feedback.backlog.openTicket', 'Open source feedback ticket')}
+                              <Tag size={11} />
+                            </a>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </button>
+                    )}
+                  </div>
                 );
               })}
             </div>

@@ -60,6 +60,7 @@ import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NMo
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
+import { V8ResultsApi } from '@/services/api/v8/results';
 import {
   getContextActions,
   getFilteredStatusActions,
@@ -77,7 +78,8 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-import { buildArtifactCode, buildArtifactPermalink } from '@/utils/artifactLinks';
+import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
@@ -96,6 +98,7 @@ import {
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   type NModeAction,
   NModeCanvas,
@@ -123,6 +126,11 @@ import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
+import {
+  extractInitiativeKpiRows,
+  type InitiativeKpiEditorRow,
+  toInitiativeKpiEditorRow,
+} from './initiativeKpiContract';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
@@ -177,7 +185,7 @@ const toEnglishKpiName = (name: string, isPolish: boolean): string => {
   return KPI_NAME_EN_MAP[name] || name;
 };
 
-const toKpiNumber = (value: string): number => {
+const toKpiNumber = (value?: string | null): number => {
   const normalized = String(value || '')
     .replace(',', '.')
     .trim();
@@ -321,6 +329,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const titleInputId = 'initiative-title-input';
 
@@ -355,18 +364,32 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [inScopeItems, setInScopeItems] = useState<string[]>([]);
   const [outScopeItems, setOutScopeItems] = useState<string[]>([]);
   const [killCriteriaItems, setKillCriteriaItems] = useState<string[]>([]);
-  const [localKpis, setLocalKpis] = useState<
+  const [localKpis, setLocalKpis] = useState<InitiativeKpiEditorRow[]>([]);
+  const [showCreateKpi, setShowCreateKpi] = useState(false);
+  const [createKpiMode, setCreateKpiMode] = useState<'manual' | 'linked'>('manual');
+  const [createKpiName, setCreateKpiName] = useState('');
+  const [createKpiUnit, setCreateKpiUnit] = useState('');
+  const [createKpiCategory, setCreateKpiCategory] = useState('benefits');
+  const [createKpiBaseline, setCreateKpiBaseline] = useState('');
+  const [createKpiObservationPhase, setCreateKpiObservationPhase] = useState<
+    'realization' | 'post-implementation' | 'both'
+  >('post-implementation');
+  const [createKpiRealizationTarget, setCreateKpiRealizationTarget] = useState('');
+  const [createKpiPostImplementationTarget, setCreateKpiPostImplementationTarget] = useState('');
+  const [createKpiCadence, setCreateKpiCadence] = useState('MONTHLY');
+  const [createKpiLibraryId, setCreateKpiLibraryId] = useState('');
+  const [createKpiLibraryOptions, setCreateKpiLibraryOptions] = useState<
     Array<{
       id: string;
       name: string;
-      category?: string;
-      unit: string;
-      baseline: string;
-      target: string;
-      current: string;
+      unit?: string | null;
+      category?: string | null;
+      baselineValue?: number | null;
+      targetValue?: number | null;
+      measurementFrequency?: string;
     }>
   >([]);
-  const [showCreateKpi, setShowCreateKpi] = useState(false);
+  const [createKpiLibraryLoading, setCreateKpiLibraryLoading] = useState(false);
   const [kpiMenuId, setKpiMenuId] = useState<string | null>(null);
   const [editingKpiId, setEditingKpiId] = useState<string | null>(null);
   const [editKpiName, setEditKpiName] = useState('');
@@ -1173,6 +1196,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       baseline: string;
       current: string;
       target: string;
+      cadence?: string;
     }) => {
       setEditingKpiId(kpi.id);
       setEditKpiName(kpi.name || '');
@@ -1193,25 +1217,243 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setEditKpiTarget('');
   }, []);
 
-  const saveEditKpi = useCallback(() => {
-    if (!editingKpiId || !editKpiName.trim() || !editKpiUnit.trim()) return;
-    setLocalKpis((prev) =>
-      prev.map((k) =>
-        k.id === editingKpiId
-          ? {
-              ...k,
-              name: editKpiName.trim(),
-              unit: editKpiUnit.trim(),
-              baseline: editKpiBaseline.trim(),
-              current: editKpiCurrent.trim(),
-              target: editKpiTarget.trim(),
-            }
-          : k
-      )
+  const resetCreateKpiDraft = useCallback(() => {
+    setCreateKpiMode('manual');
+    setCreateKpiName('');
+    setCreateKpiUnit('');
+    setCreateKpiCategory('benefits');
+    setCreateKpiBaseline('');
+    setCreateKpiObservationPhase('post-implementation');
+    setCreateKpiRealizationTarget('');
+    setCreateKpiPostImplementationTarget('');
+    setCreateKpiCadence('MONTHLY');
+    setCreateKpiLibraryId('');
+  }, []);
+
+  useEffect(() => {
+    if (!showCreateKpi) return;
+    let cancelled = false;
+    setCreateKpiLibraryLoading(true);
+    V8ResultsApi.getKpiCatalog()
+      .then((catalog) => {
+        if (cancelled) return;
+        const options = Array.isArray(catalog?.kpis)
+          ? catalog.kpis.map((kpi) => ({
+              id: kpi.id,
+              name: kpi.name,
+              unit: kpi.unit,
+              category: kpi.category,
+              baselineValue: kpi.baselineValue,
+              targetValue: kpi.targetValue,
+              measurementFrequency: kpi.measurementFrequency,
+            }))
+          : [];
+        setCreateKpiLibraryOptions(options);
+      })
+      .catch(() => {
+        if (!cancelled) setCreateKpiLibraryOptions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCreateKpiLibraryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showCreateKpi]);
+
+  useEffect(() => {
+    if (createKpiMode !== 'linked' || !createKpiLibraryId) return;
+    const selected = createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId);
+    if (!selected) return;
+    setCreateKpiName(selected.name || '');
+    setCreateKpiUnit(String(selected.unit || ''));
+    setCreateKpiCategory(String(selected.category || 'benefits'));
+    setCreateKpiBaseline(
+      selected.baselineValue == null || Number.isNaN(Number(selected.baselineValue))
+        ? ''
+        : String(selected.baselineValue)
     );
-    toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
-    cancelEditKpi();
+    setCreateKpiCadence(String(selected.measurementFrequency || 'MONTHLY'));
+    setCreateKpiRealizationTarget(
+      selected.targetValue == null || Number.isNaN(Number(selected.targetValue))
+        ? ''
+        : String(selected.targetValue)
+    );
+    setCreateKpiPostImplementationTarget(
+      selected.targetValue == null || Number.isNaN(Number(selected.targetValue))
+        ? ''
+        : String(selected.targetValue)
+    );
+  }, [createKpiLibraryId, createKpiLibraryOptions, createKpiMode]);
+
+  const createKpi = useCallback(async () => {
+    if (!initiativeId) return;
+    if (createKpiMode === 'linked' && !createKpiLibraryId) {
+      toast.error(isPolish ? 'Wybierz KPI z listy' : 'Select a KPI from the list');
+      return;
+    }
+    if (createKpiMode === 'manual' && !createKpiName.trim()) {
+      toast.error(isPolish ? 'Nazwa KPI jest wymagana' : 'KPI name is required');
+      return;
+    }
+
+    setIsMutating(true);
+    try {
+      const baselineValue = toKpiNumber(createKpiBaseline);
+      const realizationTarget = toKpiNumber(createKpiRealizationTarget);
+      const postImplementationTarget = toKpiNumber(createKpiPostImplementationTarget);
+      const fallbackTarget =
+        postImplementationTarget ?? realizationTarget ?? toKpiNumber(createKpiRealizationTarget);
+      const payload = {
+        kpiId: createKpiMode === 'linked' ? createKpiLibraryId : undefined,
+        definitionSource: createKpiMode === 'linked' ? 'library' : 'initiative-custom',
+        name: createKpiMode === 'manual' ? createKpiName.trim() : undefined,
+        category: createKpiCategory || 'benefits',
+        unit: createKpiUnit.trim() || undefined,
+        baselineValue,
+        targetValue: fallbackTarget,
+        measurementFrequency: createKpiCadence || 'MONTHLY',
+        observationPhase: createKpiObservationPhase,
+        trackedInRealization:
+          createKpiObservationPhase === 'realization' || createKpiObservationPhase === 'both',
+        trackedPostImplementation:
+          createKpiObservationPhase === 'post-implementation' ||
+          createKpiObservationPhase === 'both',
+        realizationExpectation: {
+          baselineValue,
+          targetValue: realizationTarget,
+          measurementFrequency: createKpiCadence || 'MONTHLY',
+        },
+        postImplementationExpectation: {
+          baselineValue,
+          targetValue: postImplementationTarget,
+          measurementFrequency: createKpiCadence || 'MONTHLY',
+        },
+      };
+
+      const res = await Api.post(`/initiatives/${initiativeId}/kpis`, payload);
+      const created = res?.kpi || res?.data?.kpi;
+      setLocalKpis((prev) => [
+        created
+          ? toInitiativeKpiEditorRow(created, 0)
+          : {
+              id: `kpi-${Date.now()}`,
+              mappingId: null,
+              definitionSource: payload.definitionSource as 'library' | 'initiative-custom',
+              name:
+                createKpiMode === 'linked'
+                  ? createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId)
+                      ?.name || createKpiName.trim()
+                  : createKpiName.trim(),
+              category: payload.category,
+              unit: createKpiUnit.trim(),
+              baseline: String(baselineValue ?? ''),
+              target: String(fallbackTarget ?? ''),
+              current: '',
+              observationPhase: createKpiObservationPhase,
+              trackedInRealization: Boolean(payload.trackedInRealization),
+              trackedPostImplementation: Boolean(payload.trackedPostImplementation),
+              realizationTarget: String(realizationTarget ?? ''),
+              postImplementationTarget: String(postImplementationTarget ?? ''),
+              cadence: createKpiCadence || 'MONTHLY',
+            },
+        ...prev,
+      ]);
+      toast.success(
+        createKpiMode === 'linked'
+          ? isPolish
+            ? 'KPI podłączone do inicjatywy'
+            : 'KPI linked to initiative'
+          : isPolish
+            ? 'KPI dodane do inicjatywy'
+            : 'KPI added to initiative'
+      );
+      resetCreateKpiDraft();
+      setShowCreateKpi(false);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się dodać KPI' : 'Failed to add KPI');
+    } finally {
+      setIsMutating(false);
+    }
   }, [
+    createKpiBaseline,
+    createKpiCadence,
+    createKpiLibraryId,
+    createKpiLibraryOptions,
+    createKpiMode,
+    createKpiName,
+    createKpiObservationPhase,
+    createKpiPostImplementationTarget,
+    createKpiRealizationTarget,
+    createKpiUnit,
+    createKpiCategory,
+    initiativeId,
+    isPolish,
+    resetCreateKpiDraft,
+  ]);
+
+  const saveEditKpi = useCallback(async () => {
+    if (!initiativeId || !editingKpiId || !editKpiName.trim() || !editKpiUnit.trim()) return;
+    setIsMutating(true);
+    try {
+      const baselineValue = toKpiNumber(editKpiBaseline);
+      const targetValue = toKpiNumber(editKpiTarget);
+      const currentValue = toKpiNumber(editKpiCurrent);
+      const existing = localKpis.find((k) => k.id === editingKpiId);
+      const res = await Api.put(`/initiatives/${initiativeId}/kpis/${editingKpiId}`, {
+        name: editKpiName.trim(),
+        unit: editKpiUnit.trim(),
+        baselineValue,
+        targetValue,
+        currentValue,
+        category: existing?.category || 'benefits',
+        observationPhase: existing?.observationPhase || 'post-implementation',
+        trackedInRealization: existing?.trackedInRealization ?? false,
+        trackedPostImplementation: existing?.trackedPostImplementation ?? true,
+        measurementFrequency: existing?.cadence || 'MONTHLY',
+        realizationExpectation: {
+          targetValue: toKpiNumber(existing?.realizationTarget || existing?.target),
+          measurementFrequency: existing?.cadence || 'MONTHLY',
+        },
+        postImplementationExpectation: {
+          targetValue: toKpiNumber(existing?.postImplementationTarget || existing?.target),
+          measurementFrequency: existing?.cadence || 'MONTHLY',
+        },
+      });
+
+      const saved = res?.kpi || res?.data?.kpi;
+      setLocalKpis((prev) =>
+        prev.map((k) =>
+          k.id === editingKpiId
+            ? {
+                ...k,
+                ...(saved
+                  ? toInitiativeKpiEditorRow(saved, 0)
+                  : {
+                      name: editKpiName.trim(),
+                      unit: editKpiUnit.trim(),
+                      baseline: String(baselineValue ?? ''),
+                      current: String(currentValue ?? ''),
+                      target: String(targetValue ?? ''),
+                      realizationTarget: String(existing?.realizationTarget ?? targetValue ?? ''),
+                      postImplementationTarget: String(
+                        existing?.postImplementationTarget ?? targetValue ?? ''
+                      ),
+                      cadence: String(existing?.cadence ?? 'MONTHLY'),
+                    }),
+              }
+            : k
+        )
+      );
+      toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
+      cancelEditKpi();
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać KPI' : 'Failed to save KPI');
+    } finally {
+      setIsMutating(false);
+    }
+  }, [
+    initiativeId,
     cancelEditKpi,
     editKpiBaseline,
     editKpiCurrent,
@@ -1220,16 +1462,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     editKpiUnit,
     editingKpiId,
     isPolish,
+    localKpis,
   ]);
 
   const duplicateKpi = useCallback(
-    async (kpi: {
-      name: string;
-      unit: string;
-      baseline: string;
-      target: string;
-      category?: string;
-    }) => {
+    async (kpi: InitiativeKpiEditorRow) => {
       if (!initiativeId) return;
       setIsMutating(true);
       try {
@@ -1242,27 +1479,37 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           description: null,
           baselineValue,
           targetValue,
-          measurementFrequency: 'monthly',
+          measurementFrequency: kpi.cadence || 'MONTHLY',
+          observationPhase: kpi.observationPhase || 'post-implementation',
+          trackedInRealization: kpi.trackedInRealization ?? false,
+          trackedPostImplementation: kpi.trackedPostImplementation ?? true,
+          realizationExpectation: {
+            targetValue: toKpiNumber(kpi.realizationTarget || kpi.target),
+            measurementFrequency: kpi.cadence || 'MONTHLY',
+          },
+          postImplementationExpectation: {
+            targetValue: toKpiNumber(kpi.postImplementationTarget || kpi.target),
+            measurementFrequency: kpi.cadence || 'MONTHLY',
+          },
         });
 
-        const created = res?.kpi || {};
+        const created = res?.kpi || res?.data?.kpi || null;
         setLocalKpis((prev) => [
-          {
-            id: String(created.id || `kpi-${Date.now()}`),
-            name: String(created.name || `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`),
-            category: String(created.category || 'benefits'),
-            unit: String(created.unit || kpi.unit || '%'),
-            baseline: String(created.baselineValue ?? baselineValue),
-            target: String(created.targetValue ?? targetValue),
-            current: String(created.currentValue ?? baselineValue),
-          },
+          created
+            ? toInitiativeKpiEditorRow(created, 0)
+            : {
+                ...kpi,
+                id: `kpi-${Date.now()}`,
+                name: `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`,
+                baseline: String(baselineValue),
+                target: String(targetValue),
+                current: String(baselineValue),
+              },
           ...prev,
         ]);
         toast.success(isPolish ? 'KPI zduplikowane' : 'KPI duplicated');
-      } catch (e: any) {
-        toast.error(
-          e?.message || (isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI')
-        );
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI');
       } finally {
         setIsMutating(false);
       }
@@ -1271,12 +1518,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   const removeKpi = useCallback(
-    (kpiId: string) => {
-      setLocalKpis((prev) => prev.filter((k) => k.id !== kpiId));
-      if (editingKpiId === kpiId) cancelEditKpi();
-      toast.success(isPolish ? 'KPI usunięte' : 'KPI removed');
+    async (kpiId: string) => {
+      if (!initiativeId) return;
+      setIsMutating(true);
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/kpis/${kpiId}`);
+        setLocalKpis((prev) => prev.filter((k) => k.id !== kpiId));
+        if (editingKpiId === kpiId) cancelEditKpi();
+        toast.success(isPolish ? 'KPI usunięte' : 'KPI removed');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć KPI' : 'Failed to remove KPI');
+      } finally {
+        setIsMutating(false);
+      }
     },
-    [cancelEditKpi, editingKpiId, isPolish]
+    [initiativeId, cancelEditKpi, editingKpiId, isPolish]
   );
 
   const tasksDone = useMemo(
@@ -1442,6 +1698,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (!initiativeId) return;
     setIsLoading(true);
     setError(null);
+    setErrorCode(null);
     try {
       const showcaseDetail = isShowcaseInitiativeId(initiativeId)
         ? initiativesDemoData.initiativeDetailsById[initiativeId]
@@ -1629,15 +1886,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ? data.kpi
           : [];
       setLocalKpis(
-        rawKpis.map((k: any, idx: number) => ({
-          id: String(k.id || `kpi-${idx}`),
-          name: String(k.name || k.title || ''),
-          category: String(k.category || 'benefits'),
-          unit: String(k.unit || ''),
-          baseline: String(k.baselineValue ?? k.baseline ?? ''),
-          target: String(k.targetValue ?? k.target ?? ''),
-          current: String(k.currentValue ?? k.current ?? ''),
-        }))
+        rawKpis.map((k: any, idx: number) =>
+          toInitiativeKpiEditorRow(
+            {
+              ...k,
+              targetValue: k.targetValue ?? k.target ?? null,
+              baselineValue: k.baselineValue ?? k.baseline ?? null,
+              currentValue: k.currentValue ?? k.current ?? null,
+              latestValue: k.latestValue ?? k.currentValue ?? k.current ?? null,
+              measurementFrequency: k.measurementFrequency ?? 'MONTHLY',
+              alertDirection: k.alertDirection ?? 'BELOW',
+              isPrimary: k.isPrimary ?? false,
+              sortOrder: k.sortOrder ?? idx,
+              isOnTarget: Boolean(k.isOnTarget),
+              createdAt: k.createdAt ?? new Date().toISOString(),
+            },
+            idx
+          )
+        )
       );
       const rawResources = Array.isArray(data.resources) ? data.resources : [];
       setResourceItems(
@@ -1761,18 +2027,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         V8PlanningApi.getKpis(initiativeId)
           .catch(() => Api.get(`/initiatives/${initiativeId}/kpis`))
           .then((res: any) => {
-            const rows = Array.isArray(res?.kpis) ? res.kpis : [];
-            setLocalKpis(
-              rows.map((k: any, idx: number) => ({
-                id: String(k.id || `kpi-${idx}`),
-                name: String(k.name || ''),
-                category: String(k.category || 'benefits'),
-                unit: String(k.unit || ''),
-                baseline: String(k.baselineValue ?? ''),
-                target: String(k.targetValue ?? ''),
-                current: String(k.latestValue ?? k.currentValue ?? ''),
-              }))
-            );
+            const rows = extractInitiativeKpiRows(res);
+            setLocalKpis(rows.map((kpi, idx) => toInitiativeKpiEditorRow(kpi, idx)));
           })
           .catch(() => {
             // keep fallback KPI mapping from initiative payload
@@ -2009,7 +2265,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       await Promise.allSettled(fetches);
     } catch (e: any) {
-      setError(e?.message || 'Failed to load initiative');
+      const mapped = mapHubLoadFailureToPresentation(e, 'Failed to load initiative');
+      setError(mapped.message);
+      setErrorCode(mapped.code);
     } finally {
       setIsLoading(false);
     }
@@ -4666,6 +4924,39 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           />
         ),
       },
+      ...(() => {
+        const srcType = initiative?.source_type || initiative?.sourceType;
+        const srcId = initiative?.source_id || initiative?.sourceId;
+        if (srcType !== 'interview' || !srcId) return [];
+        const insightTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
+        const insightPath = getArtifactPath('insight', srcId);
+        return [
+          {
+            id: 'sourceInsight',
+            label: { en: 'Source', pl: 'Źródło' },
+            type: 'custom' as const,
+            value: srcId,
+            onChange: () => {},
+            readOnly: true,
+            render: () => (
+              <a
+                href={insightPath}
+                title={
+                  isPolish ? `Otwórz insight: ${insightTitle}` : `Open insight: ${insightTitle}`
+                }
+                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition-colors truncate"
+              >
+                <Sparkles size={12} className="shrink-0" />
+                <span className="truncate">
+                  {isPolish ? 'Z Insightu: ' : 'From Insight: '}
+                  {insightTitle}
+                </span>
+                <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
+              </a>
+            ),
+          },
+        ] as NModePropertyField[];
+      })(),
     ];
   }, [
     initiative,
@@ -6837,12 +7128,158 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               </div>
               {showCreateKpi && (
-                <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-4 py-3">
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {isPolish
-                      ? 'W przygotowaniu. Finalnie KPI będą zarządzane w zakładce Benefits.'
-                      : 'In progress. KPI management will be handled in the Benefits tab.'}
-                  </p>
+                <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-4 py-3 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      {isPolish
+                        ? 'Dodaj KPI ręcznie albo podłącz istniejące KPI do tej inicjatywy i ustaw oczekiwania dla realizacji oraz okresu po wdrożeniu.'
+                        : 'Add a manual KPI or link an existing KPI to this initiative and set expectations for realization and post-implementation.'}
+                    </p>
+                    <div className="inline-flex rounded-xl border border-slate-200 dark:border-navy-700/60 p-1 bg-white/80 dark:bg-navy-900/80">
+                      <button
+                        onClick={() => setCreateKpiMode('manual')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          createKpiMode === 'manual'
+                            ? 'bg-primary-500 text-white'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        {isPolish ? 'Ręczne KPI' : 'Manual KPI'}
+                      </button>
+                      <button
+                        onClick={() => setCreateKpiMode('linked')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          createKpiMode === 'linked'
+                            ? 'bg-primary-500 text-white'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        {isPolish ? 'Podłącz istniejące' : 'Link existing'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                    {createKpiMode === 'linked' && (
+                      <div className="md:col-span-6">
+                        <select
+                          value={createKpiLibraryId}
+                          onChange={(e) => setCreateKpiLibraryId(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                        >
+                          <option value="">
+                            {createKpiLibraryLoading
+                              ? isPolish
+                                ? 'Ładowanie katalogu KPI...'
+                                : 'Loading KPI catalog...'
+                              : isPolish
+                                ? 'Wybierz KPI z katalogu'
+                                : 'Select KPI from catalog'}
+                          </option>
+                          {createKpiLibraryOptions.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.name}
+                              {option.unit ? ` (${option.unit})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <input
+                      value={createKpiName}
+                      onChange={(e) => setCreateKpiName(e.target.value)}
+                      placeholder={isPolish ? 'Nazwa KPI' : 'KPI name'}
+                      disabled={createKpiMode === 'linked'}
+                      className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
+                    />
+                    <input
+                      value={createKpiUnit}
+                      onChange={(e) => setCreateKpiUnit(e.target.value)}
+                      placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                      disabled={createKpiMode === 'linked'}
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
+                    />
+                    <input
+                      value={createKpiCategory}
+                      onChange={(e) => setCreateKpiCategory(e.target.value)}
+                      placeholder={isPolish ? 'Kategoria' : 'Category'}
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                    <input
+                      value={createKpiBaseline}
+                      onChange={(e) => setCreateKpiBaseline(e.target.value)}
+                      placeholder="Baseline"
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                    <select
+                      value={createKpiCadence}
+                      onChange={(e) => setCreateKpiCadence(e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    >
+                      {['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY'].map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={createKpiObservationPhase}
+                      onChange={(e) =>
+                        setCreateKpiObservationPhase(
+                          e.target.value as 'realization' | 'post-implementation' | 'both'
+                        )
+                      }
+                      className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    >
+                      <option value="realization">
+                        {isPolish ? 'Tylko realizacja' : 'Realization only'}
+                      </option>
+                      <option value="post-implementation">
+                        {isPolish ? 'Tylko po wdrożeniu' : 'Post-implementation only'}
+                      </option>
+                      <option value="both">{isPolish ? 'Obie fazy' : 'Both phases'}</option>
+                    </select>
+                    <input
+                      value={createKpiRealizationTarget}
+                      onChange={(e) => setCreateKpiRealizationTarget(e.target.value)}
+                      placeholder={isPolish ? 'Cel realizacja' : 'Realization target'}
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                    <input
+                      value={createKpiPostImplementationTarget}
+                      onChange={(e) => setCreateKpiPostImplementationTarget(e.target.value)}
+                      placeholder={isPolish ? 'Cel po wdrożeniu' : 'Post-implementation target'}
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        resetCreateKpiDraft();
+                        setShowCreateKpi(false);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    >
+                      {isPolish ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        void createKpi();
+                      }}
+                      disabled={
+                        isMutating ||
+                        (createKpiMode === 'manual' ? !createKpiName.trim() : !createKpiLibraryId)
+                      }
+                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium disabled:opacity-50"
+                    >
+                      {createKpiMode === 'linked'
+                        ? isPolish
+                          ? 'Podłącz KPI'
+                          : 'Link KPI'
+                        : isPolish
+                          ? 'Dodaj KPI'
+                          : 'Add KPI'}
+                    </button>
+                  </div>
                 </div>
               )}
               {editingKpiId && (
@@ -6899,10 +7336,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <thead>
                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
                       <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
+                      <th className="text-left py-2 pr-2">{isPolish ? 'Faza' : 'Phase'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Baza' : 'Baseline'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Cel' : 'Target'}</th>
+                      <th className="text-left py-2 pr-2">
+                        {isPolish ? 'Cel realizacja' : 'Realization target'}
+                      </th>
+                      <th className="text-left py-2 pr-2">
+                        {isPolish ? 'Cel po wdrożeniu' : 'Post-implementation target'}
+                      </th>
                       <th className="text-right py-2">{isPolish ? 'Tracking' : 'Tracking'}</th>
                       <th className="text-right py-2 w-10" />
                     </tr>
@@ -6911,7 +7354,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {localKpis.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={9}
                           className="py-8 text-center text-xs text-slate-500 dark:text-slate-400"
                         >
                           {isPolish
@@ -6923,7 +7366,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       localKpis.map((kpi) => (
                         <tr key={kpi.id}>
                           <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
-                            {toEnglishKpiName(kpi.name, isPolish)}
+                            <div className="flex items-center gap-2">
+                              <span>{toEnglishKpiName(kpi.name, isPolish)}</span>
+                              <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-navy-700/60 px-1.5 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                                {kpi.definitionSource === 'library'
+                                  ? isPolish
+                                    ? 'z katalogu'
+                                    : 'linked'
+                                  : isPolish
+                                    ? 'ręczne'
+                                    : 'manual'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {kpi.observationPhase === 'both'
+                              ? isPolish
+                                ? 'Obie'
+                                : 'Both'
+                              : kpi.observationPhase === 'realization'
+                                ? isPolish
+                                  ? 'Realizacja'
+                                  : 'Realization'
+                                : isPolish
+                                  ? 'Po wdrożeniu'
+                                  : 'Post-implementation'}
                           </td>
                           <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
                             {kpi.unit || '—'}
@@ -6935,11 +7402,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             {kpi.current || '—'}
                           </td>
                           <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                            {kpi.target || '—'}
+                            {kpi.realizationTarget || '—'}
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {kpi.postImplementationTarget || '—'}
                           </td>
                           <td className="py-2 text-right">
                             <span className="inline-flex items-center rounded-md border border-emerald-300/50 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-                              {isPolish ? 'Benefits' : 'Benefits'}
+                              {kpi.cadence || 'MONTHLY'}
                             </span>
                           </td>
                           <td className="py-2 text-right relative">
@@ -7181,6 +7651,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     marketContextDraft,
     localKpis,
     showCreateKpi,
+    createKpiMode,
+    createKpiName,
+    createKpiUnit,
+    createKpiCategory,
+    createKpiBaseline,
+    createKpiObservationPhase,
+    createKpiRealizationTarget,
+    createKpiPostImplementationTarget,
+    createKpiCadence,
+    createKpiLibraryId,
+    createKpiLibraryOptions,
+    createKpiLibraryLoading,
     kpiMenuId,
     editingKpiId,
     editKpiName,
@@ -7213,6 +7695,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     startEditKpi,
     cancelEditKpi,
     saveEditKpi,
+    createKpi,
+    resetCreateKpiDraft,
     duplicateKpi,
     removeKpi,
     // AttachmentsLinksCanvas handlers
@@ -7361,24 +7845,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-      </div>
-    );
+    return <HubWorkAreaLoading />;
   }
 
   if (error || !initiative) {
+    const message = error || t('initiatives.document.notFound', 'Initiative not found');
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-center">
-        <AlertTriangle className="w-12 h-12 text-red-400 mb-4" />
-        <p className="text-slate-500">{error || 'Initiative not found'}</p>
-        {onBack && (
-          <button onClick={onBack} className="mt-4 text-purple-500 hover:underline">
-            {isPolish ? 'Wróć' : 'Go back'}
-          </button>
-        )}
-      </div>
+      <HubWorkAreaLoadError
+        title={t('initiatives.document.failedToLoad', 'Failed to load initiative card.')}
+        message={message}
+        errorCode={errorCode}
+        retryLabel={t('initiatives.document.retry', 'Retry')}
+        dismissLabel={t('initiatives.document.goBack', 'Go back')}
+        onRetry={() => {
+          void fetchAll();
+        }}
+        onDismiss={() => {
+          if (onBack) onBack();
+        }}
+      />
     );
   }
 
@@ -7683,7 +8168,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
                 {statusDriftUi ? (
-                  <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                  <Callout
+                    variant="warning"
+                    compact
+                    title={isPolish ? 'Drift statusu' : 'Status drift'}
+                  >
                     {isPolish
                       ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
                       : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
@@ -8353,7 +8842,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               >
                 {statusDriftUi ? (
                   <div className="mb-3">
-                    <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                    <Callout
+                      variant="warning"
+                      compact
+                      title={isPolish ? 'Drift statusu' : 'Status drift'}
+                    >
                       {isPolish
                         ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
                         : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}

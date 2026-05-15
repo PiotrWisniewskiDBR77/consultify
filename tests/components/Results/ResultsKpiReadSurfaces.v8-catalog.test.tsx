@@ -81,6 +81,7 @@ const KPI_CATALOG = {
     },
   ],
   mappings: [{ id: 'map-1', kpiId: 'kpi-1', initiativeId: 'init-1', initiativeName: 'Initiative Alpha' }],
+  initiatives: [],
 };
 
 describe('Results KPI read surfaces V8 catalog seam', () => {
@@ -149,12 +150,19 @@ describe('Results KPI read surfaces V8 catalog seam', () => {
     fireEvent.click(screen.getByText('Create'));
 
     await waitFor(() => {
-      expect(V8ResultsApi.createKpiReport).toHaveBeenCalledWith({
-        periodStart: expect.any(String),
-        periodEnd: expect.any(String),
-        title: undefined,
-        kpiIds: ['kpi-1'],
-      });
+      expect(V8ResultsApi.createKpiReport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodStart: expect.any(String),
+          periodEnd: expect.any(String),
+          title: undefined,
+          kpiIds: ['kpi-1'],
+          filters: {
+            lifecycleFilter: 'all',
+            initiativeIds: [],
+          },
+          initiativeIds: undefined,
+        })
+      );
     });
 
     expect(Api.post).not.toHaveBeenCalledWith('/results/kpi-reports', expect.anything());
@@ -180,12 +188,20 @@ describe('Results KPI read surfaces V8 catalog seam', () => {
     fireEvent.click(screen.getByText('Create'));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/results/kpi-reports', {
-        periodStart: expect.any(String),
-        periodEnd: expect.any(String),
-        title: undefined,
-        kpiIds: ['kpi-1'],
-      });
+      expect(Api.post).toHaveBeenCalledWith(
+        '/results/kpi-reports',
+        expect.objectContaining({
+          periodStart: expect.any(String),
+          periodEnd: expect.any(String),
+          title: undefined,
+          kpiIds: ['kpi-1'],
+          filters: {
+            lifecycleFilter: 'all',
+            initiativeIds: [],
+          },
+          initiativeIds: undefined,
+        })
+      );
     });
   });
 });

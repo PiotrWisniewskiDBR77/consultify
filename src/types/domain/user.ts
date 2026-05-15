@@ -79,6 +79,13 @@ export interface User {
   timeFormat?: string;
   linkedinId?: string;
   department?: string;
+  siteLocation?: string;
+  seniorityLevel?: string;
+  tenureYears?: string;
+  managesTeam?: boolean;
+  teamSize?: string;
+  expertiseTags?: string[];
+  engagementLevel?: string;
   profileVisibility?: 'public' | 'team' | 'internal' | 'private';
   location?: string;
   units?: 'metric' | 'imperial';

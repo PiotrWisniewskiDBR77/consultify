@@ -1,3 +1,18 @@
+/**
+ * ProvenanceBadge — Data-source provenance indicator for MyWork table rows.
+ *
+ * This component displays where a **data record** was synced from (CSV, Jira,
+ * Google Sheets, webhooks, etc.) and its trust/verification level at the
+ * connector/import layer.
+ *
+ * NOT related to P18 artifact lifecycle trust-state (source/run/stage/
+ * visibility/export_ledger). P18 trust-state is served by
+ * `GET /api/artifacts/:id/trust-state` and rendered by the Outputs Library
+ * preview (`TrustStatePreviewSection`). The naming overlap is intentional —
+ * both concepts address "where did this come from" but at different layers:
+ * - ProvenanceBadge → data-record import/sync origin
+ * - P18 trust-state → artifact lifecycle governance grammar
+ */
 import {
   AlertTriangle,
   BadgeCheck,

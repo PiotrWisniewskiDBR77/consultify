@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -70,7 +71,7 @@ try {
   const loggerModule = await import('../../services/ai/logger.js');
   aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
 } catch {
-  console.warn('[AI Feedback Routes] aiLogger not available');
+  logger.warn('[AI Feedback Routes] aiLogger not available');
 }
 
 try {
@@ -79,7 +80,7 @@ try {
   adaptiveResponseService = (module.adaptiveResponseService ||
     module) as AdaptiveResponseServiceInterface;
 } catch {
-  console.warn('[AI Feedback Routes] adaptiveResponseService not available');
+  logger.warn('[AI Feedback Routes] adaptiveResponseService not available');
 }
 
 // All routes require authentication
@@ -444,7 +445,7 @@ try {
   const styleModule = await import('../services/ai/userStyleProfileService.js');
   userStyleProfileService = styleModule.default || styleModule;
 } catch {
-  console.warn('[AI Feedback Routes] userStyleProfileService not available');
+  logger.warn('[AI Feedback Routes] userStyleProfileService not available');
 }
 
 /**
@@ -538,7 +539,7 @@ router.post(
             focusMode,
           });
         } catch (err) {
-          console.warn('[AI Feedback] Style profile processing failed:', err);
+          logger.warn('[AI Feedback] Style profile processing failed:', err);
         }
       }
 
@@ -553,7 +554,7 @@ router.post(
             { responseMode, responseLength, capability }
           );
         } catch (err) {
-          console.warn('[AI Feedback] Adaptive response processing failed:', err);
+          logger.warn('[AI Feedback] Adaptive response processing failed:', err);
         }
       }
 
@@ -730,7 +731,7 @@ router.get(
         patterns,
       });
     } catch (error: unknown) {
-      console.error('[AI Feedback] Style profile error:', error);
+      logger.error('[AI Feedback] Style profile error:', error);
       res.status(500).json({ error: 'Failed to get style profile' });
     }
   })
@@ -778,7 +779,7 @@ router.put(
         message: 'Style profile updated successfully',
       });
     } catch (error: unknown) {
-      console.error('[AI Feedback] Style profile update error:', error);
+      logger.error('[AI Feedback] Style profile update error:', error);
       res.status(500).json({ error: 'Failed to update style profile' });
     }
   })

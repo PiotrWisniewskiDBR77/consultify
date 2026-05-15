@@ -25,6 +25,8 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PromptAssistantApi } from '../../services/api/promptAssistant.api';
+
 interface TestResult {
   language: string;
   success: boolean;
@@ -98,23 +100,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
     setSummary(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/prompt-assistant/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          templateCode,
-          sampleInput,
-          languages: selectedLanguages,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Test failed');
-
-      const data = await response.json();
+      const data = await PromptAssistantApi.runTest(templateCode, sampleInput, selectedLanguages);
       setResults(data.data?.results || []);
       setSummary(data.data?.summary || null);
 

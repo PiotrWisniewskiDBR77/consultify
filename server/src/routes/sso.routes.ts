@@ -8,6 +8,8 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/sso.js');
 const ssoRoutesJS = module.default || module;
@@ -25,6 +27,6 @@ if (typeof ssoRoutesJS === 'function') {
   router.use(ssoRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('sso.js did not export a valid router');
+  logger.error('sso.js did not export a valid router');
 }
 export default router;

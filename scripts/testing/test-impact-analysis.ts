@@ -127,7 +127,7 @@ function analyze(baseBranch: string): ImpactResult {
 const argv = process.argv.slice(2);
 const isJson = argv.includes('--json');
 const baseIdx = argv.indexOf('--base');
-const baseBranch = baseIdx >= 0 && argv[baseIdx + 1] ? argv[baseIdx + 1] : 'Londyn';
+const baseBranch = baseIdx >= 0 && argv[baseIdx + 1] ? argv[baseIdx + 1] : 'develop';
 
 const result = analyze(baseBranch);
 

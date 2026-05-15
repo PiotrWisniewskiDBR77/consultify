@@ -32,4 +32,5 @@ export { default as SchemaValidationService } from './SchemaValidationService.js
 export { SCIMService, scimService } from './SCIMService.js';
 export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
 export { SSOService, ssoService } from './SSOService.js';
+export { default as TableContextService } from './TableContextService.js';
 export { default as ViewQueryEngine } from './ViewQueryEngine.js';

@@ -163,7 +163,12 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
   // Show article detail view
   if (selectedArticleSlug) {
     return (
-      <KnowledgeArticleView slug={selectedArticleSlug} onBack={handleBack} onArticleClick={setSelectedArticleSlug} moduleId={moduleId} />
+      <KnowledgeArticleView
+        slug={selectedArticleSlug}
+        onBack={handleBack}
+        onArticleClick={setSelectedArticleSlug}
+        moduleId={moduleId}
+      />
     );
   }
 
@@ -236,7 +241,11 @@ type RenderGuide = {
 
 export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language?.startsWith('pl') ? 'pl' : 'en';
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang = (HELP_LANGS as readonly string[]).includes(baseLang)
+    ? (baseLang as (typeof HELP_LANGS)[number])
+    : 'en';
   const navigate = useNavigate();
   const { isDesktop, isMobile, isTablet } = useDeviceType();
 
@@ -249,6 +258,7 @@ export const HelpSidePanel: React.FC = () => {
     knowledgeModuleIdOverride,
     knowledgeArticleSlugOverride,
     setKnowledgeArticleSlugOverride,
+    setHelpDocumentIdOverride,
   } = useHelpSidePanel();
   const currentView = useAppStore((s) => s.currentView);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -356,8 +366,8 @@ export const HelpSidePanel: React.FC = () => {
 
   const filteredFAQs = searchQuery
     ? faqs.filter((faq) => {
-        const question = lang === 'pl' ? faq.questionPl : faq.question;
-        const answer = lang === 'pl' ? faq.answerPl : faq.answer;
+        const question = lang === 'pl' && faq.questionPl ? faq.questionPl : faq.question;
+        const answer = lang === 'pl' && faq.answerPl ? faq.answerPl : faq.answer;
         const q = searchQuery.toLowerCase();
         return (
           (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q)
@@ -369,7 +379,7 @@ export const HelpSidePanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
+        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-40 transition-opacity"
         onClick={() => setOpen(false)}
       />
 
@@ -382,7 +392,7 @@ export const HelpSidePanel: React.FC = () => {
           </h2>
           <button
             onClick={() => setOpen(false)}
-            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
           >
             <X size={18} />
           </button>
@@ -405,10 +415,10 @@ export const HelpSidePanel: React.FC = () => {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
                 activeTab === id
-                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'border-purple-600 text-purple-700 dark:border-purple-500 dark:text-purple-400'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               <Icon size={14} />
@@ -608,7 +618,10 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
                 {nextDocument && (
                   <button
-                    onClick={() => setActiveTab('guides')}
+                    onClick={() => {
+                      setHelpDocumentIdOverride(nextDocument.id);
+                      setActiveTab('this_step');
+                    }}
                     className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 text-left transition-colors"
                   >
                     <div>

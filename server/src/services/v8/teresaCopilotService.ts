@@ -3,7 +3,7 @@
  *
  * Runtime logic for the Teresa contextual copilot:
  *   - Proposal lifecycle (create → approve → execute → complete/reject)
- *   - Cross-surface handoff to 4 P0 targets (Radar/Inicjatywy/Kalendarz/Notatki)
+ *   - Cross-surface handoff to 5 P0 targets (Radar/Inicjatywy/Kalendarz/Notatki/Wywiady)
  *   - Audit trail for every action
  *   - Voice posture resolution
  *   - Anti-duplicate gate
@@ -15,22 +15,27 @@
 
 import { randomUUID } from 'node:crypto';
 
+import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import {
+  buildProposalOperationContract,
+  updateOperationContractLinks,
+} from './operationContractService.js';
+import {
   type ActionEnvelopeState,
   type HandoffTargetModule,
-  type TeresaHandoffContext,
-  type VoiceAvailability,
+  isValidEnvelopeTransition,
   P08_ACTION_ENVELOPE_STATES,
   P08_COPILOT_CONTRACT,
   P08_DEGRADED_SCENARIOS,
   P08_HANDOFF_TARGET_MODULES,
-  isValidEnvelopeTransition,
   resolveVoiceAvailability,
+  type TeresaHandoffContext,
   validateHandoffContext,
   validateTargetPayload,
   validateWriteOwnership,
+  type VoiceAvailability,
 } from './teresaCopilotCanon.js';
 
 const LOG_PREFIX = '[P08-TeresaCopilot]';
@@ -51,6 +56,7 @@ export interface ProposalRecord {
   created_at: string;
   updated_at: string;
   audit_trail: AuditEntry[];
+  operation_contract: OperationContract;
 }
 
 export interface AuditEntry {
@@ -80,6 +86,24 @@ export interface VoicePostureResult {
   recovery_phrase: string | null;
 }
 
+export interface TeresaChatProposalEnvelope {
+  proposalId: string;
+  contractId: string;
+  title: string;
+  summary: string;
+  state: ActionEnvelopeState;
+  approvalState: 'awaiting_review' | 'approved' | 'completed' | 'rejected';
+  allowedActions: Array<'approve' | 'reject' | 'execute' | 'navigate'>;
+  targetModule: HandoffTargetModule;
+  targetLabel: string;
+  handoffIntent: string;
+  previewLines: string[];
+  auditCount: number;
+  resultRef: string | null;
+  degraded: string | null;
+  operationContract: OperationContract;
+}
+
 export class TeresaCopilotError extends Error {
   readonly code: string;
   readonly statusCode: number;
@@ -89,6 +113,159 @@ export class TeresaCopilotError extends Error {
     this.name = 'TeresaCopilotError';
     this.code = code;
     this.statusCode = statusCode;
+  }
+}
+
+const CHAT_ACTION_KEYWORDS: Array<{
+  targetModule: HandoffTargetModule;
+  handoffIntent: string;
+  patterns: RegExp[];
+}> = [
+  {
+    targetModule: 'calendar',
+    handoffIntent: 'schedule',
+    patterns: [
+      /\b(calendar|meeting|schedule|invite|appointment|book|reserve|slot|availability|free.?busy|reschedul|cancel.?meeting)\b/i,
+      /\b(kalendarz|spotkanie|zaplanuj|umów|zaproszenie|zarezerwuj|termin|dostępność|wolny.?termin|odwołaj.?spotkanie|przełóż)\b/i,
+    ],
+  },
+  {
+    targetModule: 'notebook',
+    handoffIntent: 'draft',
+    patterns: [
+      /\b(note|notes|notebook|summary|minutes|brief|document|draft|write.?down|capture|jot|memo|record)\b/i,
+      /\b(notatk|notebook|podsumowanie|protok[oó]ł|brief|dokument|szkic|zapisz|zanotuj|memo|streszcz)\b/i,
+    ],
+  },
+  {
+    targetModule: 'initiatives',
+    handoffIntent: 'create',
+    patterns: [
+      /\b(initiative|roadmap|plan|execution|project|proposal|strategy|goal|objective|milestone|backlog|sprint)\b/i,
+      /\b(inicjatyw|roadmap|plan|wdroż|projekt|propozycj|strategi|cel|kamień.?milowy|backlog|sprint)\b/i,
+    ],
+  },
+  {
+    targetModule: 'radar',
+    handoffIntent: 'triage',
+    patterns: [
+      /\b(risk|radar|signal|alert|watch|monitor|escalat|warn|threat|blocker|impediment|issue|problem|incident)\b/i,
+      /\b(ryzyk|radar|sygnał|alert|monitor|eskaluj|ostrzeż|zagrożen|bloker|przeszkod|problem|incydent)\b/i,
+    ],
+  },
+  {
+    targetModule: 'interview',
+    handoffIntent: 'open',
+    patterns: [
+      /\b(insight|insights|interview|findings|generate.?insight|review.?insight|publish.?insight|evidence.?map|completed.?session)\b/i,
+      /\b(wywiad|wywiady|insight|wygeneruj.?insight|recenzja|recenzuj|mapa.?dowodów|zakończon.?sesj)\b/i,
+    ],
+  },
+  {
+    targetModule: 'ideas_table',
+    handoffIntent: 'create',
+    patterns: [
+      /\b(table|tables|tracker|matrix|risk\s*register|decision\s*log|kanban\s*table|schema)\b/i,
+      /\b(tabela|tabelę|tabele|rejestr\s*ryzyk|dziennik\s*decyzji|macierz|schemat\s*tabeli)\b/i,
+    ],
+  },
+  {
+    targetModule: 'excele',
+    handoffIntent: 'generate',
+    patterns: [
+      /\b(workbook|excel\s*file|financial.?model|budget.?plan|balance.?sheet|cash.?flow|p\s*&\s*l|profit.?loss|multi.?sheet|xlsx)\b/i,
+      /\b(skoroszyt|plik\s*excel|model.?finansowy|plan.?budżet|bilans|przepływy?.?pienięż|rachunek.?zysków|arkusz.?kalkulacyjny)\b/i,
+    ],
+  },
+];
+
+const TARGET_LABELS: Record<HandoffTargetModule, string> = {
+  radar: 'Radar',
+  initiatives: 'Initiatives',
+  calendar: 'Calendar',
+  notebook: 'Notebook',
+  interview: 'Interview Insights',
+  ideas_table: 'Ideas Table',
+  excele: 'Excele Workbooks',
+};
+
+// ---------------------------------------------------------------------------
+// DB schema — auto-create tables on first use
+// ---------------------------------------------------------------------------
+
+let tablesEnsured = false;
+
+/** @internal — used by tests to reset the table-ensured cache */
+export function _resetTableCache(): void {
+  tablesEnsured = false;
+}
+
+async function ensureTeresaTables(): Promise<void> {
+  if (tablesEnsured) return;
+  try {
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS teresa_proposals (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'proposal',
+        handoff_context_json TEXT NOT NULL DEFAULT '{}',
+        target_module TEXT NOT NULL,
+        target_payload_json TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+      [],
+      { fallback: false }
+    );
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS teresa_audit_log (
+        id TEXT PRIMARY KEY,
+        proposal_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        actor TEXT NOT NULL DEFAULT 'teresa',
+        timestamp TEXT NOT NULL,
+        from_state TEXT,
+        to_state TEXT,
+        detail_json TEXT DEFAULT '{}',
+        FOREIGN KEY (proposal_id) REFERENCES teresa_proposals(id)
+      )`,
+      [],
+      { fallback: false }
+    );
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS teresa_handoff_results (
+        id TEXT PRIMARY KEY,
+        proposal_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        target_module TEXT NOT NULL,
+        result_ref TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (proposal_id) REFERENCES teresa_proposals(id)
+      )`,
+      [],
+      { fallback: false }
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_teresa_proposals_session
+       ON teresa_proposals(organization_id, user_id, session_id)`,
+      [],
+      { fallback: true }
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_teresa_audit_proposal
+       ON teresa_audit_log(proposal_id)`,
+      [],
+      { fallback: true }
+    );
+    tablesEnsured = true;
+    logger.info(`${LOG_PREFIX} Teresa DB tables ensured`);
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} Table creation failed (may already exist): ${(err as Error).message}`
+    );
+    tablesEnsured = true;
   }
 }
 
@@ -121,7 +298,7 @@ interface AuditRow {
 }
 
 function rowToProposal(row: ProposalRow, auditRows: AuditRow[] = []): ProposalRecord {
-  return {
+  const proposal = {
     id: row.id,
     organization_id: row.organization_id,
     user_id: row.user_id,
@@ -133,6 +310,11 @@ function rowToProposal(row: ProposalRow, auditRows: AuditRow[] = []): ProposalRe
     created_at: row.created_at,
     updated_at: row.updated_at,
     audit_trail: auditRows.map(rowToAuditEntry),
+  } satisfies Omit<ProposalRecord, 'operation_contract'>;
+
+  return {
+    ...proposal,
+    operation_contract: buildTeresaOperationContract(proposal),
   };
 }
 
@@ -149,6 +331,538 @@ function rowToAuditEntry(row: AuditRow): AuditEntry {
   };
 }
 
+function trimPreview(value: unknown, max = 180): string {
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  return text.length <= max ? text : `${text.slice(0, max - 1).trim()}…`;
+}
+
+function deriveProposalTitle(message: string, targetModule: HandoffTargetModule): string {
+  const cleaned = trimPreview(message, 72).replace(/[.!?]+$/g, '');
+  if (cleaned) return cleaned;
+  return `Open ${TARGET_LABELS[targetModule]}`;
+}
+
+function deriveApprovalState(
+  state: ActionEnvelopeState
+): TeresaChatProposalEnvelope['approvalState'] {
+  if (state === 'approved') return 'approved';
+  if (state === 'completed') return 'completed';
+  if (state === 'rejected') return 'rejected';
+  return 'awaiting_review';
+}
+
+function deriveAllowedActions(
+  state: ActionEnvelopeState
+): TeresaChatProposalEnvelope['allowedActions'] {
+  switch (state) {
+    case 'proposal':
+    case 'pending_approval':
+      return ['approve', 'reject', 'navigate'];
+    case 'approved':
+      return ['execute', 'reject', 'navigate'];
+    case 'executing':
+    case 'completed':
+    case 'rejected':
+      return ['navigate'];
+    default:
+      return ['navigate'];
+  }
+}
+
+function extractResultRef(detail: Record<string, unknown> | null | undefined): string | null {
+  if (!detail || typeof detail !== 'object') return null;
+  const handoff = detail.handoff_result;
+  if (!handoff || typeof handoff !== 'object') return null;
+  const keys = [
+    'signal_id',
+    'initiative_ref',
+    'calendar_ref',
+    'note_ref',
+    'insight_ref',
+    'table_ref',
+    'deep_link',
+  ];
+  for (const key of keys) {
+    const value = (handoff as Record<string, unknown>)[key];
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+  }
+  return null;
+}
+
+function buildPreviewLines(
+  proposal: ProposalRecord | Omit<ProposalRecord, 'operation_contract'>,
+  execution?: HandoffResult | null
+): string[] {
+  const lines: string[] = [];
+  const payload = proposal.target_payload || {};
+  const target = proposal.target_module;
+
+  if (target === 'initiatives') {
+    const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
+    lines.push(trimPreview(seed.problem_statement || proposal.handoff_context.user_intent, 120));
+    lines.push(trimPreview(seed.proposed_outcome || 'Draft initiative prepared for review', 120));
+  } else if (target === 'notebook') {
+    const notebook = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
+    lines.push(trimPreview(notebook.title || proposal.handoff_context.user_intent, 120));
+    lines.push(
+      trimPreview(notebook.body_preview || 'Draft note will be prepared after approval', 120)
+    );
+  } else if (target === 'calendar') {
+    const calendar = (payload.calendar_intent || {}) as Record<string, unknown>;
+    lines.push(trimPreview(calendar.what || proposal.handoff_context.user_intent, 120));
+    lines.push(trimPreview(calendar.when || 'Scheduling slot will be confirmed on execute', 120));
+  } else if (target === 'interview') {
+    const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
+    lines.push(trimPreview(interviewCtx.title || proposal.handoff_context.user_intent, 120));
+    lines.push(trimPreview(interviewCtx.action || 'Open Interview Insights module', 120));
+  } else if (target === 'ideas_table') {
+    const tableIntent = (payload.ideas_table_intent || {}) as Record<string, unknown>;
+    lines.push(trimPreview(tableIntent.message || proposal.handoff_context.user_intent, 120));
+    lines.push(trimPreview(tableIntent.workspace_id || 'My Work Ideas workspace', 120));
+  } else {
+    lines.push(trimPreview(payload.why_now || proposal.handoff_context.user_intent, 120));
+    lines.push(
+      trimPreview(payload.next_action_safe_fallback || 'Escalate through Teresa handoff', 120)
+    );
+  }
+
+  if (execution?.success) {
+    const ref = extractResultRef({ handoff_result: execution });
+    if (ref) lines.push(trimPreview(ref, 120));
+  }
+
+  return lines.filter(Boolean).slice(0, 3);
+}
+
+function mapEnvelopeStateToOperationStage(state: ActionEnvelopeState): OperationContract['stage'] {
+  switch (state) {
+    case 'proposal':
+      return 'proposal_ready';
+    case 'pending_approval':
+      return 'pending_review';
+    case 'approved':
+      return 'approved';
+    case 'executing':
+      return 'executing';
+    case 'completed':
+      return 'completed';
+    case 'rejected':
+      return 'rejected';
+    default:
+      return 'proposal_ready';
+  }
+}
+
+function buildTeresaOperationContract(
+  proposal: Omit<ProposalRecord, 'operation_contract'>,
+  execution?: HandoffResult | null
+): OperationContract {
+  const runtimeBinding = proposal.handoff_context.runtime_binding || {};
+  const latestAudit = proposal.audit_trail[proposal.audit_trail.length - 1] || null;
+  const targetPayload = (proposal.target_payload || {}) as Record<string, unknown>;
+  const existingId = proposal.handoff_context.operation_contract_ref || null;
+  const baseContract = buildProposalOperationContract({
+    contractId: existingId || proposal.id,
+    kind: 'teresa_handoff',
+    stage: mapEnvelopeStateToOperationStage(proposal.state),
+    createdAt: proposal.created_at,
+    updatedAt: proposal.updated_at,
+    organizationId: proposal.organization_id,
+    userId: proposal.user_id,
+    sessionId: proposal.session_id,
+    conversationId:
+      typeof runtimeBinding.conversation_id === 'string' ? runtimeBinding.conversation_id : null,
+    contextSnapshotId:
+      typeof runtimeBinding.context_snapshot_id === 'string'
+        ? runtimeBinding.context_snapshot_id
+        : null,
+    executionRunId:
+      typeof runtimeBinding.execution_run_id === 'string' ? runtimeBinding.execution_run_id : null,
+    artifactRunId:
+      typeof runtimeBinding.artifact_run_id === 'string' ? runtimeBinding.artifact_run_id : null,
+    toolInvocationId:
+      typeof runtimeBinding.tool_invocation_id === 'string'
+        ? runtimeBinding.tool_invocation_id
+        : null,
+    teresaProposalId: proposal.id,
+    targetModule: proposal.target_module,
+    title: deriveProposalTitle(proposal.handoff_context.user_intent, proposal.target_module),
+    summary: trimPreview(
+      proposal.handoff_context.proposed_next_action?.handoff_intent ||
+        proposal.handoff_context.user_intent,
+      160
+    ),
+    intent: proposal.handoff_context.user_intent,
+    previewLines: buildPreviewLines(proposal, execution),
+  });
+
+  const resultRef = extractResultRef(latestAudit?.detail) || execution?.audit_entry_id || null;
+  if (!resultRef) return baseContract;
+
+  return updateOperationContractLinks(baseContract, {
+    artifactId:
+      typeof targetPayload.artifact_id === 'string'
+        ? targetPayload.artifact_id
+        : baseContract.links.artifactId,
+  });
+}
+
+export function toChatProposalEnvelope(
+  proposal: ProposalRecord,
+  execution?: HandoffResult | null
+): TeresaChatProposalEnvelope {
+  const latestAudit = proposal.audit_trail[proposal.audit_trail.length - 1] || null;
+  const operationContract = buildTeresaOperationContract(proposal, execution);
+  return {
+    proposalId: proposal.id,
+    contractId: P08_COPILOT_CONTRACT,
+    title: deriveProposalTitle(proposal.handoff_context.user_intent, proposal.target_module),
+    summary: trimPreview(
+      proposal.handoff_context.proposed_next_action?.handoff_intent ||
+        proposal.handoff_context.user_intent,
+      160
+    ),
+    state: proposal.state,
+    approvalState: deriveApprovalState(proposal.state),
+    allowedActions: deriveAllowedActions(proposal.state),
+    targetModule: proposal.target_module,
+    targetLabel: TARGET_LABELS[proposal.target_module],
+    handoffIntent: String(proposal.handoff_context.proposed_next_action?.handoff_intent || 'open'),
+    previewLines: buildPreviewLines(proposal, execution),
+    auditCount: proposal.audit_trail.length,
+    resultRef: extractResultRef(latestAudit?.detail) || execution?.audit_entry_id || null,
+    degraded: execution?.degraded || null,
+    operationContract,
+  };
+}
+
+function inferTargetModuleFromChatRegex(
+  message: string,
+  context: Record<string, unknown>
+): { targetModule: HandoffTargetModule; handoffIntent: string } | null {
+  const text = String(message || '').trim();
+  if (!text) return null;
+
+  for (const candidate of CHAT_ACTION_KEYWORDS) {
+    if (candidate.patterns.some((pattern) => pattern.test(text))) {
+      return {
+        targetModule: candidate.targetModule,
+        handoffIntent: candidate.handoffIntent,
+      };
+    }
+  }
+
+  const moduleHint = String(
+    (context.screenContext as Record<string, unknown> | undefined)?.moduleId ||
+      (context.workspaceContext as Record<string, unknown> | undefined)?.type ||
+      ''
+  ).toLowerCase();
+
+  if (moduleHint.includes('initiative'))
+    return { targetModule: 'initiatives', handoffIntent: 'open' };
+  if (moduleHint.includes('notebook') || moduleHint.includes('note'))
+    return { targetModule: 'notebook', handoffIntent: 'draft' };
+  if (moduleHint.includes('calendar'))
+    return { targetModule: 'calendar', handoffIntent: 'schedule' };
+  if (moduleHint.includes('radar') || moduleHint.includes('signal'))
+    return { targetModule: 'radar', handoffIntent: 'triage' };
+  if (moduleHint.includes('interview') || moduleHint.includes('insight'))
+    return { targetModule: 'interview', handoffIntent: 'open' };
+  if (
+    moduleHint.includes('my_work') ||
+    moduleHint.includes('ideas') ||
+    moduleHint.includes('table')
+  )
+    return { targetModule: 'ideas_table', handoffIntent: 'create' };
+  if (
+    moduleHint.includes('excele') ||
+    moduleHint.includes('spreadsheet') ||
+    moduleHint.includes('workbook')
+  )
+    return { targetModule: 'excele', handoffIntent: 'generate' };
+
+  return null;
+}
+
+const INTENT_SYSTEM_PROMPT = `You are an intent classifier for Teresa, an internal copilot.
+Given a user message, determine if it contains an actionable intent for one of these modules:
+- radar: risk signals, alerts, threats, blockers, escalations, incidents
+- initiatives: projects, plans, roadmaps, strategies, goals, sprints, milestones
+- calendar: meetings, scheduling, appointments, availability, deadlines
+- notebook: notes, summaries, minutes, drafts, memos, documentation
+- interview: insights from interviews, generate insights, review insights, findings, evidence map, completed sessions
+- ideas_table: idea tables, trackers, matrices, risk registers, decision logs in My Work Ideas
+- excele: spreadsheets, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
+
+Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"ideas_table"|"excele"|null,"intent":"string describing the action"}
+If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
+
+async function inferTargetModuleWithLLM(
+  message: string
+): Promise<{ targetModule: HandoffTargetModule; handoffIntent: string } | null> {
+  try {
+    const { llmService } = await import(/* @vite-ignore */ '../ai/llmService.js');
+    const result = await (llmService as any).call({
+      messages: [{ role: 'user', content: message }],
+      systemPrompt: INTENT_SYSTEM_PROMPT,
+      temperature: 0,
+      maxTokens: 80,
+      modelId: 'fast',
+    });
+
+    const text = String(result?.text || result?.content || '').trim();
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+
+    const parsed = JSON.parse(match[0]);
+    if (!parsed.module || parsed.module === 'null') return null;
+
+    const mod = String(parsed.module).toLowerCase() as HandoffTargetModule;
+    if (!P08_HANDOFF_TARGET_MODULES.includes(mod)) return null;
+
+    return {
+      targetModule: mod,
+      handoffIntent: String(parsed.intent || 'open'),
+    };
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} LLM intent detection failed, falling back to regex: ${(err as Error).message}`
+    );
+    return null;
+  }
+}
+
+async function inferTargetModuleFromChat(
+  message: string,
+  context: Record<string, unknown>
+): Promise<{ targetModule: HandoffTargetModule; handoffIntent: string } | null> {
+  // Fast path: regex check first (instant, no network)
+  const regexResult = inferTargetModuleFromChatRegex(message, context);
+  if (regexResult) return regexResult;
+
+  // Slow path: LLM classification for ambiguous messages
+  const llmResult = await inferTargetModuleWithLLM(message);
+  if (llmResult) return llmResult;
+
+  return null;
+}
+
+function buildBoundedContextPack(
+  context: Record<string, unknown>
+): Array<{ ref: string; type: string }> {
+  const pack: Array<{ ref: string; type: string }> = [];
+  const workspaceContext = (context.workspaceContext || {}) as Record<string, unknown>;
+  const screenContext = (context.screenContext || {}) as Record<string, unknown>;
+
+  const candidates: Array<[unknown, string]> = [
+    [workspaceContext.entityId, String(workspaceContext.type || 'workspace')],
+    [workspaceContext.projectId, 'project'],
+    [screenContext.entityId, String(screenContext.entityType || 'screen')],
+    [screenContext.currentScreen, 'screen'],
+  ];
+
+  for (const [ref, type] of candidates) {
+    if (typeof ref === 'string' && ref.trim().length > 0) {
+      pack.push({ ref: ref.trim(), type: type || 'context' });
+    }
+  }
+
+  return pack.slice(0, 5);
+}
+
+function resolveIdeaWorkspaceId(context: Record<string, unknown>): string | null {
+  const workspace = (context.workspaceContext || {}) as Record<string, unknown>;
+  const screen = (context.screenContext || {}) as Record<string, unknown>;
+  const open = (workspace.entityData as Record<string, unknown> | undefined)?.open as
+    | Record<string, unknown>
+    | undefined;
+
+  if (open?.type === 'idea' && typeof open.id === 'string' && open.id.trim()) {
+    return open.id.trim();
+  }
+  if (typeof workspace.entityId === 'string' && workspace.entityId.trim() && workspace.type === 'general') {
+    return workspace.entityId.trim();
+  }
+  if (String(screen.selectedObjectType || '').toLowerCase() === 'idea') {
+    const id = String(screen.selectedObjectId || '').trim();
+    if (id) return id;
+  }
+  return null;
+}
+
+function buildTargetPayloadForChat(params: {
+  targetModule: HandoffTargetModule;
+  userMessage: string;
+  assistantMessage: string;
+  context?: Record<string, unknown>;
+}): Record<string, unknown> {
+  const { targetModule, userMessage, assistantMessage, context } = params;
+  const preview = trimPreview(assistantMessage || userMessage, 220);
+  const title = deriveProposalTitle(userMessage, targetModule);
+
+  if (targetModule === 'initiatives') {
+    return {
+      initiative_seed: {
+        problem_statement: trimPreview(userMessage, 180),
+        proposed_outcome: trimPreview(
+          assistantMessage || 'Prepare initiative draft for review',
+          180
+        ),
+        assumptions: ['Confirm scope with user before module write'],
+        risks: ['Proposal may need additional business context'],
+        next_steps: ['Review proposal', 'Approve to open initiative lane'],
+        time_window: 'next-available',
+      },
+      proposal_only: true,
+    };
+  }
+
+  if (targetModule === 'calendar') {
+    return {
+      calendar_intent: {
+        what: title,
+        when: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        timezone: 'Europe/Warsaw',
+      },
+      permission_gradient_expectation: 'write',
+      conflict_safe_write_posture: 'if_match_etag',
+      recovery_steps: ['Confirm attendees and time slot before final write'],
+    };
+  }
+
+  if (targetModule === 'notebook') {
+    return {
+      notebook_handoff_context: {
+        title,
+        body_preview: preview,
+        source: 'teresa',
+      },
+      provenance_markers: { source: 'teresa', user_edit: false, ai_transform: true },
+      evidence_pointers: ['chat:teresa'],
+    };
+  }
+
+  if (targetModule === 'interview') {
+    return {
+      interview_handoff_context: {
+        action: 'generate_insight',
+        title: title || 'Interview insight from Teresa',
+      },
+      evidence_pointers: ['chat:teresa'],
+    };
+  }
+
+  if (targetModule === 'ideas_table') {
+    return {
+      ideas_table_intent: {
+        workspace_id: resolveIdeaWorkspaceId(context || {}) || '',
+        message: trimPreview(userMessage, 220),
+      },
+      proposal_only: true,
+    };
+  }
+
+  if (targetModule === 'excele') {
+    return {
+      prompt: trimPreview(userMessage, 220),
+    };
+  }
+
+  return {
+    why_now: trimPreview(userMessage, 160),
+    time_window: 'next-available',
+    triggered_rules: ['teresa_chat_signal'],
+    evidence_pointers: ['chat:teresa'],
+    uncertainty_boundary: {
+      missing_inputs: [],
+      conflicts: [],
+      what_would_change_next_action: [],
+    },
+    next_action_safe_fallback: 'Capture as notebook draft if triage cannot proceed',
+  };
+}
+
+export async function createChatProposal(params: {
+  organizationId: string;
+  userId: string;
+  sessionId: string;
+  userMessage: string;
+  assistantMessage: string;
+  context?: Record<string, unknown>;
+  citations?: unknown[];
+}): Promise<TeresaChatProposalEnvelope | null> {
+  const { organizationId, userId, sessionId, userMessage, assistantMessage } = params;
+  const context = (params.context || {}) as Record<string, unknown>;
+  const intent = await inferTargetModuleFromChat(userMessage, context);
+  if (!intent) return null;
+  const contextSnapshotId =
+    typeof context.contextSnapshotId === 'string'
+      ? context.contextSnapshotId
+      : typeof context.snapshotId === 'string'
+        ? context.snapshotId
+        : null;
+
+  const handoffContext: TeresaHandoffContext = {
+    origin: 'teresa',
+    user_intent: trimPreview(userMessage, 240),
+    active_surface: trimPreview(
+      (context.screenContext as Record<string, unknown> | undefined)?.currentScreen ||
+        (context.workspaceContext as Record<string, unknown> | undefined)?.type ||
+        'chat/full',
+      80
+    ),
+    org_context_ref: `org:${organizationId}`,
+    operation_contract_ref: null,
+    runtime_binding: {
+      conversation_id: sessionId,
+      session_id: sessionId,
+      context_snapshot_id: contextSnapshotId,
+    },
+    bounded_context_pack: buildBoundedContextPack(context),
+    constraints: ['proposal_first', 'no_silent_writes'],
+    assumptions: [],
+    uncertainty_boundary: {
+      missing_inputs: [],
+      conflicts: [],
+      what_would_change_next_action: [],
+    },
+    evidence_pointers: Array.isArray(params.citations)
+      ? params.citations.slice(0, 3).map((item, index) => {
+          const citation = item as Record<string, unknown>;
+          return String(citation?.id || citation?.reference || citation?.title || `cit-${index}`);
+        })
+      : [],
+    proposed_next_action: {
+      target_module: intent.targetModule,
+      handoff_intent: intent.handoffIntent as 'open' | 'create' | 'append',
+      requires_approval: true,
+    },
+    audit_stub: {
+      actor: 'teresa:copilot',
+      timestamp: new Date().toISOString(),
+    },
+  };
+
+  const proposal = await createProposal({
+    organizationId,
+    userId,
+    sessionId,
+    handoffContext,
+    targetModule: intent.targetModule,
+    targetPayload: buildTargetPayloadForChat({
+      targetModule: intent.targetModule,
+      userMessage,
+      assistantMessage,
+      context,
+    }),
+  });
+
+  return toChatProposalEnvelope(proposal, null);
+}
+
 // ---------------------------------------------------------------------------
 // Anti-duplicate: check for active proposals in same session
 // ---------------------------------------------------------------------------
@@ -156,15 +870,16 @@ function rowToAuditEntry(row: AuditRow): AuditEntry {
 async function getActiveProposalForSession(
   organizationId: string,
   userId: string,
-  sessionId: string,
+  sessionId: string
 ): Promise<ProposalRow | null> {
+  await ensureTeresaTables();
   const row = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals
      WHERE organization_id = ? AND user_id = ? AND session_id = ?
        AND state NOT IN ('completed', 'rejected')
      ORDER BY created_at DESC LIMIT 1`,
     [organizationId, userId, sessionId],
-    { fallback: true },
+    { fallback: true }
   );
   return row ?? null;
 }
@@ -182,7 +897,17 @@ export async function createProposal(params: {
   targetPayload: Record<string, unknown>;
   idempotencyKey?: string;
 }): Promise<ProposalRecord> {
-  const { organizationId, userId, sessionId, handoffContext, targetModule, targetPayload, idempotencyKey } = params;
+  await ensureTeresaTables();
+
+  const {
+    organizationId,
+    userId,
+    sessionId,
+    handoffContext,
+    targetModule,
+    targetPayload,
+    idempotencyKey,
+  } = params;
 
   // Idempotency: if caller provides a key, return existing proposal instead of creating duplicate
   if (idempotencyKey) {
@@ -191,7 +916,7 @@ export async function createProposal(params: {
        WHERE organization_id = ? AND user_id = ? AND session_id = ?
          AND target_module = ? AND id = ?`,
       [organizationId, userId, sessionId, targetModule, idempotencyKey],
-      { fallback: true },
+      { fallback: true }
     );
     if (existing) {
       logger.info(`${LOG_PREFIX} Idempotent hit: returning existing proposal ${existing.id}`);
@@ -204,16 +929,18 @@ export async function createProposal(params: {
   if (!P08_HANDOFF_TARGET_MODULES.includes(targetModule)) {
     throw new TeresaCopilotError(
       `Invalid target module: ${targetModule}`,
-      'P08_INVALID_TARGET_MODULE',
+      'P08_INVALID_TARGET_MODULE'
     );
   }
 
   // Validate common handoff context
-  const ctxValidation = validateHandoffContext(handoffContext as unknown as Record<string, unknown>);
+  const ctxValidation = validateHandoffContext(
+    handoffContext as unknown as Record<string, unknown>
+  );
   if (!ctxValidation.valid) {
     throw new TeresaCopilotError(
       `Missing handoff context fields: ${ctxValidation.missing.join(', ')}`,
-      'P08_INVALID_HANDOFF_CONTEXT',
+      'P08_INVALID_HANDOFF_CONTEXT'
     );
   }
 
@@ -222,19 +949,19 @@ export async function createProposal(params: {
   if (!targetValidation.valid) {
     throw new TeresaCopilotError(
       `Missing target payload fields for ${targetModule}: ${targetValidation.missing.join(', ')}`,
-      'P08_INVALID_TARGET_PAYLOAD',
+      'P08_INVALID_TARGET_PAYLOAD'
     );
   }
 
   // Validate write ownership: Teresa initiates, module writes
   const writeCheck = validateWriteOwnership(
     handoffContext.audit_stub.actor,
-    `${targetModule}_service`,
+    `${targetModule}_service`
   );
   if (!writeCheck.valid) {
     throw new TeresaCopilotError(
       writeCheck.reason ?? 'Write ownership violation',
-      'P08_WRITE_OWNERSHIP_VIOLATION',
+      'P08_WRITE_OWNERSHIP_VIOLATION'
     );
   }
 
@@ -246,7 +973,7 @@ export async function createProposal(params: {
     await dbRun(
       `UPDATE teresa_proposals SET state = 'rejected', updated_at = ? WHERE id = ?`,
       [now, existing.id],
-      { fallback: true },
+      { fallback: true }
     );
     await writeAuditEntry({
       proposalId: existing.id,
@@ -260,6 +987,18 @@ export async function createProposal(params: {
 
   const proposalId = idempotencyKey ?? randomUUID();
   const now = new Date().toISOString();
+  const persistedHandoffContext: TeresaHandoffContext = {
+    ...handoffContext,
+    operation_contract_ref: handoffContext.operation_contract_ref || proposalId,
+    runtime_binding: {
+      conversation_id: handoffContext.runtime_binding?.conversation_id || sessionId,
+      session_id: handoffContext.runtime_binding?.session_id || sessionId,
+      context_snapshot_id: handoffContext.runtime_binding?.context_snapshot_id || null,
+      execution_run_id: handoffContext.runtime_binding?.execution_run_id || null,
+      artifact_run_id: handoffContext.runtime_binding?.artifact_run_id || null,
+      tool_invocation_id: handoffContext.runtime_binding?.tool_invocation_id || null,
+    },
+  };
 
   await dbRun(
     `INSERT INTO teresa_proposals
@@ -270,38 +1009,43 @@ export async function createProposal(params: {
       organizationId,
       userId,
       sessionId,
-      JSON.stringify(handoffContext),
+      JSON.stringify(persistedHandoffContext),
       targetModule,
       JSON.stringify(targetPayload),
       now,
       now,
     ],
-    { fallback: true },
+    { fallback: true }
   );
 
   const auditEntry = await writeAuditEntry({
     proposalId,
     action: 'proposal_created',
-    actor: handoffContext.audit_stub.actor,
+    actor: persistedHandoffContext.audit_stub.actor,
     fromState: null,
     toState: 'proposal',
-    detail: { target_module: targetModule, user_intent: handoffContext.user_intent },
+    detail: { target_module: targetModule, user_intent: persistedHandoffContext.user_intent },
   });
 
   logger.info(`${LOG_PREFIX} Proposal created: ${proposalId} → ${targetModule}`);
 
-  return {
+  const proposalWithoutContract = {
     id: proposalId,
     organization_id: organizationId,
     user_id: userId,
     session_id: sessionId,
-    state: 'proposal',
+    state: 'proposal' as const,
     handoff_context: handoffContext,
     target_module: targetModule,
     target_payload: targetPayload,
     created_at: now,
     updated_at: now,
     audit_trail: [auditEntry],
+  };
+
+  return {
+    ...proposalWithoutContract,
+    operation_contract: buildTeresaOperationContract(proposalWithoutContract),
   };
 }
 
@@ -314,12 +1058,13 @@ export async function approveProposal(params: {
   organizationId: string;
   userId: string;
 }): Promise<ProposalRecord> {
+  await ensureTeresaTables();
   const { proposalId, organizationId, userId } = params;
 
   const row = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
     [proposalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -331,7 +1076,7 @@ export async function approveProposal(params: {
   if (currentState !== 'proposal' && currentState !== 'pending_approval') {
     throw new TeresaCopilotError(
       `Cannot approve proposal in state: ${currentState}`,
-      'P08_INVALID_STATE_TRANSITION',
+      'P08_INVALID_STATE_TRANSITION'
     );
   }
 
@@ -340,7 +1085,7 @@ export async function approveProposal(params: {
     if (!isValidEnvelopeTransition('proposal', 'pending_approval')) {
       throw new TeresaCopilotError(
         'Invalid transition: proposal → pending_approval',
-        'P08_INVALID_STATE_TRANSITION',
+        'P08_INVALID_STATE_TRANSITION'
       );
     }
     await transitionState(proposalId, 'pending_approval');
@@ -358,7 +1103,7 @@ export async function approveProposal(params: {
   if (!isValidEnvelopeTransition('pending_approval', 'approved')) {
     throw new TeresaCopilotError(
       'Invalid transition: pending_approval → approved',
-      'P08_INVALID_STATE_TRANSITION',
+      'P08_INVALID_STATE_TRANSITION'
     );
   }
   await transitionState(proposalId, 'approved');
@@ -376,7 +1121,7 @@ export async function approveProposal(params: {
   const updatedRow = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals WHERE id = ?`,
     [proposalId],
-    { fallback: true },
+    { fallback: true }
   );
   const auditRows = await loadAuditEntries(proposalId);
   return rowToProposal(updatedRow!, auditRows);
@@ -392,12 +1137,13 @@ export async function rejectProposal(params: {
   userId: string;
   reason?: string;
 }): Promise<ProposalRecord> {
+  await ensureTeresaTables();
   const { proposalId, organizationId, userId, reason } = params;
 
   const row = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
     [proposalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -408,7 +1154,7 @@ export async function rejectProposal(params: {
   if (!isValidEnvelopeTransition(currentState, 'rejected')) {
     throw new TeresaCopilotError(
       `Cannot reject proposal in state: ${currentState}`,
-      'P08_INVALID_STATE_TRANSITION',
+      'P08_INVALID_STATE_TRANSITION'
     );
   }
 
@@ -427,7 +1173,7 @@ export async function rejectProposal(params: {
   const updatedRow = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals WHERE id = ?`,
     [proposalId],
-    { fallback: true },
+    { fallback: true }
   );
   const auditRows = await loadAuditEntries(proposalId);
   return rowToProposal(updatedRow!, auditRows);
@@ -442,12 +1188,13 @@ export async function executeProposal(params: {
   organizationId: string;
   userId: string;
 }): Promise<HandoffResult> {
+  await ensureTeresaTables();
   const { proposalId, organizationId, userId } = params;
 
   const row = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
     [proposalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!row) {
@@ -458,7 +1205,7 @@ export async function executeProposal(params: {
   if (currentState !== 'approved') {
     throw new TeresaCopilotError(
       `Cannot execute proposal in state: ${currentState}. Must be approved first.`,
-      'P08_INVALID_STATE_TRANSITION',
+      'P08_INVALID_STATE_TRANSITION'
     );
   }
 
@@ -522,7 +1269,9 @@ export async function executeProposal(params: {
         detail: { error: errorMsg, degraded_scenario: 'D05' },
       });
     } catch (auditErr) {
-      logger.error(`${LOG_PREFIX} CRITICAL: Audit write failed for ${proposalId} — degraded(audit_unavailable)`);
+      logger.error(
+        `${LOG_PREFIX} CRITICAL: Audit write failed for ${proposalId} — degraded(audit_unavailable)`
+      );
       return {
         success: false,
         proposal_id: proposalId,
@@ -552,12 +1301,13 @@ export async function executeProposal(params: {
 
 export async function getProposal(
   proposalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ProposalRecord | null> {
+  await ensureTeresaTables();
   const row = await dbGet<ProposalRow>(
     `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
     [proposalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) return null;
   const auditRows = await loadAuditEntries(proposalId);
@@ -567,14 +1317,15 @@ export async function getProposal(
 export async function getProposalHistory(
   organizationId: string,
   userId: string,
-  limit = 20,
+  limit = 20
 ): Promise<ProposalRecord[]> {
+  await ensureTeresaTables();
   const rows = await dbAll<ProposalRow>(
     `SELECT * FROM teresa_proposals
      WHERE organization_id = ? AND user_id = ?
      ORDER BY created_at DESC LIMIT ?`,
     [organizationId, userId, limit],
-    { fallback: true },
+    { fallback: true }
   );
   const results: ProposalRecord[] = [];
   for (const row of rows) {
@@ -590,12 +1341,12 @@ export async function getProposalHistory(
 
 export async function getAuditTrail(
   proposalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<AuditEntry[]> {
   const row = await dbGet<ProposalRow>(
     `SELECT id FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
     [proposalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) {
     throw new TeresaCopilotError('Proposal not found', 'P08_PROPOSAL_NOT_FOUND', 404);
@@ -650,7 +1401,7 @@ async function performHandoff(params: {
   handoffContext: TeresaHandoffContext;
   targetPayload: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const { proposalId, organizationId, targetModule, handoffContext, targetPayload } = params;
+  const { proposalId, organizationId, userId, targetModule, handoffContext, targetPayload } = params;
 
   // Each target module has its own write lane.
   // Teresa initiates, module writes — per P08_WRITE_OWNERSHIP.
@@ -663,8 +1414,24 @@ async function performHandoff(params: {
       return handleCalendarHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'notebook':
       return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
+    case 'interview':
+      return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
+    case 'ideas_table':
+      return handleIdeasTableHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+    case 'excele':
+      return handleExceleHandoff(proposalId, organizationId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
+  }
+}
+
+// Opaque dynamic import — prevents Vite/bundler from resolving at build time.
+// These services may or may not exist; failure is handled gracefully.
+async function tryImport(specifier: string): Promise<Record<string, any> | null> {
+  try {
+    return await import(/* @vite-ignore */ specifier);
+  } catch {
+    return null;
   }
 }
 
@@ -672,18 +1439,40 @@ async function handleRadarHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const signalId = randomUUID();
+  const fallbackRef = randomUUID();
+  let realSignalId: string | null = null;
+
+  const radarMod = await tryImport('./radarTriageService.js');
+  if (radarMod) {
+    try {
+      const fn = radarMod.createSignal ?? radarMod.default?.createSignal;
+      const result = await fn?.({
+        organizationId,
+        why_now: payload.why_now,
+        evidence_pointers: payload.evidence_pointers,
+        user_intent: context.user_intent,
+        source: 'teresa',
+        proposalId,
+      });
+      realSignalId = result?.id || result?.signalId || null;
+    } catch {
+      logger.warn(`${LOG_PREFIX} Radar service call failed, using fallback ref`);
+    }
+  }
+
+  const ref = realSignalId || fallbackRef;
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'radar', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, signalId, new Date().toISOString()],
-    { fallback: true },
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
   );
   return {
     handoff: 'radar',
-    signal_id: signalId,
+    signal_id: ref,
+    real_entity: Boolean(realSignalId),
     why_now: payload.why_now,
     user_intent: context.user_intent,
   };
@@ -693,19 +1482,42 @@ async function handleInitiativesHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const initiativeRef = randomUUID();
+  const fallbackRef = randomUUID();
+  let realInitRef: string | null = null;
+
+  const initMod = await tryImport('../initiativeGenerationService.js');
+  if (initMod) {
+    try {
+      const create =
+        initMod.createInitiative ?? initMod.default?.createInitiative ?? initMod.default?.create;
+      const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
+      const result = await create?.({
+        organizationId,
+        title: seed.problem_statement || context.user_intent,
+        description: seed.proposed_outcome || '',
+        source: 'teresa',
+        proposalId,
+      });
+      realInitRef = result?.id || result?.initiativeId || null;
+    } catch {
+      logger.warn(`${LOG_PREFIX} Initiatives service call failed, using fallback ref`);
+    }
+  }
+
+  const ref = realInitRef || fallbackRef;
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'initiatives', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, initiativeRef, new Date().toISOString()],
-    { fallback: true },
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
   );
   return {
     handoff: 'initiatives',
-    initiative_ref: initiativeRef,
-    proposal_only: true,
+    initiative_ref: ref,
+    real_entity: Boolean(realInitRef),
+    proposal_only: !realInitRef,
     user_intent: context.user_intent,
   };
 }
@@ -714,18 +1526,40 @@ async function handleCalendarHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const calendarRef = randomUUID();
+  const fallbackRef = randomUUID();
+  let realCalRef: string | null = null;
+
+  const calMod = await tryImport('./calendarInteropService.js');
+  if (calMod) {
+    try {
+      const create = calMod.createEvent ?? calMod.default?.createEvent ?? calMod.default?.create;
+      const intent = (payload.calendar_intent || {}) as Record<string, unknown>;
+      const result = await create?.({
+        organizationId,
+        title: intent.what || context.user_intent,
+        when: intent.when,
+        source: 'teresa',
+        proposalId,
+      });
+      realCalRef = result?.id || result?.eventId || null;
+    } catch {
+      logger.warn(`${LOG_PREFIX} Calendar service call failed, using fallback ref`);
+    }
+  }
+
+  const ref = realCalRef || fallbackRef;
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'calendar', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, calendarRef, new Date().toISOString()],
-    { fallback: true },
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
   );
   return {
     handoff: 'calendar',
-    calendar_ref: calendarRef,
+    calendar_ref: ref,
+    real_entity: Boolean(realCalRef),
     calendar_intent: payload.calendar_intent,
     user_intent: context.user_intent,
   };
@@ -735,20 +1569,197 @@ async function handleNotebookHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const noteRef = randomUUID();
+  const fallbackRef = randomUUID();
+  let realNoteId: string | null = null;
+
+  const noteMod = await tryImport('../notebookService.js');
+  if (noteMod) {
+    try {
+      const create = noteMod.createNote ?? noteMod.default?.createNote ?? noteMod.default?.create;
+      const nbCtx = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
+      const result = await create?.({
+        organizationId,
+        title: nbCtx.title || 'Teresa handoff note',
+        body: nbCtx.body_preview || '',
+        source: 'teresa',
+        proposalId,
+      });
+      realNoteId = result?.id || result?.noteId || null;
+    } catch {
+      logger.warn(`${LOG_PREFIX} Notebook service call failed, using fallback ref`);
+    }
+  }
+
+  const ref = realNoteId || fallbackRef;
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'notebook', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, noteRef, new Date().toISOString()],
-    { fallback: true },
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
   );
   return {
     handoff: 'notebook',
-    note_ref: noteRef,
+    note_ref: ref,
+    real_entity: Boolean(realNoteId),
     notebook_context: payload.notebook_handoff_context,
     user_intent: context.user_intent,
+  };
+}
+
+async function handleInterviewHandoff(
+  proposalId: string,
+  organizationId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const fallbackRef = randomUUID();
+  let realInsightRef: string | null = null;
+
+  const interviewMod = await tryImport('./interviewInsightService.js');
+  if (interviewMod) {
+    try {
+      const fn =
+        interviewMod.generateInsight ??
+        interviewMod.default?.generateInsight ??
+        interviewMod.createInsight ??
+        interviewMod.default?.createInsight;
+      const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
+      const result = await fn?.({
+        organizationId,
+        action: interviewCtx.action || 'generate_insight',
+        session_ids: interviewCtx.session_ids,
+        title: interviewCtx.title || context.user_intent,
+        source: 'teresa',
+        proposalId,
+      });
+      realInsightRef = result?.id || result?.insightId || null;
+    } catch {
+      logger.warn(`${LOG_PREFIX} Interview service call failed, using fallback ref`);
+    }
+  }
+
+  const ref = realInsightRef || fallbackRef;
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'interview', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
+  );
+  return {
+    handoff: 'interview',
+    insight_ref: ref,
+    real_entity: Boolean(realInsightRef),
+    interview_context: payload.interview_handoff_context,
+    user_intent: context.user_intent,
+  };
+}
+
+async function handleIdeasTableHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const intent = (payload.ideas_table_intent || {}) as Record<string, unknown>;
+  const workspaceId = String(intent.workspace_id || '').trim();
+  const message = String(intent.message || context.user_intent || '').trim();
+  const targetTableId = String(intent.target_table_id || '').trim();
+
+  if (!workspaceId) {
+    throw new TeresaCopilotError(
+      'Missing ideas_table_intent.workspace_id. Open a My Work idea before executing.',
+      'P08_IDEAS_TABLE_WORKSPACE_REQUIRED',
+      400
+    );
+  }
+  if (!message) {
+    throw new TeresaCopilotError(
+      'Missing ideas_table_intent.message for table generation.',
+      'P08_IDEAS_TABLE_MESSAGE_REQUIRED',
+      400
+    );
+  }
+
+  const ProjectionService = (await import('../tablePlatform/ProjectionService.js')).default;
+  const ChatToSchemaService = (await import('../tablePlatform/ChatToSchemaService.js')).default;
+
+  const resolved = await ProjectionService.resolveBaseId(workspaceId, organizationId, userId);
+  const proposal = await ChatToSchemaService.generateProposal(
+    workspaceId,
+    message,
+    undefined,
+    'en',
+    userId,
+    {
+      baseId: resolved?.baseId,
+      tableId: targetTableId || resolved?.tableId || undefined,
+    }
+  );
+  const execution = await ChatToSchemaService.executeProposal(
+    String((proposal as Record<string, unknown>)?.id || ''),
+    undefined,
+    userId,
+    { organizationId }
+  );
+
+  const createdIds = ((execution as Record<string, unknown>)?.createdIds || {}) as Record<
+    string,
+    string
+  >;
+  const createdEntries = Object.entries(createdIds);
+  const createdTableId =
+    createdEntries.find(([key]) => key.toLowerCase().includes('table'))?.[1] || null;
+  const createdBaseId =
+    createdEntries.find(([key]) => key.toLowerCase().includes('base'))?.[1] ||
+    resolved?.baseId ||
+    null;
+  const tableRef = createdTableId || targetTableId || resolved?.tableId || null;
+  const deepLink = tableRef
+    ? `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table?tpTable=${encodeURIComponent(tableRef)}`
+    : `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table`;
+
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'ideas_table', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, tableRef || deepLink, new Date().toISOString()],
+    { fallback: true }
+  );
+
+  return {
+    handoff: 'ideas_table',
+    proposal_ref: (proposal as Record<string, unknown>)?.id || null,
+    table_ref: tableRef,
+    base_ref: createdBaseId,
+    deep_link: deepLink,
+    workspace_id: workspaceId,
+    schema_execution: execution,
+    user_intent: context.user_intent,
+  };
+}
+
+async function handleExceleHandoff(
+  proposalId: string,
+  organizationId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const fallbackRef = randomUUID();
+  const ref = fallbackRef;
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'excele', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
+  );
+  return {
+    handoff: 'excele',
+    workbook_ref: ref,
+    navigate_to: '/excele',
+    user_intent: context.user_intent,
+    prompt_hint: payload.prompt || context.user_intent,
   };
 }
 
@@ -760,7 +1771,7 @@ async function transitionState(proposalId: string, newState: ActionEnvelopeState
   await dbRun(
     `UPDATE teresa_proposals SET state = ?, updated_at = ? WHERE id = ?`,
     [newState, new Date().toISOString(), proposalId],
-    { fallback: true },
+    { fallback: true }
   );
 }
 
@@ -788,7 +1799,7 @@ async function writeAuditEntry(params: {
       params.toState,
       params.detail ? JSON.stringify(params.detail) : null,
     ],
-    { fallback: true },
+    { fallback: true }
   );
 
   return {
@@ -807,8 +1818,57 @@ async function loadAuditEntries(proposalId: string): Promise<AuditRow[]> {
   return dbAll<AuditRow>(
     `SELECT * FROM teresa_audit_log WHERE proposal_id = ? ORDER BY timestamp ASC`,
     [proposalId],
-    { fallback: true },
+    { fallback: true }
   );
+}
+
+// ---------------------------------------------------------------------------
+// Proactive suggestions: interview sessions without insights (L6.4)
+// ---------------------------------------------------------------------------
+
+export interface ProactiveSuggestion {
+  id: string;
+  targetModule: HandoffTargetModule;
+  label: string;
+  labelPl: string;
+  handoffIntent: string;
+  context: Record<string, unknown>;
+}
+
+export async function getProactiveSuggestions(
+  organizationId: string
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
+
+  try {
+    const interviewMod = await tryImport('./interviewInsightService.js');
+    if (interviewMod) {
+      const fn =
+        interviewMod.getCompletedSessionsWithoutInsights ??
+        interviewMod.default?.getCompletedSessionsWithoutInsights;
+      if (fn) {
+        const result = await fn({ organizationId });
+        const count =
+          typeof result === 'number' ? result : Array.isArray(result) ? result.length : 0;
+        if (count > 0) {
+          suggestions.push({
+            id: `proactive-interview-insights-${organizationId}`,
+            targetModule: 'interview',
+            label: `Generate insights from ${count} completed session${count === 1 ? '' : 's'}`,
+            labelPl: `Wygeneruj wnioski z ${count} zakończon${count === 1 ? 'ej sesji' : 'ych sesji'}`,
+            handoffIntent: 'generate_insight',
+            context: { completedSessionCount: count },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} Proactive interview suggestion check failed: ${(err as Error).message}`
+    );
+  }
+
+  return suggestions;
 }
 
 // ---------------------------------------------------------------------------

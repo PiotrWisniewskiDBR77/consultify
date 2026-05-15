@@ -674,8 +674,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const { i18n, t } = useTranslation();
   const lang = i18n.language?.startsWith('pl') ? 'pl' : 'en';
   const isPolish = lang === 'pl';
-  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
-    useHelpSidePanel();
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
 
   const openContextualHelp = useCallback(() => {
     setKnowledgeModuleIdOverride('discovery-tools');
@@ -902,16 +905,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               Api.getAssessmentReports(currentProjectId || undefined),
               [] as any[]
             ),
-            resolveBootstrapRequest(
-              'report builder list',
-              Api.get('/report-builder'),
-              { reports: [] as any[] }
-            ),
-            resolveBootstrapRequest(
-              'presentation decks',
-              Api.get('/presentations/decks'),
-              { success: true, data: [] as any[] }
-            ),
+            resolveBootstrapRequest('report builder list', Api.get('/report-builder'), {
+              reports: [] as any[],
+            }),
+            resolveBootstrapRequest('presentation decks', Api.get('/presentations/decks'), {
+              success: true,
+              data: [] as any[],
+            }),
           ]);
 
         const allSessions = (toolSessionsRes.items || []).map(transformToolSession);

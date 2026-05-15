@@ -14,6 +14,7 @@
 
 import {
   AlertTriangle,
+  ArrowRight,
   BarChart3,
   Bell,
   Brain,
@@ -42,7 +43,6 @@ import {
   MoreVertical,
   Plus,
   RotateCcw,
-  Search,
   Send,
   Settings2,
   Sparkles,
@@ -55,18 +55,50 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
+import { appendCoreRuntimeHandoffTrace, buildCoreRuntimeHandoffTrace } from '@/utils/artifactLinks';
+
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
 
 // Helper function to safely display error messages
 const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) => {
   toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
+};
+
+const buildAiSendBackDraftReason = (params: {
+  isPolish: boolean;
+  assignment?: { aiReview?: any } | null;
+}): string => {
+  const aiReview = params.assignment?.aiReview;
+  const weakAnswerMap = Array.isArray(aiReview?.weakAnswerMap) ? aiReview.weakAnswerMap : [];
+  const recommendations = Array.isArray(aiReview?.recommendations) ? aiReview.recommendations : [];
+
+  if (weakAnswerMap.length === 0 && recommendations.length === 0) {
+    return params.isPolish
+      ? 'Uzupełnij odpowiedzi i dopracuj jakość submission przed ponownym wysłaniem.'
+      : 'Please complete the answers and improve the submission quality before resubmitting.';
+  }
+
+  const weakLines = weakAnswerMap
+    .slice(0, 3)
+    .map(
+      (item: any) =>
+        `- ${String(item.label || 'Question')}: ${String(item.feedback || '').trim() || (params.isPolish ? 'wymaga dopracowania' : 'needs improvement')}`
+    );
+  const recommendationLine =
+    recommendations.length > 0
+      ? `\n\n${params.isPolish ? 'Sugestia AI:' : 'AI suggestion:'} ${String(recommendations[0] || '').trim()}`
+      : '';
+
+  return params.isPolish
+    ? `AI wskazało odpowiedzi wymagające poprawy:\n${weakLines.join('\n')}${recommendationLine}`
+    : `AI identified answers that need improvement:\n${weakLines.join('\n')}${recommendationLine}`;
 };
 
 import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
@@ -80,6 +112,14 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 
+import {
+  type FilterChip,
+  ModuleHub,
+  type ModuleTab,
+  type OpenDocument as SharedOpenDocument,
+  type ViewMode,
+} from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
@@ -103,6 +143,7 @@ import {
   InterviewTemplatePreviewFooter,
 } from './InterviewTemplatePreview';
 import { InterviewWorkspace } from './InterviewWorkspace';
+import { ManageAssignmentModal } from './ManageAssignmentModal';
 import { TemplateBuilder } from './TemplateBuilder';
 import {
   getTemplateAreaTagLabel,
@@ -176,7 +217,12 @@ interface InterviewSession {
   projectId?: string;
   name: string;
   ownerId: string;
-  status: string; // 'active' | 'completed' | 'archived' - using string to avoid type conflicts
+  status: string;
+  sessionRuntimeStatus?: string;
+  assignmentId?: string;
+  assignmentStatus?: string;
+  assignmentPriority?: 'low' | 'medium' | 'high' | 'urgent' | string;
+  assignmentCreatedBy?: string;
   totalQuestions: number;
   answeredQuestions: number;
   startedAt: string;
@@ -186,6 +232,13 @@ interface InterviewSession {
   templateCategory?: string;
   respondentId?: string;
   respondentName?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  assigneeEmail?: string;
+  dueAt?: string;
+  submittedAt?: string;
+  sentBackAt?: string;
+  sentBackReason?: string;
 }
 
 interface InterviewInsight {
@@ -204,6 +257,9 @@ interface InterviewInsight {
   impactLevel?: string;
   confidence?: string;
   status?: string;
+  reviewStatus?: 'draft' | 'in_review' | 'published';
+  publishedAt?: string;
+  reviewedBy?: string;
   actionable?: boolean;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
@@ -234,8 +290,14 @@ interface InterviewTemplate {
   createdAt: string;
 }
 
-type ModuleTab = 'my-assignments' | 'sessions' | 'templates' | 'insights' | 'managed';
-type ViewMode = 'table' | 'grid';
+type InterviewTab =
+  | 'my_assignments'
+  | 'sessions'
+  | 'templates'
+  | 'insights'
+  | 'initiatives'
+  | 'managed'
+  | 'pending_review';
 type InsightsViewMode = 'flat' | 'report';
 type ItemStatus =
   | 'draft'
@@ -253,6 +315,43 @@ type ItemStatus =
   | 'submitted'
   | 'sent_back';
 
+function isInterviewTab(value: string): value is InterviewTab {
+  return (
+    value === 'my_assignments' ||
+    value === 'sessions' ||
+    value === 'templates' ||
+    value === 'insights' ||
+    value === 'initiatives' ||
+    value === 'managed' ||
+    value === 'pending_review'
+  );
+}
+
+function resolveInterviewTabFromSearchParams(
+  searchParams: URLSearchParams,
+  permissions: { canViewManaged: boolean; canViewTemplates: boolean; canViewInsights: boolean }
+): InterviewTab | null {
+  const rawTab = String(searchParams.get('tab') || '')
+    .trim()
+    .toLowerCase();
+  if (!isInterviewTab(rawTab)) return null;
+
+  if (rawTab === 'managed' || rawTab === 'sessions') {
+    return permissions.canViewManaged ? rawTab : 'my_assignments';
+  }
+  if (rawTab === 'templates') {
+    return permissions.canViewTemplates ? 'templates' : 'my_assignments';
+  }
+  if (rawTab === 'insights' || rawTab === 'pending_review' || rawTab === 'initiatives') {
+    return permissions.canViewInsights ? rawTab : 'my_assignments';
+  }
+  return rawTab;
+}
+
+function readInterviewCoreRuntimeHandoff(pathname: string, searchParams: URLSearchParams) {
+  return buildCoreRuntimeHandoffTrace('interview', pathname, searchParams);
+}
+
 // Assignment types
 interface InterviewAssignment {
   id: string;
@@ -269,6 +368,7 @@ interface InterviewAssignment {
   submittedAt?: string;
   sentBackAt?: string;
   sentBackReason?: string;
+  missingItems?: Array<{ key: string; label: string; questionId?: string; sectionId?: string }>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   isTeamAssignment: boolean;
   notes?: string;
@@ -296,13 +396,42 @@ interface InterviewAssignment {
   };
 }
 
-interface OpenDocument {
-  id: string;
-  type: 'session' | 'insight' | 'template';
-  name: string;
-  status: ItemStatus;
-  data?: InterviewSession | InterviewInsight | InterviewTemplate;
+function normalizeInterviewAssignmentStatus(status?: string): InterviewAssignment['status'] {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'sent_back') return 'in_progress';
+  if (
+    normalized === 'assigned' ||
+    normalized === 'in_progress' ||
+    normalized === 'submitted' ||
+    normalized === 'approved' ||
+    normalized === 'completed'
+  ) {
+    return normalized;
+  }
+  return 'in_progress';
 }
+
+function normalizeInterviewAssignmentRecord(assignment: InterviewAssignment): InterviewAssignment {
+  return {
+    ...assignment,
+    status: normalizeInterviewAssignmentStatus(assignment.status),
+  };
+}
+
+function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSession {
+  return {
+    ...session,
+    status:
+      String(session.assignmentStatus || session.status || '').toLowerCase() === 'sent_back'
+        ? 'in_progress'
+        : session.status,
+    assignmentStatus: session.assignmentStatus
+      ? normalizeInterviewAssignmentStatus(session.assignmentStatus)
+      : session.assignmentStatus,
+  };
+}
+
+type OpenDocument = SharedOpenDocument;
 
 // Shared button styles (KANON v3): pills, h-9, hover = bg-only.
 const BUTTON_BASE = `
@@ -352,24 +481,30 @@ const TAB_ACTIVE = `
 `;
 
 // Type colors
-const TYPE_COLORS = {
-  session: 'border-l-purple-500',
-  insight: 'border-l-amber-500',
-  template: 'border-l-blue-500',
+const TYPE_COLORS: Record<string, string> = {
+  interview_session: 'border-l-purple-500',
+  interview_insight: 'border-l-amber-500',
+  interview_template: 'border-l-blue-500',
 };
 
-const STATUS_COLORS: Record<ItemStatus, string> = {
+const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-slate-400',
+  DRAFT: 'bg-slate-400',
   drafting: 'bg-slate-400',
   in_review: 'bg-amber-400',
+  PENDING_REVIEW: 'bg-amber-400',
   review: 'bg-amber-400',
+  REVIEW: 'bg-amber-400',
   approved: 'bg-emerald-400',
+  APPROVED: 'bg-emerald-400',
   accepted: 'bg-emerald-400',
   rejected: 'bg-red-400',
   completed: 'bg-emerald-400',
+  DONE: 'bg-emerald-400',
   active: 'bg-purple-400',
+  EXECUTING: 'bg-purple-400',
   archived: 'bg-slate-500',
-  // Assignment statuses
+  ARCHIVED: 'bg-slate-500',
   assigned: 'bg-blue-400',
   in_progress: 'bg-purple-400',
   submitted: 'bg-amber-400',
@@ -379,10 +514,20 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentProjectId, setCurrentProjectId, currentOrganization, currentUser } = useAppStore();
-  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
-    useHelpSidePanel();
+  const {
+    currentProjectId,
+    setCurrentProjectId,
+    currentOrganization,
+    currentUser,
+    setInterviewBreadcrumbs,
+  } = useAppStore();
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
 
   const openContextualHelp = useCallback(() => {
     setKnowledgeModuleIdOverride('interview');
@@ -395,6 +540,9 @@ export const InterviewHub: React.FC = () => {
     canAssign: permissionsCanAssign,
     canViewManaged: permissionsCanViewManaged,
     canViewOverdue: permissionsCanViewOverdue,
+    canViewInsights: permissionsCanViewInsights,
+    canCreateInsights: permissionsCanCreateInsights,
+    canReviewInsights: permissionsCanReviewInsights,
     isLoading: permissionsLoading,
   } = useInterviewPermissions();
 
@@ -404,12 +552,12 @@ export const InterviewHub: React.FC = () => {
   const insightIdFromUrl = searchParams.get('insightId');
 
   // State - domyślnie Inbox (moje przydziały)
-  const [activeTab, setActiveTab] = useState<ModuleTab>('my-assignments');
+  const [activeTab, setActiveTab] = useState<InterviewTab>('my_assignments');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [sessionsViewMenuOpen, setSessionsViewMenuOpen] = useState(false);
   const [assignmentsViewMode, setAssignmentsViewMode] = useState<'list' | 'cards'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<string>('all');
   const [sessionsHiddenColumns, setSessionsHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
@@ -471,10 +619,12 @@ export const InterviewHub: React.FC = () => {
   }, [selectedInsightId]);
 
   useEffect(() => {
-    // Interview Inbox: managed view is driven by Command Row chips (To approve / Overdue).
+    // Assigned should open on the full manager list.
+    // Narrow slices like "To approve" and "Overdue" are entered explicitly from Command Row chips.
     if (activeTab !== 'managed') return;
-    if (assignmentStatusFilter !== 'submitted' && assignmentStatusFilter !== 'overdue') {
-      setAssignmentStatusFilter('submitted');
+    if (assignmentStatusFilter === 'submitted' || assignmentStatusFilter === 'overdue') return;
+    if (assignmentStatusFilter !== 'all') {
+      setAssignmentStatusFilter('all');
     }
   }, [activeTab, assignmentStatusFilter]);
 
@@ -495,8 +645,13 @@ export const InterviewHub: React.FC = () => {
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
-  const [showSendBackModal, setShowSendBackModal] = useState(false);
+  const [showReviewActionModal, setShowReviewActionModal] = useState(false);
+  const [reviewActionMode, setReviewActionMode] = useState<'send_back' | 'revoke_approval'>(
+    'send_back'
+  );
+  const [reviewActionReason, setReviewActionReason] = useState('');
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
@@ -522,6 +677,37 @@ export const InterviewHub: React.FC = () => {
   const canAssign = permissionsCanAssign || isUsingDemoData;
   const canViewManaged = permissionsCanViewManaged || isUsingDemoData;
   const canViewOverdue = permissionsCanViewOverdue || isUsingDemoData;
+  const canViewInsights = permissionsCanViewInsights || isUsingDemoData;
+  const canCreateInsights = permissionsCanCreateInsights || isUsingDemoData;
+  const canReviewInsights = permissionsCanReviewInsights || isUsingDemoData;
+  const canViewTemplates = canViewManaged || templates.length > 0 || isUsingDemoData;
+
+  useEffect(() => {
+    if (assignmentIdFromUrl || sessionIdFromUrl || insightIdFromUrl) return;
+    const nextTab = resolveInterviewTabFromSearchParams(searchParams, {
+      canViewManaged,
+      canViewTemplates,
+      canViewInsights,
+    });
+    if (!nextTab || nextTab === activeTab) return;
+    setActiveTab(nextTab);
+  }, [
+    activeTab,
+    assignmentIdFromUrl,
+    canViewInsights,
+    canViewManaged,
+    canViewTemplates,
+    insightIdFromUrl,
+    searchParams,
+    sessionIdFromUrl,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const trace = readInterviewCoreRuntimeHandoff(location.pathname, searchParams);
+    if (!trace || trace.source !== 'teresa') return;
+    appendCoreRuntimeHandoffTrace(window.sessionStorage, trace);
+  }, [location.pathname, searchParams]);
 
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
@@ -557,12 +743,14 @@ export const InterviewHub: React.FC = () => {
     []
   );
 
-  const loadAcceptedSessions = useCallback(async (): Promise<InterviewSession[]> => {
-    const sessionsRes = await V8InterviewApi.getAcceptedSessions()
+  const loadManagedSessions = useCallback(async (): Promise<InterviewSession[]> => {
+    const sessionsRes = await V8InterviewApi.getManagedSessions()
       .then((res) => res.sessions)
-      .catch(() => Api.get('/interview/sessions/accepted'))
+      .catch(() => Api.get('/interview/sessions/managed'))
       .catch(() => []);
-    return Array.isArray(sessionsRes) ? (sessionsRes as InterviewSession[]) : [];
+    return Array.isArray(sessionsRes)
+      ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
+      : [];
   }, []);
 
   const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
@@ -570,7 +758,9 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.assignments)
       .catch(() => Api.get('/interview/assignments/my'))
       .catch(() => []);
-    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+    return Array.isArray(assignmentsRes)
+      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+      : [];
   }, []);
 
   const loadManagedAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
@@ -578,7 +768,9 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.assignments)
       .catch(() => Api.get('/interview/assignments/managed'))
       .catch(() => []);
-    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+    return Array.isArray(assignmentsRes)
+      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+      : [];
   }, []);
 
   const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
@@ -586,40 +778,40 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.assignments)
       .catch(() => Api.get('/interview/assignments/overdue'))
       .catch(() => []);
-    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+    return Array.isArray(assignmentsRes)
+      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+      : [];
   }, []);
 
-  // V3-A02: Dynamic documents state with sessionStorage persistence
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-    } catch {
-      return [];
-    }
-  });
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
-    } catch {
-      return null;
-    }
-  });
-  useEffect(() => {
-    try {
-      window.sessionStorage.setItem(
-        'moduleHub.openDocuments.interview',
-        JSON.stringify({ openDocuments, activeDocumentId })
-      );
-    } catch {
-      /* ignore */
-    }
-  }, [openDocuments, activeDocumentId]);
+  const refreshAssignmentViews = useCallback(
+    async (includeManagedSessions = false) => {
+      const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
+        loadMyAssignments(),
+        canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
+        canViewOverdue ? loadOverdueAssignments() : Promise.resolve([]),
+        includeManagedSessions && canViewManaged ? loadManagedSessions() : Promise.resolve(null),
+      ]);
+
+      setMyAssignments(myRes);
+      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+      if (includeManagedSessions && Array.isArray(sessionsRes)) {
+        setSessions(sessionsRes);
+      }
+    },
+    [
+      canViewManaged,
+      canViewOverdue,
+      loadManagedAssignments,
+      loadManagedSessions,
+      loadMyAssignments,
+      loadOverdueAssignments,
+    ]
+  );
+
+  // V3-A02: Dynamic documents state with sessionStorage persistence (shared hook)
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
+    useModuleOpenDocuments('interview');
 
   useEffect(() => {
     // Close preview menus on context change (avoid “leaking” open menus)
@@ -631,7 +823,7 @@ export const InterviewHub: React.FC = () => {
 
   useEffect(() => {
     // Preview state should not leak across tabs/docs.
-    if (activeTab !== 'my-assignments' && activeTab !== 'managed') {
+    if (activeTab !== 'my_assignments' && activeTab !== 'managed') {
       setPreviewAssignmentId(null);
       setPreviewAssignmentOpen(false);
     }
@@ -663,6 +855,43 @@ export const InterviewHub: React.FC = () => {
     }
   }, [activeTab, activeDocumentId]);
 
+  // L2.3: Dynamic breadcrumbs for Interview module
+  useEffect(() => {
+    const base = isPolish ? 'Wywiad' : 'Interview';
+    const doc = activeDocumentId ? openDocuments.find((d) => d.id === activeDocumentId) : null;
+
+    if (doc) {
+      const typeLabel =
+        doc.type === 'interview_session'
+          ? isPolish
+            ? 'Sesja'
+            : 'Session'
+          : doc.type === 'interview_insight'
+            ? isPolish
+              ? 'Wniosek'
+              : 'Insight'
+            : isPolish
+              ? 'Szablon'
+              : 'Template';
+      const docName = doc.name || typeLabel;
+      setInterviewBreadcrumbs([base, `${typeLabel}: ${docName}`]);
+    } else {
+      const TAB_LABELS: Record<string, string> = {
+        my_assignments: 'Inbox',
+        sessions: isPolish ? 'Sesje' : 'Sessions',
+        templates: isPolish ? 'Szablony' : 'Templates',
+        insights: isPolish ? 'Wnioski' : 'Insights',
+        initiatives: isPolish ? 'Inicjatywy' : 'Initiatives',
+        managed: isPolish ? 'Przydzielone' : 'Assigned',
+        pending_review: isPolish ? 'Do przeglądu' : 'Pending Review',
+      };
+      const tabLabel = TAB_LABELS[activeTab];
+      setInterviewBreadcrumbs(tabLabel ? [base, tabLabel] : [base]);
+    }
+
+    return () => setInterviewBreadcrumbs(null);
+  }, [activeTab, activeDocumentId, openDocuments, isPolish, setInterviewBreadcrumbs]);
+
   useEffect(() => {
     // Reset preview menus/texts on item change
     setPreviewDetailsMenuOpen(false);
@@ -678,10 +907,11 @@ export const InterviewHub: React.FC = () => {
       setIsLoading(true);
       try {
         const [sessionsRes, insightsRes, templatesRes] = await Promise.all([
-          // Sessions tab is "accepted sources" in the manager workflow.
-          // Non-managers won't see the tab, so empty here is fine.
-          loadAcceptedSessions(),
-          Api.get('/interview/insights').catch(() => []),
+          // Sessions tab is the main manager cockpit for assignment-backed interview work.
+          loadManagedSessions(),
+          V8InterviewApi.listInsights()
+            .then((r) => r.insights)
+            .catch(() => Api.get('/interview/insights').catch(() => [])),
           Api.get('/interview/templates').catch(() => []),
         ]);
 
@@ -708,12 +938,14 @@ export const InterviewHub: React.FC = () => {
     };
 
     loadData();
-  }, [loadAcceptedSessions, normalizeTemplateRecord]);
+  }, [loadManagedSessions, normalizeTemplateRecord]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      const insightsRes = await V8InterviewApi.listInsights()
+        .then((r) => r.insights)
+        .catch(() => Api.get('/interview/insights').catch(() => []));
       const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
       setInsights(apiInsights);
     } catch (error) {
@@ -762,21 +994,77 @@ export const InterviewHub: React.FC = () => {
     permissionsLoading,
   ]);
 
+  const handleOpenDocument = useCallback((doc: OpenDocument) => {
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(doc.id);
+  }, []);
+
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
+
+  const handleShowList = useCallback(() => {
+    setActiveDocumentId(null);
+  }, []);
+
+  const handleViewSession = useCallback(
+    (session: InterviewSession) => {
+      const workflowStatus = String(session.assignmentStatus || session.status || 'in_progress');
+      handleOpenDocument({
+        id: session.id,
+        type: 'interview_session',
+        subType: 'interview',
+        name: session.name || 'Interview Session',
+        status: (workflowStatus.toUpperCase() || 'DRAFT') as any,
+      });
+    },
+    [handleOpenDocument]
+  );
+
+  const handleViewInsight = useCallback(
+    (insight: InterviewInsight) => {
+      handleOpenDocument({
+        id: insight.id,
+        type: 'interview_insight',
+        subType: 'interview',
+        name: insight.title,
+        status: (insight.status || 'approved').toUpperCase() as any,
+      });
+    },
+    [handleOpenDocument]
+  );
+
+  const handleViewTemplate = useCallback(
+    (template: InterviewTemplate) => {
+      handleOpenDocument({
+        id: template.id,
+        type: 'interview_template',
+        subType: 'interview',
+        name: template.name,
+        status: 'APPROVED' as any,
+      });
+    },
+    [handleOpenDocument]
+  );
+
   // Open session from URL
   useEffect(() => {
     if (sessionIdFromUrl && sessions.length > 0) {
       const session = sessions.find((s) => s.id === sessionIdFromUrl);
       if (session) {
-        handleOpenDocument({
-          id: session.id,
-          type: 'session',
-          name: session.name || 'Interview Session',
-          status: session.status as ItemStatus,
-          data: session,
-        });
+        handleViewSession(session);
       }
     }
-  }, [sessionIdFromUrl, sessions]);
+  }, [sessionIdFromUrl, sessions, handleViewSession]);
 
   // Open assignment from URL (deep link from notifications)
   useEffect(() => {
@@ -786,7 +1074,13 @@ export const InterviewHub: React.FC = () => {
     const assignment = allAssignments.find((a) => a.id === assignmentIdFromUrl);
     if (!assignment) return;
     const isManagerView = managedAssignments.some((a) => a.id === assignmentIdFromUrl);
-    setActiveTab(isManagerView ? 'managed' : 'my-assignments');
+    const shouldOpenInSessions =
+      isManagerView &&
+      Boolean(assignment.sessionId || assignment.session?.id) &&
+      ['in_progress', 'submitted', 'sent_back', 'approved', 'completed'].includes(
+        assignment.status
+      );
+    setActiveTab(shouldOpenInSessions ? 'sessions' : isManagerView ? 'managed' : 'my_assignments');
     void openInterviewAssignmentFull(assignment, isManagerView);
     const next = new URLSearchParams(searchParams);
     next.delete('assignmentId');
@@ -799,23 +1093,17 @@ export const InterviewHub: React.FC = () => {
     if (!insightIdFromUrl) return;
     const insight = insights.find((i) => i.id === insightIdFromUrl);
     if (!insight) return;
-    handleOpenDocument({
-      id: insight.id,
-      type: 'insight',
-      name: insight.title || 'Insight',
-      status: (insight.status as ItemStatus) || 'approved',
-      data: insight,
-    });
+    handleViewInsight(insight);
     const next = new URLSearchParams(searchParams);
     next.delete('insightId');
     setSearchParams(next, { replace: true });
-  }, [insightIdFromUrl, insights, searchParams, setSearchParams]);
+  }, [insightIdFromUrl, insights, searchParams, setSearchParams, handleViewInsight]);
 
   // Load template questions when a template doc is opened
   useEffect(() => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
     const templateId =
-      (doc?.type === 'template' ? doc.id : null) ||
+      (doc?.type === 'interview_template' ? doc.id : null) ||
       (activeTab === 'templates' && selectedTemplateId ? selectedTemplateId : null);
     if (!templateId) return;
     if (templateQuestionsById[templateId] || templateQuestionsLoading[templateId]) return;
@@ -861,13 +1149,29 @@ export const InterviewHub: React.FC = () => {
     templateQuestionsLoading,
   ]);
 
+  const getSessionWorkflowStatus = useCallback(
+    (session: InterviewSession) =>
+      normalizeInterviewAssignmentStatus(
+        session.assignmentStatus || session.status || 'in_progress'
+      ),
+    []
+  );
+
+  const getSessionProgress = useCallback(
+    (session: InterviewSession) =>
+      session.totalQuestions > 0
+        ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
+        : 0,
+    []
+  );
+
   // Filter sessions
   const filteredSessions = useMemo(() => {
     let result = sessions;
 
     // Filter by status
     if (sessionStatusFilter !== 'all') {
-      result = result.filter((s) => s.status === sessionStatusFilter);
+      result = result.filter((s) => getSessionWorkflowStatus(s) === sessionStatusFilter);
     }
 
     // Filter by search query
@@ -875,22 +1179,27 @@ export const InterviewHub: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (s) =>
-          s.name.toLowerCase().includes(query) ||
-          new Date(s.startedAt).toLocaleDateString().includes(query)
+          (s.name ?? '').toLowerCase().includes(query) ||
+          (s.assigneeName ?? '').toLowerCase().includes(query) ||
+          (s.templateName ?? '').toLowerCase().includes(query) ||
+          new Date(s.startedAt || 0).toLocaleDateString().includes(query)
       );
     }
 
     return result;
-  }, [sessions, searchQuery, sessionStatusFilter]);
+  }, [getSessionWorkflowStatus, searchQuery, sessionStatusFilter, sessions]);
 
   // Session status counts for filter badges
   const sessionStatusCounts = useMemo(() => {
     return {
       all: sessions.length,
-      completed: sessions.filter((s) => s.status === 'completed').length,
-      archived: sessions.filter((s) => s.status === 'archived').length,
+      in_progress: sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length,
+      submitted: sessions.filter((s) => getSessionWorkflowStatus(s) === 'submitted').length,
+      approved: sessions.filter((s) =>
+        ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
+      ).length,
     };
-  }, [sessions]);
+  }, [getSessionWorkflowStatus, sessions]);
 
   const sessionStatusOptions = useMemo(() => {
     const opts = [
@@ -900,14 +1209,19 @@ export const InterviewHub: React.FC = () => {
         count: sessionStatusCounts.all,
       },
       {
-        id: 'completed',
-        label: isPolish ? 'Zakończone' : 'Completed',
-        count: sessionStatusCounts.completed,
+        id: 'in_progress',
+        label: isPolish ? 'W trakcie' : 'In progress',
+        count: sessionStatusCounts.in_progress,
       },
       {
-        id: 'archived',
-        label: isPolish ? 'Archiwum' : 'Archived',
-        count: sessionStatusCounts.archived,
+        id: 'submitted',
+        label: isPolish ? 'Wysłane' : 'Submitted',
+        count: sessionStatusCounts.submitted,
+      },
+      {
+        id: 'approved',
+        label: isPolish ? 'Zatwierdzone' : 'Approved',
+        count: sessionStatusCounts.approved,
       },
     ];
 
@@ -939,7 +1253,8 @@ export const InterviewHub: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (i) =>
-          i.title.toLowerCase().includes(query) || (i.content || '').toLowerCase().includes(query)
+          (i.title ?? '').toLowerCase().includes(query) ||
+          (i.content ?? '').toLowerCase().includes(query)
       );
     }
 
@@ -957,8 +1272,11 @@ export const InterviewHub: React.FC = () => {
     [insightTypes]
   );
   const INSIGHT_STATUS_FILTER_OPTIONS = [
+    { value: 'draft', label: 'Draft' },
     { value: 'generating', label: 'Generating' },
     { value: 'completed', label: 'Completed' },
+    { value: 'in_review', label: 'In Review' },
+    { value: 'published', label: 'Published' },
     { value: 'failed', label: 'Failed' },
   ];
 
@@ -974,7 +1292,13 @@ export const InterviewHub: React.FC = () => {
     }
     const statusFilter = insightTableFilters.status as string[] | undefined;
     if (statusFilter?.length) {
-      result = result.filter((i) => statusFilter.includes((i.status || 'completed') as string));
+      result = result.filter((i) =>
+        statusFilter.includes(
+          (i.reviewStatus === 'in_review' || i.reviewStatus === 'published'
+            ? i.reviewStatus
+            : i.status) || 'completed'
+        )
+      );
     }
     return result;
   }, [filteredInsights, insightTableFilters]);
@@ -983,8 +1307,13 @@ export const InterviewHub: React.FC = () => {
   const insightStats = useMemo(() => {
     return {
       total: insights.length,
+      draft: insights.filter((i) => (i.reviewStatus || 'draft') === 'draft').length,
       generating: insights.filter((i) => i.status === 'generating').length,
       completed: insights.filter((i) => i.status === 'completed').length,
+      inReview: insights.filter((i) => i.reviewStatus === 'in_review' || i.status === 'in_review')
+        .length,
+      published: insights.filter((i) => i.reviewStatus === 'published' || i.status === 'published')
+        .length,
       failed: insights.filter((i) => i.status === 'failed').length,
       exportedToTools: insights.filter((i) => i.exportedToTools).length,
       exportedToAssessment: insights.filter((i) => i.exportedToAssessment).length,
@@ -1024,11 +1353,11 @@ export const InterviewHub: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (t) =>
-          t.name.toLowerCase().includes(query) ||
-          t.description.toLowerCase().includes(query) ||
-          t.category.toLowerCase().includes(query) ||
-          (t.scope || '').toLowerCase().includes(query) ||
-          (t.areaTags || []).join(' ').toLowerCase().includes(query)
+          (t.name ?? '').toLowerCase().includes(query) ||
+          (t.description ?? '').toLowerCase().includes(query) ||
+          (t.category ?? '').toLowerCase().includes(query) ||
+          (t.scope ?? '').toLowerCase().includes(query) ||
+          (t.areaTags ?? []).join(' ').toLowerCase().includes(query)
       );
     }
 
@@ -1074,6 +1403,12 @@ export const InterviewHub: React.FC = () => {
 
   // Tab configuration - role-based visibility
   // Pracownik (TEAM_MEMBER/VIEWER): tylko Inbox
+  // Pending review insights (for triage tab)
+  const pendingReviewInsights = useMemo(
+    () => insights.filter((i) => i.reviewStatus === 'in_review' || i.status === 'in_review'),
+    [insights]
+  );
+
   // Manager (PM/ADMIN): wszystkie zakładki
   const tabs = useMemo(() => {
     const baseTabs: Array<{
@@ -1081,11 +1416,9 @@ export const InterviewHub: React.FC = () => {
       label: string;
       icon: React.ReactNode;
       count?: number;
-      hasWarning?: boolean;
     }> = [
-      // 1. Inbox - przydzielone do mnie (widoczne dla wszystkich)
       {
-        id: 'my-assignments' as ModuleTab,
+        id: 'my_assignments' as ModuleTab,
         label: isPolish ? 'Inbox' : 'Inbox',
         icon: <Inbox size={16} />,
         count: myAssignments.filter((a) => a.status !== 'approved' && a.status !== 'completed')
@@ -1093,9 +1426,7 @@ export const InterviewHub: React.FC = () => {
       },
     ];
 
-    // Dodatkowe zakładki tylko dla PM/Admin
     if (canViewManaged) {
-      // 2. Sessions - sesje wywiadów (PM/Admin)
       baseTabs.push({
         id: 'sessions' as ModuleTab,
         label: isPolish ? 'Sesje' : 'Sessions',
@@ -1103,31 +1434,45 @@ export const InterviewHub: React.FC = () => {
         count: sessions.length,
       });
 
-      // 3. Assigned - wywiady które przydzieliłem (PM/Admin)
-      const assignedCount = managedAssignments.length;
-      const overdueCount = overdueAssignments.length;
       baseTabs.push({
         id: 'managed' as ModuleTab,
         label: isPolish ? 'Przydzielone' : 'Assigned',
         icon: <ClipboardList size={16} />,
-        count: assignedCount,
-        hasWarning: overdueCount > 0,
+        count: managedAssignments.length,
       });
+    }
 
-      // 4. Templates - biblioteka szablonów (PM/Admin)
+    if (canViewTemplates) {
       baseTabs.push({
         id: 'templates' as ModuleTab,
         label: isPolish ? 'Szablony' : 'Templates',
         icon: <FileText size={16} />,
         count: templates.length,
       });
+    }
 
-      // 5. Insights - wnioski AI (PM/Admin) - rightmost
+    if (canViewInsights) {
       baseTabs.push({
         id: 'insights' as ModuleTab,
         label: isPolish ? 'Wnioski' : 'Insights',
         icon: <Lightbulb size={16} />,
         count: insights.length,
+      });
+
+      baseTabs.push({
+        id: 'initiatives' as ModuleTab,
+        label: isPolish ? 'Inicjatywy' : 'Initiatives',
+        icon: <Target size={16} />,
+        count: insights.length,
+      });
+    }
+
+    if (canReviewInsights) {
+      baseTabs.push({
+        id: 'pending_review' as ModuleTab,
+        label: isPolish ? 'Do przeglądu' : 'Pending Review',
+        icon: <AlertTriangle size={16} />,
+        count: pendingReviewInsights.length,
       });
     }
 
@@ -1139,8 +1484,11 @@ export const InterviewHub: React.FC = () => {
     templates.length,
     myAssignments,
     managedAssignments,
-    overdueAssignments,
+    canViewInsights,
     canViewManaged,
+    canViewTemplates,
+    canReviewInsights,
+    pendingReviewInsights.length,
   ]);
 
   const ensureProjectId = useCallback(async (): Promise<string | null> => {
@@ -1180,10 +1528,10 @@ export const InterviewHub: React.FC = () => {
       // Open the new session (inline to avoid TDZ issues)
       const doc: OpenDocument = {
         id: (newSession as InterviewSession).id,
-        type: 'session',
+        type: 'interview_session',
         name: (newSession as InterviewSession).name || 'Interview Session',
-        status: (newSession as any)?.status || 'in_progress',
-        data: newSession as InterviewSession,
+        subType: 'interview',
+        status: ((newSession as any)?.status || 'IN_PROGRESS').toString().toUpperCase() as any,
       };
       setOpenDocuments((prev) => {
         if (prev.find((d) => d.id === doc.id)) return prev;
@@ -1198,110 +1546,75 @@ export const InterviewHub: React.FC = () => {
     }
   }, [ensureProjectId, isPolish]);
 
-  const handleOpenDocument = useCallback((doc: OpenDocument) => {
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(doc.id);
-  }, []);
-
-  const handleCloseDocument = useCallback(
-    (id: string) => {
-      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-      if (activeDocumentId === id) {
-        setActiveDocumentId(null);
-      }
-    },
-    [activeDocumentId]
-  );
-
-  const handleShowList = useCallback(() => {
-    setActiveDocumentId(null);
-  }, []);
-
-  const handleViewSession = useCallback(
-    (session: InterviewSession) => {
-      handleOpenDocument({
-        id: session.id,
-        type: 'session',
-        name: session.name || 'Interview Session',
-        status: session.status as ItemStatus,
-        data: session,
-      });
-    },
-    [handleOpenDocument]
-  );
-
-  const handleViewInsight = useCallback(
-    (insight: InterviewInsight) => {
-      // Open as dynamic tab with full view (like sessions and templates)
-      handleOpenDocument({
-        id: insight.id,
-        type: 'insight',
-        name: insight.title,
-        status: (insight.status as ItemStatus) || 'approved',
-        data: insight,
-      });
-    },
-    [handleOpenDocument]
-  );
-
-  const handleViewTemplate = useCallback(
-    (template: InterviewTemplate) => {
-      handleOpenDocument({
-        id: template.id,
-        type: 'template',
-        name: template.name,
-        status: 'approved',
-        data: template,
-      });
-    },
-    [handleOpenDocument]
-  );
-
   const handleSessionComplete = useCallback(
-    (sessionId: string) => {
+    async (sessionId: string) => {
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
-      // Refresh sessions list
-      loadAcceptedSessions().then((res) => {
-        setSessions(res);
-      });
+      const [sessionsRes, myRes, managedRes, overdueRes] = await Promise.all([
+        loadManagedSessions(),
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+      setMyAssignments(Array.isArray(myRes) ? myRes : []);
+      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
     },
-    [isPolish, loadAcceptedSessions]
+    [
+      isPolish,
+      loadManagedAssignments,
+      loadManagedSessions,
+      loadMyAssignments,
+      loadOverdueAssignments,
+    ]
   );
 
-  const handleSessionChange = useCallback((session: InterviewSession) => {
-    // Update open document
-    setOpenDocuments((prev) =>
-      prev.map((doc) =>
-        doc.id === session.id
-          ? { ...doc, name: session.name || 'Interview Session', data: session }
-          : doc
-      )
-    );
-  }, []);
+  const handleSessionChange = useCallback(
+    (session: InterviewSession) => {
+      setOpenDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === session.id ? { ...doc, name: session.name || 'Interview Session' } : doc
+        )
+      );
+      const completenessPercent =
+        session.totalQuestions > 0
+          ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
+          : 0;
+      setSessions((prev) =>
+        prev.map((item) => (item.id === session.id ? { ...item, ...session } : item))
+      );
+      const mergeAssignmentSession = (assignment: InterviewAssignment) =>
+        assignment.sessionId === session.id || assignment.session?.id === session.id
+          ? {
+              ...assignment,
+              sessionId: session.id,
+              session: {
+                ...(assignment.session || {}),
+                id: session.id,
+                status: session.status,
+                answeredQuestions: session.answeredQuestions,
+                totalQuestions: session.totalQuestions,
+                completenessPercent,
+              },
+            }
+          : assignment;
+      setMyAssignments((prev) => prev.map(mergeAssignmentSession));
+      setManagedAssignments((prev) => prev.map(mergeAssignmentSession));
+      setOverdueAssignments((prev) => prev.map(mergeAssignmentSession));
+    },
+    [setOpenDocuments]
+  );
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleCloseSearch = () => {
-    setShowSearch(false);
-    setSearchQuery('');
-  };
+  // Search is handled by ModuleHub's onSearch prop
 
   // Template actions
   const handleNewTemplate = useCallback(() => {
     handleOpenDocument({
       id: `new-template:${Date.now()}`,
-      type: 'template',
+      type: 'interview_template',
+      subType: 'interview',
       name: isPolish ? 'Nowy template' : 'New template',
-      status: 'draft',
-      data: {
-        name: isPolish ? 'Nowy template' : 'New template',
-        status: 'draft',
-      } as unknown as InterviewTemplate,
+      status: 'DRAFT' as any,
     });
   }, [handleOpenDocument, isPolish]);
 
@@ -1310,16 +1623,10 @@ export const InterviewHub: React.FC = () => {
       const template = templates.find((item) => item.id === templateId);
       handleOpenDocument({
         id: templateId,
-        type: 'template',
+        type: 'interview_template',
+        subType: 'interview',
         name: template?.name || (isPolish ? 'Template' : 'Template'),
-        status: (template?.status as ItemStatus) || 'draft',
-        data:
-          template ||
-          ({
-            id: templateId,
-            name: isPolish ? 'Template' : 'Template',
-            status: 'draft',
-          } as unknown as InterviewTemplate),
+        status: (template?.status || 'draft').toUpperCase() as any,
       });
     },
     [handleOpenDocument, isPolish, templates]
@@ -1344,10 +1651,10 @@ export const InterviewHub: React.FC = () => {
         // Open the cloned template in the dynamic document area
         handleOpenDocument({
           id: (cloned as any).id,
-          type: 'template',
+          type: 'interview_template',
+          subType: 'interview',
           name: (cloned as any).name || `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
-          status: ((cloned as any).status as ItemStatus) || 'draft',
-          data: cloned as InterviewTemplate,
+          status: ((cloned as any).status || 'draft').toUpperCase() as any,
         });
       } catch (error) {
         toast.dismiss();
@@ -1393,48 +1700,128 @@ export const InterviewHub: React.FC = () => {
     setShowReminderModal(true);
   }, []);
 
-  const handleOpenSendBackModal = useCallback((assignment: InterviewAssignment) => {
+  const handleOpenReviewActionModal = useCallback(
+    (assignment: InterviewAssignment, mode: 'send_back' | 'revoke_approval') => {
+      setSelectedAssignment(assignment);
+      setReviewActionMode(mode);
+      setReviewActionReason(
+        mode === 'send_back'
+          ? buildAiSendBackDraftReason({
+              assignment: assignment as InterviewAssignment & { aiReview?: any },
+              isPolish,
+            })
+          : ''
+      );
+      setShowReviewActionModal(true);
+    },
+    [isPolish]
+  );
+
+  const handleOpenSendBackModal = useCallback(
+    (assignment: InterviewAssignment) => {
+      handleOpenReviewActionModal(assignment, 'send_back');
+    },
+    [handleOpenReviewActionModal]
+  );
+
+  const handleOpenRevokeApprovalModal = useCallback(
+    (assignment: InterviewAssignment) => {
+      setSelectedAssignment(assignment);
+      handleOpenReviewActionModal(assignment, 'revoke_approval');
+    },
+    [handleOpenReviewActionModal]
+  );
+
+  const handleOpenManageAssignmentModal = useCallback((assignment: InterviewAssignment) => {
     setSelectedAssignment(assignment);
-    setShowSendBackModal(true);
+    setShowManageAssignmentModal(true);
   }, []);
 
-  const handleSendBack = useCallback(
-    async (reason: string) => {
-      if (!selectedAssignment) return;
+  const refreshInterviewCockpit = useCallback(async () => {
+    const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
+      loadMyAssignments(),
+      loadManagedAssignments(),
+      loadOverdueAssignments(),
+      loadManagedSessions(),
+    ]);
+    setMyAssignments(myRes);
+    setManagedAssignments(managedRes);
+    setOverdueAssignments(overdueRes);
+    setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+  }, [loadManagedAssignments, loadManagedSessions, loadMyAssignments, loadOverdueAssignments]);
+
+  const handleArchiveAssignment = useCallback(
+    async (assignment: InterviewAssignment) => {
+      if (
+        !confirm(
+          isPolish
+            ? `Czy na pewno chcesz zarchiwizować assignment "${assignment.template?.name || assignment.id}"? Zniknie z aktywnej listy Assigned.`
+            : `Are you sure you want to archive assignment "${assignment.template?.name || assignment.id}"? It will disappear from the active Assigned list.`
+        )
+      ) {
+        return;
+      }
 
       try {
-        await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
-          Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
+        await V8InterviewApi.archiveAssignment(assignment.id).catch(() =>
+          Api.post(`/interview/assignments/${assignment.id}/archive`, {})
         );
-        toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
-        setShowSendBackModal(false);
-        setSelectedAssignment(null);
-
-        // Refresh all assignments (both my and managed)
-        const [myRes, managedRes, overdueRes] = await Promise.all([
-          loadMyAssignments(),
-          loadManagedAssignments(),
-          loadOverdueAssignments(),
-        ]);
-        setMyAssignments(myRes);
-        setManagedAssignments(managedRes);
-        setOverdueAssignments(overdueRes);
+        toast.success(
+          isPolish ? 'Assignment został zarchiwizowany.' : 'The assignment has been archived.'
+        );
+        await refreshInterviewCockpit();
       } catch (error: any) {
-        console.error('[InterviewHub] Failed to send back:', error);
+        console.error('[InterviewHub] Failed to archive assignment:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back',
+          isPolish ? 'Nie udało się zarchiwizować assignmentu' : 'Failed to archive assignment',
           isPolish
         );
       }
     },
-    [
-      isPolish,
-      loadManagedAssignments,
-      loadMyAssignments,
-      loadOverdueAssignments,
-      selectedAssignment,
-    ]
+    [isPolish, refreshInterviewCockpit]
+  );
+
+  const handleReviewAction = useCallback(
+    async (reason: string) => {
+      if (!selectedAssignment) return;
+
+      try {
+        if (reviewActionMode === 'revoke_approval') {
+          await V8InterviewApi.revokeApproval(selectedAssignment.id, { reason }).catch(() =>
+            Api.post(`/interview/assignments/${selectedAssignment.id}/revoke-approval`, { reason })
+          );
+          toast.success(
+            isPolish
+              ? 'Zatwierdzenie cofnięte. Wywiad wrócił do pracy.'
+              : 'Approval revoked. The interview is editable again.'
+          );
+        } else {
+          await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
+            Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
+          );
+          toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
+        }
+        setShowReviewActionModal(false);
+        setReviewActionReason('');
+        setSelectedAssignment(null);
+        await refreshInterviewCockpit();
+      } catch (error: any) {
+        console.error('[InterviewHub] Failed to execute review action:', error);
+        safeToastError(
+          error,
+          reviewActionMode === 'revoke_approval'
+            ? isPolish
+              ? 'Nie udało się cofnąć zatwierdzenia'
+              : 'Failed to revoke approval'
+            : isPolish
+              ? 'Nie udało się zwrócić wywiadu'
+              : 'Failed to send back',
+          isPolish
+        );
+      }
+    },
+    [isPolish, refreshInterviewCockpit, reviewActionMode, selectedAssignment]
   );
 
   const handleApproveAssignment = useCallback(
@@ -1445,17 +1832,7 @@ export const InterviewHub: React.FC = () => {
         );
         toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
 
-        // Refresh assignments + accepted sessions (post-approval)
-        const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
-          loadMyAssignments(),
-          loadManagedAssignments(),
-          loadOverdueAssignments(),
-          loadAcceptedSessions(),
-        ]);
-        setMyAssignments(myRes);
-        setManagedAssignments(managedRes);
-        setOverdueAssignments(overdueRes);
-        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+        await refreshInterviewCockpit();
       } catch (error: any) {
         console.error('[InterviewHub] Failed to approve assignment:', error);
         safeToastError(
@@ -1465,13 +1842,16 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [
-      isPolish,
-      loadAcceptedSessions,
-      loadManagedAssignments,
-      loadMyAssignments,
-      loadOverdueAssignments,
-    ]
+    [isPolish, refreshInterviewCockpit]
+  );
+
+  const getManagedAssignmentForSession = useCallback(
+    (session: InterviewSession) =>
+      managedAssignments.find(
+        (assignment) =>
+          assignment.id === session.assignmentId || assignment.sessionId === session.id
+      ) || null,
+    [managedAssignments]
   );
 
   // Export intentionally not available in this view (KANON v3).
@@ -1530,12 +1910,16 @@ export const InterviewHub: React.FC = () => {
     async (session: InterviewSession, promptType: InsightPromptType = 'summary') => {
       try {
         toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
-        await Api.post('/interview/insights', { sessionId: session.id, promptType });
+        await V8InterviewApi.createInsight({ sessionId: session.id, promptType }).catch(() =>
+          Api.post('/interview/insights', { sessionId: session.id, promptType })
+        );
         toast.dismiss();
         toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
 
         // Refresh insights
-        const insightsRes = await Api.get('/interview/insights').catch(() => []);
+        const insightsRes = await V8InterviewApi.listInsights()
+          .then((r) => r.insights)
+          .catch(() => Api.get('/interview/insights').catch(() => []));
         setInsights(Array.isArray(insightsRes) ? insightsRes : []);
 
         // Switch to insights tab
@@ -1588,9 +1972,9 @@ export const InterviewHub: React.FC = () => {
               onClick={() => setActiveDocumentId(doc.id)}
             >
               {/* Type Icon */}
-              {doc.type === 'session' && <MessageSquare size={14} />}
-              {doc.type === 'insight' && <Lightbulb size={14} />}
-              {doc.type === 'template' && <FileText size={14} />}
+              {doc.type === 'interview_session' && <MessageSquare size={14} />}
+              {doc.type === 'interview_insight' && <Lightbulb size={14} />}
+              {doc.type === 'interview_template' && <FileText size={14} />}
 
               {/* Name (truncated) */}
               <span className="max-w-[120px] truncate">{doc.name}</span>
@@ -1616,64 +2000,12 @@ export const InterviewHub: React.FC = () => {
   };
 
   const renderCommandRow = () => {
-    // V3-A03 MUST: single command row under topbar
-    // 1) Search row (when enabled)
-    if (showSearch && !activeDocumentId) {
-      return (
-        <div className="px-4 pb-3">
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder={
-                activeTab === 'sessions'
-                  ? isPolish
-                    ? 'Szukaj sesji...'
-                    : 'Search sessions...'
-                  : activeTab === 'insights'
-                    ? isPolish
-                      ? 'Szukaj wniosków...'
-                      : 'Search insights...'
-                    : activeTab === 'templates'
-                      ? isPolish
-                        ? 'Szukaj szablonów...'
-                        : 'Search templates...'
-                      : isPolish
-                        ? 'Szukaj przydziałów...'
-                        : 'Search assignments...'
-              }
-              autoFocus
-              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // 2) Dynamic tabs row (when documents open)
-    if (openDocuments.length > 0) {
-      return renderDynamicTabs();
-    }
-
-    // 3) Context counters row (list view default)
+    // Search and dynamic tabs are now handled by ModuleHub
     if (activeDocumentId) return null;
 
     // Interview Inbox counters/status chips — Command Row (single line)
     // MUST: Inbox (moja) / Do zatwierdzenia / Zaległe with counters; click sets filter.
-    if (activeTab === 'my-assignments' || activeTab === 'managed') {
+    if (activeTab === 'my_assignments' || activeTab === 'managed') {
       const myInboxCount = (myAssignments || []).filter(
         (a) => a.status !== 'approved' && a.status !== 'completed'
       ).length;
@@ -1681,9 +2013,9 @@ export const InterviewHub: React.FC = () => {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
 
       const buttons: Array<{
         id: 'all' | 'my' | 'to-approve' | 'overdue';
@@ -1697,7 +2029,7 @@ export const InterviewHub: React.FC = () => {
           label: 'ALL',
           count: myInboxCount,
           onClick: () => {
-            setActiveTab('my-assignments');
+            setActiveTab('my_assignments');
             setAssignmentStatusFilter('all');
             setActiveDocumentId(null);
           },
@@ -1707,7 +2039,7 @@ export const InterviewHub: React.FC = () => {
           label: isPolish ? 'Inbox (moja)' : 'My inbox',
           count: myInboxCount,
           onClick: () => {
-            setActiveTab('my-assignments');
+            setActiveTab('my_assignments');
             setAssignmentStatusFilter('all');
             setActiveDocumentId(null);
           },
@@ -1739,7 +2071,7 @@ export const InterviewHub: React.FC = () => {
       ];
 
       const activeId: 'my' | 'to-approve' | 'overdue' | null =
-        activeTab === 'my-assignments' && assignmentStatusFilter === 'all'
+        activeTab === 'my_assignments' && assignmentStatusFilter === 'all'
           ? null
           : assignmentStatusFilter === 'overdue'
             ? 'overdue'
@@ -1763,7 +2095,7 @@ export const InterviewHub: React.FC = () => {
                   } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1779,17 +2111,23 @@ export const InterviewHub: React.FC = () => {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
 
       const allCount = sessions.length;
-      const inProgressCount = sessions.filter((s) => s.status === 'in_progress').length;
-      const submittedCount = sessions.filter((s) => s.status === 'submitted').length;
-      const completedCount = sessions.filter((s) => s.status === 'completed').length;
+      const inProgressCount = sessions.filter(
+        (s) => getSessionWorkflowStatus(s) === 'in_progress'
+      ).length;
+      const submittedCount = sessions.filter(
+        (s) => getSessionWorkflowStatus(s) === 'submitted'
+      ).length;
+      const approvedCount = sessions.filter((s) =>
+        ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
+      ).length;
 
       const buttons: Array<{
-        id: 'all' | 'in_progress' | 'submitted' | 'completed';
+        id: 'all' | 'in_progress' | 'submitted' | 'approved';
         label: string;
         count: number;
         onClick: () => void;
@@ -1815,19 +2153,19 @@ export const InterviewHub: React.FC = () => {
             setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
         },
         {
-          id: 'completed',
-          label: isPolish ? 'Zakończone' : 'Completed',
-          count: completedCount,
+          id: 'approved',
+          label: isPolish ? 'Zatwierdzone' : 'Approved',
+          count: approvedCount,
           onClick: () =>
-            setSessionStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed')),
+            setSessionStatusFilter((prev) => (prev === 'approved' ? 'all' : 'approved')),
         },
       ];
 
       const activeId =
         sessionStatusFilter === 'in_progress' ||
         sessionStatusFilter === 'submitted' ||
-        sessionStatusFilter === 'completed'
-          ? (sessionStatusFilter as 'in_progress' | 'submitted' | 'completed')
+        sessionStatusFilter === 'approved'
+          ? (sessionStatusFilter as 'in_progress' | 'submitted' | 'approved')
           : 'all';
 
       return (
@@ -1841,7 +2179,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${chipBase} ${activeId === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1857,9 +2195,9 @@ export const InterviewHub: React.FC = () => {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
 
       const buttons: Array<{
         id: 'all' | 'default' | 'active';
@@ -1898,7 +2236,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${chipBase} ${templateStatusFilter === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1920,39 +2258,58 @@ export const InterviewHub: React.FC = () => {
     > = {
       in_progress: {
         label: { en: 'In Progress', pl: 'W trakcie' },
-        bgColor: 'bg-purple-500/20',
-        textColor: 'text-purple-300',
-        dotColor: 'bg-purple-400',
+        bgColor:
+          'bg-blue-100 border border-blue-200 dark:bg-purple-500/20 dark:border-purple-500/30',
+        textColor: 'text-blue-700 dark:text-purple-300',
+        dotColor: 'bg-blue-500 dark:bg-purple-400',
       },
       submitted: {
         label: { en: 'Submitted', pl: 'Wysłany' },
-        bgColor: 'bg-amber-500/20',
-        textColor: 'text-amber-300',
-        dotColor: 'bg-amber-400',
+        bgColor:
+          'bg-amber-100 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30',
+        textColor: 'text-amber-800 dark:text-amber-300',
+        dotColor: 'bg-amber-500 dark:bg-amber-400',
+      },
+      sent_back: {
+        label: { en: 'Sent Back', pl: 'Do poprawy' },
+        bgColor: 'bg-red-100 border border-red-200 dark:bg-rose-500/20 dark:border-rose-500/30',
+        textColor: 'text-red-800 dark:text-rose-300',
+        dotColor: 'bg-red-500 dark:bg-rose-400',
+      },
+      approved: {
+        label: { en: 'Approved', pl: 'Zatwierdzony' },
+        bgColor:
+          'bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30',
+        textColor: 'text-emerald-800 dark:text-emerald-300',
+        dotColor: 'bg-emerald-500 dark:bg-emerald-400',
       },
       in_review: {
         label: { en: 'In Review', pl: 'Do przeglądu' },
-        bgColor: 'bg-amber-500/20',
-        textColor: 'text-amber-300',
-        dotColor: 'bg-amber-400',
+        bgColor:
+          'bg-amber-100 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30',
+        textColor: 'text-amber-800 dark:text-amber-300',
+        dotColor: 'bg-amber-500 dark:bg-amber-400',
       },
       completed: {
         label: { en: 'Completed', pl: 'Zakończony' },
-        bgColor: 'bg-emerald-500/20',
-        textColor: 'text-emerald-300',
-        dotColor: 'bg-emerald-400',
+        bgColor:
+          'bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30',
+        textColor: 'text-emerald-800 dark:text-emerald-300',
+        dotColor: 'bg-emerald-500 dark:bg-emerald-400',
       },
       paused: {
         label: { en: 'Paused', pl: 'Wstrzymany' },
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-600 dark:text-slate-300',
-        dotColor: 'bg-slate-400',
+        bgColor:
+          'bg-slate-100 border border-slate-200 dark:bg-slate-500/20 dark:border-slate-500/30',
+        textColor: 'text-slate-700 dark:text-slate-300',
+        dotColor: 'bg-slate-500 dark:bg-slate-400',
       },
       archived: {
         label: { en: 'Archived', pl: 'Zarchiwizowany' },
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-600 dark:text-slate-300',
-        dotColor: 'bg-slate-400',
+        bgColor:
+          'bg-slate-100 border border-slate-200 dark:bg-slate-500/20 dark:border-slate-500/30',
+        textColor: 'text-slate-700 dark:text-slate-300',
+        dotColor: 'bg-slate-500 dark:bg-slate-400',
       },
     };
     return configs[status] || configs.in_progress;
@@ -1980,28 +2337,28 @@ export const InterviewHub: React.FC = () => {
         <table className="w-full table-fixed">
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
-              <th className="w-[40%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <th className="w-[40%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 {isPolish ? 'Nazwa' : 'Name'}
               </th>
               {!hiddenSet.has('status') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Status' : 'Status'}
                 </th>
               )}
               {!hiddenSet.has('progress') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Postęp' : 'Progress'}
                 </th>
               )}
               {!hiddenSet.has('date') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Data' : 'Date'}
                 </th>
               )}
-              <th className="w-[15%] px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <th className="w-[15%] px-4 py-3 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 <button
                   onClick={() => setIsSessionsViewSettingsOpen(true)}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
                   aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                   title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                 >
@@ -2012,13 +2369,16 @@ export const InterviewHub: React.FC = () => {
           </thead>
           <tbody>
             {rows.map((session) => {
-              const progress =
-                session.totalQuestions > 0
-                  ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
-                  : 0;
-              const statusConfig = getSessionStatusConfig(session.status);
-              const isCompleted = session.status === 'completed';
+              const progress = getSessionProgress(session);
+              const workflowStatus = getSessionWorkflowStatus(session);
+              const statusConfig = getSessionStatusConfig(workflowStatus);
+              const isApproved = ['approved', 'completed'].includes(workflowStatus);
+              const isSubmitted = workflowStatus === 'submitted';
+              const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
               const isSelected = opts?.selectedId === session.id;
+              const linkedAssignment = getManagedAssignmentForSession(session);
+              const primaryMeta = session.assigneeName || session.respondentName || '—';
+              const secondaryMeta = session.templateName || session.templateCategory || '—';
 
               return (
                 <tr
@@ -2038,7 +2398,7 @@ export const InterviewHub: React.FC = () => {
                       : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
                   ].join(' ')}
                 >
-                  <td className="px-3 py-2">
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${statusConfig.bgColor}`}
@@ -2049,17 +2409,17 @@ export const InterviewHub: React.FC = () => {
                         <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                           {session.name || 'Discovery Interview'}
                         </span>
-                        {session.ownerId && (
-                          <span className="text-xs text-slate-500 truncate block">
-                            ID: {session.id.slice(0, 8)}...
-                          </span>
-                        )}
+                        <span className="text-xs text-slate-600 dark:text-slate-400 truncate block">
+                          {isPolish ? 'Assignee' : 'Assignee'}: {primaryMeta}
+                          {' · '}
+                          {isPolish ? 'Template' : 'Template'}: {secondaryMeta}
+                        </span>
                       </div>
                     </div>
                   </td>
 
                   {!hiddenSet.has('status') && (
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       <div
                         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
                       >
@@ -2074,7 +2434,7 @@ export const InterviewHub: React.FC = () => {
                   )}
 
                   {!hiddenSet.has('progress') && (
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 max-w-[100px] h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                           <div
@@ -2084,7 +2444,7 @@ export const InterviewHub: React.FC = () => {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           {progress}%
                         </span>
                       </div>
@@ -2092,15 +2452,23 @@ export const InterviewHub: React.FC = () => {
                   )}
 
                   {!hiddenSet.has('date') && (
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                         <Calendar size={12} />
-                        {new Date(session.startedAt).toLocaleDateString()}
+                        {session.dueAt
+                          ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
+                          : new Date(session.startedAt).toLocaleDateString()}
                       </div>
+                      {session.submittedAt && (
+                        <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Submitted' : 'Submitted'}{' '}
+                          {new Date(session.submittedAt).toLocaleDateString()}
+                        </div>
+                      )}
                     </td>
                   )}
 
-                  <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end">
                       <RowActionsMenu
                         iconVariant="vertical"
@@ -2111,7 +2479,54 @@ export const InterviewHub: React.FC = () => {
                             icon: ChevronRight,
                             onClick: () => handleViewSession(session),
                           },
-                          ...(isCompleted
+                          ...(isSubmitted && linkedAssignment
+                            ? [
+                                {
+                                  id: 'approve',
+                                  label: isPolish ? 'Zatwierdź' : 'Approve',
+                                  icon: Check,
+                                  onClick: () => handleApproveAssignment(linkedAssignment),
+                                },
+                                {
+                                  id: 'send-back',
+                                  label: isPolish ? 'Odeślij' : 'Send back',
+                                  icon: ArrowRight,
+                                  onClick: () => handleOpenSendBackModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(isApproved && linkedAssignment
+                            ? [
+                                {
+                                  id: 'revoke-approval',
+                                  label: isPolish ? 'Cofnij zatwierdzenie' : 'Revoke approval',
+                                  icon: RotateCcw,
+                                  onClick: () => handleOpenRevokeApprovalModal(linkedAssignment),
+                                  variant: 'danger' as const,
+                                },
+                              ]
+                            : []),
+                          ...(linkedAssignment && canAssign
+                            ? [
+                                {
+                                  id: 'manage-assignment',
+                                  label: isPolish ? 'Zarządzaj assignmentem' : 'Manage assignment',
+                                  icon: Edit3,
+                                  onClick: () => handleOpenManageAssignmentModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(canRemind && linkedAssignment
+                            ? [
+                                {
+                                  id: 'remind',
+                                  label: isPolish ? 'Przypomnij' : 'Remind',
+                                  icon: Clock,
+                                  onClick: () => handleOpenReminderModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(isApproved
                             ? [
                                 {
                                   id: 'generate-insight',
@@ -2134,13 +2549,13 @@ export const InterviewHub: React.FC = () => {
                 <td colSpan={colSpan} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
                     <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
-                      {isPolish ? 'Brak zaakceptowanych sesji' : 'No accepted sessions yet'}
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">
+                      {isPolish ? 'Brak sesji managera' : 'No manager sessions yet'}
                     </p>
-                    <p className="text-xs text-slate-500 mt-2 max-w-md">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-md">
                       {isPolish
-                        ? 'Sesje pojawiają się tutaj dopiero po zatwierdzeniu wywiadu w zakładce „Przydzielone”.'
-                        : 'Sessions appear here only after an interview is approved in the “Assigned” tab.'}
+                        ? 'Tutaj pojawiają się wszystkie uruchomione sesje z workflow managera: w trakcie, wysłane, do poprawy i zatwierdzone.'
+                        : 'This view shows manager workflow sessions across in progress, submitted, sent back, and approved states.'}
                     </p>
                   </div>
                 </td>
@@ -2156,19 +2571,24 @@ export const InterviewHub: React.FC = () => {
   const renderSessionsGrid = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {filteredSessions.map((session) => {
-        const progress =
-          session.totalQuestions > 0
-            ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
-            : 0;
+        const progress = getSessionProgress(session);
+        const workflowStatus = getSessionWorkflowStatus(session);
+        const linkedAssignment = getManagedAssignmentForSession(session);
+        const isApproved = ['approved', 'completed'].includes(workflowStatus);
+        const isSubmitted = workflowStatus === 'submitted';
+        const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
 
+        const statusConfig = getSessionStatusConfig(workflowStatus);
         const typeColor =
-          session.status === 'completed'
-            ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30'
-            : session.status === 'in_progress'
-              ? 'from-purple-500/20 to-purple-600/10 border-purple-500/30'
-              : session.status === 'submitted'
-                ? 'from-amber-500/15 to-amber-600/10 border-amber-500/30'
-                : 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
+          workflowStatus === 'approved' || workflowStatus === 'completed'
+            ? 'from-emerald-50 via-white to-white border-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/10 dark:border-emerald-500/30'
+            : workflowStatus === 'in_progress'
+              ? 'from-blue-50 via-white to-white border-blue-200 dark:from-purple-500/20 dark:to-purple-600/10 dark:border-purple-500/30'
+              : workflowStatus === 'submitted'
+                ? 'from-amber-50 via-white to-white border-amber-200 dark:from-amber-500/15 dark:to-amber-600/10 dark:border-amber-500/30'
+                : workflowStatus === 'sent_back'
+                  ? 'from-red-50 via-white to-white border-red-200 dark:from-rose-500/15 dark:to-rose-600/10 dark:border-rose-500/30'
+                  : 'from-slate-50 via-white to-white border-slate-200 dark:from-slate-500/20 dark:to-slate-600/10 dark:border-slate-500/30';
 
         return (
           <div
@@ -2183,23 +2603,27 @@ export const InterviewHub: React.FC = () => {
                   <Brain
                     size={16}
                     className={
-                      session.status === 'completed'
-                        ? 'text-emerald-400'
-                        : session.status === 'in_progress'
-                          ? 'text-purple-400'
-                          : session.status === 'submitted'
-                            ? 'text-amber-400'
-                            : 'text-slate-400'
+                      workflowStatus === 'approved' || workflowStatus === 'completed'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : workflowStatus === 'in_progress'
+                          ? 'text-blue-600 dark:text-purple-400'
+                          : workflowStatus === 'submitted'
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : workflowStatus === 'sent_back'
+                              ? 'text-red-600 dark:text-rose-400'
+                              : 'text-slate-500 dark:text-slate-400'
                     }
                   />
                   <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
-                    {session.status === 'completed'
-                      ? 'DONE'
-                      : session.status === 'in_progress'
+                    {workflowStatus === 'approved' || workflowStatus === 'completed'
+                      ? 'OK'
+                      : workflowStatus === 'in_progress'
                         ? 'LIVE'
-                        : session.status === 'submitted'
+                        : workflowStatus === 'submitted'
                           ? 'SUB'
-                          : 'ARCH'}
+                          : workflowStatus === 'sent_back'
+                            ? 'FIX'
+                            : 'ARCH'}
                   </span>
                 </div>
               </div>
@@ -2210,6 +2634,11 @@ export const InterviewHub: React.FC = () => {
               <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
                 {session.name || 'Discovery Interview'}
               </h4>
+              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                {session.assigneeName || session.respondentName || '—'}
+                {' · '}
+                {session.templateName || session.templateCategory || '—'}
+              </div>
             </div>
 
             {/* Progress */}
@@ -2223,63 +2652,96 @@ export const InterviewHub: React.FC = () => {
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{progress}%</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400">{progress}%</span>
               </div>
             </div>
 
             {/* Footer */}
             <div className="px-4 pb-4 flex items-center justify-between">
               <div
-                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${
-                  session.status === 'completed'
-                    ? 'bg-emerald-500/20'
-                    : session.status === 'in_progress'
-                      ? 'bg-purple-500/20'
-                      : session.status === 'submitted'
-                        ? 'bg-amber-500/20'
-                        : 'bg-slate-500/20'
-                }`}
+                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
               >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    session.status === 'completed'
-                      ? 'bg-emerald-400'
-                      : session.status === 'in_progress'
-                        ? 'bg-purple-400'
-                        : session.status === 'submitted'
-                          ? 'bg-amber-400'
-                          : 'bg-slate-400'
-                  }`}
-                />
-                <span
-                  className={`text-xs font-medium ${
-                    session.status === 'completed'
-                      ? 'text-emerald-300'
-                      : session.status === 'in_progress'
-                        ? 'text-purple-300'
-                        : session.status === 'submitted'
-                          ? 'text-amber-300'
-                          : 'text-slate-300'
-                  }`}
-                >
-                  {session.status === 'completed'
+                <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
+                <span className={`text-xs font-medium ${statusConfig.textColor}`}>
+                  {workflowStatus === 'approved' || workflowStatus === 'completed'
                     ? isPolish
-                      ? 'Zakończony'
-                      : 'Completed'
-                    : session.status === 'in_progress'
+                      ? 'Zatwierdzony'
+                      : 'Approved'
+                    : workflowStatus === 'in_progress'
                       ? isPolish
                         ? 'W trakcie'
                         : 'In Progress'
-                      : session.status === 'submitted'
+                      : workflowStatus === 'submitted'
                         ? isPolish
                           ? 'Wysłany'
                           : 'Submitted'
-                        : session.status}
+                        : workflowStatus === 'sent_back'
+                          ? isPolish
+                            ? 'Do poprawy'
+                            : 'Sent back'
+                          : workflowStatus}
                 </span>
               </div>
-              <span className="text-xs text-slate-500">
-                {new Date(session.startedAt).toLocaleDateString()}
+              <span className="text-xs text-slate-600 dark:text-slate-400">
+                {session.dueAt
+                  ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
+                  : new Date(session.startedAt).toLocaleDateString()}
               </span>
+            </div>
+
+            <div className="px-4 pb-4 flex flex-wrap gap-2">
+              {isSubmitted && linkedAssignment && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApproveAssignment(linkedAssignment);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25 transition-colors"
+                  >
+                    <Check size={12} />
+                    {isPolish ? 'Zatwierdź' : 'Approve'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenSendBackModal(linkedAssignment);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-200 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25 transition-colors"
+                  >
+                    <ArrowRight size={12} />
+                    {isPolish ? 'Odeślij' : 'Send back'}
+                  </button>
+                </>
+              )}
+              {canRemind && linkedAssignment && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenReminderModal(linkedAssignment);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:border-slate-500/30 dark:bg-slate-500/15 dark:text-slate-300 dark:hover:bg-slate-500/25 transition-colors"
+                >
+                  <Clock size={12} />
+                  {isPolish ? 'Przypomnij' : 'Remind'}
+                </button>
+              )}
+              {isApproved && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGenerateInsight(session, 'summary');
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-800 hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-300 dark:hover:bg-primary-500/25 transition-colors"
+                >
+                  <Lightbulb size={12} />
+                  {isPolish ? 'AI insight' : 'AI insight'}
+                </button>
+              )}
             </div>
           </div>
         );
@@ -2356,10 +2818,14 @@ export const InterviewHub: React.FC = () => {
   const handleExportInsightToTools = async (insightId: string) => {
     try {
       // Backend contract: POST /interview/insights/:id/export { target: 'tools' | 'assessment' }
-      await Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' });
+      await V8InterviewApi.exportInsight(insightId, { target: 'tools' }).catch(() =>
+        Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' })
+      );
       toast.success(isPolish ? 'Wyeksportowano do narzędzi' : 'Exported to tools');
       // Refresh insights
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      const insightsRes = await V8InterviewApi.listInsights()
+        .then((r) => r.insights)
+        .catch(() => Api.get('/interview/insights').catch(() => []));
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
@@ -2369,9 +2835,13 @@ export const InterviewHub: React.FC = () => {
 
   const handleExportInsightToAssessment = async (insightId: string) => {
     try {
-      await Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' });
+      await V8InterviewApi.exportInsight(insightId, { target: 'assessment' }).catch(() =>
+        Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' })
+      );
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      const insightsRes = await V8InterviewApi.listInsights()
+        .then((r) => r.insights)
+        .catch(() => Api.get('/interview/insights').catch(() => []));
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
@@ -2391,7 +2861,9 @@ export const InterviewHub: React.FC = () => {
       return;
     }
     try {
-      await Api.delete(`/interview/insights/${insightId}`);
+      await V8InterviewApi.deleteInsight(insightId).catch(() =>
+        Api.delete(`/interview/insights/${insightId}`)
+      );
       toast.success(isPolish ? 'Wniosek usunięty' : 'Insight deleted');
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
     } catch (error) {
@@ -2564,15 +3036,37 @@ export const InterviewHub: React.FC = () => {
             {rows.map((insight) => {
               const promptType =
                 (insight as any).promptType || (insight as any).insightType || 'summary';
+              const topicCollections = [
+                ...(((insight as any).themes as Array<any>) || []),
+                ...(((insight as any).issues as Array<any>) || []),
+                ...(((insight as any).opportunities as Array<any>) || []),
+              ];
+              const crossPerspectiveCount = topicCollections.filter(
+                (item) => item?.crossSessionPattern
+              ).length;
+              const divergenceCount = topicCollections.filter(
+                (item) => item?.divergence_note
+              ).length;
               const typeConfig = getInsightTypeConfig(promptType);
-              const status = (insight.status || 'completed') as
+              const status = ((insight.reviewStatus === 'in_review' ||
+              insight.reviewStatus === 'published'
+                ? insight.reviewStatus
+                : insight.status) || 'completed') as
+                | 'draft'
                 | 'generating'
                 | 'completed'
+                | 'in_review'
+                | 'published'
                 | 'failed';
               const statusConfig: Record<
                 typeof status,
                 { label: { en: string; pl: string }; bg: string; text: string }
               > = {
+                draft: {
+                  label: { en: 'Draft', pl: 'Szkic' },
+                  bg: 'bg-slate-500/20',
+                  text: 'text-slate-400',
+                },
                 generating: {
                   label: { en: 'Generating', pl: 'Generowanie' },
                   bg: 'bg-amber-500/20',
@@ -2582,6 +3076,16 @@ export const InterviewHub: React.FC = () => {
                   label: { en: 'Completed', pl: 'Gotowe' },
                   bg: 'bg-emerald-500/20',
                   text: 'text-emerald-400',
+                },
+                in_review: {
+                  label: { en: 'In Review', pl: 'W recenzji' },
+                  bg: 'bg-blue-500/20',
+                  text: 'text-blue-400',
+                },
+                published: {
+                  label: { en: 'Published', pl: 'Opublikowane' },
+                  bg: 'bg-violet-500/20',
+                  text: 'text-violet-400',
                 },
                 failed: {
                   label: { en: 'Failed', pl: 'Błąd' },
@@ -2624,6 +3128,22 @@ export const InterviewHub: React.FC = () => {
                         >
                           {insight.title}
                         </span>
+                        {(crossPerspectiveCount > 0 || divergenceCount > 0) && (
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {crossPerspectiveCount > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-300">
+                                <Users size={10} />
+                                {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
+                              </span>
+                            )}
+                            {divergenceCount > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                                <AlertTriangle size={10} />
+                                {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -2750,9 +3270,11 @@ export const InterviewHub: React.FC = () => {
                     </p>
                     <button
                       onClick={() => {
+                        if (!canCreateInsights) return;
                         setSelectedSessionsForInsight([]);
                         setShowInsightModal(true);
                       }}
+                      disabled={!canCreateInsights}
                       className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                     >
                       <Sparkles size={16} />
@@ -3041,10 +3563,12 @@ export const InterviewHub: React.FC = () => {
                                   setSessions((prev) => [newSession, ...prev]);
                                   handleOpenDocument({
                                     id: newSession.id,
-                                    type: 'session',
+                                    type: 'interview_session',
+                                    subType: 'interview',
                                     name: newSession.name || 'Interview Session',
-                                    status: (newSession as any)?.status || 'in_progress',
-                                    data: newSession,
+                                    status: (
+                                      (newSession as any)?.status || 'in_progress'
+                                    ).toUpperCase() as any,
                                   });
                                   toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
                                 })
@@ -3263,11 +3787,10 @@ export const InterviewHub: React.FC = () => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
     if (!doc) return null;
 
-    if (doc.type === 'session') {
-      const session = doc.data as InterviewSession;
+    if (doc.type === 'interview_session') {
       return (
         <InterviewWorkspace
-          sessionId={session.id}
+          sessionId={doc.id}
           projectId={currentProjectId || undefined}
           onComplete={handleSessionComplete}
           onSessionChange={handleSessionChange}
@@ -3275,14 +3798,15 @@ export const InterviewHub: React.FC = () => {
       );
     }
 
-    if (doc.type === 'insight') {
-      const insight = doc.data as InterviewInsight;
+    if (doc.type === 'interview_insight') {
       return (
         <InsightViewer
-          insightId={insight.id}
-          onClose={() => handleCloseDocument(insight.id)}
+          insightId={doc.id}
+          onClose={() => handleCloseDocument(doc.id)}
           onRegenerate={async () => {
-            const insightsRes = await Api.get('/interview/insights').catch(() => []);
+            const insightsRes = await V8InterviewApi.listInsights()
+              .then((r) => r.insights)
+              .catch(() => Api.get('/interview/insights').catch(() => []));
             const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
             setInsights(
               apiInsights.length > 0
@@ -3291,23 +3815,21 @@ export const InterviewHub: React.FC = () => {
             );
           }}
           onSaved={(data) => {
-            // Update local insight data
             setInsights((prev) => prev.map((i) => (i.id === data.id ? { ...i, ...data } : i)));
           }}
         />
       );
     }
 
-    if (doc.type === 'template') {
-      const template = doc.data as InterviewTemplate;
-      const isNewTemplateDocument = template.id.startsWith('new-template:');
+    if (doc.type === 'interview_template') {
+      const isNewTemplateDocument = doc.id.startsWith('new-template:');
 
       return (
         <TemplateBuilder
           key={doc.id}
           isOpen
           presentation="document"
-          templateId={isNewTemplateDocument ? null : template.id}
+          templateId={isNewTemplateDocument ? null : doc.id}
           onClose={() => handleCloseDocument(doc.id)}
           onSuccess={async (savedTemplate) => {
             const templatesRes = await Api.get('/interview/templates').catch(() => []);
@@ -3330,10 +3852,9 @@ export const InterviewHub: React.FC = () => {
             const nextTemplate =
               refreshedTemplates.find((item) => item.id === savedId) ||
               ({
-                ...template,
                 ...savedTemplate,
                 id: savedId,
-                name: savedTemplate.name || template.name,
+                name: savedTemplate.name || doc.name,
               } as InterviewTemplate);
 
             setOpenDocuments((prev) => {
@@ -3345,8 +3866,7 @@ export const InterviewHub: React.FC = () => {
                 next[existingIdx] = {
                   ...next[existingIdx],
                   name: nextTemplate.name,
-                  status: (nextTemplate.status as ItemStatus) || 'draft',
-                  data: nextTemplate,
+                  status: (nextTemplate.status || 'draft').toUpperCase() as any,
                 };
                 return next;
               }
@@ -3355,10 +3875,10 @@ export const InterviewHub: React.FC = () => {
                 ...withoutOld,
                 {
                   id: savedId,
-                  type: 'template' as const,
+                  type: 'interview_template' as const,
+                  subType: 'interview',
                   name: nextTemplate.name,
-                  status: (nextTemplate.status as ItemStatus) || 'draft',
-                  data: nextTemplate,
+                  status: (nextTemplate.status || 'draft').toUpperCase() as any,
                 },
               ];
             });
@@ -3429,23 +3949,23 @@ export const InterviewHub: React.FC = () => {
   const getAssignmentStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'assigned':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300';
       case 'drafting':
-        return 'bg-slate-500/20 text-slate-400';
+        return 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/20 dark:text-slate-300';
       case 'in_progress':
-        return 'bg-purple-500/20 text-purple-400';
+        return 'border border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-500/30 dark:bg-primary-500/20 dark:text-primary-300';
       case 'review':
       case 'submitted':
-        return 'bg-amber-500/20 text-amber-400';
+        return 'border border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300';
       case 'sent_back':
       case 'rejected':
-        return 'bg-red-500/20 text-red-400';
+        return 'border border-red-200 bg-red-100 text-red-800 dark:border-red-500/30 dark:bg-red-500/20 dark:text-red-300';
       case 'accepted':
       case 'approved':
       case 'completed':
-        return 'bg-emerald-500/20 text-emerald-400';
+        return 'border border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300';
       default:
-        return 'bg-slate-500/20 text-slate-400';
+        return 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/20 dark:text-slate-300';
     }
   }, []);
 
@@ -3540,10 +4060,10 @@ export const InterviewHub: React.FC = () => {
           toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
           handleOpenDocument({
             id: session.id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: session.name || 'Interview Session',
-            status: (session.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: (session.status || 'in_progress').toUpperCase() as any,
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
@@ -3600,10 +4120,10 @@ export const InterviewHub: React.FC = () => {
           }
           handleOpenDocument({
             id: (session as InterviewSession).id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: (session as InterviewSession).name || 'Interview Session',
-            status: ((session as any)?.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
           });
           return;
         }
@@ -3722,32 +4242,7 @@ Return ONLY the answer text (no markdown fences).`;
     const hiddenSet = new Set(hiddenColumns);
     const hasAssigneeColumn = !hiddenSet.has('assignee');
 
-    const getStatusColor = (status: string) => {
-      switch (status) {
-        case 'assigned':
-          return 'bg-blue-500/20 text-blue-400';
-        case 'drafting':
-          return 'bg-slate-500/20 text-slate-400';
-        case 'in_progress':
-          return 'bg-purple-500/20 text-purple-400';
-        case 'review':
-          return 'bg-amber-500/20 text-amber-400';
-        case 'submitted':
-          return 'bg-amber-500/20 text-amber-400';
-        case 'sent_back':
-          return 'bg-red-500/20 text-red-400';
-        case 'rejected':
-          return 'bg-red-500/20 text-red-400';
-        case 'accepted':
-          return 'bg-emerald-500/20 text-emerald-400';
-        case 'approved':
-          return 'bg-emerald-500/20 text-emerald-400';
-        case 'completed':
-          return 'bg-emerald-500/20 text-emerald-400';
-        default:
-          return 'bg-slate-500/20 text-slate-400';
-      }
-    };
+    const getStatusColor = (status: string) => getAssignmentStatusColor(status);
 
     const getStatusLabel = (status: string) => {
       const labels: Record<string, { pl: string; en: string }> = {
@@ -3855,10 +4350,10 @@ Return ONLY the answer text (no markdown fences).`;
           toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
           handleOpenDocument({
             id: session.id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: session.name || 'Interview Session',
-            status: (session.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: (session.status || 'in_progress').toUpperCase() as any,
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
@@ -3941,10 +4436,10 @@ Return ONLY the answer text (no markdown fences).`;
             .catch(() => Api.get(`/interview/sessions/${sid}`));
           handleOpenDocument({
             id: (session as InterviewSession).id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: (session as InterviewSession).name || 'Interview Session',
-            status: ((session as any)?.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
           });
           return;
         }
@@ -4220,11 +4715,13 @@ Return ONLY the answer text (no markdown fences).`;
                                     );
                                     handleOpenDocument({
                                       id: (session as InterviewSession).id,
-                                      type: 'session',
+                                      type: 'interview_session',
+                                      subType: 'interview',
                                       name:
                                         (session as InterviewSession).name || 'Interview Session',
-                                      status: ((session as any)?.status || 'in_progress') as any,
-                                      data: session as InterviewSession,
+                                      status: (
+                                        (session as any)?.status || 'in_progress'
+                                      ).toUpperCase() as any,
                                     });
                                   },
                                 },
@@ -4244,11 +4741,13 @@ Return ONLY the answer text (no markdown fences).`;
                                     );
                                     handleOpenDocument({
                                       id: (session as InterviewSession).id,
-                                      type: 'session',
+                                      type: 'interview_session',
+                                      subType: 'interview',
                                       name:
                                         (session as InterviewSession).name || 'Interview Session',
-                                      status: ((session as any)?.status || 'in_progress') as any,
-                                      data: session as InterviewSession,
+                                      status: (
+                                        (session as any)?.status || 'in_progress'
+                                      ).toUpperCase() as any,
                                     });
                                   },
                                 },
@@ -4260,28 +4759,37 @@ Return ONLY the answer text (no markdown fences).`;
                           assignment.status !== 'approved'
                             ? [
                                 {
+                                  id: 'manage',
+                                  label: isPolish ? 'Zarządzaj assignmentem' : 'Manage assignment',
+                                  icon: Edit3,
+                                  onClick: () => handleOpenManageAssignmentModal(assignment),
+                                },
+                                {
                                   id: 'remind',
                                   label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
                                   icon: Bell,
                                   onClick: () => handleOpenReminderModal(assignment),
                                 },
-                                ...(assignment.status === 'submitted'
-                                  ? [
-                                      {
-                                        id: 'approve',
-                                        label: isPolish ? 'Zatwierdź' : 'Approve',
-                                        icon: Check,
-                                        onClick: () => handleApproveAssignment(assignment),
-                                      },
-                                      {
-                                        id: 'sendback',
-                                        label: isPolish ? 'Zwróć do poprawy' : 'Send back',
-                                        icon: RotateCcw,
-                                        onClick: () => handleOpenSendBackModal(assignment),
-                                        variant: 'danger' as const,
-                                      },
-                                    ]
-                                  : []),
+                              ]
+                            : []),
+                          ...(showAssignee &&
+                          canAssign &&
+                          (assignment.status === 'completed' || assignment.status === 'approved')
+                            ? [
+                                {
+                                  id: 'manage-closed',
+                                  label: isPolish ? 'Przydziel ponownie' : 'Assign again / manage',
+                                  icon: Edit3,
+                                  onClick: () => handleOpenManageAssignmentModal(assignment),
+                                },
+                                {
+                                  id: 'archive',
+                                  label: isPolish ? 'Archiwizuj' : 'Archive',
+                                  icon: Trash2,
+                                  onClick: () => void handleArchiveAssignment(assignment),
+                                  variant: 'danger' as const,
+                                  divider: true,
+                                },
                               ]
                             : []),
                           {
@@ -4392,7 +4900,8 @@ Return ONLY the answer text (no markdown fences).`;
                   s.totalQuestions > 0
                     ? Math.round((s.answeredQuestions / s.totalQuestions) * 100)
                     : 0;
-                const statusCfg = getSessionStatusConfig(s.status);
+                const workflowStatus = getSessionWorkflowStatus(s);
+                const statusCfg = getSessionStatusConfig(workflowStatus);
 
                 return (
                   <InterviewSessionPreviewBody
@@ -4406,7 +4915,7 @@ Return ONLY the answer text (no markdown fences).`;
                       copyToClipboard(
                         [
                           `id: ${s.id}`,
-                          `status: ${s.status}`,
+                          `status: ${workflowStatus}`,
                           `answered: ${s.answeredQuestions}/${s.totalQuestions}`,
                           `startedAt: ${s.startedAt}`,
                         ].join('\n')
@@ -4418,7 +4927,8 @@ Return ONLY the answer text (no markdown fences).`;
               }}
               renderPreviewFooter={(item) => {
                 const s = item as InterviewSession;
-                const canRunAi = s.status === 'completed';
+                const workflowStatus = getSessionWorkflowStatus(s);
+                const canRunAi = ['approved', 'completed'].includes(workflowStatus);
                 const aiHints = isPolish
                   ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
                   : ['Summarize', 'Risks', 'Next steps'];
@@ -4431,6 +4941,14 @@ Return ONLY the answer text (no markdown fences).`;
                   'Next steps': 'recommendations',
                 };
                 const relations = [
+                  {
+                    label: `${isPolish ? 'Assignee' : 'Assignee'}: ${s.assigneeName || s.respondentName || '—'}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  },
+                  {
+                    label: `${isPolish ? 'Template' : 'Template'}: ${s.templateName || s.templateCategory || '—'}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  },
                   {
                     label: `${isPolish ? 'Projekt' : 'Project'}: ${s.projectId || '—'}`,
                     tone: 'text-slate-600 dark:text-slate-300',
@@ -4716,6 +5234,140 @@ Return ONLY the answer text (no markdown fences).`;
       return <div className="h-full overflow-hidden">{insightsTableWithPreview}</div>;
     }
 
+    if (activeTab === 'initiatives') {
+      const candidates = filteredInsights;
+
+      if (candidates.length === 0) {
+        return (
+          <div className="h-full flex items-center justify-center p-8">
+            <EmptyStateInline
+              icon={Target}
+              message={isPolish ? 'Brak kandydatów inicjatyw' : 'No initiative candidates'}
+              hint={
+                isPolish
+                  ? 'Wygeneruj lub opublikuj wnioski z wywiadu, aby przygotować kandydatów inicjatyw z zachowanym źródłem.'
+                  : 'Generate or publish interview insights to prepare initiative candidates with preserved source context.'
+              }
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div className="h-full overflow-auto p-4">
+          <div className="mb-4 rounded-xl border border-blue-200/70 bg-blue-50/80 p-4 text-sm text-blue-900 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-100">
+            <div className="font-semibold">
+              {isPolish ? 'Kandydaci inicjatyw z wywiadu' : 'Interview initiative candidates'}
+            </div>
+            <div className="mt-1 text-xs opacity-80">
+              {isPolish
+                ? 'Ten widok nie tworzy ukrytych inicjatyw. Otwórz źródłowy wniosek, sprawdź evidence i wykonaj jawny handoff do modułu Inicjatywy.'
+                : 'This view does not create hidden initiatives. Open the source insight, inspect evidence and perform an explicit handoff to the Initiatives module.'}
+            </div>
+          </div>
+          <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+            <table className="w-full" style={{ minWidth: 820 }}>
+              <thead>
+                <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Inicjatywa / kandydat' : 'Initiative candidate'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Status' : 'Status'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Priorytet' : 'Priority'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Źródło' : 'Source'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Data' : 'Date'}
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Akcje' : 'Actions'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {candidates.map((insight) => {
+                  const sourceLabel = insight.sourceSessionCount
+                    ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+                    : insight.sessionId
+                      ? `${isPolish ? 'Sesja' : 'Session'} ${insight.sessionId.slice(0, 8)}...`
+                      : isPolish
+                        ? 'Wniosek'
+                        : 'Insight';
+                  const status = insight.reviewStatus || insight.status || 'draft';
+                  const priority = insight.priority || 'medium';
+                  const createdAt = insight.createdAt
+                    ? new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+                    : '-';
+
+                  return (
+                    <tr
+                      key={insight.id}
+                      className="border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-300">
+                            <Target size={16} />
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-900 dark:text-white">
+                              {insight.title}
+                            </div>
+                            <div className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                              {insight.content ||
+                                insight.description ||
+                                insight.sourceQuote ||
+                                (isPolish
+                                  ? 'Kandydat wymaga przeglądu źródła.'
+                                  : 'Candidate requires source review.')}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-medium text-blue-600 dark:text-blue-300">
+                          {priority}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 dark:border-white/[0.08] dark:bg-navy-800 dark:text-slate-300">
+                          <Lightbulb size={12} />
+                          {sourceLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                        {createdAt}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleViewInsight(insight)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700"
+                        >
+                          <ExternalLink size={13} />
+                          {isPolish ? 'Przejrzyj / handoff' : 'Review / handoff'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'templates') {
       const rows = filteredTemplates;
       const selected = selectedTemplateId ? rows.find((t) => t.id === selectedTemplateId) : null;
@@ -4879,7 +5531,7 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
-    if (activeTab === 'my-assignments') {
+    if (activeTab === 'my_assignments') {
       const rows = myAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
@@ -4925,6 +5577,11 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full flex flex-col">
+          <div className="mx-4 mt-3 rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/80 dark:bg-navy-900/50 px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
+            {isPolish
+              ? 'Assigned służy do administracji przypisaniami. Główny workflow review i akceptacji managera jest teraz w zakładce Sessions.'
+              : 'Assigned is for assignment administration. The primary manager review and approval workflow now lives in Sessions.'}
+          </div>
           <div className="flex-1 min-h-0 flex flex-col">
             <TableWithPreviewLayout<InterviewAssignment & { title: string }>
               selectedId={previewAssignmentId}
@@ -5290,6 +5947,96 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
+    if (activeTab === 'pending_review') {
+      const reviewInsights = pendingReviewInsights;
+
+      if (reviewInsights.length === 0) {
+        return (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <AlertTriangle size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+            <p className="text-lg font-medium text-slate-900 dark:text-white">
+              {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {isPolish
+                ? 'Wszystkie wnioski zostały przejrzane.'
+                : 'All insights have been reviewed.'}
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="p-4 space-y-2">
+          {reviewInsights.map((insight) => {
+            const findingsCount =
+              (insight as any).findings?.length || (insight as any).findingsCount || 0;
+            const topicCollections = [
+              ...(((insight as any).themes as Array<any>) || []),
+              ...(((insight as any).issues as Array<any>) || []),
+              ...(((insight as any).opportunities as Array<any>) || []),
+            ];
+            const crossPerspectiveCount = topicCollections.filter(
+              (item) => item?.crossSessionPattern
+            ).length;
+            const divergenceCount = topicCollections.filter((item) => item?.divergence_note).length;
+
+            return (
+              <button
+                key={insight.id}
+                type="button"
+                onClick={() => handleViewInsight(insight)}
+                className="w-full text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-navy-900/70 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Lightbulb size={14} className="text-amber-500 shrink-0" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        {insight.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                      {insight.createdAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} />
+                          {new Date(insight.createdAt).toLocaleDateString(
+                            isPolish ? 'pl-PL' : 'en-US'
+                          )}
+                        </span>
+                      )}
+                      {findingsCount > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Target size={12} />
+                          {findingsCount} {isPolish ? 'wyników' : 'findings'}
+                        </span>
+                      )}
+                      {crossPerspectiveCount > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Users size={12} />
+                          {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
+                        </span>
+                      )}
+                      {divergenceCount > 0 && (
+                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300">
+                          <AlertTriangle size={12} />
+                          {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    {isPolish ? 'Do przeglądu' : 'In Review'}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -5305,405 +6052,393 @@ Return ONLY the answer text (no markdown fences).`;
   };
 
   const sessionsViewLabel = useMemo(() => {
-    const map: Record<ViewMode, { en: string; pl: string; icon: React.ElementType }> = {
+    const map: Record<string, { en: string; pl: string; icon: React.ElementType }> = {
       table: { en: 'List', pl: 'Lista', icon: LayoutList },
       grid: { en: 'Cards', pl: 'Karty', icon: LayoutGrid },
     };
     return map[viewMode] || map.table;
   }, [viewMode]);
 
-  // Insights view uses icon segmented toggle (Inbox canonical)
+  const handleMainTabChange = useCallback(
+    (tab: ModuleTab) => {
+      setActiveTab(tab as InterviewTab);
+      if (tab === 'managed') {
+        setAssignmentStatusFilter('all');
+      }
+      setActiveDocumentId(null);
+    },
+    [setActiveDocumentId]
+  );
+
+  const handleRemoveFilter = useCallback((id: string) => {
+    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setActiveFilters([]);
+  }, []);
+
+  // Tab-specific right controls
+  const rightControls = useMemo(() => {
+    if (activeDocumentId) return null;
+    const controls: React.ReactNode[] = [];
+
+    if (activeTab === 'templates') {
+      controls.push(
+        <div key="area-filter" className="relative">
+          <button
+            type="button"
+            onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
+            className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
+            title={isPolish ? 'Filtr obszarów' : 'Area filter'}
+          >
+            <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
+              {templateAreaTagFilter.length > 0
+                ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
+                : isPolish
+                  ? 'Wszystkie obszary'
+                  : 'All areas'}
+            </span>
+            <ChevronDown size={14} />
+          </button>
+          {isTemplateAreaFilterOpen ? (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsTemplateAreaFilterOpen(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
+                <button
+                  type="button"
+                  onClick={() => setTemplateAreaTagFilter([])}
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
+                >
+                  {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
+                </button>
+                {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
+                  const checked = templateAreaTagFilter.includes(tag);
+                  return (
+                    <label
+                      key={tag}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setTemplateAreaTagFilter((prev) =>
+                            checked ? prev.filter((item) => item !== tag) : [...prev, tag]
+                          )
+                        }
+                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          ) : null}
+        </div>,
+        <div key="source-filter" className="relative">
+          <select
+            value={templateSourceFilter}
+            onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
+            className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+            title={isPolish ? 'Filtr źródła' : 'Source filter'}
+          >
+            <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
+            <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
+            <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
+            <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
+          </select>
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+          />
+        </div>,
+        <div
+          key="templates-view"
+          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          role="radiogroup"
+          aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
+        >
+          <button
+            type="button"
+            onClick={() => setTemplatesViewMode('cards')}
+            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${templatesViewMode === 'cards' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            title={isPolish ? 'Karty' : 'Cards'}
+            role="radio"
+            aria-checked={templatesViewMode === 'cards'}
+          >
+            <LayoutGrid size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setTemplatesViewMode('table')}
+            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${templatesViewMode === 'table' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            title={isPolish ? 'Tabela' : 'Table'}
+            role="radio"
+            aria-checked={templatesViewMode === 'table'}
+          >
+            <List size={15} />
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'insights') {
+      controls.push(
+        <div
+          key="insights-view"
+          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          role="radiogroup"
+          aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+        >
+          <button
+            onClick={() => setInsightsViewMode('flat')}
+            className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${insightsViewMode === 'flat' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            title={isPolish ? 'Lista' : 'List'}
+            role="radio"
+            aria-checked={insightsViewMode === 'flat'}
+          >
+            <LayoutList size={16} />
+          </button>
+          <button
+            onClick={() => setInsightsViewMode('report')}
+            className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${insightsViewMode === 'report' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            title={isPolish ? 'Wg raportu' : 'By report'}
+            role="radio"
+            aria-checked={insightsViewMode === 'report'}
+          >
+            <LayoutGrid size={16} />
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'sessions') {
+      controls.push(
+        <div key="sessions-status" className="relative">
+          <select
+            value={sessionStatusFilter}
+            onChange={(e) => setSessionStatusFilter(e.target.value)}
+            className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+            title={isPolish ? 'Filtr statusu' : 'Status filter'}
+          >
+            {sessionStatusOptions.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.display}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+          />
+        </div>,
+        <div key="sessions-view" className="relative">
+          <button
+            onClick={() => setSessionsViewMenuOpen((v) => !v)}
+            className={TOPBAR_PILL_INACTIVE}
+            title={isPolish ? 'Widok' : 'View'}
+          >
+            <sessionsViewLabel.icon size={14} />
+            <span>{isPolish ? sessionsViewLabel.pl : sessionsViewLabel.en}</span>
+            <ChevronDown
+              size={12}
+              className={`transition-transform ${sessionsViewMenuOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+          {sessionsViewMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setSessionsViewMenuOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
+                {(
+                  [
+                    { id: 'table' as ViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
+                    { id: 'grid' as ViewMode, icon: LayoutGrid, en: 'Cards', pl: 'Karty' },
+                  ] as const
+                ).map(({ id, icon: Icon, en, pl }) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      setViewMode(id);
+                      setSessionsViewMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${viewMode === id ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'}`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon size={14} />
+                      {isPolish ? pl : en}
+                    </span>
+                    {viewMode === id ? <Check size={14} /> : null}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    if (activeTab === 'my_assignments' || activeTab === 'managed') {
+      controls.push(
+        <div
+          key="assignments-view"
+          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          role="radiogroup"
+          aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+        >
+          <button
+            onClick={() => setAssignmentsViewMode('list')}
+            className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${assignmentsViewMode === 'list' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            title={isPolish ? 'Lista' : 'List'}
+            role="radio"
+            aria-checked={assignmentsViewMode === 'list'}
+          >
+            <LayoutList size={16} />
+          </button>
+          <button
+            onClick={() => setAssignmentsViewMode('cards')}
+            className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${assignmentsViewMode === 'cards' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            title={isPolish ? 'Karty' : 'Cards'}
+            role="radio"
+            aria-checked={assignmentsViewMode === 'cards'}
+          >
+            <LayoutGrid size={16} />
+          </button>
+        </div>
+      );
+    }
+
+    return controls.length > 0 ? <div className="flex items-center gap-1.5">{controls}</div> : null;
+  }, [
+    activeDocumentId,
+    activeTab,
+    isPolish,
+    templateAreaTagFilter,
+    isTemplateAreaFilterOpen,
+    templateSourceFilter,
+    templatesViewMode,
+    insightsViewMode,
+    sessionStatusFilter,
+    sessionsViewMenuOpen,
+    sessionsViewLabel,
+    viewMode,
+    assignmentsViewMode,
+    sessionStatusOptions,
+    TOPBAR_PILL_INACTIVE,
+  ]);
+
+  // Tab-specific primary CTA
+  const primaryCta = useMemo(() => {
+    if (activeDocumentId) return null;
+    if (activeTab === 'sessions') {
+      return (
+        <button
+          onClick={handleNewSession}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-purple-400/30 hover:from-purple-400 hover:to-purple-500 shadow-lg shadow-purple-500/20 transition-colors"
+        >
+          <Plus size={16} />
+          <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
+        </button>
+      );
+    }
+    if (activeTab === 'templates' && canAssign) {
+      return (
+        <button
+          onClick={handleNewTemplate}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors"
+        >
+          <Plus size={16} />
+          <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
+        </button>
+      );
+    }
+    if (activeTab === 'insights') {
+      return (
+        <button
+          onClick={() => {
+            if (!canCreateInsights) return;
+            setSelectedSessionsForInsight([]);
+            setShowInsightModal(true);
+          }}
+          disabled={!canCreateInsights}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Plus size={16} />
+          <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
+        </button>
+      );
+    }
+    if ((activeTab === 'my_assignments' || activeTab === 'managed') && canAssign) {
+      return (
+        <button
+          onClick={() => {
+            setSelectedTemplateForAssign(null);
+            setShowAssignModal(true);
+          }}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors"
+        >
+          <Plus size={16} />
+          <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
+        </button>
+      );
+    }
+    return null;
+  }, [activeDocumentId, activeTab, isPolish, canAssign, handleNewSession, handleNewTemplate]);
+
+  // Tool control: Contextual Help
+  const toolControl = useMemo(() => {
+    if (activeDocumentId) return null;
+    return (
+      <button
+        type="button"
+        onClick={openContextualHelp}
+        className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+        title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
+        data-testid="contextual-help-entry-interview"
+      >
+        <CircleHelp size={16} />
+        <span>{t('help.entrypoint.contextual', 'Help')}</span>
+      </button>
+    );
+  }, [activeDocumentId, openContextualHelp, isPolish, t]);
+
+  // Command row content (from renderCommandRow, minus search/dynamic tabs which ModuleHub handles)
+  const commandRowContent = useMemo(() => {
+    if (activeDocumentId) return null;
+    return renderCommandRow();
+  }, [activeDocumentId, activeTab, renderCommandRow]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
-      {/* Navigation Bar (Golden Standard) */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-        {/* Main Navigation Row */}
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Left: Search + Tabs + Status Filters */}
-          <div className="flex items-center gap-3">
-            {/* Search Toggle — h-9 per App Table Standard */}
-            <button
-              onClick={() => setShowSearch(!showSearch)}
-              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                showSearch
-                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
-                  : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-              }`}
-              title={isPolish ? 'Szukaj' : 'Search'}
-            >
-              <Search size={18} />
-            </button>
-
-            {/* Main Tabs (KANON v3: NO counts/badges on main tabs) */}
-            <div className="flex items-center gap-2">
-              {tabs.map((tab: any) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      if (tab.id === 'managed') {
-                        // Default managed mode is approvals (KANON: "Do zatwierdzenia").
-                        setAssignmentStatusFilter('submitted');
-                      }
-                      setActiveDocumentId(null); // Go back to list when changing tabs
-                    }}
-                    className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right: (scan from right) AI → CTA → View */}
-          <div className="flex items-center gap-1.5">
-            {/* NOTE: Order here is rendered LEFT→RIGHT, but we want visual order FROM RIGHT EDGE:
-                AI → CTA → View → Filters. So JSX order must be: Filters → View → CTA → AI. */}
-
-            {/* Templates: Filters must be to the LEFT of CTA (scan from right: AI → CTA → Filters) */}
-            {activeTab === 'templates' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr obszarów' : 'Area filter'}
-                >
-                  <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
-                    {templateAreaTagFilter.length > 0
-                      ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
-                      : isPolish
-                        ? 'Wszystkie obszary'
-                        : 'All areas'}
-                  </span>
-                  <ChevronDown size={14} />
-                </button>
-                {isTemplateAreaFilterOpen ? (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsTemplateAreaFilterOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
-                      <button
-                        type="button"
-                        onClick={() => setTemplateAreaTagFilter([])}
-                        className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
-                      >
-                        {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
-                      </button>
-                      {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
-                        const checked = templateAreaTagFilter.includes(tag);
-                        return (
-                          <label
-                            key={tag}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-slate-700 dark:text-slate-200"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() =>
-                                setTemplateAreaTagFilter((prev) =>
-                                  checked ? prev.filter((item) => item !== tag) : [...prev, tag]
-                                )
-                              }
-                              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            )}
-
-            {activeTab === 'templates' && !activeDocumentId && (
-              <div className="relative">
-                <select
-                  value={templateSourceFilter}
-                  onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
-                  className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr źródła' : 'Source filter'}
-                >
-                  <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
-                  <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
-                  <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
-                  <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                />
-              </div>
-            )}
-
-            {/* Tool slot: Contextual Help (P25-B) */}
-            {!activeDocumentId && (
-              <button
-                type="button"
-                onClick={openContextualHelp}
-                className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-                data-testid="contextual-help-entry-interview"
-              >
-                <CircleHelp size={16} />
-                <span>{t('help.entrypoint.contextual', 'Help')}</span>
-              </button>
-            )}
-
-            {activeTab === 'templates' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
-                title={isPolish ? 'Widok' : 'View'}
-              >
-                <button
-                  type="button"
-                  onClick={() => setTemplatesViewMode('cards')}
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    templatesViewMode === 'cards'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Karty' : 'Cards'}
-                  role="radio"
-                  aria-checked={templatesViewMode === 'cards'}
-                >
-                  <LayoutGrid size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTemplatesViewMode('table')}
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    templatesViewMode === 'table'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Tabela' : 'Table'}
-                  role="radio"
-                  aria-checked={templatesViewMode === 'table'}
-                >
-                  <List size={15} />
-                </button>
-              </div>
-            )}
-
-            {activeTab === 'templates' && !activeDocumentId && canAssign && (
-              <button
-                onClick={handleNewTemplate}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
-              </button>
-            )}
-
-            {activeTab === 'insights' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-                title={isPolish ? 'Widok' : 'View'}
-              >
-                <button
-                  onClick={() => setInsightsViewMode('flat')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    insightsViewMode === 'flat'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Lista' : 'List'}
-                  role="radio"
-                  aria-checked={insightsViewMode === 'flat'}
-                >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setInsightsViewMode('report')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    insightsViewMode === 'report'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Wg raportu' : 'By report'}
-                  role="radio"
-                  aria-checked={insightsViewMode === 'report'}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-            )}
-
-            {activeTab === 'insights' && !activeDocumentId && (
-              <button
-                onClick={() => {
-                  setSelectedSessionsForInsight([]);
-                  setShowInsightModal(true);
-                }}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
-              </button>
-            )}
-
-            {/* 5) Filters (tab-specific) */}
-            {activeTab === 'sessions' && !activeDocumentId && (
-              <div className="relative">
-                <select
-                  value={sessionStatusFilter}
-                  onChange={(e) => setSessionStatusFilter(e.target.value)}
-                  className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr statusu' : 'Status filter'}
-                >
-                  {sessionStatusOptions.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.display}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                />
-              </div>
-            )}
-
-            {/* 3) View tool (pill dropdown) */}
-            {activeTab === 'sessions' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  onClick={() => setSessionsViewMenuOpen((v) => !v)}
-                  className={TOPBAR_PILL_INACTIVE}
-                  title={isPolish ? 'Widok' : 'View'}
-                >
-                  <sessionsViewLabel.icon size={14} />
-                  <span>{isPolish ? sessionsViewLabel.pl : sessionsViewLabel.en}</span>
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform ${sessionsViewMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {sessionsViewMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30"
-                      onClick={() => setSessionsViewMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {(
-                        [
-                          { id: 'table' as ViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
-                          { id: 'grid' as ViewMode, icon: LayoutGrid, en: 'Cards', pl: 'Karty' },
-                        ] as const
-                      ).map(({ id, icon: Icon, en, pl }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setViewMode(id);
-                            setSessionsViewMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
-                            viewMode === id
-                              ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold'
-                              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Icon size={14} />
-                            {isPolish ? pl : en}
-                          </span>
-                          {viewMode === id ? <Check size={14} /> : null}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* 2) Primary CTA (Sessions) */}
-            {activeTab === 'sessions' && !activeDocumentId && (
-              <button
-                onClick={handleNewSession}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-purple-400/30 hover:from-purple-400 hover:to-purple-500 shadow-lg shadow-purple-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Nowa sesja' : 'New session'}
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
-              </button>
-            )}
-
-            {/* Assignments View Mode Toggle (list / cards) — match MyWork Inbox canonical */}
-            {(activeTab === 'my-assignments' || activeTab === 'managed') && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
-                <button
-                  onClick={() => setAssignmentsViewMode('list')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    assignmentsViewMode === 'list'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Lista' : 'List'}
-                  role="radio"
-                  aria-checked={assignmentsViewMode === 'list'}
-                >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setAssignmentsViewMode('cards')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    assignmentsViewMode === 'cards'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Karty' : 'Cards'}
-                  role="radio"
-                  aria-checked={assignmentsViewMode === 'cards'}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-            )}
-
-            {/* Assignments Primary CTA (Add) — SHOULD be next to right edge (before Area/AI) */}
-            {(activeTab === 'my-assignments' || activeTab === 'managed') &&
-              !activeDocumentId &&
-              canAssign && (
-                <button
-                  onClick={() => {
-                    setSelectedTemplateForAssign(null);
-                    setShowAssignModal(true);
-                  }}
-                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
-                >
-                  <Plus size={16} />
-                  <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-                </button>
-              )}
-
-            {/* Area/AI — rightmost in the topbar cluster */}
-          </div>
-        </div>
-      </div>
-      {/* Command Row (search | dynamic tabs | counters) */}
-      {renderCommandRow()}
-
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-auto">{renderContent()}</div>
+    <div className="h-full" data-testid="interview-hub">
+      <ModuleHub
+        persistViewModeKey="interview"
+        tabs={tabs}
+        activeTab={activeTab as ModuleTab}
+        onTabChange={handleMainTabChange}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onSearch={setSearchQuery}
+        openDocuments={openDocuments}
+        activeDocumentId={activeDocumentId}
+        onSelectDocument={setActiveDocumentId}
+        onCloseDocument={handleCloseDocument}
+        onShowList={handleShowList}
+        activeFilters={activeFilters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearFilters={handleClearFilters}
+        rightControls={rightControls}
+        primaryCta={primaryCta}
+        toolControl={toolControl}
+        commandRowContent={commandRowContent}
+        availableViewModes={['table']}
+        showTabCounts={false}
+      >
+        <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
+      </ModuleHub>
 
       {/* Table View Settings (standard) — Sessions */}
       <Modal
@@ -6068,22 +6803,33 @@ Return ONLY the answer text (no markdown fences).`;
           setSelectedTemplateForAssign(null);
         }}
         onSuccess={async () => {
-          // Refresh assignments after successful creation
           try {
-            const [myRes, managedRes, overdueRes] = await Promise.all([
-              loadMyAssignments(),
-              canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
-              canViewOverdue ? loadOverdueAssignments() : Promise.resolve([]),
-            ]);
-            setMyAssignments(myRes);
-            setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-            setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+            await refreshAssignmentViews(false);
             setSelectedTemplateForAssign(null);
           } catch (error) {
             console.error('[InterviewHub] Failed to refresh assignments:', error);
           }
         }}
         preselectedTemplateId={selectedTemplateForAssign?.id}
+      />
+
+      <ManageAssignmentModal
+        isOpen={showManageAssignmentModal}
+        assignment={selectedAssignment}
+        onClose={() => {
+          setShowManageAssignmentModal(false);
+          setSelectedAssignment(null);
+        }}
+        onSuccess={async () => {
+          try {
+            await refreshAssignmentViews(true);
+          } catch (error) {
+            console.error('[InterviewHub] Failed to refresh after manage assignment:', error);
+          } finally {
+            setShowManageAssignmentModal(false);
+            setSelectedAssignment(null);
+          }
+        }}
       />
 
       {/* Reminder Modal */}
@@ -6161,17 +6907,24 @@ Return ONLY the answer text (no markdown fences).`;
         </div>
       )}
 
-      {/* Send Back Modal */}
-      {showSendBackModal && selectedAssignment && (
+      {/* Review Action Modal */}
+      {showReviewActionModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Zwróć do poprawy' : 'Send Back for Revision'}
+                {reviewActionMode === 'revoke_approval'
+                  ? isPolish
+                    ? 'Cofnij zatwierdzenie'
+                    : 'Revoke approval'
+                  : isPolish
+                    ? 'Zwróć do poprawy'
+                    : 'Send Back for Revision'}
               </h2>
               <button
                 onClick={() => {
-                  setShowSendBackModal(false);
+                  setShowReviewActionModal(false);
+                  setReviewActionReason('');
                   setSelectedAssignment(null);
                 }}
                 className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -6182,23 +6935,32 @@ Return ONLY the answer text (no markdown fences).`;
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const reason = formData.get('reason') as string;
-                handleSendBack(reason);
+                void handleReviewAction(reviewActionReason);
               }}
               className="p-4"
             >
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                {isPolish
-                  ? 'Podaj powód zwrotu wywiadu do poprawy:'
-                  : 'Provide a reason for sending the interview back:'}
+                {reviewActionMode === 'revoke_approval'
+                  ? isPolish
+                    ? 'Podaj powód cofnięcia zatwierdzenia i ponownego otwarcia pracy:'
+                    : 'Provide a reason for revoking approval and reopening the work:'
+                  : isPolish
+                    ? 'Podaj powód zwrotu wywiadu do poprawy:'
+                    : 'Provide a reason for sending the interview back:'}
               </p>
               <textarea
-                name="reason"
                 required
                 rows={4}
+                value={reviewActionReason}
+                onChange={(e) => setReviewActionReason(e.target.value)}
                 placeholder={
-                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
+                  reviewActionMode === 'revoke_approval'
+                    ? isPolish
+                      ? 'Wyjaśnij dlaczego zatwierdzenie trzeba cofnąć...'
+                      : 'Explain why the approval must be revoked...'
+                    : isPolish
+                      ? 'Opisz co wymaga poprawy...'
+                      : 'Describe what needs to be improved...'
                 }
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
               />
@@ -6206,7 +6968,8 @@ Return ONLY the answer text (no markdown fences).`;
                 <button
                   type="button"
                   onClick={() => {
-                    setShowSendBackModal(false);
+                    setShowReviewActionModal(false);
+                    setReviewActionReason('');
                     setSelectedAssignment(null);
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
@@ -6215,10 +6978,17 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
                 <button
                   type="submit"
+                  disabled={!reviewActionReason.trim()}
                   className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
-                  {isPolish ? 'Zwróć' : 'Send Back'}
+                  {reviewActionMode === 'revoke_approval'
+                    ? isPolish
+                      ? 'Cofnij approval'
+                      : 'Revoke approval'
+                    : isPolish
+                      ? 'Zwróć'
+                      : 'Send Back'}
                 </button>
               </div>
             </form>
@@ -6253,15 +7023,19 @@ Return ONLY the answer text (no markdown fences).`;
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-400">
-                    {sessions.filter((s) => s.status === 'completed').length}
+                    {
+                      sessions.filter((s) =>
+                        ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
+                      ).length
+                    }
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Zakończone' : 'Completed'}
+                    {isPolish ? 'Zatwierdzone' : 'Approved'}
                   </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-purple-400">
-                    {sessions.filter((s) => s.status === 'active').length}
+                    {sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPolish ? 'W trakcie' : 'In Progress'}
@@ -6355,12 +7129,19 @@ Return ONLY the answer text (no markdown fences).`;
         }}
         onSuccess={async () => {
           // Refresh insights after generation
-          const insightsRes = await Api.get('/interview/insights').catch(() => []);
+          const insightsRes = await V8InterviewApi.listInsights()
+            .then((r) => r.insights)
+            .catch(() => Api.get('/interview/insights').catch(() => []));
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />
     </div>
   );
+};
+
+export const __private__ = {
+  resolveInterviewTabFromSearchParams,
+  readInterviewCoreRuntimeHandoff,
 };
 
 export default InterviewHub;

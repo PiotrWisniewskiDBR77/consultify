@@ -59,7 +59,8 @@ vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
   v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null = null;
+let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null =
+  null;
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   default: (req: any, _res: any, next: () => void) => {
@@ -118,18 +119,173 @@ describe('P04 KPI Workflow Canon', () => {
       expect(res.status).toBe(200);
       expect(res.body.meta.contract).toBe(P04_KPI_WORKFLOW_CONTRACT);
 
-      const { vocabulary, workflowStates, linkagePatterns, permissions, antiDuplicateRules, acceptanceChecklist } = res.body.data;
-      expect(vocabulary).toEqual(expect.arrayContaining(['signal', 'target', 'trend', 'report', 'reconciliation', 'next_action']));
-      expect(linkagePatterns).toEqual(expect.arrayContaining(['interpretation', 'driver', 'review', 'realization']));
+      const {
+        vocabulary,
+        workflowStates,
+        linkagePatterns,
+        permissions,
+        antiDuplicateRules,
+        acceptanceChecklist,
+      } = res.body.data;
+      expect(vocabulary).toEqual(
+        expect.arrayContaining([
+          'signal',
+          'target',
+          'trend',
+          'report',
+          'reconciliation',
+          'next_action',
+        ])
+      );
+      expect(linkagePatterns).toEqual(
+        expect.arrayContaining(['interpretation', 'driver', 'review', 'realization'])
+      );
       expect(permissions).toHaveProperty('edit_definition');
       expect(permissions).toHaveProperty('edit_targets');
+      expect(permissions).toHaveProperty('delete_kpi');
+      expect(permissions).toHaveProperty('record_measurement');
+      expect(permissions).toHaveProperty('create_report');
+      expect(permissions).toHaveProperty('manage_deviation');
       expect(permissions).toHaveProperty('view');
       expect(permissions).toHaveProperty('comment');
       expect(permissions).toHaveProperty('manage_reconciliation_results');
       expect(antiDuplicateRules).toHaveProperty('no_bi_suite_drift');
       expect(antiDuplicateRules).toHaveProperty('no_parallel_finance_truth');
       expect(antiDuplicateRules).toHaveProperty('no_charts_only');
-      expect(acceptanceChecklist).toHaveLength(12);
+      expect(acceptanceChecklist).toHaveLength(21);
+    });
+
+    it('returns all 6 canonical workflow states', async () => {
+      const res = await request(app).get('/api/v8/results/workflow/contract');
+      expect(res.status).toBe(200);
+      const { workflowStates } = res.body.data;
+      expect(workflowStates).toHaveLength(6);
+      expect(workflowStates).toEqual(
+        expect.arrayContaining([
+          'signal_detected',
+          'inspecting',
+          'report_created',
+          'reconciling',
+          'action_assigned',
+          'resolved',
+        ])
+      );
+    });
+  });
+
+  // ─── P04 Permission enforcement on legacy routes ───────────
+
+  describe('P04 permission enforcement — viewer/commenter blocked on write routes', () => {
+    it('POST /kpis returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpis')
+        .set('x-kpi-role', 'viewer')
+        .send({ name: 'Test KPI', kpiType: 'STANDARD' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpis returns 403 for commenter', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpis')
+        .set('x-kpi-role', 'commenter')
+        .send({ name: 'Test KPI', kpiType: 'STANDARD' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('PUT /kpis/:kpiId returns 403 for viewer', async () => {
+      const res = await request(app)
+        .put('/api/v8/results/kpis/kpi-001')
+        .set('x-kpi-role', 'viewer')
+        .send({ name: 'Updated' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('DELETE /kpis/:kpiId returns 403 for viewer', async () => {
+      const res = await request(app)
+        .delete('/api/v8/results/kpis/kpi-001')
+        .set('x-kpi-role', 'viewer');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('DELETE /kpis/:kpiId returns 403 for finance_owner', async () => {
+      const res = await request(app)
+        .delete('/api/v8/results/kpis/kpi-001')
+        .set('x-kpi-role', 'finance_owner');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpis/:kpiId/time-series returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpis/kpi-001/time-series')
+        .set('x-kpi-role', 'viewer')
+        .send({ value: 42, measuredAt: '2026-04-01' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpi-reports returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpi-reports')
+        .set('x-kpi-role', 'viewer')
+        .send({ periodStart: '2026-01-01', periodEnd: '2026-03-31' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpi-reports/:snapshotId/refresh returns 403 for commenter', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpi-reports/snap-001/refresh')
+        .set('x-kpi-role', 'commenter');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /deviation-cases/:caseId/acknowledge returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/deviation-cases/case-001/acknowledge')
+        .set('x-kpi-role', 'viewer');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('PUT /deviation-cases/:caseId/rca returns 403 for commenter', async () => {
+      const res = await request(app)
+        .put('/api/v8/results/deviation-cases/case-001/rca')
+        .set('x-kpi-role', 'commenter')
+        .send({ rcaText: 'Root cause' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /deviation-cases/:caseId/resolve returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/deviation-cases/case-001/resolve')
+        .set('x-kpi-role', 'viewer');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /deviation-cases/:caseId/close returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/deviation-cases/case-001/close')
+        .set('x-kpi-role', 'viewer')
+        .send({ evidenceText: 'Evidence' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpis succeeds with x-kpi-role: kpi_owner', async () => {
+      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+      const res = await request(app)
+        .post('/api/v8/results/kpis')
+        .set('x-kpi-role', 'kpi_owner')
+        .send({ name: 'Test KPI', kpiType: 'STANDARD' });
+      expect(res.status).not.toBe(403);
     });
   });
 
@@ -138,8 +294,24 @@ describe('P04 KPI Workflow Canon', () => {
   describe('GET /workflow/signals — signal detection', () => {
     it('returns active deviation signals for the org', async () => {
       mockDbAll.mockResolvedValueOnce([
-        { id: 'sig-1', kpi_id: KPI_ID, severity: 'RED', status: 'OPEN', deviation_summary: 'Below target', detected_at: '2026-03-01', created_at: '2026-03-01' },
-        { id: 'sig-2', kpi_id: 'kpi-002', severity: 'AMBER', status: 'ACKNOWLEDGED', deviation_summary: 'Trending down', detected_at: '2026-03-15', created_at: '2026-03-15' },
+        {
+          id: 'sig-1',
+          kpi_id: KPI_ID,
+          severity: 'RED',
+          status: 'OPEN',
+          deviation_summary: 'Below target',
+          detected_at: '2026-03-01',
+          created_at: '2026-03-01',
+        },
+        {
+          id: 'sig-2',
+          kpi_id: 'kpi-002',
+          severity: 'AMBER',
+          status: 'ACKNOWLEDGED',
+          deviation_summary: 'Trending down',
+          detected_at: '2026-03-15',
+          created_at: '2026-03-15',
+        },
       ]);
 
       const res = await request(app).get('/api/v8/results/workflow/signals');
@@ -166,18 +338,40 @@ describe('P04 KPI Workflow Canon', () => {
   describe('GET /workflow/kpi/:kpiId/inspect — KPI inspection', () => {
     it('returns target, trend, health, and open signals', async () => {
       mockDbGet.mockResolvedValueOnce({
-        id: KPI_ID, kpi_id: KPI_ID, name: 'Revenue Growth',
-        target_value: 100, baseline_value: 50, latest_value: 75,
-        measurement_frequency: 'MONTHLY', updated_at: new Date().toISOString(), created_at: '2026-01-01',
+        id: KPI_ID,
+        kpi_id: KPI_ID,
+        name: 'Revenue Growth',
+        target_value: 100,
+        baseline_value: 50,
+        latest_value: 75,
+        measurement_frequency: 'MONTHLY',
+        updated_at: new Date().toISOString(),
+        created_at: '2026-01-01',
       });
 
       mockDbAll
         .mockResolvedValueOnce([
-          { value: 75, measured_at: '2026-03-01', period_start: '2026-03-01', period_end: '2026-03-31' },
-          { value: 60, measured_at: '2026-02-01', period_start: '2026-02-01', period_end: '2026-02-28' },
+          {
+            value: 75,
+            measured_at: '2026-03-01',
+            period_start: '2026-03-01',
+            period_end: '2026-03-31',
+          },
+          {
+            value: 60,
+            measured_at: '2026-02-01',
+            period_start: '2026-02-01',
+            period_end: '2026-02-28',
+          },
         ])
         .mockResolvedValueOnce([
-          { id: 'sig-1', severity: 'RED', status: 'OPEN', deviation_summary: 'Below target', detected_at: '2026-03-01' },
+          {
+            id: 'sig-1',
+            severity: 'RED',
+            status: 'OPEN',
+            deviation_summary: 'Below target',
+            detected_at: '2026-03-01',
+          },
         ]);
 
       mockDbGet.mockResolvedValueOnce(null);
@@ -252,7 +446,12 @@ describe('P04 KPI Workflow Canon', () => {
   describe('GET /workflow/kpi/:kpiId/health — degraded posture', () => {
     it('returns nominal for healthy KPI', async () => {
       mockDbGet
-        .mockResolvedValueOnce({ id: KPI_ID, latest_value: 80, target_value: 100, updated_at: new Date().toISOString() })
+        .mockResolvedValueOnce({
+          id: KPI_ID,
+          latest_value: 80,
+          target_value: 100,
+          updated_at: new Date().toISOString(),
+        })
         .mockResolvedValueOnce(null);
 
       const res = await request(app).get(`/api/v8/results/workflow/kpi/${KPI_ID}/health`);
@@ -262,7 +461,12 @@ describe('P04 KPI Workflow Canon', () => {
 
     it('returns missing_data when values are null', async () => {
       mockDbGet
-        .mockResolvedValueOnce({ id: KPI_ID, latest_value: null, target_value: null, updated_at: new Date().toISOString() })
+        .mockResolvedValueOnce({
+          id: KPI_ID,
+          latest_value: null,
+          target_value: null,
+          updated_at: new Date().toISOString(),
+        })
         .mockResolvedValueOnce(null);
 
       const res = await request(app).get(`/api/v8/results/workflow/kpi/${KPI_ID}/health`);
@@ -274,7 +478,12 @@ describe('P04 KPI Workflow Canon', () => {
     it('returns stale_data when >30 days old', async () => {
       const staleDate = new Date(Date.now() - 40 * 86400000).toISOString();
       mockDbGet
-        .mockResolvedValueOnce({ id: KPI_ID, latest_value: 50, target_value: 100, updated_at: staleDate })
+        .mockResolvedValueOnce({
+          id: KPI_ID,
+          latest_value: 50,
+          target_value: 100,
+          updated_at: staleDate,
+        })
         .mockResolvedValueOnce(null);
 
       const res = await request(app).get(`/api/v8/results/workflow/kpi/${KPI_ID}/health`);
@@ -284,7 +493,12 @@ describe('P04 KPI Workflow Canon', () => {
 
     it('returns discrepancy_unresolved when reconciliation is pending', async () => {
       mockDbGet
-        .mockResolvedValueOnce({ id: KPI_ID, latest_value: 80, target_value: 100, updated_at: new Date().toISOString() })
+        .mockResolvedValueOnce({
+          id: KPI_ID,
+          latest_value: 80,
+          target_value: 100,
+          updated_at: new Date().toISOString(),
+        })
         .mockResolvedValueOnce({ reconciliation_status: 'pending' });
 
       const res = await request(app).get(`/api/v8/results/workflow/kpi/${KPI_ID}/health`);
@@ -331,16 +545,22 @@ describe('P04 KPI Workflow Canon', () => {
   describe('POST /workflow/kpi/:kpiId/report — report creation', () => {
     it('creates a report/scorecard from KPI inspection', async () => {
       mockDbGet.mockResolvedValueOnce({
-        id: KPI_ID, name: 'Revenue Growth', latest_value: 65, target_value: 100, baseline_value: 50,
+        id: KPI_ID,
+        name: 'Revenue Growth',
+        latest_value: 65,
+        target_value: 100,
+        baseline_value: 50,
       });
       mockDbAll.mockResolvedValueOnce([
         { id: 'sig-1', severity: 'RED', deviation_summary: 'Revenue drop' },
       ]);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
-      const res = await request(app)
-        .post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`)
-        .send({ commentary: 'Revenue below target', actionPlan: 'Increase outreach', reconciliationNeeded: true });
+      const res = await request(app).post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`).send({
+        commentary: 'Revenue below target',
+        actionPlan: 'Increase outreach',
+        reconciliationNeeded: true,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.data.kpiId).toBe(KPI_ID);
@@ -367,7 +587,15 @@ describe('P04 KPI Workflow Canon', () => {
     it('signal → inspect → report → next-action creates traceable chain', async () => {
       // Step 1: Get signals
       mockDbAll.mockResolvedValueOnce([
-        { id: 'sig-e2e', kpi_id: KPI_ID, severity: 'RED', status: 'OPEN', deviation_summary: 'Revenue drop', detected_at: '2026-03-20', created_at: '2026-03-20' },
+        {
+          id: 'sig-e2e',
+          kpi_id: KPI_ID,
+          severity: 'RED',
+          status: 'OPEN',
+          deviation_summary: 'Revenue drop',
+          detected_at: '2026-03-20',
+          created_at: '2026-03-20',
+        },
       ]);
 
       const signalsRes = await request(app).get('/api/v8/results/workflow/signals');
@@ -377,13 +605,29 @@ describe('P04 KPI Workflow Canon', () => {
 
       // Step 2: Inspect the KPI
       mockDbGet.mockResolvedValueOnce({
-        id: KPI_ID, kpi_id: KPI_ID, name: 'Revenue Growth',
-        target_value: 100, baseline_value: 50, latest_value: 65,
-        measurement_frequency: 'MONTHLY', updated_at: new Date().toISOString(), created_at: '2026-01-01',
+        id: KPI_ID,
+        kpi_id: KPI_ID,
+        name: 'Revenue Growth',
+        target_value: 100,
+        baseline_value: 50,
+        latest_value: 65,
+        measurement_frequency: 'MONTHLY',
+        updated_at: new Date().toISOString(),
+        created_at: '2026-01-01',
       });
       mockDbAll
-        .mockResolvedValueOnce([{ value: 65, measured_at: '2026-03-01', period_start: '2026-03-01' }])
-        .mockResolvedValueOnce([{ id: 'sig-e2e', severity: 'RED', status: 'OPEN', deviation_summary: 'Revenue drop', detected_at: '2026-03-20' }]);
+        .mockResolvedValueOnce([
+          { value: 65, measured_at: '2026-03-01', period_start: '2026-03-01' },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 'sig-e2e',
+            severity: 'RED',
+            status: 'OPEN',
+            deviation_summary: 'Revenue drop',
+            detected_at: '2026-03-20',
+          },
+        ]);
       mockDbGet.mockResolvedValueOnce(null);
 
       const inspectRes = await request(app).get(`/api/v8/results/workflow/kpi/${KPI_ID}/inspect`);
@@ -393,7 +637,11 @@ describe('P04 KPI Workflow Canon', () => {
 
       // Step 3: Create report/scorecard
       mockDbGet.mockResolvedValueOnce({
-        id: KPI_ID, name: 'Revenue Growth', latest_value: 65, target_value: 100, baseline_value: 50,
+        id: KPI_ID,
+        name: 'Revenue Growth',
+        latest_value: 65,
+        target_value: 100,
+        baseline_value: 50,
       });
       mockDbAll.mockResolvedValueOnce([
         { id: 'sig-e2e', severity: 'RED', deviation_summary: 'Revenue drop' },
@@ -402,7 +650,10 @@ describe('P04 KPI Workflow Canon', () => {
 
       const reportRes = await request(app)
         .post(`/api/v8/results/workflow/kpi/${KPI_ID}/report`)
-        .send({ commentary: 'Revenue below target — corrective action needed', actionPlan: 'Increase outreach' });
+        .send({
+          commentary: 'Revenue below target — corrective action needed',
+          actionPlan: 'Increase outreach',
+        });
       expect(reportRes.status).toBe(200);
       expect(reportRes.body.data.status).toBe('draft');
 
@@ -428,8 +679,10 @@ describe('P04 KPI Workflow Canon', () => {
 // ─── Unit tests for kpiWorkflowCanon.ts ──────────────────────
 
 import {
-  computeKpiHealthPosture,
   canPerformKpiAction,
+  computeKpiHealthPosture,
+  KPI_WORKFLOW_DEGRADED_REASONS,
+  KPI_WORKFLOW_STATES,
   KPI_WORKFLOW_TRANSITIONS,
   P04_ACCEPTANCE_CHECKLIST,
 } from '../../../services/v8/kpiWorkflowCanon.js';
@@ -437,34 +690,53 @@ import {
 describe('kpiWorkflowCanon — unit tests', () => {
   describe('computeKpiHealthPosture', () => {
     it('returns permission_denied when hasPermission is false', () => {
-      expect(computeKpiHealthPosture({ currentValue: 10, targetValue: 20, hasPermission: false })).toBe('permission_denied');
+      expect(
+        computeKpiHealthPosture({ currentValue: 10, targetValue: 20, hasPermission: false })
+      ).toBe('permission_denied');
     });
 
     it('returns missing_data when both values are null', () => {
-      expect(computeKpiHealthPosture({ currentValue: null, targetValue: null })).toBe('missing_data');
+      expect(computeKpiHealthPosture({ currentValue: null, targetValue: null })).toBe(
+        'missing_data'
+      );
     });
 
     it('returns stale_data when updatedAt is >30 days ago', () => {
       const old = new Date(Date.now() - 35 * 86400000).toISOString();
-      expect(computeKpiHealthPosture({ currentValue: 10, targetValue: 20, updatedAt: old })).toBe('stale_data');
+      expect(computeKpiHealthPosture({ currentValue: 10, targetValue: 20, updatedAt: old })).toBe(
+        'stale_data'
+      );
     });
 
     it('returns linkage_unavailable when finance linked but no reconciliation', () => {
-      expect(computeKpiHealthPosture({
-        currentValue: 10, targetValue: 20, financeLinked: true, reconciliationStatus: null,
-      })).toBe('linkage_unavailable');
+      expect(
+        computeKpiHealthPosture({
+          currentValue: 10,
+          targetValue: 20,
+          financeLinked: true,
+          reconciliationStatus: null,
+        })
+      ).toBe('linkage_unavailable');
     });
 
     it('returns discrepancy_unresolved for disputed reconciliation', () => {
-      expect(computeKpiHealthPosture({
-        currentValue: 10, targetValue: 20, reconciliationStatus: 'disputed',
-      })).toBe('discrepancy_unresolved');
+      expect(
+        computeKpiHealthPosture({
+          currentValue: 10,
+          targetValue: 20,
+          reconciliationStatus: 'disputed',
+        })
+      ).toBe('discrepancy_unresolved');
     });
 
     it('returns nominal for healthy KPI', () => {
-      expect(computeKpiHealthPosture({
-        currentValue: 80, targetValue: 100, updatedAt: new Date().toISOString(),
-      })).toBe('nominal');
+      expect(
+        computeKpiHealthPosture({
+          currentValue: 80,
+          targetValue: 100,
+          updatedAt: new Date().toISOString(),
+        })
+      ).toBe('nominal');
     });
   });
 
@@ -505,13 +777,87 @@ describe('kpiWorkflowCanon — unit tests', () => {
   });
 
   describe('P04_ACCEPTANCE_CHECKLIST', () => {
-    it('has exactly 12 items', () => {
-      expect(P04_ACCEPTANCE_CHECKLIST).toHaveLength(12);
+    it('has exactly 21 items', () => {
+      expect(P04_ACCEPTANCE_CHECKLIST).toHaveLength(21);
     });
 
-    it('covers all required sections', () => {
+    it('covers all required sections including P04-D/E/F/G/H', () => {
       const sections = new Set(P04_ACCEPTANCE_CHECKLIST.map((c) => c.section));
-      expect(sections).toEqual(new Set(['§8.1A', '§8.1B', '§8.1C', '§8.1D', '§8.1E', '§8.1F']));
+      expect(sections).toEqual(
+        new Set([
+          '§8.1A',
+          '§8.1B',
+          '§8.1C',
+          '§8.1D',
+          '§8.1E',
+          '§8.1F',
+          'P04-D',
+          'P04-E',
+          'P04-F',
+          'P04-G',
+          'P04-H',
+        ])
+      );
+    });
+  });
+
+  describe('KPI_WORKFLOW_STATES', () => {
+    it('contains all 6 canonical states', () => {
+      expect(KPI_WORKFLOW_STATES).toHaveLength(6);
+      expect([...KPI_WORKFLOW_STATES]).toEqual([
+        'signal_detected',
+        'inspecting',
+        'report_created',
+        'reconciling',
+        'action_assigned',
+        'resolved',
+      ]);
+    });
+  });
+
+  describe('KPI_WORKFLOW_DEGRADED_REASONS (unified canon)', () => {
+    it('contains all 4 canonical degraded reasons', () => {
+      expect(KPI_WORKFLOW_DEGRADED_REASONS).toHaveLength(4);
+      expect([...KPI_WORKFLOW_DEGRADED_REASONS]).toEqual([
+        'missing_data',
+        'discrepancy_unresolved',
+        'linkage_unavailable',
+        'permission_denied',
+      ]);
+    });
+  });
+
+  describe('canPerformKpiAction — extended matrix', () => {
+    it('kpi_owner can delete KPI', () => {
+      expect(canPerformKpiAction('kpi_owner', 'delete_kpi')).toBe(true);
+    });
+
+    it('viewer cannot delete KPI', () => {
+      expect(canPerformKpiAction('viewer', 'delete_kpi')).toBe(false);
+    });
+
+    it('kpi_owner can record measurement', () => {
+      expect(canPerformKpiAction('kpi_owner', 'record_measurement')).toBe(true);
+    });
+
+    it('viewer cannot record measurement', () => {
+      expect(canPerformKpiAction('viewer', 'record_measurement')).toBe(false);
+    });
+
+    it('finance_owner can create report', () => {
+      expect(canPerformKpiAction('finance_owner', 'create_report')).toBe(true);
+    });
+
+    it('commenter cannot create report', () => {
+      expect(canPerformKpiAction('commenter', 'create_report')).toBe(false);
+    });
+
+    it('kpi_owner can manage deviation', () => {
+      expect(canPerformKpiAction('kpi_owner', 'manage_deviation')).toBe(true);
+    });
+
+    it('viewer cannot manage deviation', () => {
+      expect(canPerformKpiAction('viewer', 'manage_deviation')).toBe(false);
     });
   });
 });

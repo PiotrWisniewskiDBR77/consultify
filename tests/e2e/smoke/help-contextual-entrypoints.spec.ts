@@ -84,8 +84,8 @@ test.describe('P25-B contextual help entry points', () => {
     await dismissTourModal(page);
     await page.goto('/discovery-tools?help_article=does-not-exist&help_module=discovery-tools');
 
-    await expect(page.getByText(/Article not found/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /Search help/i })).toBeVisible();
+    await expect(page.getByText(/moved or removed/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Browse collections/i })).toBeVisible();
   });
 });
 

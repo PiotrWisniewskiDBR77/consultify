@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 import type { V8ArtifactRef } from './contextSnapshot.js';
 import { V8ArtifactRefSchema } from './contextSnapshot.js';
+import type { OperationContract } from './operationContract.js';
 
 // ==========================================
 // ENUMS / LITERALS
@@ -134,6 +135,7 @@ export interface ActionProposal {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  operationContract?: OperationContract;
 }
 
 export interface RunStateTransition {
@@ -170,7 +172,7 @@ export const ActionPreviewSchema = z.object({
 
 export const ExecutionAgentRunSchema = z.object({
   runId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   contextSnapshotId: z.string().uuid(),
   initiatorUserId: z.string().uuid(),
   state: z.enum(RunStateValues),
@@ -226,7 +228,7 @@ export interface CreateRunParams {
 }
 
 export const CreateRunParamsSchema = z.object({
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   contextSnapshotId: z.string().uuid(),
   initiatorUserId: z.string().uuid(),
   goal: z.string().min(1),

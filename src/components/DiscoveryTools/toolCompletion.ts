@@ -3,6 +3,7 @@ import type {
   OperationalToolData,
   PorterData,
   PortfolioPriorityData,
+  ProposalStatus,
   RiskUncertaintyData,
   SWOTData,
   SWOTOutputReadiness,
@@ -25,6 +26,11 @@ const readinessRank = {
   ready: 2,
 } as const;
 
+const isGovernedAccepted = (proposalStatus?: ProposalStatus) =>
+  proposalStatus !== 'ai-proposed' &&
+  proposalStatus !== 'rethinking' &&
+  proposalStatus !== 'rejected';
+
 export function computeDynamicSwotSessionSignals(data: SWOTData | undefined, isPolish: boolean) {
   const swot = data;
   const signals = swot?.signals || [];
@@ -32,11 +38,14 @@ export function computeDynamicSwotSessionSignals(data: SWOTData | undefined, isP
   const tensions = swot?.tensions || [];
   const moves = swot?.recommendedMoves || [];
   const outputs = swot?.outputCandidates || [];
+  const acceptedTensions = tensions.filter((item) => isGovernedAccepted(item.proposalStatus));
+  const acceptedMoves = moves.filter((item) => isGovernedAccepted(item.proposalStatus));
+  const acceptedOutputs = outputs.filter((item) => isGovernedAccepted(item.proposalStatus));
   const proposedSignals = signals.filter((signal) => signal.state === 'proposed').length;
   const needsEvidenceSignals = signals.filter((signal) => signal.state === 'needs-evidence').length;
   const proposedItems = items.filter((item) => item.status === 'proposed').length;
   const acceptedItems = items.filter((item) => item.status !== 'proposed').length;
-  const readyOutputs = outputs.filter((output) =>
+  const readyOutputs = acceptedOutputs.filter((output) =>
     ['ready-for-initiative', 'ready-for-presentation', 'ready-for-report'].includes(
       output.readiness || 'keep-as-idea'
     )
@@ -48,11 +57,14 @@ export function computeDynamicSwotSessionSignals(data: SWOTData | undefined, isP
   if (!signals.length)
     missingEvidence.push(isPolish ? 'Brak sygnałów wejściowych' : 'Missing input signals');
   if (!items.length) missingEvidence.push(isPolish ? 'Brak kart SWOT' : 'Missing SWOT cards');
-  if (!tensions.length && !swot?.correlations?.length)
+  if (
+    !acceptedTensions.length &&
+    !(swot?.correlations || []).some((item) => isGovernedAccepted(item.proposalStatus))
+  )
     missingEvidence.push(
       isPolish ? 'Brak napięć lub korelacji' : 'Missing tensions or correlations'
     );
-  if (!moves.length)
+  if (!acceptedMoves.length)
     missingEvidence.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
 
   return {
@@ -78,6 +90,17 @@ export function computeDynamicSwotPhaseSummaries(
     opportunities: swot?.items?.filter((item) => item.quadrant === 'opportunities').length || 0,
     threats: swot?.items?.filter((item) => item.quadrant === 'threats').length || 0,
   };
+
+  const acceptedCorrelations =
+    swot?.correlations?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedTensions =
+    swot?.tensions?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedMoves =
+    swot?.recommendedMoves?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedOutputs =
+    swot?.outputCandidates?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedSummary =
+    !!swot?.summary?.executiveSummary && isGovernedAccepted(swot?.summary?.proposalStatus);
 
   const summaries: Array<Omit<DynamicSwotPhaseSummary, 'readiness'>> = [
     {
@@ -128,22 +151,18 @@ export function computeDynamicSwotPhaseSummaries(
       id: 'insights',
       label: isPolish ? 'Synthesis & Insights' : 'Synthesis & Insights',
       done:
-        ((swot?.tensions?.length || 0) > 0 || (swot?.correlations?.length || 0) > 0) &&
-        ((swot?.recommendedMoves?.length || 0) > 0 ||
-          (swot?.summary?.appliedConclusions?.length || 0) > 0),
+        (acceptedTensions > 0 || acceptedCorrelations > 0) &&
+        (acceptedMoves > 0 || acceptedSummary),
       gapCount: [
-        !((swot?.tensions?.length || 0) > 0 || (swot?.correlations?.length || 0) > 0),
-        !(
-          (swot?.recommendedMoves?.length || 0) > 0 ||
-          (swot?.summary?.appliedConclusions?.length || 0) > 0
-        ),
+        !(acceptedTensions > 0 || acceptedCorrelations > 0),
+        !(acceptedMoves > 0 || acceptedSummary),
       ].filter(Boolean).length,
       primaryGap:
-        (swot?.tensions?.length || 0) === 0 && (swot?.correlations?.length || 0) === 0
+        acceptedTensions === 0 && acceptedCorrelations === 0
           ? isPolish
             ? 'Wygeneruj napięcia strategiczne'
             : 'Generate strategic tensions'
-          : (swot?.recommendedMoves?.length || 0) === 0
+          : acceptedMoves === 0
             ? isPolish
               ? 'Przełóż analizę na ruchy'
               : 'Translate analysis into moves'
@@ -152,16 +171,13 @@ export function computeDynamicSwotPhaseSummaries(
     {
       id: 'outputs',
       label: isPolish ? 'Outputs & Actions' : 'Outputs & Actions',
-      done: !!swot?.summary?.executiveSummary && (swot?.outputCandidates?.length || 0) > 0,
-      gapCount: [
-        !swot?.summary?.executiveSummary,
-        !((swot?.outputCandidates?.length || 0) > 0),
-      ].filter(Boolean).length,
-      primaryGap: !swot?.summary?.executiveSummary
+      done: acceptedSummary && acceptedOutputs > 0,
+      gapCount: [!acceptedSummary, !(acceptedOutputs > 0)].filter(Boolean).length,
+      primaryGap: !acceptedSummary
         ? isPolish
           ? 'Przygotuj final source summary'
           : 'Prepare the final source summary'
-        : (swot?.outputCandidates?.length || 0) === 0
+        : acceptedOutputs === 0
           ? isPolish
             ? 'Określ ścieżki outputów'
             : 'Define the output routes'
@@ -231,6 +247,18 @@ export function computeToolReviewGaps(
   const data = inputData as any;
 
   if (toolType === 'dynamic-swot') {
+    const acceptedTensions =
+      data.tensions?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+    const acceptedCorrelations =
+      data.correlations?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+    const acceptedMoves =
+      data.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
+    const acceptedOutputs =
+      data.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
+    const acceptedSummary =
+      !!data.summary?.executiveSummary && isGovernedAccepted(data.summary?.proposalStatus);
     if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal)
       gaps.push(isPolish ? 'Brak mission brief' : 'Missing mission');
     if (!(data.signals?.length || 0) && !(data.items?.length || 0))
@@ -246,12 +274,14 @@ export function computeToolReviewGaps(
         gaps.push(`${isPolish ? 'Brak' : 'Missing'}: ${labels[q]}`);
       }
     });
-    if (!data.tensions?.length && !data.correlations?.length)
+    if (!acceptedTensions && !acceptedCorrelations)
       gaps.push(isPolish ? 'Brak napięć strategicznych' : 'Missing strategic tensions');
-    if (!data.recommendedMoves?.length)
+    if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
-    if (!data.summary?.executiveSummary)
+    if (!acceptedSummary)
       gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 

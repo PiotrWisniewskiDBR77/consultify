@@ -42,6 +42,7 @@ import {
 } from '../../types/toolGovernance.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { buildProposalOperationContract } from './operationContractService.js';
 
 // ==========================================
 // HELPERS
@@ -534,6 +535,7 @@ export async function requestInvocation(
   params: RequestInvocationParams
 ): Promise<ToolInvocationRequest> {
   const validated = RequestInvocationParamsSchema.parse(params);
+  const tool = await getTool(validated.toolId, validated.organizationId);
 
   const policyResult = await getEffectivePolicy(
     validated.toolId,
@@ -557,6 +559,29 @@ export async function requestInvocation(
     policyRef: policyResult.policyRef,
     blockReason: policyResult.blockReason,
     createdAt: now,
+    operationContract: buildProposalOperationContract({
+      kind: 'tool_invocation',
+      contractId: invocationId,
+      stage:
+        policyResult.state === 'allowed'
+          ? 'approved'
+          : policyResult.state === 'blocked'
+            ? 'rejected'
+            : 'pending_review',
+      createdAt: now,
+      updatedAt: now,
+      organizationId: validated.organizationId,
+      userId: validated.initiatorUserId,
+      contextSnapshotId: validated.contextSnapshotId,
+      executionRunId: validated.executionRunId ?? null,
+      toolInvocationId: invocationId,
+      targetModule: tool?.name || 'tool',
+      title: tool?.name || 'Tool invocation',
+      summary: tool?.description || 'Governed tool execution request',
+      intent: tool?.description || 'Governed tool execution request',
+      previewLines: Object.keys(validated.parameters || {}).slice(0, 3),
+      riskLabel: tool?.riskClass || null,
+    }),
   };
 
   await dbRun(

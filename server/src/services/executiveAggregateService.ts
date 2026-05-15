@@ -580,7 +580,7 @@ export class ExecutiveAggregateService {
       includeAI: opts.includeAI,
       payload: snapshot,
       ttlSeconds: 120,
-    }).catch(() => {});
+    }).catch((err: unknown) => logger.warn('[ExecutiveAggregate] cache upsert failed', err));
 
     return snapshot;
   }

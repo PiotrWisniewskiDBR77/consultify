@@ -1,6 +1,7 @@
 import { ChevronRight, Menu, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
@@ -8,6 +9,7 @@ import { AIFreezeBanner } from '../components/AIFreezeBanner';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
+import { FeedbackFloatingButton } from '../components/Feedback/FeedbackFloatingButton';
 import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpDeepLinkListener } from '../components/Help/HelpDeepLinkListener';
@@ -22,7 +24,6 @@ import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
-import { FeatureFlagsDevToolsToggleButton } from '../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -57,15 +58,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const chatPanelWidth = useAppStore((s) => s.chatPanelWidth);
   const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
+  const chatSystemPrompt = useAppStore((s) => s.chatSystemPrompt);
+  const chatQuickPrompts = useAppStore((s) => s.chatQuickPrompts);
   const { isMobile, safeAreaInsets } = useDeviceType();
 
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
   // Views where chat panel should NOT be shown (full-screen chat only, and settings)
   // AI chat is now available on Admin, SuperAdmin, Context Builder, and Partner screens
   const VIEWS_WITHOUT_CHAT_PANEL: AppView[] = [
     AppView.AI_CHAT, // Full-screen chat mode — no split panel
+    AppView.WORDY, // KIMI workspaces embed their own chat panel
+    AppView.EXCELE,
+    AppView.PREZENTACJE_GEN,
     AppView.SETTINGS_PROFILE,
     AppView.SETTINGS_PROFILE_MODULE,
     AppView.SETTINGS_AI,
@@ -98,6 +105,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (!workspaceContext) return;
     if (currentView === AppView.AI_CHAT) return;
 
+    // F1.2: Preserve Help entityData if the current store has help metadata
+    // (set by HelpSidePanel.openAiNow) and the kickoff hasn't been consumed yet.
+    const storeCtx = useConversationStore.getState().workspaceContext;
+    const hasHelpOrigin = storeCtx?.entityData?.helpDocumentId && chatKickoffMessage;
+    if (hasHelpOrigin) return;
+
     setWorkspaceContext(workspaceContext);
 
     // Only push the UI into split mode when the split panel is actually visible.
@@ -109,6 +122,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     shouldShowChatPanel,
     isChatCollapsed,
     currentView,
+    chatKickoffMessage,
     setWorkspaceContext,
     setDisplayMode,
   ]);
@@ -149,7 +163,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const mobileGlobalRailBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
 
   return (
-    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white font-sans overflow-hidden">
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
       <div
         data-testid="global-fab-rail"
@@ -167,14 +181,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <div className="pointer-events-auto">
           <DocumentToggleButton />
         </div>
-        <div className="pointer-events-auto">
-          <FeatureFlagsDevToolsToggleButton />
-        </div>
       </div>
       <HelpDeepLinkListener />
       <HelpSidePanel />
       <DocumentSidePanel />
       <FeedbackSidePanel />
+      <FeedbackFloatingButton />
 
       {/* Global access/paywall modal */}
       <AccessBlockedModal />
@@ -193,7 +205,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-pulse"></span>
-            Impersonating Mode
+            Read-only impersonation mode
           </span>
         </div>
       )}
@@ -212,6 +224,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     pb-16 md:pb-0
                 `}
       >
+        <a
+          href="#app-main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-white dark:bg-navy-900 text-slate-900 dark:text-white border border-slate-300 dark:border-navy-600 rounded px-3 py-2 text-sm"
+        >
+          {t('layout.skipToContent', 'Skip to main content')}
+        </a>
         {/* Header */}
         <div className="flex flex-col z-30 shrink-0">
           <DemoModeBanner />
@@ -222,25 +240,35 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
           <AIFreezeBanner />
 
-          <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+          <div className="h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setIsSidebarOpen(true)}
                 className="lg:hidden text-navy-700 dark:text-white mr-2"
+                aria-label="Open menu"
               >
                 <Menu />
               </button>
-              <div className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500">
-                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
+              <nav
+                aria-label={t('layout.breadcrumb', 'Breadcrumb')}
+                className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500"
+              >
+                <span
+                  className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
+                  aria-current={!breadcrumbs?.[1] && breadcrumbs?.[0] ? 'page' : undefined}
+                >
                   {breadcrumbs?.[0] || ''}
                 </span>
                 {breadcrumbs?.[1] ? (
                   <>
-                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                    <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
+                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" aria-hidden="true" />
+                    <span className="text-navy-900 dark:text-white" aria-current="page">
+                      {breadcrumbs[1]}
+                    </span>
                   </>
                 ) : null}
-              </div>
+              </nav>
             </div>
 
             <div className="flex items-center gap-4">
@@ -301,8 +329,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     type="button"
                     onClick={() => toggleChatCollapse()}
                     className="absolute top-2 right-2 z-10 w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-                    title="Close AI panel"
-                    aria-label="Close AI panel"
+                    title={t('layout.aiPanel.close', 'Close AI panel')}
+                    aria-label={t('layout.aiPanel.close', 'Close AI panel')}
                   >
                     <X size={16} />
                   </button>
@@ -310,11 +338,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     mode="split"
                     workspaceContext={workspaceContext}
                     showModeToggle={true}
-                    onModeToggle={() => expandToFullScreen()}
+                    onModeToggle={() => {
+                      if (workspaceContext?.type === 'document') {
+                        navigate('/wordy');
+                      } else {
+                        expandToFullScreen();
+                      }
+                    }}
                     showHistoryTrigger={true}
                     showFocusMode={true}
                     kickoffMessage={chatKickoffMessage || undefined}
                     onKickoffConsumed={clearChatKickoffMessage}
+                    systemPrompt={chatSystemPrompt || undefined}
+                    quickPrompts={chatQuickPrompts || undefined}
                   />
                 </div>
                 {/* Resizer */}
@@ -326,7 +362,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto">{children}</div>
+            <div
+              id="app-main-content"
+              tabIndex={-1}
+              className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto"
+            >
+              {children}
+            </div>
           </div>
         </TrialExpiredGate>
       </main>

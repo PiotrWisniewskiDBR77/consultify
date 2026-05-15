@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  getSuperAdminCapabilities,
   setDependencies,
   verifySuperAdmin,
 } from '../../../server/src/middleware/superAdmin.middleware.js';
@@ -93,5 +94,15 @@ describe('Superadmin routing (verifySuperAdmin middleware) - REAL_CODE', () => {
 
     expect(next).toHaveBeenCalled();
     expect(req.user.isSuperAdmin).toBe(true);
+  });
+
+  it('keeps full canonical capabilities for SUPERADMIN with an empty override list', () => {
+    expect(getSuperAdminCapabilities('SUPERADMIN', [])).toEqual([
+      'platform_ops',
+      'security_ops',
+      'billing_ops',
+      'support_ops',
+      'ai_ops',
+    ]);
   });
 });

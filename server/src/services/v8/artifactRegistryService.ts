@@ -5,8 +5,8 @@ import type {
   ArtifactFamily,
   ArtifactListFilters,
   ArtifactListItem,
-  ArtifactOriginRuntime,
   ArtifactOriginLink,
+  ArtifactOriginRuntime,
   ArtifactPlanningRequest,
   ArtifactPlanningResult,
   ArtifactRecord,
@@ -27,17 +27,113 @@ import {
   MaterializeArtifactRunParamsSchema,
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
+import type { RunState } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
+import { isV8Enabled } from './featureFlagService.js';
+import {
+  buildProposalOperationContract,
+  updateOperationContractLinks,
+} from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
-import type { RunState } from '../../types/executionSpine.js';
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
 const BACKFILL_TTL_MS = 30_000;
+
+type AuditAction =
+  | 'created'
+  | 'preflight'
+  | 'plan_accepted'
+  | 'materialized'
+  | 'failed'
+  | 'cancelled'
+  | 'retry_requested'
+  | 'status_changed';
+
+async function emitRunAudit(params: {
+  runId: string;
+  organizationId: string;
+  action: AuditAction;
+  actorUserId: string;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  detail?: Record<string, unknown> | null;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO v8_artifact_run_audit_log (
+        audit_id, run_id, organization_id, action, from_status, to_status,
+        actor_user_id, detail_json, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.runId,
+        params.organizationId,
+        params.action,
+        params.fromStatus ?? null,
+        params.toStatus ?? null,
+        params.actorUserId,
+        params.detail ? JSON.stringify(params.detail) : null,
+        new Date().toISOString(),
+      ]
+    );
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} Audit emit failed (non-blocking)`, {
+      runId: params.runId,
+      action: params.action,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+export interface ArtifactRunAuditEntry {
+  auditId: string;
+  runId: string;
+  organizationId: string;
+  action: AuditAction;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actorUserId: string;
+  detail: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export async function getArtifactRunAuditLog(
+  runId: string,
+  organizationId: string
+): Promise<ArtifactRunAuditEntry[]> {
+  const rows = await dbAll<{
+    audit_id: string;
+    run_id: string;
+    organization_id: string;
+    action: string;
+    from_status: string | null;
+    to_status: string | null;
+    actor_user_id: string;
+    detail_json: string | null;
+    created_at: string;
+  }>(
+    `SELECT * FROM v8_artifact_run_audit_log
+     WHERE run_id = ? AND organization_id = ?
+     ORDER BY created_at ASC`,
+    [runId, organizationId]
+  );
+  return rows.map((r) => ({
+    auditId: r.audit_id,
+    runId: r.run_id,
+    organizationId: r.organization_id,
+    action: r.action as AuditAction,
+    fromStatus: r.from_status,
+    toStatus: r.to_status,
+    actorUserId: r.actor_user_id,
+    detail: r.detail_json ? JSON.parse(r.detail_json) : null,
+    createdAt: r.created_at,
+  }));
+}
 const SNAPSHOT_SOURCE_KIND_TO_REPORT_SOURCE_TYPE: Record<string, ArtifactRunReportSourceType> = {
   assessment: 'ASSESSMENT',
   interview: 'INTERVIEW',
@@ -52,6 +148,7 @@ const VALID_REPORT_SOURCE_TYPES = new Set<string>(ArtifactRunReportSourceTypeVal
 const SNAPSHOT_SOURCE_KIND_TO_PRESENTATION_SOURCE_ARTIFACT_TYPE: Record<string, string> = {
   assessment: 'assessment',
   interview: 'custom',
+  insight: 'custom',
   tool: 'tool_session',
   tool_session: 'tool_session',
   initiative: 'initiative_portfolio',
@@ -293,7 +390,10 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
   });
 
   const preflight = safeJsonParse<ArtifactRunPreflight | null>(row.preflight_json, null);
-  const failurePackage = safeJsonParse<ArtifactRunFailurePackage | null>(row.failure_package_json, null);
+  const failurePackage = safeJsonParse<ArtifactRunFailurePackage | null>(
+    row.failure_package_json,
+    null
+  );
   const originRuntimeRaw = String(row.materialization_origin_runtime || '').trim();
   const originRecordIdRaw = String(row.materialization_origin_record_id || '').trim();
   const materializationOrigin =
@@ -303,6 +403,21 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
           originRecordId: originRecordIdRaw,
         } as const)
       : null;
+
+  const operationStage =
+    row.run_status === 'planned' || row.run_status === 'proposal_created'
+      ? 'proposal_ready'
+      : row.run_status === 'awaiting_review'
+        ? 'pending_review'
+        : row.run_status === 'approved_for_apply'
+          ? 'approved'
+          : row.run_status === 'applying'
+            ? 'executing'
+            : row.run_status === 'completed'
+              ? 'completed'
+              : row.run_status === 'rejected' || row.run_status === 'cancelled'
+                ? 'rejected'
+                : 'failed';
 
   return {
     runId: row.run_id,
@@ -326,6 +441,31 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
     completedAt: row.completed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    operationContract: buildProposalOperationContract({
+      kind: 'artifact_runtime',
+      contractId: row.run_id,
+      stage: operationStage,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      organizationId: row.organization_id,
+      userId: row.requested_by_user_id,
+      conversationId: row.source_context_type === 'conversation' ? row.source_context_id : null,
+      contextSnapshotId: row.context_snapshot_id,
+      executionRunId: row.execution_run_id,
+      governedProposalId: row.proposal_id,
+      artifactRunId: row.run_id,
+      artifactId: row.artifact_id,
+      targetModule: 'artifact_runtime',
+      title: parsedPlan.titleHint,
+      summary: `Prepare ${parsedPlan.outputType} via governed artifact runtime`,
+      intent: parsedPlan.titleHint,
+      previewLines: [
+        `Output: ${parsedPlan.outputType}`,
+        `Family: ${parsedPlan.artifactFamily}`,
+        `Visibility: ${parsedPlan.visibilityScope}`,
+      ],
+      riskLabel: row.proposal_id ? 'safe_update' : 'safe_additive',
+    }),
   };
 }
 
@@ -338,6 +478,7 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
   if (
     persistedStatus === 'completed' ||
     persistedStatus === 'failed' ||
+    persistedStatus === 'cancelled' ||
     persistedStatus === 'retry_requested'
   ) {
     return persistedStatus;
@@ -363,6 +504,8 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
       return 'rejected';
     case 'failed':
       return 'failed';
+    case 'cancelled':
+      return 'cancelled';
     default:
       return persistedStatus;
   }
@@ -371,7 +514,11 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
 export function deriveArtifactValidationSnapshot(params: {
   artifact: Pick<
     ArtifactRecord,
-    'titleSnapshot' | 'contextSnapshotId' | 'executionRunId' | 'sourceInitiativeId' | 'originSummary'
+    | 'titleSnapshot'
+    | 'contextSnapshotId'
+    | 'executionRunId'
+    | 'sourceInitiativeId'
+    | 'originSummary'
   >;
   executionState?: RunState | null;
   sourceRefs?: unknown[];
@@ -383,7 +530,9 @@ export function deriveArtifactValidationSnapshot(params: {
     message: string;
   }>;
 } {
-  const artifactFamily = String((params.artifact as any)?.artifactFamily || '').trim().toLowerCase();
+  const artifactFamily = String((params.artifact as any)?.artifactFamily || '')
+    .trim()
+    .toLowerCase();
 
   const sourceRefs =
     params.sourceRefs && Array.isArray(params.sourceRefs)
@@ -519,8 +668,10 @@ export async function registerGovernedTableSheetArtifact(params: {
   userId: string;
   tableId: string;
   tableName: string;
+  contextSnapshotId?: string;
+  executionRunId?: string;
 }): Promise<ArtifactRecord> {
-  return registerArtifactOrigin({
+  const artifact = await registerArtifactOrigin({
     organizationId: params.organizationId,
     outputType: 'sheet',
     artifactFamily: 'sheet',
@@ -531,12 +682,18 @@ export async function registerGovernedTableSheetArtifact(params: {
     createdBy: params.userId,
     deliveryState: 'ready',
     visibilityScope: 'organization',
+    contextSnapshotId: params.contextSnapshotId,
+    executionRunId: params.executionRunId,
     originSummary: {
       sourceTable: 'tp_tables',
       exportFormat: 'xlsx',
       governanceMode: 'governed',
     },
   });
+  if (!artifact) {
+    throw new Error('Failed to register governed table sheet artifact');
+  }
+  return artifact;
 }
 
 async function getOriginLinkByOrigin(
@@ -629,35 +786,57 @@ async function cleanupGhostOutputsByOrigin(params: {
     `DELETE FROM v8_artifact_access_grants WHERE organization_id = ? AND artifact_id = ?`,
     [params.organizationId, artifactId]
   );
-  await dbRun(
-    `DELETE FROM v8_review_gates WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
-  await dbRun(
-    `DELETE FROM v8_publish_records WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
+  await dbRun(`DELETE FROM v8_review_gates WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
+  await dbRun(`DELETE FROM v8_publish_records WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
   await dbRun(
     `DELETE FROM v8_artifact_origin_links WHERE organization_id = ? AND artifact_id = ?`,
     [params.organizationId, artifactId]
   );
-  await dbRun(
-    `DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
+  await dbRun(`DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
 
   return { cleanedUp: true, notes: null };
 }
 
-async function mapArtifactRunRowWithEffectiveStatus(row: ArtifactRunRow): Promise<ArtifactRunRecord> {
+async function mapArtifactRunRowWithEffectiveStatus(
+  row: ArtifactRunRow
+): Promise<ArtifactRunRecord> {
   const mapped = mapArtifactRunRow(row);
   const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
+  const effectiveStatus = deriveArtifactRunStatusFromExecutionState({
+    persistedStatus: mapped.runStatus,
+    executionState: spineRun?.state,
+  });
   return {
     ...mapped,
-    runStatus: deriveArtifactRunStatusFromExecutionState({
-      persistedStatus: mapped.runStatus,
-      executionState: spineRun?.state,
-    }),
+    runStatus: effectiveStatus,
+    operationContract: mapped.operationContract
+      ? updateOperationContractLinks(
+          mapped.operationContract,
+          {},
+          effectiveStatus === 'awaiting_review'
+            ? 'pending_review'
+            : effectiveStatus === 'approved_for_apply'
+              ? 'approved'
+              : effectiveStatus === 'applying'
+                ? 'executing'
+                : effectiveStatus === 'completed'
+                  ? 'completed'
+                  : effectiveStatus === 'rejected' || effectiveStatus === 'cancelled'
+                    ? 'rejected'
+                    : effectiveStatus === 'failed'
+                      ? 'failed'
+                      : 'proposal_ready'
+        )
+      : undefined,
   };
 }
 
@@ -776,10 +955,68 @@ export async function registerArtifactOrigin(
 
   const row = await getArtifactRow(artifactId, validated.organizationId);
   if (!row) {
-    logger.warn(`${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`);
+    logger.warn(
+      `${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`
+    );
     return null;
   }
-  return mapArtifactRow(row);
+  const record = mapArtifactRow(row);
+
+  // Fire-and-forget context notification (feature-flagged)
+  notifyContextOfNewArtifact(record).catch((err) =>
+    logger.warn(`${LOG_PREFIX} notifyContextOfNewArtifact failed: ${err}`)
+  );
+
+  return record;
+}
+
+/**
+ * Notify the organization context that a new artifact was produced.
+ * Gated behind the 'outputs' feature flag to allow incremental rollout.
+ * On success, logs the action; on failure, swallows and logs (non-critical path).
+ */
+export async function notifyContextOfNewArtifact(artifact: ArtifactRecord): Promise<void> {
+  try {
+    const enabled = await isV8Enabled(artifact.organizationId, 'outputs');
+    if (!enabled) return;
+
+    logger.info(
+      `${LOG_PREFIX} Context notification: artifact ${artifact.artifactId} ` +
+        `(${artifact.artifactFamily}/${artifact.outputType}) registered for org ${artifact.organizationId}`
+    );
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} notifyContextOfNewArtifact error: ${err}`);
+  }
+}
+
+/**
+ * Return the most recent artifact refs for an organization, suitable for
+ * auto-suggesting artifactRefs in chat snapshots.
+ * Feature-flagged behind 'outputs' module.
+ */
+export async function getRecentArtifactRefsForOrg(
+  organizationId: string,
+  limit = 10
+): Promise<Array<{ artifactId: string; outputType: string; title: string; createdAt: string }>> {
+  const enabled = await isV8Enabled(organizationId, 'outputs');
+  if (!enabled) return [];
+
+  const rows = await dbAll(
+    `SELECT artifact_id, output_type, title_snapshot, created_at
+     FROM v8_output_artifacts
+     WHERE organization_id = ?
+       AND delivery_state NOT IN ('cancelled', 'archived')
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [organizationId, limit]
+  );
+
+  return (rows as any[]).map((r) => ({
+    artifactId: r.artifact_id,
+    outputType: r.output_type,
+    title: r.title_snapshot ?? '',
+    createdAt: r.created_at,
+  }));
 }
 
 export async function createArtifactAccessGrant(
@@ -840,7 +1077,9 @@ export async function startArtifactReview(params: {
     executionState: executionRun?.state,
   });
   if (validation.state !== 'validated') {
-    throw new Error(`Artifact ${params.artifactId} cannot enter review before artifact validation passes`);
+    throw new Error(
+      `Artifact ${params.artifactId} cannot enter review before artifact validation passes`
+    );
   }
 
   let record = await publishReviewService.getPublishRecord(
@@ -894,6 +1133,59 @@ export async function getArtifactOriginLinks(
     { fallback: true }
   );
   return (rows || []).map(mapOriginLinkRow);
+}
+
+/**
+ * Adds a secondary (non-primary) origin link from an artifact to a related artifact.
+ * Used to create back-links (e.g. report → source template artifact).
+ */
+export async function addSecondaryOriginLink(params: {
+  artifactId: string;
+  organizationId: string;
+  originRuntime: string;
+  originRecordId: string;
+}): Promise<void> {
+  const existing = await dbGet<OriginLinkRow>(
+    `SELECT link_id FROM v8_artifact_origin_links
+     WHERE artifact_id = ? AND organization_id = ? AND origin_runtime = ? AND origin_record_id = ?`,
+    [params.artifactId, params.organizationId, params.originRuntime, params.originRecordId],
+    { fallback: true }
+  );
+  if (existing) return;
+
+  const linkId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO v8_artifact_origin_links (
+      link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      linkId,
+      params.artifactId,
+      params.organizationId,
+      params.originRuntime,
+      params.originRecordId,
+      0,
+      now,
+    ]
+  );
+}
+
+/**
+ * Counts outputs (reports/presentations) that were derived from a given template artifact.
+ * Uses the secondary origin link (source_template) created during generation.
+ */
+export async function countTemplateUsage(
+  templateArtifactId: string,
+  organizationId: string
+): Promise<number> {
+  const row = await dbGet<{ cnt: number }>(
+    `SELECT COUNT(*) as cnt FROM v8_artifact_origin_links
+     WHERE organization_id = ? AND origin_runtime = 'source_template' AND origin_record_id = ?`,
+    [organizationId, templateArtifactId],
+    { fallback: true }
+  );
+  return row?.cnt || 0;
 }
 
 export async function getArtifactAccessGrantsForArtifact(
@@ -965,7 +1257,7 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   const rows = await dbAll<PresentationBackfillRow>(
     `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
             d.export_format, d.created_at, d.updated_at, d.source_id,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS source_refs_json
+            COALESCE(d.source_artifacts, '[]') AS source_refs_json
      FROM presentation_decks d
      LEFT JOIN v8_artifact_origin_links l
        ON l.organization_id = d.organization_id
@@ -1126,7 +1418,9 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
       });
       if (result) inserted++;
     } catch (err: any) {
-      logger.warn(`${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`);
+      logger.warn(
+        `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`
+      );
     }
   }
   return inserted;
@@ -1137,8 +1431,12 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
   const now = Date.now();
   if (now - last < BACKFILL_TTL_MS) return;
 
-  const [reportsInserted, presentationsInserted, reportTemplatesInserted, presentationTemplatesInserted] =
-    await Promise.all([
+  const [
+    reportsInserted,
+    presentationsInserted,
+    reportTemplatesInserted,
+    presentationTemplatesInserted,
+  ] = await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
     backfillReportTemplatesForOrg(organizationId),
@@ -1279,9 +1577,14 @@ function matchesViewFilters(
   filters: ArtifactListFilters,
   currentUserId: string
 ): boolean {
-  // Safety: templates are only included when explicitly requested, so Outputs lists
-  // (All/Mine/Needs review) remain artifact-output focused by default.
-  if (!filters.artifactFamily && !filters.reviewSharedForUserId && item.artifactFamily === 'template')
+  // Templates are included when explicitly requested via artifactFamily filter,
+  // in review lanes, or in recent/mixed lanes via includeTemplates flag.
+  if (
+    !filters.artifactFamily &&
+    !filters.reviewSharedForUserId &&
+    !(filters as any).includeTemplates &&
+    item.artifactFamily === 'template'
+  )
     return false;
   if (filters.outputType && item.outputType !== filters.outputType) return false;
   if (filters.artifactFamily && item.artifactFamily !== filters.artifactFamily) return false;
@@ -1344,7 +1647,7 @@ async function getArtifactListItemRow(
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1397,7 +1700,7 @@ export async function listArtifactsForUser(params: {
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1461,7 +1764,7 @@ export async function listArtifactsForUserByExecutionRunId(params: {
   const limit = Math.max(1, Math.min(params.limit ?? 50, 200));
   const allowDemo = Boolean(params.allowDemo);
 
-  const rows = await dbAll<ArtifactListItemRow>(
+  const rows = await dbAll<ArtifactListRow>(
     `SELECT a.*,
             l.origin_runtime,
             l.origin_record_id,
@@ -1474,7 +1777,7 @@ export async function listArtifactsForUserByExecutionRunId(params: {
             d.status AS presentation_status,
             d.slide_count,
             d.export_format,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1617,7 +1920,7 @@ export async function listMyWorkArtifacts(params: {
       userId: params.userId,
       roleKey: params.roleKey,
       allowDemo: params.allowDemo,
-      filters: { limit: laneLimit },
+      filters: { limit: laneLimit, includeTemplates: true } as any,
     }),
   ]);
 
@@ -1629,6 +1932,25 @@ function inferArtifactPlan(
 ): ArtifactPlanningResult['artifactPlan'] {
   const goal = request.goal.toLowerCase();
   const explicitFamily = request.requestedArtifactFamily;
+
+  if (
+    explicitFamily === 'template' ||
+    goal.includes('template') ||
+    goal.includes('wzorzec') ||
+    goal.includes('szablon')
+  ) {
+    const isPresentation =
+      goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
+    return {
+      artifactFamily: 'template',
+      outputType: isPresentation ? 'presentation' : 'report',
+      titleHint: 'Template-based output',
+      governancePath: 'execution_spine',
+      visibilityScope: 'organization',
+      templateHint: true,
+    } as any;
+  }
+
   if (
     explicitFamily === 'sheet' ||
     request.requestedOutputType === 'sheet' ||
@@ -1870,7 +2192,22 @@ async function resolveMaterializedPresentationParams(
       sourceArtifacts,
       sourceType: resolvedSourceType,
       sourceId: resolvedSourceId,
-      visuals,
+      visuals:
+        visuals && typeof visuals === 'object'
+          ? {
+              enabled: visuals.enabled,
+              priority:
+                visuals.priority === 'cost' || visuals.priority === 'quality'
+                  ? visuals.priority
+                  : undefined,
+              imageDensity:
+                visuals.imageDensity === 'low' ||
+                visuals.imageDensity === 'medium' ||
+                visuals.imageDensity === 'high'
+                  ? visuals.imageDensity
+                  : undefined,
+            }
+          : undefined,
     },
     originSummary: {
       sourceType: resolvedSourceType || null,
@@ -1957,6 +2294,15 @@ export async function createArtifactRunFromChat(
     plan: artifactPlan,
     sourceContextType: 'conversation',
     sourceContextId: validated.conversationId,
+  });
+
+  await emitRunAudit({
+    runId: run.runId,
+    organizationId: validated.organizationId,
+    action: 'created',
+    actorUserId: validated.userId,
+    toStatus: 'planned',
+    detail: { goal: validated.goal, outputType: artifactPlan.outputType },
   });
 
   return {
@@ -2049,7 +2395,8 @@ function computeArtifactRunPreflight(params: {
     checks.push({
       id: 'materialization_target',
       status: 'pending',
-      message: 'Sheet materialization requires a governed table target (tableId) at materialize time',
+      message:
+        'Sheet materialization requires a governed table target (tableId) at materialize time',
     });
   } else if (params.run.plan.outputType === 'report') {
     checks.push({
@@ -2102,6 +2449,14 @@ export async function preflightArtifactRun(params: {
      WHERE run_id = ? AND organization_id = ?`,
     [preflight.state, JSON.stringify(preflight), now, params.runId, params.organizationId]
   );
+
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'preflight',
+    actorUserId: params.actorUserId,
+    detail: { preflightState: preflight.state, checksCount: preflight.checks.length },
+  });
 
   const updated = await getArtifactRun(params.runId, params.organizationId);
   if (!updated) throw new Error(`ArtifactRun ${params.runId} not found after preflight`);
@@ -2178,6 +2533,16 @@ export async function acceptArtifactRunPlan(params: {
     [proposal.proposalId, 'proposal_created', now, params.runId, params.organizationId]
   );
 
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'plan_accepted',
+    actorUserId: params.actorUserId,
+    fromStatus: current.runStatus,
+    toStatus: 'proposal_created',
+    detail: { proposalId: proposal.proposalId },
+  });
+
   const updated = await getArtifactRun(params.runId, params.organizationId);
   if (!updated) throw new Error(`ArtifactRun ${params.runId} not found after accept-plan`);
   return updated;
@@ -2229,6 +2594,16 @@ export async function retryArtifactRun(params: {
     'ArtifactRun retry requested'
   );
 
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'retry_requested',
+    actorUserId: params.actorUserId,
+    fromStatus: current.runStatus,
+    toStatus: 'retry_requested',
+    detail: { newExecutionRunId: handoff.executionRunId },
+  });
+
   return createArtifactRunRecord({
     organizationId: params.organizationId,
     executionRunId: handoff.executionRunId,
@@ -2264,7 +2639,8 @@ export async function materializeArtifactRun(
     current.runStatus === 'retry_requested' ||
     current.runStatus === 'rejected' ||
     current.runStatus === 'failed' ||
-    current.runStatus === 'completed'
+    current.runStatus === 'completed' ||
+    current.runStatus === 'cancelled'
   ) {
     throw new Error(
       `ArtifactRun ${validated.runId} must have an accepted lifecycle before materialization`
@@ -2344,10 +2720,35 @@ export async function materializeArtifactRun(
         );
         resolvedArtifactId = link?.artifactId || null;
       }
+
+      // Backfill contextSnapshotId + executionRunId on the artifact row
+      // (reportBuilderService.createReport does not pass these; match presentation branch)
+      if (resolvedArtifactId && (current.contextSnapshotId || current.executionRunId)) {
+        await dbRun(
+          `UPDATE v8_output_artifacts
+           SET context_snapshot_id = COALESCE(?, context_snapshot_id),
+               execution_run_id = COALESCE(?, execution_run_id),
+               last_transition_at = ?
+           WHERE artifact_id = ? AND organization_id = ?`,
+          [
+            current.contextSnapshotId || null,
+            current.executionRunId || null,
+            new Date().toISOString(),
+            resolvedArtifactId,
+            validated.organizationId,
+          ]
+        );
+      }
     } else if (current.plan.outputType === 'presentation') {
       const presentationParams = await resolveMaterializedPresentationParams(current, validated);
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
+        presentationParams.setup as any,
+        validated.organizationId
+      );
+      await presentationGeneratorService.generateDeck(
+        outlined.deckId,
+        outlined.outline,
         presentationParams.setup as any,
         validated.organizationId
       );
@@ -2360,7 +2761,7 @@ export async function materializeArtifactRun(
         titleSnapshot: presentationParams.title,
         ownerUserId: validated.actorUserId,
         createdBy: validated.actorUserId,
-        deliveryState: mapPresentationStatusToDeliveryState('draft'),
+        deliveryState: mapPresentationStatusToDeliveryState('ready'),
         visibilityScope: current.plan.visibilityScope,
         contextSnapshotId: current.contextSnapshotId,
         executionRunId: current.executionRunId,
@@ -2398,7 +2799,7 @@ export async function materializeArtifactRun(
       // Auto-create table when Excele pipeline doesn't provide one
       if (!tableId) {
         try {
-          const { metadataService } = await import('../tablePlatform/MetadataService.js');
+          const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
 
           // Find or create a base for this org's Excele artifacts
           let baseId: string | null = null;
@@ -2428,7 +2829,10 @@ export async function materializeArtifactRun(
             tableId = (newTable as any)?.id || '';
           }
         } catch (tableCreateErr) {
-          logger.warn('[ArtifactRegistry] Auto-create table failed, falling back to error:', tableCreateErr);
+          logger.warn(
+            '[ArtifactRegistry] Auto-create table failed, falling back to error:',
+            tableCreateErr
+          );
         }
 
         if (!tableId) {
@@ -2443,6 +2847,8 @@ export async function materializeArtifactRun(
         userId: validated.actorUserId,
         tableId,
         tableName: tableName || validated.title || current.plan.titleHint,
+        contextSnapshotId: current.contextSnapshotId,
+        executionRunId: current.executionRunId,
       });
       materializationOrigin = { originRuntime: 'sheet', originRecordId: tableId };
       await persistMaterializationOrigin({
@@ -2489,6 +2895,20 @@ export async function materializeArtifactRun(
       ]
     );
 
+    await emitRunAudit({
+      runId: validated.runId,
+      organizationId: validated.organizationId,
+      action: 'materialized',
+      actorUserId: validated.actorUserId,
+      fromStatus: current.runStatus,
+      toStatus: 'completed',
+      detail: {
+        artifactId: resolvedArtifactId,
+        outputType: current.plan.outputType,
+        originRuntime: materializationOrigin?.originRuntime,
+      },
+    });
+
     const completed = await getArtifactRun(validated.runId, validated.organizationId);
     if (!completed) {
       throw new Error(`ArtifactRun ${validated.runId} not found after materialization`);
@@ -2512,8 +2932,7 @@ export async function materializeArtifactRun(
         cleanupNotes = cleanup.notes;
       } catch (cleanupError) {
         ghostArtifactsCleanedUp = false;
-        cleanupNotes =
-          cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        cleanupNotes = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       }
     }
 
@@ -2563,6 +2982,16 @@ export async function materializeArtifactRun(
         validated.organizationId,
       ]
     );
+
+    await emitRunAudit({
+      runId: validated.runId,
+      organizationId: validated.organizationId,
+      action: 'failed',
+      actorUserId: validated.actorUserId,
+      fromStatus: current.runStatus,
+      toStatus: 'failed',
+      detail: { failureReason, stage: 'materialize', ghostArtifactsCleanedUp },
+    });
 
     throw error;
   }

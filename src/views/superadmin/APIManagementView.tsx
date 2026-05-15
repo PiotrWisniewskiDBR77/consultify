@@ -36,6 +36,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
@@ -843,9 +844,9 @@ export const APIManagementView: React.FC = () => {
   const handleTestWebhook = async (id: string) => {
     try {
       await Api.post(`/api/superadmin/webhooks/${id}/test`, {});
-      alert('Test event sent');
+      toast.success('Test event sent');
     } catch {
-      alert('Test failed');
+      toast.error('Test failed');
     }
   };
 

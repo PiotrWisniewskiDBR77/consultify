@@ -451,7 +451,10 @@ function createMockDatabase(): MockDatabase {
         });
       });
 
-      if (!equalityMatches.length && (s.includes('organization_id = ?') || s.includes('organization_id = $1'))) {
+      if (
+        !equalityMatches.length &&
+        (s.includes('organization_id = ?') || s.includes('organization_id = $1'))
+      ) {
         const orgId = params?.[0];
         rows = rows.filter(
           (r) => r.organization_id != null && String(r.organization_id) === String(orgId)
@@ -742,12 +745,12 @@ export async function resetConnection(): Promise<void> {
   resetConnectionLocally();
 
   if (db) {
-    console.log('[Database] Closing database handle...');
+    logger.info('[Database] Closing database handle...');
     (db as any).__CLOSED__ = true;
     if ((db as any).close) {
       await new Promise<void>((resolve) => {
         (db as any).close((err: any) => {
-          if (err) console.error('[Database] Error closing DB handle', err);
+          if (err) logger.error('[Database] Error closing DB handle', err);
           resolve();
         });
       });

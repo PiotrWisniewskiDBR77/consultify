@@ -11,11 +11,12 @@
  */
 
 import { BookOpen, Copy, Edit3, Plus, Trash2, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import {
   SettingsDivider,
   SettingsFormRow,
@@ -88,15 +89,55 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
   const [showEditor, setShowEditor] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<SavedPrompt | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [editorName, setEditorName] = useState('');
   const [editorCategory, setEditorCategory] = useState<SavedPrompt['category']>('general');
   const [editorPrompt, setEditorPrompt] = useState('');
 
   const filteredPrompts =
-    filterCategory === 'all'
-      ? prompts
-      : prompts.filter((p) => p.category === filterCategory);
+    filterCategory === 'all' ? prompts : prompts.filter((p) => p.category === filterCategory);
+
+  useEffect(() => {
+    const loadPrompts = async () => {
+      try {
+        setLoading(true);
+        const response = await Api.getPromptLibrary();
+        if (Array.isArray(response?.prompts) && response.prompts.length > 0) {
+          setPrompts(response.prompts);
+        } else {
+          setPrompts(BUILT_IN_PROMPTS);
+        }
+      } catch (error) {
+        console.error('Failed to load prompt library:', error);
+        setPrompts(BUILT_IN_PROMPTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadPrompts();
+  }, []);
+
+  const persistPrompts = useCallback(
+    async (nextPrompts: SavedPrompt[], successMessage: string) => {
+      setSaving(true);
+      try {
+        await Api.savePromptLibrary(nextPrompts);
+        setPrompts(nextPrompts);
+        toast.success(successMessage);
+        return true;
+      } catch (error) {
+        console.error('Failed to save prompt library:', error);
+        toast.error(t('settings.ai.promptSaveError', 'Failed to save prompt library'));
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [t]
+  );
 
   const openEditor = (prompt?: SavedPrompt) => {
     if (prompt) {
@@ -118,21 +159,22 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
     setEditingPrompt(null);
   };
 
-  const savePrompt = () => {
+  const savePrompt = async () => {
     if (!editorName.trim() || !editorPrompt.trim()) {
       toast.error(t('settings.ai.promptRequired', 'Name and prompt text are required'));
       return;
     }
 
+    let nextPrompts: SavedPrompt[];
     if (editingPrompt) {
-      setPrompts((prev) =>
-        prev.map((p) =>
-          p.id === editingPrompt.id
-            ? { ...p, name: editorName, category: editorCategory, prompt: editorPrompt }
-            : p
-        )
+      nextPrompts = prompts.map((p) =>
+        p.id === editingPrompt.id
+          ? { ...p, name: editorName, category: editorCategory, prompt: editorPrompt }
+          : p
       );
-      toast.success(t('settings.ai.promptUpdated', 'Prompt updated'));
+      if (await persistPrompts(nextPrompts, t('settings.ai.promptUpdated', 'Prompt updated'))) {
+        closeEditor();
+      }
     } else {
       const newPrompt: SavedPrompt = {
         id: `custom-${Date.now()}`,
@@ -141,19 +183,21 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
         prompt: editorPrompt,
         createdAt: new Date().toISOString().split('T')[0],
       };
-      setPrompts((prev) => [...prev, newPrompt]);
-      toast.success(t('settings.ai.promptCreated', 'Prompt created'));
+      nextPrompts = [...prompts, newPrompt];
+      if (await persistPrompts(nextPrompts, t('settings.ai.promptCreated', 'Prompt created'))) {
+        closeEditor();
+      }
     }
-    closeEditor();
   };
 
-  const deletePrompt = (id: string) => {
+  const deletePrompt = async (id: string) => {
     if (id.startsWith('builtin-')) {
       toast.error(t('settings.ai.cantDeleteBuiltin', 'Built-in prompts cannot be deleted'));
       return;
     }
-    setPrompts((prev) => prev.filter((p) => p.id !== id));
-    toast.success(t('settings.ai.promptDeleted', 'Prompt deleted'));
+
+    const nextPrompts = prompts.filter((p) => p.id !== id);
+    await persistPrompts(nextPrompts, t('settings.ai.promptDeleted', 'Prompt deleted'));
   };
 
   const copyPrompt = (prompt: string) => {
@@ -178,11 +222,13 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
           'Save and organize reusable prompts for different contexts — interviews, analysis, reports, and more.'
         )}
         cardId="settings-ai-prompt-library"
+        loading={loading}
         actions={
           <button
             onClick={() => openEditor()}
+            disabled={saving}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
-              bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors"
+              bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors disabled:opacity-50"
           >
             <Plus size={14} />
             {t('settings.ai.newPrompt', 'New Prompt')}
@@ -203,7 +249,9 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                 )}
               >
-                {cat === 'all' ? t('common.all', 'All') : CATEGORY_LABELS[cat as SavedPrompt['category']]}
+                {cat === 'all'
+                  ? t('common.all', 'All')
+                  : CATEGORY_LABELS[cat as SavedPrompt['category']]}
               </button>
             ))}
           </div>
@@ -303,9 +351,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     <SettingsSelect
                       options={categoryOptions}
                       value={editorCategory}
-                      onChange={(e) =>
-                        setEditorCategory(e.target.value as SavedPrompt['category'])
-                      }
+                      onChange={(e) => setEditorCategory(e.target.value as SavedPrompt['category'])}
                     />
                   </SettingsFormRow>
                 </div>
@@ -332,11 +378,10 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                   </button>
                   <button
                     onClick={savePrompt}
+                    disabled={saving}
                     className="px-4 py-1.5 text-sm font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors"
                   >
-                    {editingPrompt
-                      ? t('common.save', 'Save')
-                      : t('common.create', 'Create')}
+                    {editingPrompt ? t('common.save', 'Save') : t('common.create', 'Create')}
                   </button>
                 </div>
               </div>

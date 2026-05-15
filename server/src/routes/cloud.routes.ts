@@ -10,6 +10,35 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import logger from '../utils/Logger.js';
 
 const router = Router();
+const CLOUD_SOURCES_CACHE_TTL_MS = Number(process.env.CLOUD_SOURCES_CACHE_TTL_MS || 30_000);
+const cloudSourcesCache = new Map<
+  string,
+  { expiresAt: number; payload: { sources: Array<Record<string, unknown>> } }
+>();
+
+const readCachedSources = (organizationId: string) => {
+  const cached = cloudSourcesCache.get(organizationId);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    cloudSourcesCache.delete(organizationId);
+    return null;
+  }
+  return cached.payload;
+};
+
+const writeCachedSources = (
+  organizationId: string,
+  payload: { sources: Array<Record<string, unknown>> }
+) => {
+  cloudSourcesCache.set(organizationId, {
+    payload,
+    expiresAt: Date.now() + CLOUD_SOURCES_CACHE_TTL_MS,
+  });
+};
+
+const invalidateCachedSources = (organizationId: string) => {
+  cloudSourcesCache.delete(organizationId);
+};
 
 /**
  * GET /api/cloud/sources
@@ -22,6 +51,11 @@ router.get('/sources', verifyToken, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Organization context required' });
     }
 
+    const cached = readCachedSources(organizationId);
+    if (cached) {
+      return res.json({ ...cached, cached: true });
+    }
+
     const { listCloudSources } = await import('../services/cloudDataService.js');
     const sources = await listCloudSources(organizationId);
 
@@ -32,7 +66,9 @@ router.get('/sources', verifyToken, async (req: AuthRequest, res: Response) => {
       refreshToken: undefined,
     }));
 
-    return res.json({ sources: safeSources });
+    const payload = { sources: safeSources };
+    writeCachedSources(organizationId, payload);
+    return res.json({ ...payload, cached: false });
   } catch (err: any) {
     logger.error('[CloudRoutes] Failed to list sources:', err?.message);
     return res.status(500).json({ error: 'Failed to list cloud sources' });
@@ -55,6 +91,8 @@ router.post('/sources', verifyToken, async (req: AuthRequest, res: Response) => 
     if (!provider || !name) {
       return res.status(400).json({ error: 'Provider and name are required' });
     }
+
+    invalidateCachedSources(organizationId);
 
     const { createCloudSource } = await import('../services/cloudDataService.js');
     const source = await createCloudSource({
@@ -87,6 +125,8 @@ router.delete('/sources/:id', verifyToken, async (req: AuthRequest, res: Respons
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization context required' });
     }
+
+    invalidateCachedSources(organizationId);
 
     const { deleteCloudSource } = await import('../services/cloudDataService.js');
     await deleteCloudSource(req.params.id, organizationId);
@@ -300,6 +340,8 @@ router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Resp
       return res.status(400).json({ error: 'Organization context required' });
     }
 
+    invalidateCachedSources(organizationId);
+
     const { listCloudFiles, getCloudSource } = await import('../services/cloudDataService.js');
     const source = await getCloudSource(req.params.id, organizationId);
     if (!source) return res.status(404).json({ error: 'Cloud source not found' });
@@ -313,7 +355,17 @@ router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Resp
         `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
          VALUES (gen_random_uuid()::TEXT, ?, ?, ?, 'file', ?::JSONB, NOW())
          ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
-        [req.params.id, file.id, `${source.provider}_file`, JSON.stringify({ name: file.name, mimeType: file.mimeType, size: file.size, isFolder: file.isFolder })]
+        [
+          req.params.id,
+          file.id,
+          `${source.provider}_file`,
+          JSON.stringify({
+            name: file.name,
+            mimeType: file.mimeType,
+            size: file.size,
+            isFolder: file.isFolder,
+          }),
+        ]
       );
       synced++;
     }
@@ -338,9 +390,24 @@ router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Resp
 router.get('/providers', verifyToken, async (_req: AuthRequest, res: Response) => {
   return res.json({
     providers: [
-      { id: 'google_drive', name: 'Google Drive', authType: 'oauth2', capabilities: ['list', 'download', 'upload', 'search'] },
-      { id: 'onedrive', name: 'OneDrive / SharePoint', authType: 'oauth2', capabilities: ['list', 'download', 'upload'] },
-      { id: 'dropbox', name: 'Dropbox', authType: 'oauth2', capabilities: ['list', 'download', 'upload'] },
+      {
+        id: 'google_drive',
+        name: 'Google Drive',
+        authType: 'oauth2',
+        capabilities: ['list', 'download', 'upload', 'search'],
+      },
+      {
+        id: 'onedrive',
+        name: 'OneDrive / SharePoint',
+        authType: 'oauth2',
+        capabilities: ['list', 'download', 'upload'],
+      },
+      {
+        id: 'dropbox',
+        name: 'Dropbox',
+        authType: 'oauth2',
+        capabilities: ['list', 'download', 'upload'],
+      },
     ],
   });
 });

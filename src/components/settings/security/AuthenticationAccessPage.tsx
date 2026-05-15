@@ -149,11 +149,23 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   // ─── Password Logic ───
 
   const passwordRequirements = [
-    { met: newPassword.length >= 8, text: t('settings.password.req.length', 'At least 8 characters') },
-    { met: /[A-Z]/.test(newPassword), text: t('settings.password.req.uppercase', 'One uppercase letter') },
-    { met: /[a-z]/.test(newPassword), text: t('settings.password.req.lowercase', 'One lowercase letter') },
+    {
+      met: newPassword.length >= 8,
+      text: t('settings.password.req.length', 'At least 8 characters'),
+    },
+    {
+      met: /[A-Z]/.test(newPassword),
+      text: t('settings.password.req.uppercase', 'One uppercase letter'),
+    },
+    {
+      met: /[a-z]/.test(newPassword),
+      text: t('settings.password.req.lowercase', 'One lowercase letter'),
+    },
     { met: /[0-9]/.test(newPassword), text: t('settings.password.req.number', 'One number') },
-    { met: /[^A-Za-z0-9]/.test(newPassword), text: t('settings.password.req.special', 'One special character') },
+    {
+      met: /[^A-Za-z0-9]/.test(newPassword),
+      text: t('settings.password.req.special', 'One special character'),
+    },
   ];
 
   const allRequirementsMet = passwordRequirements.every((r) => r.met);
@@ -219,9 +231,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     setSavingRecovery(true);
     try {
       const updates =
-        editingRecovery === 'email'
-          ? { recoveryEmail: editValue }
-          : { recoveryPhone: editValue };
+        editingRecovery === 'email' ? { recoveryEmail: editValue } : { recoveryPhone: editValue };
 
       const response = await fetch('/api/settings/recovery', {
         method: 'PUT',
@@ -438,9 +448,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                 <div
                   className={cn(
                     'p-2 rounded-lg',
-                    currentUser?.mfaEnabled
-                      ? 'bg-emerald-500/10'
-                      : 'bg-amber-500/10'
+                    currentUser?.mfaEnabled ? 'bg-emerald-500/10' : 'bg-amber-500/10'
                   )}
                 >
                   {currentUser?.mfaEnabled ? (
@@ -659,9 +667,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       }}
                       className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
                     >
-                      {recoveryEmail
-                        ? t('common.change', 'Change')
-                        : t('common.add', 'Add')}
+                      {recoveryEmail ? t('common.change', 'Change') : t('common.add', 'Add')}
                     </button>
                   </div>
                 )}
@@ -725,9 +731,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       }}
                       className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
                     >
-                      {recoveryPhone
-                        ? t('common.change', 'Change')
-                        : t('common.add', 'Add')}
+                      {recoveryPhone ? t('common.change', 'Change') : t('common.add', 'Add')}
                     </button>
                   </div>
                 )}

@@ -16,6 +16,13 @@ import { z } from 'zod';
 
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
+import {
+  buildAssignmentManagerScopeClause,
+  buildSessionManagerScopeClause,
+  type InterviewManagerScope,
+  isOrgWideInterviewManagerRole,
+  resolveInterviewManagerScope,
+} from '../services/interviewManagerScope.js';
 import notificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
@@ -104,6 +111,244 @@ type InterviewMissingItem = {
 
 const parseMissingItems = (value: string | null | undefined): InterviewMissingItem[] =>
   parseJson<InterviewMissingItem[]>(value, []);
+
+const INTERVIEW_AI_FIX_TYPES = [
+  'clarify',
+  'add_evidence',
+  'expand_answer',
+  'make_specific',
+  'complete_required_fields',
+  'correct_meaning',
+] as const;
+
+type InterviewAiFixType = (typeof INTERVIEW_AI_FIX_TYPES)[number];
+type InterviewAiAnswerVerdict = 'sufficient' | 'needs_improvement' | 'insufficient' | 'unanswered';
+type InterviewAiOverallVerdict =
+  | 'ready_for_approval'
+  | 'needs_improvement'
+  | 'insufficient'
+  | 'empty';
+type InterviewReviewAlignment =
+  | 'aligned'
+  | 'manager_stricter_than_ai'
+  | 'manager_overrode_ai_warning'
+  | 'no_ai_signal';
+
+type InterviewAiQuestionEvaluation = {
+  questionId: string;
+  score: number;
+  verdict: InterviewAiAnswerVerdict;
+  feedback: string;
+  fixType: InterviewAiFixType;
+};
+
+type InterviewAiWeakAnswerItem = InterviewMissingItem & {
+  score: number;
+  verdict: InterviewAiAnswerVerdict;
+  feedback: string;
+  fixType: InterviewAiFixType;
+  isRequired: boolean;
+};
+
+type InterviewAiReviewSnapshot = {
+  overallScore: number;
+  overallVerdict: InterviewAiOverallVerdict;
+  questionEvaluations: InterviewAiQuestionEvaluation[];
+  recommendations: string[];
+  weakAnswerMap: InterviewAiWeakAnswerItem[];
+};
+
+type InterviewReviewDecisionMemoryEntry = {
+  id: string;
+  action: 'approve' | 'send_back' | 'revoke_approval';
+  actorId: string;
+  actorRole?: string;
+  createdAt: string;
+  aiOverallVerdict: InterviewAiOverallVerdict;
+  aiOverallScore: number | null;
+  aiWeakAnswerCount: number;
+  alignment: InterviewReviewAlignment;
+  reason?: string;
+  missingItems?: InterviewMissingItem[];
+};
+
+const parseAiReviewSnapshot = (
+  value: string | null | undefined
+): InterviewAiReviewSnapshot | null => parseJson<InterviewAiReviewSnapshot | null>(value, null);
+
+const parseReviewDecisionMemory = (
+  value: string | null | undefined
+): InterviewReviewDecisionMemoryEntry[] =>
+  parseJson<InterviewReviewDecisionMemoryEntry[]>(value, []);
+
+type InterviewAssignmentManageMode = 'update' | 'restart' | 'assign_again';
+
+const normalizeInterviewAiFixType = (
+  value: unknown,
+  meta?: { verdict?: InterviewAiAnswerVerdict; isRequired?: boolean; feedback?: string }
+): InterviewAiFixType => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  if ((INTERVIEW_AI_FIX_TYPES as readonly string[]).includes(normalized)) {
+    return normalized as InterviewAiFixType;
+  }
+
+  const feedback = String(meta?.feedback || '').toLowerCase();
+  if (meta?.verdict === 'unanswered') return 'complete_required_fields';
+  if (meta?.isRequired && (meta?.verdict === 'insufficient' || !feedback)) {
+    return 'complete_required_fields';
+  }
+  if (feedback.includes('evidence')) return 'add_evidence';
+  if (
+    feedback.includes('specific') ||
+    feedback.includes('detail') ||
+    feedback.includes('example') ||
+    feedback.includes('concrete')
+  ) {
+    return 'make_specific';
+  }
+  if (feedback.includes('expand') || feedback.includes('depth') || feedback.includes('broader')) {
+    return 'expand_answer';
+  }
+  if (
+    feedback.includes('incorrect') ||
+    feedback.includes('misunder') ||
+    feedback.includes('meaning') ||
+    feedback.includes('contradict')
+  ) {
+    return 'correct_meaning';
+  }
+  return 'clarify';
+};
+
+const buildInterviewAiWeakAnswerMap = (
+  questions: Array<{
+    id: string;
+    question_text?: string;
+    is_required?: boolean;
+  }>,
+  questionEvaluations: InterviewAiQuestionEvaluation[]
+): InterviewAiWeakAnswerItem[] => {
+  const questionMap = new Map<string, { question_text?: string; is_required?: boolean }>();
+  for (const question of questions) {
+    questionMap.set(String(question.id), question);
+  }
+
+  return questionEvaluations
+    .filter((item) => item.verdict !== 'sufficient')
+    .map((item) => {
+      const question = questionMap.get(item.questionId);
+      const label = String(question?.question_text || 'Question')
+        .trim()
+        .slice(0, 160);
+      return {
+        key: `ai_${item.questionId}`,
+        label,
+        questionId: item.questionId,
+        score: item.score,
+        verdict: item.verdict,
+        feedback: item.feedback,
+        fixType: item.fixType,
+        isRequired: Boolean(question?.is_required),
+      };
+    })
+    .sort((a, b) => {
+      if (a.isRequired !== b.isRequired) return a.isRequired ? -1 : 1;
+      if (a.score !== b.score) return a.score - b.score;
+      return a.label.localeCompare(b.label);
+    });
+};
+
+const buildInterviewAiReviewSnapshot = (
+  raw: {
+    overallScore: number;
+    overallVerdict: InterviewAiOverallVerdict;
+    questionEvaluations: Array<{
+      questionId: string;
+      score: number;
+      verdict: InterviewAiAnswerVerdict;
+      feedback: string;
+      fixType?: InterviewAiFixType;
+    }>;
+    recommendations: string[];
+  },
+  questions: Array<{
+    id: string;
+    question_text?: string;
+    is_required?: boolean;
+  }>
+): InterviewAiReviewSnapshot => {
+  const questionMeta = new Map<string, { is_required?: boolean }>();
+  for (const question of questions) {
+    questionMeta.set(String(question.id), { is_required: question.is_required });
+  }
+
+  const questionEvaluations: InterviewAiQuestionEvaluation[] = (raw.questionEvaluations || []).map(
+    (item) => ({
+      questionId: String(item.questionId),
+      score: Number(item.score || 1),
+      verdict: item.verdict,
+      feedback: String(item.feedback || '').trim(),
+      fixType: normalizeInterviewAiFixType(item.fixType, {
+        verdict: item.verdict,
+        isRequired: Boolean(questionMeta.get(String(item.questionId))?.is_required),
+        feedback: item.feedback,
+      }),
+    })
+  );
+
+  return {
+    overallScore: Number(raw.overallScore || 0),
+    overallVerdict: raw.overallVerdict,
+    questionEvaluations,
+    recommendations: Array.isArray(raw.recommendations)
+      ? raw.recommendations.map((item) => String(item || '').trim()).filter(Boolean)
+      : [],
+    weakAnswerMap: buildInterviewAiWeakAnswerMap(questions, questionEvaluations),
+  };
+};
+
+const resolveInterviewReviewAlignment = (
+  action: 'approve' | 'send_back' | 'revoke_approval',
+  aiReview: InterviewAiReviewSnapshot | null
+): InterviewReviewAlignment => {
+  const verdict = aiReview?.overallVerdict;
+  if (!verdict || verdict === 'empty') return 'no_ai_signal';
+  if (action === 'approve') {
+    return verdict === 'ready_for_approval' ? 'aligned' : 'manager_overrode_ai_warning';
+  }
+  return verdict === 'ready_for_approval' ? 'manager_stricter_than_ai' : 'aligned';
+};
+
+const appendInterviewReviewDecisionMemory = (params: {
+  existing: InterviewReviewDecisionMemoryEntry[];
+  action: 'approve' | 'send_back' | 'revoke_approval';
+  actorId: string;
+  actorRole?: string;
+  aiReview: InterviewAiReviewSnapshot | null;
+  reason?: string;
+  missingItems?: InterviewMissingItem[];
+  createdAt: string;
+}): InterviewReviewDecisionMemoryEntry[] => {
+  const entry: InterviewReviewDecisionMemoryEntry = {
+    id: `irdm_${uuidv4()}`,
+    action: params.action,
+    actorId: params.actorId,
+    actorRole: params.actorRole,
+    createdAt: params.createdAt,
+    aiOverallVerdict: params.aiReview?.overallVerdict || 'empty',
+    aiOverallScore:
+      typeof params.aiReview?.overallScore === 'number' ? params.aiReview.overallScore : null,
+    aiWeakAnswerCount: params.aiReview?.weakAnswerMap?.length || 0,
+    alignment: resolveInterviewReviewAlignment(params.action, params.aiReview),
+    reason: params.reason || undefined,
+    missingItems:
+      params.missingItems && params.missingItems.length > 0 ? params.missingItems : undefined,
+  };
+
+  return [...(params.existing || []), entry].slice(-25);
+};
 
 const requireUser = (req: AuthenticatedRequest) => {
   const user = req.user;
@@ -309,6 +554,86 @@ async function ensureInterviewSessionV6Columns(): Promise<void> {
   }
 }
 
+async function ensureInterviewAssignmentAiReviewColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_assignments');
+  if (!cols.has('ai_review_snapshot_json')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_assignments ADD COLUMN ai_review_snapshot_json TEXT`
+    );
+  }
+  if (!cols.has('ai_reviewed_at')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_assignments ADD COLUMN ai_reviewed_at TIMESTAMP`
+    );
+  }
+  if (!cols.has('review_decision_memory_json')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_assignments ADD COLUMN review_decision_memory_json TEXT`
+    );
+  }
+}
+
+async function ensureInterviewAssignmentManagementSchema(): Promise<void> {
+  await ensureInterviewAssignmentAiReviewColumns();
+  const cols = await getTableColumns('interview_assignments');
+  if (!cols.has('is_active')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_assignments ADD COLUMN is_active INTEGER DEFAULT 1`
+    );
+  }
+
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_assignment_events (
+      id TEXT PRIMARY KEY,
+      assignment_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      actor_id TEXT,
+      event_type TEXT NOT NULL,
+      reason TEXT,
+      payload_json TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_assignment
+     ON interview_assignment_events(assignment_id, created_at DESC)`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_org
+     ON interview_assignment_events(organization_id, created_at DESC)`
+  );
+}
+
+async function logInterviewAssignmentEvent(params: {
+  assignmentId: string;
+  organizationId: string;
+  actorId?: string;
+  eventType: string;
+  reason?: string;
+  payload?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await ensureInterviewAssignmentManagementSchema();
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_assignment_events
+       (id, assignment_id, organization_id, actor_id, event_type, reason, payload_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.assignmentId,
+        params.organizationId,
+        params.actorId || null,
+        params.eventType,
+        params.reason || null,
+        params.payload ? JSON.stringify(params.payload) : null,
+        new Date().toISOString(),
+      ]
+    );
+  } catch (error) {
+    logger.warn('[InterviewController] Failed to log interview assignment event', error);
+  }
+}
+
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
@@ -339,6 +664,10 @@ async function ensureInterviewTemplateV6Columns(): Promise<void> {
     {
       name: 'source_template_id',
       sql: `ALTER TABLE interview_library_templates ADD COLUMN source_template_id TEXT`,
+    },
+    {
+      name: 'language',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN language VARCHAR(5) DEFAULT 'en'`,
     },
   ];
 
@@ -549,6 +878,10 @@ const buildNoteResponse = (row: any) => {
 
 const buildEvidenceResponse = (row: any) => {
   if (!row) return null;
+  const ingestToKnowledge =
+    typeof row.ingest_to_knowledge === 'boolean'
+      ? row.ingest_to_knowledge
+      : Number(row.ingest_to_knowledge || 0) !== 0;
   return {
     id: row.id,
     sessionId: row.session_id,
@@ -565,7 +898,7 @@ const buildEvidenceResponse = (row: any) => {
     fileType: row.file_type,
     url: row.url,
     transcriptText: row.transcript_text || '',
-    ingestToKnowledge: row.ingest_to_knowledge !== 0,
+    ingestToKnowledge,
     knowledgeDocumentId: row.knowledge_document_id || undefined,
     uploadedBy: row.uploaded_by,
     createdAt: row.created_at,
@@ -644,7 +977,7 @@ async function normalizeAnswerEvidence(
       `INSERT INTO interview_evidence
        (id, session_id, organization_id, question_id, category, evidence_type, evidence_role,
         title, transcript_text, ingest_to_knowledge, uploaded_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         question.session_id,
@@ -655,6 +988,7 @@ async function normalizeAnswerEvidence(
         mapping.evidenceRole,
         `${mapping.titlePrefix} – Q ${questionId.slice(0, 8)}`,
         mapping.evidenceType === 'text' ? null : content,
+        true,
         userId,
         now,
       ]
@@ -737,6 +1071,7 @@ const buildTemplateResponse = (row: any) => {
     createdBy: row.created_by || undefined,
     updatedAt: row.updated_at || row.created_at,
     sourceTemplateId: row.source_template_id || undefined,
+    language: row.language || 'en',
     createdAt: row.created_at,
   };
 };
@@ -926,7 +1261,7 @@ async function createSessionFromTemplate(params: {
 // ASSIGNMENTS HELPERS
 // ==========================================
 
-const LOCKED_SESSION_STATUSES = ['submitted', 'completed'] as const;
+const LOCKED_SESSION_STATUSES = ['completed'] as const;
 
 const calcCompletenessRatio = (answered: number, total: number): number => {
   if (!total || total <= 0) return 0;
@@ -936,6 +1271,12 @@ const calcCompletenessRatio = (answered: number, total: number): number => {
 const isLockedSessionStatus = (status?: string): boolean => {
   const s = String(status || '').toLowerCase();
   return (LOCKED_SESSION_STATUSES as unknown as string[]).includes(s);
+};
+
+const normalizeAssignmentStatusForClient = (status?: string): string => {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'sent_back') return 'in_progress';
+  return normalized;
 };
 
 async function assertSessionEditable(sessionId: string, organizationId: string): Promise<any> {
@@ -1218,6 +1559,7 @@ export async function loadAcceptedInterviewSessionsForManager(
     totalQuestions: number;
   }>
 > {
+  await ensureInterviewAssignmentManagementSchema();
   const rows = await queryHelpers.queryAll(
     `SELECT
        s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
@@ -1225,11 +1567,12 @@ export async function loadAcceptedInterviewSessionsForManager(
        t.name as template_name, t.category as template_category,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
      FROM interview_sessions s
-     INNER JOIN interview_assignments a
-       ON a.session_id = s.id
-       AND a.organization_id = ?
-       AND a.created_by = ?
-       AND a.status IN ('approved', 'completed')
+      INNER JOIN interview_assignments a
+      ON a.session_id = s.id
+      AND a.organization_id = ?
+      AND a.created_by = ?
+      AND COALESCE(a.is_active, 1) = 1
+      AND a.status IN ('approved', 'completed')
      LEFT JOIN projects p ON p.id = s.project_id
      LEFT JOIN interview_library_templates t ON t.id = s.template_id
      LEFT JOIN users u ON u.id = s.owner_id
@@ -1258,6 +1601,251 @@ export async function loadAcceptedInterviewSessionsForManager(
   }));
 }
 
+export async function loadManagedInterviewSessionsForManager(
+  organizationId: string,
+  userId: string,
+  options?: { elevated?: boolean; scope?: InterviewManagerScope }
+): Promise<
+  Array<{
+    id: string;
+    organizationId: string;
+    projectId?: string;
+    name: string;
+    ownerId: string;
+    status: string;
+    sessionRuntimeStatus?: string;
+    assignmentId?: string;
+    assignmentStatus?: string;
+    assignmentPriority?: string;
+    assignmentCreatedBy?: string;
+    totalQuestions: number;
+    answeredQuestions: number;
+    startedAt: string;
+    completedAt?: string;
+    lastActivityAt?: string;
+    templateId?: string;
+    templateName?: string;
+    templateCategory?: string;
+    respondentId?: string;
+    respondentName?: string;
+    assigneeId?: string;
+    assigneeName?: string;
+    assigneeEmail?: string;
+    dueAt?: string;
+    submittedAt?: string;
+    sentBackAt?: string;
+    sentBackReason?: string;
+  }>
+> {
+  await ensureInterviewAssignmentManagementSchema();
+  const scope =
+    options?.scope ||
+    (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: userId });
+  const scopeClause = buildSessionManagerScopeClause(scope, {
+    assignmentAlias: 'a',
+    sessionProjectColumn: 's.project_id',
+  });
+  const params: unknown[] = [organizationId, ...scopeClause.params, organizationId, organizationId];
+
+  const rows = await queryHelpers.queryAll(
+    `SELECT
+       s.id,
+       COALESCE(s.organization_id, a.organization_id) as organization_id,
+       s.project_id,
+       s.name,
+       s.owner_id,
+       s.status as session_runtime_status,
+       s.template_id,
+       s.started_at,
+       s.completed_at,
+       s.last_activity_at,
+       s.answered_questions,
+       s.total_questions,
+       a.id as assignment_id,
+       a.status as assignment_status,
+       a.priority as assignment_priority,
+       a.created_by as assignment_created_by,
+       a.due_at,
+       a.submitted_at,
+       a.sent_back_at,
+       a.sent_back_reason,
+       t.name as template_name,
+       t.category as template_category,
+       COALESCE(owner_u.first_name, '') || ' ' || COALESCE(owner_u.last_name, '') as respondent_name,
+       a.assignee_user_id as assignee_id,
+       COALESCE(assignee_u.first_name, '') || ' ' || COALESCE(assignee_u.last_name, '') as assignee_name,
+       assignee_u.email as assignee_email
+     FROM interview_assignments a
+     INNER JOIN interview_sessions s ON s.id = a.session_id
+     LEFT JOIN projects p ON p.id = s.project_id
+     LEFT JOIN interview_library_templates t ON t.id = s.template_id
+     LEFT JOIN users owner_u ON owner_u.id = s.owner_id
+     LEFT JOIN users assignee_u ON assignee_u.id = a.assignee_user_id
+     WHERE a.organization_id = ?
+       ${scopeClause.clause}
+       AND COALESCE(a.is_active, 1) = 1
+       AND a.status IN ('in_progress', 'submitted', 'sent_back', 'approved', 'completed')
+       AND (
+         p.organization_id = ?
+         OR (s.project_id IS NULL AND s.organization_id = ?)
+       )
+     ORDER BY
+       CASE a.status
+         WHEN 'submitted' THEN 0
+         WHEN 'in_progress' THEN 1
+         WHEN 'sent_back' THEN 1
+         WHEN 'approved' THEN 2
+         WHEN 'completed' THEN 3
+         ELSE 5
+       END,
+       COALESCE(a.submitted_at, a.sent_back_at, s.last_activity_at, s.started_at) DESC`,
+    params
+  );
+
+  return (rows || []).map((row: any) => ({
+    id: row.id,
+    organizationId: row.organization_id,
+    projectId: row.project_id || undefined,
+    name: row.name || 'Discovery Interview',
+    ownerId: row.owner_id,
+    status: normalizeAssignmentStatusForClient(row.assignment_status || 'in_progress'),
+    sessionRuntimeStatus: row.session_runtime_status || undefined,
+    assignmentId: row.assignment_id || undefined,
+    assignmentStatus: normalizeAssignmentStatusForClient(row.assignment_status || undefined),
+    assignmentPriority: row.assignment_priority || undefined,
+    assignmentCreatedBy: row.assignment_created_by || undefined,
+    totalQuestions: row.total_questions || 0,
+    answeredQuestions: row.answered_questions || 0,
+    startedAt: row.started_at,
+    completedAt: row.completed_at || undefined,
+    lastActivityAt: row.last_activity_at || undefined,
+    templateId: row.template_id || undefined,
+    templateName: row.template_name || undefined,
+    templateCategory: row.template_category || undefined,
+    respondentId: row.owner_id || undefined,
+    respondentName: String(row.respondent_name || '').trim() || undefined,
+    assigneeId: row.assignee_id || undefined,
+    assigneeName: String(row.assignee_name || '').trim() || undefined,
+    assigneeEmail: row.assignee_email || undefined,
+    dueAt: row.due_at || undefined,
+    submittedAt: row.submitted_at || undefined,
+    sentBackAt: row.sent_back_at || undefined,
+    sentBackReason: row.sent_back_reason || undefined,
+  }));
+}
+
+async function evaluateInterviewSessionAnswers(params: {
+  session: { id?: string; name?: string };
+  questions: any[];
+  language?: unknown;
+}): Promise<InterviewAiReviewSnapshot> {
+  const { session, questions } = params;
+  if (!questions || questions.length === 0) {
+    return {
+      overallScore: 0,
+      overallVerdict: 'empty',
+      questionEvaluations: [],
+      recommendations: [],
+      weakAnswerMap: [],
+    };
+  }
+
+  const lang = params.language === 'pl' ? 'Polish' : 'English';
+  const EvalSchema = z.object({
+    questionEvaluations: z.array(
+      z.object({
+        questionId: z.string(),
+        score: z.number().min(1).max(5),
+        verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
+        feedback: z.string(),
+        fixType: z
+          .enum([
+            'clarify',
+            'add_evidence',
+            'expand_answer',
+            'make_specific',
+            'complete_required_fields',
+            'correct_meaning',
+          ])
+          .optional(),
+      })
+    ),
+    overallScore: z.number().min(1).max(5),
+    overallVerdict: z.enum(['ready_for_approval', 'needs_improvement', 'insufficient']),
+    recommendations: z.array(z.string()),
+  });
+
+  const questionsForPrompt = (questions as any[])
+    .map((q, i) => {
+      const answered = q.status === 'answered' && q.answer_text?.trim();
+      return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
+Question: ${q.question_text}
+${q.expected_answer_shape ? `Expected format: ${q.expected_answer_shape}` : ''}
+${q.description ? `Helper: ${q.description}` : ''}
+Status: ${q.status || 'not_started'}
+Answer: ${answered ? q.answer_text.trim() : '(no answer)'}
+${q.context_note ? `Context note: ${q.context_note}` : ''}`;
+    })
+    .join('\n\n');
+
+  const systemPrompt = `You are a quality reviewer for interview/survey answers. Evaluate each answer for:
+1. Completeness - does it address the full question?
+2. Specificity - does it give concrete details, examples, or data rather than vague generalities?
+3. Actionability - could a consultant use this answer to make decisions or recommendations?
+4. Relevance - does it actually answer what was asked?
+
+Score each answer 1-5:
+- 5: Excellent - thorough, specific, actionable
+- 4: Good - adequate with minor gaps
+- 3: Acceptable - covers basics but lacks depth
+- 2: Needs improvement - too vague, incomplete, or off-topic
+- 1: Insufficient - essentially empty or irrelevant
+
+For unanswered questions, use verdict "unanswered" and score 1.
+
+For each weak answer choose the most useful fixType:
+- clarify
+- add_evidence
+- expand_answer
+- make_specific
+- complete_required_fields
+- correct_meaning
+
+Overall verdict:
+- "ready_for_approval": overallScore >= 3.5 and no required questions are "insufficient"
+- "needs_improvement": overallScore >= 2.5 or some answers need work
+- "insufficient": overallScore < 2.5 or many required questions unanswered
+
+Provide 2-5 actionable recommendations for improving the weakest answers.
+Write all feedback and recommendations in ${lang}.
+Return valid JSON matching the schema.`;
+
+  const userPrompt = `Session: ${session?.name || 'Interview session'}
+Total questions: ${questions.length}
+Answered: ${(questions as any[]).filter((q) => q.status === 'answered').length}
+
+${questionsForPrompt}`;
+
+  const result = await llmService.call({
+    type: 'structured',
+    modelConfig: { id: 'standard' },
+    systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+    schema: EvalSchema,
+    maxTokens: 2000,
+    temperature: 0.2,
+    cache: false,
+  });
+
+  const evaluation = (result as any).object || {
+    questionEvaluations: [],
+    overallScore: 1,
+    overallVerdict: 'insufficient',
+    recommendations: [],
+  };
+
+  return buildInterviewAiReviewSnapshot(evaluation, questions);
+}
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -1283,6 +1871,19 @@ export const InterviewController = {
   getAcceptedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const sessions = await loadAcceptedInterviewSessionsForManager(user.organizationId, user.id);
+    res.json(sessions);
+  }),
+
+  getManagedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const sessions = await loadManagedInterviewSessionsForManager(user.organizationId, user.id, {
+      scope,
+    });
     res.json(sessions);
   }),
 
@@ -1416,21 +2017,16 @@ export const InterviewController = {
       updates.push('name = ?');
       params.push(name);
     }
+    let normalizedStatus = '';
     if (status) {
       // DB constraint allows: active | completed | paused
       // API may send: in_progress (alias for active)
-      const normalized =
+      normalizedStatus =
         String(status).toLowerCase() === 'in_progress' ? 'active' : String(status).toLowerCase();
       const allowed = new Set(['active', 'completed', 'paused']);
-      if (!allowed.has(normalized)) {
+      if (!allowed.has(normalizedStatus)) {
         res.status(400).json({ error: 'Invalid status' });
         return;
-      }
-      updates.push('status = ?');
-      params.push(normalized);
-      if (normalized === 'completed') {
-        updates.push('completed_at = ?');
-        params.push(new Date().toISOString());
       }
     }
     if (summaryFacts) {
@@ -1450,6 +2046,15 @@ export const InterviewController = {
       params.push(JSON.stringify(summaryPainPoints));
     }
 
+    if (normalizedStatus) {
+      updates.push('status = ?');
+      params.push(normalizedStatus);
+      if (normalizedStatus === 'completed') {
+        updates.push('completed_at = ?');
+        params.push(new Date().toISOString());
+      }
+    }
+
     if (updates.length === 0) {
       res.status(400).json({ error: 'No updates provided' });
       return;
@@ -1461,7 +2066,7 @@ export const InterviewController = {
 
     // Verify session belongs to user's organization (project-scoped OR org-scoped)
     const sessionCheck = await queryHelpers.queryOne(
-      `SELECT s.id
+      `SELECT s.id, s.assignment_id, s.status
        FROM interview_sessions s
        LEFT JOIN projects p ON p.id = s.project_id
        WHERE s.id = ?
@@ -1473,6 +2078,14 @@ export const InterviewController = {
     );
     if (!sessionCheck) {
       res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    if (normalizedStatus && (sessionCheck as any)?.assignment_id) {
+      res.status(409).json({
+        error:
+          'Assignment-backed sessions must use assignment workflow actions instead of direct status changes',
+      });
       return;
     }
 
@@ -1493,16 +2106,17 @@ export const InterviewController = {
 
   getMyAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const { status, includeCompleted } = req.query as any;
 
     const params: unknown[] = [user.organizationId, user.id, user.id];
-    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR m.user_id = ?)`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND (a.assignee_user_id = ? OR m.user_id = ?)`;
 
     if (status) {
       where += ` AND a.status = ?`;
       params.push(status);
     } else if (!includeCompleted) {
-      where += ` AND a.status != 'completed'`;
+      where += ` AND a.status NOT IN ('approved', 'completed')`;
     }
 
     let rows: any[] = [];
@@ -1522,7 +2136,7 @@ export const InterviewController = {
          LEFT JOIN interview_sessions s ON s.id = a.session_id
          ${where}
          ORDER BY
-           CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
+           CASE a.status WHEN 'assigned' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'sent_back' THEN 1 WHEN 'submitted' THEN 2 ELSE 3 END,
            COALESCE(a.due_at, '9999-12-31') ASC,
            a.created_at DESC`,
         params
@@ -1530,12 +2144,12 @@ export const InterviewController = {
     } catch {
       // Back-compat: environments without `interview_assignment_members`.
       const fallbackParams: unknown[] = [user.organizationId, user.id];
-      let fallbackWhere = `WHERE a.organization_id = ? AND a.assignee_user_id = ?`;
+      let fallbackWhere = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND a.assignee_user_id = ?`;
       if (status) {
         fallbackWhere += ` AND a.status = ?`;
         fallbackParams.push(status);
       } else if (!includeCompleted) {
-        fallbackWhere += ` AND a.status != 'completed'`;
+        fallbackWhere += ` AND a.status NOT IN ('approved', 'completed')`;
       }
       rows = await queryHelpers.queryAll(
         `SELECT
@@ -1551,7 +2165,7 @@ export const InterviewController = {
          LEFT JOIN interview_sessions s ON s.id = a.session_id
          ${fallbackWhere}
          ORDER BY
-           CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
+           CASE a.status WHEN 'assigned' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'sent_back' THEN 1 WHEN 'submitted' THEN 2 ELSE 3 END,
            COALESCE(a.due_at, '9999-12-31') ASC,
            a.created_at DESC`,
         fallbackParams
@@ -1565,7 +2179,7 @@ export const InterviewController = {
       return {
         id: r.id,
         organizationId: r.organization_id,
-        status: r.status,
+        status: normalizeAssignmentStatusForClient(r.status),
         projectId: r.project_id || null,
         sessionId: r.session_id || null,
         dueAt: r.due_at || null,
@@ -1574,6 +2188,9 @@ export const InterviewController = {
         sentBackAt: r.sent_back_at || null,
         sentBackReason: r.sent_back_reason || null,
         missingItems: parseMissingItems(r.missing_items_json),
+        aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+        aiReviewedAt: r.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
         processRef: r.process_ref || null,
         template: {
           id: r.template_id,
@@ -1616,13 +2233,16 @@ export const InterviewController = {
     } = req.body || {};
 
     // Support both singular and plural assignee fields
-    const userIds: string[] = assigneeUserIds
+    const requestedUserIds: string[] = assigneeUserIds
       ? Array.isArray(assigneeUserIds)
         ? assigneeUserIds
         : [assigneeUserIds]
       : assigneeUserId
         ? [assigneeUserId]
         : [];
+    const userIds = Array.from(
+      new Set(requestedUserIds.map((id) => String(id || '').trim()).filter(Boolean))
+    );
 
     if (userIds.length === 0 || !templateId) {
       res.status(400).json({ error: 'assigneeUserId(s) and templateId are required' });
@@ -1722,22 +2342,51 @@ export const InterviewController = {
     const { default: interviewAssignmentService } =
       await import('../services/InterviewAssignmentService.js');
 
-    const assignment = await interviewAssignmentService.create({
+    const createPayloadBase = {
       organizationId: admin.organizationId,
       projectId: projectId || undefined,
       templateId,
       templateVersion: (template as any).version || 1,
-      assigneeUserIds: userIds,
-      teamLeadId: teamLeadId || undefined,
-      dueAt: dueAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 7 days
+      dueAt: dueAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       priority: priority || 'medium',
-      escalateTo: escalateTo || admin.id, // Default to creator
+      escalateTo: escalateTo || admin.id,
       notes: notes || undefined,
       processRef: processRef || undefined,
       createdBy: admin.id,
+    };
+
+    // Multi-assign is modeled as separate assignments per assignee so each person
+    // gets an independent session and manager review flow.
+    if (userIds.length > 1) {
+      const createdAssignments = [] as any[];
+      for (const userId of userIds) {
+        const created = await interviewAssignmentService.create({
+          ...createPayloadBase,
+          assigneeUserIds: [userId],
+        });
+        const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
+          created.id
+        );
+        if (assignmentWithDetails) {
+          createdAssignments.push(assignmentWithDetails);
+        }
+      }
+      const primaryAssignment = createdAssignments[0] || null;
+      res.status(201).json({
+        ...(primaryAssignment || {}),
+        createdAssignments,
+        createdCount: createdAssignments.length,
+        splitAssignments: true,
+      });
+      return;
+    }
+
+    const assignment = await interviewAssignmentService.create({
+      ...createPayloadBase,
+      assigneeUserIds: userIds,
+      teamLeadId: teamLeadId || undefined,
     });
 
-    // Return with full details
     const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
       assignment.id
     );
@@ -1746,10 +2395,11 @@ export const InterviewController = {
 
   listAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const { status, assigneeUserId, createdBy, projectId, overdue } = req.query as any;
 
     const params: unknown[] = [admin.organizationId];
-    let where = `WHERE a.organization_id = ?`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1`;
     if (status) {
       where += ` AND a.status = ?`;
       params.push(status);
@@ -1791,6 +2441,9 @@ export const InterviewController = {
       const total = Number(r.total_questions || 0);
       return {
         ...r,
+        aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+        aiReviewedAt: r.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
         template: {
           id: r.template_id,
           name: r.template_name || '',
@@ -1843,7 +2496,7 @@ export const InterviewController = {
       res.status(404).json({ error: 'Assignment not found' });
       return;
     }
-    const assignmentStatus = String((assignment as any).status || '');
+    const assignmentStatus = String((assignment as any).status || '').toLowerCase();
     if (assignmentStatus === 'approved' || assignmentStatus === 'completed') {
       res.status(409).json({ error: 'Assignment already completed' });
       return;
@@ -1907,6 +2560,7 @@ export const InterviewController = {
   submitAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
+    await ensureInterviewAssignmentAiReviewColumns();
 
     // Team submission is allowed only for the primary assignee OR team lead (member role=lead).
     let assignment: any = null;
@@ -1916,16 +2570,32 @@ export const InterviewController = {
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m
            ON m.assignment_id = a.id AND m.user_id = ? AND m.role = 'lead'
+         LEFT JOIN interview_sessions s
+           ON s.id = a.session_id
          WHERE a.id = ?
            AND a.organization_id = ?
-           AND (a.assignee_user_id = ? OR m.id IS NOT NULL)`,
-        [user.id, id, user.organizationId, user.id]
+           AND (
+             a.assignee_user_id = ?
+             OR m.id IS NOT NULL
+             OR a.created_by = ?
+             OR s.owner_id = ?
+           )`,
+        [user.id, id, user.organizationId, user.id, user.id, user.id]
       );
     } catch {
       // Back-compat: environments without `interview_assignment_members`.
       assignment = await queryHelpers.queryOne(
-        `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
-        [id, user.organizationId, user.id]
+        `SELECT a.*
+         FROM interview_assignments a
+         LEFT JOIN interview_sessions s ON s.id = a.session_id
+         WHERE a.id = ?
+           AND a.organization_id = ?
+           AND (
+             a.assignee_user_id = ?
+             OR a.created_by = ?
+             OR s.owner_id = ?
+           )`,
+        [id, user.organizationId, user.id, user.id, user.id]
       );
     }
     if (!assignment) {
@@ -1964,26 +2634,40 @@ export const InterviewController = {
       return;
     }
 
-    const answered = Number((sessionRow as any).answered_questions || 0);
-    const total = Number((sessionRow as any).total_questions || 0);
+    // Recalculate progress from actual question data to avoid stale counters
+    const sessionId = (assignment as any).session_id;
+    await InterviewController.updateSessionProgress(sessionId);
+    const freshSession = await queryHelpers.queryOne(
+      `SELECT answered_questions, total_questions FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    const answered = Number((freshSession as any)?.answered_questions || 0);
+    const total = Number((freshSession as any)?.total_questions || 0);
     const completenessRatio = calcCompletenessRatio(answered, total);
     const completenessPercent = Math.round(completenessRatio * 100);
     const now = new Date().toISOString();
 
-    // Canon: submit ALWAYS sends to review.
-    // Session status remains within DB constraint (active|completed|paused); the "lock" is enforced by assignment status.
     const newAssignmentStatus = 'submitted';
 
-    await queryHelpers.queryRun(
-      `UPDATE interview_assignments
-       SET status = ?, submitted_at = ?, updated_at = ?
-       WHERE id = ?`,
-      [newAssignmentStatus, now, now, id]
-    );
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, missing_items_json = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
+         WHERE id = ?`,
+        [newAssignmentStatus, now, now, id]
+      );
+    } catch {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
+         WHERE id = ?`,
+        [newAssignmentStatus, now, now, id]
+      );
+    }
 
     await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET updated_at = ?, last_activity_at = ? WHERE id = ?`,
-      [now, now, (assignment as any).session_id]
+      `UPDATE interview_sessions SET status = 'submitted', updated_at = ?, last_activity_at = ? WHERE id = ?`,
+      [now, now, sessionId]
     );
 
     if ((assignment as any).task_id) {
@@ -1991,6 +2675,31 @@ export const InterviewController = {
         `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
         ['in_progress', completenessPercent, now, (assignment as any).task_id]
       );
+    }
+
+    let aiReview: InterviewAiReviewSnapshot | null = null;
+    try {
+      const questions = await queryHelpers.queryAll(
+        `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
+                status, answer_text, context_note, confidence_score
+         FROM interview_questions
+         WHERE session_id = ? AND organization_id = ?
+         ORDER BY sort_order`,
+        [sessionId, user.organizationId]
+      );
+      aiReview = await evaluateInterviewSessionAnswers({
+        session: { id: sessionId, name: (sessionRow as any)?.name || 'Interview session' },
+        questions: questions as any[],
+        language: req.body?.language,
+      });
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
+         WHERE id = ?`,
+        [JSON.stringify(aiReview), now, now, id]
+      );
+    } catch (error) {
+      logger.warn('[InterviewController] Failed to generate AI review on submit', error);
     }
 
     const updatedAssignment = await queryHelpers.queryOne(
@@ -2024,10 +2733,20 @@ export const InterviewController = {
     }
 
     res.json({
-      assignment: updatedAssignment,
+      assignment: {
+        ...(updatedAssignment as any),
+        aiReview:
+          aiReview || parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+        aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(
+          (updatedAssignment as any)?.review_decision_memory_json
+        ),
+      },
       session: buildSessionResponse(updatedSession),
       completenessPercent,
       entersContext: false,
+      aiReview:
+        aiReview || parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
     });
   }),
 
@@ -2035,6 +2754,7 @@ export const InterviewController = {
     const admin = requireUser(req);
     const { id } = req.params;
     const { reason, missingItems } = req.body || {};
+    await ensureInterviewAssignmentAiReviewColumns();
 
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
     if (!normalizedReason) {
@@ -2125,20 +2845,32 @@ export const InterviewController = {
 
     const now = new Date().toISOString();
     const missingItemsJson = JSON.stringify(normalizedMissingItems);
+    const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
+    const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
+      existing: parseReviewDecisionMemory((assignment as any)?.review_decision_memory_json),
+      action: 'send_back',
+      actorId: admin.id,
+      actorRole: admin.role,
+      aiReview,
+      reason: normalizedReason,
+      missingItems: normalizedMissingItems,
+      createdAt: now,
+    });
+    const reviewDecisionMemoryJson = JSON.stringify(reviewDecisionMemory);
     try {
       await queryHelpers.queryRun(
         `UPDATE interview_assignments
-         SET status = 'sent_back', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, updated_at = ?
+         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, review_decision_memory_json = ?, updated_at = ?
          WHERE id = ?`,
-        [now, normalizedReason, missingItemsJson, now, id]
+        [now, normalizedReason, missingItemsJson, reviewDecisionMemoryJson, now, id]
       );
     } catch (error) {
       // Back-compat for environments without missing_items_json column.
       await queryHelpers.queryRun(
         `UPDATE interview_assignments
-         SET status = 'sent_back', sent_back_at = ?, sent_back_reason = ?, updated_at = ?
+         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, review_decision_memory_json = ?, updated_at = ?
          WHERE id = ?`,
-        [now, normalizedReason, now, id]
+        [now, normalizedReason, reviewDecisionMemoryJson, now, id]
       );
       logger.warn(
         '[InterviewController] sendBackAssignment: missing_items_json column unavailable, using reason-only fallback'
@@ -2162,6 +2894,10 @@ export const InterviewController = {
     const updated = await queryHelpers.queryOne(
       `SELECT * FROM interview_assignments WHERE id = ?`,
       [id]
+    );
+    const updatedSession = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ?`,
+      [(assignment as any).session_id]
     );
 
     // Notify assignee(s) that interview was sent back (team-aware).
@@ -2200,13 +2936,31 @@ export const InterviewController = {
 
     res.json({
       ...updated,
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
       missingItems: parseMissingItems((updated as any)?.missing_items_json),
+      aiReview: parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json),
+      aiReviewedAt: (updated as any)?.ai_reviewed_at || null,
+      reviewDecisionMemory: parseReviewDecisionMemory(
+        (updated as any)?.review_decision_memory_json
+      ),
+      assignment: {
+        ...updated,
+        status: normalizeAssignmentStatusForClient((updated as any)?.status),
+        missingItems: parseMissingItems((updated as any)?.missing_items_json),
+        aiReview: parseAiReviewSnapshot((updated as any)?.ai_review_snapshot_json),
+        aiReviewedAt: (updated as any)?.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(
+          (updated as any)?.review_decision_memory_json
+        ),
+      },
+      session: buildSessionResponse(updatedSession),
     });
   }),
 
   approveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const reviewer = requireUser(req);
     const { id } = req.params;
+    await ensureInterviewAssignmentAiReviewColumns();
 
     const assignment = await queryHelpers.queryOne(
       `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
@@ -2260,11 +3014,20 @@ export const InterviewController = {
     }
 
     const now = new Date().toISOString();
+    const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
+    const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
+      existing: parseReviewDecisionMemory((assignment as any)?.review_decision_memory_json),
+      action: 'approve',
+      actorId: reviewer.id,
+      actorRole: reviewer.role,
+      aiReview,
+      createdAt: now,
+    });
     await queryHelpers.queryRun(
       `UPDATE interview_assignments
-       SET status = 'approved', updated_at = ?
+       SET status = 'approved', review_decision_memory_json = ?, updated_at = ?
        WHERE id = ?`,
-      [now, id]
+      [JSON.stringify(reviewDecisionMemory), now, id]
     );
     await queryHelpers.queryRun(
       `UPDATE interview_sessions SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?`,
@@ -2322,10 +3085,187 @@ export const InterviewController = {
     );
 
     res.json({
-      assignment: updatedAssignment,
+      assignment: {
+        ...(updatedAssignment as any),
+        aiReview: parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+        aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(
+          (updatedAssignment as any)?.review_decision_memory_json
+        ),
+      },
       session: buildSessionResponse(updatedSession),
       completenessPercent,
       entersContext: true,
+    });
+  }),
+
+  revokeApproval: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const reviewer = requireUser(req);
+    const { id } = req.params;
+    const { reason } = req.body || {};
+    await ensureInterviewAssignmentAiReviewColumns();
+
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!normalizedReason) {
+      res.status(400).json({ error: 'Revoke reason is required' });
+      return;
+    }
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, reviewer.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    const revokeGate = evaluateGatePolicy({
+      action: 'REVOKE_INTERVIEW_APPROVAL',
+      contextType: 'interview_assignment',
+      user: reviewer,
+      context: { assignment },
+    });
+    if (!revokeGate.allow) {
+      const gateError = revokeGate as {
+        allow: false;
+        error: string;
+        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
+      };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
+      return;
+    }
+
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [(assignment as any).session_id, reviewer.organizationId, reviewer.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
+    const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
+      existing: parseReviewDecisionMemory((assignment as any)?.review_decision_memory_json),
+      action: 'revoke_approval',
+      actorId: reviewer.id,
+      actorRole: reviewer.role,
+      aiReview,
+      reason: normalizedReason,
+      createdAt: now,
+    });
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = 'in_progress',
+             sent_back_at = ?,
+             sent_back_reason = ?,
+             missing_items_json = NULL,
+             review_decision_memory_json = ?,
+             updated_at = ?
+         WHERE id = ?`,
+        [now, normalizedReason, JSON.stringify(reviewDecisionMemory), now, id]
+      );
+    } catch (error) {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = 'in_progress',
+             sent_back_at = ?,
+             sent_back_reason = ?,
+             review_decision_memory_json = ?,
+             updated_at = ?
+         WHERE id = ?`,
+        [now, normalizedReason, JSON.stringify(reviewDecisionMemory), now, id]
+      );
+      logger.warn(
+        '[InterviewController] revokeApproval: missing_items_json column unavailable, using reason-only fallback'
+      );
+      logger.debug('[InterviewController] revokeApproval fallback details', error);
+    }
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions
+       SET status = 'active',
+           completed_at = NULL,
+           updated_at = ?,
+           last_activity_at = ?
+       WHERE id = ?`,
+      [now, now, (assignment as any).session_id]
+    );
+
+    if ((assignment as any).task_id) {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
+        ['in_progress', 75, now, (assignment as any).task_id]
+      );
+    }
+
+    try {
+      const recipients = new Set<string>();
+      if ((assignment as any).assignee_user_id) {
+        recipients.add(String((assignment as any).assignee_user_id));
+      }
+      try {
+        const memberRows = await queryHelpers.queryAll(
+          `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
+          [id]
+        );
+        (memberRows || []).forEach((row: any) => {
+          if (row?.user_id) recipients.add(String(row.user_id));
+        });
+      } catch {
+        // ignore - members table may not exist
+      }
+      for (const userId of recipients) {
+        await notificationService.send({
+          userId,
+          organizationId: reviewer.organizationId,
+          type: 'interview_sent_back',
+          title: 'Interview approval revoked',
+          body: normalizedReason,
+          entityType: 'interview_assignment',
+          entityId: id,
+          actionUrl: `/discovery?assignmentId=${id}`,
+          priority: 'high',
+          actorId: reviewer.id,
+        });
+      }
+    } catch (e) {
+      logger.warn(
+        '[InterviewController] Failed to send interview_approval_revoked notification',
+        e
+      );
+    }
+
+    const updatedAssignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    const updatedSession = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ?`,
+      [(assignment as any).session_id]
+    );
+
+    res.json({
+      assignment: {
+        ...(updatedAssignment as any),
+        status: normalizeAssignmentStatusForClient((updatedAssignment as any)?.status),
+        missingItems: parseMissingItems((updatedAssignment as any)?.missing_items_json),
+        aiReview: parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+        aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(
+          (updatedAssignment as any)?.review_decision_memory_json
+        ),
+      },
+      session: buildSessionResponse(updatedSession),
+      entersContext: false,
     });
   }),
 
@@ -2335,10 +3275,16 @@ export const InterviewController = {
 
   getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const { status, projectId } = req.query as any;
-
-    const params: unknown[] = [user.organizationId, user.id];
-    let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
+    const params: unknown[] = [user.organizationId, ...scopeClause.params];
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1${scopeClause.clause}`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -2376,7 +3322,7 @@ export const InterviewController = {
         id: r.id,
         organizationId: r.organization_id,
         projectId: r.project_id || null,
-        status: r.status,
+        status: normalizeAssignmentStatusForClient(r.status),
         sessionId: r.session_id || null,
         priority: r.priority || 'medium',
         dueAt: r.due_at || null,
@@ -2385,6 +3331,9 @@ export const InterviewController = {
         sentBackAt: r.sent_back_at || null,
         sentBackReason: r.sent_back_reason || null,
         missingItems: parseMissingItems(r.missing_items_json),
+        aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+        aiReviewedAt: r.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
         isTeamAssignment: r.is_team_assignment === 1,
         reminderCount: r.reminder_count || 0,
         escalationCount: r.escalation_count || 0,
@@ -2423,7 +3372,14 @@ export const InterviewController = {
 
   getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const now = new Date().toISOString();
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
 
     const rows = await queryHelpers.queryAll(
       `SELECT
@@ -2440,12 +3396,13 @@ export const InterviewController = {
        LEFT JOIN interview_sessions s ON s.id = a.session_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        WHERE a.organization_id = ?
-         AND a.created_by = ?
+         AND COALESCE(a.is_active, 1) = 1
+         ${scopeClause.clause}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
-         AND a.status NOT IN ('completed', 'submitted')
+         AND a.status NOT IN ('approved', 'completed', 'submitted')
        ORDER BY a.due_at ASC`,
-      [user.organizationId, user.id, now]
+      [user.organizationId, ...scopeClause.params, now]
     );
 
     const mapped = (rows || []).map((r: any) => {
@@ -2457,7 +3414,7 @@ export const InterviewController = {
         id: r.id,
         organizationId: r.organization_id,
         projectId: r.project_id || null,
-        status: r.status,
+        status: normalizeAssignmentStatusForClient(r.status),
         sessionId: r.session_id || null,
         priority: r.priority || 'medium',
         dueAt: r.due_at,
@@ -2487,7 +3444,16 @@ export const InterviewController = {
 
   getAssignmentCounts: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const now = new Date().toISOString();
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const countScopeClause = buildAssignmentManagerScopeClause(scope, {
+      assignmentAlias: 'interview_assignments',
+    });
 
     // My assignments count (including team memberships)
     let myResult: any = null;
@@ -2497,8 +3463,9 @@ export const InterviewController = {
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
          WHERE a.organization_id = ?
+           AND COALESCE(a.is_active, 1) = 1
            AND (a.assignee_user_id = ? OR m.user_id = ?)
-           AND a.status NOT IN ('completed')`,
+           AND a.status NOT IN ('approved', 'completed')`,
         [user.organizationId, user.id, user.id]
       );
     } catch {
@@ -2506,7 +3473,7 @@ export const InterviewController = {
       myResult = await queryHelpers.queryOne(
         `SELECT COUNT(*) as count
          FROM interview_assignments
-         WHERE organization_id = ? AND assignee_user_id = ? AND status NOT IN ('completed')`,
+         WHERE organization_id = ? AND COALESCE(is_active, 1) = 1 AND assignee_user_id = ? AND status NOT IN ('approved', 'completed')`,
         [user.organizationId, user.id]
       );
     }
@@ -2515,8 +3482,10 @@ export const InterviewController = {
     const managedResult = await queryHelpers.queryOne(
       `SELECT COUNT(*) as count
        FROM interview_assignments
-       WHERE organization_id = ? AND created_by = ?`,
-      [user.organizationId, user.id]
+       WHERE organization_id = ?
+         AND COALESCE(is_active, 1) = 1
+         ${countScopeClause.clause}`,
+      [user.organizationId, ...countScopeClause.params]
     );
 
     // Overdue count (managed only)
@@ -2524,11 +3493,12 @@ export const InterviewController = {
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
-         AND created_by = ?
+         AND COALESCE(is_active, 1) = 1
+         ${countScopeClause.clause}
          AND due_at IS NOT NULL
          AND due_at < ?
-         AND status NOT IN ('completed', 'submitted')`,
-      [user.organizationId, user.id, now]
+         AND status NOT IN ('approved', 'completed', 'submitted')`,
+      [user.organizationId, ...countScopeClause.params, now]
     );
 
     res.json({
@@ -2588,7 +3558,7 @@ export const InterviewController = {
       id: r.id,
       organizationId: r.organization_id,
       projectId: r.project_id || null,
-      status: r.status,
+      status: normalizeAssignmentStatusForClient(r.status),
       priority: r.priority || 'medium',
       dueAt: r.due_at || null,
       startedAt: r.started_at || null,
@@ -2596,6 +3566,9 @@ export const InterviewController = {
       sentBackAt: r.sent_back_at || null,
       sentBackReason: r.sent_back_reason || null,
       missingItems: parseMissingItems(r.missing_items_json),
+      aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
+      aiReviewedAt: r.ai_reviewed_at || null,
+      reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
       notes: r.notes || null,
       isTeamAssignment: r.is_team_assignment === 1,
       reminderSentAt: r.reminder_sent_at || null,
@@ -2707,6 +3680,393 @@ export const InterviewController = {
       [id]
     );
     res.json(updated);
+  }),
+
+  manageAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { assigneeUserId, templateId, dueAt, priority, notes, mode, reason } = req.body || {};
+
+    await ensureInterviewAssignmentManagementSchema();
+
+    const allowedPriorities = new Set(['low', 'medium', 'high', 'urgent']);
+    const allowedModes = new Set<InterviewAssignmentManageMode>([
+      'update',
+      'restart',
+      'assign_again',
+    ]);
+    if (mode !== undefined && !allowedModes.has(mode)) {
+      res.status(400).json({ error: 'Invalid mode. Must be update, restart, or assign_again.' });
+      return;
+    }
+    if (priority !== undefined && !allowedPriorities.has(String(priority))) {
+      res.status(400).json({ error: 'Invalid priority' });
+      return;
+    }
+    if (
+      dueAt !== undefined &&
+      dueAt !== null &&
+      (typeof dueAt !== 'string' || Number.isNaN(new Date(dueAt).getTime()))
+    ) {
+      res.status(400).json({ error: 'Invalid dueAt value' });
+      return;
+    }
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    if (Number((existing as any).is_active ?? 1) === 0) {
+      res.status(409).json({ error: 'Assignment has already been superseded' });
+      return;
+    }
+
+    const nextAssigneeUserId =
+      assigneeUserId !== undefined
+        ? String(assigneeUserId || '').trim()
+        : (existing as any).assignee_user_id;
+    const nextTemplateId =
+      templateId !== undefined ? String(templateId || '').trim() : (existing as any).template_id;
+    const nextPriority =
+      priority !== undefined ? String(priority) : String((existing as any).priority || 'medium');
+    const nextDueAt = dueAt !== undefined ? dueAt : ((existing as any).due_at ?? null);
+    const nextNotes = notes !== undefined ? notes : ((existing as any).notes ?? null);
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+
+    if (!nextAssigneeUserId) {
+      res.status(400).json({ error: 'assigneeUserId is required' });
+      return;
+    }
+    if (!nextTemplateId) {
+      res.status(400).json({ error: 'templateId is required' });
+      return;
+    }
+
+    const assigneeChanged = nextAssigneeUserId !== String((existing as any).assignee_user_id || '');
+    const templateChanged = nextTemplateId !== String((existing as any).template_id || '');
+    const dueAtChanged = (nextDueAt ?? null) !== ((existing as any).due_at ?? null);
+    const priorityChanged = nextPriority !== String((existing as any).priority || 'medium');
+    const notesChanged = (nextNotes ?? null) !== ((existing as any).notes ?? null);
+    const hasSensitiveChange = assigneeChanged || templateChanged;
+
+    const currentStatus = String((existing as any).status || '').toLowerCase();
+    let effectiveMode: InterviewAssignmentManageMode = 'update';
+    if (mode === 'assign_again') {
+      effectiveMode =
+        currentStatus === 'approved' || currentStatus === 'completed' ? 'assign_again' : 'restart';
+    } else if (mode === 'restart') {
+      effectiveMode = 'restart';
+    } else if (mode === 'update') {
+      effectiveMode = 'update';
+    } else if (currentStatus === 'approved' || currentStatus === 'completed') {
+      effectiveMode = hasSensitiveChange ? 'assign_again' : 'update';
+    } else if (currentStatus !== 'assigned' && hasSensitiveChange) {
+      effectiveMode = 'restart';
+    }
+
+    const template = await queryHelpers.queryOne(
+      `SELECT id, name, version, status FROM interview_library_templates WHERE id = ?`,
+      [nextTemplateId]
+    );
+    if (!template) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+    if (String((template as any).status || '').toLowerCase() !== 'approved') {
+      res.status(400).json({ error: 'Template is not approved yet' });
+      return;
+    }
+
+    const assigneeMembership = await queryHelpers.queryOne(
+      `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+      [user.organizationId, nextAssigneeUserId]
+    );
+    if (!assigneeMembership) {
+      res.status(404).json({ error: 'Assignee is not a member of this organization' });
+      return;
+    }
+    if ((existing as any).project_id) {
+      const projectMember = await queryHelpers.queryOne(
+        `SELECT user_id FROM project_members WHERE project_id = ? AND user_id = ?`,
+        [(existing as any).project_id, nextAssigneeUserId]
+      );
+      if (!projectMember) {
+        res.status(403).json({
+          error: 'Assignee must be a member of the assignment project to receive this interview.',
+        });
+        return;
+      }
+    }
+
+    const hasAnyChange =
+      assigneeChanged ||
+      templateChanged ||
+      dueAtChanged ||
+      priorityChanged ||
+      notesChanged ||
+      effectiveMode !== 'update';
+    if (!hasAnyChange) {
+      res.status(400).json({ error: 'No changes provided' });
+      return;
+    }
+
+    const { default: interviewAssignmentService } =
+      await import('../services/InterviewAssignmentService.js');
+    const now = new Date().toISOString();
+
+    if (effectiveMode === 'update') {
+      if (currentStatus !== 'assigned' && hasSensitiveChange) {
+        res.status(409).json({
+          error:
+            'Changing assignee or template after the interview has started requires creating a fresh assignment.',
+        });
+        return;
+      }
+
+      const updates: string[] = [];
+      const params: unknown[] = [];
+
+      if (dueAtChanged) {
+        updates.push('due_at = ?');
+        params.push(nextDueAt);
+      }
+      if (priorityChanged) {
+        updates.push('priority = ?');
+        params.push(nextPriority);
+      }
+      if (notesChanged) {
+        updates.push('notes = ?');
+        params.push(nextNotes);
+      }
+      if (assigneeChanged) {
+        updates.push('assignee_user_id = ?');
+        params.push(nextAssigneeUserId);
+      }
+      if (templateChanged) {
+        updates.push('template_id = ?');
+        params.push(nextTemplateId);
+        updates.push('template_version = ?');
+        params.push((template as any).version || 1);
+      }
+
+      if (updates.length === 0) {
+        res.status(400).json({ error: 'No supported updates for this assignment state' });
+        return;
+      }
+
+      updates.push('updated_at = ?');
+      params.push(now, id);
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
+
+      if ((existing as any).task_id) {
+        const taskUpdates: string[] = [];
+        const taskParams: unknown[] = [];
+        if (dueAtChanged) {
+          taskUpdates.push('due_date = ?');
+          taskParams.push(nextDueAt);
+        }
+        if (priorityChanged) {
+          taskUpdates.push('priority = ?');
+          taskParams.push(nextPriority);
+        }
+        if (assigneeChanged) {
+          taskUpdates.push('assignee_id = ?');
+          taskParams.push(nextAssigneeUserId);
+        }
+        if (templateChanged) {
+          taskUpdates.push('title = ?');
+          taskParams.push(`Interview: ${(template as any).name || 'Discovery Interview'}`);
+          taskUpdates.push('description = ?');
+          taskParams.push(
+            JSON.stringify({
+              type: 'interview_assignment',
+              assignmentId: id,
+              templateId: nextTemplateId,
+              templateVersion: (template as any).version || 1,
+            })
+          );
+        }
+        if (taskUpdates.length > 0) {
+          taskUpdates.push('updated_at = ?');
+          taskParams.push(now, (existing as any).task_id);
+          await queryHelpers.queryRun(
+            `UPDATE tasks SET ${taskUpdates.join(', ')} WHERE id = ?`,
+            taskParams
+          );
+        }
+      }
+
+      const updatedAssignment = await interviewAssignmentService.getByIdWithDetails(id);
+      await logInterviewAssignmentEvent({
+        assignmentId: id,
+        organizationId: user.organizationId,
+        actorId: user.id,
+        eventType: 'assignment_updated',
+        reason: normalizedReason || undefined,
+        payload: {
+          assigneeChanged,
+          templateChanged,
+          dueAtChanged,
+          priorityChanged,
+          notesChanged,
+          mode: effectiveMode,
+        },
+      });
+      res.json({
+        assignment: updatedAssignment,
+        action: 'updated',
+        createdFreshAssignment: false,
+      });
+      return;
+    }
+
+    if (
+      effectiveMode === 'restart' &&
+      currentStatus !== 'assigned' &&
+      currentStatus !== 'in_progress' &&
+      currentStatus !== 'sent_back' &&
+      currentStatus !== 'submitted'
+    ) {
+      res.status(409).json({ error: 'This assignment state cannot be restarted' });
+      return;
+    }
+
+    if (effectiveMode === 'restart' && currentStatus !== 'assigned' && !normalizedReason) {
+      res.status(400).json({ error: 'Reason is required when replacing a started assignment' });
+      return;
+    }
+
+    const created = await interviewAssignmentService.create({
+      organizationId: user.organizationId,
+      projectId: (existing as any).project_id || undefined,
+      templateId: nextTemplateId,
+      templateVersion: (template as any).version || 1,
+      assigneeUserIds: [nextAssigneeUserId],
+      dueAt:
+        typeof nextDueAt === 'string' && nextDueAt
+          ? nextDueAt
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      priority: nextPriority as 'low' | 'medium' | 'high' | 'urgent',
+      escalateTo: (existing as any).escalate_to || user.id,
+      notes:
+        typeof nextNotes === 'string' && nextNotes.trim().length > 0 ? nextNotes.trim() : undefined,
+      processRef: (existing as any).process_ref || undefined,
+      createdBy: user.id,
+    });
+    const replacementAssignment = await interviewAssignmentService.getByIdWithDetails(created.id);
+
+    const shouldDeactivateCurrent =
+      effectiveMode === 'restart' && currentStatus !== 'approved' && currentStatus !== 'completed';
+
+    if (shouldDeactivateCurrent) {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments SET is_active = 0, updated_at = ? WHERE id = ?`,
+        [now, id]
+      );
+      if ((existing as any).task_id) {
+        await queryHelpers.queryRun(`UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`, [
+          'cancelled',
+          now,
+          (existing as any).task_id,
+        ]);
+      }
+      if ((existing as any).session_id) {
+        await queryHelpers.queryRun(
+          `UPDATE interview_sessions
+           SET status = 'archived',
+               completed_at = COALESCE(completed_at, ?),
+               last_activity_at = ?,
+               updated_at = ?
+           WHERE id = ?`,
+          [now, now, now, (existing as any).session_id]
+        );
+      }
+    }
+
+    await logInterviewAssignmentEvent({
+      assignmentId: id,
+      organizationId: user.organizationId,
+      actorId: user.id,
+      eventType: shouldDeactivateCurrent ? 'assignment_replaced' : 'assignment_follow_up_created',
+      reason: normalizedReason || undefined,
+      payload: {
+        createdAssignmentId: created.id,
+        mode: effectiveMode,
+        assigneeChanged,
+        templateChanged,
+        dueAtChanged,
+        priorityChanged,
+        notesChanged,
+      },
+    });
+    await logInterviewAssignmentEvent({
+      assignmentId: created.id,
+      organizationId: user.organizationId,
+      actorId: user.id,
+      eventType: 'assignment_created_from_existing',
+      reason: normalizedReason || undefined,
+      payload: {
+        sourceAssignmentId: id,
+        mode: effectiveMode,
+      },
+    });
+
+    res.json({
+      assignment: replacementAssignment,
+      action: effectiveMode === 'assign_again' ? 'assigned_again' : 'restarted',
+      createdFreshAssignment: true,
+      previousAssignmentId: id,
+      previousAssignmentDeactivated: shouldDeactivateCurrent,
+    });
+  }),
+
+  archiveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    await ensureInterviewAssignmentManagementSchema();
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND COALESCE(is_active, 1) = 1`,
+      [id, user.organizationId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const currentStatus = String((existing as any).status || '').toLowerCase();
+    if (currentStatus !== 'approved' && currentStatus !== 'completed') {
+      res.status(409).json({ error: 'Only approved or completed assignments can be archived' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET is_active = 0, updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    await logInterviewAssignmentEvent({
+      assignmentId: id,
+      organizationId: user.organizationId,
+      actorId: user.id,
+      eventType: 'assignment_archived',
+      payload: { previousStatus: currentStatus },
+    });
+
+    res.json({
+      success: true,
+      archived: true,
+      assignmentId: id,
+    });
   }),
 
   deleteAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -2938,6 +4298,23 @@ export const InterviewController = {
           : ''
     );
 
+    // Resolve org language for system template filtering (default: 'en')
+    let orgLanguage = 'en';
+    try {
+      const langRow = await queryHelpers.queryOne(
+        `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'language'`,
+        [user.organizationId]
+      );
+      if (langRow && (langRow as any).setting_value) {
+        orgLanguage = String((langRow as any).setting_value)
+          .trim()
+          .toLowerCase()
+          .substring(0, 2);
+      }
+    } catch {
+      /* fallback to 'en' */
+    }
+
     const rows = await queryHelpers.queryAll(
       `SELECT
          t.*,
@@ -2947,7 +4324,13 @@ export const InterviewController = {
           WHERE s.template_id = t.id AND p.organization_id = ?) as sessions_used
        FROM interview_library_templates t
        WHERE (
-         COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'system'
+         (
+           COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'system'
+           AND (t.language IS NULL OR t.language = ? OR NOT EXISTS (
+             SELECT 1 FROM interview_library_templates t2
+             WHERE t2.template_scope = 'system' AND t2.category = t.category AND t2.language = ?
+           ))
+         )
          OR (
            COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'organization'
            AND t.organization_id = ?
@@ -2964,7 +4347,16 @@ export const InterviewController = {
          t.is_default DESC,
          t.category ASC,
          t.name ASC`,
-      [user.organizationId, user.organizationId, user.organizationId, user.id, user.role, user.id]
+      [
+        user.organizationId,
+        orgLanguage,
+        orgLanguage,
+        user.organizationId,
+        user.organizationId,
+        user.id,
+        user.role,
+        user.id,
+      ]
     );
 
     const templates = (rows || [])
@@ -3996,91 +5388,44 @@ Answer type: ${(question as any).answer_type || 'open'}`;
         overallVerdict: 'empty',
         questionEvaluations: [],
         recommendations: [],
+        weakAnswerMap: [],
       });
       return;
     }
 
-    const lang = language === 'pl' ? 'Polish' : 'English';
-
-    const EvalSchema = z.object({
-      questionEvaluations: z.array(
-        z.object({
-          questionId: z.string(),
-          score: z.number().min(1).max(5),
-          verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
-          feedback: z.string(),
-        })
-      ),
-      overallScore: z.number().min(1).max(5),
-      overallVerdict: z.enum(['ready_for_approval', 'needs_improvement', 'insufficient']),
-      recommendations: z.array(z.string()),
-    });
-
-    const questionsForPrompt = (questions as any[])
-      .map((q, i) => {
-        const answered = q.status === 'answered' && q.answer_text?.trim();
-        return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
-Question: ${q.question_text}
-${q.expected_answer_shape ? `Expected format: ${q.expected_answer_shape}` : ''}
-${q.description ? `Helper: ${q.description}` : ''}
-Status: ${q.status || 'not_started'}
-Answer: ${answered ? q.answer_text.trim() : '(no answer)'}
-${q.context_note ? `Context note: ${q.context_note}` : ''}`;
-      })
-      .join('\n\n');
-
-    const systemPrompt = `You are a quality reviewer for interview/survey answers. Evaluate each answer for:
-1. Completeness — does it address the full question?
-2. Specificity — does it give concrete details, examples, or data rather than vague generalities?
-3. Actionability — could a consultant use this answer to make decisions or recommendations?
-4. Relevance — does it actually answer what was asked?
-
-Score each answer 1-5:
-- 5: Excellent — thorough, specific, actionable
-- 4: Good — adequate with minor gaps
-- 3: Acceptable — covers basics but lacks depth
-- 2: Needs improvement — too vague, incomplete, or off-topic
-- 1: Insufficient — essentially empty or irrelevant
-
-For unanswered questions, use verdict "unanswered" and score 1.
-
-Overall verdict:
-- "ready_for_approval": overallScore >= 3.5 and no required questions are "insufficient"
-- "needs_improvement": overallScore >= 2.5 or some answers need work
-- "insufficient": overallScore < 2.5 or many required questions unanswered
-
-Provide 2-5 actionable recommendations for improving the weakest answers.
-Write all feedback and recommendations in ${lang}.
-Return valid JSON matching the schema.`;
-
-    const userPrompt = `Session: ${(session as any).name || 'Interview session'}
-Total questions: ${questions.length}
-Answered: ${(questions as any[]).filter((q) => q.status === 'answered').length}
-
-${questionsForPrompt}`;
-
     try {
-      const result = await llmService.call({
-        type: 'structured',
-        modelConfig: { id: 'standard' },
-        systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-        schema: EvalSchema,
-        maxTokens: 2000,
-        temperature: 0.2,
-        cache: false,
+      const evaluation = await evaluateInterviewSessionAnswers({
+        session: session as any,
+        questions: questions as any[],
+        language,
       });
 
-      const evaluation = (result as any).object || {
-        questionEvaluations: [],
-        overallScore: 1,
-        overallVerdict: 'insufficient',
-        recommendations: [],
-      };
+      try {
+        await ensureInterviewAssignmentAiReviewColumns();
+        const assignment = await queryHelpers.queryOne(
+          `SELECT id FROM interview_assignments WHERE session_id = ? AND organization_id = ? LIMIT 1`,
+          [sessionId, user.organizationId]
+        );
+        if ((assignment as any)?.id) {
+          await queryHelpers.queryRun(
+            `UPDATE interview_assignments
+             SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
+             WHERE id = ?`,
+            [
+              JSON.stringify(evaluation),
+              new Date().toISOString(),
+              new Date().toISOString(),
+              (assignment as any).id,
+            ]
+          );
+        }
+      } catch (persistError) {
+        logger.warn('[evaluateSessionAnswers] Failed to persist AI review snapshot', persistError);
+      }
 
       res.json(evaluation);
     } catch (err) {
-      console.error('[evaluateSessionAnswers] AI call failed:', err);
+      logger.error('[evaluateSessionAnswers] AI call failed:', err);
       res.status(500).json({ error: 'AI evaluation failed' });
     }
   }),
@@ -4508,34 +5853,21 @@ ${JSON.stringify(questions || [], null, 2)}
       [sessionId]
     )) as { category: string; status: string }[];
 
-    const progress: Record<string, number> = {
-      strategy: 0,
-      operations: 0,
-      digital: 0,
-      people: 0,
-      finance: 0,
-    };
-    const categoryCount: Record<string, number> = {
-      strategy: 0,
-      operations: 0,
-      digital: 0,
-      people: 0,
-      finance: 0,
-    };
+    const progress: Record<string, number> = {};
+    const categoryCount: Record<string, number> = {};
     let answeredTotal = 0;
 
     for (const q of questions) {
-      if (INTERVIEW_CATEGORIES.includes(q.category as InterviewCategory)) {
-        categoryCount[q.category]++;
-        if (q.status === 'answered') {
-          progress[q.category]++;
-          answeredTotal++;
-        }
+      const cat = q.category || 'general';
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+      progress[cat] = progress[cat] || 0;
+      if (q.status === 'answered') {
+        progress[cat]++;
+        answeredTotal++;
       }
     }
 
-    // Calculate percentage per category
-    for (const cat of INTERVIEW_CATEGORIES) {
+    for (const cat of Object.keys(progress)) {
       if (categoryCount[cat] > 0) {
         progress[cat] = Math.round((progress[cat] / categoryCount[cat]) * 100);
       }
@@ -4863,7 +6195,7 @@ ${JSON.stringify(questions || [], null, 2)}
         resolvedFileType,
         url || null,
         transcriptText || null,
-        ingestToKnowledge === false ? 0 : 1,
+        ingestToKnowledge !== false,
         user.id,
         now,
       ]

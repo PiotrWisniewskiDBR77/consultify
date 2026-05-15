@@ -7,13 +7,14 @@ import crypto from 'crypto';
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
+import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
 import * as oauthEngine from '../services/integrationOAuthEngine.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
-import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -28,6 +29,30 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 const preferencesKey = (prefType: string) => `settings:${prefType}`;
+const LEGACY_SETTINGS_ROOT_GUIDANCE =
+  'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readAuthenticatedUserId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.userId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown));
+
+const readAuthenticatedOrganizationId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown));
 
 /**
  * GET /api/settings
@@ -37,6 +62,14 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!isRequestSuperAdmin(req)) {
+      return res.status(403).json({
+        error: 'Legacy settings root is restricted to platform superadmins',
+        code: 'LEGACY_SETTINGS_SCOPE_BLOCKED',
+        guidance: LEGACY_SETTINGS_ROOT_GUIDANCE,
+      });
+    }
+
     try {
       const sql = `SELECT * FROM settings`;
       const rows = await dbAll(sql, [], { fallback: true });
@@ -62,6 +95,14 @@ router.post(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!isRequestSuperAdmin(req)) {
+      return res.status(403).json({
+        error: 'Legacy settings root is restricted to platform superadmins',
+        code: 'LEGACY_SETTINGS_SCOPE_BLOCKED',
+        guidance: LEGACY_SETTINGS_ROOT_GUIDANCE,
+      });
+    }
+
     const { key, value } = req.body;
 
     if (!key) {
@@ -142,12 +183,31 @@ router.get(
         return res.json({ preferences: JSON.parse(prefs.preferences_data) });
       }
 
+      const orgId = req.user?.organizationId;
+      let tenantDefaults: { timezone?: string | null; currency?: string | null } = {};
+      if (orgId) {
+        try {
+          const { default: organizationContextService } =
+            await import('../services/organizationContext/OrganizationContextService.js');
+          const context = await organizationContextService.buildResolvedContext(orgId);
+          tenantDefaults = {
+            timezone: context.profile.defaultTimezone,
+            currency: context.profile.currency,
+          };
+        } catch (contextErr) {
+          logger.warn(
+            '[settings] Failed to hydrate tenant regional defaults from organization context:',
+            contextErr
+          );
+        }
+      }
+
       // Return defaults
       return res.json({
         preferences: {
-          timezone: 'UTC',
+          timezone: tenantDefaults.timezone || 'UTC',
           units: 'metric',
-          currency: 'USD',
+          currency: tenantDefaults.currency || 'USD',
           numberFormat: 'en-US',
           dateFormat: 'DD/MM/YYYY',
           timeFormat: '24h',
@@ -513,7 +573,8 @@ router.post(
     }
 
     // Only owner or admin/superadmin
-    if (requesterId !== userId && req.user?.role !== 'SUPERADMIN' && req.user?.role !== 'ADMIN') {
+    const actorRole = getSettingsActorRole(req);
+    if (requesterId !== userId && actorRole !== 'owner' && actorRole !== 'admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
@@ -708,26 +769,91 @@ router.put(
 const defaultIntegrationProviders = [
   // Email & Communication
   { id: 'gmail', name: 'Gmail', capabilities: ['email', 'contacts'], category: 'email' },
-  { id: 'outlook', name: 'Microsoft Outlook', capabilities: ['email', 'contacts'], category: 'email' },
+  {
+    id: 'outlook',
+    name: 'Microsoft Outlook',
+    capabilities: ['email', 'contacts'],
+    category: 'email',
+  },
   { id: 'slack', name: 'Slack', capabilities: ['messages', 'notifications'], category: 'email' },
-  { id: 'teams', name: 'Microsoft Teams', capabilities: ['messages', 'meetings'], category: 'email' },
+  {
+    id: 'teams',
+    name: 'Microsoft Teams',
+    capabilities: ['messages', 'meetings'],
+    category: 'email',
+  },
   // Calendar
-  { id: 'google_calendar', name: 'Google Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
-  { id: 'outlook_calendar', name: 'Outlook Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
-  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', capabilities: ['events'], category: 'calendar' },
-  { id: 'calendly', name: 'Calendly', capabilities: ['scheduling', 'events'], category: 'calendar' },
+  {
+    id: 'google_calendar',
+    name: 'Google Calendar',
+    capabilities: ['events', 'reminders'],
+    category: 'calendar',
+  },
+  {
+    id: 'outlook_calendar',
+    name: 'Outlook Calendar',
+    capabilities: ['events', 'reminders'],
+    category: 'calendar',
+  },
+  {
+    id: 'apple_calendar',
+    name: 'Apple Calendar (iCal)',
+    capabilities: ['events'],
+    category: 'calendar',
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    capabilities: ['scheduling', 'events'],
+    category: 'calendar',
+  },
   // Task Management
   { id: 'jira', name: 'Jira', capabilities: ['issues', 'sprints'], category: 'task_management' },
   { id: 'asana', name: 'Asana', capabilities: ['tasks', 'projects'], category: 'task_management' },
   { id: 'trello', name: 'Trello', capabilities: ['boards', 'cards'], category: 'task_management' },
-  { id: 'clickup', name: 'ClickUp', capabilities: ['tasks', 'spaces'], category: 'task_management' },
-  { id: 'monday', name: 'Monday.com', capabilities: ['boards', 'items'], category: 'task_management' },
-  { id: 'notion', name: 'Notion', capabilities: ['databases', 'pages'], category: 'task_management' },
-  { id: 'todoist', name: 'Todoist', capabilities: ['tasks', 'projects'], category: 'task_management' },
-  { id: 'linear', name: 'Linear', capabilities: ['issues', 'projects'], category: 'task_management' },
+  {
+    id: 'clickup',
+    name: 'ClickUp',
+    capabilities: ['tasks', 'spaces'],
+    category: 'task_management',
+  },
+  {
+    id: 'monday',
+    name: 'Monday.com',
+    capabilities: ['boards', 'items'],
+    category: 'task_management',
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    capabilities: ['databases', 'pages'],
+    category: 'task_management',
+  },
+  {
+    id: 'todoist',
+    name: 'Todoist',
+    capabilities: ['tasks', 'projects'],
+    category: 'task_management',
+  },
+  {
+    id: 'linear',
+    name: 'Linear',
+    capabilities: ['issues', 'projects'],
+    category: 'task_management',
+  },
   // Cloud Storage
-  { id: 'google_drive', name: 'Google Drive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
-  { id: 'onedrive', name: 'OneDrive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
+  {
+    id: 'google_drive',
+    name: 'Google Drive',
+    capabilities: ['files', 'sharing'],
+    category: 'cloud_storage',
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    capabilities: ['files', 'sharing'],
+    category: 'cloud_storage',
+  },
   { id: 'dropbox', name: 'Dropbox', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
   { id: 'box', name: 'Box', capabilities: ['files', 'workflows'], category: 'cloud_storage' },
 ];
@@ -1010,8 +1136,8 @@ router.get(
   '/integrations',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
@@ -1041,8 +1167,8 @@ router.post(
   '/integrations/:provider/connect',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1123,9 +1249,15 @@ router.post(
           integrationId,
           connectorId: connector.id,
           eventType: 'external_auth_prepared',
-          metadata: { source: 'settings', mode: 'connect', callbackUrl: session.callbackUrl, expiresAt: session.expiresAt },
+          metadata: {
+            source: 'settings',
+            mode: 'connect',
+            callbackUrl: session.callbackUrl,
+            expiresAt: session.expiresAt,
+          },
           ipAddress: typeof req.ip === 'string' ? req.ip : null,
-          userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+          userAgent:
+            typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
         });
       }
 
@@ -1166,8 +1298,8 @@ router.delete(
   '/integrations/:provider',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1203,8 +1335,8 @@ router.post(
   '/integrations/:provider/test',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1216,7 +1348,9 @@ router.post(
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const item = integrations.find((integration) => integration.provider === provider);
     if (!item) {
-      return res.status(404).json({ success: false, error: oauthResult.error || 'Integration not connected' });
+      return res
+        .status(404)
+        .json({ success: false, error: oauthResult.error || 'Integration not connected' });
     }
 
     if (item.status !== 'active') {
@@ -1249,8 +1383,8 @@ router.get(
   '/integrations/oauth/start/:connectorId',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { connectorId } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1260,12 +1394,17 @@ router.get(
     }
 
     if (cfg.authType === 'basic') {
-      return res.status(400).json({ error: 'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.' });
+      return res.status(400).json({
+        error:
+          'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.',
+      });
     }
 
     const result = oauthEngine.generateAuthUrl(connectorId, userId, organizationId);
     if (!result) {
-      return res.status(503).json({ error: 'Connector not configured. Missing API credentials in environment.' });
+      return res
+        .status(503)
+        .json({ error: 'Connector not configured. Missing API credentials in environment.' });
     }
 
     await logIntegrationConnectionEvent({
@@ -1312,7 +1451,9 @@ router.get(
 
     const tokens = await oauthEngine.exchangeCode(pending.connectorId, code);
     if (!tokens) {
-      return res.redirect(`/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`);
+      return res.redirect(
+        `/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`
+      );
     }
 
     const cfg = oauthEngine.getConnectorConfig(pending.connectorId);
@@ -1371,7 +1512,8 @@ router.post(
   '/integrations/:connectorId/oauth-disconnect',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { connectorId } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1382,7 +1524,7 @@ router.post(
     await saveIntegrations(userId, filtered);
 
     await logIntegrationConnectionEvent({
-      organizationId: req.organizationId || req.user?.organizationId || 'unknown',
+      organizationId: organizationId || 'unknown',
       userId,
       integrationId: `${connectorId}-${userId}`,
       connectorId,
@@ -1402,7 +1544,7 @@ router.post(
   '/integrations/:connectorId/oauth-test',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
     const { connectorId } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1419,7 +1561,7 @@ router.get(
   '/integrations/oauth/status',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const connected = await oauthEngine.listConnectedIntegrations(userId);
@@ -1437,7 +1579,8 @@ router.post(
   '/integrations/:connectorId/basic-connect',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { connectorId } = req.params;
     const { username, password, serverUrl } = req.body || {};
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -1475,7 +1618,7 @@ router.post(
     await saveIntegrations(userId, filtered);
 
     await logIntegrationConnectionEvent({
-      organizationId: req.organizationId || req.user?.organizationId || 'unknown',
+      organizationId: organizationId || 'unknown',
       userId,
       integrationId: `${connectorId}-${userId}`,
       connectorId,
@@ -1494,8 +1637,8 @@ router.post(
   '/integrations/:provider/refresh',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1567,8 +1710,8 @@ router.put(
   '/integrations/:provider/config',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     const config = parseJsonObject(req.body?.config);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -1655,8 +1798,8 @@ router.get(
   '/integrations/:provider/status',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1673,8 +1816,8 @@ router.get(
   '/integrations/:provider/logs',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     const rawLimit = parseInt(String(req.query.limit || '50'), 10);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -3160,6 +3303,52 @@ const defaultAIVoice = {
   autoPlay: false,
 };
 
+const defaultAIPrivacyPreferences = {
+  allowProjectData: true,
+  allowClientData: true,
+  allowFinancialData: false,
+  allowPersonalNotes: false,
+  optOutTraining: true,
+  dataRetention: '30d',
+  auditLogEnabled: true,
+  anonymizeExports: false,
+};
+
+const defaultPromptLibrary = [
+  {
+    id: 'builtin-professional',
+    name: 'Professional',
+    category: 'general',
+    prompt:
+      'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.',
+    createdAt: '2024-01-01',
+  },
+  {
+    id: 'builtin-interview-prep',
+    name: 'Interview Preparation',
+    category: 'interview',
+    prompt:
+      'Help me prepare structured interview questions. Focus on behavioral and competency-based questions. Suggest follow-ups for each main question.',
+    createdAt: '2024-01-01',
+  },
+  {
+    id: 'builtin-analysis',
+    name: 'Data Analysis',
+    category: 'analysis',
+    prompt:
+      'Analyze data thoroughly. Present findings with clear structure: key metrics, trends, anomalies, and actionable recommendations. Use tables when helpful.',
+    createdAt: '2024-01-01',
+  },
+  {
+    id: 'builtin-report',
+    name: 'Executive Report',
+    category: 'report',
+    prompt:
+      'Write in executive summary style. Lead with conclusions, then supporting evidence. Keep paragraphs short. Use bullet points for key takeaways.',
+    createdAt: '2024-01-01',
+  },
+];
+
 /**
  * GET /api/settings/preferences/ai-instructions
  */
@@ -3448,7 +3637,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
@@ -3460,7 +3650,10 @@ router.get(
       try {
         return res.json({ preferences: JSON.parse(row.preferences_data) });
       } catch {
-        // fallthrough
+        return res.status(500).json({
+          error: 'Stored AI memory preferences are invalid',
+          code: 'AI_MEMORY_PREFERENCES_INVALID_STORE',
+        });
       }
     }
     return res.json({ preferences: defaultAIMemory });
@@ -3476,9 +3669,13 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { preferences } = req.body || {};
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
     if (!preferences || typeof preferences !== 'object') {
-      return res.status(400).json({ error: 'Invalid preferences payload' });
+      return res.status(400).json({
+        error: 'Invalid preferences payload',
+        code: 'AI_MEMORY_PREFERENCES_INVALID_PAYLOAD',
+      });
     }
 
     await ensureUserPreferencesTable();
@@ -3489,7 +3686,12 @@ router.put(
       [userId, preferencesKey('ai-memory'), payload],
       { fallback: false }
     );
-    if (!result.success) throw new Error(result.error || 'Failed to save preference');
+    if (!result.success) {
+      return res.status(500).json({
+        error: 'Failed to save AI memory preferences',
+        code: 'AI_MEMORY_PREFERENCES_SAVE_FAILED',
+      });
+    }
 
     logger.info(`[settings] AI memory preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -3505,7 +3707,8 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
 
     // Clear user's AI conversation history if exists
     try {
@@ -3571,6 +3774,118 @@ router.put(
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI voice preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-privacy
+ */
+router.get(
+  '/preferences/ai-privacy',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-privacy')],
+      { fallback: false }
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+
+    return res.json({ preferences: defaultAIPrivacyPreferences });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-privacy
+ */
+router.put(
+  '/preferences/ai-privacy',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-privacy'), JSON.stringify(preferences)],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+    logger.info(`[settings] AI privacy preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/prompt-library
+ */
+router.get(
+  '/preferences/prompt-library',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('prompt-library')],
+      { fallback: false }
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ prompts: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+
+    return res.json({ prompts: defaultPromptLibrary });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/prompt-library
+ */
+router.put(
+  '/preferences/prompt-library',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { prompts } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!Array.isArray(prompts)) {
+      return res.status(400).json({ error: 'Invalid prompt library payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('prompt-library'), JSON.stringify(prompts)],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save prompt library');
+
+    logger.info(`[settings] Prompt library updated for user ${userId}`);
     return res.json({ success: true });
   })
 );
@@ -3848,7 +4163,7 @@ router.post(
     };
 
     if (systemSettings[id]) {
-      // Apply system template (would update user_preferences)
+      await applySettingsPayload(userId, systemSettings[id]);
       logger.info(`[settings] Applied system template ${id} for user ${userId}`);
       return res.json({ success: true, applied: systemSettings[id] });
     }
@@ -3861,8 +4176,11 @@ router.post(
 
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
+    const applied = JSON.parse(template.settings_data);
+    await applySettingsPayload(userId, applied);
+
     logger.info(`[settings] Applied custom template ${id} for user ${userId}`);
-    return res.json({ success: true, applied: JSON.parse(template.settings_data) });
+    return res.json({ success: true, applied });
   })
 );
 
@@ -3962,6 +4280,9 @@ router.post(
       return res.status(404).json({ error: 'History entry not found or cannot be restored' });
     }
 
+    const restoredValue = JSON.parse(entry.old_value);
+    await restoreSettingsValue(userId, entry.category, restoredValue);
+
     // Log the restore action
     const { v4: uuidv4 } = await import('uuid');
     await dbRun(
@@ -3971,7 +4292,7 @@ router.post(
     );
 
     logger.info(`[settings] Restored setting ${entry.setting_key} for user ${userId}`);
-    return res.json({ success: true, restoredValue: JSON.parse(entry.old_value) });
+    return res.json({ success: true, restoredValue });
   })
 );
 
@@ -4094,6 +4415,28 @@ const ensureUserApiKeysTable = async () => {
     [],
     { fallback: false }
   );
+
+  const cols = await getTableColumns('user_api_keys');
+  const alterations: Array<[string, string]> = [
+    ['name', `ALTER TABLE user_api_keys ADD COLUMN name TEXT`],
+    ['key_hash', `ALTER TABLE user_api_keys ADD COLUMN key_hash TEXT`],
+    ['key_prefix', `ALTER TABLE user_api_keys ADD COLUMN key_prefix TEXT`],
+    ['permissions', `ALTER TABLE user_api_keys ADD COLUMN permissions TEXT DEFAULT '[]'`],
+    ['rate_limit', `ALTER TABLE user_api_keys ADD COLUMN rate_limit INTEGER DEFAULT 1000`],
+    ['last_used_at', `ALTER TABLE user_api_keys ADD COLUMN last_used_at TIMESTAMPTZ`],
+    ['expires_at', `ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMPTZ`],
+    ['is_active', `ALTER TABLE user_api_keys ADD COLUMN is_active INTEGER DEFAULT 1`],
+    [
+      'updated_at',
+      `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  ];
+
+  for (const [column, sql] of alterations) {
+    if (!cols.has(column)) {
+      await dbRun(sql, [], { fallback: true });
+    }
+  }
 };
 
 const generateApiKey = (): string => {
@@ -4279,6 +4622,27 @@ const ensureUserWebhooksTable = async () => {
     [],
     { fallback: false }
   );
+
+  const cols = await getTableColumns('user_webhooks');
+  const alterations: Array<[string, string]> = [
+    ['name', `ALTER TABLE user_webhooks ADD COLUMN name TEXT`],
+    ['secret', `ALTER TABLE user_webhooks ADD COLUMN secret TEXT`],
+    ['headers', `ALTER TABLE user_webhooks ADD COLUMN headers TEXT DEFAULT '{}'`],
+    ['is_active', `ALTER TABLE user_webhooks ADD COLUMN is_active INTEGER DEFAULT 1`],
+    ['last_triggered_at', `ALTER TABLE user_webhooks ADD COLUMN last_triggered_at TIMESTAMPTZ`],
+    ['last_status', `ALTER TABLE user_webhooks ADD COLUMN last_status INTEGER`],
+    ['failure_count', `ALTER TABLE user_webhooks ADD COLUMN failure_count INTEGER DEFAULT 0`],
+    [
+      'updated_at',
+      `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  ];
+
+  for (const [column, sql] of alterations) {
+    if (!cols.has(column)) {
+      await dbRun(sql, [], { fallback: true });
+    }
+  }
 };
 
 /**
@@ -4884,6 +5248,54 @@ async function logSettingsChange(
   }
 }
 
+async function applySettingsPayload(userId: string, settings: Record<string, unknown>) {
+  await ensureUserPreferencesTable();
+
+  for (const [type, value] of Object.entries(settings || {})) {
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey(type), JSON.stringify(value)],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || `Failed to apply setting ${type}`);
+  }
+}
+
+async function restoreSettingsValue(
+  userId: string,
+  category: string,
+  value: Record<string, unknown>
+) {
+  if (category === 'developer') {
+    await ensureDeveloperSettingsTable();
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM developer_settings WHERE user_id = ?`,
+      [userId]
+    );
+    const { v4: uuidv4 } = await import('uuid');
+    const id = existing?.id || uuidv4();
+
+    await dbRun(
+      `INSERT OR REPLACE INTO developer_settings
+         (id, user_id, developer_mode, api_logging, verbose_errors, show_debug_info, beta_features, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        id,
+        userId,
+        value?.developerMode ? 1 : 0,
+        value?.apiLogging ? 1 : 0,
+        value?.verboseErrors ? 1 : 0,
+        value?.showDebugInfo ? 1 : 0,
+        JSON.stringify(value?.betaFeatures || []),
+      ]
+    );
+    return;
+  }
+
+  await applySettingsPayload(userId, { [category]: value });
+}
+
 // ==========================================
 // SETTINGS REGISTRY — P31 §2.3.2-§2.3.6
 // ==========================================
@@ -4897,8 +5309,8 @@ router.get(
     const owner = req.query.owner as string | undefined;
 
     let keys = registryService.getRegistry();
-    if (scope) keys = keys.filter(k => k.scope === scope);
-    if (owner) keys = keys.filter(k => k.ownerContract === owner);
+    if (scope) keys = keys.filter((k) => k.scope === scope);
+    if (owner) keys = keys.filter((k) => k.ownerContract === owner);
 
     res.json({ keys, total: keys.length });
   })
@@ -4923,11 +5335,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { default: registryService } = await import('../services/settingsRegistryService.js');
-    const userId = req.userId || req.user?.id;
-    const orgId = req.user?.organizationId;
+    const userId = req.userId ?? req.user?.id;
+    const orgId = req.organizationId ?? req.user?.organizationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
     try {
-      const result = await registryService.resolveEffectiveValue(req.params.key, userId!, orgId);
+      const result = await registryService.resolveEffectiveValue(req.params.key, userId, orgId);
       res.json(result);
     } catch {
       const denial = registryService.buildDenialResponse(req.params.key, 'resolver_unavailable');
@@ -4941,15 +5357,27 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { default: registryService } = await import('../services/settingsRegistryService.js');
-    const userRole = req.user?.role || 'member';
+    const meta = registryService.getKeyMetadata(req.params.key);
+    if (!meta) {
+      const denial = registryService.buildDenialResponse(req.params.key, 'not_found');
+      return res.status(denial.status).json(denial);
+    }
+
+    const userRole = getSettingsActorRole(req);
     const routing = registryService.checkWriteRouting(req.params.key, userRole);
 
     if (!routing.allowed) {
-      const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
-      return res.status(denial.status).json({ ...denial, guidance: routing.guidance, routeTo: routing.routeTo });
+      const denial = registryService.buildDenialResponse(
+        req.params.key,
+        meta.readOnlyInSettings || meta.managedIn !== 'settings' ? 'read_only' : 'permission_denied'
+      );
+      return res.status(denial.status).json({
+        ...denial,
+        guidance: routing.guidance || denial.guidance,
+        routeTo: denial.routeTo || routing.routeTo,
+      });
     }
 
-    const meta = registryService.getKeyMetadata(req.params.key);
     if (meta?.confirmationGate && !req.body.confirmed) {
       return res.status(428).json({
         code: 'CONFIRMATION_REQUIRED',
@@ -4959,17 +5387,45 @@ router.put(
       });
     }
 
-    const userId = req.userId || req.user?.id;
-    const { value } = req.body;
+    const userId = req.userId ?? req.user?.id;
+    const organizationId = req.organizationId ?? req.user?.organizationId;
 
-    if (meta?.scope === 'personal') {
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const { value } = req.body;
+    const writeTarget = registryService.getWriteTarget(
+      req.params.key,
+      userRole,
+      req.body.targetScope
+    );
+
+    if (writeTarget === 'blocked') {
+      const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
+      return res.status(denial.status).json(denial);
+    }
+
+    if (writeTarget === 'personal') {
       await dbRun(
         'INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) ON CONFLICT (user_id, key) DO UPDATE SET value = $3, updated_at = CURRENT_TIMESTAMP',
-        [userId, `settings:${req.params.key}`, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        [
+          userId,
+          `settings:${meta.key}`,
+          typeof value === 'object' ? JSON.stringify(value) : String(value),
+        ],
         { fallback: false }
       );
     } else {
-      const storeKey = meta?.scope === 'tenant' ? `tenant:${req.user?.organizationId}:${req.params.key}` : req.params.key;
+      if (!organizationId) {
+        return res
+          .status(400)
+          .json({ error: 'Organization context is required for non-personal settings writes.' });
+      }
+
+      const storeKey =
+        writeTarget === 'tenant'
+          ? `tenant:${organizationId}:${meta.key}`
+          : `module:${organizationId}:${meta.moduleId}:${meta.key}`;
       await dbRun(
         'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
         [storeKey, typeof value === 'object' ? JSON.stringify(value) : String(value)],
@@ -4982,12 +5438,20 @@ router.put(
       const crypto = await import('crypto');
       await dbRun(
         'INSERT INTO settings_audit_log (id, user_id, category, setting_key, action, old_value, new_value) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [crypto.randomUUID(), userId, meta?.scope || 'personal', req.params.key, 'updated', null, String(value)],
+        [crypto.randomUUID(), userId, writeTarget, meta.key, 'updated', null, String(value)],
         { fallback: true }
       );
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
-    res.json({ success: true, key: req.params.key, scope: meta?.scope, impactLanguage: meta?.impactLanguage });
+    res.json({
+      success: true,
+      key: meta.key,
+      scope: meta.scope,
+      storedAs: writeTarget,
+      impactLanguage: meta.impactLanguage,
+    });
   })
 );
 

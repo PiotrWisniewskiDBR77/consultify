@@ -75,6 +75,7 @@ import { MarketInboxTab } from './Operations/MarketInboxTab';
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
 import { SLAManagementTab } from './Operations/SLAManagementTab';
+import { PolicyEnforcementTab } from './Policy/PolicyEnforcementTab';
 import { AccessControlTab } from './Security/AccessControlTab';
 // Security Tab Components
 import { APIKeysTab } from './Security/APIKeysTab';
@@ -156,6 +157,15 @@ const AI_PLATFORM_TABS: MainTab[] = [
     ],
   },
   {
+    id: 'policy',
+    label: 'Policy Plane',
+    icon: <ShieldCheck size={20} />,
+    description: 'Enforcement, drift detection, kill-switches, and propagation state',
+    subTabs: [
+      { id: 'enforcement-state', label: 'Enforcement State', icon: <ShieldCheck size={16} /> },
+    ],
+  },
+  {
     id: 'security',
     label: 'Security',
     icon: <Shield size={20} />,
@@ -196,16 +206,23 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
     internetEnabled: boolean;
     tavilyConfigured: boolean;
     webSearchAvailable: boolean;
+    searchProvider: string | null;
   }>({
     loading: true,
     internetEnabled: false,
     tavilyConfigured: false,
     webSearchAvailable: false,
+    searchProvider: null,
   });
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   // Get current main tab configuration
   const currentMainTab = AI_PLATFORM_TABS.find((tab) => tab.id === activeMainTab);
+
+  useEffect(() => {
+    if (initialTab) setActiveMainTab(initialTab);
+    if (initialSubTab) setActiveSubTab(initialSubTab);
+  }, [initialTab, initialSubTab]);
 
   // Set default sub-tab when main tab changes
   useEffect(() => {
@@ -242,6 +259,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'analytics/pricing-registry': 'superadmin_ai_analytics_pricing_registry',
       'analytics/performance-metrics': 'superadmin_ai_analytics_performance_metrics',
       'analytics/custom-reports': 'superadmin_ai_analytics_custom_reports',
+      'policy/enforcement-state': 'superadmin_ai_policy_plane',
       'security/api-keys': 'superadmin_ai_security_api_keys',
       'security/access-control': 'superadmin_ai_security_access_control',
       'security/audit-logs': 'superadmin_ai_security_audit_logs',
@@ -256,6 +274,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       development: 'superadmin_ai_development',
       operations: 'superadmin_ai_operations',
       analytics: 'superadmin_ai_analytics',
+      policy: 'superadmin_ai_policy_plane',
       security: 'superadmin_ai_security',
       knowledge: 'superadmin_ai_intelligence',
     };
@@ -335,6 +354,10 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       case 'analytics/custom-reports':
         return <CustomReportsTab />;
 
+      // Policy plane
+      case 'policy/enforcement-state':
+        return <PolicyEnforcementTab />;
+
       // Security
       case 'security/api-keys':
         return <APIKeysTab />;
@@ -383,6 +406,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'development/model-registry': 'superadmin-ai-model-registry',
       'operations/prompt-os-runtime': 'superadmin-ai-operations',
       'analytics/llm-observatory': 'superadmin-ai-operations',
+      'policy/enforcement-state': 'superadmin-ai-governance',
 
       // Security (reuse existing Settings docs where applicable)
       'security/api-keys': 'settings-api-keys',
@@ -398,6 +422,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       development: 'superadmin-ai-development',
       operations: 'superadmin-ai-operations',
       analytics: 'superadmin-ai-operations',
+      policy: 'superadmin-ai-governance',
       security: 'superadmin-security',
       knowledge: 'superadmin-ai-knowledge',
     };
@@ -418,6 +443,10 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
           internetEnabled: Boolean(summary?.internetEnabled),
           tavilyConfigured: Boolean(runtime?.tavilyConfigured),
           webSearchAvailable: Boolean(runtime?.webSearchAvailable),
+          searchProvider:
+            typeof runtime?.provider === 'string' && runtime.provider.trim().length > 0
+              ? runtime.provider
+              : null,
         });
       })
       .catch(() => {
@@ -461,9 +490,9 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               title={
                 internetSignal.loading
                   ? 'Checking internet & web search configuration'
-                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Tavily key: ${
-                      internetSignal.tavilyConfigured ? 'configured' : 'missing'
-                    }`
+                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Provider: ${
+                      internetSignal.searchProvider || 'unavailable'
+                    }; Tavily key: ${internetSignal.tavilyConfigured ? 'configured' : 'missing'}`
               }
             >
               <span className={`w-2 h-2 rounded-full ${internetDotClass}`} />

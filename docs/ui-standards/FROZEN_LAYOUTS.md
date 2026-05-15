@@ -24,9 +24,8 @@
 6. Execution  
 7. Results (Benefits)  
 8. Finance  
-9. Reports  
-10. Presentations  
-11. … (pozostałe według menuConfig)
+9. Outputs (unified Reports & Presentations hub — P19)  
+10. … (pozostałe według menuConfig)
 
 **Reguła:** Nie zmieniaj kolejności, nie dodawaj nowych pozycji między istniejącymi bez aktualizacji `menuConfig.ts` i świadomej decyzji PO/CTO.
 
@@ -83,9 +82,9 @@
 
 ---
 
-### 4. Command Row — dokładnie jeden rząd
+### 4. Command Row (Menu 3) — dokładnie jeden rząd
 
-**SSOT:** `docs/ui-standards/03-modules/module-hub-standard.md` sekcja 3.1, `golden-standard-table-cards-preview-v3.md` sekcja 0.2
+**SSOT:** `docs/ui-standards/03-modules/module-hub-standard.md` sekcje 3.1, 3.2, 3.3; `golden-standard-table-cards-preview-v3.md` sekcja 0.2
 
 **Reguła:** Pod topbarem jest **dokładnie jeden** Command Row. Ten rząd obsługuje (wymieniając się w tym samym miejscu):
 - Dynamic tabs (otwarte dokumenty)
@@ -93,7 +92,19 @@
 - Context counters (pills: All, Overdue, This week…)
 - Bulk actions (po zaznaczeniu)
 
+**Doprecyzowanie (MUST):**
+- Jeśli Menu 3 używa prawej strony na przyciski AI / actions, nie dokładamy tam przełączników typu `prev/next`, `W/M`, `3M/6M/12M`.
+- Takie kontrolki należą do toolbara konkretnego widoku (np. timeline / heatmap / canvas), a nie do Command Row.
+
 **MUST NOT:** Dokładanie 2.–3. rzędu filtrów/toolbarów między topbarem a tabelą.
+
+**Standard wizualny (MUST — identyczny we wszystkich modułach):**
+- **Tło paska:** dziedziczy `dark:bg-navy-900` z ModuleNavBar; chipy mają ciemniejsze `dark:bg-navy-800`
+- **Separator:** `border-b border-slate-200/60 dark:border-white/5` pod całym ModuleNavBar
+- **Format chipów:** pill shape `h-8 rounded-full`, ikona kolorowa 14px + label + badge z counterem
+- **Aktywny chip:** fioletowa ramka `border-purple-500/40`, tło `bg-purple-500/10`, tekst `text-purple-700 dark:text-purple-200`
+- **Przyciski AI (prawa strona):** kontekstowe, `h-8 rounded-full`, ikona `Sparkles`, wariant secondary (outline violet) lub primary (gradient violet→cyan)
+- **Pełna specyfikacja:** `module-hub-standard.md` §3.2 (tło/separator), §3.3 (chipy), §3.4 (AI buttons)
 
 ---
 

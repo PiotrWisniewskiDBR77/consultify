@@ -9,6 +9,8 @@ import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import { Api } from '@/services/api';
+
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
@@ -295,45 +297,76 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (setters.setExportMenuOpen) {
         setters.setExportMenuOpen(true);
       } else {
-        handlers.exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
+        try {
+          handlers.exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
+        } catch {
+          toast.error(isPolish ? 'Nie udało się wyeksportować PNG' : 'PNG export failed');
+        }
       }
     }
-    if (action === 'mm_export_png') handlers.exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
-    if (action === 'mm_export_svg') handlers.exportAsSVG(`${ideaTitle || 'mindmap'}.svg`);
-    if (action === 'mm_export_json')
-      handlers.exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`);
+    if (action === 'mm_export_png') {
+      try {
+        handlers.exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się wyeksportować PNG' : 'PNG export failed');
+      }
+    }
+    if (action === 'mm_export_svg') {
+      try {
+        handlers.exportAsSVG(`${ideaTitle || 'mindmap'}.svg`);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się wyeksportować SVG' : 'SVG export failed');
+      }
+    }
+    if (action === 'mm_export_json') {
+      try {
+        handlers.exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się wyeksportować JSON' : 'JSON export failed');
+      }
+    }
     if (action === 'mm_export_csv') {
-      if (handlers.exportAsCSV) {
-        handlers.exportAsCSV(nodes, `${ideaTitle || 'mindmap'}.csv`);
-      } else {
-        const header = 'id,label,type,parent';
-        const parentMap = new Map<string, string>();
-        edges.forEach((e) => parentMap.set(e.target, e.source));
-        const rows = nodes.map((n) => {
-          const label = String(n.data?.label || '').replace(/"/g, '""');
-          return `"${n.id}","${label}","${n.type || 'default'}","${parentMap.get(n.id) || ''}"`;
-        });
-        const csv = [header, ...rows].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${ideaTitle || 'mindmap'}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(isPolish ? 'CSV wyeksportowany' : 'CSV exported');
+      try {
+        if (handlers.exportAsCSV) {
+          handlers.exportAsCSV(nodes, `${ideaTitle || 'mindmap'}.csv`);
+        } else {
+          const header = 'id,label,type,parent';
+          const parentMap = new Map<string, string>();
+          edges.forEach((e) => parentMap.set(e.target, e.source));
+          const rows = nodes.map((n) => {
+            const label = String(n.data?.label || '').replace(/"/g, '""');
+            return `"${n.id}","${label}","${n.type || 'default'}","${parentMap.get(n.id) || ''}"`;
+          });
+          const csv = [header, ...rows].join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${ideaTitle || 'mindmap'}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success(isPolish ? 'CSV wyeksportowany' : 'CSV exported');
+        }
+      } catch {
+        toast.error(isPolish ? 'Nie udało się wyeksportować CSV' : 'CSV export failed');
       }
     }
 
     if (action === 'mm_export_markdown') {
-      if (handlers.exportAsMarkdown) {
-        handlers.exportAsMarkdown(
-          nodes,
-          edges,
-          { includeMetadata: true },
-          `${ideaTitle || 'mindmap'}.md`
-        );
-        toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard');
+      try {
+        if (handlers.exportAsMarkdown) {
+          handlers.exportAsMarkdown(
+            nodes,
+            edges,
+            { includeMetadata: true },
+            `${ideaTitle || 'mindmap'}.md`
+          );
+          toast.success(
+            isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'
+          );
+        }
+      } catch {
+        toast.error(isPolish ? 'Nie udało się wyeksportować Markdown' : 'Markdown export failed');
       }
     }
 
@@ -742,15 +775,50 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     // ── KnowledgePopover: Platform inserts ────────────────────────────────
     if (action === 'mm_insert_from_notebook') {
-      window.dispatchEvent(
-        new CustomEvent('idea-workspace-quick-action', {
-          detail: { action: 'open_linked_artifacts', ideaId },
-        })
-      );
-      toast(isPolish ? 'Otwórz panel Context → Notebook' : 'Open Context panel → Notebook', {
-        icon: '📓',
-        duration: 2500,
-      });
+      (async () => {
+        try {
+          const pages = await Api.getNotebookPages({ limit: 10, sort: 'updated_at' });
+          if (!Array.isArray(pages) || pages.length === 0) {
+            toast(isPolish ? 'Brak stron w notatniku' : 'No notebook pages found', { icon: '📓' });
+            return;
+          }
+          const sel = handlers.getSelectedNode();
+          const parentId = sel?.id || 'root';
+          const parentNode = nodes.find((n) => n.id === parentId);
+          const baseX = (parentNode?.position?.x ?? 0) + 250;
+          const baseY = (parentNode?.position?.y ?? 0) - (pages.length - 1) * 40;
+
+          const newNodes: Node[] = pages.slice(0, 8).map((page: any, i: number) => ({
+            id: `kb-${Date.now()}-${i}`,
+            type: 'idea',
+            position: { x: baseX, y: baseY + i * 80 },
+            data: {
+              label: page.title || page.name || (isPolish ? 'Notatka' : 'Note'),
+              semanticType: 'knowledge',
+              sourceType: 'notebook',
+              sourceId: page.id,
+              description: page.summary || page.preview || '',
+              _isNew: true,
+            },
+          }));
+          const newEdges = newNodes.map((n) => ({
+            id: `e-${parentId}-${n.id}`,
+            source: parentId,
+            target: n.id,
+            type: 'smoothstep',
+          }));
+
+          setters.setNodes((prev) => [...prev, ...newNodes]);
+          setters.setEdges((prev) => [...prev, ...newEdges]);
+          toast.success(
+            isPolish
+              ? `Wstawiono ${newNodes.length} stron z notatnika`
+              : `Inserted ${newNodes.length} notebook pages`
+          );
+        } catch {
+          toast.error(isPolish ? 'Nie udało się pobrać notatnika' : 'Failed to fetch notebook');
+        }
+      })();
     }
     if (action === 'mm_insert_from_interview') {
       setters.setShowInterviewToMap(true);

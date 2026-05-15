@@ -34,8 +34,8 @@ import {
   KbTag,
   useKnowledgeArticles,
   useKnowledgeCategories,
-  useKnowledgeCollections,
   useKnowledgeCollectionArticles,
+  useKnowledgeCollections,
   useKnowledgeContextual,
   useKnowledgeSearch,
   useKnowledgeSearchFaceted,
@@ -188,7 +188,9 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onClick }) 
       </div>
     </div>
     {collection.description && (
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{collection.description}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+        {collection.description}
+      </p>
     )}
   </button>
 );
@@ -220,7 +222,9 @@ const TagChip: React.FC<TagChipProps> = ({ tag, isActive, onClick }) => {
       `}
     >
       {tag.label}
-      <span className={`text-[9px] ${isActive ? 'text-purple-200' : 'opacity-60'}`}>({tag.article_count})</span>
+      <span className={`text-[9px] ${isActive ? 'text-purple-200' : 'opacity-60'}`}>
+        ({tag.article_count})
+      </span>
     </button>
   );
 };
@@ -253,11 +257,8 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
   const { data: categories = [], isLoading: categoriesLoading } = useKnowledgeCategories(true);
 
   // Collection-scoped articles
-  const { data: collectionData, isLoading: collectionArticlesLoading } = useKnowledgeCollectionArticles(
-    activeCollection || undefined,
-    limit,
-    page * limit
-  );
+  const { data: collectionData, isLoading: collectionArticlesLoading } =
+    useKnowledgeCollectionArticles(activeCollection || undefined, limit, page * limit);
 
   // Fetch contextual articles if moduleId is provided
   const { data: contextualArticles = [], isLoading: contextualLoading } = useKnowledgeContextual(
@@ -266,19 +267,20 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
 
   // Fetch articles with category filter (fallback)
   const { data: articlesData, isLoading: articlesLoading } = useKnowledgeArticles({
-    category: !activeCollection ? (activeCategory || undefined) : undefined,
+    category: !activeCollection ? activeCategory || undefined : undefined,
     limit,
     offset: page * limit,
   });
 
   // P26-B: Faceted search
-  const { data: facetedResults, isLoading: facetedLoading, isError: facetedError } = useKnowledgeSearchFaceted(
-    searchQuery,
-    {
-      collectionSlug: activeCollection || undefined,
-      tagSlugs: activeTags.length > 0 ? activeTags : undefined,
-    }
-  );
+  const {
+    data: facetedResults,
+    isLoading: facetedLoading,
+    isError: facetedError,
+  } = useKnowledgeSearchFaceted(searchQuery, {
+    collectionSlug: activeCollection || undefined,
+    tagSlugs: activeTags.length > 0 ? activeTags : undefined,
+  });
 
   // Search results (legacy fallback)
   const { data: searchResults = [], isLoading: searchLoading } = useKnowledgeSearch(
@@ -292,7 +294,17 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
     if (activeCollection) return collectionData?.articles || [];
     if (!activeCategory && moduleId && contextualArticles.length > 0) return contextualArticles;
     return articlesData?.articles || [];
-  }, [searchQuery, facetedResults, searchResults, activeCollection, collectionData, activeCategory, moduleId, contextualArticles, articlesData]);
+  }, [
+    searchQuery,
+    facetedResults,
+    searchResults,
+    activeCollection,
+    collectionData,
+    activeCategory,
+    moduleId,
+    contextualArticles,
+    articlesData,
+  ]);
 
   const searchFacets = facetedResults?.facets;
 
@@ -302,7 +314,14 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
     return articlesData?.total || 0;
   }, [searchQuery, facetedResults, searchResults, activeCollection, collectionData, articlesData]);
 
-  const isLoading = collectionsLoading || categoriesLoading || articlesLoading || searchLoading || contextualLoading || collectionArticlesLoading || facetedLoading;
+  const isLoading =
+    collectionsLoading ||
+    categoriesLoading ||
+    articlesLoading ||
+    searchLoading ||
+    contextualLoading ||
+    collectionArticlesLoading ||
+    facetedLoading;
 
   const handleCollectionClick = (slug: string | null) => {
     setActiveCollection(slug);
@@ -367,10 +386,13 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
       )}
 
       {/* P26-B: Search degraded banner */}
-      {facetedError && searchQuery.length >= 2 && (
+      {(facetedError || (facetedResults as any)?.degraded) && searchQuery.length >= 2 && (
         <div className="mx-1 mb-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
           <AlertTriangle size={14} className="flex-shrink-0" />
-          {t('help.knowledge.searchLimited', 'Search is temporarily limited. Showing browse results instead.')}
+          {t(
+            'help.knowledge.searchLimited',
+            'Search is temporarily limited. Showing browse results instead.'
+          )}
         </div>
       )}
 
@@ -459,6 +481,19 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
           </div>
+        ) : (facetedError || (facetedResults as any)?.degraded) &&
+          searchQuery.length >= 2 &&
+          collections.length > 0 ? (
+          <div>
+            <h3 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              {t('help.knowledge.browseFallback', 'Browse by collection instead')}
+            </h3>
+            <div className="grid gap-2">
+              {collections.map((coll) => (
+                <CollectionCard key={coll.id} collection={coll} onClick={handleCollectionClick} />
+              ))}
+            </div>
+          </div>
         ) : articles.length > 0 ? (
           <div className="grid gap-3">
             {articles.map((article: KbArticleListItem) => (
@@ -477,7 +512,10 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
             </p>
             {(searchQuery || activeCollection) && (
               <button
-                onClick={() => { handleCollectionClick(null); handleClearSearch(); }}
+                onClick={() => {
+                  handleCollectionClick(null);
+                  handleClearSearch();
+                }}
                 className="mt-2 text-xs text-purple-600 dark:text-purple-400 hover:underline"
               >
                 {t('help.knowledge.browseAll', 'Browse all collections')}

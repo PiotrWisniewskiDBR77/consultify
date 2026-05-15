@@ -13,7 +13,14 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
 
-export type HelpRecoRationaleV1 = { pl: string; en: string };
+export type HelpRecoRationaleV1 = {
+  en: string;
+  pl: string;
+  de?: string;
+  ar?: string;
+  jp?: string;
+  es?: string;
+};
 
 export type HelpRecoContextV1 = {
   surface_id: string;
@@ -41,17 +48,24 @@ function firstParam(value: unknown): string | undefined {
   return undefined;
 }
 
-function normalizeHelpLang(locale: string): 'pl' | 'en' {
-  const raw = String(locale || '').toLowerCase();
-  return raw === 'pl' || raw.startsWith('pl-') ? 'pl' : 'en';
+type HelpLang = 'en' | 'pl' | 'de' | 'ar' | 'jp' | 'es';
+const HELP_LANGUAGES: HelpLang[] = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+
+function normalizeHelpLang(locale: string): HelpLang {
+  const raw = String(locale || '')
+    .toLowerCase()
+    .split('-')[0];
+  if (raw === 'ja') return 'jp';
+  if ((HELP_LANGUAGES as string[]).includes(raw)) return raw as HelpLang;
+  return 'en';
 }
 
-function surfaceLabel(surfaceId: string): { pl: string; en: string } {
+function surfaceLabel(surfaceId: string): string {
   const s = String(surfaceId || '').toLowerCase();
-  if (s === 'tools' || s === 'discovery-tools') return { pl: 'Tools', en: 'Tools' };
-  if (s === 'interview') return { pl: 'Interview', en: 'Interview' };
-  if (s === 'results' || s === 'outputs') return { pl: 'Outputs', en: 'Outputs' };
-  return { pl: surfaceId || 'Help', en: surfaceId || 'Help' };
+  if (s === 'tools' || s === 'discovery-tools') return 'Tools';
+  if (s === 'interview') return 'Interview';
+  if (s === 'results' || s === 'outputs') return 'Outputs';
+  return surfaceId || 'Help';
 }
 
 function buildRationale(context: HelpRecoContextV1): HelpRecoRationaleV1 {
@@ -61,8 +75,12 @@ function buildRationale(context: HelpRecoContextV1): HelpRecoRationaleV1 {
       ? ` (${context.artifact_type}: ${context.artifact_id})`
       : '';
   return {
-    pl: `Jesteś w ${label.pl}${a} — ten artykuł pasuje do bieżącego kontekstu i prowadzi do następnego kroku.`,
-    en: `You are in ${label.en}${a} — this article matches the current context and guides the next step.`,
+    en: `You are in ${label}${a} — this article matches the current context and guides the next step.`,
+    pl: `Jesteś w ${label}${a} — ten artykuł pasuje do bieżącego kontekstu i prowadzi do następnego kroku.`,
+    de: `Sie befinden sich in ${label}${a} — dieser Artikel passt zum aktuellen Kontext und leitet den nächsten Schritt.`,
+    ar: `أنت في ${label}${a} — هذه المقالة تتوافق مع السياق الحالي وتوجه الخطوة التالية.`,
+    jp: `${label}${a}にいます — この記事は現在のコンテキストに一致し、次のステップを案内します。`,
+    es: `Estás en ${label}${a} — este artículo coincide con el contexto actual y guía al siguiente paso.`,
   };
 }
 
@@ -75,7 +93,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     getV8Context(req);
 
-    const surface_id = firstParam(req.query.surface_id) || firstParam(req.query.surface) || 'unknown';
+    const surface_id =
+      firstParam(req.query.surface_id) || firstParam(req.query.surface) || 'unknown';
     const module_id = firstParam(req.query.module_id) || firstParam(req.query.module) || surface_id;
     const view_id = firstParam(req.query.view_id) || firstParam(req.query.view) || undefined;
     const artifact_type = firstParam(req.query.artifact_type) || undefined;
@@ -109,4 +128,3 @@ router.get(
 );
 
 export default router;
-

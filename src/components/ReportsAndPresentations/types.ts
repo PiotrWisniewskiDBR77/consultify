@@ -30,7 +30,7 @@ export interface UnifiedOutputRow {
   governance?: ArtifactGovernanceSummary;
 }
 
-export type TemplateType = 'report' | 'presentation';
+export type TemplateType = 'report' | 'presentation' | 'sheet';
 export type TemplateCategory =
   | 'R1'
   | 'R2'
@@ -43,7 +43,7 @@ export type TemplateCategory =
   | 'assessment_results'
   | 'custom';
 export type TemplateScope = 'personal' | 'application' | 'organization';
-export type TemplateStatus = 'active' | 'archived' | 'draft';
+export type TemplateStatus = 'active' | 'deprecated' | 'archived' | 'draft';
 
 export type ReportType = 'R1' | 'R2' | 'R3' | 'R4' | 'custom';
 export type ReportStatus = 'draft' | 'ready' | 'exported' | 'archived';
@@ -149,6 +149,11 @@ export interface TemplateItem {
   createdBy: string;
   slideCount?: number;
   sectionCount?: number;
+  deprecationReason?: string;
+  migrationHint?: string;
+  /** Structured pointer to the replacement template artifact */
+  replacedByArtifactId?: string;
+  governance?: ArtifactGovernanceSummary | null;
   [key: string]: unknown;
 }
 
@@ -259,5 +264,16 @@ export const TEMPLATE_TYPE_META: Record<
   { label: string; labelPl: string; dotColor: string }
 > = {
   report: { label: 'Report', labelPl: 'Raport', dotColor: 'bg-blue-400' },
+  sheet: { label: 'Sheet', labelPl: 'Tabela', dotColor: 'bg-emerald-400' },
   presentation: { label: 'Presentation', labelPl: 'Prezentacja', dotColor: 'bg-purple-400' },
+};
+
+export const TEMPLATE_STATUS_META: Record<
+  TemplateStatus,
+  { label: string; labelPl: string; dotColor: string }
+> = {
+  active: { label: 'Active', labelPl: 'Aktywny', dotColor: 'bg-emerald-400' },
+  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400' },
+  deprecated: { label: 'Deprecated', labelPl: 'Wycofany', dotColor: 'bg-amber-500' },
+  archived: { label: 'Archived', labelPl: 'Zarchiwizowany', dotColor: 'bg-slate-500' },
 };

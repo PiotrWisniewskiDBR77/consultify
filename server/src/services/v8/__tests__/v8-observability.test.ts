@@ -221,6 +221,20 @@ describe('v8MetricsMiddleware', () => {
     const snap = getV8MetricsSnapshot();
     expect(snap.avgLatencyMs).toBeGreaterThanOrEqual(10);
   });
+
+  it('calls next when res.on throws', () => {
+    const req = {} as any;
+    const res = {
+      statusCode: 200,
+      on: () => {
+        throw new Error('listener registration failed');
+      },
+    } as any;
+    const next = vi.fn();
+
+    expect(() => v8MetricsMiddleware(req, res, next)).not.toThrow();
+    expect(next).toHaveBeenCalledOnce();
+  });
 });
 
 // ==========================================

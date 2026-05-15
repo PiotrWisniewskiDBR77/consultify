@@ -231,9 +231,35 @@ export async function setConnectorAuthState(
     ]
   );
 
+  const isRecovery =
+    validated.targetState === 'healthy' &&
+    currentRow != null &&
+    ['degraded_reauth_needed', 'degraded_scope_limited', 'suspended'].includes(currentState);
+
   logger.info(
-    `${LOG_PREFIX} Auth state transition: ${currentState} → ${validated.targetState} for connector ${validated.connectorId}`
+    `${LOG_PREFIX} Auth state transition: ${currentState} → ${validated.targetState} for connector ${validated.connectorId}${isRecovery ? ' [RECOVERED]' : ''}`
   );
+
+  if (isRecovery) {
+    try {
+      await dbRun(
+        `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+         VALUES (gen_random_uuid()::TEXT, ?, NULL, 'connection_recovered', ?, ?, ?::JSONB)`,
+        [
+          validated.organizationId,
+          validated.transitionedBy,
+          validated.transitionedBy,
+          JSON.stringify({
+            connectorId: validated.connectorId,
+            previousState: currentState,
+            recoveryReason: validated.reason ?? 'reauth_completed',
+          }),
+        ]
+      );
+    } catch {
+      logger.warn(`${LOG_PREFIX} Failed to log connection_recovered audit event`);
+    }
+  }
 
   return {
     recordId,
@@ -314,7 +340,7 @@ export async function registerProviderProfile(
       providerId: validated.providerId,
       providerName: validated.providerName,
       tier: validated.tier,
-      parityDimensions: validated.parityDimensions,
+      parityDimensions: validated.parityDimensions as ProviderDepthProfile['parityDimensions'],
       limitations: validated.limitations,
       displayContract: validated.displayContract,
       organizationId: validated.organizationId,
@@ -352,7 +378,7 @@ export async function registerProviderProfile(
     providerId: validated.providerId,
     providerName: validated.providerName,
     tier: validated.tier,
-    parityDimensions: validated.parityDimensions,
+    parityDimensions: validated.parityDimensions as ProviderDepthProfile['parityDimensions'],
     limitations: validated.limitations,
     displayContract: validated.displayContract,
     organizationId: validated.organizationId,
@@ -561,6 +587,30 @@ export async function recordConflict(params: RecordConflictParams): Promise<Conf
     `${LOG_PREFIX} Recorded conflict ${conflictId}: ${validated.conflictClass} (${validated.severity})`
   );
 
+  if (
+    ['schema_mismatch_conflict', 'custom_field_conflict', 'stale_snapshot_conflict'].includes(
+      validated.conflictClass
+    )
+  ) {
+    try {
+      await dbRun(
+        `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+         VALUES (gen_random_uuid()::TEXT, ?, NULL, 'drift_detected', 'system', 'system', ?::JSONB)`,
+        [
+          validated.organizationId,
+          JSON.stringify({
+            conflictId,
+            conflictClass: validated.conflictClass,
+            severity: validated.severity,
+            objectSyncStateId: validated.objectSyncStateId,
+          }),
+        ]
+      );
+    } catch {
+      logger.warn(`${LOG_PREFIX} Failed to emit drift_detected telemetry event`);
+    }
+  }
+
   return {
     conflictId,
     objectSyncStateId: validated.objectSyncStateId,
@@ -637,6 +687,215 @@ export async function getConflictsByObject(
   );
 
   return (rows || []).map(rowToConflictRecord);
+}
+
+// ==========================================
+// PROVIDER CATALOG STATE (§2.3.3A)
+// ==========================================
+
+const PROVIDER_LIFECYCLE_STATES = [
+  'draft',
+  'connected',
+  'degraded',
+  'requires_action',
+  'recovered',
+  'blocked',
+] as const;
+
+type ProviderLifecycleState = (typeof PROVIDER_LIFECYCLE_STATES)[number];
+
+export const PROVIDER_STATE_TRANSITIONS: Record<
+  ProviderLifecycleState,
+  readonly ProviderLifecycleState[]
+> = {
+  draft: ['connected', 'blocked'],
+  connected: ['degraded', 'requires_action', 'blocked'],
+  degraded: ['connected', 'recovered', 'requires_action', 'blocked'],
+  requires_action: ['connected', 'recovered', 'blocked'],
+  recovered: ['connected'],
+  blocked: ['connected', 'draft'],
+};
+
+export interface ProviderCatalogState {
+  stateId: string;
+  providerId: string;
+  organizationId: string;
+  lifecycleState: ProviderLifecycleState;
+  previousState: ProviderLifecycleState | null;
+  reason: string | null;
+  incidentDescription: string | null;
+  expectedRecoveryAt: string | null;
+  transitionedAt: string;
+  transitionedBy: string;
+}
+
+interface ProviderCatalogStateRow {
+  state_id: string;
+  provider_id: string;
+  organization_id: string;
+  lifecycle_state: string;
+  previous_state: string | null;
+  reason: string | null;
+  incident_description: string | null;
+  expected_recovery_at: string | null;
+  transitioned_at: string;
+  transitioned_by: string;
+}
+
+function rowToProviderCatalogState(row: ProviderCatalogStateRow): ProviderCatalogState {
+  return {
+    stateId: row.state_id,
+    providerId: row.provider_id,
+    organizationId: row.organization_id,
+    lifecycleState: row.lifecycle_state as ProviderLifecycleState,
+    previousState: row.previous_state as ProviderLifecycleState | null,
+    reason: row.reason,
+    incidentDescription: row.incident_description,
+    expectedRecoveryAt: row.expected_recovery_at,
+    transitionedAt: row.transitioned_at,
+    transitionedBy: row.transitioned_by,
+  };
+}
+
+export function isValidProviderStateTransition(
+  current: ProviderLifecycleState,
+  target: ProviderLifecycleState
+): boolean {
+  const allowed = PROVIDER_STATE_TRANSITIONS[current];
+  return (allowed as readonly string[]).includes(target);
+}
+
+export async function setProviderCatalogState(params: {
+  providerId: string;
+  organizationId: string;
+  targetState: ProviderLifecycleState;
+  transitionedBy: string;
+  reason?: string | null;
+  incidentDescription?: string | null;
+  expectedRecoveryAt?: string | null;
+}): Promise<ProviderCatalogState> {
+  const currentRow = await dbGet<ProviderCatalogStateRow>(
+    `SELECT * FROM v8_provider_catalog_states
+     WHERE provider_id = ? AND organization_id = ?`,
+    [params.providerId, params.organizationId],
+    { fallback: true }
+  );
+
+  const currentState: ProviderLifecycleState = currentRow
+    ? (currentRow.lifecycle_state as ProviderLifecycleState)
+    : 'draft';
+
+  if (
+    currentState !== params.targetState &&
+    !isValidProviderStateTransition(currentState, params.targetState)
+  ) {
+    throw new Error(`Invalid provider state transition: ${currentState} → ${params.targetState}`);
+  }
+
+  const stateId = uuidv4();
+  const now = new Date().toISOString();
+
+  if (currentRow) {
+    await dbRun(
+      `UPDATE v8_provider_catalog_states
+       SET lifecycle_state = ?, previous_state = ?, reason = ?,
+           incident_description = ?, expected_recovery_at = ?,
+           transitioned_at = ?, transitioned_by = ?
+       WHERE provider_id = ? AND organization_id = ?`,
+      [
+        params.targetState,
+        currentState,
+        params.reason ?? null,
+        params.incidentDescription ?? null,
+        params.expectedRecoveryAt ?? null,
+        now,
+        params.transitionedBy,
+        params.providerId,
+        params.organizationId,
+      ]
+    );
+
+    logger.info(
+      `${LOG_PREFIX} Provider catalog state: ${currentState} → ${params.targetState} for ${params.providerId}`
+    );
+
+    return {
+      stateId: currentRow.state_id,
+      providerId: params.providerId,
+      organizationId: params.organizationId,
+      lifecycleState: params.targetState,
+      previousState: currentState,
+      reason: params.reason ?? null,
+      incidentDescription: params.incidentDescription ?? null,
+      expectedRecoveryAt: params.expectedRecoveryAt ?? null,
+      transitionedAt: now,
+      transitionedBy: params.transitionedBy,
+    };
+  }
+
+  await dbRun(
+    `INSERT INTO v8_provider_catalog_states (
+      state_id, provider_id, organization_id, lifecycle_state,
+      previous_state, reason, incident_description, expected_recovery_at,
+      transitioned_at, transitioned_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      stateId,
+      params.providerId,
+      params.organizationId,
+      params.targetState,
+      null,
+      params.reason ?? null,
+      params.incidentDescription ?? null,
+      params.expectedRecoveryAt ?? null,
+      now,
+      params.transitionedBy,
+    ]
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Provider catalog state created: ${params.targetState} for ${params.providerId}`
+  );
+
+  return {
+    stateId,
+    providerId: params.providerId,
+    organizationId: params.organizationId,
+    lifecycleState: params.targetState,
+    previousState: null,
+    reason: params.reason ?? null,
+    incidentDescription: params.incidentDescription ?? null,
+    expectedRecoveryAt: params.expectedRecoveryAt ?? null,
+    transitionedAt: now,
+    transitionedBy: params.transitionedBy,
+  };
+}
+
+export async function getProviderCatalogState(
+  providerId: string,
+  orgId: string
+): Promise<ProviderCatalogState | null> {
+  const row = await dbGet<ProviderCatalogStateRow>(
+    `SELECT * FROM v8_provider_catalog_states
+     WHERE provider_id = ? AND organization_id = ?`,
+    [providerId, orgId],
+    { fallback: true }
+  );
+
+  if (!row) return null;
+  return rowToProviderCatalogState(row);
+}
+
+export async function listProviderCatalogStates(orgId: string): Promise<ProviderCatalogState[]> {
+  const rows = await dbAll<ProviderCatalogStateRow>(
+    `SELECT * FROM v8_provider_catalog_states
+     WHERE organization_id = ?
+     ORDER BY transitioned_at DESC`,
+    [orgId],
+    { fallback: true }
+  );
+
+  return (rows || []).map(rowToProviderCatalogState);
 }
 
 // ==========================================

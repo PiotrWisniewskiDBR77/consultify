@@ -19,6 +19,7 @@ import {
   Factory,
   FileSpreadsheet,
   FileText,
+  FolderOutput,
   LayoutDashboard,
   Lightbulb,
   Map,
@@ -115,29 +116,32 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
     {
       id: 'MODULE_PRESENTATIONS',
       label: t('sidebar.outputsLibrary', 'Outputs'),
-      icon: React.createElement(Presentation, { size: 20 }),
+      icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
     },
-    // 10. Wordy — KIMI-style document generation (P22)
+    // 10. Wordy — KIMI-style document generation (P22) — contact required
     {
       id: 'MODULE_WORDY',
-      label: t('sidebar.wordy', 'Wordy'),
+      label: t('sidebar.wordy', 'Documents'),
       icon: React.createElement(FileText, { size: 20 }),
       viewId: AppView.WORDY,
+      badge: 'soon',
     },
-    // 11. Excele — KIMI-style spreadsheet generation (P23)
+    // 11. Excele — KIMI-style spreadsheet generation (P23) — contact required
     {
       id: 'MODULE_EXCELE',
-      label: t('sidebar.excele', 'Excele'),
+      label: t('sidebar.excele', 'Tables'),
       icon: React.createElement(FileSpreadsheet, { size: 20 }),
       viewId: AppView.EXCELE,
+      badge: 'soon',
     },
-    // 12. Prezentacje — Gamma-style presentation generation (P20)
+    // 12. Prezentacje — Gamma-style presentation generation (P20) — contact required
     {
       id: 'MODULE_PREZENTACJE_GEN',
-      label: t('sidebar.prezentacje', 'Prezentacje'),
+      label: t('sidebar.prezentacje', 'Presentations'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
+      badge: 'soon',
     },
     {
       id: 'MODULE_MEETING',
@@ -218,38 +222,9 @@ export function getSuperAdminMenuItem(t: TranslationFn): MenuItem {
     id: 'SUPERADMIN',
     label: t('sidebar.superAdmin', 'SuperAdmin'),
     icon: React.createElement(Shield, { size: 20 }),
-    subItems: [
-      {
-        id: 'SUPERADMIN_OVERVIEW',
-        label: t('superadmin.overview', 'Overview'),
-        viewId: AppView.SUPERADMIN_OVERVIEW,
-        icon: React.createElement(LayoutDashboard, { size: 16 }),
-      },
-      {
-        id: 'SUPERADMIN_CUSTOMERS',
-        label: t('superadmin.customers', 'Customers'),
-        viewId: AppView.SUPERADMIN_CUSTOMERS,
-        icon: React.createElement(Users, { size: 16 }),
-      },
-      {
-        id: 'SUPERADMIN_AI_PLATFORM',
-        label: t('superadmin.aiPlatform', 'AI Platform'),
-        viewId: AppView.SUPERADMIN_AI_PLATFORM,
-        icon: React.createElement(Brain, { size: 16 }),
-      },
-      {
-        id: 'SUPERADMIN_REVENUE',
-        label: t('superadmin.revenue', 'Revenue'),
-        viewId: AppView.SUPERADMIN_REVENUE,
-        icon: React.createElement(CreditCard, { size: 16 }),
-      },
-      {
-        id: 'SUPERADMIN_SYSTEM',
-        label: t('superadmin.system', 'System'),
-        viewId: AppView.SUPERADMIN_SYSTEM,
-        icon: React.createElement(Settings, { size: 16 }),
-      },
-    ],
+    viewId: AppView.SUPERADMIN_CUSTOMERS,
+    // Superadmin owns a dedicated internal shell; the global sidebar acts only
+    // as the launcher into that control plane to avoid duplicated IA.
   };
 }
 
@@ -263,6 +238,10 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
+    [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),
+    [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentations'),
+    [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
+    [AppView.EXCELE]: t('sidebar.excele', 'Tables'),
   };
   return viewNames[view] || t('common.previousStep');
 }

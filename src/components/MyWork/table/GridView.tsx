@@ -1,160 +1,886 @@
 /**
- * GridView — Gallery/card view showing rows as visual cards.
- * Supports cover images, property pills, and click-to-detail.
+ * GridView — Platform-native data grid for the Table Platform (gallery layout slot).
+ *
+ * Virtualized body, sticky header/first data column, resizable columns, row selection
+ * with shift-range, footer aggregations, and double-click inline editing.
  */
-import { Image, Star } from 'lucide-react';
-import React from 'react';
+import { AlertTriangle, Image, X } from 'lucide-react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ColumnDef, TableNode } from './tableTypes';
-import { SELECT_COLORS } from './tableTypes';
+import type { FieldType, LinkedRecordFieldOptions } from '@/types/tablePlatform';
 
-interface GridViewProps {
-  rows: TableNode[];
-  columns: ColumnDef[];
-  onNodeClick?: (nodeId: string) => void;
+import { CellEditor } from './CellEditor';
+import { LinkedRecordDisplay } from './LinkedRecordDisplay';
+import { PlatformCellRenderer } from './PlatformCellRenderer';
+import { TableDataContext, useTableData } from './TableDataProvider';
+import type { ColumnDef, TableNode } from './tableTypes';
+import {
+  computeAggregation,
+  DEFAULT_COLUMN_WIDTH,
+  MAX_COLUMN_WIDTH,
+  MIN_COLUMN_WIDTH,
+} from './tableTypes';
+
+// ── Layout constants ─────────────────────────────────────────────────────────
+
+const CHECK_COL_PX = 44;
+const ROW_HEIGHT_PX = 36;
+const GROUP_ROW_HEIGHT_PX = 32;
+const VIRTUAL_BUFFER = 10;
+
+const headerCell =
+  'bg-slate-50 dark:bg-navy-800/50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100 dark:border-navy-800 font-semibold text-left whitespace-nowrap select-none';
+
+const bodyCell =
+  'border-b border-slate-100 dark:border-navy-800 h-9 px-3 align-middle text-sm text-slate-800 dark:text-slate-200';
+
+const stickyTop = 'sticky top-0 z-10';
+
+function cellId(rowId: string, fieldId: string): string {
+  return `${rowId}:${fieldId}`;
 }
 
-export const GridView: React.FC<GridViewProps> = ({ rows, columns, onNodeClick }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+export function isMissingField(
+  fieldId: string,
+  viewConfig?: { missing_fields?: string[] }
+): boolean {
+  return viewConfig?.missing_fields?.includes(fieldId) ?? false;
+}
 
-  const displayCols = columns
-    .filter((c) => c.visible && c.key !== 'label' && c.key !== 'type')
-    .slice(0, 4);
+function columnTypeToFieldType(col: ColumnDef): FieldType {
+  switch (col.type) {
+    case 'number':
+    case 'currency':
+      return 'number';
+    case 'checkbox':
+      return 'checkbox';
+    case 'date':
+    case 'created_time':
+    case 'last_edited_time':
+      return 'date';
+    case 'select':
+    case 'status':
+      return 'singleSelect';
+    case 'multiselect':
+      return 'multiSelect';
+    case 'url':
+      return 'url';
+    case 'email':
+      return 'email';
+    case 'phone':
+      return 'phone';
+    case 'rating':
+      return 'rating';
+    case 'file':
+      return 'attachment';
+    case 'relation':
+      return 'linkedRecord';
+    case 'rollup':
+      return 'rollup';
+    case 'formula':
+    case 'ai_generated':
+      return 'formula';
+    default:
+      return 'singleLineText';
+  }
+}
 
-  if (rows.length === 0) {
+function selectOptionsFromColumn(col: ColumnDef): Record<string, unknown> {
+  if (!col.options?.length) return {};
+  return {
+    options: col.options.map((name, i) => ({
+      id: `opt-${i}`,
+      name,
+      color: col.optionColors?.[name],
+    })),
+  };
+}
+
+type FlatItem = { kind: 'group'; label: string } | { kind: 'row'; row: TableNode };
+
+function flattenRows(
+  processedRows: TableNode[],
+  groupedRows: Record<string, TableNode[]> | null
+): FlatItem[] {
+  if (!groupedRows || Object.keys(groupedRows).length === 0) {
+    return processedRows.map((row) => ({ kind: 'row' as const, row }));
+  }
+  const out: FlatItem[] = [];
+  for (const [label, rows] of Object.entries(groupedRows)) {
+    out.push({ kind: 'group', label });
+    for (const row of rows) out.push({ kind: 'row', row });
+  }
+  return out;
+}
+
+function itemHeight(item: FlatItem): number {
+  return item.kind === 'group' ? GROUP_ROW_HEIGHT_PX : ROW_HEIGHT_PX;
+}
+
+/** `starts[i]` = y-offset of item i; `ends[i]` = y-offset just below item i. */
+function cumulativeStartsAndEnds(items: FlatItem[]): {
+  starts: number[];
+  ends: number[];
+  total: number;
+} {
+  const starts: number[] = [];
+  const ends: number[] = [];
+  let y = 0;
+  for (const it of items) {
+    starts.push(y);
+    y += itemHeight(it);
+    ends.push(y);
+  }
+  return { starts, ends, total: y };
+}
+
+/** Smallest index i such that ends[i] > scrollTop (first row intersecting viewport from top). */
+function findStartIndex(ends: number[], scrollTop: number): number {
+  if (ends.length === 0) return 0;
+  let lo = 0;
+  let hi = ends.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (ends[mid]! <= scrollTop) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo >= ends.length ? ends.length - 1 : lo;
+}
+
+// ── Shared grid (used with provider data or legacy props) ────────────────────
+
+interface PlatformFieldMeta {
+  fieldType: FieldType;
+  options: Record<string, unknown>;
+  isComputed: boolean;
+}
+
+interface DataGridProps {
+  processedRows: TableNode[];
+  groupedRows: Record<string, TableNode[]> | null;
+  visibleColumns: ColumnDef[];
+  platformFieldById: Map<string, PlatformFieldMeta>;
+  locked: boolean;
+  isPl: boolean;
+  selectedRowIds: Set<string>;
+  setSelectedRowIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  toggleRowSelection: (id: string) => void;
+  handleFieldChange: (nodeId: string, field: string, value: unknown) => void;
+  editingCellId: string | null;
+  setEditingCellId: (id: string | null) => void;
+  onOpenDetail: (rowId: string) => void;
+  onOpenLinkedRecord: (recordId: string, tableId: string) => void;
+  viewConfig?: { missing_fields?: string[]; missing_field_names?: Record<string, string> };
+  onRemoveMissingField?: (fieldId: string) => void;
+}
+
+const DataGrid: React.FC<DataGridProps> = ({
+  processedRows,
+  groupedRows,
+  visibleColumns,
+  platformFieldById,
+  locked,
+  isPl,
+  selectedRowIds,
+  setSelectedRowIds,
+  toggleRowSelection,
+  handleFieldChange,
+  editingCellId,
+  setEditingCellId,
+  onOpenDetail,
+  onOpenLinkedRecord,
+  viewConfig,
+  onRemoveMissingField,
+}) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const footerScrollRef = useRef<HTMLDivElement>(null);
+  const lastAnchorIndex = useRef<number | null>(null);
+
+  const [widthByKey, setWidthByKey] = useState<Record<string, number>>(() => {
+    const m: Record<string, number> = {};
+    for (const c of visibleColumns) m[c.key] = c.width || DEFAULT_COLUMN_WIDTH;
+    return m;
+  });
+
+  useEffect(() => {
+    setWidthByKey((prev) => {
+      const next = { ...prev };
+      for (const c of visibleColumns) {
+        if (next[c.key] == null) next[c.key] = c.width || DEFAULT_COLUMN_WIDTH;
+      }
+      return next;
+    });
+  }, [visibleColumns]);
+
+  const flatItems = useMemo(
+    () => flattenRows(processedRows, groupedRows),
+    [processedRows, groupedRows]
+  );
+
+  const {
+    starts: rowStarts,
+    ends: rowEnds,
+    total: totalScrollHeight,
+  } = useMemo(() => cumulativeStartsAndEnds(flatItems), [flatItems]);
+
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportH, setViewportH] = useState(400);
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => setViewportH(el.clientHeight || 400);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const onBodyScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setScrollTop(el.scrollTop);
+    if (footerScrollRef.current) footerScrollRef.current.scrollLeft = el.scrollLeft;
+  }, []);
+
+  const onFooterScroll = useCallback(() => {
+    const body = scrollRef.current;
+    const foot = footerScrollRef.current;
+    if (!body || !foot) return;
+    body.scrollLeft = foot.scrollLeft;
+  }, []);
+
+  const { start, end } = useMemo(() => {
+    if (flatItems.length === 0) return { start: 0, end: 0 };
+    const st = scrollTop;
+    const startIdx = findStartIndex(rowEnds, st);
+    const viewBottom = st + viewportH + ROW_HEIGHT_PX * VIRTUAL_BUFFER;
+    let endIdx = startIdx;
+    while (endIdx < flatItems.length && (rowStarts[endIdx] ?? 0) < viewBottom) {
+      endIdx++;
+    }
+    const s = Math.max(0, startIdx - VIRTUAL_BUFFER);
+    const e = Math.min(flatItems.length, endIdx + VIRTUAL_BUFFER);
+    return { start: s, end: e };
+  }, [flatItems, rowEnds, rowStarts, scrollTop, viewportH]);
+
+  const paddingTop = start > 0 ? (rowStarts[start] ?? 0) : 0;
+  let paddingBottom = 0;
+  if (end < flatItems.length) {
+    paddingBottom = totalScrollHeight - (rowStarts[end] ?? totalScrollHeight);
+  }
+
+  const allRowIds = useMemo(
+    () =>
+      flatItems
+        .filter((x): x is Extract<FlatItem, { kind: 'row' }> => x.kind === 'row')
+        .map((x) => x.row.id),
+    [flatItems]
+  );
+
+  const allSelected = allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds.has(id));
+
+  const toggleSelectAll = useCallback(() => {
+    if (allSelected) setSelectedRowIds(new Set());
+    else setSelectedRowIds(new Set(allRowIds));
+  }, [allRowIds, allSelected, setSelectedRowIds]);
+
+  const onCheckboxChange = useCallback(
+    (rowId: string, indexInFlat: number, shiftKey: boolean) => {
+      if (shiftKey && lastAnchorIndex.current != null) {
+        const a = Math.min(lastAnchorIndex.current, indexInFlat);
+        const b = Math.max(lastAnchorIndex.current, indexInFlat);
+        const slice = flatItems
+          .slice(a, b + 1)
+          .filter((x): x is Extract<FlatItem, { kind: 'row' }> => x.kind === 'row');
+        setSelectedRowIds(new Set(slice.map((r) => r.row.id)));
+      } else {
+        lastAnchorIndex.current = indexInFlat;
+        toggleRowSelection(rowId);
+      }
+    },
+    [flatItems, setSelectedRowIds, toggleRowSelection]
+  );
+
+  const resizeState = useRef<{ colKey: string; startX: number; startW: number } | null>(null);
+
+  const onResizeMouseDown = useCallback(
+    (e: React.MouseEvent, colKey: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      resizeState.current = {
+        colKey,
+        startX: e.clientX,
+        startW: widthByKey[colKey] ?? DEFAULT_COLUMN_WIDTH,
+      };
+      const onMove = (ev: MouseEvent) => {
+        const st = resizeState.current;
+        if (!st) return;
+        const delta = ev.clientX - st.startX;
+        const w = Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, st.startW + delta));
+        setWidthByKey((prev) => ({ ...prev, [st.colKey]: w }));
+      };
+      const onUp = () => {
+        resizeState.current = null;
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    },
+    [widthByKey]
+  );
+
+  const footerValues = useMemo(
+    () =>
+      visibleColumns.map((col) => {
+        const agg = col.aggregation;
+        if (!agg || agg === 'none') return '';
+        const vals = processedRows.map(
+          (r) => r.data?.[col.key] as string | number | null | undefined
+        );
+        return computeAggregation(agg, vals);
+      }),
+    [processedRows, visibleColumns]
+  );
+
+  const colSpan = visibleColumns.length + 1;
+
+  const renderCell = useCallback(
+    (row: TableNode, col: ColumnDef) => {
+      if (isMissingField(col.key, viewConfig)) {
+        return (
+          <div
+            className="text-xs text-amber-500 dark:text-amber-400 italic select-none"
+            aria-hidden
+          >
+            —
+          </div>
+        );
+      }
+      const id = cellId(row.id, col.key);
+      const isEditing = !locked && editingCellId === id;
+      const pf = platformFieldById.get(col.key);
+      const fieldType = (pf?.fieldType ?? columnTypeToFieldType(col)) as FieldType;
+      const fieldOptions =
+        (pf?.options as Record<string, unknown>) ||
+        (fieldType === 'singleSelect' || fieldType === 'multiSelect'
+          ? selectOptionsFromColumn(col)
+          : {});
+      const rawValue = row.data?.[col.key];
+      const isLinked = fieldType === 'linkedRecord';
+      const linkedTableId =
+        (fieldOptions as unknown as LinkedRecordFieldOptions | undefined)?.linkedTableId ?? '';
+
+      if (isEditing) {
+        return (
+          <div className="min-w-0 py-0.5" onClick={(e) => e.stopPropagation()}>
+            <CellEditor
+              value={rawValue}
+              fieldType={fieldType}
+              fieldOptions={fieldOptions}
+              linkedRecordContext={
+                isLinked ? { recordId: row.id, fieldId: col.key, linkedTableId } : undefined
+              }
+              onSave={(v) => {
+                handleFieldChange(row.id, col.key, v);
+                setEditingCellId(null);
+              }}
+              onCancel={() => setEditingCellId(null)}
+            />
+          </div>
+        );
+      }
+
+      const readOnly =
+        isLinked && linkedTableId ? (
+          <LinkedRecordDisplay
+            recordId={row.id}
+            fieldId={col.key}
+            linkedTableId={linkedTableId}
+            locked={locked}
+            onOpenRecord={(rid, tid) => onOpenLinkedRecord(rid, tid)}
+            onOpenPicker={() => {
+              if (!locked) setEditingCellId(id);
+            }}
+          />
+        ) : (
+          <PlatformCellRenderer
+            value={rawValue}
+            fieldType={fieldType}
+            fieldOptions={fieldOptions}
+            record={{ data: row.data as Record<string, unknown> | undefined }}
+          />
+        );
+
+      return (
+        <div
+          role="gridcell"
+          tabIndex={0}
+          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-violet-500/40 cursor-text"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            if (locked || pf?.isComputed) return;
+            setEditingCellId(id);
+          }}
+          onKeyDown={(e) => {
+            if (locked || pf?.isComputed) return;
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              setEditingCellId(id);
+            }
+          }}
+        >
+          {readOnly}
+        </div>
+      );
+    },
+    [
+      locked,
+      editingCellId,
+      platformFieldById,
+      handleFieldChange,
+      setEditingCellId,
+      onOpenLinkedRecord,
+      viewConfig,
+    ]
+  );
+
+  if (processedRows.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2 p-8">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-slate-400 dark:text-slate-500">
         <Image size={32} />
         <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No items'}</span>
       </div>
     );
   }
 
+  const stickyPrimaryLeft = CHECK_COL_PX;
+
   return (
-    <div className="flex-1 overflow-auto p-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {rows.map((row) => {
-          const coverUrl = row.data?.coverImage || row.data?.thumbnail;
-          const emoji = row.data?.icon || row.data?.emoji;
-          const color = row.data?.color;
-
-          return (
-            <div
-              key={row.id}
-              className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-800 overflow-hidden cursor-pointer hover:shadow-lg hover:border-violet-300/60 dark:hover:border-violet-500/30 transition-all group"
-              onClick={() => onNodeClick?.(row.id)}
-            >
-              {/* Cover area */}
-              {coverUrl ? (
-                <div
-                  className="h-24 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${coverUrl})` }}
+    <div className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40">
+      <div
+        ref={scrollRef}
+        className="min-h-[320px] flex-1 overflow-y-auto overflow-x-auto"
+        onScroll={onBodyScroll}
+      >
+        <table className="w-max min-w-full border-collapse text-left">
+          <thead className={stickyTop}>
+            <tr>
+              <th
+                style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
+                className={`${headerCell} sticky left-0 z-20 border-r border-slate-100 dark:border-navy-800 px-2 py-2`}
+              >
+                <input
+                  type="checkbox"
+                  className="rounded border-slate-300 dark:border-navy-600"
+                  checked={allSelected}
+                  disabled={locked}
+                  onChange={toggleSelectAll}
+                  aria-label={isPl ? 'Zaznacz wszystkie' : 'Select all'}
                 />
-              ) : (
-                <div
-                  className="h-16 flex items-center justify-center"
-                  style={{
-                    background: color
-                      ? `linear-gradient(135deg, ${color}30, ${color}10)`
-                      : 'linear-gradient(135deg, #e0e7ff, #ede9fe)',
-                  }}
-                >
-                  {emoji ? (
-                    <span className="text-2xl">{emoji}</span>
-                  ) : (
-                    <span
-                      className="text-lg font-bold opacity-30"
-                      style={{ color: color || '#6366f1' }}
+              </th>
+              {visibleColumns.map((col, colIdx) => {
+                const w = widthByKey[col.key] ?? col.width ?? DEFAULT_COLUMN_WIDTH;
+                const isPrimary = colIdx === 0;
+                const missing = isMissingField(col.key, viewConfig);
+                const missingFieldName =
+                  viewConfig?.missing_field_names?.[col.key] ?? col.header ?? 'Unknown';
+                if (missing) {
+                  return (
+                    <th
+                      key={col.key}
+                      style={{
+                        width: w,
+                        minWidth: w,
+                        maxWidth: w,
+                        ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
+                      }}
+                      className={`relative border-r border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs px-3 py-2 border-b border-amber-200 dark:border-amber-800 font-semibold text-left whitespace-nowrap select-none ${
+                        isPrimary
+                          ? `sticky z-[15] border-r border-amber-200 dark:border-amber-800`
+                          : ''
+                      }`}
                     >
-                      {(row.data?.label || '?').charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="p-3">
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate mb-1.5 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                  {row.data?.label || row.id}
-                </div>
-
-                {/* Property pills */}
-                <div className="flex flex-wrap gap-1">
-                  {displayCols.map((col) => {
-                    const val = row.data?.[col.key];
-                    if (val == null || val === '') return null;
-
-                    if (col.type === 'select') {
-                      const bgColor =
-                        col.optionColors?.[String(val)] ||
-                        SELECT_COLORS[
-                          (col.options || []).indexOf(String(val)) % SELECT_COLORS.length
-                        ] ||
-                        '#e0e7ff';
-                      return (
-                        <span
-                          key={col.key}
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold"
-                          style={{ backgroundColor: bgColor, color: '#334155' }}
+                      <div className="flex items-center gap-1.5 pr-2">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        <span className="min-w-0 truncate">[Missing: {missingFieldName}]</span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveMissingField?.(col.key)}
+                          className="ml-auto shrink-0 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300"
+                          title={isPl ? 'Usuń z widoku' : 'Remove from view'}
+                          aria-label={isPl ? 'Usuń z widoku' : 'Remove from view'}
                         >
-                          {String(val)}
-                        </span>
-                      );
-                    }
-
-                    if (col.type === 'rating') {
-                      return (
-                        <span
-                          key={col.key}
-                          className="inline-flex items-center gap-0.5 text-amber-500"
-                        >
-                          <Star size={8} className="fill-amber-400" />
-                          <span className="text-[8px] font-bold">{val}</span>
-                        </span>
-                      );
-                    }
-
-                    if (col.type === 'progress') {
-                      const pct = Number(val) || 0;
-                      return (
-                        <div key={col.key} className="flex items-center gap-1">
-                          <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400'}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-[8px] text-slate-400">{pct}%</span>
-                        </div>
-                      );
-                    }
-
-                    if (col.type === 'checkbox') {
-                      return val ? (
-                        <span key={col.key} className="text-[8px] text-emerald-500 font-bold">
-                          ✓
-                        </span>
-                      ) : null;
-                    }
-
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
+                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-violet-400/50"
+                        onMouseDown={(e) => onResizeMouseDown(e, col.key)}
+                      />
+                    </th>
+                  );
+                }
+                return (
+                  <th
+                    key={col.key}
+                    style={{
+                      width: w,
+                      minWidth: w,
+                      maxWidth: w,
+                      ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
+                    }}
+                    className={`${headerCell} relative border-r border-slate-100 dark:border-navy-800 px-3 py-2 ${
+                      isPrimary
+                        ? `sticky z-[15] border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50`
+                        : ''
+                    }`}
+                  >
+                    <span className="block truncate pr-2">{col.header}</span>
+                    <button
+                      type="button"
+                      aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
+                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-violet-400/50"
+                      onMouseDown={(e) => onResizeMouseDown(e, col.key)}
+                    />
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {paddingTop > 0 && (
+              <tr aria-hidden className="pointer-events-none">
+                <td colSpan={colSpan} style={{ height: paddingTop, padding: 0, border: 0 }} />
+              </tr>
+            )}
+            {flatItems.slice(start, end).map((item, j) => {
+              const i = start + j;
+              if (item.kind === 'group') {
+                return (
+                  <tr key={`g-${item.label}-${i}`} className="bg-slate-100/90 dark:bg-navy-900/80">
+                    <td
+                      colSpan={colSpan}
+                      className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-navy-800"
+                    >
+                      {item.label}
+                    </td>
+                  </tr>
+                );
+              }
+              const row = item.row;
+              const selected = selectedRowIds.has(row.id);
+              return (
+                <tr
+                  key={row.id}
+                  className={`${selected ? 'bg-primary-50 dark:bg-primary-900/20' : ''} hover:bg-slate-50 dark:hover:bg-navy-800/30`}
+                  onClick={() => onOpenDetail(row.id)}
+                >
+                  <td
+                    style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
+                    className={`${bodyCell} sticky left-0 z-[8] border-r border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-950 ${
+                      selected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                    } text-center`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 dark:border-navy-600"
+                      checked={selected}
+                      disabled={locked}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        onCheckboxChange(row.id, i, e.shiftKey);
+                      }}
+                      aria-label={isPl ? 'Wybierz wiersz' : 'Select row'}
+                    />
+                  </td>
+                  {visibleColumns.map((col, colIdx) => {
+                    const w = widthByKey[col.key] ?? col.width ?? DEFAULT_COLUMN_WIDTH;
+                    const isPrimary = colIdx === 0;
+                    const missing = isMissingField(col.key, viewConfig);
                     return (
-                      <span
+                      <td
                         key={col.key}
-                        className="text-[8px] text-slate-500 dark:text-slate-400 truncate max-w-[80px]"
+                        style={{
+                          width: w,
+                          minWidth: w,
+                          maxWidth: w,
+                          ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
+                        }}
+                        className={[
+                          missing
+                            ? 'bg-amber-50/50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/50 px-3 py-2 text-xs text-amber-500 dark:text-amber-400 italic h-9 align-middle'
+                            : bodyCell,
+                          !missing && 'border-r border-slate-100 dark:border-navy-800 min-w-0',
+                          missing && 'border-r border-amber-100 dark:border-amber-800/50 min-w-0',
+                          isPrimary &&
+                            !missing &&
+                            'sticky z-[5] border-r border-slate-200 dark:border-navy-700',
+                          isPrimary &&
+                            missing &&
+                            'sticky z-[5] border-r border-amber-200 dark:border-amber-800',
+                          isPrimary &&
+                            !missing &&
+                            (selected
+                              ? 'bg-primary-50 dark:bg-primary-900/20'
+                              : 'bg-white dark:bg-navy-950'),
+                          isPrimary &&
+                            missing &&
+                            (selected
+                              ? 'bg-primary-50 dark:bg-primary-900/20'
+                              : 'bg-amber-50/50 dark:bg-amber-900/10'),
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {String(val)}
-                      </span>
+                        {renderCell(row, col)}
+                      </td>
                     );
                   })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                </tr>
+              );
+            })}
+            {paddingBottom > 0 && (
+              <tr aria-hidden className="pointer-events-none">
+                <td colSpan={colSpan} style={{ height: paddingBottom, padding: 0, border: 0 }} />
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        ref={footerScrollRef}
+        className="shrink-0 overflow-x-auto border-t border-slate-200/80 dark:border-navy-700/80 bg-slate-50/90 dark:bg-navy-900/60"
+        onScroll={onFooterScroll}
+      >
+        <table className="w-max min-w-full border-collapse text-left text-xs text-slate-600 dark:text-slate-300">
+          <tbody>
+            <tr>
+              <td
+                style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
+                className="sticky left-0 z-[8] border-r border-slate-100 dark:border-navy-800 bg-slate-50/90 dark:bg-navy-900/60 px-3 py-2 font-semibold uppercase tracking-wider text-slate-500"
+              >
+                {isPl ? 'Podsum.' : 'Totals'}
+              </td>
+              {visibleColumns.map((col, colIdx) => {
+                const w = widthByKey[col.key] ?? col.width ?? DEFAULT_COLUMN_WIDTH;
+                const isPrimary = colIdx === 0;
+                const missing = isMissingField(col.key, viewConfig);
+                const fv = footerValues[colIdx] ?? '';
+                const label =
+                  col.aggregation && col.aggregation !== 'none'
+                    ? `${col.aggregation.toUpperCase()}`
+                    : '';
+                return (
+                  <td
+                    key={col.key}
+                    style={{
+                      width: w,
+                      minWidth: w,
+                      maxWidth: w,
+                      ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
+                    }}
+                    className={`${
+                      missing
+                        ? 'border-r border-amber-100 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-900/10 px-3 py-2 text-xs text-amber-400/80'
+                        : 'border-r border-slate-100 dark:border-navy-800 px-3 py-2 tabular-nums'
+                    } ${
+                      isPrimary
+                        ? missing
+                          ? 'sticky z-[5] border-r border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10'
+                          : 'sticky z-[5] bg-slate-50/90 dark:bg-navy-900/60 border-r border-slate-200 dark:border-navy-700'
+                        : ''
+                    }`}
+                  >
+                    {missing ? '' : label && fv ? `${label}: ${fv}` : fv}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
+  );
+};
+
+// ── Connected: inside TableDataProvider ─────────────────────────────────────
+
+const GridViewConnected: React.FC = () => {
+  const {
+    processedRows,
+    groupedRows,
+    visibleColumns,
+    platformFields,
+    locked,
+    isPl,
+    selectedRowIds,
+    setSelectedRowIds,
+    toggleRowSelection,
+    handleFieldChange,
+    ui,
+    uiDispatch,
+    activeViewConfig,
+    removeMissingFieldFromView,
+  } = useTableData();
+
+  const platformFieldById = useMemo(() => {
+    const m = new Map<string, PlatformFieldMeta>();
+    for (const f of platformFields) {
+      m.set(f.id, {
+        fieldType: f.fieldType as FieldType,
+        options: (f.options ?? {}) as Record<string, unknown>,
+        isComputed: Boolean(f.isComputed),
+      });
+    }
+    return m;
+  }, [platformFields]);
+
+  const setEditingCellId = useCallback(
+    (id: string | null) => {
+      uiDispatch({ type: 'SET_EDITING_CELL', id });
+    },
+    [uiDispatch]
+  );
+
+  const onOpenDetail = useCallback(
+    (rowId: string) => {
+      uiDispatch({ type: 'SET_DETAIL_RECORD', id: rowId });
+    },
+    [uiDispatch]
+  );
+
+  const onOpenLinkedRecord = useCallback(
+    (recordId: string, _tableId: string) => {
+      void _tableId;
+      uiDispatch({ type: 'SET_EXPANDED_RECORD', id: recordId });
+    },
+    [uiDispatch]
+  );
+
+  return (
+    <DataGrid
+      processedRows={processedRows}
+      groupedRows={groupedRows}
+      visibleColumns={visibleColumns}
+      platformFieldById={platformFieldById}
+      locked={locked}
+      isPl={isPl}
+      selectedRowIds={selectedRowIds}
+      setSelectedRowIds={setSelectedRowIds}
+      toggleRowSelection={toggleRowSelection}
+      handleFieldChange={handleFieldChange}
+      editingCellId={ui.editingCellId}
+      setEditingCellId={setEditingCellId}
+      onOpenDetail={onOpenDetail}
+      onOpenLinkedRecord={onOpenLinkedRecord}
+      viewConfig={activeViewConfig}
+      onRemoveMissingField={removeMissingFieldFromView}
+    />
+  );
+};
+
+// ── Legacy: no TableDataProvider (props only) ────────────────────────────────
+
+export interface GridViewProps {
+  rows?: TableNode[];
+  columns?: ColumnDef[];
+  onNodeClick?: (nodeId: string) => void;
+  onFieldChange?: (nodeId: string, field: string, value: unknown) => void;
+  locked?: boolean;
+}
+
+const GridViewStandalone: React.FC<
+  Required<Pick<GridViewProps, 'rows' | 'columns'>> & GridViewProps
+> = ({ rows, columns, onNodeClick, onFieldChange, locked = false }) => {
+  const { i18n } = useTranslation();
+  const isPl = Boolean(i18n.language?.startsWith('pl'));
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(() => new Set());
+  const [editingCellId, setEditingCellId] = useState<string | null>(null);
+
+  const visibleColumns = useMemo(() => columns.filter((c) => c.visible), [columns]);
+
+  const toggleRowSelection = useCallback((id: string) => {
+    setSelectedRowIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleFieldChange = useCallback(
+    (nodeId: string, field: string, value: unknown) => {
+      onFieldChange?.(nodeId, field, value);
+    },
+    [onFieldChange]
+  );
+
+  const platformFieldById = useMemo(() => new Map<string, PlatformFieldMeta>(), []);
+
+  return (
+    <DataGrid
+      processedRows={rows}
+      groupedRows={null}
+      visibleColumns={visibleColumns}
+      platformFieldById={platformFieldById}
+      locked={locked}
+      isPl={isPl}
+      selectedRowIds={selectedRowIds}
+      setSelectedRowIds={setSelectedRowIds}
+      toggleRowSelection={toggleRowSelection}
+      handleFieldChange={handleFieldChange}
+      editingCellId={editingCellId}
+      setEditingCellId={setEditingCellId}
+      onOpenDetail={(id) => onNodeClick?.(id)}
+      onOpenLinkedRecord={() => {}}
+    />
+  );
+};
+
+// ── Public entry ────────────────────────────────────────────────────────────
+
+export const GridView: React.FC<GridViewProps> = (props) => {
+  const { i18n } = useTranslation();
+  const ctx = useContext(TableDataContext);
+  if (ctx) {
+    return <GridViewConnected />;
+  }
+  if (!props.rows || !props.columns) {
+    const msg = i18n.language?.startsWith('pl')
+      ? 'GridView wymaga TableDataProvider lub właściwości rows i columns.'
+      : 'GridView requires TableDataProvider or rows and columns props.';
+    return (
+      <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">
+        {msg}
+      </div>
+    );
+  }
+  return (
+    <GridViewStandalone
+      rows={props.rows}
+      columns={props.columns}
+      onNodeClick={props.onNodeClick}
+      onFieldChange={props.onFieldChange}
+      locked={props.locked}
+    />
   );
 };
 

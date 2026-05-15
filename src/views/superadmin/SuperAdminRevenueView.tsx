@@ -38,6 +38,7 @@ export const SuperAdminRevenueView: React.FC = () => {
     items: any[];
     totalCost: number;
   } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,10 +47,15 @@ export const SuperAdminRevenueView: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      setNotice(null);
       const [revenue, usage, costs] = await Promise.all([
         Api.get('/billing/admin/revenue'),
         Api.get('/billing/admin/usage'),
-        Api.get('/billing/admin/operational-costs'),
+        Api.get('/billing/admin/operational-costs').catch((error) => {
+          console.warn('[SuperAdminRevenueView] Operational costs unavailable', error);
+          setNotice('Operational cost metrics are temporarily unavailable.');
+          return { items: [], totalCost: 0, degraded: true };
+        }),
       ]);
       setRevenueStats(revenue);
       setUsageStats(usage);
@@ -89,6 +95,12 @@ export const SuperAdminRevenueView: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">

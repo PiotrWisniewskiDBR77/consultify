@@ -15,8 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
@@ -280,6 +280,7 @@ export interface SyncResult {
   status: string;
   recordsSynced: number;
   duration: number;
+  error?: string | null;
 }
 
 export interface SyncEvent {
@@ -371,7 +372,11 @@ class IntegrationHubServiceClass {
    */
   async getConnectedIntegrations(organizationId: string): Promise<Integration[]> {
     const cols = await this.getIntegrationsColumns();
-    const orderBy = cols.has('created_at') ? 'created_at' : cols.has('updated_at') ? 'updated_at' : 'id';
+    const orderBy = cols.has('created_at')
+      ? 'created_at'
+      : cols.has('updated_at')
+        ? 'updated_at'
+        : 'id';
     const rows = (await this.deps.db.all<IntegrationRecord>(
       `SELECT * FROM integrations
              WHERE organization_id = ?
@@ -455,18 +460,7 @@ class IntegrationHubServiceClass {
       'auth_type',
     ];
     const columns = [...baseCols, ...timestampCols];
-    const values = [
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      ...timestampValues,
-    ];
+    const values = ['?', '?', '?', '?', '?', '?', '?', '?', '?', ...timestampValues];
     const params = [
       integrationId,
       organizationId,
@@ -798,16 +792,25 @@ async function slackSyncAdapter(
   _options: Record<string, unknown>
 ): Promise<ProviderSyncResult> {
   try {
-    const token = String(config.botToken || config.bot_token || config.accessToken || config.access_token || '');
+    const token = String(
+      config.botToken || config.bot_token || config.accessToken || config.access_token || ''
+    );
     if (!token) return { recordsSynced: 0, error: 'No Slack bot token configured' };
 
-    const resp = await fetch('https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=100', {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    });
+    const resp = await fetch(
+      'https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=100',
+      {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      }
+    );
 
     if (!resp.ok) return { recordsSynced: 0, error: `Slack API ${resp.status}` };
 
-    const data = (await resp.json()) as { ok?: boolean; channels?: Array<{ id: string; name: string }>; error?: string };
+    const data = (await resp.json()) as {
+      ok?: boolean;
+      channels?: Array<{ id: string; name: string }>;
+      error?: string;
+    };
     if (!data.ok) return { recordsSynced: 0, error: `Slack error: ${data.error || 'unknown'}` };
 
     const channels = data.channels || [];
@@ -843,7 +846,8 @@ async function teamsSyncAdapter(
     });
 
     if (!resp.ok) {
-      if (resp.status === 401) return { recordsSynced: 0, error: 'Teams token expired — reauth required' };
+      if (resp.status === 401)
+        return { recordsSynced: 0, error: 'Teams token expired — reauth required' };
       return { recordsSynced: 0, error: `Graph API ${resp.status}` };
     }
 
@@ -882,7 +886,8 @@ async function googleSyncAdapter(
     );
 
     if (!resp.ok) {
-      if (resp.status === 401) return { recordsSynced: 0, error: 'Google token expired — reauth required' };
+      if (resp.status === 401)
+        return { recordsSynced: 0, error: 'Google token expired — reauth required' };
       return { recordsSynced: 0, error: `Google API ${resp.status}` };
     }
 
@@ -907,11 +912,125 @@ async function googleSyncAdapter(
 }
 
 async function genericWebhookSyncAdapter(
-  _integrationId: string,
-  _config: Record<string, unknown>,
+  integrationId: string,
+  config: Record<string, unknown>,
   _options: Record<string, unknown>
 ): Promise<ProviderSyncResult> {
-  return { recordsSynced: 0 };
+  const crypto = await import('crypto');
+  const db = getDatabase();
+
+  try {
+    const orgId = String(config._organizationId || config.organizationId || '');
+    if (!orgId) return { recordsSynced: 0, error: 'No organization ID for webhook sync' };
+
+    const registrations = (await db.all(
+      `SELECT registration_id, endpoint_url, secret_key, direction, event_types, is_active, consecutive_failures
+       FROM v8_webhook_registrations
+       WHERE integration_id = ? AND organization_id = ? AND is_active = TRUE`,
+      [integrationId, orgId]
+    )) as Array<{
+      registration_id: string;
+      endpoint_url: string;
+      secret_key: string | null;
+      direction: string;
+      event_types: string;
+      is_active: boolean;
+      consecutive_failures: number;
+    }> | null;
+
+    if (!registrations?.length) {
+      return { recordsSynced: 0 };
+    }
+
+    let delivered = 0;
+    for (const reg of registrations) {
+      if (reg.direction !== 'outbound') continue;
+
+      const payload = JSON.stringify({
+        event: 'sync_heartbeat',
+        integrationId,
+        timestamp: new Date().toISOString(),
+      });
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Webhook-Event': 'sync_heartbeat',
+      };
+
+      if (reg.secret_key) {
+        const signature = crypto.createHmac('sha256', reg.secret_key).update(payload).digest('hex');
+        headers['X-Webhook-Signature'] = `sha256=${signature}`;
+      }
+
+      const deliveryId = `wd-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+      try {
+        const resp = await fetch(reg.endpoint_url, {
+          method: 'POST',
+          headers,
+          body: payload,
+          signal: AbortSignal.timeout(10000),
+        });
+
+        const httpStatus = resp.status;
+        const responseBody = await resp.text().catch(() => '');
+
+        await db.run(
+          `INSERT INTO v8_webhook_deliveries
+             (delivery_id, registration_id, organization_id, event_type, payload_hash, status, http_status, response_body, attempt_count, completed_at)
+           VALUES (?, ?, ?, 'sync_heartbeat', ?, ?, ?, ?, 1, NOW())`,
+          [
+            deliveryId,
+            reg.registration_id,
+            orgId,
+            crypto.createHash('sha256').update(payload).digest('hex'),
+            resp.ok ? 'delivered' : 'failed',
+            httpStatus,
+            responseBody.slice(0, 500),
+          ]
+        );
+
+        if (resp.ok) {
+          delivered++;
+          await db.run(
+            `UPDATE v8_webhook_registrations
+             SET last_delivery_at = NOW(), consecutive_failures = 0, updated_at = NOW()
+             WHERE registration_id = ?`,
+            [reg.registration_id]
+          );
+        } else {
+          const newFailures = reg.consecutive_failures + 1;
+          const deactivate = newFailures >= 5;
+          await db.run(
+            `UPDATE v8_webhook_registrations
+             SET consecutive_failures = ?, is_active = ?, updated_at = NOW()
+             WHERE registration_id = ?`,
+            [newFailures, !deactivate, reg.registration_id]
+          );
+        }
+      } catch (deliveryErr) {
+        await db.run(
+          `INSERT INTO v8_webhook_deliveries
+             (delivery_id, registration_id, organization_id, event_type, status, response_body, attempt_count)
+           VALUES (?, ?, ?, 'sync_heartbeat', 'failed', ?, 1)`,
+          [deliveryId, reg.registration_id, orgId, (deliveryErr as Error).message.slice(0, 500)]
+        );
+
+        const newFailures = reg.consecutive_failures + 1;
+        const deactivate = newFailures >= 5;
+        await db.run(
+          `UPDATE v8_webhook_registrations
+           SET consecutive_failures = ?, is_active = ?, updated_at = NOW()
+           WHERE registration_id = ?`,
+          [newFailures, !deactivate, reg.registration_id]
+        );
+      }
+    }
+
+    return { recordsSynced: delivered };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Webhook sync error: ${(err as Error).message}` };
+  }
 }
 
 async function cloudStorageSyncAdapter(
@@ -925,7 +1044,9 @@ async function cloudStorageSyncAdapter(
     if (!orgId) return { recordsSynced: 0, error: 'No organization ID for cloud sync' };
 
     const sources = await listCloudSources(orgId);
-    const matchingSource = sources.find((s: any) => s.id === integrationId || s.status === 'active');
+    const matchingSource = sources.find(
+      (s: any) => s.id === integrationId || s.status === 'active'
+    );
     if (!matchingSource) return { recordsSynced: 0 };
 
     const { listCloudFiles } = await import('./cloudDataService.js');
@@ -938,7 +1059,16 @@ async function cloudStorageSyncAdapter(
         `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
          VALUES (gen_random_uuid()::TEXT, ?, ?, 'cloud_file', 'file', ?::JSONB, NOW())
          ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
-        [integrationId, file.id, JSON.stringify({ name: file.name, mimeType: file.mimeType, size: file.size, isFolder: file.isFolder })]
+        [
+          integrationId,
+          file.id,
+          JSON.stringify({
+            name: file.name,
+            mimeType: file.mimeType,
+            size: file.size,
+            isFolder: file.isFolder,
+          }),
+        ]
       );
       synced++;
     }

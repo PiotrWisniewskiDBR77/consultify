@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '../../components/ui/BaseCard';
@@ -199,7 +200,7 @@ const CustomRolesBuilder: React.FC = () => {
       if (selectedRole?.id === roleId) setSelectedRole(null);
       fetchData();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to delete role');
+      toast.error(error.response?.data?.error || 'Failed to delete role');
     }
   };
 
@@ -209,7 +210,7 @@ const CustomRolesBuilder: React.FC = () => {
       await api.post('/rbac/roles/from-template', { templateName });
       fetchData();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to create role from template');
+      toast.error(error.response?.data?.error || 'Failed to create role from template');
     }
   };
 

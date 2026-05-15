@@ -26,14 +26,176 @@ interface PermissionService {
   ) => Promise<boolean>;
 }
 
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+const hasExplicitPermissionGrant = (value: unknown): boolean => value === true;
+const AUDIT_JSON_WRAPPED = Symbol.for('consultify.permissionMiddleware.auditActionWrapped');
+const MAX_PERMISSION_KEY_LENGTH = 128;
+const MAX_PERMISSION_KEYS_PER_REQUEST = 32;
+const MAX_PERMISSION_ROLE_INPUT_LENGTH = 128;
+const ROLE_CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
+const ROLE_INVISIBLE_FORMAT_CHARS =
+  /[\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069\u2060\u2061\u2062\u2063]/g;
+
+const readOptionalString = (reader: () => unknown): string | undefined => {
+  try {
+    return normalizeOptionalString(reader());
+  } catch {
+    return undefined;
+  }
+};
+
+const readOwnOptionalString = (
+  record: unknown,
+  key: string
+): string | undefined => {
+  if (!record || typeof record !== 'object') return undefined;
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return undefined;
+  return readOptionalString(() => (record as Record<string, unknown>)[key]);
+};
+
+const sanitizeRoleInput = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const bounded = value.length > MAX_PERMISSION_ROLE_INPUT_LENGTH
+    ? value.slice(0, MAX_PERMISSION_ROLE_INPUT_LENGTH)
+    : value;
+  const normalized = safeRead(() => bounded.normalize('NFKC'), bounded);
+  const stripped = normalized
+    .replace(ROLE_CONTROL_CHARS, '')
+    .replace(ROLE_INVISIBLE_FORMAT_CHARS, '');
+  return normalizeOptionalString(stripped);
+};
+const sanitizePermissionKeyInput = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = safeRead(() => value.normalize('NFKC'), value);
+  const stripped = normalized
+    .replace(ROLE_CONTROL_CHARS, '')
+    .replace(ROLE_INVISIBLE_FORMAT_CHARS, '');
+  return normalizeOptionalString(stripped);
+};
+
+const getAuthContext = (
+  req: AuthRequest
+): { userId?: string; orgId?: string; userRole?: string } => {
+  const requestRecord = req as unknown as Record<string, unknown>;
+  const requestUser = safeRead(
+    () => (requestRecord as Record<string, unknown>).user,
+    undefined as unknown
+  );
+  const userRecord =
+    Object.prototype.hasOwnProperty.call(requestRecord, 'user') &&
+    requestUser &&
+    typeof requestUser === 'object'
+      ? (requestUser as Record<string, unknown>)
+      : undefined;
+  const userId =
+    readOwnOptionalString(requestRecord, 'userId') ||
+    readOwnOptionalString(userRecord, 'id') ||
+    undefined;
+  const orgId =
+    readOwnOptionalString(requestRecord, 'organizationId') ||
+    readOwnOptionalString(userRecord, 'organization_id') ||
+    readOwnOptionalString(userRecord, 'organizationId') ||
+    undefined;
+  const userRole =
+    sanitizeRoleInput(readOwnOptionalString(requestRecord, 'userRole')) ||
+    sanitizeRoleInput(readOwnOptionalString(userRecord, 'role')) ||
+    undefined;
+  return { userId, orgId, userRole };
+};
+
+const safeGetCorrelationId = (req: Request): string | undefined => {
+  const fromRequest = readOptionalString(
+    () => (req as Request & { correlationId?: string }).correlationId
+  );
+  if (fromRequest) return fromRequest;
+  try {
+    return normalizeOptionalString(req.get?.('X-Correlation-Id'));
+  } catch {
+    return undefined;
+  }
+};
+
+const sendJsonIfHeadersOpen = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>
+): boolean => {
+  if (safeRead(() => res.headersSent, false)) {
+    logger.warn('[PermissionMiddleware] Skipped response write: headers already sent', {
+      statusCode,
+      code: payload.code,
+    });
+    return false;
+  }
+  try {
+    res.status(statusCode).json(payload);
+    return true;
+  } catch (error) {
+    logger.error('[PermissionMiddleware] Failed response write', {
+      statusCode,
+      code: payload.code,
+      error,
+    });
+    return false;
+  }
+};
+const isResponseCommitted = (res: Response): boolean =>
+  safeRead(
+    () =>
+      res.headersSent ||
+      (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
+      (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true,
+    false
+  );
+const shouldSkipPermissionCheck = (
+  res: Response,
+  middlewareName: 'requirePermission' | 'requireAnyPermission' | 'requireAllPermissions'
+): boolean => {
+  if (!isResponseCommitted(res)) return false;
+  logger.warn('[PermissionMiddleware] Skipped permission check: response already committed', {
+    middleware: middlewareName,
+    code: 'RESPONSE_ALREADY_COMMITTED',
+  });
+  return true;
+};
+const asPermissionKeyList = (permissionKeys: unknown): string[] =>
+  Array.isArray(permissionKeys) ? permissionKeys : [];
+const isPermissionKeyWithinLimit = (key: string): boolean => key.length <= MAX_PERMISSION_KEY_LENGTH;
+const dedupePermissionKeys = (permissionKeys: string[]): string[] => {
+  if (permissionKeys.length <= 1) return permissionKeys;
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const permissionKey of permissionKeys) {
+    if (seen.has(permissionKey)) continue;
+    seen.add(permissionKey);
+    deduped.push(permissionKey);
+  }
+  return deduped;
+};
+
 const normalizeRoleForDb = (role?: string): string => {
-  if (!role) return 'VIEWER';
-  const r = role.toString().trim();
+  const sanitizedRole = sanitizeRoleInput(role);
+  if (!sanitizedRole) return 'VIEWER';
+  const r = sanitizedRole.toString().trim();
   const upper = r.toUpperCase();
+  if (!upper) return 'VIEWER';
 
   // Common aliases from JWT/app layer
   if (upper === 'ADMINISTRATOR' || upper === 'ADMIN') return 'ADMIN';
-  if (upper === 'OWNER' || upper === 'SUPER_ADMIN' || upper === 'SUPERADMIN') return 'SUPERADMIN';
+  if (upper === 'SUPER_ADMIN' || upper === 'SUPERADMIN') return 'SUPERADMIN';
+  if (upper === 'OWNER') return 'SUPERADMIN';
   if (upper === 'PROJECT_MANAGER' || upper === 'MANAGER') return 'PROJECT_MANAGER';
   if (upper === 'TEAM_MEMBER' || upper === 'MEMBER') return 'TEAM_MEMBER';
   if (upper === 'GUEST' || upper === 'CLIENT') return 'VIEWER';
@@ -102,14 +264,22 @@ export const requirePermission = (permissionKey: string) => {
     try {
       const { PermissionService } = deps;
 
-      const userId = req.userId || req.user?.id;
-      const orgId = req.organizationId || req.user?.organizationId;
-      const userRole = req.userRole || req.user?.role;
+      const { userId, orgId, userRole } = getAuthContext(req);
 
       if (!userId) {
-        res.status(401).json({
+        sendJsonIfHeadersOpen(res, 401, {
           error: 'Authentication required',
           code: 'AUTH_REQUIRED',
+        });
+        return;
+      }
+      if (shouldSkipPermissionCheck(res, 'requirePermission')) return;
+      const normalizedPermissionKey = sanitizePermissionKeyInput(permissionKey);
+      if (!normalizedPermissionKey || !isPermissionKeyWithinLimit(normalizedPermissionKey)) {
+        logger.info(`[PermissionMiddleware] Denied: blank permission key for user ${userId}`);
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          code: 'PERMISSION_DENIED',
         });
         return;
       }
@@ -120,28 +290,28 @@ export const requirePermission = (permissionKey: string) => {
         hasPermission = await PermissionService.hasPermission(
           userId,
           orgId,
-          permissionKey,
+          normalizedPermissionKey,
           candidateRole
         );
-        if (hasPermission) break;
+        if (hasExplicitPermissionGrant(hasPermission)) break;
       }
 
-      if (!hasPermission) {
-        logger.info(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
-        res.status(403).json({
+      if (!hasExplicitPermissionGrant(hasPermission)) {
+        logger.info(`[PermissionMiddleware] Denied: ${normalizedPermissionKey} for user ${userId}`);
+        sendJsonIfHeadersOpen(res, 403, {
           error: 'Permission denied',
-          required: permissionKey,
+          required: normalizedPermissionKey,
           code: 'PERMISSION_DENIED',
         });
         return;
       }
 
       // Attach permission info for audit logging
-      (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
+      (req as AuthRequest & { permissionChecked?: string }).permissionChecked = normalizedPermissionKey;
       next();
     } catch (err: any) {
       logger.error('[PermissionMiddleware] Error:', err);
-      res.status(500).json({
+      sendJsonIfHeadersOpen(res, 500, {
         error: 'Permission check failed',
         code: 'PERMISSION_ERROR',
       });
@@ -159,20 +329,64 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
     try {
       const { PermissionService } = deps;
 
-      const userId = req.userId || req.user?.id;
-      const orgId = req.organizationId || req.user?.organizationId;
-      const userRole = req.userRole || req.user?.role;
+      const { userId, orgId, userRole } = getAuthContext(req);
 
       if (!userId) {
-        res.status(401).json({
+        sendJsonIfHeadersOpen(res, 401, {
           error: 'Authentication required',
           code: 'AUTH_REQUIRED',
         });
         return;
       }
+      if (shouldSkipPermissionCheck(res, 'requireAnyPermission')) return;
+      const permissionKeyList = asPermissionKeyList(permissionKeys);
+      if (permissionKeyList !== permissionKeys) {
+        logger.warn('[PermissionMiddleware] Invalid permission key list input for requireAnyPermission', {
+          inputType: typeof permissionKeys,
+        });
+      }
+      const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
+        .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
+        .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
+      if (normalizedPermissionKeys.length === 0) {
+        logger.info(
+          `[PermissionMiddleware] Denied: requireAnyPermission invoked with no valid permission keys for user ${userId}`
+        );
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          requiredAny: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+      if (normalizedPermissionKeys.some((permissionKey) => !isPermissionKeyWithinLimit(permissionKey))) {
+        logger.warn('[PermissionMiddleware] Denied: permission key over max length', {
+          userId,
+          max: MAX_PERMISSION_KEY_LENGTH,
+        });
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          requiredAny: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+      if (normalizedPermissionKeys.length > MAX_PERMISSION_KEYS_PER_REQUEST) {
+        logger.warn('[PermissionMiddleware] Denied: permission key list exceeds max count', {
+          userId,
+          count: normalizedPermissionKeys.length,
+          max: MAX_PERMISSION_KEYS_PER_REQUEST,
+        });
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          requiredAny: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
 
       const roleCandidates = getRoleCandidates(userRole);
-      for (const permissionKey of permissionKeys) {
+      for (const permissionKey of normalizedPermissionKeys) {
         for (const candidateRole of roleCandidates) {
           const hasPermission = await PermissionService.hasPermission(
             userId,
@@ -180,7 +394,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
             permissionKey,
             candidateRole
           );
-          if (hasPermission) {
+          if (hasExplicitPermissionGrant(hasPermission)) {
             (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
             next();
             return;
@@ -189,16 +403,16 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
       }
 
       logger.info(
-        `[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`
+        `[PermissionMiddleware] Denied: none of [${normalizedPermissionKeys.join(', ')}] for user ${userId}`
       );
-      res.status(403).json({
+      sendJsonIfHeadersOpen(res, 403, {
         error: 'Permission denied',
-        requiredAny: permissionKeys,
+        requiredAny: [...normalizedPermissionKeys],
         code: 'PERMISSION_DENIED',
       });
     } catch (err: any) {
       logger.error('[PermissionMiddleware] Error:', err);
-      res.status(500).json({
+      sendJsonIfHeadersOpen(res, 500, {
         error: 'Permission check failed',
         code: 'PERMISSION_ERROR',
       });
@@ -216,14 +430,58 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
     try {
       const { PermissionService } = deps;
 
-      const userId = req.userId || req.user?.id;
-      const orgId = req.organizationId || req.user?.organizationId;
-      const userRole = req.userRole || req.user?.role;
+      const { userId, orgId, userRole } = getAuthContext(req);
 
       if (!userId) {
-        res.status(401).json({
+        sendJsonIfHeadersOpen(res, 401, {
           error: 'Authentication required',
           code: 'AUTH_REQUIRED',
+        });
+        return;
+      }
+      if (shouldSkipPermissionCheck(res, 'requireAllPermissions')) return;
+      const permissionKeyList = asPermissionKeyList(permissionKeys);
+      if (permissionKeyList !== permissionKeys) {
+        logger.warn('[PermissionMiddleware] Invalid permission key list input for requireAllPermissions', {
+          inputType: typeof permissionKeys,
+        });
+      }
+      const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
+        .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
+        .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
+      if (normalizedPermissionKeys.length === 0) {
+        logger.info(
+          `[PermissionMiddleware] Denied: requireAllPermissions invoked with no valid permission keys for user ${userId}`
+        );
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          missing: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+      if (normalizedPermissionKeys.some((permissionKey) => !isPermissionKeyWithinLimit(permissionKey))) {
+        logger.warn('[PermissionMiddleware] Denied: permission key over max length', {
+          userId,
+          max: MAX_PERMISSION_KEY_LENGTH,
+        });
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          missing: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+      if (normalizedPermissionKeys.length > MAX_PERMISSION_KEYS_PER_REQUEST) {
+        logger.warn('[PermissionMiddleware] Denied: permission key list exceeds max count', {
+          userId,
+          count: normalizedPermissionKeys.length,
+          max: MAX_PERMISSION_KEYS_PER_REQUEST,
+        });
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          missing: [],
+          code: 'PERMISSION_DENIED',
         });
         return;
       }
@@ -231,7 +489,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
       const missingPermissions: string[] = [];
       const roleCandidates = getRoleCandidates(userRole);
 
-      for (const permissionKey of permissionKeys) {
+      for (const permissionKey of normalizedPermissionKeys) {
         let hasPermission = false;
         for (const candidateRole of roleCandidates) {
           hasPermission = await PermissionService.hasPermission(
@@ -240,16 +498,16 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
             permissionKey,
             candidateRole
           );
-          if (hasPermission) break;
+          if (hasExplicitPermissionGrant(hasPermission)) break;
         }
-        if (!hasPermission) missingPermissions.push(permissionKey);
+        if (!hasExplicitPermissionGrant(hasPermission)) missingPermissions.push(permissionKey);
       }
 
       if (missingPermissions.length > 0) {
         logger.info(
           `[PermissionMiddleware] Denied: missing [${missingPermissions.join(', ')}] for user ${userId}`
         );
-        res.status(403).json({
+        sendJsonIfHeadersOpen(res, 403, {
           error: 'Permission denied',
           missing: missingPermissions,
           code: 'PERMISSION_DENIED',
@@ -257,11 +515,12 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
         return;
       }
 
-      (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked = permissionKeys;
+      (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked =
+        normalizedPermissionKeys;
       next();
     } catch (err: any) {
       logger.error('[PermissionMiddleware] Error:', err);
-      res.status(500).json({
+      sendJsonIfHeadersOpen(res, 500, {
         error: 'Permission check failed',
         code: 'PERMISSION_ERROR',
       });
@@ -285,28 +544,68 @@ export const auditAction = (options: AuditOptions) => {
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { GovernanceAuditService } = deps;
+    if (
+      safeRead(
+        () =>
+          Boolean(
+            (res as Response & { [AUDIT_JSON_WRAPPED]?: boolean })[AUDIT_JSON_WRAPPED]
+          ),
+        false
+      )
+    ) {
+      next();
+      return;
+    }
 
     // Store original json method
-    const originalJson = res.json.bind(res);
+    const originalJson = safeRead(() => res.json.bind(res), null as unknown as ((data: unknown) => unknown));
+    if (!originalJson) {
+      next();
+      return;
+    }
+    safeRead(() => {
+      Object.defineProperty(res, AUDIT_JSON_WRAPPED, {
+        value: true,
+        enumerable: false,
+        configurable: false,
+        writable: false,
+      });
+      return true;
+    }, false);
+    let auditEmitted = false;
 
     // Override json to intercept response
     res.json = (async (data: unknown) => {
-      // Only audit on success (2xx status codes)
-      if (res.statusCode >= 200 && res.statusCode < 300) {
+      const callOriginalJson = async (): Promise<unknown> => {
         try {
+          return await Promise.resolve(originalJson(data));
+        } catch (error) {
+          logger.error('[AuditMiddleware] Response json handler failed', error);
+          throw error;
+        }
+      };
+      if (safeRead(() => res.headersSent, false)) {
+        return callOriginalJson();
+      }
+      const statusCode = safeRead(() => res.statusCode, 200);
+      // Only audit on success (2xx status codes)
+      if (statusCode >= 200 && statusCode < 300 && !auditEmitted) {
+        auditEmitted = true;
+        try {
+          const { userId, orgId, userRole } = getAuthContext(req as AuthRequest);
+          const resourceId = safeRead(() => getResourceId(req, data), null);
+          const before = safeRead(() => getBefore(req), null);
+          const after = safeRead(() => getAfter(req, data), null);
           await GovernanceAuditService.logAudit({
-            actorId: (req as AuthRequest).userId || (req as AuthRequest).user?.id || '',
-            actorRole: (req as AuthRequest).userRole || (req as AuthRequest).user?.role,
-            orgId: (req as AuthRequest).organizationId || (req as AuthRequest).user?.organizationId,
+            actorId: userId || '',
+            actorRole: userRole,
+            orgId,
             action,
             resourceType,
-            resourceId: getResourceId(req, data),
-            before: getBefore(req),
-            after: getAfter(req, data),
-            correlationId:
-              (req as Request & { correlationId?: string }).correlationId ||
-              req.get('X-Correlation-Id') ||
-              undefined,
+            resourceId,
+            before,
+            after,
+            correlationId: safeGetCorrelationId(req),
           });
         } catch (auditErr) {
           logger.error('[AuditMiddleware] Error logging audit:', auditErr);
@@ -315,7 +614,7 @@ export const auditAction = (options: AuditOptions) => {
       }
 
       // Call original json method
-      return originalJson(data);
+      return callOriginalJson();
     }) as any;
 
     next();

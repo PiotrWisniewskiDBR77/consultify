@@ -97,6 +97,10 @@ export interface SearchResult {
   score: number;
   icon?: string;
   tags?: string[];
+  /** 'en' | 'pl' — actual language of the displayed content */
+  contentLanguage?: string;
+  /** true when PL was requested but only EN content is available */
+  isLanguageFallback?: boolean;
 }
 
 export interface SearchIndex {
@@ -367,18 +371,23 @@ export function searchHelp(
     const score = calculateScore(query, entry, language);
 
     if (score > 0) {
+      const hasPl = Boolean(entry.titlePl);
+      const usedPl = language === 'pl' && hasPl;
+      const hasRequestedLang = language === 'en' || (language === 'pl' && hasPl);
       results.push({
         type: entry.type,
         id: entry.id,
-        title: language === 'pl' && entry.titlePl ? entry.titlePl : entry.title,
+        title: usedPl ? entry.titlePl! : entry.title,
         titlePl: entry.titlePl,
-        excerpt: language === 'pl' && entry.excerptPl ? entry.excerptPl : entry.excerpt,
+        excerpt: usedPl && entry.excerptPl ? entry.excerptPl : entry.excerpt,
         excerptPl: entry.excerptPl,
         moduleId: entry.moduleId,
         url: entry.url,
         score,
         icon: entry.icon,
         tags: entry.tags,
+        contentLanguage: usedPl ? 'pl' : 'en',
+        isLanguageFallback: !hasRequestedLang,
       });
     }
   });

@@ -1,7 +1,52 @@
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { SlackServiceClass } from '../slackService.js';
 
 type Threshold = 80 | 90 | 100;
+
+function resolveCostSlackWebhookUrl(): string {
+  const direct = String(process.env.AI_COST_SLACK_WEBHOOK_URL || '').trim();
+  if (direct) return direct;
+  // Fallback: send to AI alerts channel if cost-specific channel not set
+  const ai = String(process.env.AI_SLACK_WEBHOOK_URL || '').trim();
+  if (ai) return ai;
+  // Final fallback: default slack webhook
+  const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
+  return (
+    String(process.env[`SLACK_WEBHOOK_URL_${envName}`] || '').trim() ||
+    String(process.env.SLACK_WEBHOOK_URL || '').trim()
+  );
+}
+
+async function sendSlackCostAlert(params: {
+  orgId: string;
+  threshold: Threshold;
+  usedUsd: number;
+  capUsd: number;
+}): Promise<void> {
+  try {
+    const url = resolveCostSlackWebhookUrl();
+    if (!url) return;
+
+    const slack = new SlackServiceClass({ webhookUrl: url });
+    const org = await dbGet<{ name: string }>(
+      `SELECT name FROM organizations WHERE id = ?`,
+      [params.orgId],
+      { fallback: true } as any
+    );
+
+    await slack.sendSystemAlert(
+      `AI Cost budget: ${org?.name || params.orgId}`,
+      `Reached ${params.threshold}% of monthly AI budget. Used: $${params.usedUsd.toFixed(2)} / $${params.capUsd.toFixed(2)}.`,
+      params.threshold >= 100 ? 'CRITICAL' : 'WARNING'
+    );
+  } catch (e: any) {
+    logger.warn('[AICostAlerts] slack send failed', { error: e?.message || e });
+  }
+}
 
 async function ensureTables(): Promise<void> {
   try {
@@ -180,6 +225,7 @@ export async function runAiCostBudgetAlerts(): Promise<{ processed: number; sent
 
     await markSent(orgId, threshold, periodStart);
     await sendEmailToOrgAdmins({ orgId, threshold, usedUsd, capUsd });
+    await sendSlackCostAlert({ orgId, threshold, usedUsd, capUsd });
     sent += 1;
   }
 

@@ -275,6 +275,9 @@ router.post(
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const orgId = getOrgId(req);
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
@@ -806,6 +809,9 @@ router.post(
     const statementId = String(req.params.id);
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
 
@@ -944,6 +950,9 @@ router.post(
     const statementId = String(req.params.id);
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
     const traceId = getFinanceTraceId((req as any).correlationId);
@@ -1363,7 +1372,7 @@ router.put(
     const result = await saveStatementValuesFlow({
       statementId,
       organizationId: orgId,
-      userId,
+      userId: userId as string,
       statement: stmt,
       values,
     });

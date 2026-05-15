@@ -37,52 +37,25 @@ import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
 import { IdeasTableContent } from './IdeasTableContent';
+import type {
+  IdeasBulkBarPayload,
+  IdeaStage,
+  IdeasViewMode,
+  MyIdea,
+  SortDir,
+  SortField,
+} from './myIdeasTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
-export type IdeaStage = 'spark' | 'incubating' | 'shaping' | 'ready' | 'promoted';
-
-export type MyIdea = {
-  id: string;
-  title: string;
-  name?: string | null;
-  body?: string | null;
-  seedText?: string | null;
-  seed_text?: string | null;
-  tags?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-  sourceType?: string | null;
-  sourceConversationId?: string | null;
-  sourceMessageId?: string | null;
-  stage?: IdeaStage;
-  stageV5?: IdeaStageV5;
-  potential?: string | null;
-  complexity?: string | null;
-  aiExpansion?: string | null;
-  promotedTo?: string | null;
-  area?: string | null;
-  priority?: number | null;
-  branch?: string | null;
-  mapItems?: number | null;
-  mapNodes?: number | null;
-  mapEdges?: number | null;
-  openMap?: boolean;
-  preferredTool?: string | null;
-};
-
-export type IdeasViewMode = 'table' | 'grid' | 'garden';
-
-export type IdeasBulkBarPayload = {
-  selectedCount: number;
-  allSelected: boolean;
-  someSelected: boolean;
-  selectAllVisible: () => void;
-  clearSelection: () => void;
-  convert: () => void;
-  tag: () => void;
-  deleteSelected: () => void;
-};
+export type {
+  IdeasBulkBarPayload,
+  IdeaStage,
+  IdeasViewMode,
+  MyIdea,
+  SortDir,
+  SortField,
+} from './myIdeasTypes';
 
 interface MyIdeasListContentProps {
   viewMode?: IdeasViewMode;
@@ -209,9 +182,6 @@ function getToolConfig(tool?: string | null) {
   return TOOL_CONFIG[t] || TOOL_CONFIG.mindmap;
 }
 
-export type SortField = 'title' | 'stage' | 'tool' | 'date' | 'tags';
-export type SortDir = 'asc' | 'desc';
-
 const IDEAS_TABLE_VIEW_STORAGE_KEY = 'consultify.mywork.ideas.tableView';
 const DEFAULT_IDEAS_TABLE_FILTERS: TableFilters = {};
 const DEFAULT_IDEAS_COLUMN_WIDTHS = {
@@ -226,7 +196,9 @@ const DEFAULT_IDEAS_COLUMN_WIDTHS = {
 function getIdeasTableViewStorageKey(): string {
   try {
     const token = tokenService.getToken();
-    const payload = token ? (tokenService.decodeToken(token) as Record<string, unknown> | null) : null;
+    const payload = token
+      ? (tokenService.decodeToken(token) as Record<string, unknown> | null)
+      : null;
     const userId = String(payload?.id || 'anonymous').trim() || 'anonymous';
     const orgId = String(payload?.organizationId || 'unknown-org').trim() || 'unknown-org';
     return `${IDEAS_TABLE_VIEW_STORAGE_KEY}.${orgId}.${userId}`;

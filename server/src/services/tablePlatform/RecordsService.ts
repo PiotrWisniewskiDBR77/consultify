@@ -281,6 +281,27 @@ const recordsService = {
     const db = getDatabase();
     const id = uuidv4();
     try {
+      // Apply default values before validation
+      const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [
+        tableId,
+      ]);
+      const allFields = allFieldsResult.rows as Array<{
+        id: string;
+        name: string;
+        field_type: string;
+        options: Record<string, unknown> | null;
+      }>;
+      for (const field of allFields) {
+        const opts = field.options;
+        if (
+          opts?.default !== undefined &&
+          data[field.id] === undefined &&
+          data[field.name] === undefined
+        ) {
+          data[field.id] = opts.default;
+        }
+      }
+
       const validation = await schemaValidationService.validateRecord(tableId, data);
       if (!validation.valid) {
         throw new ValidationError('Record validation failed', {
@@ -360,12 +381,12 @@ const recordsService = {
               recordId: id,
               newCellValues: enrichedData,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
           webhookRelayService
             .dispatchEvent(baseId, 'record.created', { recordId: id, tableId, data: enrichedData })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       return row ?? null;
     } catch (e) {
@@ -470,7 +491,10 @@ const recordsService = {
         });
       }
 
-      const validation = await schemaValidationService.validateRecord(tableId, data);
+      const validation = await schemaValidationService.validateRecord(tableId, data, {
+        recordId,
+        isUpdate: true,
+      });
       if (!validation.valid) {
         throw new ValidationError('Record validation failed', {
           errors: validation.errors,
@@ -580,7 +604,7 @@ const recordsService = {
               oldCellValues: existingData,
               newCellValues: enrichedData,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
           webhookRelayService
             .dispatchEvent(baseId, 'record.updated', {
               recordId,
@@ -588,9 +612,9 @@ const recordsService = {
               data: enrichedData,
               previousData: existingData,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       recordWatchService
         .notifyWatchers(recordId, {
@@ -600,7 +624,7 @@ const recordsService = {
           actorId: updatedBy,
           changes: enrichedData,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       return after ?? null;
     } catch (e) {
@@ -647,12 +671,12 @@ const recordsService = {
               tableId,
               recordId,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
           webhookRelayService
             .dispatchEvent(baseId, 'record.deleted', { recordId, tableId })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       recordWatchService
         .notifyWatchers(recordId, {
@@ -661,7 +685,7 @@ const recordsService = {
           tableId,
           actorId: deletedBy,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       return true;
     } catch (e) {

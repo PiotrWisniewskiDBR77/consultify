@@ -4,15 +4,24 @@ server/node_modules
 
 # Build artifacts
 dist
+server/dist
+server/dist-temp
+**/*.tsbuildinfo
 coverage
 playwright-report
 test-results
 
-# Environment files
+# Environment files — NEVER bake secrets into the image.
+# Runtime env vars are injected by Railway. Keep `*.example` for docs.
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+!.env.*.example
+!.env.*.template
 server/.env
+server/.env.*
+!server/.env.example
+!server/.env.*.example
 
 # Database (for Docker builds)
 *.db
@@ -35,6 +44,9 @@ Thumbs.db
 # Git
 .git
 .gitignore
+
+# Blog content (not needed in container)
+Blogs
 
 # Documentation (not needed in container)
 docs

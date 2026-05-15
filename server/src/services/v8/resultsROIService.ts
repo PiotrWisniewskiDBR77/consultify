@@ -52,6 +52,8 @@ import {
 } from '../../types/resultsROIContinuity.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { eventBus } from '../event/EventBus.js';
+import { send as sendNotification } from '../notificationService.js';
 
 // ==========================================
 // HELPERS
@@ -487,9 +489,10 @@ export async function createExecutiveReviewPack(
     packId,
     organizationId: validated.organizationId,
     reviewPeriod: validated.reviewPeriod,
-    kpiSummaries: validated.kpiSummaries,
-    deviationHighlights: validated.deviationHighlights,
-    roiSnapshot: validated.roiSnapshot,
+    kpiSummaries: validated.kpiSummaries as ExecutiveReviewPack['kpiSummaries'],
+    deviationHighlights:
+      validated.deviationHighlights as ExecutiveReviewPack['deviationHighlights'],
+    roiSnapshot: validated.roiSnapshot as ExecutiveReviewPack['roiSnapshot'],
     status: 'draft',
     createdAt: now,
     updatedAt: now,
@@ -580,6 +583,47 @@ export async function initiateReconciliation(
   logger.info(
     `${LOG_PREFIX} Initiated reconciliation ${reconciliationId} for KPI ${reconciliation.kpiId} by ${reconciliation.initiatedBy}`
   );
+
+  eventBus.publish('kpi.reconciliation_initiated', {
+    organizationId: reconciliation.organizationId,
+    kpiId: reconciliation.kpiId,
+    reconciliationId,
+    financeRef: reconciliation.financeRef,
+    initiatedBy: reconciliation.initiatedBy,
+  });
+
+  try {
+    const kpiRow = await dbGet<{ name?: string }>(
+      `SELECT name FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
+      [reconciliation.kpiId, reconciliation.organizationId],
+      { fallback: true }
+    );
+    const orgMembers: Array<{ user_id: string }> =
+      (await dbAll(
+        `SELECT user_id FROM organization_members WHERE organization_id = ? AND role IN ('owner', 'admin') LIMIT 5`,
+        [reconciliation.organizationId],
+        { fallback: true }
+      )) || [];
+    for (const member of orgMembers) {
+      if (member.user_id === reconciliation.initiatedBy) continue;
+      sendNotification({
+        userId: member.user_id,
+        organizationId: reconciliation.organizationId,
+        type: 'KPI_RECONCILIATION_INITIATED',
+        title: `Reconciliation Needed: ${kpiRow?.name || reconciliation.kpiId}`,
+        body: `A KPI-Finance reconciliation has been initiated and requires review.`,
+        severity: 'WARNING',
+        entityType: 'kpi',
+        entityId: reconciliation.kpiId,
+        actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+      }).catch((err: unknown) =>
+        logger.warn('[ResultsROI] reconciliation notification failed', err)
+      );
+    }
+  } catch {
+    // non-blocking
+  }
+
   return reconciliation;
 }
 
@@ -622,6 +666,30 @@ export async function resolveReconciliation(
   updated.updatedAt = now;
 
   logger.info(`${LOG_PREFIX} Reconciliation ${reconciliationId} resolved to ${newStatus}`);
+
+  eventBus.publish('kpi.reconciliation_resolved', {
+    organizationId,
+    reconciliationId,
+    kpiId: updated.kpiId,
+    newStatus,
+  });
+
+  if (updated.initiatedBy) {
+    sendNotification({
+      userId: updated.initiatedBy,
+      organizationId,
+      type: 'KPI_RECONCILIATION_RESOLVED',
+      title: `Reconciliation Resolved`,
+      body: `KPI-Finance reconciliation resolved with status: ${newStatus}`,
+      severity: 'INFO',
+      entityType: 'kpi',
+      entityId: updated.kpiId,
+      actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+    }).catch((err: any) =>
+      logger.debug(`${LOG_PREFIX} Reconciliation resolved notification failed: ${err?.message}`)
+    );
+  }
+
   return updated;
 }
 
@@ -644,25 +712,30 @@ function emptyReconciliationStatusCounts(): Partial<Record<ReconciliationStatus,
 /**
  * KPI scorecard: counts, status/category breakdown, average capped achievement vs target.
  */
-export async function getKPIScorecard(organizationId: string): Promise<KPIScorecardSummary> {
+export async function getKPIScorecard(
+  organizationId: string,
+  initiativeId?: string
+): Promise<KPIScorecardSummary> {
+  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const totalRow = await dbGet<{ total: number }>(
-    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?`,
-    [organizationId],
+    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
   const totalKpis = totalRow?.total ?? 0;
 
   const statusRows = await dbAll<{ status: string; cnt: number }>(
     `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ? GROUP BY status`,
-    [organizationId],
+     WHERE organization_id = ?${initiativeClause} GROUP BY status`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
   const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
     `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ? GROUP BY metric_type`,
-    [organizationId],
+     WHERE organization_id = ?${initiativeClause} GROUP BY metric_type`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -680,8 +753,8 @@ export async function getKPIScorecard(organizationId: string): Promise<KPIScorec
          ELSE NULL
        END
      ) AS avg_rate
-     FROM v8_kpi_definitions WHERE organization_id = ?`,
-    [organizationId],
+     FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -760,25 +833,38 @@ export async function getKPITrend(
  */
 export async function getActiveDeviations(
   organizationId: string,
-  severity?: DeviationSeverity
+  severity?: DeviationSeverity,
+  initiativeId?: string
 ): Promise<DeviationRecord[]> {
   if (severity != null && !DeviationSeverityValues.includes(severity)) {
     throw new Error(`Invalid deviation severity: ${severity}`);
   }
 
+  const initiativeClause = initiativeId
+    ? ` AND EXISTS (
+         SELECT 1
+         FROM v8_kpi_definitions k
+         WHERE k.kpi_id = v8_deviation_records.kpi_id
+           AND k.organization_id = v8_deviation_records.organization_id
+           AND k.initiative_id = ?
+       )`
+    : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const rows = severity
     ? await dbAll<DeviationRow>(
         `SELECT * FROM v8_deviation_records
          WHERE organization_id = ? AND resolved_at IS NULL AND severity = ?
+         ${initiativeClause}
          ORDER BY created_at DESC`,
-        [organizationId, severity],
+        [organizationId, severity, ...initiativeParams],
         { fallback: true }
       )
     : await dbAll<DeviationRow>(
         `SELECT * FROM v8_deviation_records
          WHERE organization_id = ? AND resolved_at IS NULL
+         ${initiativeClause}
          ORDER BY created_at DESC`,
-        [organizationId],
+        [organizationId, ...initiativeParams],
         { fallback: true }
       );
 
@@ -874,10 +960,13 @@ interface LegacyRoiRealizedRow {
 
 interface LegacyResultsKpiRow {
   id: string;
+  mapping_id: string | null;
   initiative_id: string | null;
   initiative_name: string | null;
+  initiative_status: string | null;
   name: string;
   description: string | null;
+  category: string | null;
   unit: string | null;
   baseline_value: number | null;
   target_value: number | null;
@@ -903,6 +992,17 @@ interface LegacyResultsKpiRow {
   open_case_id: string | null;
   open_case_severity: 'AMBER' | 'RED' | null;
   open_case_status: string | null;
+  definition_source: string | null;
+  observation_phase: string | null;
+  tracked_in_realization: number | null;
+  tracked_post_implementation: number | null;
+  observation_status: string | null;
+  realization_baseline_value: number | null;
+  realization_target_value: number | null;
+  realization_measurement_frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | null;
+  post_implementation_baseline_value: number | null;
+  post_implementation_target_value: number | null;
+  post_implementation_measurement_frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -911,9 +1011,150 @@ interface LegacyResultsKpiMappingRow {
   id: string;
   initiative_id: string;
   initiative_name: string | null;
+  initiative_status: string | null;
   kpi_id: string;
   kpi_name: string | null;
   impact_direction: string | null;
+  definition_source: string | null;
+  observation_phase: string | null;
+  tracked_in_realization: number | null;
+  tracked_post_implementation: number | null;
+  observation_status: string | null;
+}
+
+interface ResultsSnapshotRow {
+  id: string;
+  title: string | null;
+  filters_json: string | null;
+  created_at: string | null;
+}
+
+function normalizeLifecycleBucket(
+  status: string | null | undefined
+): 'in-realization' | 'realized' | null {
+  const normalized = String(status || '')
+    .trim()
+    .toUpperCase();
+  if (['APPROVED', 'SCHEDULED', 'EXECUTING'].includes(normalized)) return 'in-realization';
+  if (['DONE', 'TRACKING'].includes(normalized)) return 'realized';
+  return null;
+}
+
+function isNeedsEntry(
+  latestMeasurementDate: string | null,
+  measurementFrequency: string | null
+): boolean {
+  if (!latestMeasurementDate) return true;
+  const latest = new Date(latestMeasurementDate);
+  if (Number.isNaN(latest.getTime())) return true;
+  const now = new Date();
+  const freq = String(measurementFrequency || 'MONTHLY').toUpperCase();
+  const diffDays = (now.getTime() - latest.getTime()) / 86400000;
+  if (freq === 'DAILY') return diffDays > 2;
+  if (freq === 'WEEKLY') return diffDays > 8;
+  if (freq === 'MONTHLY') {
+    return latest.getFullYear() < now.getFullYear() || latest.getMonth() < now.getMonth();
+  }
+  const latestQuarter = Math.floor(latest.getMonth() / 3);
+  const currentQuarter = Math.floor(now.getMonth() / 3);
+  return latest.getFullYear() < now.getFullYear() || latestQuarter < currentQuarter;
+}
+
+async function listResultsTrackedInitiatives(
+  organizationId: string,
+  kpis: ResultsKpiCatalog['kpis']
+): Promise<ResultsKpiCatalog['initiatives']> {
+  const byInitiative = new Map<
+    string,
+    {
+      initiativeId: string;
+      initiativeName: string;
+      initiativeStatus: string;
+      lifecycleBucket: 'in-realization' | 'realized';
+      trackedKpiCount: number;
+      realizationKpiCount: number;
+      postImplementationKpiCount: number;
+      belowTargetCount: number;
+      needsEntryCount: number;
+      openDeviationCount: number;
+      openReportCount: number;
+      lastReportTitle: string | null;
+      lastReportId: string | null;
+      lastReportCreatedAt: string | null;
+    }
+  >();
+
+  for (const kpi of kpis) {
+    const initiativeId = String(kpi.initiativeId || '').trim();
+    if (!initiativeId) continue;
+    const lifecycleBucket = normalizeLifecycleBucket(kpi.initiativeStatus);
+    if (!lifecycleBucket) continue;
+
+    const existing = byInitiative.get(initiativeId) || {
+      initiativeId,
+      initiativeName: String(kpi.initiativeName || initiativeId),
+      initiativeStatus: String(kpi.initiativeStatus || ''),
+      lifecycleBucket,
+      trackedKpiCount: 0,
+      realizationKpiCount: 0,
+      postImplementationKpiCount: 0,
+      belowTargetCount: 0,
+      needsEntryCount: 0,
+      openDeviationCount: 0,
+      openReportCount: 0,
+      lastReportTitle: null,
+      lastReportId: null,
+      lastReportCreatedAt: null,
+    };
+
+    existing.trackedKpiCount += 1;
+    if (kpi.trackedInRealization) existing.realizationKpiCount += 1;
+    if (kpi.trackedPostImplementation) existing.postImplementationKpiCount += 1;
+    if (!kpi.isOnTarget && kpi.latestValue != null) existing.belowTargetCount += 1;
+    if (isNeedsEntry(kpi.latestMeasurementDate || null, kpi.measurementFrequency || null)) {
+      existing.needsEntryCount += 1;
+    }
+    if (kpi.openDeviationCase) existing.openDeviationCount += 1;
+
+    byInitiative.set(initiativeId, existing);
+  }
+
+  const initiativeIds = Array.from(byInitiative.keys());
+  if (initiativeIds.length > 0) {
+    const snapshots = await dbAll<ResultsSnapshotRow>(
+      `SELECT id, title, filters_json, created_at
+       FROM results_kpi_report_snapshots
+       WHERE organization_id = ?
+       ORDER BY created_at DESC`,
+      [organizationId],
+      { fallback: true }
+    ).catch(() => []);
+
+    for (const snapshot of snapshots || []) {
+      const filters = safeJsonParse<Record<string, unknown>>(snapshot.filters_json, {});
+      const linkedInitiativeIds = Array.isArray(filters.initiativeIds)
+        ? (filters.initiativeIds as unknown[])
+            .map((entry) => String(entry || '').trim())
+            .filter(Boolean)
+        : [];
+
+      for (const initiativeId of linkedInitiativeIds) {
+        if (!initiativeIds.includes(initiativeId)) continue;
+        const item = byInitiative.get(initiativeId);
+        if (!item) continue;
+        item.openReportCount += 1;
+        if (!item.lastReportId) {
+          item.lastReportId = snapshot.id;
+          item.lastReportTitle = snapshot.title || null;
+          item.lastReportCreatedAt = snapshot.created_at || null;
+        }
+      }
+    }
+  }
+
+  return Array.from(byInitiative.values()).sort((a, b) =>
+    a.initiativeName.localeCompare(b.initiativeName)
+  );
 }
 
 interface LegacyKpiTimeSeriesRow {
@@ -966,11 +1207,16 @@ interface LegacyDeviationActionRow {
 /**
  * ROI realization aggregates for dashboards.
  */
-export async function getROIDashboard(organizationId: string): Promise<ROIDashboardSummary> {
+export async function getROIDashboard(
+  organizationId: string,
+  initiativeId?: string
+): Promise<ROIDashboardSummary> {
+  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const totalRow = await dbGet<{ total_entries: number; total_realized: number }>(
     `SELECT COUNT(*) AS total_entries, COALESCE(SUM(realized_value), 0) AS total_realized
-     FROM v8_roi_realization_entries WHERE organization_id = ?`,
-    [organizationId],
+     FROM v8_roi_realization_entries WHERE organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -978,21 +1224,23 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
     `SELECT COALESCE(SUM(k.target_value), 0) AS projected
      FROM v8_kpi_definitions k
      WHERE k.organization_id = ?
+       ${initiativeId ? ` AND k.initiative_id = ?` : ''}
        AND k.target_value IS NOT NULL
        AND EXISTS (
          SELECT 1 FROM v8_roi_realization_entries r
          WHERE r.organization_id = k.organization_id AND r.kpi_id = k.kpi_id
+           ${initiativeId ? `AND r.initiative_id = ?` : ''}
        )`,
-    [organizationId],
+    [organizationId, ...initiativeParams, ...initiativeParams],
     { fallback: true }
   );
 
   const initiativeRows = await dbAll<RoiInitiativeAggRow>(
     `SELECT initiative_id, COUNT(*) AS entry_count, COALESCE(SUM(realized_value), 0) AS realized_sum
      FROM v8_roi_realization_entries
-     WHERE organization_id = ?
+     WHERE organization_id = ?${initiativeClause}
      GROUP BY initiative_id`,
-    [organizationId],
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -1020,7 +1268,13 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
  * ROI portfolio rollup for the active Results ROI surfaces.
  * This is a bounded V8 bridge over the existing org-scoped ROI assumptions and realized tables.
  */
-export async function getROIPortfolioSummary(organizationId: string): Promise<ROIPortfolioSummary> {
+export async function getROIPortfolioSummary(
+  organizationId: string,
+  options?: { initiativeId?: string }
+): Promise<ROIPortfolioSummary> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  const initiativeClause = initiativeId ? ' AND ra.initiative_id = ?' : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const assumptions = await dbAll<LegacyRoiAssumptionRow>(
     `SELECT
        ra.initiative_id,
@@ -1034,11 +1288,12 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
        ra.confidence
      FROM roi_assumptions ra
      JOIN initiatives i ON i.id = ra.initiative_id
-     WHERE ra.organization_id = ?`,
-    [organizationId],
+     WHERE ra.organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
+  const realizedClause = initiativeId ? ' AND initiative_id = ?' : '';
   const realized = await dbAll<LegacyRoiRealizedAggRow>(
     `SELECT
        initiative_id,
@@ -1046,9 +1301,9 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
        SUM(realized_cost_delta) AS total_cost,
        SUM(realized_savings) AS total_savings
      FROM roi_realized_values
-     WHERE organization_id = ?
+     WHERE organization_id = ?${realizedClause}
      GROUP BY initiative_id`,
-    [organizationId],
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -1218,7 +1473,7 @@ export async function getROIInitiativeDetail(
  */
 export async function getResultsKpiCatalog(
   organizationId: string,
-  options: { kpiId?: string } = {}
+  options: { kpiId?: string; initiativeId?: string } = {}
 ): Promise<ResultsKpiCatalog> {
   const params: Array<string> = [organizationId, organizationId, organizationId, organizationId];
   let kpiFilterSql = '';
@@ -1226,14 +1481,30 @@ export async function getResultsKpiCatalog(
     kpiFilterSql = ' AND k.id = ?';
     params.push(options.kpiId);
   }
+  if (options.initiativeId) {
+    kpiFilterSql += ` AND (
+      k.initiative_id = ?
+      OR EXISTS (
+        SELECT 1
+        FROM initiative_kpi_mappings map_scope
+        WHERE map_scope.organization_id = ?
+          AND map_scope.initiative_id = ?
+          AND map_scope.kpi_id = k.id
+      )
+    )`;
+    params.push(options.initiativeId, organizationId, options.initiativeId);
+  }
 
   const kpiRows = await dbAll<LegacyResultsKpiRow>(
     `SELECT
+       m.id AS mapping_id,
        k.id,
        k.initiative_id,
        i.name AS initiative_name,
+       i.status AS initiative_status,
        k.name,
        k.description,
+       k.category,
        k.unit,
        k.baseline_value,
        k.target_value,
@@ -1259,10 +1530,22 @@ export async function getResultsKpiCatalog(
        c.id AS open_case_id,
        c.severity AS open_case_severity,
        c.status AS open_case_status,
+       COALESCE(m.definition_source, CASE WHEN k.initiative_id IS NULL THEN 'library' ELSE 'initiative-custom' END) AS definition_source,
+       COALESCE(m.observation_phase, 'post-implementation') AS observation_phase,
+       COALESCE(m.tracked_in_realization, 0) AS tracked_in_realization,
+       COALESCE(m.tracked_post_implementation, 1) AS tracked_post_implementation,
+       COALESCE(m.observation_status, 'active') AS observation_status,
+       COALESCE(m.realization_baseline_value, k.baseline_value) AS realization_baseline_value,
+       COALESCE(m.realization_target_value, k.target_value) AS realization_target_value,
+       COALESCE(m.realization_measurement_frequency, k.measurement_frequency) AS realization_measurement_frequency,
+       COALESCE(m.post_implementation_baseline_value, k.baseline_value) AS post_implementation_baseline_value,
+       COALESCE(m.post_implementation_target_value, k.target_value) AS post_implementation_target_value,
+       COALESCE(m.post_implementation_measurement_frequency, k.measurement_frequency) AS post_implementation_measurement_frequency,
        k.created_at,
        k.updated_at
      FROM initiative_kpis k
      LEFT JOIN initiatives i ON i.id = k.initiative_id
+     LEFT JOIN initiative_kpi_mappings m ON m.kpi_id = k.id AND m.organization_id = ?
      LEFT JOIN users u ON u.id = k.owner_user_id
      LEFT JOIN LATERAL (
        SELECT value, period_start
@@ -1286,9 +1569,9 @@ export async function getResultsKpiCatalog(
        ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
        LIMIT 1
      ) c ON TRUE
-     WHERE COALESCE(k.organization_id, i.organization_id) = ?${kpiFilterSql}
+     WHERE COALESCE(k.organization_id, i.organization_id, m.organization_id) = ?${kpiFilterSql}
      ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC`,
-    params,
+    [organizationId, ...params],
     { fallback: true }
   );
 
@@ -1298,15 +1581,25 @@ export async function getResultsKpiCatalog(
     mappingFilterSql = ' AND m.kpi_id = ?';
     mappingParams.push(options.kpiId);
   }
+  if (options.initiativeId) {
+    mappingFilterSql += ' AND m.initiative_id = ?';
+    mappingParams.push(options.initiativeId);
+  }
 
   const mappingRows = await dbAll<LegacyResultsKpiMappingRow>(
     `SELECT
        m.id,
        m.initiative_id,
        i.name AS initiative_name,
+       i.status AS initiative_status,
        m.kpi_id,
        ik.name AS kpi_name,
-       m.impact_direction
+       m.impact_direction,
+       COALESCE(m.definition_source, CASE WHEN ik.initiative_id IS NULL THEN 'library' ELSE 'initiative-custom' END) AS definition_source,
+       COALESCE(m.observation_phase, 'post-implementation') AS observation_phase,
+       COALESCE(m.tracked_in_realization, 0) AS tracked_in_realization,
+       COALESCE(m.tracked_post_implementation, 1) AS tracked_post_implementation,
+       COALESCE(m.observation_status, 'active') AS observation_status
      FROM initiative_kpi_mappings m
      LEFT JOIN initiative_kpis ik ON ik.id = m.kpi_id
      LEFT JOIN initiatives i ON i.id = m.initiative_id
@@ -1328,10 +1621,13 @@ export async function getResultsKpiCatalog(
 
     return {
       id: row.id,
+      mappingId: row.mapping_id,
       initiativeId: row.initiative_id,
       initiativeName: row.initiative_name,
+      initiativeStatus: row.initiative_status,
       name: row.name,
       description: row.description,
+      category: row.category,
       unit: row.unit,
       baselineValue: row.baseline_value,
       targetValue,
@@ -1358,6 +1654,44 @@ export async function getResultsKpiCatalog(
       redThresholdPct: row.red_threshold_pct,
       amberThresholdAbs: row.amber_threshold_abs,
       redThresholdAbs: row.red_threshold_abs,
+      definitionSource: (String(row.definition_source || '')
+        .trim()
+        .toLowerCase() === 'library'
+        ? 'library'
+        : 'initiative-custom') as 'library' | 'initiative-custom',
+      observationPhase: (String(row.observation_phase || '')
+        .trim()
+        .toLowerCase() === 'realization'
+        ? 'realization'
+        : String(row.observation_phase || '')
+              .trim()
+              .toLowerCase() === 'both'
+          ? 'both'
+          : 'post-implementation') as 'realization' | 'both' | 'post-implementation',
+      trackedInRealization: Boolean(row.tracked_in_realization),
+      trackedPostImplementation:
+        row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
+      observationStatus: (String(row.observation_status || '')
+        .trim()
+        .toLowerCase() === 'paused'
+        ? 'paused'
+        : String(row.observation_status || '')
+              .trim()
+              .toLowerCase() === 'completed'
+          ? 'completed'
+          : 'active') as 'active' | 'completed' | 'paused',
+      realizationExpectation: {
+        baselineValue: row.realization_baseline_value,
+        targetValue: row.realization_target_value,
+        measurementFrequency:
+          row.realization_measurement_frequency || row.measurement_frequency || 'MONTHLY',
+      },
+      postImplementationExpectation: {
+        baselineValue: row.post_implementation_baseline_value,
+        targetValue: row.post_implementation_target_value,
+        measurementFrequency:
+          row.post_implementation_measurement_frequency || row.measurement_frequency || 'MONTHLY',
+      },
       openDeviationCase: row.open_case_id
         ? {
             id: row.open_case_id,
@@ -1372,13 +1706,43 @@ export async function getResultsKpiCatalog(
     id: row.id,
     initiativeId: row.initiative_id,
     initiativeName: row.initiative_name,
+    initiativeStatus: row.initiative_status,
     kpiId: row.kpi_id,
     kpiName: row.kpi_name,
     impactDirection: row.impact_direction,
+    definitionSource: (String(row.definition_source || '')
+      .trim()
+      .toLowerCase() === 'library'
+      ? 'library'
+      : 'initiative-custom') as 'library' | 'initiative-custom',
+    observationPhase: (String(row.observation_phase || '')
+      .trim()
+      .toLowerCase() === 'realization'
+      ? 'realization'
+      : String(row.observation_phase || '')
+            .trim()
+            .toLowerCase() === 'both'
+        ? 'both'
+        : 'post-implementation') as 'realization' | 'both' | 'post-implementation',
+    trackedInRealization: Boolean(row.tracked_in_realization),
+    trackedPostImplementation:
+      row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
+    observationStatus: (String(row.observation_status || '')
+      .trim()
+      .toLowerCase() === 'paused'
+      ? 'paused'
+      : String(row.observation_status || '')
+            .trim()
+            .toLowerCase() === 'completed'
+        ? 'completed'
+        : 'active') as 'active' | 'completed' | 'paused',
   }));
+
+  const initiatives = await listResultsTrackedInitiatives(organizationId, kpis);
 
   return {
     organizationId,
+    initiatives,
     kpis,
     mappings,
   };
@@ -1412,8 +1776,34 @@ function deriveLegacyKpiPeriodKey(
  */
 export async function getResultsKpiDrawerDetail(
   kpiId: string,
-  organizationId: string
+  organizationId: string,
+  options?: { initiativeId?: string }
 ): Promise<ResultsKpiDrawerDetail> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  if (initiativeId) {
+    const scopedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ?
+         AND COALESCE(k.organization_id, i.organization_id) = ?
+         AND (
+           k.initiative_id = ?
+           OR EXISTS (
+             SELECT 1
+             FROM initiative_kpi_mappings m
+             WHERE m.organization_id = ?
+               AND m.initiative_id = ?
+               AND m.kpi_id = k.id
+           )
+         )`,
+      [kpiId, organizationId, initiativeId, organizationId, initiativeId],
+      { fallback: true }
+    );
+    if (!scopedKpi?.id) {
+      throw new Error('RESULTS_KPI_NOT_FOUND');
+    }
+  }
   const measurementRows = await dbAll<LegacyKpiTimeSeriesRow>(
     `SELECT
        ts.*,
@@ -1451,6 +1841,26 @@ export async function getResultsKpiDrawerDetail(
         { fallback: true }
       )
     : [];
+
+  const auditRows = await dbAll<{
+    id: string;
+    section: string;
+    event_type: string;
+    source: string;
+    actor_user_id?: string | null;
+    summary?: string | null;
+    before_json?: string | null;
+    after_json?: string | null;
+    created_at: string;
+  }>(
+    `SELECT *
+     FROM kpi_metric_audit_log
+     WHERE organization_id = ? AND kpi_id = ?
+     ORDER BY created_at DESC
+     LIMIT 30`,
+    [organizationId, kpiId],
+    { fallback: true }
+  ).catch(() => []);
 
   return {
     organizationId,
@@ -1505,6 +1915,17 @@ export async function getResultsKpiDrawerDetail(
           })),
         }
       : null,
+    auditLog: (auditRows || []).map((row) => ({
+      id: row.id,
+      section: row.section,
+      eventType: row.event_type,
+      source: row.source || 'results_runtime',
+      actorUserId: row.actor_user_id || null,
+      summary: row.summary || null,
+      before: safeJsonParse(row.before_json, {}),
+      after: safeJsonParse(row.after_json, {}),
+      createdAt: row.created_at,
+    })),
   };
 }
 
@@ -1636,13 +2057,15 @@ export async function getReconciliationHealth(
  * Master Results surface: composes scorecard, deviations, ROI, reconciliation, recent packs.
  */
 export async function getResultsDashboard(
-  organizationId: string
+  organizationId: string,
+  options?: { initiativeId?: string }
 ): Promise<ResultsDashboardSnapshot> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
   const [kpiScorecard, activeDeviations, roiDashboard, reconciliationHealth, reviewTimeline] =
     await Promise.all([
-      getKPIScorecard(organizationId),
-      getActiveDeviations(organizationId),
-      getROIDashboard(organizationId),
+      getKPIScorecard(organizationId, initiativeId),
+      getActiveDeviations(organizationId, undefined, initiativeId),
+      getROIDashboard(organizationId, initiativeId),
       getReconciliationHealth(organizationId),
       getReviewPackTimeline(organizationId),
     ]);
@@ -1766,6 +2189,40 @@ export async function createKpiSignal(params: {
   logger.info(
     `${LOG_PREFIX} Created KPI signal ${signalId} type=${params.signalType} for KPI ${params.kpiId}`
   );
+
+  eventBus.publish('kpi.signal_created', {
+    organizationId: params.organizationId,
+    kpiId: params.kpiId,
+    signalId,
+    signalType: params.signalType,
+    severity: params.severity,
+  });
+
+  try {
+    const kpiRow = await dbGet<{ owner_user_id?: string; name?: string }>(
+      `SELECT owner_user_id, name FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
+      [params.kpiId, params.organizationId],
+      { fallback: true }
+    );
+    if (kpiRow?.owner_user_id) {
+      sendNotification({
+        userId: kpiRow.owner_user_id,
+        organizationId: params.organizationId,
+        type: 'KPI_SIGNAL_DETECTED',
+        title: `KPI Signal: ${kpiRow.name || params.kpiId}`,
+        body: params.description || `${params.signalType} signal detected (${params.severity})`,
+        severity: params.severity === 'critical' ? 'CRITICAL' : 'WARNING',
+        entityType: 'kpi',
+        entityId: params.kpiId,
+        actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+      }).catch((err: any) =>
+        logger.debug(`${LOG_PREFIX} Signal notification failed: ${err?.message}`)
+      );
+    }
+  } catch {
+    // non-blocking
+  }
+
   return signal;
 }
 
@@ -1883,6 +2340,32 @@ export async function createKpiNextAction(params: {
   );
 
   logger.info(`${LOG_PREFIX} Created next action ${actionId} for signal ${params.signalId}`);
+
+  eventBus.publish('kpi.next_action_created', {
+    organizationId: params.organizationId,
+    kpiId: params.kpiId,
+    signalId: params.signalId,
+    actionId,
+    actionType: params.actionType,
+    assignedTo: params.assignedTo || null,
+  });
+
+  if (params.assignedTo) {
+    sendNotification({
+      userId: params.assignedTo,
+      organizationId: params.organizationId,
+      type: 'KPI_NEXT_ACTION_ASSIGNED',
+      title: `KPI Action Assigned`,
+      body: params.description || `New ${params.actionType} action for KPI`,
+      severity: 'INFO',
+      entityType: 'kpi',
+      entityId: params.kpiId,
+      actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+    }).catch((err: any) =>
+      logger.debug(`${LOG_PREFIX} Next action notification failed: ${err?.message}`)
+    );
+  }
+
   return action;
 }
 
@@ -1924,7 +2407,10 @@ export async function getKpiNextActions(
   }));
 }
 
-export async function completeKpiNextAction(actionId: string, organizationId: string): Promise<void> {
+export async function completeKpiNextAction(
+  actionId: string,
+  organizationId: string
+): Promise<void> {
   const now = new Date().toISOString();
   await dbRun(
     `UPDATE v8_kpi_next_actions SET status = 'completed', completed_at = ?
@@ -1933,13 +2419,9 @@ export async function completeKpiNextAction(actionId: string, organizationId: st
   );
 }
 
-export const KpiWorkflowDegradedReasonValues = [
-  'missing_data',
-  'discrepancy_unresolved',
-  'linkage_unavailable',
-  'permission_denied',
-] as const;
-export type KpiWorkflowDegradedReason = (typeof KpiWorkflowDegradedReasonValues)[number];
+export { KPI_WORKFLOW_DEGRADED_REASONS as KpiWorkflowDegradedReasonValues } from './kpiWorkflowCanon.js';
+import type { KpiWorkflowDegradedReason } from './kpiWorkflowCanon.js';
+export type { KpiWorkflowDegradedReason };
 
 export interface KpiWorkflowStatus {
   kpiId: string;
@@ -2026,7 +2508,9 @@ export async function getKpiWorkflowStatus(
   }
 
   const openSignals = signals.filter((s) => s.nextActionStatus === 'pending').length;
-  const pendingActions = actions.filter((a) => a.status === 'open' || a.status === 'in_progress').length;
+  const pendingActions = actions.filter(
+    (a) => a.status === 'open' || a.status === 'in_progress'
+  ).length;
 
   return {
     kpiId,

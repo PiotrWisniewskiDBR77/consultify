@@ -15,9 +15,10 @@ import { StaffingPlanController } from '../../controllers/StaffingPlanController
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import { requireOrgRole } from '../../middleware/rbac.middleware.js';
+import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import blueprintService from '../../services/blueprintService.js';
+import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
@@ -35,19 +36,43 @@ import {
 } from '../../validators/initiative.validators.js';
 
 const router = Router();
-const notConfigured = (res: Response) =>
-  res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
-  });
+function resolvePmoInitiativesCorrelationId(req: any): string | null {
+  return req?.correlationId || req?.get?.('X-Correlation-ID') || null;
+}
+
+function buildPmoInitiativesFailClosedError(
+  req: any,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolvePmoInitiativesCorrelationId(req),
+  };
+}
+
+const notConfigured = (req: any, res: Response) =>
+  res.status(503).json(
+    buildPmoInitiativesFailClosedError(
+      req,
+      503,
+      'PMO_INITIATIVES_SERVICE_NOT_CONFIGURED',
+      'PMO initiatives service is temporarily unavailable.'
+    )
+  );
 
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);
@@ -101,7 +126,16 @@ router.delete(
 router.get('/programs', async (req: any, res: any) => {
   try {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!orgId) {
+      return res.status(401).json(
+        buildPmoInitiativesFailClosedError(
+          req,
+          401,
+          'PMO_INITIATIVES_UNAUTHORIZED',
+          'Authentication is required to access PMO initiatives.'
+        )
+      );
+    }
 
     const rows = await queryHelpers.queryAll(
       `SELECT p.*,
@@ -130,8 +164,15 @@ router.get('/programs', async (req: any, res: any) => {
     }));
 
     return res.json({ programs });
-  } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch programs', message: err.message });
+  } catch {
+    return res.status(500).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        500,
+        'PMO_INITIATIVES_PROGRAMS_READ_FAILED',
+        'Failed to fetch PMO programs.'
+      )
+    );
   }
 });
 
@@ -982,21 +1023,61 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
     const kpis = template.suggestedKpis || [];
     for (const kpi of kpis) {
       try {
-        const kpiId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO initiative_kpis (id, initiative_id, organization_id, name, unit, target_value, frequency, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            kpiId,
-            String(id),
-            String(orgId),
-            String(kpi.name || 'Untitled KPI'),
-            String(kpi.unit || '%'),
-            kpi.targetValue ?? kpi.target_value ?? null,
-            String(kpi.frequency || kpi.measurementFrequency || 'monthly'),
-            now,
-          ]
-        );
+        const observationPhase =
+          String(kpi.observationPhase || '').trim() === 'realization' ||
+          String(kpi.observationPhase || '').trim() === 'both'
+            ? String(kpi.observationPhase)
+            : 'post-implementation';
+        const measurementFrequency =
+          String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'DAILY'
+            ? 'DAILY'
+            : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
+                'WEEKLY'
+              ? 'WEEKLY'
+              : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
+                  'QUARTERLY'
+                ? 'QUARTERLY'
+                : 'MONTHLY';
+        const baselineValue = kpi.baselineValue ?? kpi.baseline ?? null;
+        const targetValue = kpi.targetValue ?? kpi.target ?? kpi.target_value ?? null;
+        const realizationTargetValue =
+          kpi.realizationExpectation?.targetValue ?? kpi.realizationTarget ?? targetValue;
+        const postImplementationTargetValue =
+          kpi.postImplementationExpectation?.targetValue ??
+          kpi.postImplementationTarget ??
+          targetValue;
+
+        await upsertInitiativeKpiAssignment({
+          initiativeId: String(id),
+          organizationId: String(orgId),
+          userId: String(userId || 'system'),
+          name: String(kpi.name || 'Untitled KPI'),
+          description: String(kpi.description || ''),
+          category: String(kpi.category || 'benefits'),
+          unit: String(kpi.unit || '%'),
+          baselineValue,
+          targetValue,
+          measurementFrequency,
+          currentValue: baselineValue,
+          definitionSource: 'initiative-custom',
+          observationPhase:
+            observationPhase === 'realization' || observationPhase === 'both'
+              ? (observationPhase as 'realization' | 'both')
+              : 'post-implementation',
+          trackedInRealization: observationPhase === 'realization' || observationPhase === 'both',
+          trackedPostImplementation:
+            observationPhase === 'post-implementation' || observationPhase === 'both',
+          realizationExpectation: {
+            baselineValue,
+            targetValue: realizationTargetValue,
+            measurementFrequency,
+          },
+          postImplementationExpectation: {
+            baselineValue,
+            targetValue: postImplementationTargetValue,
+            measurementFrequency,
+          },
+        });
         created.kpis++;
       } catch {
         // skip
@@ -1262,13 +1343,17 @@ router.post('/generate-section', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return notConfigured(res);
+      return notConfigured(req, res);
     }
 
-    return res.status(statusCode).json({
-      error: 'Failed to generate section content',
-      message: err?.message,
-    });
+    return res.status(statusCode).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        statusCode,
+        'PMO_INITIATIVES_SECTION_GENERATION_FAILED',
+        'Failed to generate section content.'
+      )
+    );
   }
 });
 
@@ -1376,12 +1461,17 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return notConfigured(res);
+      return notConfigured(req, res);
     }
 
-    return res
-      .status(statusCode)
-      .json({ error: 'Failed to analyze readiness', message: err?.message });
+    return res.status(statusCode).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        statusCode,
+        'PMO_INITIATIVES_READINESS_ANALYSIS_FAILED',
+        'Failed to analyze readiness.'
+      )
+    );
   }
 });
 
@@ -1409,13 +1499,17 @@ router.post('/suggest-sections', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return notConfigured(res);
+      return notConfigured(req, res);
     }
 
-    return res.status(statusCode).json({
-      error: 'Failed to suggest sections',
-      message: err?.message,
-    });
+    return res.status(statusCode).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        statusCode,
+        'PMO_INITIATIVES_SUGGEST_SECTIONS_FAILED',
+        'Failed to suggest sections.'
+      )
+    );
   }
 });
 
@@ -1602,6 +1696,18 @@ router.get('/:id/kpis', InitiativeController.getInitiativeKpis);
  * Create a new KPI for an initiative
  */
 router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
+
+/**
+ * PUT /api/initiatives/:id/kpis/:kpiId
+ * Update KPI assignment for an initiative
+ */
+router.put('/:id/kpis/:kpiId', InitiativeController.updateInitiativeKpi);
+
+/**
+ * DELETE /api/initiatives/:id/kpis/:kpiId
+ * Delete KPI assignment for an initiative
+ */
+router.delete('/:id/kpis/:kpiId', InitiativeController.deleteInitiativeKpi);
 
 // ==========================================
 // ROADMAP MODULE: MILESTONES ENDPOINTS

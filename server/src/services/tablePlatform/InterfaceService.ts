@@ -7,6 +7,7 @@ import crypto from 'crypto';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { PermissionError } from './ErrorHandling.js';
 
 export interface InterfaceBlock {
   id: string;
@@ -64,6 +65,15 @@ export class InterfaceService {
 
   async updateLayout(interfaceId: string, layout: InterfaceLayout): Promise<any> {
     const db = getDatabase();
+    const lockRow = await db.query('SELECT locked, locked_by FROM tp_interfaces WHERE id = $1', [
+      interfaceId,
+    ]);
+    if ((lockRow.rows[0] as any)?.locked) {
+      const lockedBy = (lockRow.rows[0] as { locked_by?: string }).locked_by;
+      throw new PermissionError(
+        `Interface is locked${lockedBy ? ` by user ${lockedBy}` : ''}. Unlock it before editing.`
+      );
+    }
     const result = await db.query(
       `UPDATE tp_interfaces SET layout = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
       [interfaceId, JSON.stringify(layout)]

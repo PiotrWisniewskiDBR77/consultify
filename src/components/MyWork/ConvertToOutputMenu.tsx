@@ -53,24 +53,23 @@ const TARGET_ITEMS: {
   { type: 'initiative', icon: Target, labelKey: 'traceability.convertTo.initiative' },
   { type: 'report', icon: FileText, labelKey: 'traceability.convertTo.report' },
   { type: 'presentation', icon: Presentation, labelKey: 'traceability.convertTo.presentation' },
-  // V5-IDEA-37: Finance output targets
   {
-    type: 'financial_model' as ConversionTargetType,
+    type: 'financial_model',
     icon: Calculator,
     labelKey: 'traceability.convertTo.financialModel',
   },
   {
-    type: 'budget' as ConversionTargetType,
+    type: 'budget',
     icon: Wallet,
     labelKey: 'traceability.convertTo.budget',
   },
   {
-    type: 'valuation' as ConversionTargetType,
+    type: 'valuation',
     icon: TrendingUp,
     labelKey: 'traceability.convertTo.valuation',
   },
   {
-    type: 'analysis' as ConversionTargetType,
+    type: 'analysis',
     icon: BarChart3,
     labelKey: 'traceability.convertTo.analysis',
   },

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { type Request, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 const requireAuth = verifyToken; // Alias for compatibility
@@ -15,6 +15,23 @@ const legacyMetricsRouter = Router(); // Stubbed legacy router
 
 const router = Router();
 
+function safeParseMetricsPayload(raw: unknown): Record<string, unknown> {
+  if (raw === null || raw === undefined || raw === '') return {};
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  if (typeof raw !== 'string') return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
 // Apply rate limiting
 router.use(defaultRateLimiter);
 
@@ -26,7 +43,7 @@ router.use(defaultRateLimiter);
  * GET /api/metrics/
  * Prometheus metrics endpoint
  */
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
     const metricsService = getMetricsService();
     const metrics = await metricsService.getMetrics();
@@ -36,7 +53,14 @@ router.get('/', async (_req, res) => {
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('[MetricsRoutes] Error generating metrics:', err);
-    return res.status(500).send(`# Error generating metrics: ${err.message}\n`);
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    const correlationId = (req as Request & { correlationId?: string }).correlationId ?? null;
+    const correlationLine = correlationId ? `# correlation_id=${correlationId}\n` : '';
+    return res.status(503).send(
+      '# consultify_metrics_export_unavailable\n' +
+        '# code=METRICS_PROMETHEUS_EXPORT_FAILED\n' +
+        correlationLine
+    );
   }
 });
 
@@ -297,7 +321,7 @@ router.get('/attribution', async (req, res) => {
  * GET /api/metrics/warnings
  * Early warning signals for churn risk - PRODUCTION: queries churn_warnings table
  */
-router.get('/warnings', async (_req, res) => {
+router.get('/warnings', async (req, res) => {
   try {
     const { all: dbAll } = await import('../utils/DbPromise.js');
 
@@ -336,7 +360,7 @@ router.get('/warnings', async (_req, res) => {
     // Parse metrics JSON
     const formattedWarnings = warnings.map((w) => ({
       ...w,
-      metrics: w.metrics ? JSON.parse(w.metrics) : {},
+      metrics: safeParseMetricsPayload(w.metrics),
       organizationName: w.organizationName || 'Unknown Organization',
     }));
 
@@ -348,7 +372,15 @@ router.get('/warnings', async (_req, res) => {
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('[MetricsRoutes] Error fetching warnings:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      status: 'error',
+      error: {
+        code: 'METRICS_WARNINGS_READ_FAILED',
+        message: 'Failed to read metrics warnings.',
+        timestamp: new Date().toISOString(),
+      },
+      correlationId: (req as Request & { correlationId?: string }).correlationId ?? null,
+    });
   }
 });
 

@@ -8,17 +8,27 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { useDeviceType } from '../../../hooks/useDeviceType';
-import { getRouteFromAppView } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
-import { AppView, UserRole } from '../../../types';
+import { AppView } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
-import { isAdminOwnerOrSuperAdminRole, isSuperAdminRole } from '../../../utils/roleGuards';
-import { OnboardingChecklist } from '../../Onboarding/OnboardingChecklist';
+import {
+  dispatchPilotAccessBlocked,
+  getPilotLockedAreaDetail,
+  isPilotAllowedMenuId,
+} from '../../../utils/pilotAccess';
+import {
+  lockMainMenuForPublicProduction,
+  shouldLockNonCoreModulesInPublicProduction,
+} from '../../../utils/publicProduction';
+import {
+  isAdminOwnerOrSuperAdminRole,
+  isPilotRestrictedRole,
+  isSuperAdminRole,
+} from '../../../utils/roleGuards';
 import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
@@ -37,7 +47,6 @@ import { ActiveFloatingState, MenuItem } from './types';
 export const Sidebar: React.FC = () => {
   const { t } = useTranslation();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
-  const navigate = useNavigate();
 
   // Prefetch route modules / data on hover to reduce perceived navigation latency.
   const prefetchedRef = React.useRef<Set<string>>(new Set());
@@ -46,7 +55,8 @@ export const Sidebar: React.FC = () => {
   // Avoid selectors returning new objects/arrays each call (even with shallow),
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const currentView = useAppStore((s) => s.currentView);
-  const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const returnToFullChat = useAppStore((s) => s.returnToFullChat);
   const logout = useAppStore((s) => s.logout);
   const isSidebarOpen = useAppStore((s) => s.isSidebarOpen);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
@@ -81,16 +91,81 @@ export const Sidebar: React.FC = () => {
   // That made "expanded" mode effectively impossible in narrower desktop windows / split-screen.
   // We now allow expanded mode anywhere except mobile.
   const showFull = !isSidebarCollapsed && !isMobile;
+  const lockNonCoreModulesOnPublicProduction = React.useMemo(
+    () => shouldLockNonCoreModulesInPublicProduction(),
+    []
+  );
+  const publicProductionLockedMessage =
+    'This module is visible in the platform overview, but access is disabled on public production. Please use Chat or Interview.';
 
   // Menu configuration
   const menuStructure = React.useMemo(
-    () => getMenuStructure(t, currentUser?.journeyState),
-    [t, currentUser?.journeyState]
+    () =>
+      lockMainMenuForPublicProduction(
+        getMenuStructure(t, currentUser?.journeyState),
+        lockNonCoreModulesOnPublicProduction,
+        publicProductionLockedMessage,
+        '/interview'
+      ),
+    [
+      t,
+      currentUser?.journeyState,
+      lockNonCoreModulesOnPublicProduction,
+      publicProductionLockedMessage,
+    ]
   );
+  const visibleMenuStructure = React.useMemo(() => {
+    if (!isPilotRestrictedRole(currentUser?.role)) {
+      return menuStructure;
+    }
+
+    const decoratePilotItem = (item: MenuItem): MenuItem => {
+      const decoratedChildren = item.subItems?.map((subItem) => decoratePilotItem(subItem));
+
+      if (isPilotAllowedMenuId(item.id)) {
+        return {
+          ...item,
+          subItems: decoratedChildren,
+        };
+      }
+
+      const lockedDetail = getPilotLockedAreaDetail(item.id, item.label);
+      return {
+        ...item,
+        subItems: decoratedChildren,
+        isLocked: true,
+        lockedMessage: lockedDetail.message,
+        lockedCtaHref: lockedDetail.href,
+      };
+    };
+
+    return menuStructure.map((item) => decoratePilotItem(item));
+  }, [currentUser?.role, menuStructure]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
+  const shouldLockFooterAdminMenus = !isSuperAdminRole(currentUser?.role);
+  const lockedOrganizationMenuItem = React.useMemo<MenuItem>(() => {
+    if (!shouldLockFooterAdminMenus) return organizationMenuItem;
+    return {
+      ...organizationMenuItem,
+      isLocked: true,
+      lockedMessage:
+        'Organization is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
+      lockedCtaHref: '/interview',
+    };
+  }, [organizationMenuItem, shouldLockFooterAdminMenus]);
+  const lockedAdminMenuItem = React.useMemo<MenuItem>(() => {
+    if (!shouldLockFooterAdminMenus) return adminMenuItem;
+    return {
+      ...adminMenuItem,
+      isLocked: true,
+      lockedMessage:
+        'Admin is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
+      lockedCtaHref: '/interview',
+    };
+  }, [adminMenuItem, shouldLockFooterAdminMenus]);
 
   // Completed views
   const completedViews = React.useMemo(() => {
@@ -117,9 +192,12 @@ export const Sidebar: React.FC = () => {
 
   const navigateToFullChat = React.useCallback(() => {
     setDisplayMode('full');
-    setCurrentViewState(AppView.AI_CHAT);
-    navigate(getRouteFromAppView(AppView.AI_CHAT));
-  }, [navigate, setCurrentViewState, setDisplayMode]);
+    if (typeof returnToFullChat === 'function') {
+      returnToFullChat();
+      return;
+    }
+    setCurrentView(AppView.AI_CHAT);
+  }, [returnToFullChat, setCurrentView, setDisplayMode]);
 
   const navigateToView = React.useCallback(
     (viewId: AppView) => {
@@ -129,10 +207,9 @@ export const Sidebar: React.FC = () => {
         projectId: currentProjectId || undefined,
       });
       setWorkspaceContext(context);
-      setCurrentViewState(viewId);
-      navigate(getRouteFromAppView(viewId));
+      setCurrentView(viewId);
     },
-    [currentProjectId, navigate, setCurrentViewState, setDisplayMode, setWorkspaceContext]
+    [currentProjectId, setCurrentView, setDisplayMode, setWorkspaceContext]
   );
 
   const handleItemClick = React.useCallback(
@@ -159,6 +236,14 @@ export const Sidebar: React.FC = () => {
           itemId: item.id,
           requiresView: item.requiresView,
           completedViews,
+        });
+        return;
+      }
+
+      if (item.isLocked) {
+        dispatchPilotAccessBlocked({
+          message: item.lockedMessage,
+          href: item.lockedCtaHref,
         });
         return;
       }
@@ -268,8 +353,17 @@ export const Sidebar: React.FC = () => {
   }, []);
 
   const handleFlyoutNavigate = React.useCallback(
-    (viewId: AppView) => {
-      navigateToView(viewId);
+    (item: MenuItem) => {
+      if (item.isLocked) {
+        dispatchPilotAccessBlocked({
+          message: item.lockedMessage,
+          href: item.lockedCtaHref,
+        });
+        setActiveFloating(null);
+        return;
+      }
+      if (!item.viewId) return;
+      navigateToView(item.viewId);
       setActiveFloating(null);
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
     },
@@ -329,7 +423,7 @@ export const Sidebar: React.FC = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             data-testid="mobile-sidebar-overlay"
-            className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-slate-900/40 dark:bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -341,7 +435,7 @@ export const Sidebar: React.FC = () => {
         data-tour="sidebar-nav"
         className={`
           fixed inset-y-0 left-0 z-[60]
-          bg-slate-50 dark:bg-navy-950 backdrop-blur-xl
+          bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-transparent backdrop-blur-xl
           flex flex-col
           ${sidebarWidthClass}
           ${
@@ -377,12 +471,9 @@ export const Sidebar: React.FC = () => {
             <PhaseIndicator compact={!showFull} />
           </div>
 
-          {/* Onboarding Checklist (for new users) */}
-          {showFull && <OnboardingChecklist />}
-
           {/* Menu Items */}
           <div className={`space-y-0.5 pb-2 ${showFull ? 'pt-4 px-2' : 'pt-4 px-1'}`}>
-            {menuStructure.map(renderNavItem)}
+            {visibleMenuStructure.map(renderNavItem)}
           </div>
         </nav>
 
@@ -392,10 +483,13 @@ export const Sidebar: React.FC = () => {
           onLogout={logout}
           onNavigate={handleFooterNavigate}
           t={t as any}
-          showPartnerPortal={!isSuperAdminRole(currentUser?.role)}
+          showPartnerPortal={
+            !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
+          }
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(organizationMenuItem)}
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(adminMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
+            renderNavItem(lockedOrganizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>
@@ -408,7 +502,7 @@ export const Sidebar: React.FC = () => {
           items={activeFloating.items}
           title={activeFloating.title}
           onClose={() => setActiveFloating(null)}
-          onNavigate={handleFlyoutNavigate}
+          onItemClick={handleFlyoutNavigate}
           currentView={currentView}
           onMouseEnter={handleFlyoutMouseEnter}
           onMouseLeave={handleFlyoutMouseLeave}

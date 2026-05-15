@@ -21,6 +21,7 @@ export interface Invoice {
 
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
+  AI_CHAT_V10_RUNTIME = 'AI_CHAT_V10_RUNTIME', // Dedicated V10 runtime workspace
   APP_INTRO = 'APP_INTRO', // In-app orientation screen
   INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
   DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
@@ -934,27 +935,42 @@ export interface InitiativeTaskStats {
   blocked: number;
 }
 
+export type InitiativeKpiObservationPhase = 'realization' | 'post-implementation' | 'both';
+export type InitiativeKpiDefinitionSource = 'library' | 'initiative-custom';
+export type InitiativeKpiObservationStatus = 'active' | 'paused' | 'completed';
+export type InitiativeKpiMeasurementFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+
+export interface InitiativeKpiExpectation {
+  baselineValue?: number | null;
+  targetValue?: number | null;
+  measurementFrequency: InitiativeKpiMeasurementFrequency;
+}
+
 /** Initiative KPI - Key Performance Indicator */
 export interface InitiativeKPI {
   id: string;
   // V3: KPI can be global (no single initiative); relations live in mapping table.
   initiativeId?: string | null;
+  mappingId?: string | null;
   name: string;
   description?: string;
+  category?: string;
   targetValue: number | null;
   unit?: string;
-  measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  measurementFrequency: InitiativeKpiMeasurementFrequency;
   alertThreshold?: number;
   alertDirection: 'BELOW' | 'ABOVE';
   isPrimary: boolean;
   sortOrder: number;
-  latestValue?: number;
-  latestMeasurementDate?: string;
+  currentValue?: number | null;
+  latestValue?: number | null;
+  latestMeasurementDate?: string | null;
   // Optional helper fields for trend calculation (R1).
   prevValue?: number;
-  prevMeasurementDate?: string;
+  prevMeasurementDate?: string | null;
   isOnTarget: boolean;
   createdAt: string;
+  updatedAt?: string;
   // Optional enrichment used by Results (R0/R1).
   baselineValue?: number | null;
   ownerUserId?: string | null;
@@ -965,6 +981,17 @@ export interface InitiativeKPI {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  definitionSource?: InitiativeKpiDefinitionSource;
+  observationPhase?: InitiativeKpiObservationPhase;
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: InitiativeKpiObservationStatus;
+  realizationExpectation?: InitiativeKpiExpectation;
+  postImplementationExpectation?: InitiativeKpiExpectation;
+  target?: number;
+  current?: number;
+  status?: 'on-target' | 'below' | 'no-data';
+  needsEntry?: boolean;
 }
 
 /** KPI Measurement - historical value record */
@@ -2678,6 +2705,7 @@ export interface FullInitiative {
 
   // Economics (financial fields for analytics)
   capex?: number;
+  budget?: number;
   firstYearOpex?: number;
   annualBenefit?: number;
   roi?: number;
@@ -3732,6 +3760,13 @@ export interface User {
   displayName?: string;
   pronouns?: 'he/him' | 'she/her' | 'they/them' | 'other' | '';
   department?: string;
+  siteLocation?: string;
+  seniorityLevel?: string;
+  tenureYears?: string;
+  managesTeam?: boolean;
+  teamSize?: string;
+  expertiseTags?: string[];
+  engagementLevel?: string;
   isOutOfOffice?: boolean;
   outOfOfficeUntil?: string;
   outOfOfficeMessage?: string;

@@ -47,6 +47,16 @@ class SupportTicketServiceClass {
     return await this.db.get('SELECT * FROM support_tickets WHERE id = ?', [id]);
   }
 
+  async getComments(ticketId: string): Promise<any[]> {
+    return await this.db.all(
+      `SELECT id, ticket_id, user_id, comment_text, is_internal, created_at
+       FROM support_ticket_comments
+       WHERE ticket_id = ?
+       ORDER BY created_at ASC`,
+      [ticketId]
+    );
+  }
+
   async updateTicket(id: string, updates: any): Promise<boolean> {
     const fields: string[] = [];
     const params: any[] = [];

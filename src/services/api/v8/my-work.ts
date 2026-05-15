@@ -205,6 +205,11 @@ export interface V8CalendarEvent {
   status?: string;
   priority?: string;
   description?: string;
+  visibilityClass?: 'free_busy_only' | 'details';
+  editAuthority?: 'none' | 'local_only' | 'remote_owner' | 'delegate';
+  syncState?: 'in_sync' | 'pending' | 'conflict' | 'blocked' | 'stale';
+  permissionGradient?: 'free_busy' | 'read' | 'write' | 'delegate';
+  etag?: string;
 }
 
 export interface V8CalendarConflictItem {

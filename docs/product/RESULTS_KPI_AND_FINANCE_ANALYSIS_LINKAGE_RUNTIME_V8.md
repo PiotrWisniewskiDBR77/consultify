@@ -4,6 +4,12 @@
 > Owner: Product + Engineering
 > Scope: canonical optional linkage between KPI and Finance analysis, models, budgets, valuation and finance review packs
 
+Read with:
+
+- `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+- `docs/product/RESULTS_V8_SSOT.md`
+- `docs/product/REPORTING_CANONICAL_TEMPLATES.md`
+
 ---
 
 ## 1. Why this document exists
@@ -258,6 +264,16 @@ In Results, a KPI should be able to show:
 - whether the link is interpretive, driver-based, review-based or realization-based
 - whether the linkage is current or stale
 - quick path to open finance evidence
+
+In reporting, this linkage should be visible especially in:
+
+- `R3 Benefits Tracking Report`
+- executive KPI review packs
+- reconciliation-driven operator reviews
+
+Canonical rule:
+
+`Reporting may expose KPI-to-Finance interpretation, but must not materialize a second truth outside Results and Finance ownership boundaries`
 - quick path to open a dedicated reconciliation view when needed
 
 In Finance, models and analysis packs should be able to show:

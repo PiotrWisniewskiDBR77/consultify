@@ -17,7 +17,6 @@ import { Router } from 'express';
 
 import { getDatabase } from '../../database/Database.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
@@ -30,6 +29,7 @@ import PartnerProgramLedgerService from '../../services/partnerProgramLedgerServ
 import PartnerReferralService from '../../services/partnerReferralService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { ensureUserOnboardingStatusTable } from '../../utils/ensureUserOnboardingStatusTable.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -37,23 +37,47 @@ const router = Router();
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readPartnerUserId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.userId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown));
+
+const readPartnerTenantOrgId = (req: AuthRequest): string =>
+  normalizeOptionalString(
+    safeRead(() => (req as AuthRequest & { v8Context?: { organizationId?: string } }).v8Context?.organizationId, undefined)
+  ) ||
+  normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
+  '';
+
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
-  const { organizationId } = getV8Context(req);
   return {
     version: 'v8' as const,
     contract: V8_PARTNER_READ_CONTRACT,
     partnerOrgId,
-    v8TenantOrganizationId: organizationId,
+    v8TenantOrganizationId: readPartnerTenantOrgId(req),
   };
 }
 
 function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
-  const { organizationId } = getV8Context(req);
   return {
     version: 'v8' as const,
     contract: V8_PARTNER_PROGRAM_CONTRACT,
     partnerOrgId,
-    v8TenantOrganizationId: organizationId,
+    v8TenantOrganizationId: readPartnerTenantOrgId(req),
   };
 }
 
@@ -75,7 +99,7 @@ function buildReferralToolsFallback() {
 router.get(
   '/program/status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -86,11 +110,17 @@ router.get(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
-    const detail = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner');
+    const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
+      partnerOrgId,
+      'partner'
+    );
+    const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
     return res.json({
       data: {
         lifecyclePhase: detail.runtime.lifecycle_phase,
         partnerOrganizationStatus: detail.runtime.partner_status,
+        onboardChecklist: JSON.parse(detail.runtime.onboard_checklist_json || '{}'),
+        payoutSettingsComplete: isPartnerPayoutDestinationComplete(payoutSettings),
         balances: detail.balances,
         whatNext: detail.whatNext,
         hold: detail.hold,
@@ -107,7 +137,7 @@ router.get(
 router.get(
   '/program/ledger',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -141,7 +171,7 @@ router.get(
 router.post(
   '/program/lifecycle/request-payout-phase',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -159,7 +189,10 @@ router.post(
           'Uzupełnij dane wypłaty: PUT /api/v8/partner/payout-settings (konto i metoda), potem ponów request fazy payout.',
         ];
         try {
-          const d = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner');
+          const d = await PartnerProgramLedgerService.getProgramStatusDetail(
+            partnerOrgId,
+            'partner'
+          );
           whatNext = [...whatNext, ...d.whatNext];
         } catch {
           /* ignore */
@@ -187,7 +220,10 @@ router.post(
       let whatNext: string[] = [];
       if (code === 'P29_LIFECYCLE_INVALID' || code === 'P29_LIFECYCLE_FORBIDDEN') {
         try {
-          const d = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner');
+          const d = await PartnerProgramLedgerService.getProgramStatusDetail(
+            partnerOrgId,
+            'partner'
+          );
           whatNext = d.whatNext;
         } catch {
           /* ignore */
@@ -208,7 +244,7 @@ router.post(
 router.get(
   '/clients',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -243,7 +279,7 @@ router.get(
 router.get(
   '/projects',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -277,7 +313,7 @@ router.get(
 router.get(
   '/employees',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -312,7 +348,8 @@ router.get(
 router.get(
   '/onboarding-status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -358,7 +395,8 @@ router.get(
 router.post(
   '/onboarding/accept-terms',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -394,7 +432,7 @@ router.post(
       req.socket?.remoteAddress ||
       '';
     const userAgent = (req.headers['user-agent'] as string) || '';
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const organizationId = readPartnerTenantOrgId(req);
 
     try {
       await legalService.acceptDocuments(
@@ -422,7 +460,8 @@ router.post(
 router.post(
   '/onboarding/select-tier',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -467,7 +506,8 @@ router.post(
 router.post(
   '/onboarding/complete',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -541,7 +581,7 @@ router.post(
 router.get(
   '/referral-tools',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -571,7 +611,7 @@ router.get(
 router.get(
   '/referral-analytics',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -601,7 +641,7 @@ router.get(
 router.get(
   '/attributions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -636,7 +676,7 @@ router.get(
 router.get(
   '/earnings-summary',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -647,10 +687,28 @@ router.get(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
-    const earnings = await PartnerCommissionService.getEarningsSummary(partnerOrgId);
+    const [legacySummary, detail] = await Promise.all([
+      PartnerCommissionService.getEarningsSummary(partnerOrgId),
+      PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner'),
+    ]);
+    const earnings = {
+      totalEarned: detail.balances.grossEarned,
+      totalPending: legacySummary.totalPending,
+      totalApproved: legacySummary.totalApproved,
+      totalPaid: detail.balances.paidOut,
+      thisMonth: legacySummary.thisMonth,
+      thisMonthCount: legacySummary.thisMonthCount,
+      lastMonth: legacySummary.lastMonth,
+      readyForPayout: detail.balances.availableToPayout,
+      currency: detail.balances.currency || legacySummary.currency || 'EUR',
+      lifecyclePhase: detail.runtime.lifecycle_phase,
+      whatNext: detail.whatNext,
+      hold: detail.hold,
+      ...(detail.degraded ? { degraded: detail.degraded } : {}),
+    };
     return res.json({
       data: { earnings },
-      meta: partnerReadMeta(req, partnerOrgId),
+      meta: partnerProgramMeta(req, partnerOrgId),
     });
   })
 );
@@ -661,7 +719,7 @@ router.get(
 router.get(
   '/commission-transactions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -698,7 +756,7 @@ router.get(
 router.get(
   '/payouts',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -733,7 +791,7 @@ router.get(
 router.post(
   '/payouts/request',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -744,6 +802,41 @@ router.post(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
+    const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
+    if (!isPartnerPayoutDestinationComplete(payoutSettings)) {
+      const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
+        partnerOrgId,
+        'partner'
+      );
+      return res.status(409).json({
+        error: 'Complete payout settings before requesting payout',
+        code: 'P29_PAYOUT_SETTINGS_INCOMPLETE',
+        whatNext: ['Uzupełnij payout settings i ponów żądanie payout.', ...detail.whatNext],
+        meta: partnerProgramMeta(req, partnerOrgId),
+      });
+    }
+
+    const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
+      partnerOrgId,
+      'partner'
+    );
+    if (detail.runtime.lifecycle_phase === 'earn') {
+      await PartnerProgramLedgerService.transitionLifecycle({
+        partnerOrgId,
+        toPhase: 'payout',
+        actor: 'partner',
+        actorId: userId,
+        reason: typeof req.body?.notes === 'string' ? req.body.notes : 'Payout requested',
+      });
+    } else if (detail.runtime.lifecycle_phase !== 'payout') {
+      return res.status(409).json({
+        error: `Cannot request payout while lifecycle phase is ${detail.runtime.lifecycle_phase}`,
+        code: 'P29_LIFECYCLE_INVALID',
+        whatNext: detail.whatNext,
+        meta: partnerProgramMeta(req, partnerOrgId),
+      });
+    }
+
     const payout = await PartnerCommissionService.requestPayout({
       partnerOrgId,
       payoutAccountId: req.body?.payoutAccountId,
@@ -756,9 +849,39 @@ router.post(
         code: 'PAYOUT_NOT_AVAILABLE',
       });
     }
+
+    await PartnerProgramLedgerService.appendEntry({
+      partnerOrgId,
+      entryType: 'payout.requested',
+      amount: Number(payout.netAmount || payout.grossAmount || 0),
+      currency: payout.currency || 'EUR',
+      actor: 'partner',
+      actorId: userId,
+      idempotencyKey:
+        typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
+          ? req.body.idempotencyKey.trim()
+          : `partner-payout-request:${payout.id}`,
+      sourceRef: {
+        payoutId: payout.id,
+        payoutAccountId: req.body?.payoutAccountId || null,
+        bridge: 'partner_commission_service',
+      },
+      note: typeof req.body?.notes === 'string' ? req.body.notes : null,
+    });
+
+    const updatedDetail = await PartnerProgramLedgerService.getProgramStatusDetail(
+      partnerOrgId,
+      'partner'
+    );
     return res.status(201).json({
-      data: { payout },
-      meta: partnerReadMeta(req, partnerOrgId),
+      data: {
+        payout,
+        lifecyclePhase: updatedDetail.runtime.lifecycle_phase,
+        balances: updatedDetail.balances,
+        whatNext: updatedDetail.whatNext,
+        hold: updatedDetail.hold,
+      },
+      meta: partnerProgramMeta(req, partnerOrgId),
     });
   })
 );
@@ -769,7 +892,7 @@ router.post(
 router.post(
   '/campaign-links',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -810,7 +933,7 @@ router.post(
 router.delete(
   '/campaign-links/:linkId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -841,7 +964,7 @@ router.delete(
 router.put(
   '/organization',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -852,27 +975,25 @@ router.put(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
-    const { name, taxId, contactEmail, contactPhone, website } = req.body ?? {};
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'name is required', code: 'PARTNER_NAME_REQUIRED' });
-    }
-    if (!contactEmail || typeof contactEmail !== 'string') {
-      return res.status(400).json({
-        error: 'contactEmail is required',
-        code: 'PARTNER_CONTACT_EMAIL_REQUIRED',
-      });
-    }
+    const { contactPhone, website } = req.body ?? {};
+    const ignoredFields = ['name', 'taxId', 'contactEmail'].filter(
+      (field) => req.body?.[field] !== undefined
+    );
 
     await DbPromise.run(
       getDatabase(),
       `UPDATE partner_organizations
-       SET name = ?, tax_id = ?, contact_email = ?, contact_phone = ?, website = ?, updated_at = NOW()
+       SET contact_phone = ?, website = ?, updated_at = NOW()
        WHERE id = ?`,
-      [name, taxId || null, contactEmail, contactPhone || null, website || null, partnerOrgId]
+      [contactPhone || null, website || null, partnerOrgId]
     );
 
     return res.json({
-      data: { success: true, message: 'Organization updated successfully' },
+      data: {
+        success: true,
+        message: 'Partner-program profile updated successfully',
+        ignoredFields,
+      },
       meta: partnerReadMeta(req, partnerOrgId),
     });
   })
@@ -884,7 +1005,7 @@ router.put(
 router.put(
   '/organization/specializations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -944,7 +1065,7 @@ router.put(
 router.put(
   '/organization/regions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1004,7 +1125,7 @@ router.put(
 router.put(
   '/organization/listing',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1044,7 +1165,7 @@ router.put(
 router.get(
   '/payout-settings',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1070,7 +1191,7 @@ router.get(
 router.put(
   '/payout-settings',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }

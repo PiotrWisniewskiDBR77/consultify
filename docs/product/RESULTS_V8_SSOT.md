@@ -4,6 +4,13 @@
 > Owner: Product + Engineering
 > Scope: canonical product truth for Results covering KPI, scorecards, OKRs, dashboards, deviations, ROI and executive review
 
+Read with:
+
+- `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+- `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `docs/product/REPORTING_CANONICAL_TEMPLATES.md`
+- `docs/product/work-packets/cursor-work/final_master/KPI_AI_SUPPORT_ANALYSIS_2026-04-06.md`
+
 ---
 
 ## 1. Why this document exists
@@ -73,6 +80,21 @@ Rule:
 
 At product level, Results should support at least:
 
+Current operating spine inside the active module is:
+
+- `Initiatives`
+- `KPI`
+- `Reporting`
+- `ROI`
+- `ROI Analysis`
+
+Canonical interpretation:
+
+- `Initiatives` is the observation scope surface
+- `KPI` is the operator workspace for signal inspection, measurement and action
+- `Reporting` is the template-first narrative, distribution and review surface
+- `ROI` and `ROI Analysis` extend the results lane with financial consequence and realized-value interpretation
+
 ### 4.1 KPI and metrics surface
 
 For:
@@ -97,6 +119,8 @@ For:
 - separate OKR cycles
 - rollups
 - scorecard views
+- scorecard status rules
+- check-ins and ownership
 - alignment to initiatives
 
 ### 4.3 KPI review and deviation surface
@@ -132,6 +156,8 @@ For:
 - operational KPI dashboards
 - wallboards
 - scheduled results packs
+- recurring delivery schedules
+- KPI connectors and ingest posture
 
 ---
 
@@ -144,9 +170,15 @@ At minimum the package should distinguish:
 - `MetricDimension`
 - `MetricSlice`
 - `MetricView`
+- `MetricConnector`
+- `MetricLineageRecord`
 - `Scorecard`
 - `Objective`
 - `KeyResult`
+- `Goal`
+- `GoalCheckIn`
+- `ReportSchedule`
+- `Wallboard`
 - `DeviationCase`
 - `CorrectiveActionPlan`
 - `RoiTrackingArtifact`
@@ -162,6 +194,8 @@ One metric should keep one governed meaning across:
 
 - Results
 - Reports
+- Schedules
+- Wallboards
 - Execution
 - Initiatives
 - executive packs
@@ -174,6 +208,8 @@ Every metric should explain:
 - how recent it is
 - whether it was manually entered or synced
 - whether the value is trusted, stale or disputed
+- which connector or ingest path produced it where applicable
+- what downstream artifacts currently consume it
 
 ### 6.3 Deviation-to-action doctrine
 
@@ -194,6 +230,19 @@ Results should make it obvious how:
 - KPIs roll into scorecards
 - scorecards support strategic goals
 - standing operational KPI connect process reality back to strategy
+
+### 6.4C Distribution doctrine
+
+Results should support governed distribution surfaces that consume the same KPI truth:
+
+- report schedules
+- wallboards
+- executive packs
+- connector status visibility
+
+Canonical rule:
+
+`distribution surfaces amplify governed KPI truth; they do not define or fork it`
 
 ### 6.4A KPI-finance linkage doctrine
 
@@ -307,16 +356,21 @@ AI may not:
 - scorecards and OKRs connect to initiatives and results
 - deviations become actionable workflows
 - ROI is evidence-based
-- dashboards and reports are connected to one metrics truth
+- dashboards, schedules and reports are connected to one metrics truth
+- connectors and wallboards remain source-aware and audit-friendly
 
 ---
 
 ## 9. Related canonical docs
 
+- `KPI_FULL_SYSTEM_CANON_V8.md`
 - `RESULTS_V8_BENCHMARK.md`
 - `RESULTS_KPI_OPERATING_MODEL_AND_OKR_FUNCTIONS_V8.md`
 - `RESULTS_AI_COPILOT_AUTOMATION_AND_AGENT_RUNTIME_V8.md`
 - `RESULTS_PLATFORM_INTEGRATION_PLAN_V8.md`
 - `RESULTS_ROI_REGISTRY_AND_REALIZATION_TRACKING_RUNTIME_V8.md`
+- `RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `REPORTING_CANONICAL_TEMPLATES.md`
+- `work-packets/cursor-work/final_master/KPI_AI_SUPPORT_ANALYSIS_2026-04-06.md`
 - `RESULTS_KPI_DEVIATION_MANAGEMENT_V3.md`
 - `ROI_TRACKING_CONTRACT_V3.md`

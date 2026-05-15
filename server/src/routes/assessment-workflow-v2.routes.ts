@@ -29,6 +29,7 @@ import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import activityService from '../services/ActivityService.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
@@ -62,16 +63,51 @@ const router = Router();
 // Apply middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readOptionalString = (reader: () => unknown): string | undefined =>
+  normalizeOptionalString(safeRead(reader, undefined));
+
+const readAssessmentId = (req: any): string | undefined =>
+  readOptionalString(() => req.params?.assessmentId);
+
+const safeGetHeader = (req: any, headerName: string): string | undefined =>
+  readOptionalString(() => req.get?.(headerName));
+
+const safeGetIp = (req: any): string | undefined =>
+  readOptionalString(() => req.ip) ||
+  readOptionalString(() => req.connection?.remoteAddress) ||
+  readOptionalString(() => req.socket?.remoteAddress);
 
 function getAuthContext(req: any): {
   userId: string | null;
   organizationId: string;
   globalRole: string;
 } {
-  const userId = req?.user?.id || req?.userId || null;
-  const organizationId = req?.user?.organizationId || req?.organizationId || 'org-default';
-  const globalRole = String(req?.user?.role || req?.userRole || '').toUpperCase();
+  const userId = readOptionalString(() => req.user?.id) || readOptionalString(() => req.userId) || null;
+  const organizationId =
+    readOptionalString(() => req.user?.organizationId) ||
+    readOptionalString(() => req.user?.organization_id) ||
+    readOptionalString(() => req.organizationId) ||
+    '';
+  const globalRole =
+    (readOptionalString(() => req.user?.role) || readOptionalString(() => req.userRole) || '')
+      .toUpperCase();
   return { userId, organizationId, globalRole };
 }
 
@@ -86,7 +122,11 @@ function isGlobalAdminRole(globalRole: string): boolean {
 }
 
 async function requireAssessmentFlag(req: any, res: any, flag: keyof any): Promise<boolean> {
-  const { assessmentId } = req.params as any;
+  const assessmentId = readAssessmentId(req);
+  if (!assessmentId) {
+    res.status(400).json({ error: 'assessmentId is required' });
+    return false;
+  }
   const { userId, organizationId, globalRole } = getAuthContext(req);
 
   if (!userId) {
@@ -123,7 +163,11 @@ async function requireAssessmentPermission(
   res: any,
   permission: 'canManage' | 'canManageTeam'
 ): Promise<boolean> {
-  const { assessmentId } = req.params as any;
+  const assessmentId = readAssessmentId(req);
+  if (!assessmentId) {
+    res.status(400).json({ error: 'assessmentId is required' });
+    return false;
+  }
   const { userId, organizationId, globalRole } = getAuthContext(req);
 
   if (!userId) {
@@ -166,14 +210,15 @@ router.get('/sessions', AssessmentController.getOpenSessions);
  */
 router.get('/:assessmentId/users', async (req, res) => {
   try {
-    const { assessmentId } = req.params as any;
+    const assessmentId = readAssessmentId(req);
+    if (!assessmentId) return res.status(400).json({ error: 'assessmentId is required' });
     const { userId, organizationId } = getAuthContext(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const ok = await requireAssessmentPermission(req, res, 'canManageTeam');
     if (!ok) return;
 
-    const q = String((req.query as any)?.query || '')
+    const q = String(safeRead(() => (req.query as any)?.query, '') || '')
       .trim()
       .toLowerCase();
     const db = getDatabase();
@@ -277,8 +322,9 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
           id, organization_id, project_id, assessment_type, name, status,
           completion_percent, confidence_avg,
           answers_json, context_snapshot, score_summary, navigation_json,
+          assessment_definition_id, assessment_definition_version,
           created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newId,
           organizationId,
@@ -289,8 +335,10 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
           original.confidence_avg || 0,
           original.answers_json || '{}',
           original.context_snapshot || '{}',
-          original.score_summary || '{}',
+          original.p28_workbench_v1 ? '{}' : original.score_summary || '{}',
           original.navigation_json || '{}',
+          original.assessment_definition_id || null,
+          original.assessment_definition_version || null,
           userId,
           userId,
           now,
@@ -302,7 +350,7 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
 
     res.json({ id: newId, name: newName, status: 'DRAFT' });
   } catch (err: any) {
-    console.error('[assessment-workflow] duplicate error:', err?.message);
+    logger.error('[assessment-workflow] duplicate error:', err?.message);
     res.status(500).json({ error: 'Failed to duplicate assessment' });
   }
 });
@@ -840,10 +888,10 @@ router.post('/:assessmentId/roles', validateBody(AssignAssessmentRoleSchema), as
         entityType: 'ASSESSMENT',
         entityId: String(assessmentId),
         metadata: { targetUserId: String(userId), role },
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent') || undefined,
+        ipAddress: safeGetIp(req),
+        userAgent: safeGetHeader(req, 'user-agent'),
       })
-      .catch(() => {});
+      .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
 
     return res.status(201).json({ role: record });
   } catch (err: any) {
@@ -888,10 +936,10 @@ router.put(
           entityType: 'ASSESSMENT',
           entityId: String(assessmentId),
           metadata: { targetUserId: String(userId), role },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent') || undefined,
+          ipAddress: safeGetIp(req),
+          userAgent: safeGetHeader(req, 'user-agent'),
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
 
       return res.json({ role: record });
     } catch (err: any) {
@@ -930,10 +978,10 @@ router.delete('/:assessmentId/roles/:userId', async (req, res) => {
           entityType: 'ASSESSMENT',
           entityId: String(assessmentId),
           metadata: { targetUserId: String(userId) },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent') || undefined,
+          ipAddress: safeGetIp(req),
+          userAgent: safeGetHeader(req, 'user-agent'),
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
     }
 
     return res.json({ ok: true });
@@ -1499,14 +1547,13 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
 
     let resolvedIndustry = 'manufacturing';
     try {
-      const orgContextService = (await import('../services/organizationContext/OrganizationContextService.js')).default;
+      const orgContextService = (
+        await import('../services/organizationContext/OrganizationContextService.js')
+      ).default;
       const resolved = await orgContextService.buildResolvedContext(String(organizationId));
       resolvedIndustry = resolved?.profile?.industry || 'manufacturing';
     } catch {
-      const org = await db.get<any>(`SELECT industry FROM organizations WHERE id = ?`, [
-        String(organizationId),
-      ]);
-      resolvedIndustry = org?.industry || 'manufacturing';
+      resolvedIndustry = 'manufacturing';
     }
 
     const framework = String(assessment.assessment_type || 'SIRI').toUpperCase();

@@ -6,6 +6,7 @@
  */
 
 import { Request } from 'express';
+import { randomBytes } from 'node:crypto';
 import * as fs from 'fs';
 import multer from 'multer';
 import * as path from 'path';
@@ -25,6 +26,147 @@ interface _FileRequest extends AuthRequest {
   file?: Express.Multer.File;
 }
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readOrgId = (req: Request): string =>
+  normalizeOptionalString(safeRead(() => (req as AuthRequest).user?.organizationId, undefined)) ||
+  normalizeOptionalString(safeRead(() => (req as AuthRequest).user?.organization_id, undefined)) ||
+  'unknown';
+const MAX_UPLOAD_ORG_ID_CHARS = 128;
+const MAX_UPLOAD_BASENAME_CHARS = 120;
+const MAX_UPLOAD_FILENAME_CHARS = 200;
+export const MAX_CLIENT_ORIGINALNAME_LENGTH = 4096;
+export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE = 'Upload workspace unavailable';
+export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE = 'FILE_UPLOAD_WORKSPACE_UNAVAILABLE' as const;
+export const sanitizeOrgIdForUploadPath = (value: unknown): string => {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) return 'unknown';
+  if (normalized.length > MAX_UPLOAD_ORG_ID_CHARS) return 'unknown';
+  if (normalized === '.' || normalized === '..') return 'unknown';
+  if (normalized.includes('..') || /[/\\\u0000]/.test(normalized)) return 'unknown';
+  if (!/^[a-zA-Z0-9_-]+$/.test(normalized)) return 'unknown';
+  return normalized;
+};
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+const EXTENSION_TO_ALLOWED_MIME = new Map<string, Set<string>>([
+  ['.pdf', new Set(['application/pdf'])],
+  [
+    '.doc',
+    new Set(['application/msword']),
+  ],
+  [
+    '.docx',
+    new Set(['application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
+  ],
+  [
+    '.xls',
+    new Set(['application/vnd.ms-excel']),
+  ],
+  [
+    '.xlsx',
+    new Set(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']),
+  ],
+]);
+const normalizeMimeType = (value: string): string => value.split(';')[0]?.trim().toLowerCase() || '';
+const clientReportedFilenameTail = (raw: unknown): string => {
+  if (typeof raw === 'string' && raw.length > MAX_CLIENT_ORIGINALNAME_LENGTH) {
+    return 'unknown.file';
+  }
+  const normalized = normalizeOptionalString(raw);
+  if (!normalized) return 'unknown.file';
+  const unifiedSlashes = normalized.replace(/\\/g, '/');
+  return path.posix.basename(unifiedSlashes) || 'unknown.file';
+};
+
+export const buildSafeUploadedFilename = (originalname: unknown): string => {
+  const normalizedOriginalName = clientReportedFilenameTail(originalname) || 'upload.bin';
+  const extRaw = path.extname(normalizedOriginalName).toLowerCase();
+  const ext = EXTENSION_TO_ALLOWED_MIME.has(extRaw) ? extRaw : '.bin';
+  const basename = path.basename(normalizedOriginalName, ext) || 'upload';
+  let safeBasename =
+    basename.length > MAX_UPLOAD_BASENAME_CHARS
+      ? basename.slice(0, MAX_UPLOAD_BASENAME_CHARS)
+      : basename;
+  safeBasename = safeBasename
+    .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u2028-\u202E\uFEFF]/g, '_')
+    .trim();
+  if (!safeBasename || safeBasename === '.') {
+    safeBasename = 'upload';
+  }
+  const entropy = randomBytes(8).toString('hex');
+  const uniqueSuffix = `${Date.now()}-${entropy}`;
+  const filenamePrefix = `${uniqueSuffix}-`;
+  const maxBasenameChars = Math.max(1, MAX_UPLOAD_FILENAME_CHARS - filenamePrefix.length - ext.length);
+  if (safeBasename.length > maxBasenameChars) {
+    safeBasename = safeBasename.slice(0, maxBasenameChars);
+  }
+  return `${filenamePrefix}${safeBasename}${ext}`;
+};
+const assessmentsUploadRoot = path.resolve(path.join(__dirname, '../../../uploads/assessments'));
+export const ASSESSMENTS_UPLOAD_ROOT = assessmentsUploadRoot;
+const isPathInsideDir = (baseDir: string, candidatePath: string): boolean => {
+  const relative = path.relative(baseDir, candidatePath);
+  return !relative.startsWith('..') && !path.isAbsolute(relative);
+};
+export const resolveAssessmentUploadDir = (req: Request): string => {
+  try {
+    const orgId = sanitizeOrgIdForUploadPath(readOrgId(req));
+    const dir = path.resolve(path.join(assessmentsUploadRoot, orgId));
+    if (!isPathInsideDir(assessmentsUploadRoot, dir)) {
+      throw new Error('Upload path outside assessments root');
+    }
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    }
+    const realRoot = fs.realpathSync(assessmentsUploadRoot);
+    const realDir = fs.realpathSync(dir);
+    if (!isPathInsideDir(realRoot, realDir)) {
+      throw new Error('Upload path outside assessments root');
+    }
+    return realDir;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Upload path outside assessments root') {
+      throw error;
+    }
+    const err = new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE) as Error & {
+      code?: typeof FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE;
+    };
+    err.code = FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE;
+    throw err;
+  }
+};
+export const resolveUploadDestinationForMulter = (
+  req: Request,
+  cb: (error: Error | null, destination: string) => void,
+  resolveDir: (request: Request) => string = resolveAssessmentUploadDir
+): void => {
+  try {
+    const dir = resolveDir(req);
+    cb(null, dir);
+  } catch (error) {
+    // Multer ignores destination when error is set, but keep a stable non-empty fallback.
+    cb(error instanceof Error ? error : new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE), assessmentsUploadRoot);
+  }
+};
+
 // ==========================================
 // STORAGE CONFIGURATION
 // ==========================================
@@ -38,26 +180,15 @@ const storage = multer.diskStorage({
     _file: Express.Multer.File,
     cb: (error: Error | null, destination: string) => void
   ) => {
-    const orgId = (req as AuthRequest).user?.organizationId || 'unknown';
-    const dir = path.join(__dirname, '../../../uploads/assessments', orgId);
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    cb(null, dir);
+    resolveUploadDestinationForMulter(req, cb);
   },
   filename: (
     _req: Request,
     file: Express.Multer.File,
     cb: (error: Error | null, filename: string) => void
   ) => {
-    // Generate unique filename: timestamp-random-original.ext
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
-    cb(null, `${uniqueSuffix}-${basename}${ext}`);
+    const safeFilename = buildSafeUploadedFilename(safeRead(() => file.originalname, undefined));
+    cb(null, safeFilename);
   },
 });
 
@@ -69,17 +200,28 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: (error: Error | null, acceptFile: boolean) => void
 ): void => {
-  const allowedExts = /pdf|xlsx|xls|docx|doc/;
-  const allowedMimes = /pdf|spreadsheet|document|msword|ms-excel/;
+  try {
+    const originalName = clientReportedFilenameTail(safeRead(() => file.originalname, undefined));
+    if (/[\u0000-\u001F\u007F\u200B-\u200F\u2028-\u202E\uFEFF]/.test(originalName)) {
+      cb(createInvalidFilenameError(), false);
+      return;
+    }
+    const mimeType =
+      normalizeMimeType(normalizeOptionalString(safeRead(() => file.mimetype, undefined)) || '');
+    const ext = safeRead(() => path.extname(originalName).toLowerCase(), '');
+    const extensionAllowedMimes = EXTENSION_TO_ALLOWED_MIME.get(ext);
+    const extname = Boolean(extensionAllowedMimes);
+    const mimetype = safeRead(() => ALLOWED_MIME_TYPES.has(mimeType), false);
+    const mimeMatchesExtension = Boolean(extensionAllowedMimes?.has(mimeType));
 
-  const extname = allowedExts.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedMimes.test(file.mimetype.toLowerCase());
+    if (extname && mimetype && mimeMatchesExtension) {
+      return cb(null, true);
+    }
 
-  if (extname && mimetype) {
-    return cb(null, true);
+    cb(createDisallowedFileTypeError(), false);
+  } catch {
+    cb(createRuntimeFilterError(), false);
   }
-
-  cb(new Error('Only PDF, Excel, and Word documents are allowed'), false);
 };
 
 /**
@@ -88,6 +230,43 @@ const fileFilter = (
 export const uploadLimits = {
   fileSize: 10 * 1024 * 1024, // 10MB max
   files: 1, // Single file upload
+  fields: 24,
+  parts: 48,
+  fieldSize: 256 * 1024, // 256KB max text field payload
+  fieldNameSize: 256,
+  headerPairs: 1000,
+};
+
+export const FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE =
+  'Only PDF, Excel, and Word documents are allowed';
+export const FILE_UPLOAD_DISALLOWED_TYPE_CODE = 'FILE_UPLOAD_DISALLOWED_TYPE' as const;
+export const FILE_UPLOAD_INVALID_FILENAME_MESSAGE =
+  'The uploaded filename contains invalid characters';
+export const FILE_UPLOAD_INVALID_FILENAME_CODE = 'FILE_UPLOAD_INVALID_FILENAME' as const;
+export const FILE_UPLOAD_FILTER_RUNTIME_MESSAGE =
+  'Failed to validate uploaded file metadata';
+export const FILE_UPLOAD_FILTER_RUNTIME_CODE = 'FILE_UPLOAD_FILTER_RUNTIME' as const;
+
+const createDisallowedFileTypeError = (): Error => {
+  const err = new Error(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE) as Error & {
+    code?: typeof FILE_UPLOAD_DISALLOWED_TYPE_CODE;
+  };
+  err.code = FILE_UPLOAD_DISALLOWED_TYPE_CODE;
+  return err;
+};
+const createInvalidFilenameError = (): Error => {
+  const err = new Error(FILE_UPLOAD_INVALID_FILENAME_MESSAGE) as Error & {
+    code?: typeof FILE_UPLOAD_INVALID_FILENAME_CODE;
+  };
+  err.code = FILE_UPLOAD_INVALID_FILENAME_CODE;
+  return err;
+};
+const createRuntimeFilterError = (): Error => {
+  const err = new Error(FILE_UPLOAD_FILTER_RUNTIME_MESSAGE) as Error & {
+    code?: typeof FILE_UPLOAD_FILTER_RUNTIME_CODE;
+  };
+  err.code = FILE_UPLOAD_FILTER_RUNTIME_CODE;
+  return err;
 };
 
 export const upload = multer({
@@ -96,4 +275,4 @@ export const upload = multer({
   fileFilter: fileFilter as any,
 });
 
-export { fileFilter };
+export { fileFilter, isPathInsideDir };

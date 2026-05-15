@@ -17,6 +17,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import PartnerProgramLedgerService from './partnerProgramLedgerService.js';
 
 // ==========================================
 // TYPES
@@ -200,6 +201,17 @@ interface PayoutRow {
 
 let db: IDatabase = getDatabase();
 
+async function getPayoutRowById(payoutId: string): Promise<PayoutRow | null> {
+  const row = await DbPromise.get<PayoutRow>(
+    db,
+    `SELECT *
+     FROM partner_payouts
+     WHERE id = ?`,
+    [payoutId]
+  );
+  return row ?? null;
+}
+
 /**
  * Set database instance (for testing)
  */
@@ -382,6 +394,17 @@ export async function approveCommissions(
 
   try {
     const placeholders = commissionIds.map(() => '?').join(', ');
+    const pendingRows = await DbPromise.all<CommissionRow>(
+      db,
+      `SELECT id, partner_org_id, attribution_id, organization_id, transaction_type,
+              transaction_date, billing_period_start, billing_period_end,
+              gross_amount, commission_rate, commission_amount, currency,
+              invoice_id, stripe_payment_id, stripe_invoice_id, status,
+              approved_at, approved_by, payout_id, notes, created_at, updated_at
+       FROM partner_commission_transactions
+       WHERE id IN (${placeholders}) AND status = 'PENDING'`,
+      commissionIds
+    );
     const result = await DbPromise.run(
       db,
       `UPDATE partner_commission_transactions 
@@ -389,6 +412,24 @@ export async function approveCommissions(
              WHERE id IN (${placeholders}) AND status = 'PENDING'`,
       [approvedBy, ...commissionIds]
     );
+
+    for (const row of pendingRows) {
+      await PartnerProgramLedgerService.appendEntry({
+        partnerOrgId: row.partner_org_id,
+        entryType: 'accrual.posted',
+        amount: Number(row.commission_amount || 0),
+        currency: row.currency || 'EUR',
+        actor: 'operator',
+        actorId: approvedBy || null,
+        idempotencyKey: `partner-commission-approved:${row.id}`,
+        sourceRef: {
+          commissionId: row.id,
+          organizationId: row.organization_id,
+          transactionType: row.transaction_type,
+        },
+        note: row.notes || 'Commission approved and posted to governed ledger',
+      });
+    }
 
     logger.info(
       `[PartnerCommissionService] Approved ${result.changes} commissions by ${approvedBy}`
@@ -677,9 +718,16 @@ export async function getPayouts(
 export async function processPayout(
   payoutId: string,
   processedBy: string,
-  options?: { payoutReference?: string; externalPayoutId?: string }
+  options?: {
+    payoutReference?: string;
+    externalPayoutId?: string;
+    dualControlConfirmed?: boolean;
+    reason?: string;
+  }
 ): Promise<boolean> {
   try {
+    const payout = await getPayoutRowById(payoutId);
+    if (!payout) return false;
     const result = await DbPromise.run(
       db,
       `UPDATE partner_payouts 
@@ -691,7 +739,27 @@ export async function processPayout(
       [processedBy, options?.payoutReference || null, options?.externalPayoutId || null, payoutId]
     );
 
-    return (result.changes || 0) > 0;
+    const changed = (result.changes || 0) > 0;
+    if (changed) {
+      await PartnerProgramLedgerService.appendEntry({
+        partnerOrgId: payout.partner_org_id,
+        entryType: 'payout.approved',
+        amount: Number(payout.net_amount || 0),
+        currency: payout.currency || 'EUR',
+        actor: 'operator',
+        actorId: processedBy || null,
+        idempotencyKey: `partner-payout-approved:${payoutId}`,
+        sourceRef: {
+          payoutId,
+          payoutReference: options?.payoutReference || payout.payout_reference || null,
+          providerTxId: options?.externalPayoutId || payout.external_payout_id || null,
+          elevatedRiskConfirmed: Boolean(options?.dualControlConfirmed),
+        },
+        note: options?.reason || 'Payout approved for processing',
+      });
+    }
+
+    return changed;
   } catch (err: any) {
     logger.error('[PartnerCommissionService] Error processing payout:', err);
     return false;
@@ -703,9 +771,16 @@ export async function processPayout(
  */
 export async function completePayout(
   payoutId: string,
-  options?: { payoutReference?: string }
+  options?: {
+    payoutReference?: string;
+    dualControlConfirmed?: boolean;
+    completedBy?: string;
+    reason?: string;
+  }
 ): Promise<boolean> {
   try {
+    const payout = await getPayoutRowById(payoutId);
+    if (!payout) return false;
     // Update payout status
     const result = await DbPromise.run(
       db,
@@ -728,6 +803,54 @@ export async function completePayout(
       );
 
       logger.info(`[PartnerCommissionService] Completed payout ${payoutId}`);
+
+      const providerTxId =
+        payout.external_payout_id || options?.payoutReference || payout.payout_reference;
+      await PartnerProgramLedgerService.appendEntry({
+        partnerOrgId: payout.partner_org_id,
+        entryType: 'payout.executed',
+        amount: Number(payout.net_amount || 0),
+        currency: payout.currency || 'EUR',
+        actor: 'operator',
+        actorId: options?.completedBy || null,
+        idempotencyKey: `partner-payout-executed:${payoutId}`,
+        sourceRef: {
+          payoutId,
+          payoutReference: options?.payoutReference || payout.payout_reference || null,
+          providerTxId: providerTxId || null,
+          elevatedRiskConfirmed: Boolean(options?.dualControlConfirmed),
+        },
+        note: options?.reason || 'Payout executed by provider',
+      });
+      await PartnerProgramLedgerService.appendEntry({
+        partnerOrgId: payout.partner_org_id,
+        entryType: 'payout.reconciled',
+        amount: Number(payout.net_amount || 0),
+        currency: payout.currency || 'EUR',
+        actor: 'operator',
+        actorId: options?.completedBy || null,
+        idempotencyKey: `partner-payout-reconciled:${payoutId}`,
+        sourceRef: {
+          payoutId,
+          payoutReference: options?.payoutReference || payout.payout_reference || null,
+          providerTxId: providerTxId || null,
+        },
+        note: 'Payout completed and reconciled in governed ledger',
+      });
+      try {
+        await PartnerProgramLedgerService.transitionLifecycle({
+          partnerOrgId: payout.partner_org_id,
+          toPhase: 'earn',
+          actor: 'operator',
+          actorId: options?.completedBy || null,
+          reason: 'Payout completed',
+        });
+      } catch (error) {
+        logger.warn(
+          '[PartnerCommissionService] Could not transition payout lifecycle back to earn',
+          error
+        );
+      }
     }
 
     return (result.changes || 0) > 0;
@@ -742,6 +865,8 @@ export async function completePayout(
  */
 export async function failPayout(payoutId: string, reason: string): Promise<boolean> {
   try {
+    const payout = await getPayoutRowById(payoutId);
+    if (!payout) return false;
     // Update payout status
     const result = await DbPromise.run(
       db,
@@ -762,6 +887,33 @@ export async function failPayout(payoutId: string, reason: string): Promise<bool
       );
 
       logger.warn(`[PartnerCommissionService] Failed payout ${payoutId}: ${reason}`);
+      await PartnerProgramLedgerService.appendEntry({
+        partnerOrgId: payout.partner_org_id,
+        entryType: 'payout.failed',
+        amount: Number(payout.net_amount || 0),
+        currency: payout.currency || 'EUR',
+        actor: 'operator',
+        idempotencyKey: `partner-payout-failed:${payoutId}`,
+        sourceRef: {
+          payoutId,
+          payoutReference: payout.payout_reference || null,
+          providerTxId: payout.external_payout_id || null,
+        },
+        note: reason,
+      });
+      try {
+        await PartnerProgramLedgerService.transitionLifecycle({
+          partnerOrgId: payout.partner_org_id,
+          toPhase: 'earn',
+          actor: 'operator',
+          reason: 'Payout failed',
+        });
+      } catch (error) {
+        logger.warn(
+          '[PartnerCommissionService] Could not transition failed payout lifecycle back to earn',
+          error
+        );
+      }
     }
 
     return (result.changes || 0) > 0;

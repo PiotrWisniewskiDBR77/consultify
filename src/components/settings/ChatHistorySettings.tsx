@@ -13,6 +13,11 @@ interface ChatHistorySettingsProps {
   className?: string;
 }
 
+const extractErrorCode = (error: unknown): string | null => {
+  const maybe = error as { data?: { code?: string } };
+  return typeof maybe?.data?.code === 'string' ? maybe.data.code : null;
+};
+
 export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [retentionDays, setRetentionDays] = useState(90);
@@ -29,8 +34,10 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
     try {
       await Api.clearChatHistory();
       toast.success(t('settings.chat.cleared', 'Chat history cleared'));
-    } catch (_error) {
-      toast.error(t('settings.chat.clearError', 'Failed to clear history'));
+    } catch (error) {
+      const fallback = t('settings.chat.clearError', 'Failed to clear history');
+      const code = extractErrorCode(error);
+      toast.error(code ? `${fallback} (${code})` : fallback);
     }
   };
 
@@ -43,8 +50,10 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
       a.download = 'chat-history.json';
       a.click();
       URL.revokeObjectURL(url);
-    } catch (_error) {
-      toast.error(t('settings.chat.exportError', 'Failed to export history'));
+    } catch (error) {
+      const fallback = t('settings.chat.exportError', 'Failed to export history');
+      const code = extractErrorCode(error);
+      toast.error(code ? `${fallback} (${code})` : fallback);
     }
   };
 

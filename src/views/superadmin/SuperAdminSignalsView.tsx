@@ -135,7 +135,9 @@ export const SuperAdminSignalsView: React.FC = () => {
     <div className="space-y-5 p-5 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">System alerts, client tickets, and user feedback (unread)</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            System alerts, client tickets, and user feedback (unread)
+          </h2>
         </div>
         <Button variant="secondary" icon={RefreshCw} onClick={fetchSignals} loading={loading}>
           Refresh

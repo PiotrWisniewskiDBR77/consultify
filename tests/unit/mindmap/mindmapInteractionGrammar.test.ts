@@ -34,4 +34,11 @@ describe('mindmapInteractionGrammar', () => {
     expect(stabilizeMindmapInteractionMode('connect', 'select')).toBe('select');
     expect(stabilizeMindmapInteractionMode('select', 'pan')).toBe('pan');
   });
+
+  it('keeps explicit direct mode choices stable outside accidental connect-to-pan', () => {
+    expect(stabilizeMindmapInteractionMode('select', 'connect')).toBe('connect');
+    expect(stabilizeMindmapInteractionMode('pan', 'connect')).toBe('connect');
+    expect(stabilizeMindmapInteractionMode('pan', 'select')).toBe('select');
+    expect(stabilizeMindmapInteractionMode('select', 'select')).toBe('select');
+  });
 });

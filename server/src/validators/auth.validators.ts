@@ -19,6 +19,8 @@ export const RegisterDemoRequestSchema = z.object({
   email: z.string().email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   firstName: z.string().optional(),
+  acceptedLegalDocs: z.array(z.string().toUpperCase()).optional(),
+  legalConsentAt: z.string().optional(),
 });
 
 // Register Request
@@ -28,12 +30,18 @@ export const RegisterRequestSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   companyName: z.string().optional(),
+  jobTitle: z.string().trim().max(255).optional(),
+  department: z.string().trim().max(255).optional(),
+  siteLocation: z.string().trim().max(255).optional(),
+  seniorityLevel: z.string().trim().max(255).optional(),
   accessCode: z.string().optional(),
   isDemo: z.boolean().optional(),
   promoCode: z.string().optional(),
   utm_campaign: z.string().optional(),
   utm_medium: z.string().optional(),
   partner_code: z.string().optional(),
+  acceptedLegalDocs: z.array(z.string().toUpperCase()).optional(),
+  legalConsentAt: z.string().optional(),
 });
 
 // Refresh Token Request

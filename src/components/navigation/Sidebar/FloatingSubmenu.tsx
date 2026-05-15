@@ -5,10 +5,10 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { Lock } from 'lucide-react';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { AppView } from '../../../types';
 import { FloatingMenuPosition, MenuItem, ThemeMode } from './types';
 
 interface FloatingSubmenuProps {
@@ -16,8 +16,8 @@ interface FloatingSubmenuProps {
   items: MenuItem[];
   title?: string;
   onClose: () => void;
-  onNavigate: (viewId: AppView) => void;
-  currentView: AppView;
+  onItemClick: (item: MenuItem) => void;
+  currentView: import('../../../types').AppView;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   theme: ThemeMode;
@@ -43,7 +43,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
   parentRect,
   items,
   title,
-  onNavigate,
+  onItemClick,
   currentView,
   onMouseEnter,
   onMouseLeave,
@@ -86,9 +86,9 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
         className={`
           fixed z-[9999] w-56 py-1.5
           rounded-xl
-          ${isDark ? 'bg-navy-900 border-white/[0.08]' : 'bg-white border-slate-200/60'}
+          ${isDark ? 'bg-navy-900 border-white/[0.08]' : 'bg-white border-slate-200'}
           border
-          shadow-xl
+          ${isDark ? 'shadow-xl' : 'shadow-hig-md'}
           overflow-hidden
         `}
         style={{ top: position.top, left: position.left }}
@@ -101,7 +101,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
             className={`
               px-3 py-2 text-[11px] font-medium uppercase tracking-wider
               ${hasItems ? 'border-b mb-0.5' : ''} 
-              ${isDark ? 'border-white/[0.06] text-slate-400' : 'border-slate-100 text-slate-500'}
+              ${isDark ? 'border-white/[0.06] text-slate-400' : 'border-slate-200 text-slate-600'}
             `}
           >
             {title}
@@ -111,25 +111,32 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
         {/* Menu Items */}
         {items.map((item) => {
           const isActive = item.viewId === currentView;
+          const isLocked = Boolean(item.isLocked);
 
           return (
             <motion.button
               key={item.id}
               type="button"
-              onClick={() => item.viewId && onNavigate(item.viewId)}
+              onClick={() => onItemClick(item)}
               whileTap={{ scale: 0.98 }}
+              title={item.lockedMessage}
               className={`
                 w-full flex items-center gap-2.5 px-3 py-2
                 text-[13px] font-medium text-left
                 transition-colors duration-100
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset
                 ${
-                  isActive
+                  isLocked
                     ? isDark
-                      ? 'bg-white/[0.08] text-slate-100'
-                      : 'bg-primary-50 text-primary-700'
-                    : isDark
-                      ? 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'text-slate-500 hover:bg-white/[0.04]'
+                      : 'text-slate-500 hover:bg-slate-50'
+                    : isActive
+                      ? isDark
+                        ? 'bg-white/[0.08] text-slate-100'
+                        : 'bg-primary-50 text-primary-800 font-semibold ring-1 ring-inset ring-primary-200'
+                      : isDark
+                        ? 'text-slate-300 hover:bg-white/[0.05] hover:text-slate-100'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                 }
               `}
             >
@@ -143,6 +150,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
                 </span>
               )}
               <span className="flex-1 truncate">{item.label}</span>
+              {isLocked && <Lock size={14} className="flex-shrink-0 opacity-70" />}
             </motion.button>
           );
         })}

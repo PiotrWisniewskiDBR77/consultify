@@ -10,14 +10,28 @@ import { AppView } from '../../../src/types';
 
 describe('routeConfig helpers', () => {
   it('getAppViewFromRoute: resolves exact route', () => {
+    expect(getAppViewFromRoute('/superadmin/overview')).toBe(AppView.SUPERADMIN_OVERVIEW);
     expect(getAppViewFromRoute('/superadmin/customers')).toBe(AppView.SUPERADMIN_CUSTOMERS);
     expect(getAppViewFromRoute('/superadmin/customers/communication')).toBe(
       AppView.SUPERADMIN_COMMUNICATION,
+    );
+    expect(getAppViewFromRoute('/superadmin/customers/commercial')).toBe(
+      AppView.SUPERADMIN_REVENUE,
+    );
+    expect(getAppViewFromRoute('/superadmin/customers/commercial/invoices')).toBe(
+      AppView.SUPERADMIN_INVOICES,
     );
   });
 
   it('getAppViewFromPath: resolves chat conversation routes to AI_CHAT', () => {
     expect(getAppViewFromPath('/chat/abc')).toBe(AppView.AI_CHAT);
+  });
+
+  it('keeps the dedicated V10 runtime route internal-only', () => {
+    expect(ROUTES.AI_CHAT_V10_RUNTIME).toBe('/internal/v10-runtime');
+    expect(getAppViewFromPath('/internal/v10-runtime')).toBe(AppView.AI_CHAT_V10_RUNTIME);
+    expect(getAppViewFromPath('/chat/v10-runtime')).toBe(AppView.AI_CHAT);
+    expect(getRouteFromAppView(AppView.AI_CHAT_V10_RUNTIME)).toBe('/internal/v10-runtime');
   });
 
   it('knowledge routes resolve to the docs-backed knowledge base view', () => {
@@ -50,18 +64,36 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/partner/resources')).toBe(AppView.PARTNER_RESOURCES);
   });
 
+  it('maps pack-02 guarded nested module routes to stable AppViews', () => {
+    expect(getAppViewFromPath('/roi/plan-1')).toBe(AppView.FULL_STEP4_ROI);
+    expect(getAppViewFromPath('/project-intelligence/session-77')).toBe(AppView.PROJECT_INTELLIGENCE);
+    expect(getAppViewFromPath('/ai-actions/queue')).toBe(AppView.AI_ACTION_PROPOSALS);
+    expect(getAppViewFromPath('/consultant/panel/team')).toBe(AppView.CONSULTANT_PANEL);
+    expect(getAppViewFromPath('/consultant/invites')).toBe(AppView.CONSULTANT_INVITES);
+    expect(getAppViewFromPath('/affiliate/overview')).toBe(AppView.AFFILIATE_DASHBOARD);
+    expect(getAppViewFromPath('/setup/organization')).toBe(AppView.ORG_SETUP_WIZARD);
+    expect(getAppViewFromPath('/setup/onboarding/admin')).toBe(AppView.ONBOARDING_WIZARD);
+    expect(getAppViewFromPath('/setup/onboarding/seed/persona-a')).toBe(AppView.ONBOARDING_WIZARD);
+    expect(getAppViewFromPath('/partner/onboarding')).toBe(AppView.PARTNER_LANDING);
+  });
+
   it('getAppViewFromPath: resolves both /finance and /economics to ECONOMICS', () => {
     expect(getAppViewFromPath('/finance')).toBe(AppView.ECONOMICS);
     expect(getAppViewFromPath('/finance/models')).toBe(AppView.ECONOMICS);
     expect(getAppViewFromPath('/economics')).toBe(AppView.ECONOMICS);
   });
 
-  it('getAppViewFromPath: resolves superadmin prefix to SUPERADMIN_OVERVIEW', () => {
-    // Root superadmin route maps to the legacy dashboard view for backward compatibility.
-    expect(getAppViewFromPath('/superadmin')).toBe(AppView.SUPERADMIN_DASHBOARD);
+  it('getAppViewFromPath: normalizes superadmin aliases to canonical branches', () => {
+    expect(getAppViewFromPath('/superadmin')).toBe(AppView.SUPERADMIN_CUSTOMERS);
     expect(getAppViewFromPath('/superadmin/revenue')).toBe(AppView.SUPERADMIN_REVENUE);
+    expect(getAppViewFromPath('/superadmin/overview')).toBe(AppView.SUPERADMIN_OVERVIEW);
+    expect(getAppViewFromPath('/superadmin/analytics')).toBe(AppView.SUPERADMIN_ANALYTICS);
+    expect(getAppViewFromPath('/superadmin/configuration')).toBe(AppView.SUPERADMIN_CONFIGURATION);
     expect(getAppViewFromPath('/superadmin/customers/communication')).toBe(
       AppView.SUPERADMIN_COMMUNICATION,
+    );
+    expect(getAppViewFromPath('/superadmin/customers/commercial/billing')).toBe(
+      AppView.SUPERADMIN_BILLING,
     );
   });
 
@@ -79,5 +111,17 @@ describe('routeConfig helpers', () => {
 
   it('getRouteFromAppView: uses /finance as the canonical economics route', () => {
     expect(getRouteFromAppView(AppView.ECONOMICS)).toBe(ROUTES.FINANCE);
+  });
+
+  it('getRouteFromAppView: maps settings entrypoints to mounted settings sections', () => {
+    expect(getRouteFromAppView(AppView.SETTINGS_AI)).toBe('/settings/ai-behavior');
+    expect(getRouteFromAppView(AppView.SETTINGS_NOTIFICATIONS)).toBe(
+      '/settings/notifications-overview',
+    );
+    expect(getRouteFromAppView(AppView.SETTINGS_SECURITY)).toBe('/settings/security-dashboard');
+    expect(getRouteFromAppView(AppView.SETTINGS_API_KEYS)).toBe('/settings/api-keys');
+    expect(getRouteFromAppView(AppView.SETTINGS_PRIVACY)).toBe('/settings/privacy');
+    expect(getRouteFromAppView(AppView.SETTINGS_AI_MEMORY)).toBe('/settings/ai-memory');
+    expect(getRouteFromAppView(AppView.SETTINGS_AI_CHAT_HISTORY)).toBe('/settings/ai-chat-history');
   });
 });

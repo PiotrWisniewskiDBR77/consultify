@@ -70,7 +70,8 @@ type AIAvailabilityReason = 'network' | 'rate_limited' | 'server' | 'unknown' | 
 
 export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => {
   const { t } = useTranslation();
-  const { aiConfig, setAIConfig } = useAppStore();
+  const { aiConfig, setAIConfig, currentUser, isDemoMode } = useAppStore();
+  const isDemoContext = isDemoMode || currentUser?.isDemo === true;
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeModelName, setActiveModelName] = useState<string>('');
@@ -107,6 +108,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
   useEffect(() => {
     const fetchRecommendation = async () => {
       try {
+        if (isDemoContext) {
+          setActiveModelName('');
+          return;
+        }
         // If using specific model override, show that name
         if (aiConfig.selectedModelId) {
           // We could fetch model name here but let's stick to Tier for now
@@ -128,11 +133,16 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
     if (isOpen) {
       fetchRecommendation();
     }
-  }, [isOpen, activeTier.id, aiConfig.selectedModelId]);
+  }, [isOpen, activeTier.id, aiConfig.selectedModelId, isDemoContext]);
 
   // Health indicator for top-bar model button.
   // Red indicator means AI providers are currently unavailable.
   const checkAIAvailability = useCallback(async () => {
+    if (isDemoContext) {
+      setAvailabilityState('available');
+      setAvailabilityReason(null);
+      return;
+    }
     try {
       const health = await Api.checkLLMProvidersHealth();
       const providersRaw = health?.providers;
@@ -175,7 +185,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
       setAvailabilityState('unknown');
       setAvailabilityReason('unknown');
     }
-  }, []);
+  }, [isDemoContext]);
 
   useEffect(() => {
     checkAIAvailability();
@@ -213,20 +223,39 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           ? 'AI currently unavailable'
           : 'AI status temporarily degraded';
 
+  if (isDemoContext) {
+    return (
+      <div className="relative z-50" ref={menuRef}>
+        <button
+          type="button"
+          disabled
+          title={t('llm.demoTitle', 'Demo AI workspace')}
+          className="inline-flex items-center gap-2 h-9 px-2 rounded-full border border-violet-400/30 bg-violet-500/10 text-xs font-medium text-violet-700 dark:text-violet-200 cursor-default"
+        >
+          <div className="w-2 h-2 rounded-full bg-violet-500" />
+          <span className={compact ? 'max-w-[72px] truncate' : ''}>
+            {t('llm.demoLabel', 'Demo AI')}
+          </span>
+          <ChevronDown size={compact ? 10 : 12} className="text-violet-300/80" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative z-50" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
         title={buttonTitle}
-        className={`inline-flex items-center gap-2 h-9 ${compact ? 'px-2' : 'px-3'} rounded-full border transition-colors duration-150 ${
+        className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${
           isUnavailable
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
             : isDegraded
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : isOpen
-                ? 'bg-slate-100/70 dark:bg-white/[0.06] border-slate-200/70 dark:border-white/[0.10]'
-                : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                ? 'bg-slate-100 dark:bg-white/10 border-brand/50'
+                : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
         } text-xs font-medium text-navy-900 dark:text-white`}
       >
         {/* Status Dot / Icon */}

@@ -102,6 +102,17 @@ async function ensureWs4SqliteSchema(): Promise<void> {
       lag_days INTEGER,
       confidence TEXT,
       notes TEXT,
+      definition_source TEXT,
+      observation_phase TEXT,
+      tracked_in_realization INTEGER,
+      tracked_post_implementation INTEGER,
+      observation_status TEXT,
+      realization_baseline_value REAL,
+      realization_target_value REAL,
+      realization_measurement_frequency TEXT,
+      post_implementation_baseline_value REAL,
+      post_implementation_target_value REAL,
+      post_implementation_measurement_frequency TEXT,
       created_by TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(initiative_id, kpi_id)
@@ -556,6 +567,11 @@ router.post(
     if (!assertEnabled(req, res)) return deny(res);
 
     const runId = String(req.body?.runId || '').trim();
+    const requestedRole = String(req.body?.role || 'ADMIN')
+      .trim()
+      .toUpperCase();
+    const userRole = requestedRole === 'SUPERADMIN' ? 'SUPERADMIN' : 'ADMIN';
+    const memberRole = userRole === 'SUPERADMIN' ? 'ADMIN' : userRole;
     if (!runId || runId.length > 128) {
       return res.status(400).json({ error: 'runId is required' });
     }
@@ -591,7 +607,16 @@ router.post(
       await DbPromise.run(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, organizationId, email, 'e2e-not-used', 'ADMIN', 'active', 'E2E', 'Admin'],
+        [
+          userId,
+          organizationId,
+          email,
+          'e2e-not-used',
+          userRole,
+          'active',
+          'E2E',
+          userRole === 'SUPERADMIN' ? 'SuperAdmin' : 'Admin',
+        ],
         { fallback: false }
       );
 
@@ -600,14 +625,14 @@ router.post(
         await DbPromise.run(
           `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [memberId, organizationId, userId, 'ADMIN', 'ACTIVE', JSON.stringify({ '*': true })],
+          [memberId, organizationId, userId, memberRole, 'ACTIVE', JSON.stringify({ '*': true })],
           { fallback: false }
         );
       } catch {
         await DbPromise.run(
           `INSERT INTO organization_members (id, organization_id, user_id, role, status)
            VALUES (?, ?, ?, ?, ?)`,
-          [memberId, organizationId, userId, 'ADMIN', 'ACTIVE'],
+          [memberId, organizationId, userId, memberRole, 'ACTIVE'],
           { fallback: false }
         );
       }
@@ -626,8 +651,8 @@ router.post(
     const token = makeSignedToken({
       id: userId,
       email: `e2e+${runId}@local.test`,
-      name: 'E2E Admin',
-      role: 'ADMIN',
+      name: userRole === 'SUPERADMIN' ? 'E2E SuperAdmin' : 'E2E Admin',
+      role: userRole,
       organizationId,
       runId,
       jti: uuidv4(),

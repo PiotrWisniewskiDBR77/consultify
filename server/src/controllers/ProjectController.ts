@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateProjectRequest,
@@ -189,7 +190,7 @@ export class ProjectController {
           queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
         ]);
       } catch (error) {
-        console.warn('[ProjectController] Falling back to basic project query:', error);
+        logger.warn('[ProjectController] Falling back to basic project query:', error);
         const fallbackSql = `
               SELECT 
                   p.*, 
@@ -237,7 +238,7 @@ export class ProjectController {
     async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
-      console.error(`[ProjectController] createProject called. Org: ${orgId}, User: ${userId}`);
+      logger.error(`[ProjectController] createProject called. Org: ${orgId}, User: ${userId}`);
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -256,7 +257,7 @@ export class ProjectController {
 
       const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-      console.error(`[ProjectController] Executing INSERT for project ${id}`);
+      logger.error(`[ProjectController] Executing INSERT for project ${id}`);
       await queryHelpers.queryRun(sql, [
         id,
         orgId,
@@ -272,7 +273,7 @@ export class ProjectController {
         'SELECT COUNT(*) as c FROM projects WHERE organization_id = ?',
         [orgId]
       );
-      console.error(`[ProjectController] Immediate verify count for org ${orgId}: ${count?.c}`);
+      logger.error(`[ProjectController] Immediate verify count for org ${orgId}: ${count?.c}`);
 
       res.status(201).json({ id, name, description, goal, status: 'active', ownerId: owner });
     }

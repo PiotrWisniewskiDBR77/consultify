@@ -82,4 +82,51 @@ describe('AIContextBuilder organization layer', () => {
     expect(organization.contextConflicts).toHaveLength(1);
     expect(organization.contextTimeline).toHaveLength(3);
   });
+
+  it('prefers canonical assessments over legacy maturity rows for assessment context', async () => {
+    mockDbGet.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM assessments')) {
+        return {
+          id: 'asm-1',
+          name: 'Canonical DRD',
+          assessment_type: 'DRD',
+          status: 'IN_REVIEW',
+          completion_percent: 82,
+          confidence_avg: 0.78,
+          score_summary: JSON.stringify({
+            scores: { readiness: 3.4, data: 2.9 },
+            overallScore: 3.15,
+          }),
+          context_snapshot: JSON.stringify({
+            needsWorkTopAxes: [{ axisName: 'Data', percent: 52 }],
+          }),
+          p28_workbench_v1: JSON.stringify({
+            assessmentRunId: 'run-42',
+            runState: 'score_reviewed',
+            scoreProposal: { scoreValues: { readiness: 3.4, data: 2.9 }, confidence: 0.78 },
+          }),
+        };
+      }
+      return null;
+    });
+
+    const mod = await import('../../../../server/src/services/aiContextBuilder.js');
+    const assessment = await mod.AIContextBuilder._buildAssessmentContext('proj-1', 'org-1');
+
+    expect(assessment).toEqual(
+      expect.objectContaining({
+        assessmentId: 'asm-1',
+        name: 'Canonical DRD',
+        framework: 'DRD',
+        runState: 'score_reviewed',
+        completionPercent: 82,
+      })
+    );
+    expect(assessment.axisScores).toEqual(
+      expect.arrayContaining([expect.objectContaining({ axis: 'readiness', asIs: 3.4 })])
+    );
+    expect(assessment.topGaps).toEqual(
+      expect.arrayContaining([expect.objectContaining({ axis: 'Data' })])
+    );
+  });
 });

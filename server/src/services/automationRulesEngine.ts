@@ -29,6 +29,10 @@ const EVENT_TO_TRIGGER: Record<string, string> = {
   'task.overdue': 'task_overdue',
   'decision.updated': 'decision_status_changed',
   'raid.created': 'raid_item_created',
+  'kpi.signal_created': 'kpi_signal_created',
+  'kpi.next_action_created': 'kpi_next_action_created',
+  'kpi.reconciliation_initiated': 'kpi_reconciliation_initiated',
+  'kpi.reconciliation_resolved': 'kpi_reconciliation_resolved',
 };
 
 // ============================================
@@ -81,6 +85,13 @@ function buildContext(
     ctx.status = payload.newStatus ?? payload.oldStatus;
     ctx.oldStatus = payload.oldStatus;
     ctx.newStatus = payload.newStatus;
+  }
+
+  if (eventName.startsWith('kpi.')) {
+    ctx.kpiId = payload.kpiId;
+    ctx.severity = payload.severity;
+    ctx.signalType = payload.signalType;
+    ctx.actionType = payload.actionType;
   }
 
   return ctx;

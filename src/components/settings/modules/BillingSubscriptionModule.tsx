@@ -46,6 +46,21 @@ interface Subscription {
   status: 'active' | 'trialing' | 'past_due' | 'cancelled';
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  billingRail?: 'stripe_subscription' | 'manual_invoice' | 'hybrid_usage_invoice';
+  contractStatus?:
+    | 'draft'
+    | 'active'
+    | 'renewal_due'
+    | 'grace'
+    | 'suspended'
+    | 'expired'
+    | 'canceled'
+    | null;
+  renewalAt?: string | null;
+  graceUntil?: string | null;
+  accessExpiresAt?: string | null;
+  managedByUserId?: string | null;
+  isManualBilling?: boolean;
 }
 
 interface UsageStats {
@@ -60,7 +75,9 @@ interface Invoice {
   date: string;
   amount: number;
   status: string;
-  downloadUrl: string;
+  downloadUrl?: string | null;
+  source?: string | null;
+  currency?: string | null;
 }
 
 interface PaymentMethod {
@@ -73,55 +90,55 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
-// TODO(T109): Replace with data from subscription_plans DB table / API
-const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    features: ['5 users', '3 projects', '1GB storage', '10K AI tokens'],
-    popular: false,
-  },
-  {
-    id: 'pro',
-    name: 'Professional',
-    price: 29,
-    features: ['25 users', 'Unlimited projects', '50GB storage', '500K AI tokens'],
-    popular: true,
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    price: 79,
-    features: [
-      '100 users',
-      'Unlimited projects',
-      '500GB storage',
-      '2M AI tokens',
-      'Priority support',
-    ],
-    popular: false,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: null,
-    features: [
-      'Unlimited users',
-      'Unlimited everything',
-      'Custom integrations',
-      'Dedicated support',
-      'SLA',
-    ],
-    popular: false,
-  },
-];
+interface BillingPlanOption {
+  id: string;
+  name: string;
+  price: number | null;
+  features: string[];
+  popular: boolean;
+}
+
+const parsePlanFeatures = (raw: unknown): string[] => {
+  if (Array.isArray(raw)) return raw.map((item) => String(item));
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item));
+    } catch {
+      if (raw.trim()) return [raw.trim()];
+    }
+  }
+  return [];
+};
+
+const normalizePlan = (plan: any): BillingPlanOption => ({
+  id: String(plan?.id || ''),
+  name: String(plan?.name || 'Plan'),
+  price: plan?.price_monthly == null ? null : Number(plan.price_monthly),
+  features: parsePlanFeatures(plan?.features),
+  popular: Boolean(plan?.is_popular),
+});
+
+const normalizeInvoice = (invoice: any): Invoice => ({
+  id: String(invoice?.id || invoice?.stripe_invoice_id || ''),
+  date: String(
+    invoice?.paid_at || invoice?.due_date || invoice?.created_at || new Date().toISOString()
+  ),
+  amount: Number(invoice?.amount_paid ?? invoice?.amount_due ?? invoice?.amount ?? 0),
+  status: String(invoice?.status || 'open'),
+  downloadUrl: invoice?.pdf_url || invoice?.downloadUrl || null,
+  source: invoice?.source || (invoice?.stripe_invoice_id ? 'stripe' : null),
+  currency: invoice?.currency || 'USD',
+});
 
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
   past_due: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  canceling: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400',
+  renewal_due: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+  suspended: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
 };
 
 export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps> = ({
@@ -136,6 +153,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [availablePlans, setAvailablePlans] = useState<BillingPlanOption[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment' | 'usage'>(
     'overview'
   );
@@ -157,11 +175,12 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   const loadData = async () => {
     try {
       setLoading(true);
-      const [subRes, usageRes, invoicesRes, paymentRes] = await Promise.all([
+      const [subRes, usageRes, invoicesRes, paymentRes, plansRes] = await Promise.all([
         Api.get('/api/billing/subscription').catch(() => ({ data: null })),
         Api.get('/api/billing/usage').catch(() => ({ data: null })),
         Api.get('/api/billing/invoices').catch(() => ({ data: [] })),
         Api.get('/api/billing/payment-methods').catch(() => ({ data: [] })),
+        Api.getSubscriptionPlans().catch(() => []),
       ]);
 
       if (subRes.data) setSubscription(subRes.data);
@@ -170,11 +189,21 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       if (usageRes.data) setUsage(usageRes.data);
       else setUsage(null);
 
-      if (invoicesRes.data) setInvoices(invoicesRes.data);
-      else setInvoices([]);
+      const invoiceRows = Array.isArray(invoicesRes?.data?.invoices)
+        ? invoicesRes.data.invoices
+        : Array.isArray(invoicesRes?.invoices)
+          ? invoicesRes.invoices
+          : Array.isArray(invoicesRes?.data)
+            ? invoicesRes.data
+            : [];
+      setInvoices(invoiceRows.map(normalizeInvoice));
 
       if (paymentRes.data) setPaymentMethods(paymentRes.data);
       else setPaymentMethods([]);
+
+      setAvailablePlans(
+        Array.isArray(plansRes) ? plansRes.map(normalizePlan).filter((plan) => plan.id) : []
+      );
     } catch (error) {
       console.error('Error loading billing data:', error);
     } finally {
@@ -314,8 +343,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     );
   }
 
-  const currentPlan = plans.find((p) => p.id === subscription?.plan);
+  const currentPlan = availablePlans.find((p) => p.id === subscription?.plan);
   const effectiveStatus = subscriptionStatus || subscription?.status || 'trialing';
+  const isManualBilling = Boolean(snapshot?.isManualBilling || subscription?.isManualBilling);
+  const manualStatus = snapshot?.contractStatus || subscription?.contractStatus || null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
@@ -390,11 +421,18 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             {t('access.upgrade.subtitle')}
           </p>
         </div>
-        {effectiveStatus && (
+        {(isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) && (
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[effectiveStatus] || STATUS_COLORS.trialing}`}
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              STATUS_COLORS[
+                (isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) as string
+              ] || STATUS_COLORS.trialing
+            }`}
           >
-            {t(`access.upgrade.subscription.${effectiveStatus}`, effectiveStatus)}
+            {t(
+              `access.upgrade.subscription.${isManualBilling ? manualStatus || effectiveStatus : effectiveStatus}`,
+              isManualBilling ? manualStatus || effectiveStatus : effectiveStatus
+            )}
           </span>
         )}
       </div>
@@ -405,7 +443,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           { id: 'overview', label: 'Overview', icon: Crown },
           { id: 'usage', label: 'Usage', icon: BarChart3 },
           { id: 'invoices', label: 'Invoices', icon: FileText },
-          { id: 'payment', label: 'Payment', icon: CreditCard },
+          ...(!isManualBilling ? [{ id: 'payment', label: 'Payment', icon: CreditCard }] : []),
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -434,7 +472,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </h3>
           <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
             <p className="text-sm text-purple-700 dark:text-purple-300">
-              {t('access.upgrade.whatChanges')}: {plans.find((p) => p.id === checkoutPlanId)?.name}
+              {t('access.upgrade.whatChanges')}:{' '}
+              {availablePlans.find((p) => p.id === checkoutPlanId)?.name || checkoutPlanId}
             </p>
             <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
               {t('access.upgrade.instantUnlock')}
@@ -478,9 +517,20 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 <h3 className="text-3xl font-bold mt-1">
                   {currentPlan?.name || (snapshot?.isTrial ? 'Trial' : 'Free')}
                 </h3>
+                {isManualBilling && (
+                  <p className="text-emerald-100 mt-2">
+                    Managed by account team
+                    {manualStatus ? ` • ${manualStatus.replace('_', ' ')}` : ''}
+                  </p>
+                )}
                 {subscription?.currentPeriodEnd && (
                   <p className="text-emerald-100 mt-2">
                     Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  </p>
+                )}
+                {subscription?.renewalAt && (
+                  <p className="text-emerald-100 mt-2">
+                    Contract renewal {new Date(subscription.renewalAt).toLocaleDateString()}
                   </p>
                 )}
                 {snapshot?.isTrial && snapshot.trialExpiresAt && (
@@ -498,61 +548,71 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </div>
 
           {/* Plan Comparison */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`p-4 rounded-xl border-2 relative ${
-                  plan.id === subscription?.plan
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                    : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
-                    {t('access.upgrade.popular')}
+          {availablePlans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {availablePlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className={`p-4 rounded-xl border-2 relative ${
+                    plan.id === subscription?.plan
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                      {t('access.upgrade.popular')}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
+                    {plan.id === subscription?.plan && (
+                      <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                        {t('access.upgrade.currentPlan')}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
-                  {plan.id === subscription?.plan && (
-                    <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
-                      {t('access.upgrade.currentPlan')}
-                    </span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                    {plan.price !== null
+                      ? `$${plan.price}${t('access.upgrade.perMonth')}`
+                      : 'Custom'}
+                  </p>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <Check size={14} className="text-emerald-500" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {plan.id !== subscription?.plan && plan.price !== null && !isManualBilling && (
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
+                    >
+                      {availablePlans.indexOf(plan) >
+                      availablePlans.findIndex((p) => p.id === subscription?.plan)
+                        ? 'Upgrade'
+                        : 'Downgrade'}
+                    </button>
+                  )}
+                  {plan.price === null && (
+                    <button className="w-full mt-4 py-2 px-4 border border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors">
+                      {t('access.cta.contactSales')}
+                    </button>
                   )}
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  {plan.price !== null ? `$${plan.price}${t('access.upgrade.perMonth')}` : 'Custom'}
-                </p>
-                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <Check size={14} className="text-emerald-500" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                {plan.id !== subscription?.plan && plan.price !== null && (
-                  <button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
-                  >
-                    {plans.indexOf(plan) > plans.findIndex((p) => p.id === subscription?.plan)
-                      ? 'Upgrade'
-                      : 'Downgrade'}
-                  </button>
-                )}
-                {plan.price === null && (
-                  <button className="w-full mt-4 py-2 px-4 border border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors">
-                    {t('access.cta.contactSales')}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+              Live pricing plans are currently unavailable. Refresh the page or retry after billing
+              services recover.
+            </div>
+          )}
 
           {/* Cancel */}
-          {subscription?.status === 'active' && (
+          {subscription?.status === 'active' && !isManualBilling && (
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
@@ -560,6 +620,12 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               >
                 Cancel Subscription
               </button>
+            </div>
+          )}
+          {isManualBilling && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300">
+              This subscription is managed manually outside Stripe. Contract renewals, invoice
+              status, and access changes are handled by your account team.
             </div>
           )}
         </>
@@ -668,11 +734,21 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
                         {new Date(invoice.date).toLocaleDateString()}
                       </p>
+                      {invoice.source && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-1">
+                          {invoice.source === 'manual' || invoice.source === 'manual_invoice'
+                            ? 'Manual invoice'
+                            : 'Stripe invoice'}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-slate-900 dark:text-white font-medium">
-                      ${invoice.amount}
+                      {new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: invoice.currency || 'USD',
+                      }).format(invoice.amount)}
                     </span>
                     <span
                       className={`px-2 py-0.5 text-xs rounded-full ${
@@ -683,7 +759,13 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     >
                       {invoice.status}
                     </span>
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg">
+                    <button
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg disabled:opacity-40"
+                      disabled={!invoice.downloadUrl}
+                      onClick={() =>
+                        invoice.downloadUrl && window.open(invoice.downloadUrl, '_blank')
+                      }
+                    >
                       <Download size={16} className="text-slate-500 dark:text-slate-400" />
                     </button>
                   </div>

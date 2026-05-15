@@ -83,7 +83,7 @@ Dodatkowe katalogi testow (pomocnicze) znajduja sie m.in. w:
 
 ## Zmiany plikow i `--changed-only`
 
-`test-runner` uzywa merge-base (domyslnie `Londyn`) do wyznaczania zmienionych plikow.
+`test-runner` uzywa merge-base (domyslnie `develop`) do wyznaczania zmienionych plikow.
 Możesz ustawic baze przez zmienna srodowiskowa:
 
 ```bash

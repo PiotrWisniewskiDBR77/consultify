@@ -8,6 +8,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../utils/Logger.js';
+
 // ============================================
 // TYPES
 // ============================================
@@ -648,7 +650,7 @@ class ScheduledReportService {
 
     // Get report data for attachment
     // This would integrate with the actual email service
-    console.log(`[ScheduledReportService] Sending email to ${emailConfig.recipients.join(', ')}`);
+    logger.info(`[ScheduledReportService] Sending email to ${emailConfig.recipients.join(', ')}`);
   }
 
   /**
@@ -683,7 +685,7 @@ class ScheduledReportService {
     if (!storageConfig) return;
 
     // This would integrate with file storage service
-    console.log(`[ScheduledReportService] Saving report to ${storageConfig.path}`);
+    logger.info(`[ScheduledReportService] Saving report to ${storageConfig.path}`);
   }
 
   /**
@@ -713,7 +715,7 @@ class ScheduledReportService {
         ]
       );
     } catch (error) {
-      console.error('[ScheduledReportService] Failed to log execution:', error);
+      logger.error('[ScheduledReportService] Failed to log execution:', error);
     }
   }
 
@@ -862,7 +864,7 @@ class ScheduledReportService {
           failed++;
         }
       } catch (error) {
-        console.error(`[ScheduledReportService] Failed to process schedule ${schedule.id}:`, error);
+        logger.error(`[ScheduledReportService] Failed to process schedule ${schedule.id}:`, error);
         failed++;
       }
     }

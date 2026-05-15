@@ -726,7 +726,33 @@ export function useFinanceSelection(activeTab: ModuleTab) {
           value: Number(statement.mapped_line_count ?? 0),
         })),
       });
-      setStatementPreviewRatios(null);
+
+      const firstStatementId = statements[0]?.id;
+      if (firstStatementId) {
+        try {
+          const ratiosData = await V8FinanceApi.getStatementRatios(String(firstStatementId));
+          const ratioSummary = ratiosData?.ratios;
+          const coverage = ratioSummary?.coverageSummary;
+          setStatementPreviewRatios(
+            ratioSummary
+              ? {
+                  coveragePct: Number(coverage?.coveragePct ?? 0),
+                  computed: Number(coverage?.computed ?? 0),
+                  total: Number(coverage?.total ?? ratioSummary.ratios.length ?? 0),
+                  topRatios: (ratioSummary.ratios ?? []).slice(0, 5).map((ratio) => ({
+                    code: ratio.code,
+                    name: ratio.name,
+                    value: ratio.value ?? null,
+                  })),
+                }
+              : null
+          );
+        } catch {
+          setStatementPreviewRatios(null);
+        }
+      } else {
+        setStatementPreviewRatios(null);
+      }
     } catch {
       setStatementPreviewDetail(null);
       setStatementPreviewRatios(null);

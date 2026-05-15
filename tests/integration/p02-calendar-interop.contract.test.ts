@@ -29,6 +29,13 @@ import {
   P02_ACCEPTANCE_CHECKLIST,
   P02_ANTI_DUPLICATE_RULES,
   P02_PERMISSION_UI_RULES,
+  P02_P01_BRIDGE,
+  P02_ADAPTER_REGISTRY,
+  P02_ADAPTER_INTERFACE,
+  P02_SYNC_RUNTIME,
+  P02_FRONTEND_CONTRACT,
+  P02_ITEM_TYPES,
+  P02_ACCEPTANCE_CHECKLIST_EXTENDED,
 } from '../../server/src/services/v8/calendarInteropCanon.js';
 
 describe('P02 Calendar Interop contract', () => {
@@ -55,14 +62,20 @@ describe('P02 Calendar Interop contract', () => {
       expect(CalendarProviderValues).toHaveLength(3);
     });
 
-    it('ItemTypeValues has exactly 5 entries', () => {
-      expect(ItemTypeValues).toHaveLength(5);
+    it('ItemTypeValues has exactly 11 entries (SSOT-complete per §2.3.2)', () => {
+      expect(ItemTypeValues).toHaveLength(11);
       expect(ItemTypeValues).toEqual([
         'task_due',
+        'task_window',
         'initiative_milestone',
         'decision_deadline',
         'meeting',
         'external_event',
+        'assignment',
+        'adjustment',
+        'approval_window',
+        'escalation_window',
+        'focus_block',
       ]);
     });
 
@@ -224,6 +237,96 @@ describe('P02 Calendar Interop contract', () => {
       expect(mapProviderError('rate_limited').sourceState).toBe('degraded');
       expect(mapProviderError('cursor_invalid').sourceState).toBe('recoverable');
       expect(mapProviderError('permanent_auth_failure').sourceState).toBe('blocked');
+    });
+  });
+
+  // === P02-D through P02-J contract tests ===
+
+  describe('§2.3.10 P01 Integration Bridge', () => {
+    it('declares P01 bridge with all required fields', () => {
+      expect(P02_P01_BRIDGE.connectionRef).toContain('connectionId');
+      expect(P02_P01_BRIDGE.tokenLifecycle).toContain('pmSyncRefreshExecutionService');
+      expect(P02_P01_BRIDGE.oauthFlow).toContain('integrationOAuthEngine');
+      expect(P02_P01_BRIDGE.providerCatalog).toContain('google_calendar');
+      expect(P02_P01_BRIDGE.providerCatalog).toContain('outlook_calendar');
+      expect(P02_P01_BRIDGE.providerCatalog).toContain('apple_calendar');
+    });
+  });
+
+  describe('§2.3.11 Provider Adapter Contract', () => {
+    it('has adapter entries for all 3 providers', () => {
+      expect(P02_ADAPTER_REGISTRY.google).toBeDefined();
+      expect(P02_ADAPTER_REGISTRY.microsoft).toBeDefined();
+      expect(P02_ADAPTER_REGISTRY.caldav).toBeDefined();
+    });
+
+    it('CalDAV adapter is read-only', () => {
+      expect(P02_ADAPTER_REGISTRY.caldav).toContain('read-only');
+    });
+
+    it('adapter interface declares required methods', () => {
+      expect(P02_ADAPTER_INTERFACE).toContain('listCalendars(connection): ProviderCalendarRef[]');
+      expect(P02_ADAPTER_INTERFACE).toContain('fetchEvents(connection, window, cursor?): FetchEventsResult');
+    });
+  });
+
+  describe('§2.3.12 Sync Runtime Contract', () => {
+    it('cron interval is 5 minutes', () => {
+      expect(P02_SYNC_RUNTIME.cronInterval).toBe('*/5 * * * *');
+    });
+
+    it('declares webhook routes for Google and Microsoft', () => {
+      expect(P02_SYNC_RUNTIME.webhookRoutes).toContain('/api/v8/calendar/webhooks/google');
+      expect(P02_SYNC_RUNTIME.webhookRoutes).toContain('/api/v8/calendar/webhooks/microsoft');
+    });
+
+    it('uses RRULE-based recurrence engine', () => {
+      expect(P02_SYNC_RUNTIME.recurrenceEngine).toContain('rrule');
+    });
+  });
+
+  describe('§2.3.13 Frontend Contract', () => {
+    it('extends /my-work/calendar/unified with P02 metadata', () => {
+      expect(P02_FRONTEND_CONTRACT.apiSurface).toContain('/api/v8/my-work/calendar/unified');
+    });
+
+    it('enforces permission gradients in UI', () => {
+      expect(P02_FRONTEND_CONTRACT.permissionEnforcement).toContain('P02_PERMISSION_UI_RULES');
+    });
+
+    it('gates edit affordance based on editAuthority + effectiveMode', () => {
+      expect(P02_FRONTEND_CONTRACT.editAffordanceGating).toContain('editAuthority=none');
+    });
+  });
+
+  describe('Extended ItemTypeValues (SSOT completeness)', () => {
+    it('includes all 11 item types from SSOT', () => {
+      const required = [
+        'task_due', 'task_window', 'initiative_milestone', 'decision_deadline', 'meeting',
+        'external_event', 'assignment', 'adjustment', 'approval_window',
+        'escalation_window', 'focus_block',
+      ];
+      for (const t of required) {
+        expect(ItemTypeValues).toContain(t);
+      }
+    });
+
+    it('P02_ITEM_TYPES canon matches service ItemTypeValues', () => {
+      expect([...P02_ITEM_TYPES].sort()).toEqual([...ItemTypeValues].sort());
+    });
+  });
+
+  describe('Extended acceptance checklist', () => {
+    it('has at least 15 acceptance points', () => {
+      expect(P02_ACCEPTANCE_CHECKLIST_EXTENDED.length).toBeGreaterThanOrEqual(15);
+    });
+
+    it('includes AC-12 through AC-15 for runtime deliverables', () => {
+      const ids = P02_ACCEPTANCE_CHECKLIST_EXTENDED.map(ac => ac.id);
+      expect(ids).toContain('AC-12');
+      expect(ids).toContain('AC-13');
+      expect(ids).toContain('AC-14');
+      expect(ids).toContain('AC-15');
     });
   });
 });

@@ -1,5 +1,9 @@
 # Deployment Guide
 
+> Canonical release model now lives in [STAGING_PRODUCTION_OPERATING_MODEL.md](./STAGING_PRODUCTION_OPERATING_MODEL.md).
+> This document contains legacy deployment notes and historical examples. For current branch flow,
+> Railway target separation, and promotion rules, follow the operating model and its linked runbooks.
+
 **Version:** 1.0  
 **Last Updated:** January 4, 2026
 

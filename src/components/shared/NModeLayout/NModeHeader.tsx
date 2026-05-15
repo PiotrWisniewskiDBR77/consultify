@@ -60,7 +60,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="col-span-full bg-slate-50/90 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl overflow-hidden"
+      className="col-span-full bg-white dark:bg-navy-900/70 backdrop-blur-xl border border-slate-200 dark:border-navy-700 rounded-2xl overflow-hidden"
     >
       <div className="flex items-center gap-4 px-5 py-4">
         {/* Back button */}
@@ -68,7 +68,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClose}
-          className="p-2 -ml-2 rounded-xl text-slate-400 hover:bg-slate-200/80 dark:hover:bg-navy-800/60 transition-all duration-150"
+          className="p-2 -ml-2 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         >
           <ChevronLeft size={20} />
         </motion.button>
@@ -82,7 +82,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             value={title}
             onChange={(e) => !titleReadOnly && onTitleChange(e.target.value)}
             readOnly={titleReadOnly}
-            className="flex-1 text-xl font-semibold bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
+            className="flex-1 text-xl font-semibold bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 rounded-md"
             placeholder={
               titlePlaceholder ? (isPolish ? titlePlaceholder.pl : titlePlaceholder.en) : undefined
             }
@@ -90,7 +90,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           />
           {artifactId && (
             <>
-              <span className="hidden sm:inline-flex px-2 py-1 rounded-md bg-slate-200/60 dark:bg-navy-800/60 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
+              <span className="hidden sm:inline-flex px-2 py-1 rounded-md bg-slate-100 border border-slate-200 dark:bg-navy-800/60 dark:border-transparent text-[10px] font-mono uppercase text-slate-700 dark:text-slate-400">
                 {buildArtifactCode ? buildArtifactCode(artifactType, artifactId) : artifactId}
               </span>
               <ArtifactPermalinkButton
@@ -111,10 +111,10 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             whileTap={{ scale: 0.98 }}
             onClick={onSave}
             disabled={saving || !isDirty}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
               isDirty
-                ? 'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15 dark:hover:bg-blue-500/15'
-                : 'bg-slate-100/70 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500'
+                ? 'bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200 dark:bg-blue-500/10 dark:border-transparent dark:text-blue-300 dark:hover:bg-blue-500/15'
+                : 'bg-slate-100 border border-slate-200 text-slate-600 dark:bg-navy-800/40 dark:border-transparent dark:text-slate-500'
             } ${saving ? 'opacity-70' : ''}`}
             title={
               isDirty
@@ -138,7 +138,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onChat}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/15 dark:hover:bg-purple-500/15 text-sm font-semibold transition-all duration-150"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-100 border border-purple-200 text-purple-800 hover:bg-purple-200 dark:bg-purple-500/10 dark:border-transparent dark:text-purple-300 dark:hover:bg-purple-500/15 text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
               title={isPolish ? 'Otwórz czat' : 'Open chat'}
             >
               <MessageSquare size={16} />
@@ -149,7 +149,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           {/* Mode Switcher */}
           {showModeSwitcher && (
             <>
-              <div className="w-px h-6 bg-slate-200/50 dark:bg-navy-700/30" />
+              <div className="w-px h-6 bg-slate-300 dark:bg-navy-700/30" />
               <PresentationModeSwitcher
                 value={presentationMode}
                 onChange={onPresentationModeChange}
@@ -157,7 +157,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             </>
           )}
           {draftSavedLabel && (
-            <span className="hidden xl:inline text-xs text-slate-500 dark:text-slate-400">
+            <span className="hidden xl:inline text-xs text-slate-600 dark:text-slate-400">
               {draftSavedLabel}
             </span>
           )}

@@ -259,7 +259,10 @@ export async function executeRefreshExecution(
 
   if (!response.ok) {
     return {
-      status: classifyRefreshFailure(refreshErrorPayload, `${response.status}`),
+      status: classifyRefreshFailure(refreshErrorPayload, `${response.status}`) as Extract<
+        RefreshExecutionResult,
+        { error: string }
+      >['status'],
       tokenEndpoint: secret.tokenEndpoint,
       error: normalizeFailureCode(refreshErrorPayload, `${response.status}`),
     };
@@ -267,7 +270,10 @@ export async function executeRefreshExecution(
 
   if (payload.ok === false || typeof payload.access_token !== 'string' || !payload.access_token) {
     return {
-      status: classifyRefreshFailure(refreshErrorPayload, 'provider_error'),
+      status: classifyRefreshFailure(refreshErrorPayload, 'provider_error') as Extract<
+        RefreshExecutionResult,
+        { error: string }
+      >['status'],
       tokenEndpoint: secret.tokenEndpoint,
       error: normalizeFailureCode(refreshErrorPayload, 'provider_error'),
     };

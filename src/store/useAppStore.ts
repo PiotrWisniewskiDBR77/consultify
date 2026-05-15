@@ -7,7 +7,35 @@ import { createDemoSlice, DemoSlice } from './slices/demoSlice';
 import { createProjectSlice, ProjectSlice } from './slices/projectSlice';
 import { createUISlice, UISlice } from './slices/uiSlice';
 
-// Combine all slice types into AppState
+/**
+ * Store Ownership Map (all Zustand stores in the app):
+ *
+ * COMPOSED (this store):
+ *   authSlice       — Auth & org (currentUser, sessionMode, org)
+ *   uiSlice         — Shell UI (currentView, theme, sidebar, chat panel)
+ *   chatSlice       — Legacy chat messages + AI config       ⚠ OVERLAP: useConversationStore
+ *   projectSlice    — PMO workspace (projectId, session data) ⚠ OVERLAP: usePMOStore
+ *   demoSlice       — Demo mode flags
+ *
+ * STANDALONE:
+ *   useConversationStore (52k) — Unified AI conversations     ⚠ HIGH overlap with chatSlice
+ *   useToolStore         (81k) — Strategic tool sessions       ⚠ MEDIUM overlap with useDiscoveryStore
+ *   useDiscoveryStore    (25k) — Discovery canvas/sessions
+ *   useMultiFrameworkStore(19k)— Assessment frameworks
+ *   useContextBuilderStore(13k)— Context Builder wizard
+ *   useAIActionsStore    (12k) — AI action approval queue
+ *   useChatProjectStore  (11k) — Chat folders (NOT PMO projects)
+ *   useArtifactsStore    (10k) — AI artifacts panel
+ *   useOpenDocumentsStore (5k) — Module tab strip
+ *   usePMOStore           (5k) — PMO phase/gate context        ⚠ MEDIUM overlap with projectSlice
+ *   usePortfolioStore     (3k) — Portfolio/roadmap view
+ *   useMegatrendStore     (3k) — Megatrend baseline cache
+ *
+ * CONSOLIDATION PRIORITIES:
+ *   1. chatSlice ↔ useConversationStore — merge chat messages into conversation store
+ *   2. projectSlice ↔ usePMOStore — unify PMO project context
+ *   3. useToolStore ↔ useDiscoveryStore — clarify discovery tool boundary
+ */
 export type AppState = AuthSlice & UISlice & ChatSlice & ProjectSlice & DemoSlice;
 
 // Perf: this store updates very frequently (chat streaming, UI state, etc.).
@@ -137,6 +165,8 @@ export const useAppStore = create<AppState>()(
 
         // DemoSlice - persist demo mode state
         isDemoMode: state.isDemoMode,
+        demoSessionOrgId: state.demoSessionOrgId,
+        demoLocale: state.demoLocale,
         demoOrganization: state.demoOrganization,
       }),
     }

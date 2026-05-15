@@ -39,7 +39,8 @@ interface WhatsNewModalProps {
 
 export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false, onClose }) => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang: 'en' | 'pl' = baseLang === 'pl' ? 'pl' : 'en';
 
   const [isOpen, setIsOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);

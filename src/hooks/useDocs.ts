@@ -7,9 +7,15 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
 import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
 const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
 const LEGACY_KB_BASE = '/api/kb';
+
+function withSite(path: string): string {
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}site=${encodeURIComponent(KNOWLEDGE_BASE_SITE.key)}`;
+}
 
 // ============================================
 // TYPES
@@ -43,6 +49,13 @@ export interface KbArticle extends KbArticleListItem {
   content: string;
   video_url?: string;
   video_teaser_url?: string;
+  hero_asset_refs?: Array<{
+    type: 'image' | 'video' | 'embed';
+    url: string;
+    alt?: string;
+    caption?: string;
+    poster?: string;
+  }>;
   related_modules: string[];
   target_audience: string[];
   video_script?: string;
@@ -86,7 +99,7 @@ const fetchCategories = async (language: string = 'en'): Promise<KbCategory[]> =
     const data = await fetchPublicKbBridge<{
       data?: { categories?: KbCategory[] };
       categories?: KbCategory[];
-    }>(`/categories?lang=${language}`, 'public v8 unavailable');
+    }>(withSite(`/categories?lang=${language}`), 'public v8 unavailable');
     return normalizeCategoryList(data);
   } catch {
     const response = await fetch(`${LEGACY_KB_BASE}/categories?lang=${language}`);
@@ -115,7 +128,7 @@ const fetchArticles = async (params: {
       data?: { articles?: KbArticleListItem[]; total?: number };
       articles?: KbArticleListItem[];
       total?: number;
-    }>(`/articles?${searchParams.toString()}`, 'public v8 unavailable');
+    }>(withSite(`/articles?${searchParams.toString()}`), 'public v8 unavailable');
     return {
       articles: data.data?.articles || data.articles || [],
       total: data.data?.total ?? data.total ?? 0,
@@ -148,7 +161,7 @@ const fetchArticleBySlug = async (
 ): Promise<KbArticle | null> => {
   try {
     const data = await fetchPublicKbBridge<{ data?: { article?: KbArticle }; article?: KbArticle }>(
-      `/articles/${encodeURIComponent(slug)}?lang=${language}`,
+      withSite(`/articles/${encodeURIComponent(slug)}?lang=${language}`),
       'public v8 unavailable'
     );
     return data.data?.article || data.article || null;
@@ -173,7 +186,7 @@ const fetchFeaturedArticles = async (
 ): Promise<KbArticleListItem[]> => {
   try {
     const publicResponse = await fetch(
-      `${PUBLIC_V8_KB_BASE}/featured?lang=${language}&limit=${limit}`
+      `${PUBLIC_V8_KB_BASE}${withSite(`/featured?lang=${language}&limit=${limit}`)}`
     );
     if (!publicResponse.ok) throw new Error('public v8 unavailable');
     const publicData = await publicResponse.json();
@@ -199,7 +212,10 @@ const searchArticles = async (
     const data = await fetchPublicKbBridge<{
       data?: { articles?: KbArticleListItem[] };
       articles?: KbArticleListItem[];
-    }>(`/search?q=${encodeURIComponent(query)}&lang=${language}`, 'public v8 unavailable');
+    }>(
+      withSite(`/search?q=${encodeURIComponent(query)}&lang=${language}`),
+      'public v8 unavailable'
+    );
     return normalizeArticleList(data);
   } catch {
     try {

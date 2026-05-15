@@ -12,10 +12,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import type { KpiPermissionRole } from '../../services/v8/kpiWorkflowCanon.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
-import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
+import {
+  createKpiReportSnapshot,
+  getKpiReportSnapshot,
+} from '../../services/results/kpiReportSnapshotService.js';
+import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
   getResultsDashboard,
   getResultsKpiCatalog,
@@ -25,6 +28,7 @@ import {
 } from '../../services/v8/resultsROIService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -38,6 +42,58 @@ function resultsMeta() {
 
 function resultsWriteMeta() {
   return { version: 'v8' as const, contract: V8_RESULTS_WRITE_CONTRACT };
+}
+
+async function createV8KpiReportArtifact(params: {
+  organizationId: string;
+  userId: string;
+  created: Awaited<ReturnType<typeof createKpiReportSnapshot>>;
+}) {
+  const { organizationId, userId, created } = params;
+  const report = await ReportBuilderService.createReport({
+    organizationId,
+    sourceType: 'RESULTS_KPI_REPORT',
+    sourceId: created.snapshotId,
+    sourceName: created.snapshot.title,
+    title: created.snapshot.title,
+    description: `KPI review for ${created.snapshot.periodStart}${created.snapshot.periodEnd ? ` → ${created.snapshot.periodEnd}` : ''}`,
+    createdBy: userId,
+  });
+
+  await Promise.all([
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'executive_summary',
+      created.markdown.executive_summary,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'kpi_overview',
+      created.markdown.kpi_overview,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'deviation_cases',
+      created.markdown.deviation_cases,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'action_plan',
+      created.markdown.action_plan,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'appendix',
+      created.markdown.appendix,
+      userId
+    ),
+  ]);
+  await ReportBuilderService.updateReportStatus(report.report.id, 'GENERATED', userId);
+  return report.report.id;
 }
 
 /** P04-B: role for `canPerformKpiAction` (header override; default viewer). */
@@ -57,6 +113,12 @@ function p04KpiRoleFromRequest(req: AuthRequest): KpiPermissionRole {
 }
 
 type P04KpiGuardedAction =
+  | 'edit_definition'
+  | 'edit_targets'
+  | 'delete_kpi'
+  | 'record_measurement'
+  | 'create_report'
+  | 'manage_deviation'
   | 'create_signal'
   | 'create_next_action'
   | 'manage_reconciliation'
@@ -67,7 +129,6 @@ async function p04AssertKpiPermission(
   res: Response,
   action: P04KpiGuardedAction
 ): Promise<boolean> {
-  const { canPerformKpiAction } = await import('../../services/v8/kpiWorkflowCanon.js');
   const role = p04KpiRoleFromRequest(req);
   if (!canPerformKpiAction(role, action)) {
     res.status(403).json({ error: 'Permission denied', code: 'P04_PERMISSION_DENIED' });
@@ -103,7 +164,32 @@ router.get(
   '/dashboard',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const snapshot = await getResultsDashboard(organizationId);
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    let snapshot;
+    try {
+      snapshot = await getResultsDashboard(organizationId, { initiativeId });
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load results dashboard',
+        code: 'RESULTS_DASHBOARD_READ_FAILED',
+      });
+    }
     return res.json({
       data: { snapshot },
       meta: resultsMeta(),
@@ -120,9 +206,40 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const kpiId = typeof req.query.kpiId === 'string' ? req.query.kpiId.trim() : undefined;
-    const catalog = await getResultsKpiCatalog(organizationId, { kpiId });
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    let catalog;
+    try {
+      catalog = await getResultsKpiCatalog(organizationId, { kpiId, initiativeId });
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load KPI catalog',
+        code: 'RESULTS_CATALOG_READ_FAILED',
+      });
+    }
+    const normalizedCatalog = {
+      ...catalog,
+      initiatives: Array.isArray((catalog as any)?.initiatives) ? (catalog as any).initiatives : [],
+      kpis: Array.isArray((catalog as any)?.kpis) ? (catalog as any).kpis : [],
+      mappings: Array.isArray((catalog as any)?.mappings) ? (catalog as any).mappings : [],
+    };
     return res.json({
-      data: catalog,
+      data: normalizedCatalog,
       meta: resultsMeta(),
     });
   })
@@ -135,6 +252,7 @@ router.get(
 router.post(
   '/kpis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
     const { organizationId } = getV8Context(req);
     const {
       name,
@@ -212,7 +330,8 @@ router.post(
 router.put(
   '/kpis/:kpiId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
+    const { organizationId, userId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     if (!kpiId) {
       return res.status(400).json({
@@ -241,7 +360,9 @@ router.put(
 
     const row = await dbGet<any>(
       `
-      SELECT k.id
+      SELECT k.id, k.name, k.description, k.unit, k.baseline_value, k.target_value,
+             k.measurement_frequency, k.direction, k.threshold_mode,
+             k.amber_threshold_pct, k.red_threshold_pct, k.amber_threshold_abs, k.red_threshold_abs
       FROM initiative_kpis k
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
@@ -297,6 +418,95 @@ router.put(
       ]
     );
 
+    const afterState = {
+      name: name != null && String(name).trim() ? String(name).trim() : row.name,
+      description: description != null ? String(description).trim() : row.description,
+      unit: unit != null ? String(unit).trim() : row.unit,
+      baselineValue:
+        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : row.baseline_value,
+      targetValue:
+        targetValue != null && targetValue !== '' ? Number(targetValue) : row.target_value,
+      measurementFrequency: measurementFrequency || row.measurement_frequency,
+      direction: direction || row.direction,
+      thresholdMode: thresholdMode || row.threshold_mode,
+      amberThresholdPct:
+        amberThresholdPct != null && amberThresholdPct !== ''
+          ? Number(amberThresholdPct)
+          : row.amber_threshold_pct,
+      redThresholdPct:
+        redThresholdPct != null && redThresholdPct !== ''
+          ? Number(redThresholdPct)
+          : row.red_threshold_pct,
+      amberThresholdAbs:
+        amberThresholdAbs != null && amberThresholdAbs !== ''
+          ? Number(amberThresholdAbs)
+          : row.amber_threshold_abs,
+      redThresholdAbs:
+        redThresholdAbs != null && redThresholdAbs !== ''
+          ? Number(redThresholdAbs)
+          : row.red_threshold_abs,
+    };
+    const beforeDefinition = {
+      name: row.name,
+      description: row.description,
+      unit: row.unit,
+      measurementFrequency: row.measurement_frequency,
+      direction: row.direction,
+    };
+    const afterDefinition = {
+      name: afterState.name,
+      description: afterState.description,
+      unit: afterState.unit,
+      measurementFrequency: afterState.measurementFrequency,
+      direction: afterState.direction,
+    };
+    const beforeTargets = {
+      baselineValue: row.baseline_value,
+      targetValue: row.target_value,
+      thresholdMode: row.threshold_mode,
+      amberThresholdPct: row.amber_threshold_pct,
+      redThresholdPct: row.red_threshold_pct,
+      amberThresholdAbs: row.amber_threshold_abs,
+      redThresholdAbs: row.red_threshold_abs,
+    };
+    const afterTargets = {
+      baselineValue: afterState.baselineValue,
+      targetValue: afterState.targetValue,
+      thresholdMode: afterState.thresholdMode,
+      amberThresholdPct: afterState.amberThresholdPct,
+      redThresholdPct: afterState.redThresholdPct,
+      amberThresholdAbs: afterState.amberThresholdAbs,
+      redThresholdAbs: afterState.redThresholdAbs,
+    };
+    if (JSON.stringify(beforeDefinition) !== JSON.stringify(afterDefinition)) {
+      await resultsEnterpriseService
+        .createMetricAuditEntry(organizationId, {
+          kpiId,
+          section: 'definition',
+          eventType: 'definition_updated',
+          source: 'v8_results_update',
+          actorUserId: userId || null,
+          summary: `Definition updated for ${afterState.name || row.name || kpiId}`,
+          before: beforeDefinition,
+          after: afterDefinition,
+        })
+        .catch(() => null);
+    }
+    if (JSON.stringify(beforeTargets) !== JSON.stringify(afterTargets)) {
+      await resultsEnterpriseService
+        .createMetricAuditEntry(organizationId, {
+          kpiId,
+          section: 'targets',
+          eventType: 'targets_updated',
+          source: 'v8_results_update',
+          actorUserId: userId || null,
+          summary: `Targets updated for ${afterState.name || row.name || kpiId}`,
+          before: beforeTargets,
+          after: afterTargets,
+        })
+        .catch(() => null);
+    }
+
     return res.json({
       data: { success: true },
       meta: resultsWriteMeta(),
@@ -311,6 +521,7 @@ router.put(
 router.delete(
   '/kpis/:kpiId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'delete_kpi'))) return;
     const { organizationId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     if (!kpiId) {
@@ -398,6 +609,31 @@ router.post(
         code: 'RESULTS_KPI_MAPPING_REQUIRED_FIELDS',
       });
     }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(initiativeId), organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
+    const kpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), organizationId],
+      { fallback: true }
+    );
+    if (!kpi?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -462,6 +698,7 @@ router.delete(
 router.post(
   '/deviation-cases/:caseId/acknowledge',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     if (!caseId) {
@@ -505,6 +742,7 @@ router.post(
 router.put(
   '/deviation-cases/:caseId/rca',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { rcaText } = req.body || {};
@@ -550,6 +788,7 @@ router.put(
 router.post(
   '/deviation-cases/:caseId/actions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { title, ownerUserId, dueDate } = req.body || {};
@@ -602,6 +841,7 @@ router.post(
 router.put(
   '/deviation-cases/:caseId/actions/:actionId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const actionId = typeof req.params.actionId === 'string' ? req.params.actionId.trim() : '';
@@ -668,6 +908,7 @@ router.put(
 router.post(
   '/deviation-cases/:caseId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     if (!caseId) {
@@ -711,6 +952,7 @@ router.post(
 router.post(
   '/deviation-cases/:caseId/close',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { evidenceText, evidenceRef, resolutionNotes, linkedInitiativeId, linkedTaskId } =
@@ -744,6 +986,23 @@ router.post(
         code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
       });
     }
+    const safeLinkedInitiativeId =
+      typeof linkedInitiativeId === 'string' && linkedInitiativeId.trim()
+        ? linkedInitiativeId.trim()
+        : '';
+    if (safeLinkedInitiativeId) {
+      const linkedInitiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [safeLinkedInitiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!linkedInitiative?.id) {
+        return res.status(404).json({
+          error: 'Initiative not found',
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
 
     try {
       await dbRun(
@@ -757,7 +1016,7 @@ router.post(
           safeEvidenceRef || null,
           userId || null,
           safeResolutionNotes || null,
-          linkedInitiativeId || null,
+          safeLinkedInitiativeId || null,
           linkedTaskId || null,
           caseId,
           organizationId,
@@ -795,13 +1054,44 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
     if (!kpiId) {
       return res.status(400).json({
         error: 'kpiId is required',
         code: 'RESULTS_KPI_ID_REQUIRED',
       });
     }
-    const detail = await getResultsKpiDrawerDetail(kpiId, organizationId);
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    let detail;
+    try {
+      detail = await getResultsKpiDrawerDetail(kpiId, organizationId, { initiativeId });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'RESULTS_KPI_NOT_FOUND') {
+        return res.status(404).json({
+          error: `KPI ${kpiId} not found`,
+          code: 'RESULTS_KPI_NOT_FOUND',
+        });
+      }
+      return res.status(500).json({
+        error: 'Failed to load KPI drawer detail',
+        code: 'RESULTS_KPI_DRAWER_READ_FAILED',
+      });
+    }
     return res.json({
       data: detail,
       meta: resultsMeta(),
@@ -816,6 +1106,7 @@ router.get(
 router.post(
   '/kpis/:kpiId/time-series',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'record_measurement'))) return;
     const { organizationId, userId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     const body = req.body || {};
@@ -899,6 +1190,23 @@ router.post(
     } catch {
       // Do not fail the write on deviation side effects.
     }
+    await resultsEnterpriseService
+      .createMetricAuditEntry(organizationId, {
+        kpiId,
+        section: 'history',
+        eventType: 'measurement_recorded',
+        source: source ? String(source) : 'manual',
+        actorUserId: userId || null,
+        summary: `Measurement recorded for ${periodStart}`,
+        before: {},
+        after: {
+          value: Number(value),
+          periodStart,
+          periodEnd,
+          source: source || 'manual',
+        },
+      })
+      .catch(() => null);
 
     return res.json({
       data: {
@@ -923,7 +1231,32 @@ router.get(
   '/roi/portfolio-summary',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const portfolio = await getROIPortfolioSummary(organizationId);
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    let portfolio;
+    try {
+      portfolio = await getROIPortfolioSummary(organizationId, initiativeId ? { initiativeId } : undefined);
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load ROI portfolio summary',
+        code: 'RESULTS_ROI_PORTFOLIO_READ_FAILED',
+      });
+    }
     return res.json({
       data: portfolio,
       meta: resultsMeta(),
@@ -938,8 +1271,9 @@ router.get(
 router.post(
   '/kpi-reports',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'create_report'))) return;
     const { organizationId, userId } = getV8Context(req);
-    const { periodStart, periodEnd, title, filters, kpiIds } = req.body || {};
+    const { periodStart, periodEnd, title, filters, kpiIds, goalIds } = req.body || {};
     const safeStart = String(periodStart || '').slice(0, 10);
     if (!safeStart) {
       return res.status(400).json({
@@ -952,62 +1286,75 @@ router.post(
       ? (kpiIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
       : null;
 
+    const selectedGoalIds: string[] | null = Array.isArray(goalIds)
+      ? (goalIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
+      : null;
+
+    const enrichedFilters = {
+      ...(filters && typeof filters === 'object' ? filters : {}),
+      ...(selectedGoalIds && selectedGoalIds.length ? { goalIds: selectedGoalIds } : {}),
+    };
+
     const created = await createKpiReportSnapshot({
       organizationId,
       periodStart: safeStart,
       periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
       title: title ? String(title) : null,
       createdBy: userId,
-      filters: filters && typeof filters === 'object' ? filters : null,
+      filters: Object.keys(enrichedFilters).length ? enrichedFilters : null,
       kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
     });
 
-    const report = await ReportBuilderService.createReport({
-      organizationId,
-      sourceType: 'RESULTS_KPI_REPORT',
-      sourceId: created.snapshotId,
-      sourceName: created.snapshot.title,
-      title: created.snapshot.title,
-      description: `KPI review for ${created.snapshot.periodStart}${created.snapshot.periodEnd ? ` → ${created.snapshot.periodEnd}` : ''}`,
-      createdBy: userId,
-    });
-
-    await Promise.all([
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'executive_summary',
-        created.markdown.executive_summary,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'kpi_overview',
-        created.markdown.kpi_overview,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'deviation_cases',
-        created.markdown.deviation_cases,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'action_plan',
-        created.markdown.action_plan,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'appendix',
-        created.markdown.appendix,
-        userId
-      ),
-    ]);
-    await ReportBuilderService.updateReportStatus(report.report.id, 'GENERATED', userId);
+    const reportId = await createV8KpiReportArtifact({ organizationId, userId, created });
 
     return res.json({
-      data: { snapshotId: created.snapshotId, reportId: report.report.id },
+      data: { snapshotId: created.snapshotId, reportId },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+router.post(
+  '/kpi-reports/:snapshotId/refresh',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'create_report'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const snapshotId =
+      typeof req.params.snapshotId === 'string' ? req.params.snapshotId.trim() : '';
+    if (!snapshotId) {
+      return res.status(400).json({
+        error: 'snapshotId is required',
+        code: 'RESULTS_KPI_REPORT_SNAPSHOT_ID_REQUIRED',
+      });
+    }
+
+    const existing = await getKpiReportSnapshot({ organizationId, snapshotId });
+    if (!existing?.snapshot) {
+      return res.status(404).json({
+        error: 'KPI report snapshot not found',
+        code: 'RESULTS_KPI_REPORT_SNAPSHOT_NOT_FOUND',
+      });
+    }
+
+    const refreshed = await createKpiReportSnapshot({
+      organizationId,
+      periodStart: existing.snapshot.periodStart,
+      periodEnd: existing.snapshot.periodEnd,
+      title: existing.snapshot.title,
+      createdBy: userId,
+      filters: existing.filters && typeof existing.filters === 'object' ? existing.filters : null,
+      kpiIds: Array.isArray(existing.snapshot.kpis)
+        ? existing.snapshot.kpis.map((kpi: any) => String(kpi.id || '').trim()).filter(Boolean)
+        : null,
+    });
+
+    const reportId = await createV8KpiReportArtifact({
+      organizationId,
+      userId,
+      created: refreshed,
+    });
+    return res.json({
+      data: { snapshotId: refreshed.snapshotId, reportId },
       meta: resultsWriteMeta(),
     });
   })
@@ -1027,6 +1374,17 @@ router.get(
       return res.status(400).json({
         error: 'initiativeId is required',
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
+      });
+    }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
       });
     }
     const detail = await getROIInitiativeDetail(initiativeId, organizationId);
@@ -1051,6 +1409,17 @@ router.put(
       return res.status(400).json({
         error: 'initiativeId is required',
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
+      });
+    }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
       });
     }
 
@@ -1128,6 +1497,17 @@ router.post(
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
       });
     }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
 
     const {
       periodMonth,
@@ -1176,24 +1556,25 @@ router.post(
 // ────────────────────────────────────────────────────────────────
 
 import {
-  P04_KPI_WORKFLOW_CONTRACT,
-  computeKpiHealthPosture,
   canPerformKpiAction,
-  KPI_WORKFLOW_TRANSITIONS,
-  P04_ACCEPTANCE_CHECKLIST,
+  computeKpiHealthPosture,
   KPI_ANTI_DUPLICATE_RULES,
-  LINKAGE_PATTERNS,
   KPI_PERMISSION_MATRIX,
+  KPI_WORKFLOW_STATES,
+  KPI_WORKFLOW_TRANSITIONS,
   type KpiDegradedPosture,
-  type KpiSignal,
+  type KpiHealthStatus,
   type KpiNextAction,
-  type KpiReport,
+  type KpiPermissionRole,
   type KpiReconciliation,
+  type KpiReport,
+  type KpiSignal,
   type KpiTarget,
   type KpiTrend,
-  type KpiPermissionRole,
   type KpiWorkflowState,
-  type KpiHealthStatus,
+  LINKAGE_PATTERNS,
+  P04_ACCEPTANCE_CHECKLIST,
+  P04_KPI_WORKFLOW_CONTRACT,
 } from '../../services/v8/kpiWorkflowCanon.js';
 
 const p04Meta = () => ({ version: 'v8' as const, contract: P04_KPI_WORKFLOW_CONTRACT });
@@ -1221,7 +1602,7 @@ router.get(
       signalId: String(d.id),
       kpiId: String(d.kpi_id),
       signalType: 'deviation' as const,
-      severity: (String(d.severity || 'medium').toLowerCase() as KpiSignal['severity']),
+      severity: String(d.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(d.deviation_summary || `Deviation on KPI ${d.kpi_id}`),
       detectedAt: String(d.detected_at || d.created_at),
     }));
@@ -1290,9 +1671,10 @@ router.get(
       period: String(m.period_start || m.measured_at || ''),
       actualValue: m.value != null ? Number(m.value) : null,
       targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
-      deviation: m.value != null && kpi.target_value != null
-        ? Number(m.value) - Number(kpi.target_value)
-        : null,
+      deviation:
+        m.value != null && kpi.target_value != null
+          ? Number(m.value) - Number(kpi.target_value)
+          : null,
     }));
 
     let direction: KpiTrend['direction'] = 'insufficient_data';
@@ -1320,7 +1702,11 @@ router.get(
       updatedAt: kpi.updated_at ? String(kpi.updated_at) : null,
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
-        ? (String(reconciliation.reconciliation_status) as 'pending' | 'reconciled' | 'disputed' | 'escalated')
+        ? (String(reconciliation.reconciliation_status) as
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 
@@ -1348,9 +1734,10 @@ router.get(
               financeRef: String(reconciliation.finance_ref),
             }
           : null,
-        workflowHint: signals.length > 0
-          ? 'Signal detected — create report or assign next action'
-          : 'No open signals',
+        workflowHint:
+          signals.length > 0
+            ? 'Signal detected — create report or assign next action'
+            : 'No open signals',
       },
       meta: p04Meta(),
     });
@@ -1400,6 +1787,35 @@ router.post(
       status: 'open',
       createdAt: new Date().toISOString(),
     };
+
+    let taskId: string | null = null;
+    const { createTask } = req.body || {};
+    if (createTask) {
+      try {
+        taskId = uuidv4();
+        await dbRun(
+          `INSERT INTO tasks (id, organization_id, title, description, status, priority, assigned_to, due_date, created_by, source_type, source_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'todo', 'medium', ?, ?, ?, 'kpi_next_action', ?, datetime('now'), datetime('now'))`,
+          [
+            taskId,
+            organizationId,
+            title,
+            `KPI next action from ${sourceType}: ${sourceRef}`,
+            assigneeId || userId || null,
+            dueDate || null,
+            userId,
+            actionId,
+          ]
+        );
+        await dbRun(`UPDATE kpi_deviation_actions SET execution_follow_up_ref = ? WHERE id = ?`, [
+          taskId,
+          actionId,
+        ]);
+        (action as any).taskId = taskId;
+      } catch (err: any) {
+        logger.warn(`[V8:Results] Task creation from next-action failed: ${err?.message}`);
+      }
+    }
 
     return res.json({ data: action, meta: { ...p04Meta(), contract: P04_KPI_WORKFLOW_CONTRACT } });
   })
@@ -1499,7 +1915,11 @@ router.get(
       updatedAt: kpi.updated_at ? String(kpi.updated_at) : null,
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
-        ? (String(reconciliation.reconciliation_status) as 'pending' | 'reconciled' | 'disputed' | 'escalated')
+        ? (String(reconciliation.reconciliation_status) as
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 
@@ -1507,7 +1927,8 @@ router.get(
       nominal: 'KPI is operating normally',
       missing_data: 'KPI has missing current or target value — trend/target comparisons disabled',
       stale_data: 'KPI data is stale (>30 days since last update) — results may be unreliable',
-      discrepancy_unresolved: 'KPI has an unresolved discrepancy with Finance — reconciliation required',
+      discrepancy_unresolved:
+        'KPI has an unresolved discrepancy with Finance — reconciliation required',
       linkage_unavailable: 'KPI has finance linkage but reconciliation data is unavailable',
       permission_denied: 'You do not have permission to access this KPI',
     };
@@ -1567,7 +1988,9 @@ router.get(
         targetValue: kpi.target_value != null ? Number(kpi.target_value) : null,
         updatedAt: kpi.updated_at ? String(kpi.updated_at) : null,
         financeLinked: reconMap.has(String(kpi.id)),
-        reconciliationStatus: (reconMap.get(String(kpi.id)) as 'pending' | 'reconciled' | 'disputed' | 'escalated') || null,
+        reconciliationStatus:
+          (reconMap.get(String(kpi.id)) as 'pending' | 'reconciled' | 'disputed' | 'escalated') ||
+          null,
       });
       postureCount[posture]++;
     }
@@ -1601,7 +2024,7 @@ router.get(
       data: {
         contract: P04_KPI_WORKFLOW_CONTRACT,
         vocabulary: ['signal', 'target', 'trend', 'report', 'reconciliation', 'next_action'],
-        workflowStates: [...KPI_WORKFLOW_TRANSITIONS.signal_detected, 'signal_detected'],
+        workflowStates: [...KPI_WORKFLOW_STATES],
         linkagePatterns: [...LINKAGE_PATTERNS],
         permissions: KPI_PERMISSION_MATRIX,
         antiDuplicateRules: KPI_ANTI_DUPLICATE_RULES,
@@ -1621,7 +2044,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const { kpiId, financeRef } = req.body || {};
-    if (!kpiId) return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
+    if (!kpiId)
+      return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
     if (!(await p04AssertKpiPermission(req, res, 'manage_reconciliation'))) return;
 
     const { initiateReconciliation } = await import('../../services/v8/resultsROIService.js');
@@ -1642,8 +2066,11 @@ router.put(
     const reconciliationId = req.params.reconciliationId?.trim();
     const { status } = req.body || {};
     if (!reconciliationId)
-      return res.status(400).json({ error: 'reconciliationId required', code: 'P04_RECONCILIATION_ID_REQUIRED' });
-    if (!status) return res.status(400).json({ error: 'status required', code: 'P04_STATUS_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'reconciliationId required', code: 'P04_RECONCILIATION_ID_REQUIRED' });
+    if (!status)
+      return res.status(400).json({ error: 'status required', code: 'P04_STATUS_REQUIRED' });
 
     const resolvedBy = req.body?.resolvedBy ?? 'finance';
     if (resolvedBy !== 'finance' && resolvedBy !== 'results') {
@@ -1683,7 +2110,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { kpiId, signalType, severity, description, evidencePointers } = req.body || {};
     if (!kpiId || !signalType)
-      return res.status(400).json({ error: 'kpiId and signalType required', code: 'P04_SIGNAL_PARAMS_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'kpiId and signalType required', code: 'P04_SIGNAL_PARAMS_REQUIRED' });
     if (!(await p04AssertKpiPermission(req, res, 'create_signal'))) return;
 
     const { createKpiSignal } = await import('../../services/v8/resultsROIService.js');
@@ -1704,11 +2133,17 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const signalId = req.params.signalId?.trim();
-    if (!signalId) return res.status(400).json({ error: 'signalId required', code: 'P04_SIGNAL_ID_REQUIRED' });
+    if (!signalId)
+      return res.status(400).json({ error: 'signalId required', code: 'P04_SIGNAL_ID_REQUIRED' });
     if (!(await p04AssertKpiPermission(req, res, 'comment'))) return;
 
     const { acknowledgeKpiSignal } = await import('../../services/v8/resultsROIService.js');
-    const signal = await acknowledgeKpiSignal(signalId, organizationId, userId, req.body?.reason || '');
+    const signal = await acknowledgeKpiSignal(
+      signalId,
+      organizationId,
+      userId,
+      req.body?.reason || ''
+    );
     return res.json({ data: signal, meta: resultsWriteMeta() });
   })
 );
@@ -1733,10 +2168,20 @@ router.post(
   '/next-actions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const { signalId, kpiId, actionType, description, assignedTo, financeConsequenceRef, executionFollowUpRef } =
-      req.body || {};
+    const {
+      signalId,
+      kpiId,
+      actionType,
+      description,
+      assignedTo,
+      financeConsequenceRef,
+      executionFollowUpRef,
+    } = req.body || {};
     if (!signalId || !kpiId || !actionType)
-      return res.status(400).json({ error: 'signalId, kpiId, actionType required', code: 'P04_ACTION_PARAMS_REQUIRED' });
+      return res.status(400).json({
+        error: 'signalId, kpiId, actionType required',
+        code: 'P04_ACTION_PARAMS_REQUIRED',
+      });
     if (!(await p04AssertKpiPermission(req, res, 'create_next_action'))) return;
 
     const { createKpiNextAction } = await import('../../services/v8/resultsROIService.js');
@@ -1760,7 +2205,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const actionId = req.params.actionId?.trim();
-    if (!actionId) return res.status(400).json({ error: 'actionId required', code: 'P04_ACTION_ID_REQUIRED' });
+    if (!actionId)
+      return res.status(400).json({ error: 'actionId required', code: 'P04_ACTION_ID_REQUIRED' });
     if (!(await p04AssertKpiPermission(req, res, 'create_next_action'))) return;
 
     const { completeKpiNextAction } = await import('../../services/v8/resultsROIService.js');
@@ -1776,7 +2222,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const kpiId = req.params.kpiId?.trim();
-    if (!kpiId) return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
+    if (!kpiId)
+      return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
 
     const { getKpiWorkflowStatus } = await import('../../services/v8/resultsROIService.js');
     const status = await getKpiWorkflowStatus(kpiId, organizationId);

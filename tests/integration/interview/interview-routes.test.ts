@@ -11,9 +11,17 @@ import { initializeDatabase } from '../../../server/src/database/DatabaseInitial
 
 vi.hoisted(() => {
   process.env.MOCK_DB = 'false';
+  process.env.DISABLE_SCHEDULER = 'true';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-interview-${workerId}.db`;
 });
+
+vi.mock('../../../server/src/cron/Scheduler.js', () => ({
+  default: {
+    init: vi.fn(async () => undefined),
+    stop: vi.fn(),
+  },
+}));
 
 const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500];
 

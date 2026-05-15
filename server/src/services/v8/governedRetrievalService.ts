@@ -145,19 +145,20 @@ export async function createRetrievalRequest(
   const requestId = uuidv4();
   const createdAt = new Date().toISOString();
 
-  const request: RetrievalRequest = {
+  const request = {
     requestId,
     organizationId: validated.organizationId,
     contextSnapshotId: validated.contextSnapshotId ?? null,
-    retrievalScopeToken: validated.retrievalScopeToken ?? null,
+    retrievalScopeToken: (validated.retrievalScopeToken ??
+      null) as RetrievalRequest['retrievalScopeToken'],
     consumerClass: validated.consumerClass,
     query: validated.query,
     searchPreset: validated.searchPreset,
-    budgetHint: validated.budgetHint ?? null,
+    budgetHint: (validated.budgetHint ?? null) as RetrievalRequest['budgetHint'],
     workingMemoryContextRef: validated.workingMemoryContextRef ?? null,
-    status: 'pending',
+    status: 'pending' as const,
     createdAt,
-  };
+  } satisfies RetrievalRequest;
 
   await dbRun(
     `INSERT INTO v8_retrieval_requests (
@@ -376,12 +377,13 @@ export async function logRetrievalTrace(params: LogRetrievalTraceParams): Promis
     conversationId: validated.conversationId ?? null,
     consumerClass: validated.consumerClass,
     presetUsed: validated.presetUsed,
-    scopeResolutionSummary: validated.scopeResolutionSummary,
-    pipelineStages: validated.pipelineStages,
+    scopeResolutionSummary:
+      validated.scopeResolutionSummary as RetrievalTrace['scopeResolutionSummary'],
+    pipelineStages: validated.pipelineStages as RetrievalTrace['pipelineStages'],
     candidatesConsidered: validated.candidatesConsidered,
     resultsReturned: validated.resultsReturned,
-    results: validated.results,
-    deniedEntries: validated.deniedEntries,
+    results: validated.results as RetrievalTrace['results'],
+    deniedEntries: validated.deniedEntries as RetrievalTrace['deniedEntries'],
     freshnessWarnings: validated.freshnessWarnings,
     totalLatencyMs: validated.totalLatencyMs,
     createdAt,

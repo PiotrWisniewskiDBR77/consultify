@@ -11,6 +11,8 @@ export interface V8AssessmentListItem {
   created_at?: string;
   answers?: Record<string, unknown>;
   scoreSummary?: Record<string, unknown>;
+  assessmentDefinitionId?: string | null;
+  assessmentDefinitionVersion?: string | null;
 }
 
 export interface V8AssessmentDetail extends V8AssessmentListItem {
@@ -94,6 +96,115 @@ export interface V8AssessmentAssignmentPayload {
   status?: string;
 }
 
+export type V8AssessmentRunState =
+  | 'draft'
+  | 'running'
+  | 'awaiting_evidence'
+  | 'score_proposed'
+  | 'score_reviewed'
+  | 'interpretation_proposed'
+  | 'interpretation_reviewed'
+  | 'completed'
+  | 'failed';
+
+export interface V8AssessmentWorkbench {
+  contractVersion: string;
+  assessmentDefinitionRef: {
+    definitionId: string;
+    methodologyId: string;
+    version: string;
+    status: 'published';
+    readOnly: true;
+    publishedAt?: string | null;
+  };
+  assessmentRunId: string;
+  orgId: string;
+  runState: V8AssessmentRunState;
+  startedBy: string;
+  startedAt: string;
+  evidencePointers: Array<{
+    id: string;
+    kind: string;
+    ref: string;
+    label?: string;
+    availability?: 'ok' | 'unavailable';
+  }>;
+  requiredEvidenceKinds?: string[];
+  scoreProposal: null | {
+    id: string;
+    status: 'proposal';
+    scoreValues: Record<string, number>;
+    scoringRationale: string;
+    evidencePointerIds: string[];
+    assumptions: string[];
+    confidence: number;
+    proposedAt: string;
+    proposedBy: string;
+  };
+  scoreReview: null | {
+    status: 'pending' | 'accepted' | 'rejected' | 'overridden';
+    decidedAt?: string;
+    decidedBy?: string;
+    reason?: string;
+    overrideScoreValues?: Record<string, number>;
+  };
+  interpretationProposal: null | {
+    id: string;
+    status: 'proposal';
+    summary: string;
+    keyFindings: string[];
+    limits: string;
+    nextActions: string[];
+    linksToScoreProposalId: string;
+    proposedAt: string;
+    proposedBy: string;
+  };
+  interpretationReview: null | {
+    status: 'pending' | 'accepted' | 'rejected' | 'overridden';
+    decidedAt?: string;
+    decidedBy?: string;
+    reason?: string;
+    overrideSummary?: string;
+  };
+  promotionTraces: Array<{
+    id: string;
+    fromAssessmentRunId: string;
+    targetKind: 'outputs_artifact' | 'interview_insight';
+    targetRef: string;
+    createdAt: string;
+    actorId: string;
+    payloadSummary?: string;
+  }>;
+  degraded?: {
+    code: string;
+    message: string;
+    missingEvidenceKinds?: string[];
+    acceptedForCompletion?: boolean;
+  };
+  pendingPromotion?: {
+    targetKind: 'outputs_artifact' | 'interview_insight';
+    targetRef: string;
+    payload: Record<string, unknown>;
+    failedAt: string;
+    error: string;
+  } | null;
+  completedAt?: string;
+}
+
+export interface V8AssessmentDefinitionRecord {
+  id: string;
+  methodologyId: string;
+  version: string;
+  title: string;
+  status: 'draft' | 'published' | 'deprecated';
+  isReadOnly: boolean;
+  definition: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string | null;
+}
+
 export const V8AssessmentApi = {
   listAssessments(params?: {
     projectId?: string;
@@ -121,6 +232,145 @@ export const V8AssessmentApi = {
 
   updateAssessment(assessmentId: string, payload: V8AssessmentUpdatePayload) {
     return v8Put<{ id: string; updatedAt: string }>(`/assessment/${assessmentId}`, payload);
+  },
+
+  getWorkbench(assessmentId: string) {
+    return v8Get<{ workbench: V8AssessmentWorkbench; whatNext: string[] }>(
+      `/assessment/${assessmentId}/workbench`
+    );
+  },
+
+  getWorkbenchDefinition(assessmentId: string) {
+    return v8Get<{
+      definitionRef: V8AssessmentWorkbench['assessmentDefinitionRef'];
+      definition: V8AssessmentDefinitionRecord | null;
+    }>(`/assessment/${assessmentId}/workbench/definition`);
+  },
+
+  applyWorkbenchPreset(assessmentId: string, preset: string) {
+    return v8Post<{ workbench: V8AssessmentWorkbench; whatNext: string[] }>(
+      `/assessment/${assessmentId}/workbench/methodology-preset`,
+      { preset }
+    );
+  },
+
+  transitionWorkbench(
+    assessmentId: string,
+    payload: { toState: 'running' | 'awaiting_evidence' | 'completed' | 'failed'; reason?: string }
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/transition`,
+      payload
+    );
+  },
+
+  addWorkbenchEvidence(
+    assessmentId: string,
+    pointers: Array<{
+      kind: string;
+      ref: string;
+      label?: string;
+      availability?: 'ok' | 'unavailable';
+    }>
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/evidence`,
+      {
+        pointers,
+      }
+    );
+  },
+
+  setRequiredEvidenceKinds(assessmentId: string, kinds: string[]) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/required-evidence`,
+      {
+        kinds,
+      }
+    );
+  },
+
+  proposeWorkbenchScore(
+    assessmentId: string,
+    payload: {
+      scoreValues: Record<string, number>;
+      scoringRationale: string;
+      evidencePointerIds: string[];
+      assumptions?: string[];
+      confidence?: number;
+    }
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/score-proposal`,
+      payload
+    );
+  },
+
+  reviewWorkbenchScore(
+    assessmentId: string,
+    payload: {
+      action: 'accept' | 'reject' | 'override';
+      reason?: string;
+      overrideScoreValues?: Record<string, number>;
+    }
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/score-review`,
+      payload
+    );
+  },
+
+  proposeWorkbenchInterpretation(
+    assessmentId: string,
+    payload: { summary: string; keyFindings: string[]; limits: string; nextActions: string[] }
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/interpretation-proposal`,
+      payload
+    );
+  },
+
+  reviewWorkbenchInterpretation(
+    assessmentId: string,
+    payload: { action: 'accept' | 'reject' | 'override'; reason?: string; overrideSummary?: string }
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/interpretation-review`,
+      payload
+    );
+  },
+
+  getWorkbenchPromotionPayload(assessmentId: string) {
+    return v8Get<{
+      valid: boolean;
+      validationErrors: string[];
+      payload: Record<string, unknown>;
+      supportedHandoffs?: Array<{
+        targetKind: 'outputs_artifact' | 'interview_insight';
+        targetRefOwner: string;
+        bounded: boolean;
+        purpose: string;
+      }>;
+      downstreamContract?: {
+        initiatives?: Record<string, unknown>;
+        execution?: Record<string, unknown>;
+        kpi?: Record<string, unknown>;
+      };
+    }>(`/assessment/${assessmentId}/workbench/promotion-payload`);
+  },
+
+  promoteWorkbench(
+    assessmentId: string,
+    payload: {
+      targetKind: 'outputs_artifact' | 'interview_insight';
+      targetRef?: string;
+      payloadSummary?: string;
+    }
+  ) {
+    return v8Post<{ workbench: V8AssessmentWorkbench }>(
+      `/assessment/${assessmentId}/workbench/promotion`,
+      payload
+    );
   },
 
   getMyRole(assessmentId: string) {

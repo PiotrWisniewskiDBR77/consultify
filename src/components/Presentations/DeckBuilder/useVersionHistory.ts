@@ -75,6 +75,8 @@ export function useVersionHistory(deck: Deck | null) {
     [deck]
   );
 
+  const serverVersionRef = useRef<number>(1);
+
   const autoSave = useCallback(async () => {
     if (!deck) return;
 
@@ -84,14 +86,32 @@ export function useVersionHistory(deck: Deck | null) {
     setState((prev) => ({ ...prev, isSaving: true }));
 
     try {
-      await fetch(`/api/presentations/decks/${deck.deck_id}/autosave`, {
+      const res = await fetch(`/api/presentations/decks/${deck.deck_id}/autosave`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'X-Deck-Version': String(serverVersionRef.current),
         },
         body: serialized,
       });
+
+      if (res.status === 409) {
+        setState((prev) => ({ ...prev, isSaving: false }));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('deck-version-conflict', {
+              detail: { deckId: deck.deck_id },
+            })
+          );
+        }
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (data?.version) {
+        serverVersionRef.current = data.version;
+      }
 
       lastSavedDeckRef.current = serialized;
       setState((prev) => ({

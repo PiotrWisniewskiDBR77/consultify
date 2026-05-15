@@ -120,7 +120,10 @@ export async function captureSnapshot(params: CaptureSnapshotParams): Promise<Co
         initiatorUserId: validated.initiatorUserId,
         consumerClass: validated.consumerClass,
         privacyMode: validated.privacyMode,
-        sourceContextRefs: validated.sourceContextRefs,
+        sourceContextRefs: validated.sourceContextRefs.map((ref) => ({
+          ...ref,
+          freshnessAt: ref.freshnessAt ?? null,
+        })),
         driftEvents: [],
       };
 
@@ -148,7 +151,10 @@ export async function captureSnapshot(params: CaptureSnapshotParams): Promise<Co
     initiatorUserId: validated.initiatorUserId,
     consumerClass: validated.consumerClass,
     privacyMode: validated.privacyMode,
-    sourceContextRefs: validated.sourceContextRefs,
+    sourceContextRefs: validated.sourceContextRefs.map((ref) => ({
+      ...ref,
+      freshnessAt: ref.freshnessAt ?? null,
+    })),
     driftEvents,
   };
 

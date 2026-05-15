@@ -222,10 +222,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const {
     isStreaming,
     streamedContent,
-    requestSuggestions,
-    generateCorrelations,
-    generateSummary,
     generateFullSession,
+    runPhaseAiAction,
+    phaseAiActions,
+    activeAiActionId,
+    missionSuggestion,
+    applyMissionSuggestion,
+    dismissMissionSuggestion,
     rethinkCard,
     abortStream,
   } = useToolAI({ toolType });
@@ -238,6 +241,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     if (!currentSession) return [];
     const gaps: string[] = [];
     const data = currentSession.inputData as any;
+    const accepted = (items: any[] = []) =>
+      items.filter(
+        (item: any) =>
+          item?.proposalStatus !== 'ai-proposed' &&
+          item?.proposalStatus !== 'rethinking' &&
+          item?.proposalStatus !== 'rejected'
+      );
     if (toolType === 'dynamic-swot') {
       if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
         gaps.push('Missing mission brief');
@@ -247,9 +257,16 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           gaps.push(`Missing ${q}`);
         }
       });
-      if (!data.tensions?.length && !data.correlations?.length)
+      if (!accepted(data.tensions).length && !accepted(data.correlations).length)
         gaps.push('Missing strategic tensions');
-      if (!data.recommendedMoves?.length) gaps.push('Missing recommended moves');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
     }
     if (toolType === 'market-forces') {
       if (!data.context?.industry) gaps.push('Missing industry');
@@ -262,6 +279,36 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   }, [currentSession, toolType]);
 
   const completionReady = reviewGaps.length === 0;
+  const currentStepDef = stepDefs[currentStep - 1];
+  const missingItemsPayload = useMemo(
+    () =>
+      reviewGaps.map((gap, index) => ({
+        id: `${toolType}-gap-${index + 1}`,
+        label: gap,
+        severity: 'blocker' as const,
+        stepId: currentStepDef?.id || 'review',
+        resolved: false,
+      })),
+    [currentStepDef?.id, reviewGaps, toolType]
+  );
+  const wizardStatePayload = useMemo(
+    () => ({
+      sessionId: toolSessionId || sessionId || '',
+      toolType,
+      status:
+        toolStatus === 'REVIEW'
+          ? 'REVIEW'
+          : ['APPROVED', 'GENERATED', 'COMPLETED', 'FINALIZED'].includes(toolStatus)
+            ? 'FINALIZED'
+            : 'IN_PROGRESS',
+      currentStep: currentStepDef?.id || 'context',
+      locked: ['APPROVED', 'GENERATED', 'COMPLETED', 'FINALIZED'].includes(toolStatus),
+      review: {
+        missingItems: missingItemsPayload,
+      },
+    }),
+    [currentStepDef?.id, missingItemsPayload, sessionId, toolSessionId, toolStatus, toolType]
+  );
 
   const confidenceAvg = useMemo(() => {
     if (!currentSession) return 1;
@@ -323,6 +370,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         completionPercent: completionReady ? 100 : completionPercent,
         confidenceAvg,
         contextSnapshot,
+        missingItems: missingItemsPayload,
+        wizardState: wizardStatePayload,
       });
     };
     const timeout = setTimeout(syncSession, 1500);
@@ -335,7 +384,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     calculateProgress,
     confidenceAvg,
     completionReady,
+    missingItemsPayload,
     recentInitiatives,
+    sessionId,
+    toolStatus,
+    toolType,
+    currentStep,
+    wizardStatePayload,
   ]);
 
   // Load generated initiatives when tool session exists
@@ -401,24 +456,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
   const handlePrevStep = () => {
     prevStep();
-  };
-
-  // Handle AI actions
-  const handleRequestSuggestions = async () => {
-    await requestSuggestions();
-  };
-
-  const handleGenerateAnalysis = async () => {
-    const currentStepDef = stepDefs[currentStep - 1];
-    if (currentStepDef?.id === 'correlations') {
-      await generateCorrelations();
-    } else if (
-      ['summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(
-        currentStepDef?.id || ''
-      )
-    ) {
-      await generateSummary();
-    }
   };
 
   const handleOpenChat = () => {
@@ -567,34 +604,41 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           />
         ) : (
           <ToolCanvas
-            toolType={toolType}
-            currentStep={currentStep}
-            stepDefinition={stepDefs[currentStep - 1]}
-            session={currentSession}
-            isStreaming={isStreaming}
-            streamedContent={streamedContent}
-            isPolish={isPolish}
-            orgName={currentOrganization?.name}
-            onOpenChat={handleOpenChat}
-            onOpenInitiatives={handleOpenInitiatives}
-            generatedInitiatives={generatedInitiatives}
-            recentInitiatives={recentInitiatives}
-            chatSnippets={activeChatMessages.slice(-3).map((m) => ({
-              role: m.role,
-              content: m.content,
-            }))}
-            onGenerateFullSession={generateFullSession}
-            sessionGenerationStatus={currentSession.sessionGenerationStatus}
-            onAcceptCard={(cardType: ProposalCardType, cardId: string) =>
-              acceptCard(cardType, cardId)
-            }
-            onRejectCard={(cardType: ProposalCardType, cardId: string) =>
-              rejectCard(cardType, cardId)
-            }
-            onRethinkCard={(cardType: ProposalCardType, cardId: string, comment?: string) => {
-              const phaseId = stepDefs[currentStep - 1]?.id || 'mission';
-              rethinkCard(phaseId, cardType, cardId, comment);
-            }}
+            {...({
+              toolType,
+              currentStep,
+              stepDefinition: stepDefs[currentStep - 1],
+              session: currentSession,
+              isStreaming,
+              streamedContent,
+              isPolish,
+              orgName: currentOrganization?.name,
+              onOpenChat: handleOpenChat,
+              onOpenInitiatives: handleOpenInitiatives,
+              generatedInitiatives,
+              recentInitiatives,
+              chatSnippets: activeChatMessages.slice(-3).map((m) => ({
+                role: m.role,
+                content: m.content,
+              })),
+              onGenerateFullSession: generateFullSession,
+              phaseAiActions,
+              activeAiActionId,
+              onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
+              onAbortAi: abortStream,
+              missionSuggestion,
+              onApplyMissionSuggestion: applyMissionSuggestion,
+              onDismissMissionSuggestion: dismissMissionSuggestion,
+              sessionGenerationStatus: currentSession.sessionGenerationStatus,
+              onAcceptCard: (cardType: ProposalCardType, cardId: string) =>
+                acceptCard(cardType, cardId),
+              onRejectCard: (cardType: ProposalCardType, cardId: string) =>
+                rejectCard(cardType, cardId),
+              onRethinkCard: (cardType: ProposalCardType, cardId: string, comment?: string) => {
+                const phaseId = stepDefs[currentStep - 1]?.id || 'mission';
+                rethinkCard(phaseId, cardType, cardId, comment);
+              },
+            } as any)}
           />
         )}
       </div>
@@ -602,17 +646,18 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       {/* Action Bar */}
       {toolStatus !== 'REVIEW' && (
         <ToolActionBar
-          currentStep={currentStep}
-          totalSteps={stepDefs.length}
-          canAdvance={canAdvanceStep()}
-          isStreaming={isStreaming}
-          stepDefinition={stepDefs[currentStep - 1]}
-          onPrevStep={handlePrevStep}
-          onNextStep={handleNextStep}
-          onRequestSuggestions={handleRequestSuggestions}
-          onGenerateAnalysis={handleGenerateAnalysis}
-          onAbort={abortStream}
-          isPolish={isPolish}
+          {...({
+            currentStep,
+            totalSteps: stepDefs.length,
+            canAdvance: canAdvanceStep(),
+            onPrevStep: handlePrevStep,
+            onNextStep: handleNextStep,
+            isPolish,
+            isStreaming,
+            onRequestSuggestions: () => {},
+            onGenerateAnalysis: () => {},
+            onAbort: abortStream,
+          } as any)}
         />
       )}
 

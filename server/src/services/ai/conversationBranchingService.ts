@@ -1,0 +1,174 @@
+/**
+ * Conversation Branching Service
+ *
+ * Enables forking conversations from any point to explore
+ * alternative paths. Supports branch comparison and tree visualization.
+ */
+import { randomUUID } from 'node:crypto';
+
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
+
+export interface ConversationBranch {
+  id: string;
+  conversationId: string;
+  parentBranchId: string | null;
+  forkMessageId: string;
+  branchName: string;
+  createdBy: string;
+  createdAt: string;
+  messageCount: number;
+}
+
+export interface BranchTree {
+  rootConversationId: string;
+  branches: ConversationBranch[];
+  depth: number;
+}
+
+class ConversationBranchingService {
+  async forkConversation(input: {
+    conversationId: string;
+    forkMessageId: string;
+    branchName?: string;
+    userId: string;
+    organizationId: string;
+  }): Promise<ConversationBranch> {
+    const branchId = randomUUID();
+
+    const parentBranch = (await dbGet(
+      `SELECT id FROM conversation_branches
+       WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [input.conversationId]
+    )) as any;
+
+    await dbRun(
+      `INSERT INTO conversation_branches
+        (id, conversation_id, parent_branch_id, fork_message_id, branch_name, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        branchId,
+        input.conversationId,
+        parentBranch?.id || null,
+        input.forkMessageId,
+        input.branchName || `Branch ${branchId.slice(0, 6)}`,
+        input.userId,
+      ]
+    );
+
+    const newConvId = randomUUID();
+    await dbRun(
+      `INSERT INTO conversations (id, user_id, organization_id, title, parent_conversation_id, branch_id, created_at, updated_at)
+       SELECT ?, user_id, organization_id, title || ' (Branch)', ?, ?, datetime('now'), datetime('now')
+       FROM conversations WHERE id = ?`,
+      [newConvId, input.conversationId, branchId, input.conversationId]
+    ).catch(() => {});
+
+    await dbRun(
+      `INSERT INTO conversation_messages (id, conversation_id, role, content, created_at)
+       SELECT ?, ?, role, content, created_at
+       FROM conversation_messages
+       WHERE conversation_id = ? AND created_at <= (
+         SELECT created_at FROM conversation_messages WHERE id = ?
+       )
+       ORDER BY created_at`,
+      [randomUUID(), newConvId, input.conversationId, input.forkMessageId]
+    ).catch(() => {});
+
+    return {
+      id: branchId,
+      conversationId: newConvId,
+      parentBranchId: parentBranch?.id || null,
+      forkMessageId: input.forkMessageId,
+      branchName: input.branchName || `Branch ${branchId.slice(0, 6)}`,
+      createdBy: input.userId,
+      createdAt: new Date().toISOString(),
+      messageCount: 0,
+    };
+  }
+
+  async getBranchTree(conversationId: string): Promise<BranchTree> {
+    const branches = (await dbAll(
+      `SELECT b.*,
+              (SELECT COUNT(*) FROM conversation_messages m
+               JOIN conversations c ON c.id = m.conversation_id
+               WHERE c.branch_id = b.id) as message_count
+       FROM conversation_branches b
+       WHERE b.conversation_id = ?
+       ORDER BY b.created_at`,
+      [conversationId]
+    ).catch(() => [])) as any[];
+
+    const mapped: ConversationBranch[] = (branches || []).map((b: any) => ({
+      id: b.id,
+      conversationId: b.conversation_id,
+      parentBranchId: b.parent_branch_id,
+      forkMessageId: b.fork_message_id,
+      branchName: b.branch_name || 'Unnamed',
+      createdBy: b.created_by,
+      createdAt: b.created_at,
+      messageCount: Number(b.message_count) || 0,
+    }));
+
+    let depth = 0;
+    const visited = new Set<string>();
+    for (const branch of mapped) {
+      let d = 0;
+      let current = branch;
+      while (current.parentBranchId && !visited.has(current.id) && d < 10) {
+        visited.add(current.id);
+        d++;
+        current = mapped.find((b) => b.id === current.parentBranchId) || current;
+      }
+      depth = Math.max(depth, d);
+    }
+
+    return { rootConversationId: conversationId, branches: mapped, depth };
+  }
+
+  async compareBranches(
+    branchId1: string,
+    branchId2: string
+  ): Promise<{
+    branch1Messages: Array<{ role: string; content: string; createdAt: string }>;
+    branch2Messages: Array<{ role: string; content: string; createdAt: string }>;
+    divergencePoint: number;
+  }> {
+    const getMessages = async (branchId: string) => {
+      const rows = (await dbAll(
+        `SELECT m.role, m.content, m.created_at
+         FROM conversation_messages m
+         JOIN conversations c ON c.id = m.conversation_id
+         WHERE c.branch_id = ?
+         ORDER BY m.created_at`,
+        [branchId]
+      ).catch(() => [])) as any[];
+
+      return (rows || []).map((r: any) => ({
+        role: r.role,
+        content: r.content,
+        createdAt: r.created_at,
+      }));
+    };
+
+    const [msgs1, msgs2] = await Promise.all([getMessages(branchId1), getMessages(branchId2)]);
+
+    let divergence = 0;
+    for (let i = 0; i < Math.min(msgs1.length, msgs2.length); i++) {
+      if (msgs1[i].content === msgs2[i].content) {
+        divergence = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      branch1Messages: msgs1,
+      branch2Messages: msgs2,
+      divergencePoint: divergence,
+    };
+  }
+}
+
+export const conversationBranchingService = new ConversationBranchingService();
+export default conversationBranchingService;

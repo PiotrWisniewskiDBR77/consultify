@@ -51,7 +51,11 @@ interface AccessCode {
 
 type ActiveTab = 'organizations' | 'pending' | 'codes';
 
-export const OrganizationsView: React.FC = () => {
+interface OrganizationsViewProps {
+  onViewUsers?: (organizationId: string) => void;
+}
+
+export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUsers }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('organizations');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -518,6 +522,15 @@ export const OrganizationsView: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {onViewUsers && (
+                                <button
+                                  onClick={() => onViewUsers(org.id)}
+                                  className="p-1.5 hover:bg-indigo-500/20 text-slate-400 dark:text-slate-500 hover:text-indigo-400 rounded transition-colors"
+                                  title="View Users"
+                                >
+                                  <Users size={16} />
+                                </button>
+                              )}
                               <button
                                 onClick={() => setSelectedOrg(org)}
                                 className="p-1.5 hover:bg-blue-500/20 text-slate-400 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"

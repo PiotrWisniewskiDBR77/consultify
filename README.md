@@ -12,7 +12,7 @@
 ## 📚 Documentation - Enterprise Edition
 
 > **✅ VC Technical Due Diligence Ready**  
-> **96% Test Coverage | 100% Pass Rate | 5,826 Tests**
+> **Quality metrics live in CI and `docs/metrics/QUALITY_METRICS.md`**
 
 **Complete Documentation**: [docs/README.md](docs/README.md)
 
@@ -20,7 +20,7 @@
 
 - **[Executive Summary](docs/executive/EXECUTIVE_SUMMARY.md)** - 2-page technical overview
 - **[Tech DD Checklist](docs/due-diligence/TECH_DD_CHECKLIST.md)** - Pre-answered common questions
-- **[Quality Metrics](docs/metrics/QUALITY_METRICS.md)** - 96% coverage, 100% pass rate
+- **[Quality Metrics](docs/metrics/QUALITY_METRICS.md)** - current coverage and pass-rate reference
 - **[Compliance Matrix](docs/security-compliance/COMPLIANCE_MATRIX.md)** - GDPR/SOC2/ISO27001 status
 
 ### Technical Documentation (8-Pillar Enterprise Structure)
@@ -37,29 +37,43 @@
 
 ### Platform Status
 
-| Metric          | Status                       |
-| --------------- | ---------------------------- |
-| Test Coverage   | ✅ 96%                       |
-| Test Pass Rate  | ✅ 100% (5,826/5,826)        |
-| GDPR Compliance | 🟡 Ready for cert (Q2 2026)  |
-| SOC 2 Type I    | 🟡 Audit scheduled (Q1 2026) |
-| Uptime SLA      | 🟡 99.9% target              |
+| Metric          | Status                                      |
+| --------------- | ------------------------------------------- |
+| Test Coverage   | See `docs/metrics/QUALITY_METRICS.md`       |
+| Test Pass Rate  | See CI / `docs/metrics/QUALITY_METRICS.md`  |
+| GDPR Compliance | 🟡 Ready for cert (Q2 2026)                 |
+| SOC 2 Type I    | 🟡 Audit scheduled (Q1 2026)                |
+| Uptime SLA      | 🟡 99.9% target                             |
 
 ## 🚀 Quick Start (Development)
 
-### Recommended: Stable Dev Mode (less lag / no backend resets)
+### Recommended: Staging-First Dev Mode (safe default)
 
 This repo contains many macOS/iCloud duplicate files (e.g. `Foo 2.tsx`, `Bar 13.ts`) which can cause file-watch “storms”
 and make `vite` + `tsx watch` feel laggy or unstable.
 
-Run the stable mode:
+Run the default staging mode:
 
 ```bash
-npm run dev:stable
+npm run dev
 ```
 
-**Database note:** `npm run dev` / `npm run dev:stable` now start the backend in **PostgreSQL mode** (`DB_TYPE=postgres`).
-If you want the old SQLite demo flow, use `npm run dev:backend:sqlite` (or `npm run dev:backend:sqlite:seeded` for full demo seeding), or the Londyn launcher (`./start-londyn.sh`).
+This now starts the local frontend and backend against `.env.staging.local`.
+In staging mode, the app is expected to use staging overrides instead of local `.env.local` values.
+
+For a read-only investigation session against staging, use:
+
+```bash
+npm run dev:staging:ro
+```
+
+For an explicit live-edit session against staging, use:
+
+```bash
+npm run dev:live
+```
+
+`npm run dev:railway` remains available as an explicit opt-in flow for direct Railway-backed troubleshooting and should not be treated as the default local mode.
 
 Diagnostics:
 
@@ -71,13 +85,6 @@ Optional (safe) cleanup: move iCloud duplicates into `_quarantine/` (undoable by
 
 ```bash
 npm run cleanup:quarantine-duplicates
-```
-
-**Londyn branch** — for immediate hot reload (frontend HMR + backend auto-restart on file changes):
-
-```bash
-npm run dev:londyn:live
-# or: ./start-londyn.sh --live
 ```
 
 ### Option 1: Using Startup Script (Recommended)
@@ -94,7 +101,7 @@ chmod +x start.sh
     npm install
     ```
 2.  **Configure Environment**:
-    Create `.env.local` file (see [docs/development/DEVELOPMENT.md](docs/development/DEVELOPMENT.md) for detailed instructions).
+    Create `.env.staging.local` file (see [docs/operations/LOCAL_TO_STAGING_RUNBOOK.md](docs/operations/LOCAL_TO_STAGING_RUNBOOK.md) for the supported local-to-staging flow).
     Minimum required: at least one LLM provider key (e.g. `OPENAI_API_KEY` or `OPENROUTER_API_KEY`).
 3.  **Run Application**:
     ```bash
@@ -104,6 +111,18 @@ chmod +x start.sh
 **📖 For complete documentation, see [docs/README.md](docs/README.md)**
 
 ## 🧪 Running Tests
+
+```bash
+npm run verify:quick
+```
+
+Daily local recommendation:
+
+```bash
+npm run test:unit
+```
+
+Full local gate:
 
 ```bash
 npm run test:all
@@ -170,7 +189,12 @@ docker-compose up --build                               # Start application
 
 ### Option 2: Railway
 
-See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) and [RAILWAY_SETUP.md](RAILWAY_SETUP.md) for configuration details.
+Use the current deployment documents:
+
+- [Staging and Production Operating Model](docs/operations/STAGING_PRODUCTION_OPERATING_MODEL.md)
+- [Railway Deployment Guide](docs/deployment/RAILWAY_DEPLOYMENT.md)
+- [Railway Setup Guide](docs/deployment/RAILWAY_SETUP.md)
+- [Railway Environment Matrix](docs/deployment/RAILWAY_ENV_MATRIX.md)
 
 Configure Railway environment variables from `.env.production.example`.
 
@@ -189,7 +213,7 @@ npm start               # Start production server
 | --------- | -------------------------------- | ---- |
 | Frontend  | React + Vite                     | 3000 |
 | Backend   | Node.js + Express                | 3005 |
-| Database  | SQLite (dev) / PostgreSQL (prod) | 5432 |
+| Database  | PostgreSQL (staging-first local + production) | 5432 |
 | Cache     | Redis (optional)                 | 6379 |
 
 ---

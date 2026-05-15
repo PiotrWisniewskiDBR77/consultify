@@ -84,9 +84,11 @@ const DecisionItem: React.FC<{
               <span
                 className={`text-[10px] font-semibold ${priorityText[decision.priority] || priorityText.medium}`}
               >
-                {decision.priority === 'critical' || decision.priority === 'high'
-                  ? decision.priority.charAt(0).toUpperCase() + decision.priority.slice(1)
-                  : ''}
+                {decision.priority === 'critical'
+                  ? t('executive.urgency.critical', 'Critical')
+                  : decision.priority === 'high'
+                    ? t('executive.urgency.high', 'High')
+                    : ''}
               </span>
             </span>
             {isOverdue && (
@@ -116,7 +118,8 @@ const DecisionItem: React.FC<{
             {!isOverdue && (
               <span className="flex items-center gap-1">
                 <Clock size={10} />
-                {decision.daysWaiting}d waiting
+                {decision.daysWaiting}
+                {t('executive.actions.days', 'd')} {t('executive.decisions.waiting', 'waiting')}
               </span>
             )}
           </div>
@@ -128,7 +131,7 @@ const DecisionItem: React.FC<{
             onClick={(e) => {
               e.stopPropagation();
               if (!decision?.id) {
-                toast.error('Missing decision ID');
+                toast.error(t('executive.decisions.error', 'Failed to process decision'));
                 return;
               }
               onApprove?.(decision.id);
@@ -142,7 +145,7 @@ const DecisionItem: React.FC<{
             onClick={(e) => {
               e.stopPropagation();
               if (!decision?.id) {
-                toast.error('Missing decision ID');
+                toast.error(t('executive.decisions.error', 'Failed to process decision'));
                 return;
               }
               onReject?.(decision.id);
@@ -156,7 +159,7 @@ const DecisionItem: React.FC<{
             onClick={(e) => {
               e.stopPropagation();
               if (!decision?.id) {
-                toast.error('Missing decision ID');
+                toast.error(t('executive.decisions.error', 'Failed to process decision'));
                 return;
               }
               onDelegate?.(decision.id);
@@ -226,7 +229,7 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
             </h3>
             {criticalCount > 0 && (
               <p className="text-[11px] text-rose-500 dark:text-rose-400 font-medium">
-                {criticalCount} critical
+                {criticalCount} {t('executive.actions.critical', 'critical')}
               </p>
             )}
           </div>

@@ -35,6 +35,13 @@ function kbMeta() {
   return { version: 'v8' as const, contract: V8_KB_READ_CONTRACT };
 }
 
+const VALID_SITE_KEYS = new Set(['consultify', 'iot', 'iris', 'dt', 'marketplace', 'vector']);
+
+function sitePrefix(raw: unknown): string | undefined {
+  const key = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
+  return VALID_SITE_KEYS.has(key) ? key + '-' : undefined;
+}
+
 /**
  * GET /api/v8/kb/categories?lang=&all=
  * Anonymous-safe category listing for public docs and landing surfaces.
@@ -43,7 +50,8 @@ publicKnowledgeBaseRoutes.get(
   '/categories',
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
-    const categories = await KnowledgeBaseService.getCategories(language, false);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const categories = await KnowledgeBaseService.getCategories(language, false, categoryPrefix);
     return res.json({ data: { categories }, meta: kbMeta() });
   })
 );
@@ -57,7 +65,8 @@ publicKnowledgeBaseRoutes.get(
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 3, 20);
-    const articles = await KnowledgeBaseService.getPublicPreview(language, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.getPublicPreview(language, limit, categoryPrefix);
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );
@@ -71,7 +80,12 @@ publicKnowledgeBaseRoutes.get(
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 4, 20);
-    const articles = await KnowledgeBaseService.getFeaturedArticles(language, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.getFeaturedArticles(
+      language,
+      limit,
+      categoryPrefix
+    );
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );
@@ -92,6 +106,7 @@ publicKnowledgeBaseRoutes.get(
       Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0
     );
 
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
     const result = await KnowledgeBaseService.getArticles({
       language,
       categorySlug,
@@ -99,6 +114,7 @@ publicKnowledgeBaseRoutes.get(
       limit,
       offset,
       publicOnly: true,
+      categoryPrefix,
     });
 
     return res.json({ data: result, meta: kbMeta() });
@@ -120,10 +136,9 @@ publicKnowledgeBaseRoutes.get(
       return res.json({ data: { articles: [] }, meta: kbMeta() });
     }
 
-    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
-    const publicArticles = articles.filter(
-      (article: { is_public?: boolean }) => article.is_public !== false
-    );
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit, categoryPrefix);
+    const publicArticles = articles.filter((article) => (article as any)?.is_public !== false);
     return res.json({ data: { articles: publicArticles }, meta: kbMeta() });
   })
 );
@@ -181,7 +196,7 @@ publicKnowledgeBaseRoutes.post(
 // ============================================================
 
 /**
- * GET /api/v8/kb/collections?lang=&parent=&featured=
+ * GET /api/v8/kb/collections?lang=&parent=&featured=&site=
  * Browse collections (IA spine). Public + authenticated.
  */
 publicKnowledgeBaseRoutes.get(
@@ -190,10 +205,12 @@ publicKnowledgeBaseRoutes.get(
     const language = firstParam(req.query.lang) || 'en';
     const parentId = firstParam(req.query.parent);
     const featured = firstParam(req.query.featured) === 'true';
+    const slugPrefix = sitePrefix(firstParam(req.query.site));
     const collections = await KnowledgeBaseService.getCollections(language, {
       parentId: parentId || undefined,
       visibility: 'public',
       featured: featured || undefined,
+      slugPrefix: slugPrefix || undefined,
     });
     return res.json({ data: { collections }, meta: kbMeta() });
   })
@@ -209,7 +226,10 @@ publicKnowledgeBaseRoutes.get(
     const language = firstParam(req.query.lang) || 'en';
     if (!slug) return res.status(400).json({ error: 'slug required' });
     const collection = await KnowledgeBaseService.getCollectionBySlug(slug, language);
-    if (!collection) return res.status(404).json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
+    if (!collection)
+      return res
+        .status(404)
+        .json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
     return res.json({ data: { collection }, meta: kbMeta() });
   })
 );
@@ -223,13 +243,24 @@ publicKnowledgeBaseRoutes.get(
     const slug = firstParam((req.params as any).slug);
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
-    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+    const offset = Math.max(
+      0,
+      Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0
+    );
     if (!slug) return res.status(400).json({ error: 'slug required' });
 
     const collection = await KnowledgeBaseService.getCollectionBySlug(slug, language);
-    if (!collection) return res.status(404).json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
+    if (!collection)
+      return res
+        .status(404)
+        .json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
 
-    const result = await KnowledgeBaseService.getArticlesByCollection(collection.id, language, limit, offset);
+    const result = await KnowledgeBaseService.getArticlesByCollection(
+      collection.id,
+      language,
+      limit,
+      offset
+    );
     return res.json({ data: { ...result, collection }, meta: kbMeta() });
   })
 );
@@ -246,7 +277,11 @@ publicKnowledgeBaseRoutes.get(
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
     const kind = firstParam(req.query.kind);
-    const tags = await KnowledgeBaseService.getTags(language, { kind: kind || undefined });
+    const slugPrefix = sitePrefix(req.query.site);
+    const tags = await KnowledgeBaseService.getTags(language, {
+      kind: kind || undefined,
+      sitePrefix: slugPrefix,
+    });
     return res.json({ data: { tags }, meta: kbMeta() });
   })
 );
@@ -285,10 +320,18 @@ publicKnowledgeBaseRoutes.get(
     const surface = firstParam(req.query.surface);
 
     if (!q || q.length < 2) {
-      return res.json({ data: { articles: [], facets: { collections: [], tags: [] }, total: 0 }, meta: kbMeta() });
+      return res.json({
+        data: { articles: [], facets: { collections: [], tags: [] }, total: 0 },
+        meta: kbMeta(),
+      });
     }
 
-    const tagSlugs = tagsRaw ? tagsRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined;
+    const tagSlugs = tagsRaw
+      ? tagsRaw
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : undefined;
 
     const result = await KnowledgeBaseService.searchWithFacets(q, language, {
       collectionSlug: collectionSlug || undefined,
@@ -317,7 +360,8 @@ publicKnowledgeBaseRoutes.get(
     if (!slug) return res.status(400).json({ error: 'slug required' });
 
     const article = await KnowledgeBaseService.getArticleBySlug(slug, language);
-    if (!article) return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+    if (!article)
+      return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
 
     const related = await KnowledgeBaseService.getRelatedArticles(article.id, language, limit);
     return res.json({ data: { articles: related }, meta: kbMeta() });
@@ -334,7 +378,8 @@ publicKnowledgeBaseRoutes.get(
     if (!slug) return res.status(400).json({ error: 'slug required' });
 
     const article = await KnowledgeBaseService.getArticleBySlug(slug, 'en');
-    if (!article) return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+    if (!article)
+      return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
 
     const versions = await KnowledgeBaseService.getArticleVersions(article.id);
     return res.json({ data: { versions }, meta: kbMeta() });
@@ -389,8 +434,13 @@ router.get(
     getV8Context(req);
     const language = firstParam(req.query.lang) || 'en';
     const includePrivate = firstParam(req.query.all) === 'true';
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
 
-    const categories = await KnowledgeBaseService.getCategories(language, includePrivate);
+    const categories = await KnowledgeBaseService.getCategories(
+      language,
+      includePrivate,
+      categoryPrefix
+    );
     return res.json({ data: { categories }, meta: kbMeta() });
   })
 );
@@ -414,6 +464,7 @@ router.get(
     const publicOnly = firstParam(req.query.public) === 'true';
     const moduleId = firstParam(req.query.module);
 
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
     const result = await KnowledgeBaseService.getArticles({
       language,
       categorySlug,
@@ -422,6 +473,7 @@ router.get(
       offset,
       publicOnly,
       moduleId,
+      categoryPrefix,
     });
 
     return res.json({ data: result, meta: kbMeta() });
@@ -444,7 +496,8 @@ router.get(
       return res.json({ data: { articles: [] }, meta: kbMeta() });
     }
 
-    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit, categoryPrefix);
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );

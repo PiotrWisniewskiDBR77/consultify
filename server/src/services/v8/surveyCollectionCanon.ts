@@ -90,10 +90,7 @@ export type P09SurveyLifecycleState = (typeof P09_SURVEY_LIFECYCLE)[number];
 // ────────────────────────────────────────────────────────────────
 
 export const P09_BRANCHING_POSTURE = {
-  supported: [
-    'skip_logic',
-    'conditional_display',
-  ] as const,
+  supported: ['skip_logic', 'conditional_display'] as const,
   non_goal: [
     'complex_scripting',
     'quotas',
@@ -104,8 +101,7 @@ export const P09_BRANCHING_POSTURE = {
   ] as const,
   validation_expectation:
     'Before publish, the system must detect and block obvious dead-ends / unreachable required questions, or explicitly downgrade to warning + publish-with-known-limits',
-  preview_requirement:
-    'Operator can preview the pathing before publish (single-pass, acyclic)',
+  preview_requirement: 'Operator can preview the pathing before publish (single-pass, acyclic)',
 } as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -216,14 +212,16 @@ export const P09_DEGRADED_SCENARIOS: ReadonlyArray<{
     scenario: 'Handoff to P10 failure',
     degradedReason: 'handoff_failure',
     userVisibleState: 'Locked submission preserved; handoff pending retry',
-    nextAction: 'Preserve retryable job state; surface operator-visible failure; do not lose locked submission',
+    nextAction:
+      'Preserve retryable job state; surface operator-visible failure; do not lose locked submission',
   },
   {
     id: 4,
     scenario: 'Export failure',
     degradedReason: 'export_failure',
     userVisibleState: 'Export error with retry available',
-    nextAction: 'Explicit error state with retry; export artifact references must be consistent with locked truth',
+    nextAction:
+      'Explicit error state with retry; export artifact references must be consistent with locked truth',
   },
   {
     id: 5,
@@ -237,7 +235,8 @@ export const P09_DEGRADED_SCENARIOS: ReadonlyArray<{
     scenario: 'Branching dead-end detected pre-publish',
     degradedReason: 'branching_dead_end',
     userVisibleState: 'Publish blocked or warning issued',
-    nextAction: 'Block publish with dead-end details; or downgrade to warning + publish-with-known-limits',
+    nextAction:
+      'Block publish with dead-end details; or downgrade to warning + publish-with-known-limits',
   },
   {
     id: 7,
@@ -276,7 +275,8 @@ export const P09_DEGRADED_SCENARIOS: ReadonlyArray<{
 export const P09_ACCEPTANCE_CHECKLIST = [
   {
     id: 1,
-    requirement: 'Ankiety is explicitly framed as collection lane, not insight engine (non-goal is explicit)',
+    requirement:
+      'Ankiety is explicitly framed as collection lane, not insight engine (non-goal is explicit)',
     section: '§2.3',
   },
   {
@@ -286,22 +286,26 @@ export const P09_ACCEPTANCE_CHECKLIST = [
   },
   {
     id: 3,
-    requirement: 'Branching posture is explicit: what is supported vs not promised, and validation/preview expectation is stated',
+    requirement:
+      'Branching posture is explicit: what is supported vs not promised, and validation/preview expectation is stated',
     section: '§2.3.3',
   },
   {
     id: 4,
-    requirement: 'Handoff payload to P10 is explicit (identity + governance + content + provenance + idempotency)',
+    requirement:
+      'Handoff payload to P10 is explicit (identity + governance + content + provenance + idempotency)',
     section: '§2.3.4',
   },
   {
     id: 5,
-    requirement: 'Anti-duplicate and degraded/error posture is explicit and does not create double truth',
+    requirement:
+      'Anti-duplicate and degraded/error posture is explicit and does not create double truth',
     section: '§2.3.5–§2.3.6',
   },
   {
     id: 6,
-    requirement: 'Survey lifecycle states are defined (draft → published → collecting → review_queue → closed → archived)',
+    requirement:
+      'Survey lifecycle states are defined (draft → published → collecting → review_queue → closed → archived)',
     section: '§2.3.2',
   },
   {

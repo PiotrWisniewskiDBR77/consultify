@@ -16,6 +16,7 @@ echo ""
 
 PASS=0
 FAIL=0
+HEALTH_BASE_URL="${DEPLOY_GATE_HEALTH_BASE_URL:-http://localhost:3001}"
 
 run_check() {
   local name="$1"
@@ -50,10 +51,10 @@ run_check "Frontend build" npm run build
 run_check "Data truth release gate" npm run release:gate:data-truth
 
 # Gate 6: Health endpoint check (if server running)
-if curl -sf http://localhost:3005/api/health/ping > /dev/null 2>&1; then
-  run_check "Health: /api/health/ping" curl -sf http://localhost:3005/api/health/ping
-  run_check "Health: /api/health/ready" curl -sf http://localhost:3005/api/health/ready
-  run_check "Health: /api/health/database" curl -sf http://localhost:3005/api/health/database
+if curl -sf "${HEALTH_BASE_URL}/api/health/ping" > /dev/null 2>&1; then
+  run_check "Health: /api/health/ping" curl -sf "${HEALTH_BASE_URL}/api/health/ping"
+  run_check "Health: /api/health/ready" curl -sf "${HEALTH_BASE_URL}/api/health/ready"
+  run_check "Health: /api/health/database" curl -sf "${HEALTH_BASE_URL}/api/health/database"
 else
   echo "▶ Health checks: SKIP (server not running)"
 fi

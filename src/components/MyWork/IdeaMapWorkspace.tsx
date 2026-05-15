@@ -17,6 +17,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
 
 import {
   type ArtifactLinkRole,
@@ -70,7 +71,7 @@ import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
-import type { MyIdea } from './MyIdeasListContent';
+import type { MyIdea } from './myIdeasTypes';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
@@ -168,6 +169,8 @@ type IdeaMapWorkspaceProps = {
   onSelectionChange?: (sel: IdeaWorkspaceSelection) => void;
   onQuickAction?: (action: string) => void;
   onLockedChange?: (locked: boolean) => void;
+  onGraphSummaryChange?: (summary: string | null) => void;
+  onTableContextChange?: (ctx: Record<string, unknown> | null) => void;
 };
 
 type IdeaConvertTarget =
@@ -229,14 +232,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   onSelectionChange: externalOnSelectionChange,
   onQuickAction: externalOnQuickAction,
   onLockedChange,
+  onGraphSummaryChange,
+  onTableContextChange,
 }) => {
   const { i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const deepLinkedTableId = searchParams.get('tpTable');
+  const deepLinkedViewId = searchParams.get('tpView');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNewInitial = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const currentUser = useAppStore((state) => state.currentUser);
+  const currentProjectId = useAppStore((state) => state.currentProjectId);
   const currentUserId = String(currentUser?.id || 'current-user');
 
   const [loading, setLoading] = useState(true);
@@ -252,6 +259,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
+  const [tableContext, setTableContext] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    onTableContextChange?.(tableContext);
+  }, [tableContext, onTableContextChange]);
+
   const [mapOpen, setMapOpen] = useState(Boolean(initialOpenMap));
   // MM-01: Read-only mirrors for non-reactive access (AI generation, cross-tool transforms).
   // Canonical graph owner is ReactFlow state inside IdeaRecommendationMap.
@@ -259,6 +271,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [mmCanUndo, setMmCanUndo] = useState(false);
+  const [mmCanRedo, setMmCanRedo] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { canUndo, canRedo } = (e as CustomEvent).detail || {};
+      setMmCanUndo(Boolean(canUndo));
+      setMmCanRedo(Boolean(canRedo));
+    };
+    window.addEventListener('mm-undo-state', handler);
+    return () => window.removeEventListener('mm-undo-state', handler);
+  }, []);
   // discoveryPanel removed — replaced by CanvasLeftToolbar
   const [whiteboardFacilitation, setWhiteboardFacilitation] = useState<{
     timerEndsAt?: number | null;
@@ -339,6 +363,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     (tool: CanvasToolType) => {
       if (onActiveToolChange) onActiveToolChange(tool);
       else setInternalActiveTool(tool);
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tool', tool);
+        window.history.replaceState(null, '', url.toString());
+      } catch {
+        /* ignore */
+      }
     },
     [onActiveToolChange]
   );
@@ -369,11 +400,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const selectionRef = useRef<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [mindMapInteractionMode, setMindMapInteractionMode] =
     useState<MindMapInteractionMode>('select');
-  const handleMindMapInteractionModeChange = useCallback((requestedMode: MindMapInteractionMode) => {
-    setMindMapInteractionMode((previousMode) =>
-      stabilizeMindmapInteractionMode(previousMode, requestedMode)
-    );
-  }, []);
+  const handleMindMapInteractionModeChange = useCallback(
+    (requestedMode: MindMapInteractionMode) => {
+      setMindMapInteractionMode((previousMode) =>
+        stabilizeMindmapInteractionMode(previousMode, requestedMode)
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     selectionRef.current = selection;
@@ -440,6 +474,80 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         : null;
     return Array.isArray(ext?.lanes) ? (ext.lanes as any[]) : [];
   }, [mapExtensions]);
+
+  const whiteboardSession = useMemo(() => {
+    const wb =
+      mapExtensions?.whiteboard &&
+      typeof mapExtensions.whiteboard === 'object' &&
+      !Array.isArray(mapExtensions.whiteboard)
+        ? (mapExtensions.whiteboard as Record<string, unknown>)
+        : null;
+    if (!wb) return undefined;
+    return {
+      role: (wb.sessionRole as string) || undefined,
+      phase: (wb.facilitationPhase as string) || undefined,
+      timerActive: !!wb.timerActive,
+      followActive: !!wb.followMeActive,
+      participantCount: typeof wb.participantCount === 'number' ? wb.participantCount : undefined,
+    };
+  }, [mapExtensions]);
+
+  const whiteboardOutcomes = useMemo(() => {
+    const wb =
+      mapExtensions?.whiteboard &&
+      typeof mapExtensions.whiteboard === 'object' &&
+      !Array.isArray(mapExtensions.whiteboard)
+        ? (mapExtensions.whiteboard as Record<string, unknown>)
+        : null;
+    const registry = Array.isArray(wb?.outcomeRegistry)
+      ? (wb.outcomeRegistry as Array<{ type?: string; label?: string }>)
+      : [];
+    return registry.map((o) => ({
+      type: o.type || 'outcome',
+      label: o.label || '',
+    }));
+  }, [mapExtensions]);
+
+  // Report compact graph summary to parent (for chat system prompt enrichment)
+  useEffect(() => {
+    if (!onGraphSummaryChange) return;
+    if (!graphNodes || graphNodes.length === 0) {
+      onGraphSummaryChange(null);
+      return;
+    }
+    const parentMap = new Map<string, string>();
+    const childrenMap = new Map<string, string[]>();
+    for (const e of graphEdges) {
+      const src = e.source || e.sourceId;
+      const tgt = e.target || e.targetId;
+      if (src && tgt) {
+        parentMap.set(tgt, src);
+        const ch = childrenMap.get(src) || [];
+        ch.push(tgt);
+        childrenMap.set(src, ch);
+      }
+    }
+    const nodeMap = new Map(graphNodes.map((n: any) => [n.id, n]));
+    const rootNodes = graphNodes.filter((n: any) => !parentMap.has(n.id));
+    const rootLabel = rootNodes[0]?.data?.label || rootNodes[0]?.data?.text || title || 'Root';
+    const topBranches = (childrenMap.get(rootNodes[0]?.id) || []).slice(0, 8).map((id) => {
+      const n = nodeMap.get(id);
+      return n?.data?.label || n?.data?.text || id;
+    });
+
+    const selectedNode = graphNodes.find((n: any) => n.selected);
+    const parts = [
+      `Total nodes: ${graphNodes.length}`,
+      `Root: "${rootLabel}"`,
+      topBranches.length > 0
+        ? `Top branches: ${topBranches.map((b: string) => `"${b}"`).join(', ')}`
+        : null,
+      selectedNode
+        ? `Selected: "${selectedNode.data?.label || selectedNode.data?.text || selectedNode.id}"`
+        : null,
+    ].filter(Boolean);
+    onGraphSummaryChange(parts.join('; '));
+  }, [graphNodes, graphEdges, title, onGraphSummaryChange]);
 
   // ── AI Proposals (Propose→Accept) ──────────────────────────────────────────
   const [proposalBatch, setProposalBatch] = useState<AIProposalBatch | null>(null);
@@ -659,10 +767,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 nodeType: n.type,
                 position: n.position,
                 color: n.data?.color,
+                data: n.data,
               }));
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
-                  detail: { items, ideaId: realId },
+                  detail: { items, ideaId: realId, tableContext },
                 })
               );
             } else if (result.type === 'table') {
@@ -673,8 +782,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                       id: r.id,
                       label: r.label,
                       nodeType: 'row',
+                      data: {
+                        ...(r.data || {}),
+                        sourceType: r.sourceType,
+                        sourceLabel: r.label,
+                        sourceRowType: r.type,
+                      },
                     })),
                     ideaId: realId,
+                    tableContext,
                   },
                 })
               );
@@ -684,10 +800,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 label: n.data?.label || '',
                 nodeType: n.type,
                 position: n.position,
+                data: n.data,
               }));
+              const insertEdges =
+                (result.data as any).edges?.map((e: any) => ({
+                  id: e.id,
+                  source: e.source,
+                  target: e.target,
+                  label: e.data?.label || e.label,
+                  data: e.data,
+                })) ?? [];
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
-                  detail: { items, ideaId: realId },
+                  detail: { items, edges: insertEdges, ideaId: realId, tableContext },
                 })
               );
             }
@@ -737,6 +862,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         wb_convert_initiative: 'initiative',
         wb_convert_task_set: 'task_set',
         wb_convert_decision: 'decision',
+        wb_convert_action: 'task_set',
         wb_convert_report: 'report',
         pf_convert_initiative: 'initiative',
         pf_convert_task_set: 'task_set',
@@ -809,12 +935,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (action === 'mm_select_mode') handleMindMapInteractionModeChange('select');
       if (action === 'mm_pan_mode') handleMindMapInteractionModeChange('pan');
       if (action === 'mm_connect_mode') handleMindMapInteractionModeChange('connect');
+      if (action === 'switch_to_process_flow') {
+        setActiveTool('process_flow');
+        toast.success(isPolish ? 'Przełączono na przepływ procesu' : 'Switched to Process Flow');
+        return;
+      }
       externalOnQuickAction?.(action);
       window.dispatchEvent(
         new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId: realId } })
       );
     },
-    [activeTool, externalOnQuickAction, handleMindMapInteractionModeChange, isPolish, realId, setActiveTool]
+    [
+      activeTool,
+      externalOnQuickAction,
+      handleMindMapInteractionModeChange,
+      isPolish,
+      realId,
+      setActiveTool,
+      tableContext,
+    ]
   );
 
   useEffect(() => {
@@ -830,9 +969,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (
         action.endsWith('_execute') ||
         action.startsWith('mm_') ||
-        action.startsWith('wb_') ||
-        action.startsWith('pf_') ||
-        action.startsWith('tbl_') ||
+        (action.startsWith('wb_') && !action.startsWith('wb_convert_')) ||
+        (action.startsWith('pf_') && !action.startsWith('pf_convert_')) ||
+        (action.startsWith('tbl_') && !action.startsWith('tbl_convert_')) ||
         action.startsWith('ctx_')
       ) {
         return;
@@ -843,7 +982,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         action === 'open_linked_artifacts' ||
         action === 'accept_challenge' ||
         action === 'open_export_menu' ||
-        action.startsWith('convert_')
+        action.startsWith('convert_') ||
+        action.startsWith('wb_convert_') ||
+        action.startsWith('pf_convert_') ||
+        action.startsWith('tbl_convert_') ||
+        action === 'switch_to_process_flow'
       ) {
         handleQuickAction(action, detail);
       }
@@ -934,9 +1077,33 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, graphRuntime.graph.version, isPolish, realId, seedText, title]
   );
 
+  const orgContextRef = useRef<string | null>(null);
+  const orgContextFetchedRef = useRef(false);
+
   const handleGenerateCanvasAI = useCallback(
     async (generatorType: string) => {
       if (!realId) return;
+      // Fetch org context summary once for AI proposal enrichment
+      if (!orgContextFetchedRef.current) {
+        orgContextFetchedRef.current = true;
+        try {
+          const orgData = await Api.organizationContextGet();
+          const parts: string[] = [];
+          if (orgData?.summary) parts.push(orgData.summary);
+          if (orgData?.claims?.length) {
+            parts.push(
+              `Key claims: ${orgData.claims
+                .slice(0, 5)
+                .map((c: any) => c.text || c.claim || c)
+                .join('; ')}`
+            );
+          }
+          if (orgData?.strategy) parts.push(`Strategy: ${orgData.strategy}`);
+          orgContextRef.current = parts.join('\n') || null;
+        } catch {
+          orgContextRef.current = null;
+        }
+      }
       try {
         const batch = await generateAIProposal({
           ideaId: realId,
@@ -949,6 +1116,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             existingEdges: graphEdgesRef.current,
             existingLanes: graphLanes,
             language: i18n.language || 'en',
+            organizationContext: orgContextRef.current || undefined,
             selection: {
               type: selection.type,
               count: selection.count,
@@ -1315,28 +1483,31 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [setActiveTool]);
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
-  const { showHelp: shortcutsHelpOpen, setShowHelp: setShortcutsHelpOpen, shortcuts } =
-    useKeyboardShortcuts({
-      enabled: !loading,
-      onCancel: () => {
-        if (nodeDetailOpen) setNodeDetailOpen(false);
-        else if (templateGalleryOpen) setTemplateGalleryOpen(false);
-        else if (searchOpen) setSearchOpen(false);
-        else if (votingActive) setVotingActive(false);
-        else if (focusMode !== 'full') handleExitFocus();
-      },
-      onSlashCommand: () => setSearchOpen(true),
-      onAddChild: () => handleQuickAction('mm_add_child'),
-      onAddSibling: () => handleQuickAction('mm_add_sibling'),
-      onGroup: () => handleQuickAction('group'),
-      onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
-      onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
-      onFocusSelection: () => handleQuickAction('mm_focus_selected'),
-      onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
-      onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
-      onSelectAll: () => handleQuickAction('selectAll'),
-      onClearSelection: () => handleQuickAction('clearSelection'),
-    });
+  const {
+    showHelp: shortcutsHelpOpen,
+    setShowHelp: setShortcutsHelpOpen,
+    shortcuts,
+  } = useKeyboardShortcuts({
+    enabled: !loading && activeTool === 'mindmap',
+    onCancel: () => {
+      if (nodeDetailOpen) setNodeDetailOpen(false);
+      else if (templateGalleryOpen) setTemplateGalleryOpen(false);
+      else if (searchOpen) setSearchOpen(false);
+      else if (votingActive) setVotingActive(false);
+      else if (focusMode !== 'full') handleExitFocus();
+    },
+    onSlashCommand: () => setSearchOpen(true),
+    onAddChild: () => handleQuickAction('mm_add_child'),
+    onAddSibling: () => handleQuickAction('mm_add_sibling'),
+    onGroup: () => handleQuickAction('group'),
+    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
+    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+    onFocusSelection: () => handleQuickAction('mm_focus_selected'),
+    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
+    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
+    onSelectAll: () => handleQuickAction('selectAll'),
+    onClearSelection: () => handleQuickAction('clearSelection'),
+  });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1443,6 +1614,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     },
     [isChatCollapsed, isPolish, seedText, setChatKickoffMessage, title, toggleChatCollapse]
   );
+
+  // Subscribe to idea-workspace-chat-prompt so any tool can send text to the chat panel
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const msg = detail?.message || detail?.prompt;
+      if (typeof msg === 'string' && msg) {
+        openChat(msg);
+      } else {
+        openChat();
+      }
+    };
+    window.addEventListener('idea-workspace-chat-prompt', handler);
+    return () => window.removeEventListener('idea-workspace-chat-prompt', handler);
+  }, [openChat]);
 
   useEffect(() => {
     if (loading || aiKickoffTriggeredRef.current) return;
@@ -1593,11 +1779,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       setSaving(true);
       try {
         trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
+        const wbContext =
+          activeTool === 'whiteboard'
+            ? {
+                sourceTool: 'whiteboard' as const,
+                facilitationPhase: whiteboardSession?.phase,
+                outcomeCount: whiteboardOutcomes?.length || 0,
+                outcomeSummary: (whiteboardOutcomes || [])
+                  .slice(0, 10)
+                  .map((o) => `[${o.type}] ${o.label}`)
+                  .join('; '),
+              }
+            : undefined;
         const result = await Api.convertMyIdea(realId, {
           target: target as any,
           options: {
             language: i18n.language,
             ...(nodeIds?.length ? { nodeIds } : {}),
+            ...(wbContext ? { whiteboardContext: wbContext } : {}),
           },
         });
         trackFunnelEvent('mywork_convert_completed', {
@@ -1675,7 +1874,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setSaving(false);
       }
     },
-    [i18n.language, isDraft, isPolish, realId, selection.ids]
+    [
+      activeTool,
+      i18n.language,
+      isDraft,
+      isPolish,
+      realId,
+      selection.ids,
+      whiteboardOutcomes,
+      whiteboardSession,
+    ]
   );
 
   handleConvertRef.current = handleConvert;
@@ -1981,6 +2189,74 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => window.removeEventListener('idea-workspace-ai-proposal', handler);
   }, []);
 
+  // Chat-triggered AI proposals: watch conversation store for mindmap-proposal blocks
+  useEffect(() => {
+    const seenIds = new Set<string>();
+    const unsubscribe = useConversationStore.subscribe((state) => {
+      if (activeTool !== 'mindmap') return;
+      const msgs = state.activeMessages;
+      if (!msgs?.length) return;
+      const last = msgs[msgs.length - 1];
+      if (!last || last.role === 'user' || seenIds.has(last.id)) return;
+      const content = typeof last.content === 'string' ? last.content : '';
+      const match = content.match(/```mindmap-proposal\s*\n([\s\S]*?)\n```/);
+      if (!match?.[1]) return;
+      seenIds.add(last.id);
+      try {
+        const parsed = JSON.parse(match[1]);
+        const proposals: AIProposal[] = [];
+        if (Array.isArray(parsed.addNodes)) {
+          for (const n of parsed.addNodes) {
+            proposals.push({
+              id: `chat-add-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              type: 'graph_patch',
+              rationale: `Add "${n.label}"`,
+              confidence: 0.7,
+              patch: {
+                addNodes: [
+                  {
+                    id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    label: n.label,
+                    data: n.parentId ? { parentId: n.parentId } : undefined,
+                  },
+                ],
+              },
+              status: 'pending',
+            });
+          }
+        }
+        if (Array.isArray(parsed.renameNodes)) {
+          for (const r of parsed.renameNodes) {
+            proposals.push({
+              id: `chat-rename-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              type: 'graph_patch',
+              rationale: `Rename "${r.id}" to "${r.label}"`,
+              confidence: 0.7,
+              patch: { updateNodes: [{ id: r.id, data: { label: r.label } }] },
+              status: 'pending',
+            });
+          }
+        }
+        if (proposals.length > 0) {
+          const batch: AIProposalBatch = {
+            id: `chat-batch-${Date.now()}`,
+            tool: 'mindmap',
+            generatorType: 'chat',
+            proposals,
+            createdAt: Date.now(),
+          };
+          setProposalBatch(batch);
+          toast(isPolish ? 'AI zaproponowało zmiany w mapie' : 'AI proposed changes to the map', {
+            icon: '🤖',
+          });
+        }
+      } catch {
+        // Invalid JSON — ignore
+      }
+    });
+    return unsubscribe;
+  }, [activeTool, isPolish]);
+
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -1992,6 +2268,54 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     window.addEventListener('idea-workspace-attach-knowledge', handler);
     return () => window.removeEventListener('idea-workspace-attach-knowledge', handler);
   }, [realId]);
+
+  // Quick task creation from mindmap node
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.action !== 'create_task' || !detail?.taskTitle) return;
+      if (!currentProjectId) {
+        toast.error(isPolish ? 'Brak kontekstu projektu' : 'No project context');
+        return;
+      }
+      try {
+        const result = await Api.createTask({
+          projectId: currentProjectId,
+          title: detail.taskTitle,
+          description: isPolish
+            ? `Zadanie utworzone z mapy myśli (węzeł: ${detail.nodeId || 'nieznany'})`
+            : `Task created from mindmap (node: ${detail.nodeId || 'unknown'})`,
+          status: 'todo',
+        });
+        if (result?.id && detail.nodeId) {
+          const node = graphNodes.find((n: any) => n.id === detail.nodeId);
+          if (node) {
+            const existing = Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks : [];
+            const newLink = {
+              type: 'task' as ArtifactType,
+              id: result.id,
+              code: buildArtifactCode('task', result.id),
+              ref: buildArtifactRef('task', result.id),
+              label: getArtifactLabel('task', isPolish ? 'pl' : 'en'),
+              name: detail.taskTitle,
+              role: 'output' as ArtifactLinkRole,
+              createdAt: new Date().toISOString(),
+            };
+            const updatedNodes = graphNodes.map((n: any) =>
+              n.id === detail.nodeId
+                ? { ...n, data: { ...n.data, artifactLinks: [...existing, newLink] } }
+                : n
+            );
+            replaceRuntimeGraph({ nodes: updatedNodes });
+          }
+        }
+      } catch {
+        toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
+      }
+    };
+    window.addEventListener('idea-mindmap-node-quick-action', handler);
+    return () => window.removeEventListener('idea-mindmap-node-quick-action', handler);
+  }, [currentProjectId, graphNodes, graphRuntime, isPolish]);
 
   // V51-19: Interview insight -> Idea evidence listener
   useEffect(() => {
@@ -2195,52 +2519,72 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           </div>
         )}
 
-        <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-              {isPolish ? 'Idea workspace' : 'Idea workspace'}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-              {activeToolLabel}
-            </span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
+        {activeTool !== 'mindmap' && (
+          <div
+            className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
+                {isPolish ? 'Idea workspace' : 'Idea workspace'}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                {activeToolLabel}
+              </span>
+              {(() => {
+                const rootNode = graphNodes.find(
+                  (n: any) =>
+                    n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
+                );
+                const ps = rootNode?.data?.pipelineStage;
+                if (!ps || ps === 'draft') return null;
+                return (
+                  <span className="rounded-full bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                    {ps}
+                  </span>
+                );
+              })()}
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {draftSavedLabel}
+              </span>
+            </div>
+            <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+              {title || safeTitleFromSeed(seedText, isPolish)}
+            </div>
+            <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+              {workspaceNextStepLabel}
+            </div>
           </div>
-          <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-            {title || safeTitleFromSeed(seedText, isPolish)}
-          </div>
-          <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
-            {workspaceNextStepLabel}
-          </div>
-        </div>
+        )}
 
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
         {/* Ghost cards — AI gap suggestions */}
-        {isAccepted && (activeTool === 'whiteboard' || activeTool === 'mindmap') && (
-          <IdeaGhostCards
-            ideaId={realId}
-            activeTool={activeTool}
-            title={title || safeTitleFromSeed(seedText, isPolish)}
-            seedText={seedText}
-            isAccepted={isAccepted}
-            graphNodes={graphNodes}
-            graphEdges={graphEdges}
-            onMaterialize={(card) => {
-              window.dispatchEvent(
-                new CustomEvent('idea-workspace-insert', {
-                  detail: {
-                    items: [
-                      { text: card.text, position: card.position, branchKey: card.branchKey },
-                    ],
-                    ideaId: realId,
-                  },
-                })
-              );
-            }}
-          />
-        )}
+        {isAccepted &&
+          (activeTool === 'whiteboard' ||
+            activeTool === 'mindmap' ||
+            activeTool === 'process_flow') && (
+            <IdeaGhostCards
+              ideaId={realId}
+              activeTool={activeTool}
+              title={title || safeTitleFromSeed(seedText, isPolish)}
+              seedText={seedText}
+              isAccepted={isAccepted}
+              graphNodes={graphNodes}
+              graphEdges={graphEdges}
+              onMaterialize={(card) => {
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-insert', {
+                    detail: {
+                      items: [
+                        { text: card.text, position: card.position, branchKey: card.branchKey },
+                      ],
+                      ideaId: realId,
+                    },
+                  })
+                );
+              }}
+            />
+          )}
 
         {/* Voting mode overlay */}
         <IdeaVotingMode
@@ -2358,6 +2702,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               open
               ideaId={realId}
               preferredPlatformTableId={activeTool === 'table' ? deepLinkedTableId : null}
+              preferredViewId={activeTool === 'table' ? deepLinkedViewId : null}
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
@@ -2367,6 +2712,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               }
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
+              onTableContextChange={setTableContext}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -2388,6 +2734,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               focusObjectId={focusObjectId}
               onFullscreenToggle={toggleWorkspaceFullscreen}
               isFullscreen={isFullscreen}
+              onOpenChat={openChat}
+              onQuickAction={handleQuickAction}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -2401,6 +2749,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               open
               ideaId={realId}
               locked={canvasLocked}
+              title={title}
+              seedText={seedText}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
               onGraphChange={replaceRuntimeGraph}
@@ -2423,6 +2773,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           selection={selection}
           isAccepted={isAccepted}
           ideaId={realId}
+          canUndo={mmCanUndo}
+          canRedo={mmCanRedo}
           onAction={(action) => handleQuickAction(action)}
           onOpenChat={() => {
             setChatKickoffMessage('');
@@ -2447,7 +2799,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
 
         {proposalBatch && (
-          <div className="absolute bottom-4 left-4 right-4 z-[90] max-w-lg mx-auto">
+          <div className="absolute right-4 top-16 z-[90] w-[min(28rem,calc(100%-7rem))]">
             <IdeaProposalReview
               batch={proposalBatch}
               onAccept={handleAcceptProposal}
@@ -2542,6 +2894,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             })
           );
         }}
+        whiteboardSession={whiteboardSession}
+        whiteboardOutcomes={whiteboardOutcomes}
       />
 
       <IdeaContextPanel

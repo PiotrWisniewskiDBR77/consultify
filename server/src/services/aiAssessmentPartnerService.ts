@@ -15,6 +15,7 @@ import {
   ROIEstimateSchema,
   validateOrFallback,
 } from '../utils/AISchemaValidator.js';
+import logger from '../utils/Logger.js';
 
 // AI THINKING_PARTNER Mode Configuration
 const AI_PARTNER_CONFIG = {
@@ -161,7 +162,7 @@ class AIAssessmentPartnerService {
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       } catch (err) {
-        console.error('[AIPartner] Failed to initialize Google AI:', err.message);
+        logger.error('[AIPartner] Failed to initialize Google AI:', err.message);
       }
     } else {
       this.genAI = null;
@@ -206,7 +207,7 @@ class AIAssessmentPartnerService {
         },
       };
     } catch (error) {
-      console.error('[AIPartner] Error generating guidance:', error);
+      logger.error('[AIPartner] Error generating guidance:', error);
       return {
         axisId,
         guidance: this._getFallbackGuidance(axisId, currentScore, targetScore),
@@ -344,7 +345,7 @@ class AIAssessmentPartnerService {
           aiRecommendations = validateOrFallback(parsed, GapAnalysisSchema, []);
         }
       } catch (error) {
-        console.error('[AIPartner] Error generating recommendations:', error);
+        logger.error('[AIPartner] Error generating recommendations:', error);
       }
     }
 
@@ -676,7 +677,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error suggesting justification:', error);
+      logger.error('[AIPartner] Error suggesting justification:', error);
       return {
         axisId,
         score,
@@ -742,7 +743,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error suggesting evidence:', error);
+      logger.error('[AIPartner] Error suggesting evidence:', error);
       return {
         axisId,
         score,
@@ -841,7 +842,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_CORRECTED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error correcting text:', error);
+      logger.error('[AIPartner] Error correcting text:', error);
       return {
         originalText: text,
         correctedText: text,
@@ -892,7 +893,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_COMPLETED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error autocompleting:', error);
+      logger.error('[AIPartner] Error autocompleting:', error);
       return {
         partialText,
         completion: '',
@@ -974,7 +975,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error generating executive summary:', error);
+      logger.error('[AIPartner] Error generating executive summary:', error);
       return this._getFallbackExecutiveSummary(scores, avgActual, avgTarget);
     }
   }
@@ -1042,7 +1043,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error generating stakeholder view:', error);
+      logger.error('[AIPartner] Error generating stakeholder view:', error);
       return {
         stakeholderRole,
         view: `Podsumowanie dla ${stakeholderRole} wymaga połączenia z AI.`,
@@ -1112,7 +1113,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error generating benchmark commentary:', error);
+      logger.error('[AIPartner] Error generating benchmark commentary:', error);
       return {
         commentary: 'Komentarz benchmarkowy wymaga połączenia z AI.',
         mode: 'FALLBACK',
@@ -1190,7 +1191,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error generating initiatives:', error);
+      logger.error('[AIPartner] Error generating initiatives:', error);
       return this._getFallbackInitiatives(sortedGaps);
     }
   }
@@ -1261,7 +1262,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error prioritizing initiatives:', error);
+      logger.error('[AIPartner] Error prioritizing initiatives:', error);
       return {
         prioritizedList: initiatives.map((i, idx) => ({
           rank: idx + 1,
@@ -1327,7 +1328,7 @@ class AIAssessmentPartnerService {
         mode: 'AI_GENERATED',
       };
     } catch (error) {
-      console.error('[AIPartner] Error estimating ROI:', error);
+      logger.error('[AIPartner] Error estimating ROI:', error);
       return this._getFallbackROI(initiative);
     }
   }

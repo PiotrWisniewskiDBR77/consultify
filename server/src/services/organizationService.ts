@@ -27,10 +27,36 @@ export const ROLES = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
   MEMBER: 'MEMBER',
+  GUEST: 'GUEST',
   CONSULTANT: 'CONSULTANT',
 } as const;
 
 export type OrganizationRole = (typeof ROLES)[keyof typeof ROLES];
+
+export function normalizeOrganizationRole(rawRole: string | null | undefined): OrganizationRole {
+  const normalized = String(rawRole || '')
+    .trim()
+    .toUpperCase();
+
+  switch (normalized) {
+    case 'OWNER':
+      return ROLES.OWNER;
+    case 'ADMIN':
+    case 'SUPERADMIN':
+    case 'SUPER_ADMIN':
+    case 'ADMINISTRATOR':
+      return ROLES.ADMIN;
+    case 'VIEWER':
+    case 'GUEST':
+      return ROLES.GUEST;
+    case 'CONSULTANT':
+      return ROLES.CONSULTANT;
+    case 'USER':
+    case 'MEMBER':
+    default:
+      return ROLES.MEMBER;
+  }
+}
 
 interface CreateOrganizationParams {
   userId: string;
@@ -302,7 +328,8 @@ export async function updateOrganization(
  * Add a member to the organization
  */
 export async function addMember(params: AddMemberParams): Promise<AddMemberResult> {
-  const { organizationId, userId, role, invitedBy } = params;
+  const { organizationId, userId, invitedBy } = params;
+  const role = normalizeOrganizationRole(params.role);
 
   if (!Object.values(ROLES).includes(role)) {
     throw new Error('Invalid role');
@@ -482,7 +509,8 @@ export async function removeMember(params: RemoveMemberParams): Promise<void> {
 export async function updateMemberRole(
   params: UpdateMemberRoleParams
 ): Promise<UpdateMemberRoleResult> {
-  const { organizationId, userId, role } = params;
+  const { organizationId, userId } = params;
+  const role = normalizeOrganizationRole(params.role);
 
   if (!Object.values(ROLES).includes(role)) {
     throw new Error('Invalid role');

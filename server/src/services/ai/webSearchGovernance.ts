@@ -3,6 +3,7 @@
  * Enforces internetEnabled policy, domain allowlist/denylist, SSRF safety, cache.
  */
 import logger from '../../utils/Logger.js';
+import { getRuntimeWebSearchStatus } from './runtimeWebSearchService.js';
 
 const SSRF_BLOCKED_PATTERNS = [
   /^https?:\/\/localhost/i,
@@ -61,9 +62,10 @@ export async function getEffectiveWebSearchPolicy(
     policy.internetEnabled = false;
     policy.reason = 'Policy engine unavailable — defaulting to restricted';
   }
-  if (!process.env.TAVILY_API_KEY) {
+  const runtime = getRuntimeWebSearchStatus();
+  if (!runtime.available) {
     policy.internetEnabled = false;
-    policy.reason = 'TAVILY_API_KEY not configured';
+    policy.reason = 'Web search runtime unavailable';
   }
   return policy;
 }
@@ -150,6 +152,7 @@ export function setCache(orgId: string, query: string, result: unknown, lang?: s
 
 export default {
   getEffectiveWebSearchPolicy,
+  getRuntimeWebSearchStatus,
   isUrlSafe,
   sanitizeQuery,
   filterResults,

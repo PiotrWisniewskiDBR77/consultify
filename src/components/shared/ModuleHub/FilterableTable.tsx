@@ -234,7 +234,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const cellPadding = density === 'compact' ? 'px-3 py-2' : 'px-4 py-3';
+  const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
 
   const parsePx = useCallback((value?: string, fallback = 140) => {
     if (!value) return fallback;
@@ -372,9 +372,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     <div className={canvasClassName}>
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <div className="w-full overflow-x-auto">
-          <table className="w-full table-fixed">
-            <thead>
-              <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
+          <table className="w-full table-fixed" style={{ minWidth: 980 }}>
+            <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
+              <tr>
                 {visibleColumns.map((column, idx) => {
                   const cfg = columnConfigs.find((c) => c.id === column.id);
                   const width = columnWidths[column.id] ?? parsePx(column.width, 140);
@@ -386,7 +386,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   return (
                     <th
                       key={column.id}
-                      className={`${cellPadding} relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      className={`${cellPadding} relative text-left text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
                       style={{
                         width: `${width}px`,
                         minWidth: `${minWidth}px`,
@@ -417,7 +417,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 })}
                 {!hideRowActions ? (
                   <th
-                    className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                    className={`${cellPadding} text-right text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
                   >
                     {enableColumnSettings ? (
                       <div className="flex justify-end">
@@ -442,14 +442,16 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 ) : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
+            <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
               {filteredData.length === 0 ? (
                 <tr>
                   <td
                     colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
-                    className={`${density === 'compact' ? 'px-3' : 'px-4'} py-12 text-center text-slate-500`}
+                    className="px-4 py-14 text-center text-slate-500 dark:text-slate-400"
                   >
-                    {emptyMessage}
+                    <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] px-6 py-8 text-sm">
+                      {emptyMessage}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -461,7 +463,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     className={[
                       'group cursor-pointer transition-colors',
                       row.id === selectedRowId
-                        ? 'bg-primary-500/10'
+                        ? 'bg-primary-500/8 dark:bg-primary-500/10'
                         : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
                     ].join(' ')}
                   >

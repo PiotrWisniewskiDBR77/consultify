@@ -61,7 +61,9 @@ export interface ExecutionResult {
   success: boolean;
   createdIds: Record<string, string>;
   failedOperations: Array<{ operationId: string; error: string }>;
-  status: 'executed' | 'partially_executed' | 'failed';
+  status: 'executed' | 'failed';
+  /** Set when the mutation transaction rolled back and nothing persisted */
+  message?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -420,8 +422,29 @@ const chatToSchemaService = {
       parsed.warnings.push(...validation.errors.map((e) => ({ message: e })));
     }
 
-    // --- Step 5: Persist ---
+    // --- Step 5: Capture current schema_version for stale detection ---
+    let schemaVersionAtCreation: number | null = null;
+    const resolvedBaseId = context?.baseId ?? workspaceId;
+    if (resolvedBaseId) {
+      try {
+        const svResult = await db.query('SELECT schema_version FROM tp_bases WHERE id = $1', [
+          resolvedBaseId,
+        ]);
+        schemaVersionAtCreation =
+          (svResult.rows[0] as { schema_version?: number })?.schema_version ?? null;
+      } catch {
+        // Non-critical: fall back to time-based stale detection
+      }
+    }
+
+    // --- Step 6: Persist ---
     const id = uuidv4();
+    const warningsWithVersion = [
+      ...parsed.warnings,
+      ...(schemaVersionAtCreation != null
+        ? [{ message: `__schema_version_at_creation:${schemaVersionAtCreation}` }]
+        : []),
+    ];
     await db.query(
       `INSERT INTO tp_schema_proposals (id, workspace_id, intent, confidence, summary, operations, warnings, status, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
@@ -432,12 +455,15 @@ const chatToSchemaService = {
         parsed.confidence,
         parsed.summary,
         JSON.stringify(operations),
-        JSON.stringify(parsed.warnings),
+        JSON.stringify(warningsWithVersion),
         createdBy ?? null,
       ]
     );
 
     const row = (await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [id])).rows[0];
+    if (row && schemaVersionAtCreation != null) {
+      (row as Record<string, unknown>).schema_version_at_creation = schemaVersionAtCreation;
+    }
     return row as unknown as SchemaProposal;
   },
 
@@ -457,6 +483,36 @@ const chatToSchemaService = {
     }
 
     // --- Stale proposal detection (WS-D §6.3) ---
+    // Primary: compare schema_version at proposal creation vs current version
+    const proposalSchemaVersion = (proposal as Record<string, unknown>).schema_version_at_creation;
+    const workspaceId = proposal.workspace_id;
+    if (proposalSchemaVersion != null) {
+      try {
+        const baseIdForCheck =
+          (proposal.operations as SchemaOperation[])?.[0]?.target?.baseId ??
+          (proposal.operations as SchemaOperation[])?.[0]?.target?.base_id ??
+          workspaceId;
+        if (baseIdForCheck) {
+          const currentVersion = await db.query(
+            'SELECT schema_version FROM tp_bases WHERE id = $1',
+            [baseIdForCheck]
+          );
+          const currentSV = (currentVersion.rows[0] as { schema_version?: number })?.schema_version;
+          if (currentSV != null && Number(proposalSchemaVersion) !== currentSV) {
+            throw new Error(
+              `Schema was modified since this proposal was created (proposal version: ${proposalSchemaVersion}, current: ${currentSV}). Please regenerate.`
+            );
+          }
+        }
+      } catch (e) {
+        if ((e as Error).message.includes('Schema was modified')) throw e;
+        logger.warn('[ChatToSchema] schema version stale check failed', {
+          error: (e as Error).message,
+        });
+      }
+    }
+
+    // Fallback: time-based stale detection
     const STALE_THRESHOLD_MS = 5 * 60 * 1000;
     const proposalAge = Date.now() - new Date(proposal.created_at).getTime();
     if (proposalAge > STALE_THRESHOLD_MS) {
@@ -467,7 +523,6 @@ const chatToSchemaService = {
     }
 
     const orgId = context?.organizationId;
-    const workspaceId = proposal.workspace_id;
     const operations = (proposal.operations as SchemaOperation[]) || [];
     const resolved = resolveOperationDependencies(operations);
     const toExecute = approvedOperationIds?.length
@@ -498,39 +553,57 @@ const chatToSchemaService = {
 
     const baseId = this.extractBaseId(pipelineOps, workspaceId);
 
+    // Wrap execution in a SQL transaction for atomicity
     const executor = new MutationExecutor();
-    const outcome = await executor.executeOperations(
-      pipelineOps,
-      baseId,
-      executedBy,
-      orgId,
-      workspaceId
-    );
+    let outcome: any;
+    try {
+      await db.query('BEGIN');
+      outcome = await executor.executeOperations(
+        pipelineOps,
+        baseId,
+        executedBy,
+        orgId,
+        workspaceId
+      );
+      if ((outcome as any).allSucceeded) {
+        await db.query('COMMIT');
+      } else {
+        await db.query('ROLLBACK');
+      }
+    } catch (txErr) {
+      await db.query('ROLLBACK').catch(() => {});
+      logger.error('[ChatToSchema] executeProposal transaction failed', {
+        proposalId,
+        error: (txErr as Error).message,
+      });
+      throw txErr;
+    }
 
     const createdIds: Record<string, string> = {};
-    for (const [key, value] of outcome.createdEntities) {
+    for (const [key, value] of (outcome as any).createdEntities) {
       createdIds[key] = value;
     }
-    const failedOperations = outcome.results
-      .filter((r) => !r.success)
-      .map((r) => ({ operationId: r.operationId, error: r.error ?? 'Unknown error' }));
+    const failedOperations = (outcome as any).results
+      .filter((r: any) => !r.success)
+      .map((r: any) => ({ operationId: r.operationId, error: r.error ?? 'Unknown error' }));
 
-    const anySuccess = outcome.results.some((r) => r.success);
-    const status =
-      failedOperations.length === 0 ? 'executed' : anySuccess ? 'partially_executed' : 'failed';
+    const status: 'executed' | 'failed' =
+      (outcome as any).allSucceeded && failedOperations.length === 0 ? 'executed' : 'failed';
+    const rollbackMessage = 'Execution failed — all changes rolled back';
+    const message = status === 'failed' ? rollbackMessage : undefined;
 
     await db.query(
       `UPDATE tp_schema_proposals SET status = $2, resolved_by = $3, resolved_at = NOW() WHERE id = $1`,
       [proposalId, status, executedBy ?? null]
     );
 
-    if (outcome.allSucceeded && baseId) {
+    if ((outcome as any).allSucceeded && baseId) {
       const stack = getStack(baseId);
       stack.push({
         proposalId,
         baseId,
         timestamp: new Date().toISOString(),
-        operations: outcome.results,
+        operations: (outcome as any).results,
         originalOperations: pipelineOps,
         description: String(proposal.summary ?? proposal.intent ?? ''),
         userId: executedBy,
@@ -543,7 +616,12 @@ const chatToSchemaService = {
       proposalId,
       executedBy,
       undefined,
-      { createdIds, failedOperations, status } as unknown as Record<string, unknown>,
+      {
+        createdIds,
+        failedOperations,
+        status,
+        ...(message ? { message } : {}),
+      } as unknown as Record<string, unknown>,
       undefined
     );
 
@@ -552,6 +630,7 @@ const chatToSchemaService = {
       createdIds,
       failedOperations,
       status,
+      ...(message ? { message } : {}),
     };
   },
 

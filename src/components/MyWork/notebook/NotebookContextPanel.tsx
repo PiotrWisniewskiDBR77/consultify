@@ -17,13 +17,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import {
-  useAssessmentOutputsForOrigins,
+  type AssessmentOriginOutputRow,
   useArtifactOutputsForInitiatives,
   useArtifactOutputsForOrigins,
-  type AssessmentOriginOutputRow,
+  useAssessmentOutputsForOrigins,
 } from '@/components/ReportsAndPresentations/useRapData';
-import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -229,8 +229,10 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       return true;
     });
   }, [directAssessmentRows, directOutputRows, linkedOutputRows]);
-  const linkedOutputsErrorMessage = directAssessmentsError || directOutputsError || linkedOutputsError;
-  const linkedOutputsBusy = directAssessmentsLoading || directOutputsLoading || linkedOutputsLoading;
+  const linkedOutputsErrorMessage =
+    directAssessmentsError || directOutputsError || linkedOutputsError;
+  const linkedOutputsBusy =
+    directAssessmentsLoading || directOutputsLoading || linkedOutputsLoading;
 
   useEffect(() => {
     if (!open) return;
@@ -241,13 +243,14 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       try {
         const q = searchTerms.slice(0, 300);
 
-        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes] =
+        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes, backlinksPageRes] =
           await Promise.allSettled([
             q ? Api.suggestMyIdeas(q, 12) : Api.getMyIdeas({ limit: 12 }),
             Api.get(`/initiatives?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
             Api.get(`/my-work/tasks?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
             Api.get(`/decisions?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
             Api.getLinkGraphBacklinks({ type: 'notebook', id: noteId, limit: 50 }),
+            Api.getLinkGraphBacklinks({ type: 'notebook_page', id: noteId, limit: 50 }),
           ]);
 
         if (!cancelled) {
@@ -298,10 +301,15 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             }))
           );
 
-          const backlinks =
+          const backlinksA =
             backlinksRes.status === 'fulfilled' && Array.isArray(backlinksRes.value)
               ? (backlinksRes.value as any[])
               : [];
+          const backlinksB =
+            backlinksPageRes.status === 'fulfilled' && Array.isArray(backlinksPageRes.value)
+              ? (backlinksPageRes.value as any[])
+              : [];
+          const backlinks = [...backlinksA, ...backlinksB];
           const backlinkRows = backlinks
             .map((x: any) => ({
               id: String(x?.id || ''),
@@ -712,10 +720,10 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                 row.kind === 'assessment'
                                   ? 'assessment'
                                   : row.kind === 'document'
-                                  ? 'report'
-                                  : row.kind === 'presentation'
-                                    ? 'presentation'
-                                    : 'sheet',
+                                    ? 'report'
+                                    : row.kind === 'presentation'
+                                      ? 'presentation'
+                                      : 'sheet',
                                 row.originRecordId,
                                 row.title
                               )

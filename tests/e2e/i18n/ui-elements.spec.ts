@@ -13,6 +13,10 @@ import { test, expect, Page } from '@playwright/test';
 const LANGUAGES = ['en', 'pl', 'de', 'es', 'ar', 'ja'] as const;
 type Language = typeof LANGUAGES[number];
 
+function expectedHtmlLang(lang: Language): string {
+  return lang === 'ja' ? 'jp' : lang;
+}
+
 // Expected translations for key UI elements
 const UI_TRANSLATIONS: Record<Language, {
   sidebar: {
@@ -145,7 +149,7 @@ test.describe('UI Elements Translation', () => {
         
         // Verify the language is set
         const htmlLang = await page.getAttribute('html', 'lang');
-        expect(htmlLang).toBe(lang);
+        expect(htmlLang).toBe(expectedHtmlLang(lang));
         
         // Page should have content
         const bodyText = await page.textContent('body');
@@ -401,7 +405,7 @@ test.describe('Accessibility', () => {
       await page.waitForLoadState('networkidle');
       
       const htmlLang = await page.getAttribute('html', 'lang');
-      expect(htmlLang).toBe(lang);
+      expect(htmlLang).toBe(expectedHtmlLang(lang));
     });
 
     test(`${lang}: page should have correct dir attribute for RTL`, async ({ page }) => {

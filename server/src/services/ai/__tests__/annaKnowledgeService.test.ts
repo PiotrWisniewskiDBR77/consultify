@@ -50,7 +50,7 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
     delete process.env.DB_TYPE;
   });
 
-  it('prefers locale-matching and neutral product pills before other-language docs', async () => {
+  it('includes locale-matching and neutral Consultify pills (full portfolio mode may add more sources)', async () => {
     mockDbAll.mockResolvedValue([
       buildDoc('pl-doc', 'consultify-pl.md', 'consultify', 'pl'),
       buildDoc('neutral-doc', 'consultify-neutral.md', 'consultify', null),
@@ -82,7 +82,6 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
 
     expect(result.sources).toContain('consultify-pl.md');
     expect(result.sources).toContain('consultify-neutral.md');
-    expect(result.sources).not.toContain('consultify-en.md');
     expect(result.contextText).toContain('Polish Consultify context');
     expect(result.contextText).toContain('Neutral Consultify context');
   });
@@ -134,7 +133,46 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
     const result = await buildAnnaVoiceBootstrap('pl');
 
     expect(result.sources).toContain('voice-pl.md');
-    expect(result.sources).not.toContain('voice-en.md');
     expect(result.contextText).toContain('context-for-pl-doc');
+    expect(result.primaryProducts).toContain('dbr77');
+    expect(result.primaryProducts[0]).toBe('consultify');
+  });
+
+  it('prioritizes explicitly requested products ahead of the default portfolio order', async () => {
+    mockDbAll.mockResolvedValue([
+      buildDoc('vector-doc', 'vector.md', 'vector', 'pl'),
+      buildDoc('iris-doc', 'iris.md', 'iris', 'pl'),
+      buildDoc('consultify-doc', 'consultify.md', 'consultify', 'pl'),
+    ]);
+
+    const hitsByDocumentId = new Map<string, RagResult>([
+      [
+        'vector-doc',
+        { documentId: 'vector-doc', content: 'Vector Anna context', similarity: 0.81 },
+      ],
+      ['iris-doc', { documentId: 'iris-doc', content: 'IRIS Anna context', similarity: 0.97 }],
+      [
+        'consultify-doc',
+        { documentId: 'consultify-doc', content: 'Consultify Anna context', similarity: 0.93 },
+      ],
+    ]);
+
+    mockSearchRelevantChunks.mockImplementation(
+      async (_query: string, opts: { documentIds: string[] }) =>
+        opts.documentIds.map((documentId) => hitsByDocumentId.get(documentId)).filter(Boolean)
+    );
+
+    const result = await buildAnnaKnowledgeContext({
+      query: 'Czym jest Vector i czym rozni sie od IRIS?',
+      locale: 'pl',
+      siteKey: 'consultify',
+      limit: 6,
+    });
+
+    expect(result.primaryProducts[0]).toBe('vector');
+    expect(result.primaryProducts[1]).toBe('iris');
+    expect(result.contextText.indexOf('Vector Anna context')).toBeLessThan(
+      result.contextText.indexOf('IRIS Anna context')
+    );
   });
 });

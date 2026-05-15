@@ -318,4 +318,28 @@ Canonical paired families (per V8 Decision W6-3): **Executive Steering Pack**, *
 | P24-A | approved(scope) | `8787580d34` | N/A — scope packet | N/A — scope packet | Schema §2.3.1; ownership §2.3.2; gate §2.3.3; foundation §2.3.4; convergence §2.3.5; anti-dup §2.3.6; errors §2.4; checklist §8.1 |
 | P24-B | delivered | `42e2a699b7` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/unit/hooks/useTemplates.canonicalArtifacts.test.tsx` — **pass** | Script: `docs/product/work-packets/cursor-work/final_master/evidence/P24-B_TEMPLATE_RUNTIME_VERIFICATION_2026-03-30.md` (not yet executed) | Bounded: templates are canonical `v8_output_artifacts` entries; org publish requires review+admin approval; presentation template “edit” remains bounded to wizard entrypoints |
 | P24-C | verified(evidence) | `98bf75bf8a` | `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/unit/hooks/useTemplates.canonicalArtifacts.test.tsx` -> PASS (13/13) | `docs/product/work-packets/cursor-work/final_master/evidence/P24-C_TEMPLATES_CLOSEOUT_2026-03-31.md` | Closeout verified canonical template runtime in Outputs, fail-closed review/publish rollback guards, and stable browse+generate behavior for report and presentation families. |
+|| P24-D | verified(evidence) | (2026-04-11 session) | Extended tests: error handling, deprecation, migrationHint | `P24-D_UI_UX_COMPLIANCE_AND_GAP_CLOSURE_2026-04-11.md` | UI/UX V3 compliance: TEMPLATE_STATUS_META, grid fix, deprecation flow + endpoint, i18n preview, row action completeness, error handling. P1 bounded gaps documented. |
+
+## 11. Implementation status (contract §2.3 vs code — as of 2026-04-11)
+
+| Contract requirement | Section | Status | Evidence |
+| --- | --- | --- | --- |
+| OutputTemplate shared fields in runtime | §2.3.1 | **Delivered** | `originSummary.template` in `v8_output_artifacts` |
+| Report extensions (R1-R4) | §2.3.1 | **Delivered** | `reportCanonicalTemplatesService.ts` + `reportType` in template payload |
+| Deck extensions | §2.3.1 | **Delivered** | `deckType`, `outlineBlueprint` in template payload |
+| 3 scopes (user/org/app) | §2.3.2 | **Delivered** | `canPublishOrgTemplate()` + UI scope filters |
+| Explicit permissions (create/edit/publish/deprecate/delete) | §2.3.2 | **Delivered** | Route guards + role checks |
+| No silent publish | §2.3.3 | **Delivered** | Review gate required before publish; 409 if missing |
+| Provenance stamp (P18) | §2.3.3 | **Delivered** | `provenanceStamp` in `updateTemplateArtifactPostPublish` |
+| Fail-closed P18 | §2.3.3 | **Delivered** | `V8_PROVENANCE_STAMP_ENABLED=false` → 503 |
+| Deprecation flow | §2.3.3 | **Delivered** (P24-D) | `POST /artifacts/:id/deprecate` + UI banner + migrationHint |
+| Templates = Outputs artifacts (P19) | §2.3.4 | **Delivered** | `artifact_family = 'template'` migration |
+| Brand defaults source: 'org' from P30 | §2.3.4 | **Bounded (P1)** | Presentations use brand-kit; reports no org brand merge |
+| qualityRules storage + enforcement | §2.3.1 | **Bounded (P1)** | Schema defined; not yet stored/enforced in runtime |
+| sampleContentPolicy | §2.3.1 | **Bounded (P1)** | Schema defined; save-as-template does structural copy only |
+| audienceDefaults / sourceExpectations / generationHints | §2.3.1 | **Bounded (P1)** | Schema defined; originSummary stores subset |
+| PairedOutputTemplateFamily with template IDs | §2.3.1 | **Partial** | TemplateFamily exists with formRefs; template-ID pairing not yet wired |
+| Anti-duplicate gate | §2.3.6 | **Delivered** | No parallel stores; templates in Outputs registry |
+| Error taxonomy | §2.4 | **Delivered** | 404/403/422/503 with guidance per contract |
+| Rollback posture | §8.3 | **Delivered** | 3 env vars tested (review/publish/provenance) |
 

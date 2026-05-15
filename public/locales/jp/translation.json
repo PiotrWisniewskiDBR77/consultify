@@ -26,7 +26,7 @@
     "no": "いいえ",
     "goals": "Goals",
     "challenges": "Challenges",
-    "megatrends": "Megatrends",
+    "megatrends": "メガトレンド",
     "strategy": "Strategy",
     "rollout": "Rollout",
     "users": "Users",
@@ -41,7 +41,8 @@
     "select": "選択",
     "connected": "接続済み",
     "comingSoon": "近日公開",
-    "root": "ルート"
+    "root": "ルート",
+    "noOrganizations": "組織が見つかりません"
   },
   "contextBadge": {
     "aiSees": "AIが見ているもの",
@@ -404,10 +405,148 @@
   },
   "myWork": {
     "title": "マイワーク",
+    "home": "ホーム",
+    "manager": "マネージャー",
     "inbox": "受信トレイ",
     "focus": "フォーカス",
     "calendar": "カレンダー",
-    "tasks": "タスク"
+    "tasks": "タスク",
+    "radar": {
+      "pulseLabel": "レーダー · コンテキスト、アイデア、そして穏やかな方向性",
+      "unavailable": "レーダーは一時的に利用できません。",
+      "unavailableHint": "これは1日が空であることを意味しません。ホーム画面の再読み込みをお試しください。",
+      "retry": "再試行",
+      "roofTruthChecking": "ルーフトゥルース: 確認中…",
+      "roofExpandHint": "モジュールリストとデータ整合性監査を展開または折りたたむ。",
+      "roofModules": "ルーフ · {{count}} モジュール",
+      "pulse": "パルス",
+      "gentleExplanation": "穏やかな説明",
+      "explainBriefing": "このブリーフィングをプレッシャーなく平易な言葉で説明してください — 3つのポイント: これが何を意味するか、なぜ今か、私ができる小さな一歩。",
+      "explain": "説明する",
+      "calmPlan": "これを焦らず、ステップバイステップの落ち着いた計画にするのを手伝ってください。",
+      "blocks": {
+        "aiPulseCore": "AIパルス",
+        "industryLens": "業界コンテキスト",
+        "executionCurrent": "実行フロー",
+        "sparkField": "アイデア＆ノート",
+        "decisionTemperature": "意思決定温度",
+        "teamSignal": "チームシグナル",
+        "momentum": "モメンタム"
+      },
+      "blockHints": {
+        "aiPulseCore": "パルス概要: ヘッドライン、フォーカス、パルススコア。",
+        "momentum": "プログラムモメンタム: 統計と進捗シグナル。",
+        "sparkField": "アイデア＆ノート: ランタイムノートと最新の出力。",
+        "decisionTemperature": "意思決定: キュー、ブロッカー、最もホットなトピック。",
+        "industryLens": "業界コンテキスト: 市場、テクノロジー、ベンチマーク、ピアケース。",
+        "executionCurrent": "実行: ワークストリームとアーティファクト。",
+        "teamSignal": "チーム: アラインメントと組織シグナル。"
+      },
+      "worthNoticing": "注目すべき点",
+      "talkToAI": "AIと話す",
+      "openExecution": "実行に移動",
+      "topMove": "最重要アクション",
+      "pulseActionPrompt": "このパルスを今日と今週の具体的な計画に変換してください。",
+      "decisionQueue": "意思決定キュー",
+      "decisionQueueClear": "キューに意思決定はなく、ハードブロッカーもありません — 現在問題なしです。",
+      "pending": "保留中",
+      "blocking": "ブロック中",
+      "hottestDecision": "最も緊急な意思決定",
+      "unblockPrompt": "この意思決定のブロックを解除するのを手伝ってください: {{title}}",
+      "outputFlow": "アウトプットフロー",
+      "visibility": {
+        "private": "プライベート",
+        "project": "プロジェクト",
+        "organization": "組織",
+        "reviewShared": "レビュー必要",
+        "demo": "デモ"
+      },
+      "reviewState": {
+        "privateDraft": "プライベートドラフト",
+        "reviewReady": "レビュー準備完了",
+        "inReview": "レビュー中",
+        "approved": "承認済み",
+        "published": "公開済み"
+      },
+      "artifactType": {
+        "presentation": "プレゼンテーション",
+        "sheet": "スプレッドシート",
+        "report": "レポート"
+      },
+      "outputsLibraryNote": "レビューと可視性はアウトプットライブラリと整合性を保ちます。",
+      "askAISequencing": "AIに順序付けを依頼",
+      "sequencingPrompt": "現在のストリームに基づいて最適な実行順序を作成してください。",
+      "ideasWithTasks": "タスク付きアイデア {{count}}",
+      "recentNotes": "最近のノート {{count}}",
+      "recentOutputs": "最近のアウトプット {{count}}",
+      "orgSignals": "組織シグナル {{count}}",
+      "expandIdea": "最強のアイデアを展開",
+      "expandIdeaPrompt": "このアイデアをイニシアチブに展開し、最初の3ステップを提案してください: {{text}}",
+      "newIdea": "新しいアイデア",
+      "newIdeaSubtitle": "新しい変革トラックを開始",
+      "noteLabel": "ノート",
+      "nodes": "ノード",
+      "tasks": "タスク",
+      "stages": {
+        "spark": "スパーク",
+        "shaping": "形成",
+        "growing": "成長"
+      },
+      "benchmark": "ベンチマーク",
+      "peerCase": "参考事例",
+      "peerCasePrompt": "この事例を我々の変革プログラムと比較し、3つの示唆を教えてください: {{title}}",
+      "signalPrompt": "なぜこのシグナルが我々の変革にとって重要なのか説明してください: {{title}}",
+      "teamReadout": "チームシグナル",
+      "teamUpdatePrompt": "このシグナルに基づいて短いチーム更新を準備してください: {{title}}",
+      "momentumPrompt": "このモメンタムシグナルが変革にとって何を意味するか説明してください: {{title}}",
+      "live": "ライブ",
+      "rel": "関連",
+      "loadError": "レーダーの読み込みに失敗しました",
+      "triage": {
+        "title": "トリアージコックピット",
+        "subtitle": "意思決定優先度順の運用シグナル",
+        "empty": "トリアージシグナルはありません。運用レーダーはクリアです。",
+        "category": {
+          "execution_delivery": "実行",
+          "decision_alignment": "意思決定",
+          "finance_kpi": "財務 / KPI",
+          "governance_compliance": "ガバナンス",
+          "external_change": "外部変化"
+        },
+        "timeWindow": {
+          "next_24h": "24時間以内",
+          "this_week": "今週",
+          "this_month": "今月"
+        },
+        "driver": {
+          "deadline": "期限",
+          "blocker": "ブロッカー",
+          "variance": "差異",
+          "escalation": "エスカレーション",
+          "opportunity": "機会"
+        },
+        "whyNow": "なぜ今",
+        "evidence": "証拠",
+        "evidencePartial": "部分的カバレッジ",
+        "evidenceComplete": "完全カバレッジ",
+        "uncertainty": "不確実性の境界",
+        "missingInputs": "不足データ",
+        "conflicts": "矛盾",
+        "wouldChange": "ランキングを変える要因",
+        "owner": "担当者",
+        "nextAction": "次のアクション",
+        "goTo": "{{module}}に移動",
+        "fallback": "代替: {{fallback}}",
+        "degraded": {
+          "missing_data": "一部のデータが不足しています。結果が不完全な場合があります。",
+          "conflict": "矛盾するデータが検出されました。注意して確認してください。",
+          "stale": "データが古い可能性があります。ソースの更新を検討してください。",
+          "permission": "アクセスが制限されています。一部の情報が非表示です。"
+        },
+        "hardGate": "ハードゲート",
+        "score": "スコア"
+      }
+    }
   },
   "step1": {
     "title": "ステップ1"
@@ -923,7 +1062,7 @@
       "noSearchResults": "検索結果が見つかりませんでした。",
       "noArticles": "このカテゴリには記事がありません。",
       "articleNotFound": "記事が見つかりません。",
-      "minRead": "分で読めます",
+      "minRead": "分で読了",
       "views": "閲覧数",
       "relatedModules": "関連モジュール",
       "shareArticle": "記事を共有",
@@ -945,14 +1084,26 @@
       "tutorials": "チュートリアル",
       "bestPractices": "ベストプラクティス",
       "faq": "よくある質問",
-      "troubleshooting": "トラブルシューティング"
+      "troubleshooting": "トラブルシューティング",
+      "contentMoved": "このコンテンツは移動または削除されました。",
+      "contentMovedHint": "コレクションを参照して必要な情報を見つけてください。",
+      "browseCollections": "コレクションを参照",
+      "deprecated": "この記事は非推奨です",
+      "viewReplacement": "代替記事を表示",
+      "missingTranslationBanner": "日本語版なし — EN表示中",
+      "staleTranslation": "この翻訳は古い可能性があります。",
+      "nextAction": "次のステップ",
+      "backToSurface": "作業に戻る"
     },
     "sidePanel": {
       "title": "Help Center",
       "tabs": {
-        "overview": "Overview",
+        "overview": "概要",
+        "thisStep": "このステップ",
+        "guides": "ガイド",
         "faq": "FAQ",
-        "knowledge": "Knowledge Base"
+        "knowledge": "ナレッジベース",
+        "updates": "更新情報"
       },
       "fullDocs": "Full documentation",
       "overview": {
@@ -995,15 +1146,23 @@
         "notify": {
           "success": "You'll be notified when it's ready!"
         }
-      }
+      },
+      "whatThisIs": "これは何か",
+      "whyItMatters": "なぜ重要か",
+      "whatYouDoHere": "ここで何をするか",
+      "howAiHelpsHere": "AIがどう助けるか",
+      "whatComesNext": "次は何か",
+      "askAi": "AIに質問",
+      "quickGuides": "クイックガイド",
+      "watchVideo": "動画を見る"
     },
     "search": {
-      "placeholder": "Search help articles, tutorials...",
+      "placeholder": "ヘルプを検索... (Cmd+K)",
       "searching": "Searching...",
       "results": "Results",
       "found": "found",
       "viewAll": "View all results",
-      "noResults": "No results found for \"{{query}}\"",
+      "noResults": "検索結果なし:",
       "tryDifferent": "Try different keywords or browse categories",
       "recent": "Recent searches",
       "clearRecent": "Clear",
@@ -1012,7 +1171,21 @@
       "navigate": "Navigate",
       "select": "Select",
       "close": "Close",
-      "buttonText": "Search help..."
+      "buttonText": "Search help...",
+      "tryDifferentKeywords": "別のキーワードを試すか、カテゴリを参照してください",
+      "types": {
+        "module": "モジュール",
+        "card": "カード",
+        "faq": "FAQ",
+        "video": "ビデオ"
+      },
+      "filters": {
+        "all": "すべて",
+        "module": "モジュール",
+        "card": "カード",
+        "faq": "FAQ",
+        "video": "ビデオ"
+      }
     },
     "article": {
       "tableOfContents": "Table of Contents",
@@ -1079,9 +1252,41 @@
       "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
       "support": "Support",
       "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    },
+    "widget": {
+      "label": "ヘルプ",
+      "header": "ヘルプセンター",
+      "searchPlaceholder": "ヘルプを検索...",
+      "docs": "ドキュメント",
+      "contact": "お問い合わせ"
+    },
+    "chatbot": {
+      "title": "テレサ — ヘルプ",
+      "placeholder": "テレサに質問...",
+      "send": "送信",
+      "typing": "入力中...",
+      "clear": "チャットをクリア",
+      "sources": "出典",
+      "helpful": "役に立ちましたか？",
+      "suggestions": "おすすめの質問",
+      "poweredBy": "ナレッジベースAI"
     }
   },
   "settings": {
+    "menu": {
+      "preferences": "設定",
+      "theme": "テーマ",
+      "language": "言語",
+      "demoMode": "デモを開く",
+      "demoModeExit": "デモを終了",
+      "demoModeOn": "デモモードが有効です - Atelier Toys を閲覧中です",
+      "demoModeOff": "Atelier Toys のデモワークスペースを開く",
+      "demoReadOnly": "デモデータ - 読み取り専用",
+      "myProfile": "マイプロフィール",
+      "billing": "請求とプラン",
+      "aiConfig": "AI 設定",
+      "switchOrg": "組織を切り替え"
+    },
     "title": "設定",
     "profile": "プロフィール",
     "billing": "請求",
@@ -1117,8 +1322,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {
@@ -1164,6 +1369,52 @@
         "title": "Human Governance",
         "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
       }
+    },
+    "problemPlatform": {
+      "heading": "Spotifyが音楽にしたことを、",
+      "headingAccent": "私たちはコンサルティングで実現します。",
+      "problem": {
+        "badge": "市場の問題",
+        "title": "ビジネスインテリジェンスは、いまなお手の届かない、汎用的で、安全性に欠けるものです。",
+        "body": "市場は依然として、AIとデジタルツールを戦術的・戦略的な業務遂行のためのスケーラブルな基盤へと変えられていません。",
+        "points": [
+          "コンサルティングは依然として大多数の企業にとって手の届かないものです。",
+          "大規模言語モデルは専門家ではなく、企業の文脈を理解しません。",
+          "多くのAIソリューションは、実際のビジネス業務に使うには十分安全ではありません。"
+        ],
+        "solve": "まさにこのギャップをConsultifyが埋めます。"
+      },
+      "pattern": {
+        "badge": "カテゴリーシフト",
+        "title": "Spotifyが音楽にしたこと: 大規模なアクセス、品質、信頼。",
+        "body": "Spotifyは音楽そのものを増やしたのではありません。優れた音楽を、すぐに使えて、信頼でき、簡単に楽しめるものにしました。Consultifyは同じ変化をビジネスインテリジェンスにもたらします。",
+        "examples": [
+          "ハーバードのビジネス知識へ直接アクセス。",
+          "孤立したプロンプトではなく、企業全体の文脈で機能するインテリジェンス。",
+          "企業ごとの要件に合わせて設計されたテクノロジーによる信頼性とセキュリティ。"
+        ],
+        "summary": "アクセス。品質。信頼。それがこの変化です。"
+      }
+    },
+    "docs": {
+      "badge": "ヘルプと評価",
+      "title": "Consultifyの評価に必要なすべて",
+      "subtitle": "ナレッジ、セキュリティ、価格、パートナー資料を活用して、Consultifyがお客様の展開に適しているかをご判断ください。",
+      "searchPlaceholder": "ナレッジベースを検索...",
+      "searchBtn": "検索",
+      "knowledgeBase": "ナレッジベース",
+      "knowledgeBaseDesc": "変革、ガバナンス、ROI防御、実行規律に関する専門ガイド。",
+      "security": "セキュリティとコンプライアンス",
+      "securityDesc": "AES-256、GDPR、データ居住地、エンタープライズ導入オプションの説明。",
+      "pricing": "価格",
+      "pricingDesc": "シートパッケージ、共有AIバジェット、ライセンスツール、エンタープライズプラン。",
+      "partnerProgram": "パートナープログラム",
+      "partnerProgramDesc": "収益シェア、認定資格、アカデミーアクセス、パートナー申請プロセス。",
+      "legalCenter": "法務センター",
+      "legalCenterDesc": "利用規約、プライバシーポリシー、データ処理契約、コンプライアンス文書。",
+      "resources": "リソース",
+      "resourcesDesc": "ケーススタディ、ホワイトペーパー、ウェビナー、製品アップデート情報。",
+      "explore": "探索"
     }
   },
   "partner": {
@@ -1379,12 +1630,12 @@
           }
         },
         "digital-maturity": {
-          "name": "Digital Maturity Assessment",
-          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "name": "デジタル成熟度評価",
+          "description": "業界標準のフレームワークを使用して、テクノロジー、プロセス、人材の各側面でデジタル対応力を評価します。",
           "outputs": {
-            "0": "Maturity Radar",
-            "1": "Benchmark Comparison",
-            "2": "Transformation Roadmap"
+            "0": "成熟度レーダー",
+            "1": "ベンチマーク比較",
+            "2": "変革ロードマップ"
           }
         },
         "automation-roadmap": {
@@ -1397,12 +1648,12 @@
           }
         },
         "technology-scanner": {
-          "name": "Technology Landscape Scanner",
-          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "name": "テクノロジーランドスケープスキャナー",
+          "description": "業界に関連する新興テクノロジーをスキャンし、導入の準備状況を評価します。",
           "outputs": {
-            "0": "Technology Radar",
-            "1": "Adoption Assessment",
-            "2": "Pilot Recommendations"
+            "0": "テクノロジーレーダー",
+            "1": "導入評価",
+            "2": "パイロット推奨"
           }
         },
         "data-strategy": {
@@ -1547,5 +1798,345 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "megatrends": {
+    "title": "メガトレンド分析",
+    "subtitle": "業界のメガトレンドを探索し、レーダーを構築し、戦略的インサイトを発見する",
+    "tabs": {
+      "baseline": "業界ベースライン",
+      "radar": "トレンドレーダーマップ",
+      "detail": "トレンド詳細",
+      "custom": "カスタムトレンド",
+      "insights": "AIインサイト"
+    },
+    "selectTrend": "ベースラインまたはレーダーマップからトレンドを選択して詳細を表示してください。",
+    "goToBaseline": "ベースラインへ"
+  },
+  "executive": {
+    "greeting": {
+      "morning": "おはようございます",
+      "afternoon": "こんにちは",
+      "evening": "こんばんは"
+    },
+    "health": {
+      "title": "ポートフォリオの健全性",
+      "subtitle": "全体的な実行パフォーマンス",
+      "portfolio": "ポートフォリオの健全性",
+      "excellent": "優秀",
+      "good": "良好",
+      "attention": "要注意",
+      "critical": "危機的",
+      "noData": "データなし",
+      "lastUpdated": "最終更新",
+      "live": "ライブ",
+      "execution": "実行",
+      "decisions": "意思決定速度",
+      "capacity": "チームキャパシティ",
+      "risk": "リスク軽減",
+      "noBreakdown": "詳細データはまだ利用できません",
+      "noBreakdownHint": "タスクと意思決定が追跡されるとデータが表示されます",
+      "vsLastWeek": "先週比"
+    },
+    "kpi": {
+      "tasks": "タスク実行",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "期限内",
+      "overdue": "期限超過",
+      "decisions": "保留中の意思決定",
+      "awaiting": "保留中",
+      "critical": "重大",
+      "avgWait": "平均待ち時間",
+      "team": "チームキャパシティ",
+      "teamCapacity": "チームキャパシティ",
+      "utilized": "稼働率",
+      "overloaded": "過負荷",
+      "available": "対応可能",
+      "risk": "リスクレベル",
+      "riskLevel": "リスクレベル",
+      "blockers": "ブロッカー",
+      "escalations": "エスカレーション",
+      "noData": "データなし",
+      "riskLow": "低",
+      "riskMedium": "中",
+      "riskHigh": "高",
+      "riskCritical": "重大"
+    },
+    "action": {
+      "decision": "意思決定",
+      "task": "タスク",
+      "escalation": "エスカレーション",
+      "blocker": "ブロッカー",
+      "approve": "承認",
+      "reject": "却下",
+      "view": "詳細を表示",
+      "title": "対応が必要",
+      "allClear": "すべて完了！",
+      "noUrgent": "注意が必要な緊急項目はありません。",
+      "viewAll": "すべて表示"
+    },
+    "actions": {
+      "title": "対応が必要",
+      "critical": "重大",
+      "highPriority": "高優先度",
+      "viewAll": "すべて表示",
+      "viewDetails": "詳細を表示",
+      "allClear": "すべて完了",
+      "overdue": "期限超過",
+      "days": "日"
+    },
+    "urgency": {
+      "critical": "重大",
+      "high": "高"
+    },
+    "decisions": {
+      "title": "意思決定キュー",
+      "queue": "意思決定キュー",
+      "noPending": "保留中の意思決定はありません",
+      "allClear": "保留中の意思決定はありません",
+      "approve": "承認",
+      "reject": "却下",
+      "delegate": "委任",
+      "viewAll": "すべての意思決定を表示",
+      "approved": "意思決定が承認されました",
+      "rejected": "意思決定が却下されました",
+      "error": "意思決定の処理に失敗しました",
+      "waiting": "待機中"
+    },
+    "team": {
+      "title": "チームパフォーマンス",
+      "members": "メンバー",
+      "avgCapacity": "平均キャパシティ",
+      "overloaded": "過負荷",
+      "available": "対応可能",
+      "noMembers": "チームメンバーが見つかりません",
+      "viewAll": "チームレポート全体を表示",
+      "tasks": "タスク",
+      "unknown": "不明"
+    },
+    "teamPerf": {
+      "title": "チームパフォーマンス",
+      "noMembers": "チームメンバーが見つかりません"
+    },
+    "initiatives": {
+      "title": "イニシアチブ",
+      "active": "アクティブなイニシアチブ",
+      "viewAll": "すべて表示",
+      "empty": "アクティブなイニシアチブはありません",
+      "tasks": "タスク",
+      "overdue": "期限超過",
+      "untitled": "無題"
+    },
+    "signals": {
+      "title": "AIシグナル",
+      "subtitle": "ポートフォリオからのインテリジェントアラート",
+      "viewAll": "すべて表示",
+      "empty": "シグナルなし"
+    },
+    "refresh": "更新",
+    "lastUpdated": "更新済み",
+    "loadError": "ダッシュボードデータの読み込みに失敗しました",
+    "patterns": {
+      "title": "作業パターン",
+      "tasksPerWeek": "タスク/週",
+      "avgTaskTime": "平均タスク時間",
+      "avgDecisionTime": "平均意思決定時間",
+      "overdueRate": "期限超過率",
+      "insight": {
+        "overloaded": "未完了タスクが{{openTasks}}件ありますが、週平均は{{velocity}}件です。委任または延期を検討してください。",
+        "highOverdue": "期限付きタスクの{{rate}}%が遅延して完了しています。バッファ時間の追加をお試しください。",
+        "slowDecisions": "平均意思決定時間は{{days}}日です。より迅速な決定がチームの障害を解消できます。"
+      }
+    },
+    "aiOperator": {
+      "title": "AIオペレーター",
+      "subtitle": "リレーション、ナビゲーション、実行、価値を一つのコックピットで",
+      "readiness": "オペレーター準備状況",
+      "stage": "ステージ",
+      "relationship": "リレーション",
+      "daysSinceTouch": "日前の接点",
+      "noTouchpoint": "接点なし",
+      "value": "バリュー",
+      "autonomy": "自律性",
+      "nextActions": "次のベストアクション",
+      "open": "開く",
+      "noActions": "緊急のオペレーターアクションはありません。",
+      "cadence": "ケイデンスとワークストリーム",
+      "executiveBrief": "エグゼクティブブリーフ",
+      "noBrief": "ブリーフはまだありません。",
+      "sequence": "オペレーターシーケンス",
+      "noPlan": "オペレータープランはまだありません。",
+      "intervene": "介入",
+      "noSequence": "シーケンスプランはまだ生成されていません。",
+      "nextMilestone": "次のマイルストーン",
+      "none": "なし",
+      "planBlockers": "プランブロッカー",
+      "noBlockers": "アクティブなプランブロッカーはありません。",
+      "programSummary": "プログラムサマリー",
+      "suggestedInterventions": "推奨される介入",
+      "working": "処理中...",
+      "propose": "提案",
+      "noInterventions": "新しい介入の提案はありません。",
+      "approvalQueue": "承認キュー",
+      "accept": "承認",
+      "reject": "却下",
+      "execute": "実行",
+      "noQueue": "承認キューに介入はありません。"
+    },
+    "operator": {
+      "proposed": "オペレーター介入を提案しました。",
+      "proposeFailed": "介入の提案に失敗しました。",
+      "accepted": "介入が承認されました。",
+      "acceptFailed": "介入の承認に失敗しました。",
+      "executed": "介入が実行されました。",
+      "executeFailed": "介入の実行に失敗しました。",
+      "rejected": "介入が却下されました。",
+      "rejectFailed": "介入の却下に失敗しました。"
+    }
+  },
+  "contact": {
+    "badge": "お問い合わせ",
+    "hero": {
+      "title1": "次のステップについて",
+      "title2": "お話ししましょう",
+      "subtitle": "デモのご依頼、エンタープライズ導入のご相談、ご質問など — お気軽にお問い合わせください。"
+    },
+    "offices": "オフィス",
+    "email": "メール",
+    "emailGeneral": "一般",
+    "emailSales": "営業",
+    "emailSupport": "サポート",
+    "bookDemo": "30分の通話を予約",
+    "bookDemoSub": "無料相談。Consultifyの実際の動作をご覧ください。",
+    "sla": "1営業日以内にご返信いたします。既存のお客様はアプリ内サポートでより迅速な対応が可能です。",
+    "types": {
+      "general": "一般的なお問い合わせ",
+      "sales": "営業 / デモリクエスト",
+      "support": "テクニカルサポート",
+      "partnership": "パートナーシップ",
+      "security": "セキュリティとコンプライアンス",
+      "press": "プレス・メディア"
+    },
+    "form": {
+      "title": "メッセージを送信",
+      "subtitle": "* の付いた項目は必須です",
+      "name": "お名前",
+      "email": "メールアドレス",
+      "company": "会社名",
+      "inquiryType": "お問い合わせ種別",
+      "message": "メッセージ",
+      "messagePlaceholder": "どのようにお手伝いできますか？",
+      "securityNote": "お客様のデータは暗号化され、プライバシーポリシーに従って処理されます。",
+      "send": "メッセージを送信",
+      "sending": "送信中..."
+    },
+    "success": {
+      "title": "メッセージ送信完了",
+      "subtitle": "お問い合わせありがとうございます。1営業日以内にご返信いたします。",
+      "another": "別のメッセージを送信"
+    }
+  },
+  "moduleHome": {
+    "new": "新規",
+    "recent": "最近",
+    "saved": "保存済み",
+    "templates": "テンプレート",
+    "heroDoc": "レポート、ブリーフ、分析、記事、ビジネス文書",
+    "heroSheet": "予算、財務モデル、タイムライン、リスクマトリックス",
+    "heroDeck": "経営デッキ、ピッチ、ステータス更新、ワークショッププレゼンテーション",
+    "startNew": "新規作成",
+    "fromTemplate": "テンプレートから",
+    "viewAll": "すべて表示"
+  },
+  "chatOutputTool": {
+    "auto": "自動",
+    "documents": "ドキュメント",
+    "tables": "テーブル",
+    "presentations": "プレゼンテーション"
+  },
+  "demo": {
+    "banner": {
+      "mode": "デモモード",
+      "exit": "デモを終了",
+      "exitShort": "終了",
+      "startTrial": "トライアル開始",
+      "restartLocale": "{{locale}}でデモを再読み込み",
+      "projects": "プロジェクト",
+      "initiatives": "イニシアチブ",
+      "hints": "ヒント",
+      "readOnlyTitle": "読み取り専用モード",
+      "readOnlyDesc": "変更は保存されません",
+      "exploreTitle": "機能を探索",
+      "exploreDesc": "すべてのモジュールを閲覧",
+      "hintTitle": "ヒント",
+      "defaultHint": "詳細を見るにはイニシアチブをクリック",
+      "help": "ヘルプ",
+      "partnerProgram": "パートナープログラム",
+      "showLimitations": "制限事項",
+      "hideLimitations": "隠す",
+      "limitations": {
+        "readOnly": "読み取り専用モード — 変更は保存されません",
+        "sampleData": "サンプルデータ — リアルな例で探索",
+        "session": "セッションは24時間で期限切れ",
+        "aiQuota": "AIインタラクション制限 ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "AI",
+      "used": "使用",
+      "aiUsageTooltip": "本日のAI呼び出し / 1日の上限",
+      "tokenUsageTooltip": "本日のトークン使用量 / 1日の上限"
+    }
+  },
+  "access": {
+    "banner": {
+      "demo": "デモ環境を表示しています（読み取り専用）",
+      "pastDue": "支払いが失敗しました。サービスの中断を避けるため支払い方法を更新してください。",
+      "trialExpired": "トライアルが期限切れです。続行するにはアップグレードしてください。",
+      "trialCritical": "トライアルは{{days}}日で期限切れです。今すぐアップグレードしてアクセスを維持。",
+      "trialWarning": "トライアル残り{{days}}日",
+      "approachingLimits": "使用制限に近づいています。途切れないアクセスのためアップグレードをご検討ください。"
+    },
+    "modal": {
+      "trialExpired": "トライアル期間が終了しました。データは安全ですが、組織は読み取り専用モードです。アップグレードで完全なアクセスを復元してください。",
+      "title": "アクセスが必要です",
+      "close": "閉じる",
+      "bookCall": "通話を予約"
+    },
+    "cta": {
+      "upgradePlan": "プランをアップグレード",
+      "upgradeNow": "今すぐアップグレード",
+      "fixPayment": "支払いを修正",
+      "addPaymentMethod": "支払い方法を追加",
+      "startTrial": "無料トライアル開始",
+      "completeSetup": "セットアップを完了",
+      "goToBilling": "請求へ移動",
+      "contactSales": "営業に連絡"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "組織が見つかりません。セッションを更新するために再度ログインしてください。",
+      "ORG_INACTIVE": "組織が非アクティブです。サポートにお問い合わせいただくか再度ログインしてください。",
+      "TRIAL_PROFILE_INCOMPLETE": "組織のセットアップを完了してトライアルAI体験を開始してください。",
+      "AI_TOKEN_BUDGET_EXCEEDED": "トライアルAI予算が使用されました。AI利用を続けるには支払い方法を追加してください。",
+      "AI_LIMIT_REACHED": "1日のAI呼び出し制限に達しました。続行するにはアップグレードしてください。",
+      "TRIAL_EXPIRED": "トライアルが期限切れです。すべての機能を続けて使用するにはアップグレードしてください。",
+      "DEMO_READ_ONLY": "デモモードは読み取り専用です。独自のデータを作成するには無料トライアルを開始してください。",
+      "DEMO_TIME_EXPIRED": "デモセッションが期限切れです。続行するには無料トライアルを開始してください。",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "デモAIセッションの制限に達しました。さらに使用するには無料トライアルを開始してください。",
+      "PROJECT_LIMIT_REACHED": "プロジェクトの上限に達しました。より多くのプロジェクトを作成するにはアップグレードしてください。",
+      "INITIATIVE_LIMIT_REACHED": "イニシアチブの上限に達しました。アップグレードしてください。",
+      "USER_LIMIT_REACHED": "ユーザー上限に達しました。チームメンバーを招待するにはアップグレードしてください。",
+      "STORAGE_LIMIT_REACHED": "ストレージ上限に達しました。アップグレードしてください。",
+      "SUBSCRIPTION_PAST_DUE": "支払いが失敗しました。支払い方法を更新してください。",
+      "SUBSCRIPTION_CANCELLED": "サブスクリプションはキャンセルされました。",
+      "INSUFFICIENT_TOKENS": "トークン不足。支払い方法を追加するかプランをアップグレードしてください。",
+      "default": "この操作は現在のアクセスレベルでは許可されていません。"
+    },
+    "upgrade": {
+      "instantUnlock": "アップグレード後、すべての制限が即座に解除されます"
+    }
+  },
+  "feedback": {
+    "floatingButton": {
+      "label": "バグを報告",
+      "ariaLabel": "バグを報告 (Shift+Ctrl+B)"
+    }
   }
 }

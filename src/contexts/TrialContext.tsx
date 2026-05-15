@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 
-import { useAppStore } from '../store/useAppStore';
+import { usePolicySnapshot } from './AccessPolicyContext';
 
 interface TrialState {
   isTrial: boolean;
@@ -40,85 +40,38 @@ const defaultState: TrialState = {
 
 const TrialContext = createContext<TrialState>(defaultState);
 
-const isPolicyBypassedRole = (role: unknown): boolean => {
-  const normalizedRole = String(role || '').trim().toUpperCase();
-  return normalizedRole === 'SUPERADMIN' || normalizedRole === 'SUPER_ADMIN';
-};
-
 export const useTrial = () => useContext(TrialContext);
 
 export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // NOTE (React 19 + useSyncExternalStore):
-  // Avoid selectors that return a new object each call (even with shallow),
-  // because it can trigger "getSnapshot should be cached" warnings/loops.
-  const user = useAppStore((s) => s.currentUser);
-
-  const [state, setState] = useState<TrialState>(defaultState);
-
-  const refreshTrialStatus = useCallback(async () => {
-    if (!user?.isAuthenticated || isPolicyBypassedRole(user?.role)) {
-      setState({ ...defaultState, loading: false });
-      return;
-    }
-    const storedToken = localStorage.getItem('token');
-    if (!storedToken) return;
-
-    try {
-      const headers: Record<string, string> = { Authorization: `Bearer ${storedToken}` };
-      if (useAppStore.getState().isDemoMode) {
-        headers['X-Demo-Mode'] = 'true';
-      }
-      const response = await fetch('/api/organization/policy-snapshot', { headers });
-
-      if (response.status === 404) {
-        // Endpoint may not exist in some dev/stub setups.
-        setState((prev) => ({ ...prev, loading: false }));
-        return;
-      }
-
-      if (response.ok) {
-        const policy = await response.json();
-        setState((prev) => ({
-          ...prev,
-          isTrial: policy.isTrial ?? false,
-          isExpired: policy.isTrialExpired ?? false,
-          daysRemaining: policy.trialDaysLeft ?? 0,
-          trialExpiresAt: policy.trialExpiresAt ?? null,
-          limits: policy.limits ?? null,
-          usage: {
-            aiCalls: policy.usageToday?.aiCalls ?? 0,
-            projects: policy.usageToday?.projects ?? 0,
-            users: policy.usageToday?.users ?? 0,
-            trialTokensUsed: policy.trialTokenUsage?.tokensUsed ?? 0,
-          },
-          blockedActions: Array.isArray(policy.blockedActions) ? policy.blockedActions : [],
-          loading: false,
-        }));
-      } else {
-        // API returned non-200 - set safe defaults
-        console.warn('[TrialContext] Policy snapshot returned:', response.status);
-        setState((prev) => ({ ...prev, loading: false }));
-      }
-    } catch (err) {
-      console.error('Failed to fetch trial status', err);
-      setState((prev) => ({ ...prev, loading: false }));
-    }
-  }, [user?.isAuthenticated]);
-
-  useEffect(() => {
-    if (user?.isAuthenticated && !isPolicyBypassedRole(user?.role)) {
-      refreshTrialStatus();
-    } else {
-      queueMicrotask(() => setState({ ...defaultState, loading: false }));
-    }
-  }, [user?.isAuthenticated, user?.role, refreshTrialStatus]);
+  const { snapshot, loading, refresh } = usePolicySnapshot();
 
   const value = useMemo<TrialState>(() => {
     return {
-      ...state,
-      refreshTrialStatus,
+      isTrial: snapshot?.isTrial ?? false,
+      isExpired: snapshot?.isTrialExpired ?? false,
+      daysRemaining: snapshot?.trialDaysLeft ?? 0,
+      trialExpiresAt: snapshot?.trialExpiresAt ?? null,
+      limits: snapshot?.limits
+        ? {
+            maxProjects: snapshot.limits.maxProjects,
+            maxUsers: snapshot.limits.maxUsers,
+            maxAICallsPerDay: snapshot.limits.maxAICallsPerDay,
+            maxInitiatives: snapshot.limits.maxInitiatives,
+            maxStorageMb: snapshot.limits.maxStorageMb,
+            maxTotalTokens: snapshot.limits.maxTotalTokens,
+          }
+        : null,
+      usage: {
+        aiCalls: snapshot?.usageToday?.aiCalls ?? 0,
+        projects: snapshot?.usageToday?.projects ?? 0,
+        users: snapshot?.usageToday?.users ?? 0,
+        trialTokensUsed: snapshot?.usageToday?.tokensUsed ?? 0,
+      },
+      blockedActions: Array.isArray(snapshot?.blockedActions) ? snapshot.blockedActions : [],
+      loading,
+      refreshTrialStatus: refresh,
     };
-  }, [state, refreshTrialStatus]);
+  }, [snapshot, loading, refresh]);
 
   return <TrialContext.Provider value={value}>{children}</TrialContext.Provider>;
 };

@@ -31,7 +31,13 @@ export type ModuleTab =
   // V3-H01 — Results Hub
   | 'summary'
   | 'kpis'
+  | 'kpi_overview'
+  | 'kpi_catalog'
   | 'kpi_reports'
+  | 'kpi_queue'
+  | 'results_initiatives'
+  | 'results_kpi'
+  | 'results_reports'
   | 'roi'
   | 'all_kpis'
   | 'by_initiative'
@@ -55,7 +61,13 @@ export type ModuleTab =
   | 'outputs_mine'
   | 'outputs_review'
   | 'outputs_documents'
-  | 'outputs_sheets';
+  | 'outputs_sheets'
+  // Interview module
+  | 'my_assignments'
+  | 'managed'
+  | 'insights'
+  | 'initiatives'
+  | 'pending_review';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

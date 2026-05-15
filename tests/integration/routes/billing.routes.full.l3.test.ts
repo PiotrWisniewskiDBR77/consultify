@@ -1,12 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
-import { EventEmitter } from 'node:events';
+import request from 'supertest';
 
-import { getDatabase, resetConnection } from '../../../server/src/database/Database.js';
-import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { TestDatabaseFactory } from '../../utils/TestDatabaseFactory.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = 'true';
   process.env.TEST_TYPE = 'integration';
   process.env.NODE_ENV = 'test';
   process.env.MOCK_REDIS = 'true';
@@ -17,11 +16,40 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-l3-${workerId}-${runId}.db`;
 });
 
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, _res: any, next: any) => {
+    if (!req.user) {
+      req.user = {
+        id: 'test-user-id',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'guest',
+        organizationId: 'test-org-id',
+        isSuperAdmin: false,
+        isDemo: false,
+      };
+      req.userId = req.user.id;
+      req.organizationId = req.user.organizationId;
+      req.userRole = req.user.role;
+    }
+    next();
+  },
+  requireSuperAdmin: (req: any, res: any, next: any) => {
+    if (req.user?.isSuperAdmin) {
+      next();
+      return;
+    }
+    res.status(403).json({ error: 'Superadmin access required' });
+  },
+}));
+
 const uuid = (n: number) =>
   `00000000-0000-4000-8000-${n.toString(16).padStart(12, '0')}`;
 
 describe('Billing routes integration (L3) - full', () => {
-  const db = getDatabase();
+  let db: any;
+  let resetConnection: (() => Promise<void>) | null = null;
+  let initializeDatabase: (() => Promise<any>) | null = null;
 
   const dbRun = (sql: string, params: any[] = []) =>
     new Promise<void>((resolve, reject) => {
@@ -53,6 +81,41 @@ describe('Billing routes integration (L3) - full', () => {
     const router = (await import('../../../server/src/routes/billing/billing.routes.ts')).default;
     const app = express();
     app.use(express.json());
+    app.use((req: any, _res: any, next: any) => {
+      delete req.headers.authorization;
+      delete req.headers.Authorization;
+      if (req.cookies) {
+        delete req.cookies.access_token;
+        delete req.cookies.token;
+      }
+      if (req.query?.token) {
+        delete req.query.token;
+      }
+      if (req.body?.token) {
+        delete req.body.token;
+      }
+
+      const testRole = req.headers['x-test-role'];
+      const testOrgId = req.headers['x-test-org-id'];
+      const testUserId = req.headers['x-test-user-id'];
+      const testIsSuperAdmin = req.headers['x-test-superadmin'];
+
+      if (testRole || testOrgId || testUserId || testIsSuperAdmin) {
+        req.user = {
+          id: String(testUserId || 'test-user'),
+          name: 'Test User',
+          email: 'test@example.com',
+          role: String(testRole || 'guest'),
+          organizationId: String(testOrgId || 'test-org-id'),
+          isSuperAdmin: String(testIsSuperAdmin || 'false') === 'true',
+        };
+        req.userId = req.user.id;
+        req.organizationId = req.user.organizationId;
+        req.userRole = req.user.role;
+      }
+
+      next();
+    });
     app.use('/api/billing', router);
     app.use((err: any, _req: any, res: any, _next: any) => {
       res.status(500).json({ success: false, error: err?.message || 'Internal error' });
@@ -78,99 +141,39 @@ describe('Billing routes integration (L3) - full', () => {
       query?: Record<string, any>;
     }
   ) => {
-    const req = new EventEmitter();
-    Object.assign(req, {
-      method,
-      url,
-      headers,
-      body,
-      cookies: {},
-      path: url,
-      query: query || {},
-      socket: { remoteAddress: '127.0.0.1' },
-    });
-    if (user) (req as any).user = user;
+    let httpRequest = request(app)[method.toLowerCase() as 'get' | 'post' | 'put' | 'delete' | 'patch'](
+      url
+    );
 
-    const res = new EventEmitter();
-    const chunks: Buffer[] = [];
-    const response = {
-      status: 200,
-      headers: {} as Record<string, string>,
-      body: undefined as any,
-      text: '',
-      redirectedTo: undefined as string | undefined,
+    const effectiveHeaders = { ...headers };
+    if (user) {
+      effectiveHeaders['x-test-user-id'] = user.id;
+      effectiveHeaders['x-test-org-id'] = user.organizationId;
+      effectiveHeaders['x-test-role'] = user.role;
+      effectiveHeaders['x-test-superadmin'] = user.isSuperAdmin ? 'true' : 'false';
+    }
+
+    for (const [name, value] of Object.entries(effectiveHeaders)) {
+      httpRequest = httpRequest.set(name, value);
+    }
+
+    if (query && Object.keys(query).length > 0) {
+      httpRequest = httpRequest.query(query);
+    }
+
+    if (body !== undefined) {
+      httpRequest = httpRequest.send(body);
+    }
+
+    const res = await httpRequest;
+    return {
+      status: res.status,
+      headers: res.headers as Record<string, string>,
+      body: res.body,
+      text: res.text,
+      redirectedTo: res.headers.location,
       sentFile: undefined as string | undefined,
     };
-
-    Object.assign(res, {
-      statusCode: 200,
-      setHeader(name: string, value: any) {
-        response.headers[String(name).toLowerCase()] = String(value);
-      },
-      getHeader(name: string) {
-        return response.headers[String(name).toLowerCase()];
-      },
-      writeHead(code: number, hdrs?: Record<string, any>) {
-        (res as any).statusCode = code;
-        response.status = code;
-        if (hdrs) {
-          for (const [k, v] of Object.entries(hdrs)) (res as any).setHeader(k, v);
-        }
-        return res;
-      },
-      write(chunk: any) {
-        if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
-        return true;
-      },
-      end(chunk: any) {
-        if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
-        response.status = (res as any).statusCode || 200;
-        response.text = Buffer.concat(chunks).toString('utf8');
-        try {
-          response.body = response.text ? JSON.parse(response.text) : undefined;
-        } catch {
-          response.body = undefined;
-        }
-        res.emit('finish');
-        return res;
-      },
-      json(obj: any) {
-        (res as any).setHeader('content-type', 'application/json');
-        (res as any).end(JSON.stringify(obj));
-      },
-      send(obj: any) {
-        (res as any).end(obj);
-      },
-      status(code: number) {
-        (res as any).statusCode = code;
-        response.status = code;
-        return res;
-      },
-      set(name: string, value: any) {
-        (res as any).setHeader(name, value);
-        return res;
-      },
-      redirect(location: string) {
-        response.redirectedTo = location;
-        (res as any).setHeader('location', location);
-        if (!(res as any).statusCode || (res as any).statusCode === 200) (res as any).statusCode = 302;
-        response.status = (res as any).statusCode;
-        (res as any).end('');
-      },
-      sendFile(filePath: string) {
-        response.sentFile = filePath;
-        (res as any).statusCode = (res as any).statusCode || 200;
-        response.status = (res as any).statusCode;
-        (res as any).end('');
-      },
-    });
-
-    return await new Promise<typeof response>((resolve, reject) => {
-      res.on('finish', () => resolve(response));
-      app.handle(req as any, res as any, (err: any) => {
-        if (err) reject(err);
-      });
-    });
   };
 
   const superAdminUser = {
@@ -195,6 +198,18 @@ describe('Billing routes integration (L3) - full', () => {
   };
 
   beforeAll(async () => {
+    const testDb = await TestDatabaseFactory.create();
+    (global as any).__TEST_DB_MOCK__ = testDb;
+    (process as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = testDb;
+    (globalThis as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = testDb;
+
+    const dbModule = await import('../../../server/src/database/Database.js');
+    const initializerModule = await import('../../../server/src/database/DatabaseInitializer.js');
+
+    resetConnection = dbModule.resetConnection;
+    initializeDatabase = initializerModule.initializeDatabase;
+    db = dbModule.getDatabase();
+
     await initializeDatabase();
     if ((db as any).initPromise) await (db as any).initPromise;
 
@@ -579,6 +594,8 @@ describe('Billing routes integration (L3) - full', () => {
 	    );
 	    await ensureSqliteColumn('subscription_changes', 'created_at', 'TEXT');
 	    await ensureSqliteColumn('subscription_changes', 'proration_amount', 'REAL');
+	    await ensureSqliteColumn('subscription_changes', 'rejection_reason', 'TEXT');
+	    await ensureSqliteColumn('subscription_changes', 'updated_at', 'TEXT');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS billing_webhook_events (
@@ -824,7 +841,10 @@ describe('Billing routes integration (L3) - full', () => {
   });
 
   afterAll(async () => {
-    await resetConnection();
+    await resetConnection?.();
+    delete (global as any).__TEST_DB_MOCK__;
+    delete (process as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__;
+    delete (globalThis as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__;
   });
 
   it('covers analytics endpoints', async () => {

@@ -1,3 +1,5 @@
+import { KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
+
 import { v8Get, v8Post } from './client';
 
 export const V8_KB_SEARCH_PATH = '/kb/search' as const;
@@ -51,17 +53,20 @@ export const V8KnowledgeBaseApi = {
     v8Get<{ articles: V8KbArticleListItem[] }>(V8_KB_PUBLIC_PATH, {
       lang,
       limit: String(limit),
+      site: KNOWLEDGE_BASE_SITE.key,
     }),
 
   getFeaturedArticles: (lang: string, limit = 4) =>
     v8Get<{ articles: V8KbArticleListItem[] }>(V8_KB_FEATURED_PATH, {
       lang,
       limit: String(limit),
+      site: KNOWLEDGE_BASE_SITE.key,
     }),
 
   getCategories: (lang: string, includePrivate = false) =>
     v8Get<{ categories: V8KbCategory[] }>(V8_KB_CATEGORIES_PATH, {
       lang,
+      site: KNOWLEDGE_BASE_SITE.key,
       ...(includePrivate ? { all: 'true' } : {}),
     }),
 
@@ -78,6 +83,7 @@ export const V8KnowledgeBaseApi = {
   ) =>
     v8Get<{ articles: V8KbArticleListItem[]; total: number }>(V8_KB_ARTICLE_PATH, {
       lang: params.lang,
+      site: KNOWLEDGE_BASE_SITE.key,
       ...(params.category ? { category: params.category } : {}),
       ...(params.search ? { search: params.search } : {}),
       ...(typeof params.limit === 'number' ? { limit: String(params.limit) } : {}),
@@ -91,6 +97,7 @@ export const V8KnowledgeBaseApi = {
       q: query,
       lang,
       limit: String(limit),
+      site: KNOWLEDGE_BASE_SITE.key,
     }),
 
   getArticleBySlug: (slug: string, lang: string) =>

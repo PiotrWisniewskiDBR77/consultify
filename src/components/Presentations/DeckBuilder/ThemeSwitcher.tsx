@@ -75,22 +75,22 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
                 id: 'brand_kit',
                 name: 'Brand Kit',
                 colors: {
-                  primary: brandKit.primary_color.startsWith('#')
-                    ? brandKit.primary_color
-                    : `#${brandKit.primary_color}`,
-                  secondary: brandKit.secondary_color.startsWith('#')
-                    ? brandKit.secondary_color
-                    : `#${brandKit.secondary_color}`,
-                  accent: brandKit.accent_color.startsWith('#')
-                    ? brandKit.accent_color
-                    : `#${brandKit.accent_color}`,
+                  primary: brandKit.primaryColor.startsWith('#')
+                    ? brandKit.primaryColor
+                    : `#${brandKit.primaryColor}`,
+                  secondary: brandKit.secondaryColor.startsWith('#')
+                    ? brandKit.secondaryColor
+                    : `#${brandKit.secondaryColor}`,
+                  accent: brandKit.accentColor.startsWith('#')
+                    ? brandKit.accentColor
+                    : `#${brandKit.accentColor}`,
                   background: '#FAFBFC',
                   surface: '#FFFFFF',
                   textPrimary: '#0F172A',
                   textSecondary: '#64748B',
-                  heading: brandKit.primary_color.startsWith('#')
-                    ? brandKit.primary_color
-                    : `#${brandKit.primary_color}`,
+                  heading: brandKit.primaryColor.startsWith('#')
+                    ? brandKit.primaryColor
+                    : `#${brandKit.primaryColor}`,
                 },
                 chartPalette: [],
                 styleTags: ['branded'],

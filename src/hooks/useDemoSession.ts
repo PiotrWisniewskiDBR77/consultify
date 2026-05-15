@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 
 // ============================================================
@@ -144,7 +145,7 @@ const generateSessionId = (): string => {
 // ============================================================
 
 export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
-  const { currentUser } = useAppStore();
+  const { currentUser, isDemoMode } = useAppStore();
 
   // Demo account identity (single source of truth)
   const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
@@ -152,10 +153,11 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
   // Determine if user is in demo mode
   const isDemo = useMemo(() => {
     return (
+      isDemoMode === true ||
       currentUser?.isDemo === true ||
       (sessionStorage.getItem('isDemo') === 'true' && currentUser?.email === DEMO_EMAIL)
     );
-  }, [currentUser]);
+  }, [currentUser, isDemoMode]);
 
   // Session state
   const [sessionId, setSessionId] = useState<string>('');
@@ -187,7 +189,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
   useEffect(() => {
     if (!isDemo) return;
 
-    // Try to restore existing session
+    // Try to restore existing session from localStorage first.
     const stored = loadStoredSession();
 
     if (stored) {
@@ -215,36 +217,73 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       }
     }
 
-    // Start new session
+    // Feedback #34d68475 + #da76799b: clearing the browser cache wiped the
+    // localStorage snapshot, so the banner (a) disappeared until re-login
+    // and (b) reset the 24h countdown to zero because every reload became a
+    // brand-new session. Server-side `demo_sessions.expires_at` already
+    // tracks the authoritative start/end for each user, so we now
+    // opportunistically hydrate the client clock from it. If the API call
+    // fails we gracefully fall back to the previous "start-now" behavior.
     const newSessionId = generateSessionId();
-    const newStartTime = new Date();
+    let cancelled = false;
 
-    setSessionId(newSessionId);
-    setSessionStartTime(newStartTime);
-    setTimeRemainingMs(DEMO_SESSION_DURATION_MS);
-    setAiInteractionsUsed(0);
+    const hydrateFromServer = async () => {
+      try {
+        const response = await Api.getDemoOrganization();
+        const expiresAtIso = response?.demoSession?.expiresAt;
+        if (cancelled || !expiresAtIso) return null;
+        const expiresAt = new Date(expiresAtIso).getTime();
+        if (!Number.isFinite(expiresAt)) return null;
+        const serverStart = new Date(expiresAt - DEMO_SESSION_DURATION_MS);
+        if (!Number.isFinite(serverStart.getTime())) return null;
+        return serverStart;
+      } catch {
+        return null;
+      }
+    };
 
-    saveSession({
-      sessionId: newSessionId,
-      startTime: newStartTime.toISOString(),
-      hasCompletedTour: false,
-      hasSeenWelcome: false,
-      hasInteractedWithAI: false,
-      aiInteractionsUsed: 0,
-      featuresExplored: [],
-      upgradePromptsShown: 0,
-      exitIntentTriggered: false,
-      milestones: [
-        {
-          id: 'session_start',
-          name: 'Demo Session Started',
-          timestamp: Date.now(),
-        },
-      ],
-    });
+    (async () => {
+      const serverStart = await hydrateFromServer();
+      if (cancelled) return;
 
-    // Track demo start
-    trackDemoEvent('demo_session_started', { sessionId: newSessionId });
+      const newStartTime = serverStart || new Date();
+      const elapsed = Date.now() - newStartTime.getTime();
+      const remaining = Math.max(0, DEMO_SESSION_DURATION_MS - elapsed);
+
+      setSessionId(newSessionId);
+      setSessionStartTime(newStartTime);
+      setSessionDurationMs(Math.max(0, elapsed));
+      setTimeRemainingMs(remaining);
+      setAiInteractionsUsed(0);
+
+      saveSession({
+        sessionId: newSessionId,
+        startTime: newStartTime.toISOString(),
+        hasCompletedTour: false,
+        hasSeenWelcome: false,
+        hasInteractedWithAI: false,
+        aiInteractionsUsed: 0,
+        featuresExplored: [],
+        upgradePromptsShown: 0,
+        exitIntentTriggered: false,
+        milestones: [
+          {
+            id: 'session_start',
+            name: 'Demo Session Started',
+            timestamp: newStartTime.getTime(),
+          },
+        ],
+      });
+
+      trackDemoEvent('demo_session_started', {
+        sessionId: newSessionId,
+        hydratedFromServer: Boolean(serverStart),
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isDemo]);
 
   // --------------------------------------------------------

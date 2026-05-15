@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 
 import { FreeSession, FullSession, Notification } from '../../types';
-import { AppState } from '../useAppStore';
+import type { AppState } from '../useAppStore';
 
 export interface ProjectSlice {
   currentProjectId: string | null;

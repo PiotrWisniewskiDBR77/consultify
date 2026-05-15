@@ -32,6 +32,7 @@ import {
   ToolType,
 } from '@/store/useToolStore';
 
+import { ProposalCard } from '../shared/ProposalCard';
 import { PorterRadar } from '../visualizations/PorterRadar';
 
 // ==================== TYPES ====================
@@ -783,6 +784,9 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
 }) => {
   const inputData = session.inputData;
   const initiatives = session.generatedInitiatives;
+  const swotSummary = toolType === 'dynamic-swot' ? (inputData as SWOTData).summary : undefined;
+  const hasPendingSummaryProposal =
+    swotSummary?.proposalStatus === 'ai-proposed' || swotSummary?.proposalStatus === 'rethinking';
 
   type SummaryData = {
     summary: string;
@@ -927,17 +931,56 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
       </div>
 
       {/* Executive Summary */}
-      <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-        <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-          {isPolish ? 'Final source summary' : 'Final source summary'}
-        </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          {summaryData.summary ||
-            (isPolish
-              ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
-              : 'Click "Generate Analysis" to get an AI summary.')}
-        </p>
-      </div>
+      {hasPendingSummaryProposal ? (
+        <ProposalCard
+          cardId={swotSummary?.proposalId || 'swot-summary'}
+          cardType="conclusion"
+          proposalStatus={swotSummary?.proposalStatus}
+          onAccept={onAcceptCard || (() => {})}
+          onReject={onRejectCard || (() => {})}
+          onRethink={onRethinkCard || (() => {})}
+        >
+          <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-2">
+              {isPolish
+                ? 'Final source summary (AI proposal)'
+                : 'Final source summary (AI proposal)'}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {summaryData.summary ||
+                (isPolish
+                  ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
+                  : 'Click "Generate Analysis" to get an AI summary.')}
+            </p>
+            {summaryData.insights.length > 0 && (
+              <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                {summaryData.insights.map((insight: string, index: number) => (
+                  <li key={index}>• {insight}</li>
+                ))}
+              </ul>
+            )}
+            {summaryData.appliedConclusions.length > 0 && (
+              <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                {summaryData.appliedConclusions.map((conclusion: string, index: number) => (
+                  <li key={index}>• {conclusion}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </ProposalCard>
+      ) : (
+        <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+          <h3 className="font-medium text-slate-900 dark:text-white mb-2">
+            {isPolish ? 'Final source summary' : 'Final source summary'}
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {summaryData.summary ||
+              (isPolish
+                ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
+                : 'Click "Generate Analysis" to get an AI summary.')}
+          </p>
+        </div>
+      )}
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1089,7 +1132,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
       </div>
 
       {/* Key Insights */}
-      {summaryData.insights.length > 0 && (
+      {summaryData.insights.length > 0 && !hasPendingSummaryProposal && (
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-primary-500" />
@@ -1109,7 +1152,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         </div>
       )}
 
-      {summaryData.appliedConclusions.length > 0 && (
+      {summaryData.appliedConclusions.length > 0 && !hasPendingSummaryProposal && (
         <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
           <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <Target className="w-4 h-4 text-emerald-500" />

@@ -10,6 +10,7 @@ import { EscalationService } from '../../services/escalationService.js';
 import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 function isMissingTableError(error: unknown): boolean {
   const message = (error as any)?.message;
@@ -22,13 +23,34 @@ function isMissingTableError(error: unknown): boolean {
   );
 }
 
+function resolveNotificationsCorrelationId(req: AuthRequest): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildNotificationsFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveNotificationsCorrelationId(req),
+  };
+}
+
 // Validate verifyToken is available at module load time
 if (!verifyToken || typeof verifyToken !== 'function') {
   const error = new Error(
     `verifyToken middleware is not properly exported from auth.middleware.js. ` +
       `Type: ${typeof verifyToken}, Value: ${verifyToken}`
   );
-  console.error('[NotificationsRoutes] Critical error:', error);
+  logger.error('[NotificationsRoutes] Critical error:', error);
   throw error;
 }
 
@@ -46,7 +68,16 @@ router.get(
     const service = NotificationService;
     const userId = (req as any).userId || req.user?.id;
 
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) {
+      return res.status(401).json(
+        buildNotificationsFailClosedError(
+          req,
+          401,
+          'NOTIFICATIONS_UNAUTHORIZED',
+          'Authentication is required to access notifications.'
+        )
+      );
+    }
 
     try {
       const { unreadOnly, limit, projectId } = req.query;
@@ -57,8 +88,15 @@ router.get(
       });
       return res.json(notifications);
     } catch (err: any) {
-      console.error('[NotificationsRoute] Error:', err);
-      return res.status(500).json({ error: err.message, stack: err.stack });
+      logger.error('[NotificationsRoute] Error:', err);
+      return res.status(500).json(
+        buildNotificationsFailClosedError(
+          req,
+          500,
+          'NOTIFICATIONS_READ_FAILED',
+          'Failed to load notifications.'
+        )
+      );
     }
   })
 );
@@ -89,68 +127,114 @@ router.post(
     const orgId = (req as any).organizationId || req.user?.organizationId;
     const role = (req as any).userRole || req.user?.role;
 
-    if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId || !orgId) {
+      return res.status(401).json(
+        buildNotificationsFailClosedError(
+          req,
+          401,
+          'NOTIFICATIONS_BROADCAST_UNAUTHORIZED',
+          'Authentication is required to broadcast notifications.'
+        )
+      );
+    }
 
     const isAdmin =
       role === 'ADMIN' ||
       role === 'SUPERADMIN' ||
       (req.can && typeof req.can === 'function' && req.can('edit_organization_settings'));
-    if (!isAdmin) return res.status(403).json({ error: 'Admin required' });
+    if (!isAdmin) {
+      return res.status(403).json(
+        buildNotificationsFailClosedError(
+          req,
+          403,
+          'NOTIFICATIONS_BROADCAST_FORBIDDEN',
+          'Admin role is required to broadcast notifications.'
+        )
+      );
+    }
 
     const { type, title, body, message, severity, category, actionUrl, data, userIds } =
       req.body || {};
 
-    if (!type || typeof type !== 'string')
-      return res.status(400).json({ error: 'type is required' });
-    if (!title || typeof title !== 'string')
-      return res.status(400).json({ error: 'title is required' });
-
-    const resolvedBody =
-      typeof body === 'string' ? body : typeof message === 'string' ? message : '';
-
-    let targets: { id: string }[] = [];
-    try {
-      targets =
-        Array.isArray(userIds) && userIds.length > 0
-          ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
-          : await dbAll<{ id: string }>(
-              `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
-              [orgId],
-              { fallback: false }
-            );
-    } catch (err: unknown) {
-      if (isMissingTableError(err)) {
-        return res.status(503).json({
-          statusCode: 503,
-          status: false,
-          type: 'not_configured',
-          message: 'Service temporarily unavailable due to missing configuration',
-        });
-      }
-      throw err;
+    if (!type || typeof type !== 'string') {
+      return res.status(400).json(
+        buildNotificationsFailClosedError(
+          req,
+          400,
+          'NOTIFICATIONS_BROADCAST_TYPE_REQUIRED',
+          'Notification type is required.'
+        )
+      );
     }
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json(
+        buildNotificationsFailClosedError(
+          req,
+          400,
+          'NOTIFICATIONS_BROADCAST_TITLE_REQUIRED',
+          'Notification title is required.'
+        )
+      );
+    }
+    try {
+      const resolvedBody =
+        typeof body === 'string' ? body : typeof message === 'string' ? message : '';
 
-    const results = await Promise.allSettled(
-      (targets || []).map((u) =>
-        service.send({
-          userId: u.id,
-          organizationId: orgId,
-          type,
-          title,
-          body: resolvedBody || title,
-          message: typeof message === 'string' ? message : resolvedBody,
-          severity: severity as any,
-          isActionable: false,
-          actionUrl: typeof actionUrl === 'string' ? actionUrl : undefined,
-          metadata: typeof category === 'string' ? { category } : undefined,
-          data: typeof data === 'object' && data ? data : undefined,
-        })
-      )
-    );
+      let targets: { id: string }[] = [];
+      try {
+        targets =
+          Array.isArray(userIds) && userIds.length > 0
+            ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
+            : await dbAll<{ id: string }>(
+                `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
+                [orgId],
+                { fallback: false }
+              );
+      } catch (err: unknown) {
+        if (isMissingTableError(err)) {
+          return res.status(503).json(
+            buildNotificationsFailClosedError(
+              req,
+              503,
+              'NOTIFICATIONS_SERVICE_NOT_CONFIGURED',
+              'Notifications service is temporarily unavailable.'
+            )
+          );
+        }
+        throw err;
+      }
 
-    const ok = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.length - ok;
-    return res.json({ success: true, sent: ok, failed });
+      const results = await Promise.allSettled(
+        (targets || []).map((u) =>
+          service.send({
+            userId: u.id,
+            organizationId: orgId,
+            type,
+            title,
+            body: resolvedBody || title,
+            message: typeof message === 'string' ? message : resolvedBody,
+            severity: severity as any,
+            isActionable: false,
+            actionUrl: typeof actionUrl === 'string' ? actionUrl : undefined,
+            metadata: typeof category === 'string' ? { category } : undefined,
+            data: typeof data === 'object' && data ? data : undefined,
+          })
+        )
+      );
+
+      const ok = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.length - ok;
+      return res.json({ success: true, sent: ok, failed });
+    } catch {
+      return res.status(500).json(
+        buildNotificationsFailClosedError(
+          req,
+          500,
+          'NOTIFICATIONS_BROADCAST_FAILED',
+          'Failed to broadcast notifications.'
+        )
+      );
+    }
   })
 );
 

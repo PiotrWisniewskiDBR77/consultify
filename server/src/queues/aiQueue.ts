@@ -32,7 +32,9 @@ const createUnavailableQueue = (reason) => ({
 });
 
 if (process.env.MOCK_REDIS === 'true') {
-  aiLogger.warn('[Queue] Mock queue disabled; AI tasks will be unavailable');
+  const log =
+    process.env.NODE_ENV === 'test' ? aiLogger.info.bind(aiLogger) : aiLogger.warn.bind(aiLogger);
+  log('[Queue] Mock queue disabled; AI tasks will be unavailable');
   aiQueue = createUnavailableQueue('MOCK_REDIS=true');
 } else {
   // Add default job options to redisConfig

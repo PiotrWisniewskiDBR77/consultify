@@ -485,10 +485,13 @@ export interface ROIInitiativeDetail {
 
 export interface ResultsKpiCatalogEntry {
   id: string;
+  mappingId?: string | null;
   initiativeId?: string | null;
   initiativeName?: string | null;
+  initiativeStatus?: string | null;
   name: string;
   description?: string | null;
+  category?: string | null;
   unit?: string | null;
   baselineValue?: number | null;
   targetValue: number | null;
@@ -512,6 +515,21 @@ export interface ResultsKpiCatalogEntry {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+  realizationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
+  postImplementationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
   openDeviationCase?: {
     id: string;
     severity: 'AMBER' | 'RED';
@@ -523,13 +541,37 @@ export interface ResultsKpiCatalogMapping {
   id: string;
   initiativeId: string;
   initiativeName?: string | null;
+  initiativeStatus?: string | null;
   kpiId: string;
   kpiName?: string | null;
   impactDirection?: string | null;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+}
+
+export interface ResultsTrackedInitiativeEntry {
+  initiativeId: string;
+  initiativeName: string;
+  initiativeStatus: string;
+  lifecycleBucket: 'in-realization' | 'realized';
+  trackedKpiCount: number;
+  realizationKpiCount: number;
+  postImplementationKpiCount: number;
+  belowTargetCount: number;
+  needsEntryCount: number;
+  openDeviationCount: number;
+  openReportCount: number;
+  lastReportTitle?: string | null;
+  lastReportId?: string | null;
+  lastReportCreatedAt?: string | null;
 }
 
 export interface ResultsKpiCatalog {
   organizationId: string;
+  initiatives: ResultsTrackedInitiativeEntry[];
   kpis: ResultsKpiCatalogEntry[];
   mappings: ResultsKpiCatalogMapping[];
 }
@@ -587,6 +629,17 @@ export interface ResultsKpiDrawerDetail {
     };
   }>;
   openCase: ResultsKpiDrawerCase | null;
+  auditLog: Array<{
+    id: string;
+    section: string;
+    eventType: string;
+    source: string;
+    actorUserId?: string | null;
+    summary?: string | null;
+    before: Record<string, unknown>;
+    after: Record<string, unknown>;
+    createdAt: string;
+  }>;
 }
 
 export interface ReviewPackTimelineEntry {

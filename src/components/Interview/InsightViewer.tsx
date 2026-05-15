@@ -9,19 +9,23 @@ import {
   AlertCircle,
   AlertTriangle,
   BarChart3,
+  BookOpen,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Clock,
   Copy,
   Download,
   ExternalLink,
+  Eye,
   FileText,
   Flame,
   History,
   Layers,
   Lightbulb,
+  Link2,
   Loader2,
-  Map,
+  Map as MapIcon,
   MessageSquare,
   Plus,
   Radio,
@@ -32,6 +36,8 @@ import {
   Star,
   Target,
   TrendingUp,
+  Users,
+  X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -43,10 +49,7 @@ import remarkGfm from 'remark-gfm';
 
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
-import { NModeCanvas } from '@/components/shared/NModeLayout/NModeCanvas';
-import { NModeHeader } from '@/components/shared/NModeLayout/NModeHeader';
-import { NModeLeftNav } from '@/components/shared/NModeLayout/NModeLeftNav';
-import { NModePropertiesStrip } from '@/components/shared/NModeLayout/NModePropertiesStrip';
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
 import {
   ActivityLogCanvas,
@@ -61,13 +64,19 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
+import {
+  type V8InsightAnalysis,
+  type V8InsightAnalysisMatrixCell,
+  type V8InsightCandidate,
+  type V8InsightFinding,
+  V8InterviewApi,
+} from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { useConversationStore } from '@/store/useConversationStore';
-import { AppView } from '@/types';
-import { buildArtifactCode } from '@/utils/artifactLinks';
+import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
@@ -85,13 +94,22 @@ type InsightPromptType =
   | 'maturity'
   | 'stakeholder_map';
 
-type InsightStatus = 'generating' | 'completed' | 'failed';
+type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
+
+type P10ConfidenceLevel = 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+
+type InsightReviewStatus = 'draft' | 'in_review' | 'published';
 
 interface InsightTheme {
   title: string;
   description: string;
   evidence_refs: string[];
   strength: 'strong' | 'moderate' | 'weak';
+  confidence?: P10ConfidenceLevel;
+  limits?: string[];
+  crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 interface InsightIssue {
@@ -99,6 +117,11 @@ interface InsightIssue {
   description: string;
   severity: 'high' | 'medium' | 'low';
   evidence_refs: string[];
+  confidence?: P10ConfidenceLevel;
+  limits?: string[];
+  crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 interface InsightOpportunity {
@@ -106,6 +129,11 @@ interface InsightOpportunity {
   description: string;
   impact: 'high' | 'medium' | 'low';
   evidence_refs: string[];
+  confidence?: P10ConfidenceLevel;
+  limits?: string[];
+  crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 interface InsightSignal {
@@ -120,6 +148,7 @@ interface InsightEvidenceMapEntry {
   answer_snippet: string;
   linked_themes: string[];
   linked_issues: string[];
+  evidence_pointers?: string[];
 }
 
 interface Insight {
@@ -138,6 +167,9 @@ interface Insight {
   evidenceMap?: InsightEvidenceMapEntry[];
   missingData?: string[];
   status: InsightStatus;
+  reviewStatus?: InsightReviewStatus;
+  publishedAt?: string;
+  reviewedBy?: string;
   errorMessage?: string;
   sourceSessionCount: number;
   tokensUsed: number;
@@ -319,10 +351,25 @@ const STATUS_CONFIG: Record<
     color: 'bg-amber-500',
     textColor: 'text-amber-500',
   },
+  draft: {
+    label: { en: 'Draft', pl: 'Szkic' },
+    color: 'bg-slate-500',
+    textColor: 'text-slate-500',
+  },
   completed: {
     label: { en: 'Completed', pl: 'Ukończone' },
     color: 'bg-emerald-500',
     textColor: 'text-emerald-500',
+  },
+  in_review: {
+    label: { en: 'In Review', pl: 'W recenzji' },
+    color: 'bg-blue-500',
+    textColor: 'text-blue-500',
+  },
+  published: {
+    label: { en: 'Published', pl: 'Opublikowane' },
+    color: 'bg-violet-500',
+    textColor: 'text-violet-500',
   },
   failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-red-500', textColor: 'text-red-500' },
 };
@@ -336,6 +383,13 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     icon: Sparkles,
     label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
   },
+  { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
+  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
+  {
+    id: 'analysis-matrix',
+    icon: BarChart3,
+    label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
+  },
   { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
   {
     id: 'issues-risks',
@@ -344,7 +398,7 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   },
   { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
   { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
-  { id: 'evidence-map', icon: Map, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
+  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
   { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
   { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
   {
@@ -366,9 +420,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 }) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, currentUser, currentOrganization } = useAppStore();
-  const { updateWorkspaceFromView } = useConversationStore();
+  const isPolish = i18n.language?.startsWith('pl');
+  const { currentUser, currentOrganization } = useAppStore();
+  const openChatWithContext = useOpenChatWithContext();
   const interviewDemoData = useMemo(
     () =>
       createInterviewDemoDataset({
@@ -409,6 +463,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Export states
   const [isExportingTools, setIsExportingTools] = useState(false);
   const [isExportingAssessment, setIsExportingAssessment] = useState(false);
+  const [isExportingNotebook, setIsExportingNotebook] = useState(false);
+
+  // Handoff modal state
+  const [handoffModalOpen, setHandoffModalOpen] = useState(false);
+  const [handoffFinding, setHandoffFinding] = useState<{
+    findingId?: string;
+    title: string;
+    description: string;
+    confidence?: P10ConfidenceLevel;
+    limits?: string[];
+    sectionType: 'theme' | 'issue' | 'opportunity';
+    index: number;
+  } | null>(null);
+  const [handoffSubmitting, setHandoffSubmitting] = useState(false);
+
+  // Lifecycle transition state
+  const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
+
+  // Limits expand state per card
+  const [expandedLimits, setExpandedLimits] = useState<Set<string>>(new Set());
 
   // Related data
   const [sourceSessions, setSourceSessions] = useState<SourceSession[]>([]);
@@ -416,6 +490,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     Record<string, SourceSessionSummary>
   >({});
   const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
+  const [findings, setFindings] = useState<V8InsightFinding[]>([]);
+  const [candidates, setCandidates] = useState<V8InsightCandidate[]>([]);
+  const [analysis, setAnalysis] = useState<V8InsightAnalysis | null>(null);
+  const [analysisLensMode, setAnalysisLensMode] = useState<'stakeholder' | 'session'>(
+    'stakeholder'
+  );
+  const [analysisRoleFilter, setAnalysisRoleFilter] = useState('all');
+  const [analysisDepartmentFilter, setAnalysisDepartmentFilter] = useState('all');
+  const [candidateActionLoadingId, setCandidateActionLoadingId] = useState<string | null>(null);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -423,6 +506,39 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [commentDateFilter, setCommentDateFilter] = useState<DateFilter>('all');
   const [commentSortOrder, setCommentSortOrder] = useState<SortOrder>('desc');
   const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
+
+  const loadPersistedFindings = useCallback(async (currentInsightId: string) => {
+    try {
+      const findingsRes = await V8InterviewApi.listFindings(currentInsightId)
+        .then((r) => r.findings)
+        .catch(() => []);
+      setFindings(Array.isArray(findingsRes) ? findingsRes : []);
+    } catch {
+      setFindings([]);
+    }
+  }, []);
+
+  const loadInsightAnalysis = useCallback(async (currentInsightId: string) => {
+    try {
+      const analysisRes = await V8InterviewApi.getAnalysis(currentInsightId)
+        .then((r) => r.analysis)
+        .catch(() => null);
+      setAnalysis(analysisRes || null);
+    } catch {
+      setAnalysis(null);
+    }
+  }, []);
+
+  const loadCandidates = useCallback(async (currentInsightId: string) => {
+    try {
+      const candidatesRes = await V8InterviewApi.listCandidates(currentInsightId)
+        .then((r) => r.candidates)
+        .catch(() => []);
+      setCandidates(Array.isArray(candidatesRes) ? candidatesRes : []);
+    } catch {
+      setCandidates([]);
+    }
+  }, []);
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -453,6 +569,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           (interviewDemoData.insightActivityById[id] || []) as NModeActivityLogEntry[]
         );
         setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
+        setFindings([]);
+        setCandidates([]);
+        setAnalysis(null);
         return true;
       };
 
@@ -461,28 +580,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       try {
         if (isInterviewDemoId(insightId) && applyDemoInsight(insightId)) return;
 
-        const data = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
+        const data = await V8InterviewApi.getInsight(insightId)
+          .then((r) => r.insight)
+          .catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
         if (!data) {
           if (applyDemoInsight(insightId)) return;
           throw new Error('Failed to load insight');
         }
         setInsight(data);
         setTitle(data.title || '');
+        await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
 
         if (data.sourceSessionIds?.length > 0) {
           try {
             const sessionsData = await Promise.all(
-              data.sourceSessionIds
-                .slice(0, 10)
-                .map((id: string) => Api.get(`/interview/sessions/${id}`).catch(() => null))
+              data.sourceSessionIds.slice(0, 10).map((id: string) =>
+                V8InterviewApi.getSession(id)
+                  .then((r) => r.session)
+                  .catch(() => Api.get(`/interview/sessions/${id}`).catch(() => null))
+              )
             );
             const validSessions = (sessionsData || []).filter(Boolean);
             setSourceSessions(validSessions);
 
             const summaryEntries = await Promise.all(
               validSessions.map(async (session: SourceSession) => {
-                const summary = await Api.get(`/interview/sessions/${session.id}/summary`).catch(
-                  () => null
+                const summary = await V8InterviewApi.getSessionSummary(session.id).catch(() =>
+                  Api.get(`/interview/sessions/${session.id}/summary`).catch(() => null)
                 );
                 return [session.id, summary] as const;
               })
@@ -513,8 +639,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
 
         const [activityRes, commentsRes] = await Promise.all([
-          Api.get(`/interview/insights/${insightId}/activity`).catch(() => []),
-          Api.get(`/interview/insights/${insightId}/comments`).catch(() => []),
+          V8InterviewApi.getInsightActivity(insightId)
+            .then((r) => r.activity)
+            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])),
+          V8InterviewApi.getInsightComments(insightId)
+            .then((r) => r.comments)
+            .catch(() => Api.get(`/interview/insights/${insightId}/comments`).catch(() => [])),
         ]);
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         setNComments(Array.isArray(commentsRes) ? commentsRes : []);
@@ -536,16 +666,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           clearInterval(interval);
           return;
         }
-        const data = await Api.get(`/interview/insights/${insightId}`);
+        const data = await V8InterviewApi.getInsight(insightId)
+          .then((r) => r.insight)
+          .catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(data);
+        await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
 
         if (lastStatus === 'generating' && nextStatus && nextStatus !== 'generating') {
           clearInterval(interval);
-          const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-            () => []
-          );
+          const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+            .then((r) => r.activity)
+            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
           setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         }
 
@@ -556,7 +691,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [insightId, interviewDemoData, isPolish]);
+  }, [
+    insightId,
+    interviewDemoData,
+    isPolish,
+    loadCandidates,
+    loadInsightAnalysis,
+    loadPersistedFindings,
+  ]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -654,6 +796,177 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [insight?.evidenceMap]
   );
   const v6MissingData = useMemo<string[]>(() => insight?.missingData ?? [], [insight?.missingData]);
+  const findingsBySourceKey = useMemo(
+    () =>
+      findings.reduce<Record<string, V8InsightFinding>>((acc, finding) => {
+        if (finding.source_key) acc[finding.source_key] = finding;
+        return acc;
+      }, {}),
+    [findings]
+  );
+  const findingsSummary = useMemo(
+    () => ({
+      total: findings.length,
+      activeEvidence: findings.reduce(
+        (sum, finding) =>
+          sum + finding.evidence_pointers.filter((pointer) => !pointer.isTombstone).length,
+        0
+      ),
+      pendingReview: findings.filter((finding) => finding.review_status === 'in_review').length,
+      contradicted: findings.filter((finding) => finding.confidence_level === 'contradicted')
+        .length,
+    }),
+    [findings]
+  );
+
+  const candidateSummary = useMemo(
+    () => ({
+      total: candidates.length,
+      ready: candidates.filter((candidate) => candidate.triage_status === 'ready_for_review')
+        .length,
+      needsEvidence: candidates.filter((candidate) => candidate.triage_status === 'needs_evidence')
+        .length,
+      needsSplit: candidates.filter((candidate) => candidate.triage_status === 'needs_split')
+        .length,
+      promoted: candidates.filter((candidate) => candidate.triage_status === 'promoted').length,
+    }),
+    [candidates]
+  );
+
+  const analysisTopicsById = useMemo(
+    () =>
+      (analysis?.topics || []).reduce<Record<string, V8InsightAnalysis['topics'][number]>>(
+        (acc, topic) => {
+          acc[topic.id] = topic;
+          return acc;
+        },
+        {}
+      ),
+    [analysis]
+  );
+
+  const consensusTopics = useMemo(
+    () =>
+      (analysis?.synthesis.consensusTopicIds || [])
+        .map((id) => analysisTopicsById[id])
+        .filter(Boolean),
+    [analysis?.synthesis.consensusTopicIds, analysisTopicsById]
+  );
+
+  const localOnlyTopics = useMemo(
+    () =>
+      (analysis?.synthesis.localOnlyTopicIds || [])
+        .map((id) => analysisTopicsById[id])
+        .filter(Boolean),
+    [analysis?.synthesis.localOnlyTopicIds, analysisTopicsById]
+  );
+
+  const contradictedTopics = useMemo(
+    () =>
+      (analysis?.synthesis.contradictedTopicIds || [])
+        .map((id) => analysisTopicsById[id])
+        .filter(Boolean),
+    [analysis?.synthesis.contradictedTopicIds, analysisTopicsById]
+  );
+
+  const stakeholderMatrixCellMap = useMemo(
+    () =>
+      new Map(
+        (analysis?.matrix.stakeholderCells || []).map(
+          (cell) => [`${cell.topicId}:${cell.lensId}`, cell] as const
+        )
+      ),
+    [analysis?.matrix.stakeholderCells]
+  );
+
+  const sessionMatrixCellMap = useMemo(
+    () =>
+      new Map(
+        (analysis?.matrix.sessionCells || []).map(
+          (cell) => [`${cell.topicId}:${cell.lensId}`, cell] as const
+        )
+      ),
+    [analysis?.matrix.sessionCells]
+  );
+
+  const analysisRoleOptions = useMemo(
+    () =>
+      uniqueNonEmpty([
+        ...(analysis?.people.sessionLenses || []).map((lens) => lens.role),
+        ...(analysis?.people.stakeholderLenses || []).map((lens) => lens.role),
+      ]),
+    [analysis]
+  );
+
+  const analysisDepartmentOptions = useMemo(
+    () =>
+      uniqueNonEmpty([
+        ...(analysis?.people.sessionLenses || []).map((lens) => lens.department),
+        ...(analysis?.people.stakeholderLenses || []).map((lens) => lens.department),
+      ]),
+    [analysis]
+  );
+
+  const filteredSessionAnalysisLenses = useMemo(
+    () =>
+      (analysis?.people.sessionLenses || []).filter((lens) => {
+        if (analysisRoleFilter !== 'all' && lens.role !== analysisRoleFilter) return false;
+        if (analysisDepartmentFilter !== 'all' && lens.department !== analysisDepartmentFilter)
+          return false;
+        return true;
+      }),
+    [analysis?.people.sessionLenses, analysisDepartmentFilter, analysisRoleFilter]
+  );
+
+  const filteredStakeholderAnalysisLenses = useMemo(
+    () =>
+      (analysis?.people.stakeholderLenses || []).filter((lens) => {
+        if (analysisRoleFilter !== 'all' && lens.role !== analysisRoleFilter) return false;
+        if (analysisDepartmentFilter !== 'all' && lens.department !== analysisDepartmentFilter)
+          return false;
+        return true;
+      }),
+    [analysis?.people.stakeholderLenses, analysisDepartmentFilter, analysisRoleFilter]
+  );
+
+  const activeAnalysisColumns = useMemo(
+    () =>
+      analysisLensMode === 'stakeholder'
+        ? filteredStakeholderAnalysisLenses.map((lens) => ({ id: lens.id, label: lens.label }))
+        : filteredSessionAnalysisLenses.map((lens) => ({ id: lens.id, label: lens.label })),
+    [analysisLensMode, filteredSessionAnalysisLenses, filteredStakeholderAnalysisLenses]
+  );
+
+  const activeAnalysisCellMap = useMemo(
+    () => (analysisLensMode === 'stakeholder' ? stakeholderMatrixCellMap : sessionMatrixCellMap),
+    [analysisLensMode, sessionMatrixCellMap, stakeholderMatrixCellMap]
+  );
+
+  const visibleAnalysisTopicRows = useMemo(() => {
+    const baseRows = analysis?.matrix.rows || [];
+    const filtersApplied = analysisRoleFilter !== 'all' || analysisDepartmentFilter !== 'all';
+    if (!filtersApplied) return baseRows;
+    return baseRows.filter((row) =>
+      activeAnalysisColumns.some((column) => {
+        const cell = activeAnalysisCellMap.get(`${row.id}:${column.id}`);
+        return cell && cell.state !== 'not_observed';
+      })
+    );
+  }, [
+    activeAnalysisCellMap,
+    activeAnalysisColumns,
+    analysis?.matrix.rows,
+    analysisDepartmentFilter,
+    analysisRoleFilter,
+  ]);
+
+  const visiblePeopleLenses = useMemo(
+    () =>
+      analysisLensMode === 'stakeholder'
+        ? filteredStakeholderAnalysisLenses
+        : filteredSessionAnalysisLenses,
+    [analysisLensMode, filteredSessionAnalysisLenses, filteredStakeholderAnalysisLenses]
+  );
 
   // Evidence drilldown state
   const [expandedEvidenceRef, setExpandedEvidenceRef] = useState<string | null>(null);
@@ -676,18 +989,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setSaving(true);
     try {
-      await Api.patch(`/interview/insights/${insight.id}`, { title });
+      await V8InterviewApi.updateInsight(insight.id, { title }).catch(() =>
+        Api.patch(`/interview/insights/${insight.id}`, { title })
+      );
       toast.success(isPolish ? 'Zapisano' : 'Saved');
-      const refreshed = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
+      const refreshed = await V8InterviewApi.getInsight(insightId)
+        .then((r) => r.insight)
+        .catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
       if (refreshed) {
         setInsight(refreshed);
+        await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
         onSaved?.(refreshed);
       } else {
         onSaved?.({ ...insight, title });
       }
-      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-        () => []
-      );
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
     } catch {
       toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
@@ -697,14 +1017,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   };
 
   const handleOpenChat = () => {
-    if (isChatCollapsed) toggleChatCollapse();
-    updateWorkspaceFromView(AppView.INTERVIEW, insightId, {
-      type: 'insight',
-      id: insightId,
-      title,
-      promptType: insight?.promptType,
-      status: insight?.status,
-      sourceSessionCount: insight?.sourceSessionCount,
+    void openChatWithContext({
+      entityType: 'interview insight',
+      entityId: insightId,
+      entityName: title || insight?.title || insightId,
+      contextData: {
+        insightId,
+        title,
+        promptType: insight?.promptType,
+        status: insight?.status,
+        sourceSessionCount: insight?.sourceSessionCount,
+      },
     });
   };
 
@@ -751,13 +1074,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsRegenerating(true);
     try {
-      await Api.post(`/interview/insights/${insight.id}/regenerate`, {});
-      toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
-      const data = await Api.get(`/interview/insights/${insightId}`);
-      setInsight(data);
-      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-        () => []
+      await V8InterviewApi.regenerateInsight(insight.id).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/regenerate`, {})
       );
+      toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
+      const data = await V8InterviewApi.getInsight(insightId)
+        .then((r) => r.insight)
+        .catch(() => Api.get(`/interview/insights/${insightId}`));
+      setInsight(data);
+      await loadPersistedFindings(insightId);
+      await loadCandidates(insightId);
+      await loadInsightAnalysis(insightId);
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       onRegenerate?.();
     } catch {
@@ -793,13 +1123,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingTools(true);
     try {
-      const exportRes = await Api.post(`/interview/insights/${insight.id}/export`, {
-        target: 'tools',
-      });
-      toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
-      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-        () => []
+      const exportRes = await V8InterviewApi.exportInsight(insight.id, { target: 'tools' }).catch(
+        () => Api.post(`/interview/insights/${insight.id}/export`, { target: 'tools' })
       );
+      toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const toolId = exportRes?.targetId;
       if (toolId) navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
@@ -814,13 +1144,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingAssessment(true);
     try {
-      const exportRes = await Api.post(`/interview/insights/${insight.id}/export`, {
+      const exportRes = await V8InterviewApi.exportInsight(insight.id, {
         target: 'assessment',
-      });
-      toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-        () => []
+      }).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/export`, { target: 'assessment' })
       );
+      toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const assessmentId = exportRes?.targetId;
       const assessmentType = String(exportRes?.assessmentType || 'DRD').toLowerCase();
@@ -832,13 +1164,251 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleGenerateFindings = useCallback(() => {
-    toast(
-      isPolish
-        ? 'Ta sekcja jest jeszcze niedostępna dla Insight (brak kontraktu backend).'
-        : 'This section is not available for Insight yet (no backend contract).'
-    );
-  }, [isPolish]);
+  const handleExportToNotebook = async () => {
+    if (!insight) return;
+    setIsExportingNotebook(true);
+    try {
+      await Api.post('/my-work/notebook/pages', {
+        title: insight.title,
+        content: insight.content || '',
+        source: 'interview_insight',
+        metadata: { insightId: insight.id },
+      });
+      toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać w Notatniku' : 'Failed to save to Notebook');
+    } finally {
+      setIsExportingNotebook(false);
+    }
+  };
+
+  const handleOpenHandoff = useCallback(
+    (finding: {
+      findingId?: string;
+      title: string;
+      description: string;
+      confidence?: P10ConfidenceLevel;
+      limits?: string[];
+      sectionType: 'theme' | 'issue' | 'opportunity';
+      index: number;
+    }) => {
+      setHandoffFinding(finding);
+      setHandoffModalOpen(true);
+    },
+    []
+  );
+
+  const handleHandoffSubmit = useCallback(
+    async (mode: 'link' | 'create') => {
+      if (!insight || !handoffFinding) return;
+      setHandoffSubmitting(true);
+
+      const MAX_RETRIES = 2;
+      const findingId = handoffFinding.findingId;
+      if (!findingId) {
+        toast.error(
+          isPolish
+            ? 'Finding nie został jeszcze zapisany w artefakcie P10. Zapisz lub odśwież insight.'
+            : 'This finding is not yet persisted in the P10 artifact. Refresh the insight first.'
+        );
+        setHandoffSubmitting(false);
+        return;
+      }
+      let lastError: unknown;
+
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const res = await V8InterviewApi.handoffFinding(
+            insight.id,
+            findingId,
+            mode === 'link' ? { target_initiative_id: 'select' } : undefined
+          );
+          setHandoffModalOpen(false);
+          setHandoffFinding(null);
+          const initiativeId = res?.initiative?.id;
+          toast.success(
+            isPolish
+              ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${initiativeId ? ` (${initiativeId})` : ''}`
+              : `Initiative ${mode === 'create' ? 'created' : 'linked'}${initiativeId ? ` (${initiativeId})` : ''}`
+          );
+          return;
+        } catch (err: unknown) {
+          lastError = err;
+          const errMsg = err instanceof Error ? err.message : String(err);
+
+          if (
+            errMsg.includes('403') ||
+            errMsg.includes('permission') ||
+            errMsg.includes('forbidden')
+          ) {
+            toast.error(
+              isPolish
+                ? 'Brak uprawnień do przekazania do Inicjatyw. Dostępny jest eksport lub link.'
+                : 'Permission denied for initiative handoff. Export or link-only is available.'
+            );
+            setHandoffSubmitting(false);
+            return;
+          }
+
+          if (errMsg.includes('422') || errMsg.includes('HANDOFF_BLOCKED')) {
+            toast.error(
+              isPolish
+                ? 'Handoff zablokowany — sprawdź confidence i evidence findingu.'
+                : 'Handoff blocked — check finding confidence and evidence.'
+            );
+            setHandoffSubmitting(false);
+            return;
+          }
+
+          if (attempt < MAX_RETRIES) {
+            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+        }
+      }
+
+      const errMsg = lastError instanceof Error ? lastError.message : '';
+      if (errMsg.includes('network') || errMsg.includes('fetch') || errMsg.includes('timeout')) {
+        toast.error(
+          isPolish
+            ? 'Problem z siecią — payload zachowany. Spróbuj ponownie.'
+            : 'Network issue — payload preserved. Please retry.'
+        );
+      } else {
+        toast.error(
+          isPolish
+            ? 'Nie udało się przekazać finding do inicjatywy'
+            : 'Failed to hand off finding to initiative'
+        );
+      }
+      setHandoffSubmitting(false);
+    },
+    [insight, handoffFinding, isPolish]
+  );
+
+  const handleLifecycleTransition = useCallback(
+    async (uiAction: 'submit_review' | 'approve' | 'reject' | 'revert_draft') => {
+      if (!insight) return;
+      const ACTION_MAP: Record<string, string> = {
+        submit_review: 'submit_for_review',
+        approve: 'approve',
+        reject: 'reject',
+        revert_draft: 'revert_to_draft',
+      };
+      const backendAction = ACTION_MAP[uiAction] ?? uiAction;
+      setLifecycleTransitioning(true);
+      try {
+        await V8InterviewApi.lifecycleTransition(insight.id, backendAction);
+        const refreshed = await V8InterviewApi.getInsight(insightId)
+          .then((r) => r.insight)
+          .catch(() => Api.get(`/interview/insights/${insightId}`));
+        setInsight(refreshed);
+        await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
+        const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+          .then((r) => r.activity)
+          .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        const labels: Record<string, { en: string; pl: string }> = {
+          submit_review: { en: 'Submitted for review', pl: 'Wysłano do recenzji' },
+          approve: { en: 'Published', pl: 'Opublikowano' },
+          reject: { en: 'Rejected — reverted to draft', pl: 'Odrzucono — powrót do szkicu' },
+          revert_draft: { en: 'Reverted to draft', pl: 'Przywrócono do szkicu' },
+        };
+        toast.success(isPolish ? labels[uiAction].pl : labels[uiAction].en);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : '';
+        if (
+          errMsg.includes('403') ||
+          errMsg.includes('permission') ||
+          errMsg.includes('forbidden')
+        ) {
+          toast.error(
+            isPolish
+              ? 'Brak uprawnień do zmiany statusu. Skontaktuj się z administratorem.'
+              : 'Permission denied for lifecycle change. Contact your administrator.'
+          );
+        } else {
+          toast.error(
+            isPolish ? 'Nie udało się zmienić statusu' : 'Failed to change lifecycle status'
+          );
+        }
+      } finally {
+        setLifecycleTransitioning(false);
+      }
+    },
+    [insight, insightId, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]
+  );
+
+  const handleCandidateAction = useCallback(
+    async (
+      candidate: V8InsightCandidate,
+      action:
+        | 'mark_candidate'
+        | 'mark_needs_split'
+        | 'mark_needs_evidence'
+        | 'mark_ready_for_review'
+        | 'reject'
+        | 'promote_to_finding'
+    ) => {
+      if (!insight) return;
+      setCandidateActionLoadingId(candidate.id);
+      try {
+        await V8InterviewApi.triageCandidate(insight.id, candidate.id, {
+          action,
+          candidate_statement:
+            action === 'promote_to_finding' ? candidate.candidate_statement : undefined,
+          confidence_level: action === 'promote_to_finding' ? candidate.confidence_hint : undefined,
+        });
+        await Promise.all([
+          loadCandidates(insightId),
+          loadPersistedFindings(insightId),
+          loadInsightAnalysis(insightId),
+        ]);
+        const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+          .then((r) => r.activity)
+          .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        const labels: Record<string, { pl: string; en: string }> = {
+          mark_candidate: { pl: 'Przywrócono jako kandydat', en: 'Reset to candidate' },
+          mark_needs_split: { pl: 'Oznaczono jako do rozbicia', en: 'Marked as needs split' },
+          mark_needs_evidence: {
+            pl: 'Oznaczono jako wymagające dowodów',
+            en: 'Marked as needs evidence',
+          },
+          mark_ready_for_review: {
+            pl: 'Oznaczono jako gotowe do recenzji',
+            en: 'Marked as ready for review',
+          },
+          reject: { pl: 'Kandydat odrzucony', en: 'Candidate rejected' },
+          promote_to_finding: {
+            pl: 'Kandydat promowany do findingu',
+            en: 'Candidate promoted to finding',
+          },
+        };
+        toast.success(isPolish ? labels[action].pl : labels[action].en);
+      } catch (err) {
+        toast.error(
+          isPolish
+            ? 'Nie udało się zaktualizować triage kandydata'
+            : 'Failed to update candidate triage'
+        );
+      } finally {
+        setCandidateActionLoadingId(null);
+      }
+    },
+    [insight, insightId, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]
+  );
+
+  const toggleLimitsExpand = useCallback((cardKey: string) => {
+    setExpandedLimits((prev) => {
+      const next = new Set(prev);
+      if (next.has(cardKey)) next.delete(cardKey);
+      else next.add(cardKey);
+      return next;
+    });
+  }, []);
 
   // Comments handlers (NMode)
   const handleSubmitComment = useCallback(() => {
@@ -871,17 +1441,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           return;
         }
 
-        const created = await Api.post(`/interview/insights/${insightId}/comments`, {
+        const created = await V8InterviewApi.createInsightComment(insightId, {
           content: text,
           priority: draftPriority,
-        });
+        }).catch(() =>
+          Api.post(`/interview/insights/${insightId}/comments`, {
+            content: text,
+            priority: draftPriority,
+          })
+        );
         setNComments((prev) => [...prev, created]);
         setCommentDraft('');
         setDraftPriority('normal');
 
-        const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-          () => []
-        );
+        const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+          .then((r) => r.activity)
+          .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       } catch {
         toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
@@ -916,11 +1491,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             return;
           }
 
-          await Api.delete(`/interview/insights/${insightId}/comments/${commentId}`);
-          setNComments((prev) => prev.filter((c) => c.id !== commentId));
-          const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
-            () => []
+          await V8InterviewApi.deleteInsightComment(insightId, commentId).catch(() =>
+            Api.delete(`/interview/insights/${insightId}/comments/${commentId}`)
           );
+          setNComments((prev) => prev.filter((c) => c.id !== commentId));
+          const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+            .then((r) => r.activity)
+            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
           setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         } catch {
           toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
@@ -1024,12 +1601,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         id: 'status',
         label: { en: 'Status', pl: 'Status' },
         type: 'select' as const,
-        value: insight?.status || 'generating',
+        value:
+          insight?.reviewStatus === 'in_review' || insight?.reviewStatus === 'published'
+            ? insight.reviewStatus
+            : insight?.status || 'generating',
         onChange: () => {},
         readOnly: true,
         options: [
+          { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
           { value: 'generating', label: { en: 'Generating', pl: 'Generowanie' } },
           { value: 'completed', label: { en: 'Completed', pl: 'Ukończone' } },
+          { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
+          { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
           { value: 'failed', label: { en: 'Failed', pl: 'Błąd' } },
         ],
       },
@@ -1065,8 +1648,52 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onChange: () => {},
         readOnly: true,
       },
+      {
+        id: 'reviewStatus',
+        label: { en: 'Review', pl: 'Recenzja' },
+        type: 'select' as const,
+        value: insight?.reviewStatus || 'draft',
+        onChange: () => {},
+        readOnly: true,
+        options: [
+          { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
+          { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
+          { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
+        ],
+      },
+      {
+        id: 'findings',
+        label: { en: 'Findings', pl: 'Findingi' },
+        type: 'text' as const,
+        value: String(findingsSummary.total),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'candidates',
+        label: { en: 'Candidates', pl: 'Kandydaci' },
+        type: 'text' as const,
+        value: String(candidateSummary.total),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'evidence',
+        label: { en: 'Evidence', pl: 'Dowody' },
+        type: 'text' as const,
+        value: String(findingsSummary.activeEvidence),
+        onChange: () => {},
+        readOnly: true,
+      },
     ],
-    [insight, isPolish, typeMeta]
+    [
+      candidateSummary.total,
+      findingsSummary.activeEvidence,
+      findingsSummary.total,
+      insight,
+      isPolish,
+      typeMeta,
+    ]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
@@ -1188,9 +1815,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
 
-        case 'consulting-readout':
+        case 'consulting-readout': {
+          const contradictionSignals = v6Signals.filter((s) => s.type === 'contradiction');
           component = (
             <div className="space-y-5">
+              {contradictionSignals.length > 0 && (
+                <Callout
+                  variant="critical"
+                  title={isPolish ? 'Sprzeczności wykryte' : 'Contradictions detected'}
+                >
+                  <ul className="list-disc list-inside space-y-1">
+                    {contradictionSignals.map((s, idx) => (
+                      <li key={idx} className="text-sm">
+                        <span className="font-medium">{s.title}</span>
+                        {s.description && <> — {s.description}</>}
+                      </li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
               <Callout
                 variant="info"
                 title={isPolish ? 'Zakres interpretacji' : 'Interpretation scope'}
@@ -1277,6 +1920,394 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             </div>
           );
           break;
+        }
+
+        case 'analysis-matrix': {
+          const stakeholderLenses = analysis?.people.stakeholderLenses || [];
+          const sessionLenses = analysis?.people.sessionLenses || [];
+          const cellMeta = (cell?: V8InsightAnalysisMatrixCell) => {
+            switch (cell?.state) {
+              case 'supported':
+                return {
+                  label: isPolish ? 'Wspiera' : 'Supports',
+                  className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+                };
+              case 'contradicted':
+                return {
+                  label: isPolish ? 'Sprzeczne' : 'Contradicted',
+                  className: 'bg-red-500/10 text-red-700 dark:text-red-300',
+                };
+              case 'local_only':
+                return {
+                  label: isPolish ? 'Lokalny sygnał' : 'Local only',
+                  className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                };
+              default:
+                return {
+                  label: isPolish ? 'Brak sygnału' : 'Not observed',
+                  className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+                };
+            }
+          };
+
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="info"
+                title={
+                  isPolish
+                    ? 'Kanon analizy: osoba x temat x zakres'
+                    : 'Analysis canon: person x topic x scope'
+                }
+              >
+                {isPolish
+                  ? 'Ta warstwa nie tworzy nowych truth objectów. Pokazuje, jak persisted findings rozkładają się po rolach, osobach i szerokości pokrycia.'
+                  : 'This layer does not create new truth objects. It shows how persisted findings distribute across roles, people, and coverage width.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Posture' : 'Posture'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {analysis?.scope.posture === 'organization_synthesis'
+                      ? isPolish
+                        ? 'Szeroka synteza'
+                        : 'Organization synthesis'
+                      : analysis?.scope.posture === 'cross_perspective'
+                        ? isPolish
+                          ? 'Wiele perspektyw'
+                          : 'Cross perspective'
+                        : isPolish
+                          ? 'Jedna perspektywa'
+                          : 'Single perspective'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Sesje źródłowe' : 'Source sessions'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {analysis?.scope.sourceSessionCount || 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Lenses' : 'Lenses'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {analysis?.scope.distinctStakeholderCount || 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Consensus' : 'Consensus'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {consensusTopics.length}
+                  </div>
+                </div>
+              </div>
+
+              {(analysis?.synthesis.coverageGaps || []).length > 0 && (
+                <Callout variant="warning" title={isPolish ? 'Luki pokrycia' : 'Coverage gaps'}>
+                  <ul className="list-disc list-inside space-y-1">
+                    {(analysis?.synthesis.coverageGaps || []).map((gap) => (
+                      <li key={gap} className="text-sm">
+                        {gap}
+                      </li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+
+              <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4">
+                <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-navy-900/60 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('stakeholder')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'stakeholder'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Stakeholder lenses' : 'Stakeholder lenses'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('session')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'session'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Sesje / osoby' : 'Sessions / people'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-2 xl:ml-auto">
+                    <select
+                      value={analysisRoleFilter}
+                      onChange={(e) => setAnalysisRoleFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
+                      {analysisRoleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={analysisDepartmentFilter}
+                      onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">
+                        {isPolish ? 'Wszystkie działy' : 'All departments'}
+                      </option>
+                      {analysisDepartmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Consensus topics' : 'Consensus topics'}
+                  </div>
+                  {consensusTopics.length > 0 ? (
+                    consensusTopics.map((topic) => (
+                      <div
+                        key={topic.id}
+                        className="rounded-2xl bg-emerald-500/[0.05] px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                          {topic.label}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {topic.supportingStakeholderLabels.join(', ') ||
+                            (isPolish ? 'Brak lensów' : 'No lenses')}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={CheckCircle2}
+                      message={
+                        isPolish ? 'Brak potwierdzonego konsensusu' : 'No confirmed consensus yet'
+                      }
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Local-only signals' : 'Local-only signals'}
+                  </div>
+                  {localOnlyTopics.length > 0 ? (
+                    localOnlyTopics.slice(0, 6).map((topic) => (
+                      <div
+                        key={topic.id}
+                        className="rounded-2xl bg-amber-500/[0.05] px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                          {topic.label}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {topic.supportingSessionIds.length === 1
+                            ? sessionLenses.find((lens) =>
+                                lens.sessionIds.includes(topic.supportingSessionIds[0])
+                              )?.label || topic.supportingSessionIds[0]
+                            : `${topic.supportingSessionIds.length} ${isPolish ? 'sesje' : 'sessions'}`}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={Radio}
+                      message={isPolish ? 'Brak lokalnych sygnałów' : 'No local-only signals'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {analysisLensMode === 'stakeholder'
+                      ? isPolish
+                        ? 'Stakeholder lenses'
+                        : 'Stakeholder lenses'
+                      : isPolish
+                        ? 'Sesje / osoby'
+                        : 'Sessions / people'}
+                  </div>
+                  {(analysisLensMode === 'stakeholder'
+                    ? filteredStakeholderAnalysisLenses
+                    : filteredSessionAnalysisLenses
+                  ).length > 0 ? (
+                    (analysisLensMode === 'stakeholder'
+                      ? filteredStakeholderAnalysisLenses
+                      : filteredSessionAnalysisLenses
+                    ).map((lens) => (
+                      <div
+                        key={lens.id}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                          {lens.label}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                          {lens.localSummary}
+                          {(lens.role || lens.department) && (
+                            <div>{[lens.role, lens.department].filter(Boolean).join(' · ')}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={Users}
+                      message={isPolish ? 'Brak zbudowanych lensów' : 'No lenses built yet'}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {contradictedTopics.length > 0 && (
+                <Callout
+                  variant="critical"
+                  title={
+                    isPolish
+                      ? 'Tematy sprzeczne między perspektywami'
+                      : 'Topics with cross-perspective contradiction'
+                  }
+                >
+                  <ul className="list-disc list-inside space-y-1">
+                    {contradictedTopics.map((topic) => (
+                      <li key={topic.id} className="text-sm">
+                        <span className="font-medium">{topic.label}</span>
+                        {topic.supportingStakeholderLabels.length > 0 && (
+                          <> ({topic.supportingStakeholderLabels.join(', ')})</>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+
+              {visibleAnalysisTopicRows.length > 0 && activeAnalysisColumns.length > 0 ? (
+                <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-200/70 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/50">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {analysisLensMode === 'stakeholder'
+                        ? isPolish
+                          ? 'Macierz temat x stakeholder lens'
+                          : 'Topic x stakeholder lens matrix'
+                        : isPolish
+                          ? 'Macierz temat x sesja/osoba'
+                          : 'Topic x session/person matrix'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish
+                        ? 'Komórki pokazują, gdzie finding jest wspierany, lokalny lub sprzeczny.'
+                        : 'Cells show where a finding is supported, local-only, or contradicted.'}
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="bg-white/70 dark:bg-navy-900/30">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Temat' : 'Topic'}
+                          </th>
+                          {activeAnalysisColumns.map((column) => (
+                            <th
+                              key={column.id}
+                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500"
+                            >
+                              {column.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleAnalysisTopicRows.map((row) => (
+                          <tr
+                            key={row.id}
+                            className="border-t border-slate-200/60 dark:border-navy-700/50"
+                          >
+                            <td className="px-4 py-3 align-top min-w-[220px]">
+                              <div className="font-medium text-slate-900 dark:text-slate-100">
+                                {row.label}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {analysisTopicsById[row.id]?.kind}
+                              </div>
+                              {analysisTopicsById[row.id]?.perspectiveLabels?.length ? (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {analysisTopicsById[row.id]?.perspectiveLabels.map((label) => (
+                                    <span
+                                      key={label}
+                                      className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                    >
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {analysisTopicsById[row.id]?.divergenceNote && (
+                                <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                                  {analysisTopicsById[row.id]?.divergenceNote}
+                                </div>
+                              )}
+                            </td>
+                            {activeAnalysisColumns.map((column) => {
+                              const cell = activeAnalysisCellMap.get(`${row.id}:${column.id}`);
+                              const meta = cellMeta(cell);
+                              return (
+                                <td key={column.id} className="px-3 py-3 align-top">
+                                  <div
+                                    className={`inline-flex px-2 py-1 rounded-full text-[10px] font-medium ${meta.className}`}
+                                  >
+                                    {meta.label}
+                                  </div>
+                                  {cell && cell.evidenceCount > 0 && (
+                                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                      {cell.evidenceCount} {isPolish ? 'dow.' : 'ev.'}
+                                    </div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={BarChart3}
+                  message={
+                    isPolish
+                      ? 'Brak danych po obecnych filtrach albo macierz nie jest jeszcze gotowa.'
+                      : 'No data for the current filters or the matrix is not ready yet.'
+                  }
+                />
+              )}
+            </div>
+          );
+          break;
+        }
 
         case 'themes':
           component = (
@@ -1306,87 +2337,242 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 />
               ) : (
                 <div className="space-y-3">
-                  {v6Themes.map((theme, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {theme.title}
+                  {v6Themes.map((theme, idx) => {
+                    const persistedFinding = findingsBySourceKey[`theme:${idx}`];
+                    const findingConfidence = (persistedFinding?.confidence_level ||
+                      theme.confidence) as P10ConfidenceLevel | undefined;
+                    const findingLimits =
+                      persistedFinding?.limits
+                        ?.split(/\r?\n/)
+                        .map((item) => item.trim())
+                        .filter(Boolean) ||
+                      theme.limits ||
+                      [];
+                    const activePointerCount =
+                      persistedFinding?.evidence_pointers.filter((pointer) => !pointer.isTombstone)
+                        .length || 0;
+                    const confidenceBadgeMap: Record<
+                      P10ConfidenceLevel,
+                      { bg: string; label: string; labelPl: string }
+                    > = {
+                      high: {
+                        bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                        label: 'High confidence',
+                        labelPl: 'Wysoka pewność',
+                      },
+                      medium: {
+                        bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                        label: 'Medium confidence',
+                        labelPl: 'Średnia pewność',
+                      },
+                      low: {
+                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        label: 'Hypothesis',
+                        labelPl: 'Hipoteza',
+                      },
+                      insufficient: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Insufficient data',
+                        labelPl: 'Niewystarczające dane',
+                      },
+                      contradicted: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                      },
+                    };
+                    const limitsKey = `theme-${idx}`;
+                    const limitsExpanded = expandedLimits.has(limitsKey);
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {theme.title}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                                theme.strength === 'strong'
+                                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                  : theme.strength === 'moderate'
+                                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                    : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
+                              }`}
+                            >
+                              {theme.strength === 'strong'
+                                ? isPolish
+                                  ? 'Silny'
+                                  : 'Strong'
+                                : theme.strength === 'moderate'
+                                  ? isPolish
+                                    ? 'Umiarkowany'
+                                    : 'Moderate'
+                                  : isPolish
+                                    ? 'Słaby'
+                                    : 'Weak'}
+                            </span>
+                            {findingConfidence && (
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confidenceBadgeMap[findingConfidence].bg}`}
+                              >
+                                {isPolish
+                                  ? confidenceBadgeMap[findingConfidence].labelPl
+                                  : confidenceBadgeMap[findingConfidence].label}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <span
-                          className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                            theme.strength === 'strong'
-                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                              : theme.strength === 'moderate'
-                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                                : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
-                          }`}
-                        >
-                          {theme.strength === 'strong'
-                            ? isPolish
-                              ? 'Silny'
-                              : 'Strong'
-                            : theme.strength === 'moderate'
-                              ? isPolish
-                                ? 'Umiarkowany'
-                                : 'Moderate'
-                              : isPolish
-                                ? 'Słaby'
-                                : 'Weak'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {theme.description}
-                      </p>
-                      {theme.evidence_refs?.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {theme.evidence_refs.map((ref) => {
-                            const evidence = findEvidenceForRef(ref);
-                            const isExpanded = expandedEvidenceRef === ref;
-                            return (
-                              <div key={ref} className="inline-flex flex-col">
-                                <button
-                                  onClick={() => toggleEvidenceRef(ref)}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
-                                >
-                                  <Zap size={10} />
-                                  {evidence?.question_text
-                                    ? evidence.question_text.slice(0, 40) +
-                                      (evidence.question_text.length > 40 ? '…' : '')
-                                    : ref.slice(0, 20)}
-                                  {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-                                </button>
-                                {isExpanded && evidence && (
-                                  <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                    <div className="font-medium text-slate-700 dark:text-slate-200">
-                                      {evidence.question_text}
-                                    </div>
-                                    <div className="text-slate-500 dark:text-slate-400 italic">
-                                      "{evidence.answer_snippet}"
-                                    </div>
-                                    {evidence.linked_themes?.length > 0 && (
-                                      <div className="flex flex-wrap gap-1 pt-0.5">
-                                        {evidence.linked_themes.map((t) => (
-                                          <span
-                                            key={t}
-                                            className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400"
-                                          >
-                                            {t}
-                                          </span>
-                                        ))}
+                        {findingConfidence === 'contradicted' && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                            <AlertCircle size={14} />
+                            {isPolish
+                              ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
+                              : 'Contradiction detected in data — verify before publishing'}
+                          </div>
+                        )}
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {theme.description}
+                        </p>
+                        {theme.perspective_labels?.length || theme.divergence_note ? (
+                          <div className="space-y-2">
+                            {theme.perspective_labels && theme.perspective_labels.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {theme.perspective_labels.map((label) => (
+                                  <span
+                                    key={label}
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                  >
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {theme.divergence_note && (
+                              <div className="text-xs text-amber-700 dark:text-amber-300">
+                                {theme.divergence_note}
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                          <button
+                            onClick={() => toggleLimitsExpand(limitsKey)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                          >
+                            <AlertTriangle size={12} />
+                            <span className="font-medium">
+                              {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                            </span>
+                            {limitsExpanded ? (
+                              <ChevronUp size={12} className="ml-auto" />
+                            ) : (
+                              <ChevronDown size={12} className="ml-auto" />
+                            )}
+                          </button>
+                          {limitsExpanded && (
+                            <div className="px-3 pb-2">
+                              {findingLimits.length > 0 ? (
+                                <ul className="space-y-1">
+                                  {findingLimits.map((limit, li) => (
+                                    <li
+                                      key={li}
+                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      {limit}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          {persistedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish
+                                ? `P10: ${activePointerCount} dow.`
+                                : `P10: ${activePointerCount} ev.`}
+                            </span>
+                          )}
+                          {theme.evidence_refs?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {theme.evidence_refs.map((ref) => {
+                                const evidence = findEvidenceForRef(ref);
+                                const isExpanded = expandedEvidenceRef === ref;
+                                return (
+                                  <div key={ref} className="inline-flex flex-col">
+                                    <button
+                                      onClick={() => toggleEvidenceRef(ref)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                    >
+                                      <Zap size={10} />
+                                      {evidence?.question_text
+                                        ? evidence.question_text.slice(0, 40) +
+                                          (evidence.question_text.length > 40 ? '…' : '')
+                                        : ref.slice(0, 20)}
+                                      {isExpanded ? (
+                                        <ChevronUp size={10} />
+                                      ) : (
+                                        <ChevronDown size={10} />
+                                      )}
+                                    </button>
+                                    {isExpanded && evidence && (
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                          {evidence.question_text}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                          "{evidence.answer_snippet}"
+                                        </div>
+                                        {evidence.linked_themes?.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 pt-0.5">
+                                            {evidence.linked_themes.map((t) => (
+                                              <span
+                                                key={t}
+                                                className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400"
+                                              >
+                                                {t}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                                );
+                              })}
+                            </div>
+                          )}
+                          <button
+                            onClick={() =>
+                              handleOpenHandoff({
+                                findingId: persistedFinding?.id,
+                                title: theme.title,
+                                description: theme.description,
+                                confidence: findingConfidence,
+                                limits: findingLimits,
+                                sectionType: 'theme',
+                                index: idx,
+                              })
+                            }
+                            disabled={!persistedFinding}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ExternalLink size={10} />
+                            {isPolish ? 'Inicjatywa' : 'Handoff'}
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1411,6 +2597,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <div className="space-y-3">
                   {v6Issues.map((issue, idx) => {
+                    const persistedFinding = findingsBySourceKey[`issue:${idx}`];
+                    const findingConfidence = (persistedFinding?.confidence_level ||
+                      issue.confidence) as P10ConfidenceLevel | undefined;
+                    const findingLimits =
+                      persistedFinding?.limits
+                        ?.split(/\r?\n/)
+                        .map((item) => item.trim())
+                        .filter(Boolean) ||
+                      issue.limits ||
+                      [];
+                    const activePointerCount =
+                      persistedFinding?.evidence_pointers.filter((pointer) => !pointer.isTombstone)
+                        .length || 0;
                     const severityStyles =
                       issue.severity === 'high'
                         ? 'border-l-red-500 bg-red-500/[0.04] dark:bg-red-500/10'
@@ -1423,6 +2622,38 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         : issue.severity === 'medium'
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                    const confMap: Record<
+                      P10ConfidenceLevel,
+                      { bg: string; label: string; labelPl: string }
+                    > = {
+                      high: {
+                        bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                        label: 'High confidence',
+                        labelPl: 'Wysoka pewność',
+                      },
+                      medium: {
+                        bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                        label: 'Medium confidence',
+                        labelPl: 'Średnia pewność',
+                      },
+                      low: {
+                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        label: 'Hypothesis',
+                        labelPl: 'Hipoteza',
+                      },
+                      insufficient: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Insufficient data',
+                        labelPl: 'Niewystarczające dane',
+                      },
+                      contradicted: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                      },
+                    };
+                    const limitsKey = `issue-${idx}`;
+                    const limitsExpanded = expandedLimits.has(limitsKey);
                     return (
                       <div
                         key={idx}
@@ -1432,62 +2663,166 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {issue.title}
                           </div>
-                          <span
-                            className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}
-                          >
-                            {issue.severity === 'high'
-                              ? isPolish
-                                ? 'Wysoki'
-                                : 'High'
-                              : issue.severity === 'medium'
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}
+                            >
+                              {issue.severity === 'high'
                                 ? isPolish
-                                  ? 'Średni'
-                                  : 'Medium'
-                                : isPolish
-                                  ? 'Niski'
-                                  : 'Low'}
-                          </span>
+                                  ? 'Wysoki'
+                                  : 'High'
+                                : issue.severity === 'medium'
+                                  ? isPolish
+                                    ? 'Średni'
+                                    : 'Medium'
+                                  : isPolish
+                                    ? 'Niski'
+                                    : 'Low'}
+                            </span>
+                            {findingConfidence && (
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[findingConfidence].bg}`}
+                              >
+                                {isPolish
+                                  ? confMap[findingConfidence].labelPl
+                                  : confMap[findingConfidence].label}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {findingConfidence === 'contradicted' && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                            <AlertCircle size={14} />
+                            {isPolish
+                              ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
+                              : 'Contradiction detected in data — verify before publishing'}
+                          </div>
+                        )}
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                           {issue.description}
                         </p>
-                        {issue.evidence_refs?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            {issue.evidence_refs.map((ref) => {
-                              const evidence = findEvidenceForRef(ref);
-                              const isExpanded = expandedEvidenceRef === ref;
-                              return (
-                                <div key={ref} className="inline-flex flex-col">
-                                  <button
-                                    onClick={() => toggleEvidenceRef(ref)}
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                        {issue.perspective_labels?.length || issue.divergence_note ? (
+                          <div className="space-y-2">
+                            {issue.perspective_labels && issue.perspective_labels.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {issue.perspective_labels.map((label) => (
+                                  <span
+                                    key={label}
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
                                   >
-                                    <Zap size={10} />
-                                    {evidence?.question_text
-                                      ? evidence.question_text.slice(0, 40) +
-                                        (evidence.question_text.length > 40 ? '…' : '')
-                                      : ref.slice(0, 20)}
-                                    {isExpanded ? (
-                                      <ChevronUp size={10} />
-                                    ) : (
-                                      <ChevronDown size={10} />
-                                    )}
-                                  </button>
-                                  {isExpanded && evidence && (
-                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                      <div className="font-medium text-slate-700 dark:text-slate-200">
-                                        {evidence.question_text}
-                                      </div>
-                                      <div className="text-slate-500 dark:text-slate-400 italic">
-                                        "{evidence.answer_snippet}"
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {issue.divergence_note && (
+                              <div className="text-xs text-amber-700 dark:text-amber-300">
+                                {issue.divergence_note}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ) : null}
+                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                          <button
+                            onClick={() => toggleLimitsExpand(limitsKey)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                          >
+                            <AlertTriangle size={12} />
+                            <span className="font-medium">
+                              {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                            </span>
+                            {limitsExpanded ? (
+                              <ChevronUp size={12} className="ml-auto" />
+                            ) : (
+                              <ChevronDown size={12} className="ml-auto" />
+                            )}
+                          </button>
+                          {limitsExpanded && (
+                            <div className="px-3 pb-2">
+                              {findingLimits.length > 0 ? (
+                                <ul className="space-y-1">
+                                  {findingLimits.map((limit, li) => (
+                                    <li
+                                      key={li}
+                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      {limit}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          {persistedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish
+                                ? `P10: ${activePointerCount} dow.`
+                                : `P10: ${activePointerCount} ev.`}
+                            </span>
+                          )}
+                          {issue.evidence_refs?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {issue.evidence_refs.map((ref) => {
+                                const evidence = findEvidenceForRef(ref);
+                                const isExpanded = expandedEvidenceRef === ref;
+                                return (
+                                  <div key={ref} className="inline-flex flex-col">
+                                    <button
+                                      onClick={() => toggleEvidenceRef(ref)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                    >
+                                      <Zap size={10} />
+                                      {evidence?.question_text
+                                        ? evidence.question_text.slice(0, 40) +
+                                          (evidence.question_text.length > 40 ? '…' : '')
+                                        : ref.slice(0, 20)}
+                                      {isExpanded ? (
+                                        <ChevronUp size={10} />
+                                      ) : (
+                                        <ChevronDown size={10} />
+                                      )}
+                                    </button>
+                                    {isExpanded && evidence && (
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                          {evidence.question_text}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                          "{evidence.answer_snippet}"
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <button
+                            onClick={() =>
+                              handleOpenHandoff({
+                                findingId: persistedFinding?.id,
+                                title: issue.title,
+                                description: issue.description,
+                                confidence: findingConfidence,
+                                limits: findingLimits,
+                                sectionType: 'issue',
+                                index: idx,
+                              })
+                            }
+                            disabled={!persistedFinding}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ExternalLink size={10} />
+                            {isPolish ? 'Inicjatywa' : 'Handoff'}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -1515,12 +2850,57 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <div className="space-y-3">
                   {v6Opportunities.map((opp, idx) => {
+                    const persistedFinding = findingsBySourceKey[`opportunity:${idx}`];
+                    const findingConfidence = (persistedFinding?.confidence_level ||
+                      opp.confidence) as P10ConfidenceLevel | undefined;
+                    const findingLimits =
+                      persistedFinding?.limits
+                        ?.split(/\r?\n/)
+                        .map((item) => item.trim())
+                        .filter(Boolean) ||
+                      opp.limits ||
+                      [];
+                    const activePointerCount =
+                      persistedFinding?.evidence_pointers.filter((pointer) => !pointer.isTombstone)
+                        .length || 0;
                     const impactBadge =
                       opp.impact === 'high'
                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                         : opp.impact === 'medium'
                           ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                    const confMap: Record<
+                      P10ConfidenceLevel,
+                      { bg: string; label: string; labelPl: string }
+                    > = {
+                      high: {
+                        bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                        label: 'High confidence',
+                        labelPl: 'Wysoka pewność',
+                      },
+                      medium: {
+                        bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                        label: 'Medium confidence',
+                        labelPl: 'Średnia pewność',
+                      },
+                      low: {
+                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        label: 'Hypothesis',
+                        labelPl: 'Hipoteza',
+                      },
+                      insufficient: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Insufficient data',
+                        labelPl: 'Niewystarczające dane',
+                      },
+                      contradicted: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                      },
+                    };
+                    const limitsKey = `opp-${idx}`;
+                    const limitsExpanded = expandedLimits.has(limitsKey);
                     return (
                       <div
                         key={idx}
@@ -1530,62 +2910,166 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {opp.title}
                           </div>
-                          <span
-                            className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}
-                          >
-                            {opp.impact === 'high'
-                              ? isPolish
-                                ? 'Wysoki wpływ'
-                                : 'High impact'
-                              : opp.impact === 'medium'
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}
+                            >
+                              {opp.impact === 'high'
                                 ? isPolish
-                                  ? 'Średni wpływ'
-                                  : 'Medium impact'
-                                : isPolish
-                                  ? 'Niski wpływ'
-                                  : 'Low impact'}
-                          </span>
+                                  ? 'Wysoki wpływ'
+                                  : 'High impact'
+                                : opp.impact === 'medium'
+                                  ? isPolish
+                                    ? 'Średni wpływ'
+                                    : 'Medium impact'
+                                  : isPolish
+                                    ? 'Niski wpływ'
+                                    : 'Low impact'}
+                            </span>
+                            {findingConfidence && (
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[findingConfidence].bg}`}
+                              >
+                                {isPolish
+                                  ? confMap[findingConfidence].labelPl
+                                  : confMap[findingConfidence].label}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {findingConfidence === 'contradicted' && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                            <AlertCircle size={14} />
+                            {isPolish
+                              ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
+                              : 'Contradiction detected in data — verify before publishing'}
+                          </div>
+                        )}
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                           {opp.description}
                         </p>
-                        {opp.evidence_refs?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            {opp.evidence_refs.map((ref) => {
-                              const evidence = findEvidenceForRef(ref);
-                              const isExpanded = expandedEvidenceRef === ref;
-                              return (
-                                <div key={ref} className="inline-flex flex-col">
-                                  <button
-                                    onClick={() => toggleEvidenceRef(ref)}
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                        {opp.perspective_labels?.length || opp.divergence_note ? (
+                          <div className="space-y-2">
+                            {opp.perspective_labels && opp.perspective_labels.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {opp.perspective_labels.map((label) => (
+                                  <span
+                                    key={label}
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
                                   >
-                                    <Zap size={10} />
-                                    {evidence?.question_text
-                                      ? evidence.question_text.slice(0, 40) +
-                                        (evidence.question_text.length > 40 ? '…' : '')
-                                      : ref.slice(0, 20)}
-                                    {isExpanded ? (
-                                      <ChevronUp size={10} />
-                                    ) : (
-                                      <ChevronDown size={10} />
-                                    )}
-                                  </button>
-                                  {isExpanded && evidence && (
-                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                      <div className="font-medium text-slate-700 dark:text-slate-200">
-                                        {evidence.question_text}
-                                      </div>
-                                      <div className="text-slate-500 dark:text-slate-400 italic">
-                                        "{evidence.answer_snippet}"
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {opp.divergence_note && (
+                              <div className="text-xs text-amber-700 dark:text-amber-300">
+                                {opp.divergence_note}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ) : null}
+                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                          <button
+                            onClick={() => toggleLimitsExpand(limitsKey)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                          >
+                            <AlertTriangle size={12} />
+                            <span className="font-medium">
+                              {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                            </span>
+                            {limitsExpanded ? (
+                              <ChevronUp size={12} className="ml-auto" />
+                            ) : (
+                              <ChevronDown size={12} className="ml-auto" />
+                            )}
+                          </button>
+                          {limitsExpanded && (
+                            <div className="px-3 pb-2">
+                              {findingLimits.length > 0 ? (
+                                <ul className="space-y-1">
+                                  {findingLimits.map((limit, li) => (
+                                    <li
+                                      key={li}
+                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      {limit}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          {persistedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish
+                                ? `P10: ${activePointerCount} dow.`
+                                : `P10: ${activePointerCount} ev.`}
+                            </span>
+                          )}
+                          {opp.evidence_refs?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {opp.evidence_refs.map((ref) => {
+                                const evidence = findEvidenceForRef(ref);
+                                const isExpanded = expandedEvidenceRef === ref;
+                                return (
+                                  <div key={ref} className="inline-flex flex-col">
+                                    <button
+                                      onClick={() => toggleEvidenceRef(ref)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                    >
+                                      <Zap size={10} />
+                                      {evidence?.question_text
+                                        ? evidence.question_text.slice(0, 40) +
+                                          (evidence.question_text.length > 40 ? '…' : '')
+                                        : ref.slice(0, 20)}
+                                      {isExpanded ? (
+                                        <ChevronUp size={10} />
+                                      ) : (
+                                        <ChevronDown size={10} />
+                                      )}
+                                    </button>
+                                    {isExpanded && evidence && (
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                          {evidence.question_text}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                          "{evidence.answer_snippet}"
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <button
+                            onClick={() =>
+                              handleOpenHandoff({
+                                findingId: persistedFinding?.id,
+                                title: opp.title,
+                                description: opp.description,
+                                confidence: findingConfidence,
+                                limits: findingLimits,
+                                sectionType: 'opportunity',
+                                index: idx,
+                              })
+                            }
+                            disabled={!persistedFinding}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ExternalLink size={10} />
+                            {isPolish ? 'Inicjatywa' : 'Handoff'}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -1669,7 +3153,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
 
-        case 'evidence-map':
+        case 'evidence-map': {
+          const entriesWithNoPointers = v6EvidenceMap.filter(
+            (e) => !e.evidence_pointers || e.evidence_pointers.length === 0
+          );
           component = (
             <div className="space-y-4">
               <Callout variant="purple" title={isPolish ? 'Mapa dowodów' : 'Evidence Map'} compact>
@@ -1677,9 +3164,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ? 'Tabela łączy odpowiedzi źródłowe z tematami i problemami. Kliknij wiersz, aby zobaczyć pełny cytat.'
                   : 'This table links source answers to themes and issues. Click a row to see the full quote.'}
               </Callout>
+              {entriesWithNoPointers.length > 0 && (
+                <Callout
+                  variant="warning"
+                  title={isPolish ? 'Brakujące dowody' : 'Missing evidence'}
+                  compact
+                >
+                  {isPolish
+                    ? `${entriesWithNoPointers.length} wpisów nie ma wskaźników dowodowych — publikacja zablokowana do uzupełnienia.`
+                    : `${entriesWithNoPointers.length} entries have no evidence pointers — publish blocked until resolved.`}
+                </Callout>
+              )}
+              {v6EvidenceMap.some(
+                (e) => e.answer_snippet === '[REDACTED]' || e.answer_snippet?.includes('[redacted]')
+              ) && (
+                <Callout
+                  variant="critical"
+                  title={isPolish ? 'Zredagowane dane' : 'Redacted data'}
+                  compact
+                >
+                  {isPolish
+                    ? 'Niektóre odpowiedzi źródłowe zostały zredagowane. Wskaźniki dowodowe zostają w audycie, ale treść jest niedostępna.'
+                    : 'Some source answers have been redacted. Evidence pointers remain for audit but content is unavailable.'}
+                </Callout>
+              )}
               {v6EvidenceMap.length === 0 ? (
                 <EmptyStateInline
-                  icon={Map}
+                  icon={MapIcon}
                   message={isPolish ? 'Brak mapy dowodów' : 'No evidence map available'}
                   hint={
                     isPolish
@@ -1716,26 +3227,40 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       {
                         key: 'linked',
                         header: isPolish ? 'Powiązania' : 'Links',
-                        render: (row) => (
-                          <div className="flex flex-wrap gap-1">
-                            {row.linked_themes?.map((t: string) => (
-                              <span
-                                key={`t-${t}`}
-                                className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                            {row.linked_issues?.map((i: string) => (
-                              <span
-                                key={`i-${i}`}
-                                className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]"
-                              >
-                                {i}
-                              </span>
-                            ))}
-                          </div>
-                        ),
+                        render: (row) => {
+                          const hasPointers =
+                            row.evidence_pointers && row.evidence_pointers.length > 0;
+                          return (
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap gap-1">
+                                {row.linked_themes?.map((t: string) => (
+                                  <span
+                                    key={`t-${t}`}
+                                    className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]"
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                                {row.linked_issues?.map((i: string) => (
+                                  <span
+                                    key={`i-${i}`}
+                                    className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]"
+                                  >
+                                    {i}
+                                  </span>
+                                ))}
+                              </div>
+                              {!hasPointers && (
+                                <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                                  <AlertTriangle size={10} />
+                                  {isPolish
+                                    ? 'Brak dowodu — publikacja zablokowana'
+                                    : 'Missing evidence — publish blocked'}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        },
                       },
                     ] as InlineTableColumn<InsightEvidenceMapEntry & Record<string, unknown>>[]
                   }
@@ -1748,8 +3273,509 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             </div>
           );
           break;
+        }
 
-        case 'traceability':
+        case 'candidate-triage': {
+          const triageBadge = (
+            status: V8InsightCandidate['triage_status']
+          ): { label: string; className: string } => {
+            switch (status) {
+              case 'ready_for_review':
+                return {
+                  label: isPolish ? 'Gotowe do recenzji' : 'Ready for review',
+                  className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+                };
+              case 'needs_evidence':
+                return {
+                  label: isPolish ? 'Brak dowodów' : 'Needs evidence',
+                  className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                };
+              case 'needs_split':
+                return {
+                  label: isPolish ? 'Do rozbicia' : 'Needs split',
+                  className: 'bg-red-500/10 text-red-700 dark:text-red-300',
+                };
+              case 'rejected':
+                return {
+                  label: isPolish ? 'Odrzucony' : 'Rejected',
+                  className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+                };
+              case 'promoted':
+                return {
+                  label: isPolish ? 'Promowany' : 'Promoted',
+                  className: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+                };
+              default:
+                return {
+                  label: isPolish ? 'Kandydat' : 'Candidate',
+                  className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
+                };
+            }
+          };
+
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="warning"
+                title={
+                  isPolish
+                    ? 'Warstwa robocza przed findingiem P10'
+                    : 'Working layer before a P10 finding'
+                }
+              >
+                {isPolish
+                  ? 'Kandydaci nie są publishable truth. To przestrzeń operatora do decyzji: dopnij evidence, rozbij sprzeczność, przygotuj do recenzji albo promuj do findingu.'
+                  : 'Candidates are not publishable truth. This is the operator layer to add evidence, split contradictions, prepare for review, or promote into a finding.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Kandydaci' : 'Candidates'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {candidateSummary.total}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Ready' : 'Ready'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
+                    {candidateSummary.ready}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Braki evidence' : 'Needs evidence'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
+                    {candidateSummary.needsEvidence}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Do rozbicia' : 'Needs split'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
+                    {candidateSummary.needsSplit}
+                  </div>
+                </div>
+              </div>
+
+              {candidates.length > 0 ? (
+                <div className="space-y-3">
+                  {candidates.map((candidate) => {
+                    const statusMeta = triageBadge(candidate.triage_status);
+                    const linkedTopic = candidate.source_key
+                      ? analysis?.topics.find((topic) => topic.sourceKey === candidate.source_key)
+                      : null;
+                    const linkedFinding = candidate.linked_finding_id
+                      ? findings.find((finding) => finding.id === candidate.linked_finding_id)
+                      : null;
+                    const isBusy = candidateActionLoadingId === candidate.id;
+                    return (
+                      <div
+                        key={candidate.id}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              {candidate.candidate_statement}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              <span
+                                className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${statusMeta.className}`}
+                              >
+                                {statusMeta.label}
+                              </span>
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                {candidate.confidence_hint}
+                              </span>
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                {candidate.followup_type}
+                              </span>
+                              {candidate.source_section_type && (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                  {candidate.source_section_type}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {linkedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-500/10 text-violet-700 dark:text-violet-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish ? 'Powiązany finding' : 'Linked finding'}
+                            </span>
+                          )}
+                        </div>
+
+                        {candidate.rationale && (
+                          <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                            {candidate.rationale}
+                          </div>
+                        )}
+
+                        {linkedTopic?.divergenceNote && (
+                          <div className="text-xs text-amber-700 dark:text-amber-300">
+                            {linkedTopic.divergenceNote}
+                          </div>
+                        )}
+
+                        <Callout
+                          variant={
+                            candidate.triage_status === 'needs_split'
+                              ? 'critical'
+                              : candidate.triage_status === 'needs_evidence'
+                                ? 'warning'
+                                : 'info'
+                          }
+                          title={isPolish ? 'Rekomendowany następny krok' : 'Recommended next step'}
+                          compact
+                        >
+                          {candidate.followup_recommendation}
+                        </Callout>
+
+                        {linkedTopic?.supportingStakeholderLabels?.length ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {linkedTopic.supportingStakeholderLabels.map((label) => (
+                              <span
+                                key={label}
+                                className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'mark_needs_evidence')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <AlertTriangle size={12} />
+                            )}
+                            {isPolish ? 'Needs evidence' : 'Needs evidence'}
+                          </button>
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'mark_needs_split')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <AlertCircle size={12} />
+                            )}
+                            {isPolish ? 'Do rozbicia' : 'Needs split'}
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleCandidateAction(candidate, 'mark_ready_for_review')
+                            }
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={12} />
+                            )}
+                            {isPolish ? 'Gotowe do recenzji' : 'Ready for review'}
+                          </button>
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'reject')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-500/10 text-slate-700 dark:text-slate-300 hover:bg-slate-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <X size={12} />
+                            )}
+                            {isPolish ? 'Odrzuć' : 'Reject'}
+                          </button>
+                          {candidate.triage_status !== 'promoted' &&
+                            candidate.triage_status !== 'rejected' && (
+                              <button
+                                onClick={() =>
+                                  handleCandidateAction(candidate, 'promote_to_finding')
+                                }
+                                disabled={isBusy}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 text-xs font-medium disabled:opacity-50"
+                              >
+                                {isBusy ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <Target size={12} />
+                                )}
+                                {isPolish ? 'Promuj do findingu' : 'Promote to finding'}
+                              </button>
+                            )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={Eye}
+                  message={
+                    isPolish ? 'Brak kandydatów do triage' : 'No candidates available for triage'
+                  }
+                />
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'people': {
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="info"
+                title={
+                  isPolish
+                    ? 'Czytaj insight przez perspektywy ludzi'
+                    : 'Read the insight through people perspectives'
+                }
+              >
+                {isPolish
+                  ? 'Ta sekcja pokazuje, które tematy wspiera dana osoba lub stakeholder lens i gdzie pojawiają się lokalne albo sprzeczne spojrzenia.'
+                  : 'This section shows which topics are supported by each person or stakeholder lens and where local or contradictory views appear.'}
+              </Callout>
+
+              <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4">
+                <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-navy-900/60 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('stakeholder')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'stakeholder'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Stakeholder lenses' : 'Stakeholder lenses'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('session')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'session'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Sesje / osoby' : 'Sessions / people'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-2 xl:ml-auto">
+                    <select
+                      value={analysisRoleFilter}
+                      onChange={(e) => setAnalysisRoleFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
+                      {analysisRoleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={analysisDepartmentFilter}
+                      onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">
+                        {isPolish ? 'Wszystkie działy' : 'All departments'}
+                      </option>
+                      {analysisDepartmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {visiblePeopleLenses.length > 0 ? (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  {visiblePeopleLenses.map((lens) => {
+                    const supportedTopics = lens.supportedTopicIds
+                      .map((id) => analysisTopicsById[id])
+                      .filter(Boolean);
+                    const contradictedSupportedTopics = supportedTopics.filter(
+                      (topic) => topic.isContradicted
+                    );
+                    const localSupportedTopics = supportedTopics.filter(
+                      (topic) => !topic.isContradicted && topic.supportingSessionIds.length <= 1
+                    );
+
+                    return (
+                      <div
+                        key={lens.id}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              {lens.label}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {[lens.role, lens.department].filter(Boolean).join(' · ') ||
+                                (analysisLensMode === 'session'
+                                  ? isPolish
+                                    ? 'Sesja źródłowa'
+                                    : 'Source session'
+                                  : isPolish
+                                    ? 'Stakeholder lens'
+                                    : 'Stakeholder lens')}
+                            </div>
+                          </div>
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                            <Target size={10} />
+                            {supportedTopics.length} {isPolish ? 'tem.' : 'topics'}
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {lens.localSummary}
+                        </div>
+
+                        {contradictedSupportedTopics.length > 0 && (
+                          <Callout
+                            variant="critical"
+                            title={
+                              isPolish
+                                ? 'Sprzeczne tematy dla tej perspektywy'
+                                : 'Contradicted topics for this perspective'
+                            }
+                            compact
+                          >
+                            <ul className="list-disc list-inside space-y-1">
+                              {contradictedSupportedTopics.map((topic) => (
+                                <li key={topic.id} className="text-sm">
+                                  {topic.label}
+                                </li>
+                              ))}
+                            </ul>
+                          </Callout>
+                        )}
+
+                        <div className="space-y-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Wspierane tematy' : 'Supported topics'}
+                          </div>
+                          {supportedTopics.length > 0 ? (
+                            supportedTopics.map((topic) => (
+                              <div
+                                key={topic.id}
+                                className="rounded-xl bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/50 px-3 py-3"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    {topic.label}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <span
+                                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                                        topic.isContradicted
+                                          ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                          : topic.supportingSessionIds.length <= 1
+                                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                            : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                      }`}
+                                    >
+                                      {topic.isContradicted
+                                        ? isPolish
+                                          ? 'Sprzeczne'
+                                          : 'Contradicted'
+                                        : topic.supportingSessionIds.length <= 1
+                                          ? isPolish
+                                            ? 'Lokalne'
+                                            : 'Local'
+                                          : isPolish
+                                            ? 'Wspólne'
+                                            : 'Shared'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  {topic.kind} · {topic.confidenceLevel} · {topic.evidenceCount}{' '}
+                                  {isPolish ? 'dow.' : 'ev.'}
+                                </div>
+                                {topic.divergenceNote && (
+                                  <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                                    {topic.divergenceNote}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <EmptyStateInline
+                              icon={Users}
+                              message={
+                                isPolish
+                                  ? 'Brak wspieranych tematów dla tej perspektywy'
+                                  : 'No supported topics for this perspective'
+                              }
+                            />
+                          )}
+                        </div>
+
+                        {localSupportedTopics.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Lokalne sygnały' : 'Local signals'}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {localSupportedTopics.map((topic) => (
+                                <span
+                                  key={topic.id}
+                                  className="inline-flex px-2 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-medium"
+                                >
+                                  {topic.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={Users}
+                  message={
+                    isPolish
+                      ? 'Brak perspektyw dla obecnych filtrów'
+                      : 'No perspectives for the current filters'
+                  }
+                />
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'traceability': {
+          const loadedSessionIds = new Set(sourceSessions.map((s) => s.id));
+          const unavailableSessionIds = (insight?.sourceSessionIds || []).filter(
+            (id) => !loadedSessionIds.has(id)
+          );
           component = (
             <div className="space-y-4">
               <Callout
@@ -1765,7 +3791,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   : 'Each card below shows which official answers and information gaps feed this insight.'}
               </Callout>
 
-              {traceabilityRows.length === 0 ? (
+              {traceabilityRows.length === 0 && unavailableSessionIds.length === 0 ? (
                 <EmptyStateInline
                   icon={Target}
                   message={isPolish ? 'Brak sesji źródłowych' : 'No source sessions'}
@@ -1806,12 +3832,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {isPolish ? 'Official answers' : 'Official answers'}
                           </div>
                           {summary.facts.length > 0 ? (
-                            summary.facts.slice(0, 4).map((fact) => (
+                            summary.facts.slice(0, 4).map((fact, fi) => (
                               <div
-                                key={fact}
+                                key={typeof fact === 'string' ? fact : (fact as any)?.fact || fi}
                                 className="text-sm text-slate-700 dark:text-slate-300"
                               >
-                                {fact}
+                                {typeof fact === 'string'
+                                  ? fact
+                                  : (fact as any)?.fact || JSON.stringify(fact)}
                               </div>
                             ))
                           ) : (
@@ -1836,12 +3864,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               ...summary.painPoints,
                             ])
                               .slice(0, 4)
-                              .map((item) => (
+                              .map((item, ii) => (
                                 <div
-                                  key={item}
+                                  key={
+                                    typeof item === 'string'
+                                      ? item
+                                      : (item as any)?.gap ||
+                                        (item as any)?.constraint ||
+                                        (item as any)?.painPoint ||
+                                        ii
+                                  }
                                   className="text-sm text-slate-700 dark:text-slate-300"
                                 >
-                                  {item}
+                                  {typeof item === 'string'
+                                    ? item
+                                    : (item as any)?.gap ||
+                                      (item as any)?.constraint ||
+                                      (item as any)?.painPoint ||
+                                      JSON.stringify(item)}
                                 </div>
                               ))
                           ) : (
@@ -1853,11 +3893,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                   ))}
+                  {unavailableSessionIds.map((sessionId) => (
+                    <div
+                      key={sessionId}
+                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-300 dark:border-navy-600 px-4 py-4"
+                    >
+                      <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
+                        <Link2 size={16} className="opacity-50" />
+                        <div>
+                          <div className="text-sm font-medium">
+                            {isPolish ? 'Źródło niedostępne' : 'Source unavailable'}
+                          </div>
+                          <div className="text-xs">
+                            {isPolish
+                              ? `Sesja ${sessionId.slice(0, 12)}… nie załadowała się`
+                              : `Session ${sessionId.slice(0, 12)}… failed to load`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           );
           break;
+        }
 
         case 'full-analysis':
           component = (
@@ -2023,6 +4084,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       }
 
       const badgeMap: Record<string, number | undefined> = {
+        'candidate-triage': candidates.length || undefined,
         comments: nComments.length,
         'source-sessions': sourceSessions.length,
         'activity-log': activityEntries.length,
@@ -2051,6 +4113,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     traceabilityRows,
     sourceSessions,
     sourceSessionSummaries,
+    candidates,
+    candidateSummary,
+    candidateActionLoadingId,
     nComments,
     commentDraft,
     commentDateFilter,
@@ -2073,6 +4138,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     expandedEvidenceRef,
     toggleEvidenceRef,
     findEvidenceForRef,
+    expandedLimits,
+    toggleLimitsExpand,
+    handleOpenHandoff,
   ]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -2098,102 +4166,259 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto space-y-0">
-          {/* ── Header ─────────────────────────────────────── */}
-          <NModeHeader
-            title={title}
-            onTitleChange={setTitle}
-            titlePlaceholder={{ en: 'Insight title...', pl: 'Tytuł wniosku...' }}
-            artifactId={insight?.id}
-            artifactType="insight"
-            onSave={handleSave}
-            saving={saving}
-            isDirty={isDirty}
-            onChat={handleOpenChat}
-            onClose={onClose}
-            statusDotColor={statusConfig.color}
-            presentationMode={presentationMode}
-            onPresentationModeChange={setPresentationMode}
-            buildArtifactCode={buildArtifactCode}
+    <NModeShell
+      header={{
+        title,
+        onTitleChange: setTitle,
+        titlePlaceholder: { en: 'Insight title...', pl: 'Tytuł wniosku...' },
+        artifactId: insight?.id,
+        artifactType: 'insight',
+        onSave: handleSave,
+        saving,
+        isDirty,
+        onChat: handleOpenChat,
+        onClose,
+        statusDotColor: statusConfig.color,
+      }}
+      properties={propertyFields}
+      sections={nModeSectionsWithContent}
+      activeSection={activeNSection}
+      onSectionChange={setActiveNSection}
+      presentationMode={presentationMode}
+      onPresentationModeChange={setPresentationMode}
+      buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
+      renderActionBar={() => (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleRegenerate}
+            disabled={isRegenerating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
+            {isPolish ? 'Regeneruj' : 'Regenerate'}
+          </button>
+
+          <button
+            onClick={handleExportToTools}
+            disabled={isExportingTools || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            {isExportingTools ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Target size={14} />
+            )}
+            {isPolish ? 'Do Tools' : 'Export Tools'}
+          </button>
+
+          <button
+            onClick={handleExportToAssessment}
+            disabled={isExportingAssessment || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            {isExportingAssessment ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <BarChart3 size={14} />
+            )}
+            {isPolish ? 'Do Assessment' : 'Export Assessment'}
+          </button>
+
+          <button
+            onClick={handleExportToNotebook}
+            disabled={isExportingNotebook || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            {isExportingNotebook ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <BookOpen size={14} />
+            )}
+            {isPolish ? 'Do Notatnika' : 'To Notebook'}
+          </button>
+
+          <button
+            onClick={handleExportMarkdown}
+            disabled={insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            <Download size={14} />
+            {isPolish ? 'Markdown' : 'Download MD'}
+          </button>
+
+          <button
+            onClick={handleCopy}
+            disabled={insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            <Copy size={14} />
+            {isPolish ? 'Kopiuj' : 'Copy'}
+          </button>
+
+          <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
+
+          {(!insight?.reviewStatus || insight.reviewStatus === 'draft') &&
+            (insight?.status === 'completed' || insight?.status === 'failed') && (
+              <button
+                onClick={() => handleLifecycleTransition('submit_review')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                {lifecycleTransitioning ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Eye size={14} />
+                )}
+                {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
+              </button>
+            )}
+
+          {insight?.reviewStatus === 'in_review' && (
+            <>
+              <button
+                onClick={() => handleLifecycleTransition('approve')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                {lifecycleTransitioning ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={14} />
+                )}
+                {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
+              </button>
+              <button
+                onClick={() => handleLifecycleTransition('reject')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                <X size={14} />
+                {isPolish ? 'Odrzuć' : 'Reject'}
+              </button>
+            </>
+          )}
+
+          {insight?.reviewStatus === 'published' && (
+            <>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                <CheckCircle2 size={14} />
+                {isPolish ? 'Opublikowano' : 'Published'}
+              </span>
+              <button
+                onClick={() => handleLifecycleTransition('revert_draft')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={14} />
+                {isPolish ? 'Przywróć do szkicu' : 'Revert to Draft'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    >
+      {handoffModalOpen && handoffFinding && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              setHandoffModalOpen(false);
+              setHandoffFinding(null);
+            }}
           />
-
-          <div className="col-span-full space-y-4 mt-4">
-            {/* ── Properties strip ────────────────────────── */}
-            <NModePropertiesStrip fields={propertyFields} />
-
-            {/* ── Action bar ──────────────────────────────── */}
-            <div className="px-4 py-3 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={handleRegenerate}
-                  disabled={isRegenerating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                </button>
-
-                <button
-                  onClick={handleExportToTools}
-                  disabled={isExportingTools || insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {isExportingTools ? (
-                    <Loader2 size={14} className="animate-spin" />
+          <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Utwórz inicjatywę z finding' : 'Create initiative from finding'}
+              </h3>
+              <button
+                onClick={() => {
+                  setHandoffModalOpen(false);
+                  setHandoffFinding(null);
+                }}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {isPolish ? 'Stwierdzenie finding' : 'Finding statement'}
+                </label>
+                <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
+                  {handoffFinding.title}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Poziom pewności' : 'Confidence level'}
+                  </label>
+                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                    {handoffFinding.confidence || 'medium'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Typ' : 'Type'}
+                  </label>
+                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                    {handoffFinding.sectionType}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                </label>
+                <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 min-h-[40px]">
+                  {handoffFinding.limits && handoffFinding.limits.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {handoffFinding.limits.map((l, i) => (
+                        <li key={i} className="text-xs italic">
+                          {l}
+                        </li>
+                      ))}
+                    </ul>
                   ) : (
-                    <Target size={14} />
+                    <span className="text-xs italic text-slate-400">
+                      {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                    </span>
                   )}
-                  {isPolish ? 'Do Tools' : 'Export Tools'}
-                </button>
-
-                <button
-                  onClick={handleExportToAssessment}
-                  disabled={isExportingAssessment || insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {isExportingAssessment ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <BarChart3 size={14} />
-                  )}
-                  {isPolish ? 'Do Assessment' : 'Export Assessment'}
-                </button>
-
-                <button
-                  onClick={handleExportMarkdown}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <Download size={14} />
-                  {isPolish ? 'Markdown' : 'Download MD'}
-                </button>
-
-                <button
-                  onClick={handleCopy}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <Copy size={14} />
-                  {isPolish ? 'Kopiuj' : 'Copy'}
-                </button>
+                </div>
               </div>
             </div>
-
-            {/* ── 2-pane layout ───────────────────────────── */}
-            <div className="flex gap-0 min-h-[60vh]">
-              <NModeLeftNav
-                sections={nModeSectionsWithContent}
-                activeSection={activeNSection}
-                onSectionChange={setActiveNSection}
-              />
-              <NModeCanvas sections={nModeSectionsWithContent} activeSection={activeNSection} />
+            <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50">
+              <button
+                onClick={() => handleHandoffSubmit('link')}
+                disabled={handoffSubmitting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50"
+              >
+                {handoffSubmitting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Link2 size={14} />
+                )}
+                {isPolish ? 'Połącz z istniejącą' : 'Link to existing'}
+              </button>
+              <button
+                onClick={() => handleHandoffSubmit('create')}
+                disabled={handoffSubmitting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+              >
+                {handoffSubmitting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Plus size={14} />
+                )}
+                {isPolish ? 'Utwórz nową inicjatywę' : 'Create new initiative'}
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </NModeShell>
   );
 };
 

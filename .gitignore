@@ -187,9 +187,15 @@ coverage/.tmp
 
 # Export artifacts
 server/exports/
+/exports/presentations/
+
+# Local test runner output
+vitest.out
 
 # Local backups
 _backup/
+.drive-sync-backup/
+docs/_recovery/
 
 # Personal tooling
 Piotr_Tools/
@@ -205,12 +211,14 @@ server/backups/
 
 # iCloud/Finder duplicates (macOS numbered copies)
 * [0-9]*.*
+* [0-9]*
 * copy.*
 * Copy.*
 * conflicted copy *
 *.icloud
 *.orig
 *.rej
+*.js.backup
 
 # Vendored packages
 *.tgz
@@ -242,12 +250,17 @@ _archived_backups/
 # Test artifacts (local only)
 test-drafts/
 test-screenshots/
+var/
 
 # Knowledge bank: keep markdown packs in repo, ignore raw source binaries
 knowledge/**/*.pdf
 knowledge/**/*.xlsx
 knowledge/**/*.pptx
 knowledge/**/*.docx
+
+# Blog content (local only, not part of codebase)
+/Blogs/
+/Blogs.zip
 
 # Duplicate lib artifacts
 /lib/

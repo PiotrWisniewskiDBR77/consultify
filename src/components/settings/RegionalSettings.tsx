@@ -48,6 +48,13 @@ interface RegionalPreferencesResponse {
   preferences?: Partial<RegionalPreferences>;
 }
 
+interface OrganizationRegionalDefaults {
+  profile?: {
+    defaultTimezone?: string | null;
+    currency?: string | null;
+  };
+}
+
 const DEFAULT_PREFERENCES: RegionalPreferences = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
   units: 'metric',
@@ -100,6 +107,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<RegionalPreferences>(DEFAULT_PREFERENCES);
+  const [organizationDefaults, setOrganizationDefaults] =
+    useState<OrganizationRegionalDefaults | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -107,7 +116,17 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
 
   useEffect(() => {
     loadPreferences();
+    loadOrganizationDefaults();
   }, [currentUser.id]);
+
+  const loadOrganizationDefaults = async () => {
+    try {
+      const data = (await Api.get('/organization-context')) as OrganizationRegionalDefaults;
+      setOrganizationDefaults(data);
+    } catch {
+      setOrganizationDefaults(null);
+    }
+  };
 
   const loadPreferences = async () => {
     try {
@@ -224,6 +243,27 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
               'Configure your locale, timezone, and format preferences'
             )}
           </p>
+          {organizationDefaults?.profile?.defaultTimezone ||
+          organizationDefaults?.profile?.currency ? (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100">
+              {t(
+                'settings.regional.tenantDefaultsHint',
+                'Organization defaults stay read-only here. Your personal preference can override them only for your own experience.'
+              )}
+              <div className="mt-1 text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                {organizationDefaults?.profile?.defaultTimezone
+                  ? `Tenant timezone: ${organizationDefaults.profile.defaultTimezone}`
+                  : null}
+                {organizationDefaults?.profile?.defaultTimezone &&
+                organizationDefaults?.profile?.currency
+                  ? ' | '
+                  : null}
+                {organizationDefaults?.profile?.currency
+                  ? `Tenant currency: ${organizationDefaults.profile.currency}`
+                  : null}
+              </div>
+            </div>
+          ) : null}
         </div>
         <button
           onClick={handleSave}

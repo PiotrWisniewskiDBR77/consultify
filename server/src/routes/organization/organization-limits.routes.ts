@@ -28,7 +28,9 @@ router.get(
     }
 
     try {
-      const snapshot = await buildPolicySnapshot(organizationId);
+      const snapshot = await buildPolicySnapshot(organizationId, {
+        isDemoView: String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true',
+      });
 
       if (!snapshot) {
         return res.status(404).json({ error: 'Organization not found' });

@@ -7,28 +7,29 @@
 import { Request, Response } from 'express';
 
 import type { IDatabase } from '../database/IDatabase.js';
+import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
-import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
 
-const FORCED_SUPERADMIN_EMAILS = (() => {
-  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+const getForcedSuperAdminEmails = (): Set<string> => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
   return new Set(
     raw
       .split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean)
   );
-})();
+};
 
 // Dependencies interface for dependency injection
 interface Dependencies {
   db: IDatabase;
   bcrypt: {
     compareSync: (password: string, hash: string) => boolean;
+    compare?: (password: string, hash: string) => Promise<boolean>;
   };
   ActivityService: {
     log: (data: {
@@ -92,13 +93,34 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
   ]);
 };
 
+const resetAuthRateLimit = async (
+  dependencies: Dependencies,
+  normalizedEmail: string,
+  timeoutMs = 500
+): Promise<void> => {
+  const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
+  const rateLimitKey = `auth:${normalizedEmail}`;
+  await withTimeout(authRedisStore.resetKey(rateLimitKey), timeoutMs);
+};
+
+const comparePassword = async (
+  bcrypt: Dependencies['bcrypt'],
+  password: string,
+  hash: string
+): Promise<boolean> => {
+  if (typeof bcrypt.compare === 'function') {
+    return bcrypt.compare(password, hash);
+  }
+  return bcrypt.compareSync(password, hash);
+};
+
 /**
  * Handle User Login
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const dependencies = await getDeps();
 
-  console.log('[AuthController] Login request received for email:', req.body?.email);
+  logger.info('[AuthController] Login request received for email:', req.body?.email);
 
   const body = req.body as LoginRequest;
   logger.info(`[Auth] Login request received for email: ${body.email}`);
@@ -107,16 +129,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     .trim()
     .toLowerCase();
 
-  // Best-effort rate limit clear (pre-validation)
-  try {
-    logger.info('[Auth] Resetting rate limit...');
-    const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
-    const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
-    await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-    logger.info('[Auth] Rate limit reset done.');
-  } catch (err: any) {
+  void resetAuthRateLimit(dependencies, normalizedEmail).catch((err: any) => {
     logger.info(`[Auth] Rate limit reset failed (ignoring): ${err.message}`);
-  }
+  });
 
   try {
     logger.info(`[Auth] Querying user from DB: ${email}`);
@@ -133,7 +148,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     } | null>((resolve, reject) => {
       dependencies.db.get(
         'SELECT * FROM users WHERE email = ?',
-        [email],
+        [normalizedEmail],
         (err: Error | null, row: unknown) => {
           if (err) {
             logger.error(`[Auth] DB Query Error: ${err.message}`);
@@ -155,7 +170,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Permanent role fix: selected internal accounts must always be SUPERADMIN.
     // This also updates DB so refresh tokens and /auth/me stay consistent.
     if (
-      FORCED_SUPERADMIN_EMAILS.has(
+      getForcedSuperAdminEmails().has(
         String(user.email || '')
           .trim()
           .toLowerCase()
@@ -184,7 +199,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('[Auth] Verifying password...');
     // Verify password
-    const passwordIsValid = dependencies.bcrypt.compareSync(password, user.password);
+    const passwordIsValid = await comparePassword(dependencies.bcrypt, password, user.password);
     logger.info(`[Auth] Password valid: ${passwordIsValid}`);
     if (!passwordIsValid) {
       res.status(401).json({ error: 'Invalid email or password' });
@@ -192,30 +207,29 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Clear rate limit (success)
-    try {
-      const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
-      const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
-      await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-    } catch (err: any) {
-      // Ignore
-    }
-
-    // Get organization
-    const org = await new Promise<{
-      id: string;
-      name: string;
-      status: string;
-      plan: string;
-    } | null>((resolve, reject) => {
-      dependencies.db.get(
-        'SELECT * FROM organizations WHERE id = ?',
-        [user.organization_id],
-        (err: Error | null, row: unknown) => {
-          if (err) reject(err);
-          else resolve(row as any);
-        }
-      );
+    void resetAuthRateLimit(dependencies, normalizedEmail).catch(() => {
+      // Ignore rate-limit cleanup failures on success.
     });
+
+    const [org, mfaStatus] = await Promise.all([
+      new Promise<{
+        id: string;
+        name: string;
+        status: string;
+        plan: string;
+        organization_type?: string;
+      } | null>((resolve, reject) => {
+        dependencies.db.get(
+          'SELECT * FROM organizations WHERE id = ?',
+          [user.organization_id],
+          (err: Error | null, row: unknown) => {
+            if (err) reject(err);
+            else resolve(row as any);
+          }
+        );
+      }),
+      dependencies.MFAService.getMFAStatus(user.id),
+    ]);
 
     if (!org) {
       res.status(404).json({ error: 'Organization not found' });
@@ -236,9 +250,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-
-    // Check MFA
-    const mfaStatus = await dependencies.MFAService.getMFAStatus(user.id);
 
     if (mfaStatus.enabled) {
       if (deviceFingerprint) {
@@ -301,15 +312,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Update Last Login
-    await new Promise<void>((resolve) => {
-      dependencies.db.run(
-        'UPDATE users SET last_login = datetime("now") WHERE id = ?',
-        [user.id],
-        () => resolve()
-      );
-    });
-
     const orgType = String((org as { organization_type?: string }).organization_type || '')
       .trim()
       .toUpperCase();
@@ -358,17 +360,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           : 'free',
     };
 
-    // Log activity
-    dependencies.ActivityService.log({
-      organizationId: user.organization_id,
-      userId: user.id,
-      action: 'login',
-      entityType: 'session',
-      entityId: 'session',
-      entityName: 'User Login',
-    });
-
-    console.log(
+    logger.info(
       '[AuthController] Sending response:',
       JSON.stringify({
         user: safeUser,
@@ -376,7 +368,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       })
     );
 
-    console.log('[AuthController] Sending response with res.send');
+    logger.info('[AuthController] Sending response with res.send');
 
     res.status(200).send({
       user: safeUser,
@@ -384,6 +376,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       refreshToken: tokenPair.refreshToken,
       expiresIn: tokenPair.expiresIn,
     });
+
+    void new Promise<void>((resolve) => {
+      dependencies.db.run(
+        'UPDATE users SET last_login = datetime("now") WHERE id = ?',
+        [user.id],
+        () => resolve()
+      );
+    }).catch(() => {
+      // Ignore best-effort last_login update.
+    });
+
+    void Promise.resolve().then(() =>
+      dependencies.ActivityService.log({
+        organizationId: user.organization_id,
+        userId: user.id,
+        action: 'login',
+        entityType: 'session',
+        entityId: 'session',
+        entityName: 'User Login',
+      })
+    );
   } catch (error: unknown) {
     logger.error('[Auth] Login error:', error);
     res.status(500).json({ error: 'Server error' });

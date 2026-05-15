@@ -16,12 +16,10 @@ import {
   BarChart3,
   CheckCircle,
   Clock,
-  ExternalLink,
   Loader2,
   Pause,
   Play,
   RefreshCw,
-  Settings,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -30,12 +28,12 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
+import { shouldFallbackToLegacySync, V8SyncApi } from '../../../services/api/v8/sync';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface IntegrationHealthDashboardProps {
   currentUser: User;
-  onUpdateUser: (updates: Partial<User>) => void;
 }
 
 interface IntegrationHealth {
@@ -58,10 +56,10 @@ interface IntegrationHealth {
 
 export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProps> = ({
   currentUser,
-  onUpdateUser,
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [integrations, setIntegrations] = useState<IntegrationHealth[]>([]);
   const [selectedIntegrations, setSelectedIntegrations] = useState<string[]>([]);
@@ -71,34 +69,61 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     loadHealthData();
   }, [currentUser.id]);
 
+  const mapToHealth = (h: any): IntegrationHealth => ({
+    id: h.integrationId || h.id,
+    name: h.connectorId || h.name || 'Integration',
+    icon: h.icon || '🔗',
+    status:
+      h.status === 'healthy'
+        ? 'healthy'
+        : h.status === 'degraded'
+          ? 'warning'
+          : h.status === 'unhealthy'
+            ? 'error'
+            : 'disconnected',
+    lastSync: h.lastRunAt || '',
+    nextSync: '',
+    syncFrequency: h.syncFrequency || 'On demand',
+    errorCount: h.unresolvedErrorCount || h.errorCount || 0,
+    lastError: h.lastError,
+    usageStats: {
+      requestsToday: h.requestsToday || 0,
+      requestsThisMonth: h.requestsThisMonth || 0,
+      dataTransferred: h.dataTransferred || '—',
+    },
+    enabled: h.status !== 'disconnected',
+  });
+
   const loadHealthData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
+
+      // Try V8 API first
+      try {
+        const v8Data = await V8SyncApi.getHubHealth();
+        if (v8Data?.summary) {
+          // V8 health returns a summary; fall through to legacy for per-integration detail
+          throw new Error('V8 summary only — need per-integration data');
+        }
+      } catch (v8Err: any) {
+        if (!shouldFallbackToLegacySync(v8Err)) {
+          // V8 available but no per-integration health; proceed to legacy
+        }
+      }
+
+      // Legacy fallback
       const response = await Api.get('/api/sync-hub/health');
       if (response.integrations && Array.isArray(response.integrations)) {
-        const mapped = response.integrations.map((h: any) => ({
-          id: h.integrationId || h.id,
-          name: h.connectorId || h.name || 'Integration',
-          icon: h.icon || '🔗',
-          status: h.status === 'healthy' ? 'healthy' : h.status === 'degraded' ? 'warning' : h.status === 'unhealthy' ? 'error' : 'disconnected',
-          lastSync: h.lastRunAt || new Date().toISOString(),
-          nextSync: '',
-          syncFrequency: h.syncFrequency || 'On demand',
-          errorCount: h.unresolvedErrorCount || 0,
-          lastError: h.lastError,
-          usageStats: {
-            requestsToday: h.requestsToday || 0,
-            requestsThisMonth: h.requestsThisMonth || 0,
-            dataTransferred: h.dataTransferred || '—',
-          },
-          enabled: h.status !== 'disconnected',
-        }));
-        setIntegrations(mapped);
+        setIntegrations(response.integrations.map(mapToHealth));
       } else if (response.success && response.data) {
-        setIntegrations(response.data);
+        setIntegrations(Array.isArray(response.data) ? response.data.map(mapToHealth) : []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading integration health:', error);
+      setLoadError(
+        t('integrations.health.loadError', 'Failed to load health data. Please try again.')
+      );
     } finally {
       setLoading(false);
     }
@@ -108,10 +133,10 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     setSyncing(integrationId);
     try {
       await Api.post(`/api/integrations/${integrationId}/sync`, {});
-      toast.success('Sync initiated');
+      toast.success(t('integrations.health.syncInitiated', 'Sync initiated'));
       loadHealthData();
     } catch (error) {
-      toast.error('Failed to sync integration');
+      toast.error(t('integrations.health.syncFailed', 'Failed to sync integration'));
     } finally {
       setSyncing(null);
     }
@@ -126,16 +151,28 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       setIntegrations(
         integrations.map((i) => (i.id === integrationId ? { ...i, enabled: !i.enabled } : i))
       );
-      toast.success(integration.enabled ? 'Integration paused' : 'Integration enabled');
+      toast.success(
+        integration.enabled
+          ? t('integrations.health.paused', 'Integration paused')
+          : t('integrations.health.enabled', 'Integration enabled')
+      );
     } catch (error) {
-      toast.error('Failed to update integration');
+      toast.error(t('integrations.health.updateFailed', 'Failed to update integration'));
     }
   };
 
   const bulkDisconnect = async () => {
     if (selectedIntegrations.length === 0) return;
 
-    if (!window.confirm(`Disconnect ${selectedIntegrations.length} integration(s)?`)) return;
+    if (
+      !window.confirm(
+        t(
+          'integrations.health.bulkDisconnectConfirm',
+          `Disconnect ${selectedIntegrations.length} integration(s)?`
+        )
+      )
+    )
+      return;
 
     try {
       await Promise.all(
@@ -143,9 +180,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       );
       setIntegrations(integrations.filter((i) => !selectedIntegrations.includes(i.id)));
       setSelectedIntegrations([]);
-      toast.success('Integrations disconnected');
+      toast.success(t('integrations.health.disconnected', 'Integrations disconnected'));
     } catch (error) {
-      toast.error('Failed to disconnect some integrations');
+      toast.error(
+        t('integrations.health.disconnectFailed', 'Failed to disconnect some integrations')
+      );
     }
   };
 
@@ -186,7 +225,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-emerald-600" />
+        <Loader2 size={32} className="animate-spin text-brand" />
       </div>
     );
   }
@@ -195,15 +234,26 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       <InfoButton cardId="settings-integration-health" position="top-right" />
 
+      {/* Error banner */}
+      {loadError && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+          <AlertCircle size={16} />
+          {loadError}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Activity size={28} className="text-emerald-500" />
+            <Activity size={28} className="text-brand" />
             {t('settings.integrations.health.title', 'Integration Health')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Monitor and manage your connected integrations
+            {t(
+              'settings.integrations.health.subtitle',
+              'Monitor and manage your connected integrations'
+            )}
           </p>
         </div>
         {selectedIntegrations.length > 0 && (
@@ -212,7 +262,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
           >
             <Trash2 size={16} />
-            Disconnect ({selectedIntegrations.length})
+            {t('integrations.health.bulkDisconnect', 'Disconnect')} ({selectedIntegrations.length})
           </button>
         )}
       </div>
@@ -221,27 +271,37 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">{integrations.length}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Connected</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.health.statConnected', 'Connected')}
+          </p>
         </div>
         <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-600">{totalStats.healthy}</p>
-          <p className="text-sm text-green-600">Healthy</p>
+          <p className="text-sm text-green-600">
+            {t('integrations.health.statHealthy', 'Healthy')}
+          </p>
         </div>
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-amber-600">{totalStats.warnings}</p>
-          <p className="text-sm text-amber-600">Warnings</p>
+          <p className="text-sm text-amber-600">
+            {t('integrations.health.statWarnings', 'Warnings')}
+          </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
             {totalStats.requestsToday}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Requests Today</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.health.statRequestsToday', 'Requests Today')}
+          </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
             {totalStats.requestsThisMonth.toLocaleString()}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">This Month</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.health.statThisMonth', 'This Month')}
+          </p>
         </div>
       </div>
 
@@ -276,7 +336,13 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       {getStatusIcon(integration.status)}
                     </h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Last sync: {new Date(integration.lastSync).toLocaleString()}
+                      {t('integrations.health.lastSync', 'Last sync')}:{' '}
+                      {integration.lastSync ? new Date(integration.lastSync).toLocaleString() : '—'}
+                      {integration.errorCount > 0 && (
+                        <span className="ml-2 text-red-500 font-medium">
+                          ({integration.errorCount} {t('integrations.health.errors', 'errors')})
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -288,7 +354,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                         ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
                         : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
-                    title={integration.enabled ? 'Pause' : 'Enable'}
+                    title={
+                      integration.enabled
+                        ? t('integrations.health.pause', 'Pause')
+                        : t('integrations.health.enable', 'Enable')
+                    }
                   >
                     {integration.enabled ? <Pause size={18} /> : <Play size={18} />}
                   </button>
@@ -296,7 +366,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                     onClick={() => syncIntegration(integration.id)}
                     disabled={syncing === integration.id}
                     className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors disabled:opacity-50"
-                    title="Sync now"
+                    title={t('integrations.health.syncNow', 'Sync now')}
                   >
                     <RefreshCw
                       size={18}
@@ -308,7 +378,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       setShowErrorLogs(showErrorLogs === integration.id ? null : integration.id)
                     }
                     className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    title="View logs"
+                    title={t('integrations.health.viewLogs', 'View logs')}
                   >
                     <BarChart3 size={18} />
                   </button>
@@ -318,25 +388,33 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
               {/* Stats */}
               <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
-                  <p className="text-slate-500 dark:text-slate-400">Sync Frequency</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.syncFrequency', 'Sync Frequency')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.syncFrequency}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 dark:text-slate-400">Requests Today</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.requestsToday', 'Requests Today')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.usageStats.requestsToday}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 dark:text-slate-400">This Month</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.thisMonth', 'This Month')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.usageStats.requestsThisMonth}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 dark:text-slate-400">Data Transferred</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.dataTransferred', 'Data Transferred')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.usageStats.dataTransferred}
                   </p>
@@ -365,7 +443,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       {integrations.length === 0 && (
         <div className="text-center py-12 text-slate-500 dark:text-slate-400">
           <Activity size={48} className="mx-auto mb-4 opacity-30" />
-          <p>No integrations connected</p>
+          <p>{t('integrations.health.noIntegrations', 'No integrations connected')}</p>
         </div>
       )}
     </div>
@@ -373,8 +451,15 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 };
 
 function RecentActivityPanel({ integrationId }: { integrationId: string }) {
+  const { t } = useTranslation();
   const [runs, setRuns] = React.useState<
-    Array<{ id: string; status: string; items_processed?: number; started_at: string; error_summary?: string }>
+    Array<{
+      id: string;
+      status: string;
+      items_processed?: number;
+      started_at: string;
+      error_summary?: string;
+    }>
   >([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -390,13 +475,16 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [integrationId]);
 
   if (loading) {
     return (
       <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg flex items-center gap-2 text-sm text-slate-500">
-        <Loader2 size={14} className="animate-spin" /> Loading activity…
+        <Loader2 size={14} className="animate-spin" />{' '}
+        {t('integrations.health.loadingActivity', 'Loading activity…')}
       </div>
     );
   }
@@ -404,29 +492,43 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
   if (runs.length === 0) {
     return (
       <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg text-sm text-slate-500 dark:text-slate-400">
-        No sync runs recorded yet.
+        {t('integrations.health.noRuns', 'No sync runs recorded yet.')}
       </div>
     );
   }
 
   return (
     <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg">
-      <h5 className="font-medium text-slate-900 dark:text-white mb-2">Recent Activity</h5>
+      <h5 className="font-medium text-slate-900 dark:text-white mb-2">
+        {t('integrations.health.recentActivity', 'Recent Activity')}
+      </h5>
       <div className="space-y-2 text-sm">
         {runs.map((run) => (
           <div
             key={run.id}
             className={`flex items-center gap-2 ${
-              run.status === 'completed' ? 'text-green-600' : run.status === 'failed' ? 'text-red-500' : 'text-amber-600'
+              run.status === 'completed'
+                ? 'text-green-600'
+                : run.status === 'failed'
+                  ? 'text-red-500'
+                  : 'text-amber-600'
             }`}
           >
-            {run.status === 'completed' ? <CheckCircle size={14} /> : run.status === 'failed' ? <XCircle size={14} /> : <Clock size={14} />}
+            {run.status === 'completed' ? (
+              <CheckCircle size={14} />
+            ) : run.status === 'failed' ? (
+              <XCircle size={14} />
+            ) : (
+              <Clock size={14} />
+            )}
             <span>
               {run.status === 'completed'
-                ? `Synced ${run.items_processed ?? 0} items`
+                ? t('integrations.health.syncedItems', 'Synced {{count}} items', {
+                    count: run.items_processed ?? 0,
+                  })
                 : run.status === 'failed'
-                  ? run.error_summary || 'Sync failed'
-                  : 'Sync in progress'}
+                  ? run.error_summary || t('integrations.health.syncFailed', 'Sync failed')
+                  : t('integrations.health.syncInProgress', 'Sync in progress')}
             </span>
             <span className="text-slate-400 dark:text-slate-500 ml-auto">
               {new Date(run.started_at).toLocaleString()}

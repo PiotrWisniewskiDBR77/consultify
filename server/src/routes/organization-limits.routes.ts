@@ -8,6 +8,8 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/organization-limits.js');
 const organization_limitsRoutesJS = module.default || module;
@@ -28,6 +30,6 @@ if (typeof organization_limitsRoutesJS === 'function') {
   router.use(organization_limitsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('organization-limits.js did not export a valid router');
+  logger.error('organization-limits.js did not export a valid router');
 }
 export default router;

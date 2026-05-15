@@ -85,6 +85,71 @@ function getErrorMessage(err: unknown): string {
   return 'Unknown error';
 }
 
+function detectBodyParserContractError(err: Error & { status?: number; type?: string }): {
+  statusCode: number;
+  code: string;
+  message: string;
+} | null {
+  const status = Number(err.status);
+  if (status === 413 || err.type === 'entity.too.large') {
+    return {
+      statusCode: 413,
+      code: 'REQUEST_JSON_TOO_LARGE',
+      message: 'Request body exceeds the allowed size.',
+    };
+  }
+
+  if (err.name === 'SyntaxError' && status === 400 && err.type === 'entity.parse.failed') {
+    return {
+      statusCode: 400,
+      code: 'REQUEST_JSON_INVALID',
+      message: 'Request body must be valid JSON.',
+    };
+  }
+
+  return null;
+}
+
+function detectMulterContractError(err: Error & { code?: string; name?: string }): {
+  statusCode: number;
+  code: string;
+  message: string;
+} | null {
+  if (err.name !== 'MulterError') {
+    return null;
+  }
+
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return {
+      statusCode: 413,
+      code: 'REQUEST_MULTIPART_FILE_TOO_LARGE',
+      message: 'Uploaded file exceeds the allowed size.',
+    };
+  }
+
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    return {
+      statusCode: 413,
+      code: 'REQUEST_MULTIPART_TOO_MANY_FILES',
+      message: 'Too many files uploaded in a single request.',
+    };
+  }
+
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return {
+      statusCode: 400,
+      code: 'REQUEST_MULTIPART_UNEXPECTED_FIELD',
+      message: 'Unexpected multipart file field in request.',
+    };
+  }
+
+  return {
+    statusCode: 400,
+    code: 'REQUEST_MULTIPART_INVALID_PAYLOAD',
+    message: 'Multipart payload is invalid.',
+  };
+}
+
 /**
  * Express error handler middleware
  */
@@ -99,10 +164,26 @@ export function errorHandlerMiddleware(
   res: Response,
   _next: NextFunction
 ): void {
+  const bodyParserContract = detectBodyParserContractError(err);
+  if (bodyParserContract) {
+    err.statusCode = bodyParserContract.statusCode;
+    err.code = bodyParserContract.code;
+    err.message = bodyParserContract.message;
+  }
+
+  const multerContract = detectMulterContractError(err);
+  if (multerContract) {
+    err.statusCode = multerContract.statusCode;
+    err.code = multerContract.code;
+    err.message = multerContract.message;
+  }
+
   // Safely extract error message
   const errorMessage = getErrorMessage(err);
   const errorStack = err instanceof Error ? err.stack : undefined;
   const errorName = err instanceof Error ? err.name : 'Error';
+  const correlationId =
+    (req as Request & { correlationId?: string }).correlationId || req.get('X-Correlation-ID');
 
   // Standardize status code
   let statusCode = 500;
@@ -146,6 +227,7 @@ export function errorHandlerMiddleware(
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     res.status(err.statusCode).json({
       status: status,
+      correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
         name: errorName,
         message: errorMessage,
@@ -164,6 +246,7 @@ export function errorHandlerMiddleware(
     // Known operational error (AppError) or Client Error
     res.status(err.statusCode || 400).json({
       status: status,
+      correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
         code: err.code || 'ERROR',
         message: errorMessage,
@@ -175,6 +258,7 @@ export function errorHandlerMiddleware(
     // Unknown programming/system error
     res.status(500).json({
       status: 'error',
+      correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Something went very wrong!',
@@ -187,11 +271,11 @@ export function errorHandlerMiddleware(
 /**
  * Async route wrapper to catch errors
  */
-export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void> | void
+export function asyncHandler<Req extends Request = Request>(
+  fn: (req: Req, res: Response, next: NextFunction) => Promise<any> | any
 ): (req: Request, res: Response, next: NextFunction) => void {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req as Req, res, next)).catch(next);
   };
 }
 

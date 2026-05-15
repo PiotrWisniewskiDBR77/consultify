@@ -133,6 +133,18 @@ type InboxViewMode = 'flat' | 'sections';
 type InboxStatusTab = 'open' | 'done' | 'saved' | 'all';
 type SnoozePreset = '2h' | 'tomorrow' | '3d' | 'next_monday';
 
+const aiAssistErrorMessage = (error: unknown, isPolish: boolean): string => {
+  const code = (error as any)?.data?.code as string | undefined;
+  switch (code) {
+    case 'INBOX_AI_ASSIST_INVALID_ITEM':
+      return isPolish ? 'Nieprawidlowy element AI Assist' : 'Invalid AI assist item';
+    case 'INBOX_AI_ASSIST_UNAVAILABLE':
+      return isPolish ? 'AI Assist chwilowo niedostepny' : 'AI assist temporarily unavailable';
+    default:
+      return (error as any)?.message || (isPolish ? 'AI niedostepne' : 'AI unavailable');
+  }
+};
+
 type InboxEntityKind = 'task' | 'initiative' | 'survey' | 'decision' | 'notification';
 
 const ENTITY_KIND_CONFIG: Record<
@@ -979,7 +991,7 @@ const PreviewPane: React.FC<{
         recommendedReason: String(r.recommendedReason || ''),
       });
     } catch (e: any) {
-      setAiError(e?.message || (isPolish ? 'AI niedostępne' : 'AI unavailable'));
+      setAiError(aiAssistErrorMessage(e, isPolish));
     } finally {
       setAiLoading(false);
     }
@@ -1062,8 +1074,8 @@ const PreviewPane: React.FC<{
             .join('\n');
           setDetailsOverride(full);
         }
-      } catch {
-        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+      } catch (e) {
+        toast.error(aiAssistErrorMessage(e, isPolish));
       } finally {
         setDetailsLoading(false);
       }

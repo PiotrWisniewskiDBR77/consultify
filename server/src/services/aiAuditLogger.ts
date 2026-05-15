@@ -6,10 +6,23 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 
 let all = dbAll;
 let get = dbGet;
 let run = dbRun;
+
+let aiAuditLogColumnsPromise: Promise<Set<string>> | null = null;
+
+async function getAiAuditLogColumns(): Promise<Set<string>> {
+  if (!aiAuditLogColumnsPromise) {
+    aiAuditLogColumnsPromise = getTableColumns('ai_audit_logs').catch((error) => {
+      aiAuditLogColumnsPromise = null;
+      throw error;
+    });
+  }
+  return aiAuditLogColumnsPromise;
+}
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -105,41 +118,42 @@ export const AIAuditLogger = {
       correlationId,
     } = entry;
 
-    const result = await run(
-      `INSERT INTO ai_audit_logs 
-            (id, user_id, organization_id, project_id, action_type, action_description,
-             context_snapshot, data_sources_used, ai_role, policy_level, confidence_level,
-             ai_suggestion, user_decision, user_feedback,
-             ai_project_role, justification, approving_user,
-             regulatory_mode, reasoning_summary, data_used_json, constraints_applied_json, correlation_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const availableColumns = await getAiAuditLogColumns();
+    const insertEntries = [
+      ['id', id],
+      ['user_id', userId],
+      ['organization_id', organizationId],
+      ['project_id', projectId],
+      ['action_type', actionType],
+      ['action_description', actionDescription],
       [
-        id,
-        userId,
-        organizationId,
-        projectId,
-        actionType,
-        actionDescription,
+        'context_snapshot',
         typeof contextSnapshot === 'string'
           ? contextSnapshot
           : JSON.stringify(contextSnapshot || {}),
-        JSON.stringify(dataSourcesUsed || []),
-        aiRole,
-        policyLevel,
-        confidenceLevel || 'MEDIUM',
-        aiSuggestion || null,
-        userDecision || null,
-        userFeedback || null,
-        aiProjectRole || 'ADVISOR',
-        justification || null,
-        approvingUser || null,
-        regulatoryMode ? 1 : 0,
-        reasoningSummary || null,
-        dataUsed ? JSON.stringify(dataUsed) : null,
-        constraintsApplied ? JSON.stringify(constraintsApplied) : null,
-        correlationId || null,
-      ]
-    );
+      ],
+      ['data_sources_used', JSON.stringify(dataSourcesUsed || [])],
+      ['ai_role', aiRole],
+      ['policy_level', policyLevel],
+      ['confidence_level', confidenceLevel || 'MEDIUM'],
+      ['ai_suggestion', aiSuggestion || null],
+      ['user_decision', userDecision || null],
+      ['user_feedback', userFeedback || null],
+      ['ai_project_role', aiProjectRole || 'ADVISOR'],
+      ['justification', justification || null],
+      ['approving_user', approvingUser || null],
+      ['regulatory_mode', regulatoryMode ? 1 : 0],
+      ['reasoning_summary', reasoningSummary || null],
+      ['data_used_json', dataUsed ? JSON.stringify(dataUsed) : null],
+      ['constraints_applied_json', constraintsApplied ? JSON.stringify(constraintsApplied) : null],
+      ['correlation_id', correlationId || null],
+    ].filter(([column]) => availableColumns.has(String(column)));
+
+    const sql = `INSERT INTO ai_audit_logs (${insertEntries.map(([column]) => column).join(', ')})
+            VALUES (${insertEntries.map(() => '?').join(', ')})`;
+    const values = insertEntries.map(([, value]) => value);
+
+    const result = await run(sql, values);
 
     if (!result.success) {
       throw new Error(`Failed to log AI interaction: ${result.error}`);

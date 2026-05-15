@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { run as dbRun } from '../utils/DbPromise.js';
+import logger from './Logger.js';
 
 // ==========================================
 // TYPES
@@ -97,7 +98,7 @@ export class AssessmentAuditLogger {
 
       return auditId;
     } catch (error: unknown) {
-      console.error('[AuditLog] Error logging assessment action:', error);
+      logger.error('[AuditLog] Error logging assessment action:', error);
       // Re-throw in test environment so tests can verify error handling
       if (process.env.NODE_ENV === 'test') {
         throw error;

@@ -14,14 +14,20 @@
  */
 
 import type {
-  InsightTheme,
+  InsightEvidenceMapEntry,
   InsightIssue,
   InsightOpportunity,
   InsightSignal,
-  InsightEvidenceMapEntry,
-} from '../../InterviewInsightService.js';
+  InsightTheme,
+} from '../InterviewInsightService.js';
 
-export { type InsightTheme, type InsightIssue, type InsightOpportunity, type InsightSignal, type InsightEvidenceMapEntry };
+export {
+  type InsightEvidenceMapEntry,
+  type InsightIssue,
+  type InsightOpportunity,
+  type InsightSignal,
+  type InsightTheme,
+};
 
 export const P10_INSIGHT_ARTIFACT_CONTRACT = 'interview_insight_artifact_v1';
 
@@ -65,6 +71,7 @@ export const P10_CONFIDENCE_LEVELS = [
   'medium',
   'low',
   'insufficient',
+  'contradicted',
 ] as const;
 
 export type P10ConfidenceLevel = (typeof P10_CONFIDENCE_LEVELS)[number];
@@ -80,20 +87,24 @@ export const P10_CONFIDENCE_SEMANTICS: Record<
 > = {
   high: {
     meaning: 'Well-supported within defined context; still has boundaries',
-    minimumEvidence: '3+ pointers from different sources/segments OR clear triangulation + no contradictions',
-    uiRule: 'May show "High confidence" badge; must still expose limits; default next action can be "execute"',
+    minimumEvidence:
+      '3+ pointers from different sources/segments OR clear triangulation + no contradictions',
+    uiRule:
+      'May show "High confidence" badge; must still expose limits; default next action can be "execute"',
     overclaim_guard: 'No overclaim beyond scope (e.g. no market generalization from org-only data)',
   },
   medium: {
     meaning: 'Credible pattern, but lacks triangulation or full representativeness',
     minimumEvidence: '2+ pointers OR 1 pointer + strong artifact (e.g. transcript excerpt)',
-    uiRule: 'UI shows "Assumptions" + "Limits" always visible without scroll-trap; handoff to initiative allowed with visible limits',
+    uiRule:
+      'UI shows "Assumptions" + "Limits" always visible without scroll-trap; handoff to initiative allowed with visible limits',
     overclaim_guard: 'No "root cause" claims without evidence',
   },
   low: {
     meaning: 'Hypothesis / signal; may be accurate but easily wrong',
     minimumEvidence: '1+ pointer, but narrow / singular',
-    uiRule: 'Label "Hypothesis"; warning shown; handoff to initiative only as "investigate", not "execute"',
+    uiRule:
+      'Label "Hypothesis"; warning shown; handoff to initiative only as "investigate", not "execute"',
     overclaim_guard: 'Forbidden: language like "certainly / always / everyone"',
   },
   insufficient: {
@@ -101,6 +112,13 @@ export const P10_CONFIDENCE_SEMANTICS: Record<
     minimumEvidence: 'None',
     uiRule: 'Must look like draft; block publish/handoff',
     overclaim_guard: 'Publication without confidence is forbidden',
+  },
+  contradicted: {
+    meaning: 'Evidence points in conflicting directions for this claim in this context',
+    minimumEvidence: 'At least two credible pointers that materially disagree',
+    uiRule:
+      'Show contradiction explicitly; no single narrative; next action must be "resolve / validate"',
+    overclaim_guard: 'Forbidden: picking one side without new evidence or scope change',
   },
 } as const;
 
@@ -152,8 +170,7 @@ export interface P10EvidencePointer {
 // ────────────────────────────────────────────────────────────────
 
 export const P10_SOURCE_LOSS_RULES = {
-  append_only_default:
-    'Evidence set is append-only by default; adding a pointer is always allowed',
+  append_only_default: 'Evidence set is append-only by default; adding a pointer is always allowed',
   removal_requires_tombstone:
     'Removing a pointer requires removal_reason and leaves a tombstone (pointer visible in audit as "removed")',
   pointer_stores: [
@@ -198,11 +215,7 @@ export const P10_HANDOFF_TO_INITIATIVES = {
     'evidence_pointers',
     'next_action',
   ] as const,
-  optional_fields: [
-    'assumptions',
-    'tags',
-    'owner_suggestion',
-  ] as const,
+  optional_fields: ['assumptions', 'tags', 'owner_suggestion'] as const,
   rule: 'Initiative must be able to reconstruct context via links-first (max 5 links in context pack), without copying full transcripts',
 } as const;
 
@@ -267,7 +280,8 @@ export const P10_DEGRADED_SCENARIOS: ReadonlyArray<{
     scenario: 'Contradictory evidence',
     degradedReason: 'contradictory_evidence',
     userVisibleState: 'Confidence set to "contradicted"; contradiction callout enforced',
-    nextAction: 'Block automatic handoff; require operator decision: split/resolve/keep-with-warning',
+    nextAction:
+      'Block automatic handoff; require operator decision: split/resolve/keep-with-warning',
   },
   {
     id: 6,
@@ -328,32 +342,38 @@ export const P10_ACCEPTANCE_CHECKLIST = [
   },
   {
     id: 4,
-    requirement: 'Evidence pointer types frozen (7 types: session/Q&A/transcript/survey/attachment/export/operator_note)',
+    requirement:
+      'Evidence pointer types frozen (7 types: session/Q&A/transcript/survey/attachment/export/operator_note)',
     section: '§2.3.3',
   },
   {
     id: 5,
-    requirement: 'Source loss blocked: evidence set append-only by default; removal → tombstone + reason',
+    requirement:
+      'Source loss blocked: evidence set append-only by default; removal → tombstone + reason',
     section: '§2.3.3',
   },
   {
     id: 6,
-    requirement: 'Pointer stores source_ref + captured_at + fingerprint; drift/broken source explicit in UI',
+    requirement:
+      'Pointer stores source_ref + captured_at + fingerprint; drift/broken source explicit in UI',
     section: '§2.3.3',
   },
   {
     id: 7,
-    requirement: 'System resistant to upstream duplicates (at-least-once): dedupe pointers, no link multiplication',
+    requirement:
+      'System resistant to upstream duplicates (at-least-once): dedupe pointers, no link multiplication',
     section: '§2.3.3',
   },
   {
     id: 8,
-    requirement: 'Frozen handoff payload to Inicjatywy is explicitly defined (fields + required/optional) with back-links',
+    requirement:
+      'Frozen handoff payload to Inicjatywy is explicitly defined (fields + required/optional) with back-links',
     section: '§2.3.4',
   },
   {
     id: 9,
-    requirement: 'Anti-duplicate gate explicit: no collection engine; no parallel initiative truth; prefer link-to-existing',
+    requirement:
+      'Anti-duplicate gate explicit: no collection engine; no parallel initiative truth; prefer link-to-existing',
     section: '§2.3.5',
   },
   {
@@ -390,17 +410,24 @@ export function isValidP10EvidencePointerType(type: string): type is P10Evidence
 /**
  * Check if a finding can be published based on confidence rules.
  */
-export function canPublishFinding(finding: {
-  confidenceLevel: string;
-  evidencePointers: Array<{ isTombstone: boolean }>;
-  limits?: string;
-}): { allowed: boolean; reason?: string } {
+export function canPublishFinding(
+  finding: {
+    confidenceLevel: string;
+    evidencePointers: Array<{ isTombstone: boolean }>;
+    limits?: string;
+  },
+  mode: 'publish' | 'handoff' = 'publish'
+): { allowed: boolean; reason?: string } {
   if (!isValidP10ConfidenceLevel(finding.confidenceLevel)) {
     return { allowed: false, reason: 'Invalid confidence level' };
   }
 
   if (finding.confidenceLevel === 'insufficient') {
     return { allowed: false, reason: 'Insufficient confidence blocks publish' };
+  }
+
+  if (mode === 'handoff' && finding.confidenceLevel === 'contradicted') {
+    return { allowed: false, reason: 'Contradicted evidence blocks automatic handoff' };
   }
 
   const activePointers = finding.evidencePointers.filter((p) => !p.isTombstone);

@@ -69,26 +69,26 @@ describe('Integration Test: Feedback Routes', () => {
         .post('/api/feedback')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          type: 'bug',
+          type: 'BUG',
           message: 'Test feedback message',
-          rating: 5,
+          severity: 'MEDIUM',
         });
 
-      expect([200, 201, 400, 500]).toContain(res.status); // 500 if DB not ready
+      expect([200, 201, 500]).toContain(res.status); // 500 if DB not ready
     });
 
-    it('should require authentication', async () => {
+    it('should allow anonymous feedback submissions', async () => {
       const res = await request(app).post('/api/feedback').send({
-        type: 'bug',
+        type: 'BUG',
         message: 'Test',
       });
 
-      expect([200, 400, 401, 403, 404, 500]).toContain(res.status); // 500 if DB not ready, 404 if route not mounted
+      expect([200, 400, 500]).toContain(res.status); // 500 if DB not ready
     });
   });
 
   describe('GET /api/feedback', () => {
-    it('should return feedback list (admin only)', async () => {
+    it('should require superadmin access for feedback list', async () => {
       if (!authToken) {
         console.log('Skipping feedback list test - no auth token');
         return;
@@ -98,8 +98,7 @@ describe('Integration Test: Feedback Routes', () => {
         .get('/api/feedback')
         .set('Authorization', `Bearer ${authToken}`);
 
-      // May require admin, so 200 or 403 is acceptable
-      expect([200, 403, 404]).toContain(res.status);
+      expect([403, 404]).toContain(res.status);
     });
   });
 });

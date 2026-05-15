@@ -12,6 +12,7 @@
  */
 
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
@@ -31,7 +32,7 @@ async function logExpirationEvent(invitationId) {
       [eventId, invitationId],
       function (err) {
         if (err) {
-          console.error(`[CleanupJob] Failed to log expiration for ${invitationId}:`, err.message);
+          logger.error(`[CleanupJob] Failed to log expiration for ${invitationId}:`, err.message);
           return reject(err);
         }
         resolve();
@@ -53,16 +54,16 @@ async function expirePendingInvitations() {
       [],
       async (err, invitations) => {
         if (err) {
-          console.error('[CleanupJob] Error finding expired invitations:', err.message);
+          logger.error('[CleanupJob] Error finding expired invitations:', err.message);
           return reject(err);
         }
 
         if (!invitations || invitations.length === 0) {
-          console.log('[CleanupJob] No expired pending invitations found');
+          logger.info('[CleanupJob] No expired pending invitations found');
           return resolve({ expired: 0 });
         }
 
-        console.log(`[CleanupJob] Found ${invitations.length} expired pending invitations`);
+        logger.info(`[CleanupJob] Found ${invitations.length} expired pending invitations`);
 
         // Update all to expired status
         const updateResult = await new Promise((res, rej) => {
@@ -78,7 +79,7 @@ async function expirePendingInvitations() {
           );
         });
 
-        console.log(`[CleanupJob] Marked ${updateResult.changes} invitations as expired`);
+        logger.info(`[CleanupJob] Marked ${updateResult.changes} invitations as expired`);
 
         // Log events for each (fire and forget, don't block)
         for (const inv of invitations) {
@@ -111,10 +112,10 @@ async function cleanupOldInvitations() {
       [],
       function (err) {
         if (err) {
-          console.error('[CleanupJob] Error cleaning old invitations:', err.message);
+          logger.error('[CleanupJob] Error cleaning old invitations:', err.message);
           return reject(err);
         }
-        console.log(`[CleanupJob] Deleted ${this.changes} old invitations`);
+        logger.info(`[CleanupJob] Deleted ${this.changes} old invitations`);
         resolve({ deleted: this.changes });
       }
     );
@@ -125,13 +126,13 @@ async function cleanupOldInvitations() {
  * Main cleanup function
  */
 async function runCleanup() {
-  console.log('[CleanupJob] Starting invitation cleanup job at', new Date().toISOString());
+  logger.info('[CleanupJob] Starting invitation cleanup job at', new Date().toISOString());
 
   try {
     const expiryResult = await expirePendingInvitations();
     const cleanupResult = await cleanupOldInvitations();
 
-    console.log('[CleanupJob] Cleanup completed:', {
+    logger.info('[CleanupJob] Cleanup completed:', {
       expired: expiryResult.expired,
       deleted: cleanupResult.deleted,
       timestamp: new Date().toISOString(),
@@ -143,7 +144,7 @@ async function runCleanup() {
       deleted: cleanupResult.deleted,
     };
   } catch (error) {
-    console.error('[CleanupJob] Cleanup failed:', error.message);
+    logger.error('[CleanupJob] Cleanup failed:', error.message);
     return {
       success: false,
       error: error.message,
@@ -164,11 +165,11 @@ export default {
 if (require.main === module) {
   runCleanup()
     .then((result) => {
-      console.log('[CleanupJob] Result:', result);
+      logger.info('[CleanupJob] Result:', result);
       process.exit(result.success ? 0 : 1);
     })
     .catch((err) => {
-      console.error('[CleanupJob] Fatal error:', err);
+      logger.error('[CleanupJob] Fatal error:', err);
       process.exit(1);
     });
 }

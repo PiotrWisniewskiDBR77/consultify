@@ -131,6 +131,20 @@ RUN mkdir -p dist/src/utils dist/src/services/ai && \
     echo "Verifying copied files:" && \
     ls -la dist/src/utils/*.js 2>/dev/null | grep -i schema || echo "No schema files in dist/src/utils" && \
     ls -la dist/src/services/ai/*.js 2>/dev/null | grep -i pipeline || echo "No pipeline files in dist/src/services/ai"
+# Patch known ESM dynamic import paths that TypeScript may leave extensionless.
+RUN if [ -f dist/src/cron/Scheduler.js ]; then \
+      sed -i "s#import('../services/ai/learningSystem')#import('../services/ai/learningSystem.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/ai/aiMemoryMetricsService')#import('../services/ai/aiMemoryMetricsService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/aiCostControlService')#import('../services/aiCostControlService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/slaService')#import('../services/slaService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/taskAssignmentService')#import('../services/taskAssignmentService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/decisionEscalationChainService')#import('../services/decisionEscalationChainService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/aiMemoryManager')#import('../services/aiMemoryManager.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/feedbackService')#import('../services/feedbackService.js')#g" dist/src/cron/Scheduler.js && \
+      echo "✓ Patched Scheduler.js ESM imports"; \
+    else \
+      echo "⚠️  dist/src/cron/Scheduler.js not found for ESM patch"; \
+    fi
 # Verify dist directory was created
 RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
 # Verify critical modules exist in dist

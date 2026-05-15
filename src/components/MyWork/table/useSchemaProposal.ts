@@ -51,6 +51,30 @@ function extractHistoryEntry(raw: unknown, status: string): ProposalHistoryEntry
   };
 }
 
+function normalizeSchemaError(err: unknown): string {
+  const fallback = err instanceof Error ? err.message : 'Table schema operation failed';
+  const status = Number((err as any)?.status ?? 0);
+  const serverData = (err as any)?.data as Record<string, unknown> | undefined;
+  const rawMessage = String(serverData?.error ?? fallback);
+  const lower = rawMessage.toLowerCase();
+
+  if (
+    status === 403 &&
+    (lower.includes('insufficient role') ||
+      lower.includes('required role') ||
+      lower.includes('permission'))
+  ) {
+    return 'Missing schema role. Required one of: base_owner, schema_editor.';
+  }
+  if (lower.includes('workspaceid is required') || lower.includes('workspace id is required')) {
+    return 'Table builder needs an active Idea workspace before generating a schema.';
+  }
+  if (lower.includes('table platform') && lower.includes('disabled')) {
+    return 'Table Platform is disabled by feature flag in this environment.';
+  }
+  return fallback;
+}
+
 export function useSchemaProposal(): UseSchemaProposalReturn {
   const [proposal, setProposal] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,7 +120,7 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setProposal(result);
         addToHistory(result, 'pending');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to generate proposal');
+        setError(normalizeSchemaError(err));
         setProposal(null);
       } finally {
         setLoading(false);
@@ -117,7 +141,7 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setExecutionResult(result);
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to execute proposal');
+        setError(normalizeSchemaError(err));
         throw err;
       } finally {
         setLoading(false);
@@ -138,7 +162,7 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setProposal(null);
         setExecutionResult(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to reject proposal');
+        setError(normalizeSchemaError(err));
       } finally {
         setLoading(false);
       }
@@ -157,7 +181,7 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
         setProposal(result);
         addToHistory(result, 'refined');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to refine proposal');
+        setError(normalizeSchemaError(err));
       } finally {
         setLoading(false);
       }
@@ -176,7 +200,7 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
       setExecutionResult(null);
       setProposal(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to undo proposal');
+      setError(normalizeSchemaError(err));
     } finally {
       setLoading(false);
     }
@@ -192,7 +216,7 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
       addToHistory(proposal, 'redone');
       setExecutionResult(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to redo proposal');
+      setError(normalizeSchemaError(err));
     } finally {
       setLoading(false);
     }

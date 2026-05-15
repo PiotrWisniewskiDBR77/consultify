@@ -2,8 +2,8 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Api from '@/services/api';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks/EmptyStateInline';
+import Api from '@/services/api';
 
 import { CalendarCreateEventModal } from './CalendarCreateEventModal';
 import { CalendarGrid } from './CalendarGrid';
@@ -135,7 +135,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             helper: isPolish
               ? `${providerLabel} nie ma jeszcze aktywnego połączenia.`
               : `${providerLabel} does not have an active connection yet.`,
-            nextStep: isPolish ? 'Podłącz źródło w Integracjach.' : 'Connect the source in Integrations.',
+            nextStep: isPolish
+              ? 'Podłącz źródło w Integracjach.'
+              : 'Connect the source in Integrations.',
           };
       }
     },
@@ -147,7 +149,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       return {
         variant: 'info' as const,
         title: isPolish ? 'Obciążenie dnia' : 'Day load',
-        body: isPolish ? 'Sprawdzanie obciążenia wybranego dnia...' : 'Checking the selected day load...',
+        body: isPolish
+          ? 'Sprawdzanie obciążenia wybranego dnia...'
+          : 'Checking the selected day load...',
       };
     }
 
@@ -224,8 +228,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
             if (provider === 'google' || provider === 'google_calendar') {
               acc.google =
-                normalizedStatus === 'connected' ||
-                acc.google !== 'connected'
+                normalizedStatus === 'connected' || acc.google !== 'connected'
                   ? normalizedStatus
                   : acc.google;
             }
@@ -237,8 +240,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               provider === 'outlook_calendar'
             ) {
               acc.outlook =
-                normalizedStatus === 'connected' ||
-                acc.outlook !== 'connected'
+                normalizedStatus === 'connected' || acc.outlook !== 'connected'
                   ? normalizedStatus
                   : acc.outlook;
             }

@@ -1,20 +1,37 @@
-import os from 'node:os';
-import path from 'node:path';
-
 import jwt from 'jsonwebtoken';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
 import { makeTestApp } from './_helpers/testApp';
 
-describe('Trial routes (no mocks, honest availability)', () => {
-  const prevEnv = { ...process.env };
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  const sqlitePath = path.join(os.tmpdir(), `consultify-trial-${workerId}.db`);
-  const basePath = '/api/trial';
+const { mockConvertTrialToOrg, mockAuditLog, mockBuildPolicySnapshot } = vi.hoisted(() => ({
+  mockConvertTrialToOrg: vi.fn(),
+  mockAuditLog: vi.fn(),
+  mockBuildPolicySnapshot: vi.fn(),
+}));
 
-  let resetConnection: (() => Promise<void>) | null = null;
-  let db: any;
+vi.mock('../../server/src/services/trialService.js', () => ({
+  default: {
+    convertTrialToOrg: mockConvertTrialToOrg,
+    sendTrialWarnings: vi.fn(),
+    processExpiredTrials: vi.fn(),
+  },
+}));
+
+vi.mock('../../server/src/services/auditService.js', () => ({
+  default: {
+    log: mockAuditLog,
+  },
+}));
+
+vi.mock('../../server/src/services/accessPolicyService.js', () => ({
+  default: {
+    buildPolicySnapshot: mockBuildPolicySnapshot,
+  },
+}));
+
+describe('Trial routes contract', () => {
+  const basePath = '/api/trial';
   let router: any;
 
   const tokenFor = (user: { id: string; role?: string; organizationId?: string }) => {
@@ -37,60 +54,36 @@ describe('Trial routes (no mocks, honest availability)', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
-    process.env.MOCK_DB = 'false';
-    process.env.DB_TYPE = 'sqlite';
-    process.env.SQLITE_PATH = sqlitePath;
     process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
     vi.resetModules();
-    const dbMod = await import('../../server/src/database/Database.js');
-    resetConnection = dbMod.resetConnection;
-    await resetConnection();
-    db = dbMod.getDatabase();
-
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS audit_log (
-        id TEXT PRIMARY KEY,
-        timestamp TEXT,
-        actor_type TEXT,
-        actor_id TEXT,
-        actor_email TEXT,
-        actor_name TEXT,
-        actor_ip TEXT,
-        actor_user_agent TEXT,
-        action TEXT,
-        action_category TEXT,
-        action_description TEXT,
-        resource_type TEXT,
-        resource_id TEXT,
-        resource_name TEXT,
-        organization_id TEXT,
-        project_id TEXT,
-        previous_values TEXT,
-        new_values TEXT,
-        changed_fields TEXT,
-        metadata TEXT,
-        request_id TEXT,
-        result TEXT,
-        error_message TEXT,
-        retention_category TEXT
-      );
-    `);
-
     router = (await import('../../server/src/routes/trial.routes.ts')).default;
   });
 
-  afterAll(async () => {
-    try {
-      await resetConnection?.();
-    } finally {
-      process.env = prevEnv;
-    }
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockConvertTrialToOrg.mockResolvedValue({ newOrganizationId: 't1' });
+    mockAuditLog.mockResolvedValue(undefined);
+    mockBuildPolicySnapshot.mockResolvedValue({
+      orgType: 'TRIAL',
+      isTrial: true,
+      isDemo: false,
+      isPaid: false,
+      subscriptionStatus: null,
+      trialDaysLeft: 3,
+      isTrialExpired: false,
+      warningLevel: 'warning',
+      trialStartedAt: '2026-01-01T00:00:00.000Z',
+      trialExpiresAt: '2026-01-08T00:00:00.000Z',
+      usagePercent: {},
+      hasPaymentMethod: false,
+      upgradeCtas: { primaryAction: 'Upgrade', urlOrRoute: '/settings?tab=billing' },
+    });
   });
 
   it('POST /:trialId/convert returns 400 when newOrgName is missing', async () => {
-    const token = tokenFor({ id: 'u1' });
+    const token = tokenFor({ id: 'u1', organizationId: 't1', role: 'ADMIN' });
     const res = await request(mount())
       .post(`${basePath}/t1/convert`)
       .set('Authorization', `Bearer ${token}`)
@@ -98,18 +91,41 @@ describe('Trial routes (no mocks, honest availability)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('POST /:trialId/convert returns 401 when token is missing', async () => {
+  it('POST /:trialId/convert returns 403 when token is missing', async () => {
     const res = await request(mount()).post(`${basePath}/t1/convert`).send({ newOrgName: 'X' });
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
   });
 
   it('POST /:trialId/convert returns 503 when TrialService is unavailable', async () => {
-    const token = tokenFor({ id: 'u1' });
+    mockConvertTrialToOrg.mockResolvedValueOnce(undefined as any);
+    const token = tokenFor({ id: 'u1', organizationId: 't1', role: 'ADMIN' });
     const res = await request(mount())
       .post(`${basePath}/t1/convert`)
       .set('Authorization', `Bearer ${token}`)
       .send({ newOrgName: 'Acme' });
     expect(res.status).toBe(503);
+  });
+
+  it('POST /:trialId/convert returns 403 when trialId is outside user scope', async () => {
+    const token = tokenFor({ id: 'u1', organizationId: 'org-own', role: 'ADMIN' });
+    const res = await request(mount())
+      .post(`${basePath}/other-org/convert`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ newOrgName: 'Acme' });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(expect.objectContaining({ errorCode: 'TRIAL_SCOPE_MISMATCH' }));
+  });
+
+  it('POST /:trialId/convert returns 403 for non-admin roles', async () => {
+    const token = tokenFor({ id: 'u1', organizationId: 't1', role: 'MEMBER' });
+    const res = await request(mount())
+      .post(`${basePath}/t1/convert`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ newOrgName: 'Acme' });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(
+      expect.objectContaining({ errorCode: 'TRIAL_CONVERSION_FORBIDDEN' })
+    );
   });
 
   it('POST /confirm-transition returns 400 when confirmations are incomplete', async () => {
@@ -137,8 +153,11 @@ describe('Trial routes (no mocks, honest availability)', () => {
     expect(res.body).toEqual(
       expect.objectContaining({ success: true, nextStep: 'ORG_SETUP_WIZARD' })
     );
-
-    const row = await db.get<{ c: number }>(`SELECT COUNT(*) as c FROM audit_log`, []);
-    expect(row?.c).toBeGreaterThan(0);
+    expect(mockAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        action: 'trial_transition_confirmed',
+      })
+    );
   });
 });

@@ -14,6 +14,7 @@ export interface RecordComment {
   author_name: string | null;
   content: string;
   parent_id: string | null;
+  mentions?: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,15 +26,25 @@ const recordCommentService = {
     authorId: string,
     authorName: string | undefined,
     content: string,
-    parentId?: string
+    parentId?: string,
+    mentions?: string[]
   ): Promise<RecordComment> {
     const db = getDatabase();
     try {
+      const mentionPayload = Array.isArray(mentions) && mentions.length > 0 ? mentions : [];
       const result = await db.query(
-        `INSERT INTO tp_record_comments (record_id, table_id, author_id, author_name, content, parent_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO tp_record_comments (record_id, table_id, author_id, author_name, content, parent_id, mentions)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
          RETURNING *`,
-        [recordId, tableId, authorId, authorName ?? null, content, parentId ?? null]
+        [
+          recordId,
+          tableId,
+          authorId,
+          authorName ?? null,
+          content,
+          parentId ?? null,
+          JSON.stringify(mentionPayload),
+        ]
       );
       return result.rows[0] as RecordComment;
     } catch (e) {

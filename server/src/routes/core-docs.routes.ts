@@ -1,7 +1,10 @@
 import { Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
-import { requireRole } from '../middleware/rbac.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin,
+} from '../middleware/superAdmin.middleware.js';
 import { coreDocsService } from '../services/ai/coreDocsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -9,7 +12,8 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 router.use(verifyToken as any);
-router.use(requireRole('super_admin') as any);
+router.use(verifySuperAdmin as any);
+router.use(requireSuperAdminCapability('ai_ops') as any);
 
 router.get(
   '/',

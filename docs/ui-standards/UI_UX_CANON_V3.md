@@ -19,14 +19,19 @@
 
 Problem v2: “za biało” + zbyt jasne teksty/chipsy = spadek czytelności.
 
-Kanon v3:
+Kanon v3.2:
 
-- **Layer 1 (base)**: `bg-slate-50` (nie `bg-white`)
-- **Layer 2 (elevated)**: `bg-white`
-- Tekst główny w light mode: `text-slate-900` / `text-navy-900`
-- Zakaz: “jasne tło semantyczne + jasny tekst tego samego koloru” (badge/chips)
+- **Light mode jest token-first** — kolory idą przez `text-*`, `surface-*`, `status-*` z §16 `light-mode-readability.md`, nie przez jednorazowe klasy utility w widokach.
+- **Light mode jest data-dense-first** — ekrany operacyjne mają priorytet nad landingami; estetyka "soft pastel" jest zakazana dla list / tabel / inbox / preview pane.
+- **Kontrast jest mierzalny:** tekst ≥ 4.5:1, UI state ≥ 3:1, focus ≥ 2 px + 3:1 (WCAG 2.2 SC 2.4.13).
+- **Status nigdy nie polega tylko na kolorze** — każdy badge / chip musi nieść dodatkowo ikonę, tekst, kształt albo pozycję.
+- **Surface hierarchy** (4 warstwy): `surface-app` / `surface-default` / `surface-subtle` / `surface-selected`.
+- **Border jest obowiązkowy dla badge** — w light mode nie jest "opcjonalny refinement", jest częścią kontraktu.
+- Zakazy: "jasne tło semantyczne + jasny tekst tego samego koloru" (badge/chips), `text-slate-400` dla treści roboczej, `outline: none` bez zastąpienia fokusem, niewidzialne bordery `border-*/10` dla gęstych tabel.
 
-SSOT: `docs/ui-standards/00-foundation/visual-language.md`
+SSOT: `docs/ui-standards/00-foundation/visual-language.md`  
+SSOT (readability rules, full standard): `docs/ui-standards/00-foundation/light-mode-readability.md`  
+SSOT (QA checklist): `docs/ui-standards/LIGHT_MODE_QA_CHECKLIST.md`
 
 ---
 

@@ -125,6 +125,7 @@ export type FunnelEventName =
   | 'notebook_ai_topic_added'
   | 'notebook_ai_topic_edited'
   | 'notebook_ai_topic_sent_to_chat'
+  | 'notebook_handoff'
   | 'notebook_transform_used'
   | 'notebook_share_email'
   | 'active_notes_suggested'
@@ -230,6 +231,7 @@ export type FunnelEventName =
   | 'presentation_generator_opened'
   | 'presentation_outline_generated'
   | 'presentation_exported'
+  | 'presentation_export_failed'
   | 'presentation_shared'
   | 'template_selected'
   | 'brand_kit_updated'
@@ -307,6 +309,7 @@ export type FunnelEventName =
   | 'valuation_negotiation_pack_exported'
   // T063 — Organization UX
   | 'org_workspace_opened'
+  | 'org_workspace_admin_handoff'
   | 'org_admin_cta_clicked'
   | 'org_member_invite_sent'
   // T064 — Megatrend relocation
@@ -502,7 +505,163 @@ export type FunnelEventName =
   | 'ideas_table_column_deleted'
   | 'ideas_table_bulk_convert'
   | 'ideas_table_relation_created'
-  | 'ideas_table_artifact_linked';
+  | 'ideas_table_artifact_linked'
+  // Chat V9 / VOICE VM4 — barge-in acknowledgement toast actually shown
+  // (i.e. the 1.5 s debounce guard was cleared). Payload: closed-enum
+  // `source` describing which gesture triggered the barge-in. Drops inside
+  // the debounce window do NOT emit — only visible toasts are counted.
+  | 'voice_barge_in_notified'
+  // Chat V9 / VOICE VM3 — user opened the voice-modes legend popover
+  // next to the mic. One event per open gesture (each open is a
+  // distinct "I needed an explanation now" signal). Zero ids / PII.
+  | 'voice_mode_legend_opened'
+  // Chat V9 / VOICE VM3.1 — user triggered the voice-modes legend
+  // via the Alt+Shift+V keyboard shortcut. Empty payload; symmetric
+  // with `voice_mode_legend_opened`. The split lets us measure what
+  // fraction of users learn the shortcut vs. click the trigger
+  // button, without spreading a `trigger` field onto the original
+  // event. Zero ids / PII.
+  | 'voice_mode_legend_shortcut'
+  // ---------------------------------------------------------------------
+  // Chat V9 / TRUST T-PM2-lite — advisory post-send PII heuristic.
+  // Fired exactly once per toast window (cooldown-throttled on the
+  // client). Payload is a closed-enum `categories` array of detected
+  // classes — `email | phone | iban`. No raw text, no substrings,
+  // no counts. The event is a "user was nudged" signal, not a
+  // "PII existed" signal; suppressed emissions (cooldown / no-hit)
+  // do not fire anything.
+  // ---------------------------------------------------------------------
+  | 'pii_heuristic_warning_shown'
+  // ---------------------------------------------------------------------
+  // Chat V9 / VOICE VM10 — voice funnel. Closed-enum payloads, zero
+  // transcript content. See `src/utils/voiceFunnelTelemetry.ts` for the
+  // exact PII contract. All four emit through `safeTrack()`; failures
+  // never block the voice hot path.
+  // ---------------------------------------------------------------------
+  // Fired when `useUniversalVoice.startListening` actually transitions
+  // idle → listening (not on duplicate calls). Payload: sttProvider,
+  // trigger (single vs conversation), language.
+  | 'voice_start'
+  // Fired after `transcribeWithServer` (whisper) OR a web-speech final
+  // result returns a usable transcript. Carries a length BUCKET, never
+  // the text.
+  | 'voice_stt_success'
+  // Fired for STT failures — permission denied, server error, network,
+  // web-speech `error` event, or aborted-before-transcript. Reason is a
+  // closed enum so infra-specific error strings never leak.
+  | 'voice_stt_fail'
+  // Fired when `speak()` actually starts audio playback. Captures
+  // provider (openai/edge/web) and whether it was an auto-speak vs
+  // manual replay.
+  | 'tts_on'
+  // ---------------------------------------------------------------------
+  // Chat V9 / TRUST T-PM1 — user clicked the "Private mode" chip in the
+  // header and the details popover rendered. One event per open gesture
+  // (re-opening after a close still emits — each open is a distinct
+  // "what does this guarantee mean?" signal). Payload is intentionally
+  // empty: the badge only renders when private mode is already on, so
+  // the event's presence is the full signal. Zero transcripts, zero ids.
+  // ---------------------------------------------------------------------
+  | 'private_mode_details_opened'
+  // ---------------------------------------------------------------------
+  // Chat V9 / TRUST T-TR1 — user clicked the trust badge on an AI reply
+  // and the citation summary popover rendered. RODO-safe: the payload
+  // carries only a bucketed source-count (`none` / `few` / `many`) and
+  // a single enum flag for whether a model id was known. NEVER includes
+  // message ids, conversation ids, model names, citation text, or any
+  // user-generated content. Bucketing lets the dashboard track citation
+  // health without turning this event into a per-message tracker.
+  // ---------------------------------------------------------------------
+  | 'trust_badge_opened'
+  // ---------------------------------------------------------------------
+  // Chat V9 / NAV NAV-M1 — user clicked the floating "Back to chat"
+  // pill rendered globally on non-chat views when an active
+  // conversation exists. Payload carries only the `fromView` AppView
+  // enum value (closed set) so the funnel can rank which surfaces
+  // most often send users back to the conversation. NEVER includes
+  // the conversation id, artifact id, or any user content.
+  // ---------------------------------------------------------------------
+  | 'navigation_back_to_chat_clicked'
+  // ---------------------------------------------------------------------
+  // Chat V9 / NAV NAV-M1.1 — user pressed the Alt+Shift+C keyboard
+  // shortcut and it actually triggered `returnToFullChat()`. The
+  // handler only dispatches when the same gates as NAV-M1's button
+  // are satisfied (non-chat view, active conversation, focus not
+  // trapped in an input). Payload mirrors NAV-M1's: only `fromView`
+  // (closed `AppView` enum). NEVER any conversation / user ids.
+  // ---------------------------------------------------------------------
+  | 'navigation_back_to_chat_shortcut'
+  // ---------------------------------------------------------------------
+  // Chat V10 — runtime MVP telemetry (Phase 4)
+  // Emitted by the V10 admin runtimes panel. No user content, no ids.
+  // ---------------------------------------------------------------------
+  | 'reasoning_runtime_started'
+  | 'reasoning_runtime_succeeded'
+  | 'reasoning_runtime_failed'
+  | 'research_runtime_started'
+  | 'research_runtime_succeeded'
+  | 'research_runtime_failed'
+  // Chat V10 — Research Runtime (Phase 7) admin telemetry
+  | 'research_mission_planned'
+  | 'research_mission_watched_delta'
+  | 'research_mission_summary_loaded'
+  | 'reasoning_delegated_research_plan'
+  | 'connectors_runtime_started'
+  | 'connectors_runtime_succeeded'
+  | 'connectors_runtime_failed'
+  | 'connectors_registry_loaded'
+  | 'connector_session_connected'
+  | 'connector_auth_started'
+  | 'connector_auth_completed'
+  | 'connector_source_searched'
+  | 'connector_source_read'
+  | 'connector_token_refreshed'
+  | 'connector_session_disconnected'
+  | 'learning_runtime_started'
+  | 'learning_runtime_succeeded'
+  | 'learning_runtime_failed'
+  // Chat V10 — Learning Loop (Phase 6) admin telemetry
+  | 'learning_loop_feedback_submitted'
+  | 'learning_loop_retention_previewed'
+  | 'learning_loop_stewardship_loaded'
+  | 'learning_loop_stewardship_resolved'
+  | 'learning_loop_incident_reported'
+  | 'learning_loop_dashboard_loaded'
+  | 'outcome_runtime_started'
+  | 'outcome_runtime_succeeded'
+  | 'outcome_runtime_failed'
+  | 'outcome_kpi_acceptance_previewed'
+  | 'outcome_signal_ingested'
+  | 'outcome_acceptance_resolved'
+  | 'outcome_business_linked'
+  | 'onboard_runtime_started'
+  | 'onboard_runtime_succeeded'
+  | 'onboard_runtime_failed'
+  | 'onboard.started'
+  | 'onboard.persona_inferred'
+  | 'onboard.persona_confirmed'
+  | 'onboard.admin_console_seen'
+  | 'onboard.trust_banner_viewed'
+  | 'onboard.connector_offer_rendered'
+  | 'onboard.connector_oauth_started'
+  | 'onboard.connector_oauth_succeeded'
+  | 'onboard.connector_oauth_failed'
+  | 'onboard.fallback_upload_used'
+  | 'onboard.artifact_seeded'
+  | 'onboard.artifact_first_draft_rendered'
+  | 'onboard.provenance_panel_opened'
+  | 'onboard.approval_gate_opened'
+  | 'onboard.artifact_approved'
+  | 'onboard.artifact_saved'
+  | 'onboard.activation_reached'
+  | 'onboard.export_manifest_viewed'
+  | 'onboard.export_completed'
+  | 'onboard.memory_opt_in'
+  | 'onboard.team_invite_sent'
+  | 'onboard.resume_reentered'
+  | 'onboard.abandoned'
+  // Chat V10 / onboarding blocked fallback (V10-ONB-021)
+  | 'onboard.artifact_blocked';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

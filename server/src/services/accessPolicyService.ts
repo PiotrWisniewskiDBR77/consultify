@@ -10,9 +10,15 @@ import { AccessResourceService } from './access/AccessResourceService.js';
 import { AccessTrialService } from './access/AccessTrialService.js';
 // Import Types
 import {
+  ACCESS_POSTURES,
   AIAccessContext,
+  BILLING_RAILS,
+  BillingRail,
+  BillingStateRow,
   CanInviteUsersResult,
   CheckAccessResult,
+  CONTRACT_STATUSES,
+  ContractStatus,
   DailyUsage,
   DEFAULT_DEMO_LIMITS,
   DEFAULT_TRIAL_LIMITS,
@@ -27,7 +33,6 @@ import {
   SeatAvailabilityEnhanced,
   SUBSCRIPTION_STATUSES,
   SubscriptionStatus,
-  TRIAL_DURATION_DAYS,
   TrialStatus,
   TrialUsage,
   USAGE_THRESHOLD_PERCENT,
@@ -55,11 +60,68 @@ function normalizeSubscriptionStatus(raw: string | null | undefined): Subscripti
   return null;
 }
 
+function normalizeBillingRail(raw: string | null | undefined): BillingRail {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (s === BILLING_RAILS.STRIPE_SUBSCRIPTION) return BILLING_RAILS.STRIPE_SUBSCRIPTION;
+  if (s === BILLING_RAILS.MANUAL_INVOICE) return BILLING_RAILS.MANUAL_INVOICE;
+  if (s === BILLING_RAILS.HYBRID_USAGE_INVOICE) return BILLING_RAILS.HYBRID_USAGE_INVOICE;
+  return null;
+}
+
+function normalizeContractStatus(raw: string | null | undefined): ContractStatus {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (s === CONTRACT_STATUSES.DRAFT) return CONTRACT_STATUSES.DRAFT;
+  if (s === CONTRACT_STATUSES.ACTIVE) return CONTRACT_STATUSES.ACTIVE;
+  if (s === CONTRACT_STATUSES.RENEWAL_DUE) return CONTRACT_STATUSES.RENEWAL_DUE;
+  if (s === CONTRACT_STATUSES.GRACE) return CONTRACT_STATUSES.GRACE;
+  if (s === CONTRACT_STATUSES.SUSPENDED) return CONTRACT_STATUSES.SUSPENDED;
+  if (s === CONTRACT_STATUSES.EXPIRED) return CONTRACT_STATUSES.EXPIRED;
+  if (s === CONTRACT_STATUSES.CANCELED) return CONTRACT_STATUSES.CANCELED;
+  return null;
+}
+
+function isDateInFuture(raw: string | null | undefined): boolean {
+  if (!raw) return false;
+  const parsed = new Date(raw);
+  return !Number.isNaN(parsed.getTime()) && parsed.getTime() > Date.now();
+}
+
+function hasManualBillingAccess(
+  billingRail: BillingRail,
+  contractStatus: ContractStatus,
+  graceUntil?: string | null,
+  accessExpiresAt?: string | null
+): boolean {
+  if (
+    billingRail !== BILLING_RAILS.MANUAL_INVOICE &&
+    billingRail !== BILLING_RAILS.HYBRID_USAGE_INVOICE
+  ) {
+    return false;
+  }
+  if (contractStatus === CONTRACT_STATUSES.ACTIVE) return true;
+  if (contractStatus === CONTRACT_STATUSES.RENEWAL_DUE) return true;
+  if (contractStatus === CONTRACT_STATUSES.GRACE)
+    return isDateInFuture(graceUntil || accessExpiresAt);
+  return false;
+}
+
 function resolveOrgTypeFromBilling(
   orgType: OrgType,
-  subscriptionStatus: SubscriptionStatus | null
+  subscriptionStatus: SubscriptionStatus | null,
+  billingRail: BillingRail = null,
+  contractStatus: ContractStatus = null,
+  graceUntil?: string | null,
+  accessExpiresAt?: string | null,
+  hasBillingRecord: boolean = false
 ) {
   if (orgType === ORG_TYPES.DEMO) return ORG_TYPES.DEMO;
+  if (hasManualBillingAccess(billingRail, contractStatus, graceUntil, accessExpiresAt)) {
+    return ORG_TYPES.PAID;
+  }
   if (
     subscriptionStatus === SUBSCRIPTION_STATUSES.ACTIVE ||
     subscriptionStatus === SUBSCRIPTION_STATUSES.TRIALING ||
@@ -68,7 +130,68 @@ function resolveOrgTypeFromBilling(
   ) {
     return ORG_TYPES.PAID;
   }
+  if (orgType === ORG_TYPES.PAID && hasBillingRecord) {
+    return ORG_TYPES.TRIAL;
+  }
   return orgType;
+}
+
+function resolveAccessPosture(input: {
+  orgType: OrgType;
+  isDemoView: boolean;
+  trialStatus: TrialStatus;
+  subscriptionStatus: SubscriptionStatus | null;
+  billingRail: BillingRail;
+  contractStatus: ContractStatus;
+  graceUntil?: string | null;
+  accessExpiresAt?: string | null;
+}) {
+  const {
+    orgType,
+    isDemoView,
+    trialStatus,
+    subscriptionStatus,
+    billingRail,
+    contractStatus,
+    graceUntil,
+    accessExpiresAt,
+  } = input;
+
+  if (orgType === ORG_TYPES.DEMO) {
+    return isDemoView ? ACCESS_POSTURES.DEMO_VIEW : ACCESS_POSTURES.DEMO_ORG;
+  }
+
+  if (
+    billingRail === BILLING_RAILS.MANUAL_INVOICE ||
+    billingRail === BILLING_RAILS.HYBRID_USAGE_INVOICE
+  ) {
+    if (contractStatus === CONTRACT_STATUSES.SUSPENDED) return ACCESS_POSTURES.SUSPENDED;
+    if (contractStatus === CONTRACT_STATUSES.RENEWAL_DUE)
+      return ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE;
+    if (hasManualBillingAccess(billingRail, contractStatus, graceUntil, accessExpiresAt)) {
+      return ACCESS_POSTURES.PAID_MANUAL_ACTIVE;
+    }
+  }
+
+  if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+    return ACCESS_POSTURES.PAID_PAST_DUE;
+  }
+  if (subscriptionStatus === SUBSCRIPTION_STATUSES.CANCELING) {
+    return ACCESS_POSTURES.PAID_CANCELING;
+  }
+  if (
+    subscriptionStatus === SUBSCRIPTION_STATUSES.ACTIVE ||
+    subscriptionStatus === SUBSCRIPTION_STATUSES.TRIALING
+  ) {
+    return ACCESS_POSTURES.PAID_ACTIVE;
+  }
+  if (trialStatus.expired) {
+    return ACCESS_POSTURES.TRIAL_EXPIRED;
+  }
+  if (trialStatus.warningLevel === 'warning' || trialStatus.warningLevel === 'critical') {
+    return ACCESS_POSTURES.TRIAL_EXPIRING;
+  }
+  return ACCESS_POSTURES.TRIAL_ACTIVE;
 }
 
 class AccessPolicyServiceClass {
@@ -190,9 +313,10 @@ class AccessPolicyServiceClass {
         this.getOrganizationLimits(organizationId),
         this.getDailyUsage(organizationId),
         this.getTrialUsage(organizationId),
-        DbPromise.get<{ status?: string | null }>(
+        DbPromise.get<BillingStateRow>(
           this.deps.db,
-          `SELECT status FROM organization_billing WHERE organization_id = ?`,
+          `SELECT status, billing_rail, contract_status, grace_until, access_expires_at
+           FROM organization_billing WHERE organization_id = ?`,
           [organizationId],
           { fallback: true }
         ),
@@ -204,13 +328,23 @@ class AccessPolicyServiceClass {
         return { allowed: false, reason: 'Organization is inactive', errorCode: 'ORG_INACTIVE' };
 
       const subscriptionStatus = normalizeSubscriptionStatus((billingRow as any)?.status);
+      const billingRail = normalizeBillingRail((billingRow as any)?.billing_rail);
+      const contractStatus = normalizeContractStatus((billingRow as any)?.contract_status);
       const effectiveOrgType = resolveOrgTypeFromBilling(
         orgInfo.organizationType,
-        subscriptionStatus
+        subscriptionStatus,
+        billingRail,
+        contractStatus,
+        (billingRow as any)?.grace_until,
+        (billingRow as any)?.access_expires_at,
+        Boolean(billingRow)
       );
 
       // Dunning / past-due restrictions (Stripe is SSOT).
-      if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+      if (
+        subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE ||
+        contractStatus === CONTRACT_STATUSES.SUSPENDED
+      ) {
         const blockedWhenPastDue = new Set([
           'create_project',
           'create_initiative',
@@ -222,8 +356,14 @@ class AccessPolicyServiceClass {
         if (blockedWhenPastDue.has(action)) {
           return {
             allowed: false,
-            reason: 'Payment failed. Please update your payment method to restore access.',
-            errorCode: 'SUBSCRIPTION_PAST_DUE',
+            reason:
+              contractStatus === CONTRACT_STATUSES.SUSPENDED
+                ? 'Your contract is suspended. Please contact your account team to restore access.'
+                : 'Payment failed. Please update your payment method to restore access.',
+            errorCode:
+              contractStatus === CONTRACT_STATUSES.SUSPENDED
+                ? 'SUBSCRIPTION_CANCELLED'
+                : 'SUBSCRIPTION_PAST_DUE',
           };
         }
       }
@@ -271,8 +411,16 @@ class AccessPolicyServiceClass {
               errorCode: 'TRIAL_PROFILE_INCOMPLETE',
             };
           }
-        } catch {
-          // fail open if schema mismatch
+        } catch (onboardingError) {
+          logger.error(
+            '[AccessPolicyService] Failed to verify onboarding status:',
+            onboardingError
+          );
+          return {
+            allowed: false,
+            reason: 'We could not verify your trial onboarding status. Please try again shortly.',
+            errorCode: 'TRIAL_ONBOARDING_STATUS_UNAVAILABLE',
+          };
         }
       }
 
@@ -365,8 +513,11 @@ class AccessPolicyServiceClass {
       return { allowed: true };
     } catch (error: unknown) {
       logger.error('[AccessPolicyService] Error checking access:', error);
-      // Fail open for system errors to avoid blocking legitimate users
-      return { allowed: true };
+      return {
+        allowed: false,
+        reason: 'Access policy is temporarily unavailable. Please try again in a moment.',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+      };
     }
   }
 
@@ -393,17 +544,25 @@ class AccessPolicyServiceClass {
       this.checkTrialStatus(organizationId),
       this.getOrganizationLimits(organizationId),
       this.getDailyUsage(organizationId),
-      DbPromise.get<{ status?: string | null }>(
+      DbPromise.get<BillingStateRow>(
         this.deps.db,
-        `SELECT status FROM organization_billing WHERE organization_id = ?`,
+        `SELECT status, billing_rail, contract_status, grace_until, access_expires_at
+         FROM organization_billing WHERE organization_id = ?`,
         [organizationId],
         { fallback: true }
       ),
     ]);
     const subscriptionStatus = normalizeSubscriptionStatus((billingRow as any)?.status);
+    const billingRail = normalizeBillingRail((billingRow as any)?.billing_rail);
+    const contractStatus = normalizeContractStatus((billingRow as any)?.contract_status);
     const effectiveOrgType = resolveOrgTypeFromBilling(
       orgInfo?.organizationType || ORG_TYPES.TRIAL,
-      subscriptionStatus
+      subscriptionStatus,
+      billingRail,
+      contractStatus,
+      (billingRow as any)?.grace_until,
+      (billingRow as any)?.access_expires_at,
+      Boolean(billingRow)
     );
     return {
       organizationType: effectiveOrgType,
@@ -427,16 +586,21 @@ class AccessPolicyServiceClass {
     };
   }
 
-  async buildPolicySnapshot(organizationId: string): Promise<PolicySnapshot | null> {
+  async buildPolicySnapshot(
+    organizationId: string,
+    options?: { isDemoView?: boolean }
+  ): Promise<PolicySnapshot | null> {
     const [orgInfo, trialStatus, limits, usage, trialUsage, billingRow] = await Promise.all([
       this.getOrganizationType(organizationId),
       this.checkTrialStatus(organizationId),
       this.getOrganizationLimits(organizationId),
       this.getDailyUsage(organizationId),
       this.getTrialUsage(organizationId),
-      DbPromise.get<{ status?: string | null; subscription_plan_id?: string | null }>(
+      DbPromise.get<BillingStateRow>(
         this.deps.db,
-        `SELECT status, subscription_plan_id FROM organization_billing WHERE organization_id = ?`,
+        `SELECT status, subscription_plan_id, billing_rail, contract_status, renewal_at, grace_until,
+                access_expires_at, managed_by_user_id, is_manual_override
+         FROM organization_billing WHERE organization_id = ?`,
         [organizationId],
         { fallback: true }
       ),
@@ -445,14 +609,39 @@ class AccessPolicyServiceClass {
     if (!orgInfo) return null;
 
     const subscriptionStatus = normalizeSubscriptionStatus((billingRow as any)?.status);
+    const billingRail = normalizeBillingRail((billingRow as any)?.billing_rail);
+    const contractStatus = normalizeContractStatus((billingRow as any)?.contract_status);
+    const renewalAt = (billingRow as any)?.renewal_at || null;
+    const graceUntil = (billingRow as any)?.grace_until || null;
+    const accessExpiresAt = (billingRow as any)?.access_expires_at || null;
+    const managedByUserId = (billingRow as any)?.managed_by_user_id || null;
+    const isManualBilling =
+      billingRail === BILLING_RAILS.MANUAL_INVOICE ||
+      billingRail === BILLING_RAILS.HYBRID_USAGE_INVOICE;
     const effectiveOrgType = resolveOrgTypeFromBilling(
       orgInfo.organizationType,
-      subscriptionStatus
+      subscriptionStatus,
+      billingRail,
+      contractStatus,
+      graceUntil,
+      accessExpiresAt,
+      Boolean(billingRow)
     );
 
     const isDemo = effectiveOrgType === ORG_TYPES.DEMO;
     const isTrial = effectiveOrgType === ORG_TYPES.TRIAL;
     const isPaid = effectiveOrgType === ORG_TYPES.PAID;
+    const isDemoView = Boolean(options?.isDemoView && isDemo);
+    const posture = resolveAccessPosture({
+      orgType: effectiveOrgType,
+      isDemoView,
+      trialStatus,
+      subscriptionStatus,
+      billingRail,
+      contractStatus,
+      graceUntil,
+      accessExpiresAt,
+    });
 
     const projectCount = await this.deps.resourceService.countOrgProjects(organizationId);
     const userCount = await this.deps.resourceService.countOrgUsers(organizationId);
@@ -492,7 +681,8 @@ class AccessPolicyServiceClass {
         'INVITES',
         'EXPORT',
         'CREATE_PROJECT',
-        'CREATE_INITIATIVE'
+        'CREATE_INITIATIVE',
+        'WRITE'
       );
     } else if (isTrial && trialStatus.expired) {
       blockedActions.push(
@@ -505,16 +695,29 @@ class AccessPolicyServiceClass {
       );
     }
 
-    if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
-      blockedActions.push('AI_DO_ACTIONS', 'CREATE_PROJECT', 'CREATE_INITIATIVE', 'INVITES');
+    if (posture === ACCESS_POSTURES.PAID_PAST_DUE || posture === ACCESS_POSTURES.SUSPENDED) {
+      blockedActions.push(
+        'AI_DO_ACTIONS',
+        'CREATE_PROJECT',
+        'CREATE_INITIATIVE',
+        'INVITES',
+        'WRITE'
+      );
     }
 
-    // Resolve token/storage limits from subscribed plan (Stripe SSOT → DB-configured plan limits),
-    // falling back to organization_limits defaults when missing.
     const subscribedPlanId = (billingRow as any)?.subscription_plan_id as string | null | undefined;
     let resolvedLimits: OrganizationLimits | null = limits;
     if (subscribedPlanId) {
       try {
+        const orgLimitRow = await DbPromise.get<{
+          max_storage_mb?: number | null;
+          max_total_tokens?: number | null;
+        }>(
+          this.deps.db,
+          `SELECT max_storage_mb, max_total_tokens FROM organization_limits WHERE organization_id = ?`,
+          [organizationId],
+          { fallback: true }
+        );
         const planRow = await DbPromise.get<{
           limits?: string | null;
           token_limit?: number | null;
@@ -526,19 +729,26 @@ class AccessPolicyServiceClass {
           { fallback: true }
         );
         const planLimits = planRow?.limits ? JSON.parse(planRow.limits) : {};
-
-        const tokens =
+        const orgTokenOverride =
+          typeof orgLimitRow?.max_total_tokens === 'number'
+            ? orgLimitRow.max_total_tokens
+            : undefined;
+        const orgStorageOverride =
+          typeof orgLimitRow?.max_storage_mb === 'number' ? orgLimitRow.max_storage_mb : undefined;
+        const planTokenLimit =
           typeof (planLimits as any)?.tokens === 'number'
             ? (planLimits as any).tokens
             : typeof planRow?.token_limit === 'number'
               ? planRow.token_limit
               : undefined;
-        const storageMb =
+        const planStorageMb =
           typeof (planLimits as any)?.storage_gb === 'number'
             ? Math.round((planLimits as any).storage_gb * 1024)
             : typeof planRow?.storage_limit_gb === 'number'
               ? Math.round(planRow.storage_limit_gb * 1024)
               : undefined;
+        const tokens = orgTokenOverride ?? planTokenLimit;
+        const storageMb = orgStorageOverride ?? planStorageMb;
 
         if (!resolvedLimits) {
           resolvedLimits = {
@@ -564,21 +774,26 @@ class AccessPolicyServiceClass {
     }
 
     if ((isTrial || isDemo) && resolvedLimits) {
-      if (projectCount >= resolvedLimits.maxProjects && resolvedLimits.maxProjects >= 0)
+      if (projectCount >= resolvedLimits.maxProjects && resolvedLimits.maxProjects >= 0) {
         blockedActions.push('CREATE_PROJECT');
-      if (userCount >= resolvedLimits.maxUsers && resolvedLimits.maxUsers >= 0)
+      }
+      if (userCount >= resolvedLimits.maxUsers && resolvedLimits.maxUsers >= 0) {
         blockedActions.push('INVITES');
+      }
       if (
         usage.aiCallsCount >= resolvedLimits.maxAICallsPerDay &&
         resolvedLimits.maxAICallsPerDay >= 0
-      )
+      ) {
         blockedActions.push('AI_CALL');
-      if (initiativeCount >= resolvedLimits.maxInitiatives && resolvedLimits.maxInitiatives >= 0)
+      }
+      if (initiativeCount >= resolvedLimits.maxInitiatives && resolvedLimits.maxInitiatives >= 0) {
         blockedActions.push('CREATE_INITIATIVE');
+      }
       if (
         resolvedLimits.maxTotalTokens > 0 &&
         trialUsage.tokensUsed >= resolvedLimits.maxTotalTokens &&
-        !hasPaymentMethod
+        !hasPaymentMethod &&
+        !isManualBilling
       ) {
         blockedActions.push('AI_TOKEN_BUDGET');
       }
@@ -602,20 +817,60 @@ class AccessPolicyServiceClass {
     let bannerTextKey: string | null = null;
     let modalText: string | null = null;
     let modalTextKey: string | null = null;
+    let primaryAction = 'Upgrade Plan';
+    let primaryActionKey = 'access.cta.upgradePlan';
+    let ctaReason: string | undefined;
+    let ctaUrlOrRoute = '/settings?tab=billing';
 
     if (isDemo) {
-      bannerText = 'You are viewing a demo environment (read-only)';
+      bannerText = isDemoView
+        ? 'You are exploring the Atelier Toys demo workspace.'
+        : 'You are viewing a demo environment (read-only)';
       bannerTextKey = 'access.banner.demo';
-    } else if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+      primaryAction = 'Start Trial';
+      primaryActionKey = 'access.cta.startTrial';
+      ctaReason = 'demo_mode';
+      ctaUrlOrRoute = '/trial/start';
+    } else if (posture === ACCESS_POSTURES.PAID_PAST_DUE) {
       bannerText =
         'Payment failed. Please update your payment method to avoid service interruption.';
       bannerTextKey = 'access.banner.pastDue';
+      primaryAction = 'Fix Payment';
+      primaryActionKey = 'access.cta.fixPayment';
+      ctaReason = 'payment_failed';
+      ctaUrlOrRoute = '/settings?tab=billing';
+    } else if (posture === ACCESS_POSTURES.PAID_CANCELING) {
+      bannerText = 'Your subscription will end at the close of the current billing period.';
+      bannerTextKey = 'access.banner.canceling';
+      primaryAction = 'Renew Subscription';
+      primaryActionKey = 'access.cta.renewSubscription';
+      ctaReason = 'subscription_canceling';
+      ctaUrlOrRoute = '/settings?tab=billing';
+    } else if (posture === ACCESS_POSTURES.SUSPENDED) {
+      bannerText = 'Your contract is suspended. Contact your account team to restore access.';
+      bannerTextKey = 'access.banner.contractSuspended';
+      primaryAction = 'Contact Account Team';
+      primaryActionKey = 'access.cta.contactAccountTeam';
+      ctaReason = 'contract_suspended';
+      ctaUrlOrRoute = '/legal/contact?topic=billing&reason=contract_suspended';
+    } else if (posture === ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE) {
+      bannerText =
+        'Your contract is nearing renewal. Coordinate the next term with your account team.';
+      bannerTextKey = 'access.banner.contractRenewalDue';
+      primaryAction = 'Renew Contract';
+      primaryActionKey = 'access.cta.renewContract';
+      ctaReason = 'contract_renewal_due';
+      ctaUrlOrRoute = '/legal/contact?topic=billing&reason=contract_renewal_due';
     } else if (isTrial && trialStatus.expired) {
       bannerText = 'Your trial has expired. Upgrade to continue.';
       bannerTextKey = 'access.banner.trialExpired';
       modalText =
         'Your trial period has ended. Your data is safe, but your organization is now in read-only mode. Upgrade to restore full access.';
       modalTextKey = 'access.modal.trialExpired';
+      primaryAction = 'Upgrade Now';
+      primaryActionKey = 'access.cta.upgradeNow';
+      ctaReason = 'trial_expired';
+      ctaUrlOrRoute = '/settings?tab=billing';
     } else if (isTrial && trialStatus.warningLevel === 'critical') {
       bannerText = `Trial expires in ${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''}. Upgrade now to keep full access.`;
       bannerTextKey = 'access.banner.trialCritical';
@@ -633,41 +888,47 @@ class AccessPolicyServiceClass {
       bannerTextKey = 'access.banner.approachingLimits';
     }
 
-    let primaryAction = 'Upgrade Plan';
-    let primaryActionKey = 'access.cta.upgradePlan';
-    let ctaReason: string | undefined;
-
-    if (trialStatus.expired) {
-      primaryAction = 'Upgrade Now';
-      primaryActionKey = 'access.cta.upgradeNow';
-      ctaReason = 'trial_expired';
-    } else if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
-      primaryAction = 'Fix Payment';
-      primaryActionKey = 'access.cta.fixPayment';
-      ctaReason = 'payment_failed';
-    } else if (
+    if (
       isTrial &&
       resolvedLimits &&
       resolvedLimits.maxTotalTokens > 0 &&
       trialUsage.tokensUsed >= resolvedLimits.maxTotalTokens &&
-      !hasPaymentMethod
+      !hasPaymentMethod &&
+      !isManualBilling
     ) {
       primaryAction = 'Add Payment Method';
       primaryActionKey = 'access.cta.addPaymentMethod';
       ctaReason = 'token_budget_exceeded';
+      ctaUrlOrRoute = '/settings?tab=billing';
     }
 
     return {
       orgType: effectiveOrgType,
+      posture,
       isDemo,
+      isDemoView,
       isTrial,
       isPaid,
+      billingRail,
+      contractStatus,
       subscriptionStatus,
+      sourceOfTruth: isDemo
+        ? 'demo_mode'
+        : isManualBilling
+          ? 'manual_contract'
+          : isPaid
+            ? 'stripe'
+            : 'trial_clock',
       trialStartedAt: orgInfo.trialStartedAt,
       trialExpiresAt: orgInfo.trialExpiresAt,
       trialDaysLeft: trialStatus.daysRemaining,
       isTrialExpired: trialStatus.expired,
       warningLevel: trialStatus.warningLevel,
+      renewalAt,
+      graceUntil,
+      accessExpiresAt,
+      managedByUserId,
+      isManualBilling,
       limits: resolvedLimits
         ? {
             maxProjects: resolvedLimits.maxProjects,
@@ -693,7 +954,7 @@ class AccessPolicyServiceClass {
       upgradeCtas: {
         primaryAction,
         primaryActionKey,
-        urlOrRoute: '/settings?tab=billing',
+        urlOrRoute: ctaUrlOrRoute,
         reason: ctaReason,
       },
       messages: {
@@ -720,9 +981,25 @@ class AccessPolicyServiceClass {
     ]);
 
     if (!orgInfo) return { allowed: false, reasonCode: 'ORG_NOT_FOUND' };
-    if (orgInfo.organizationType === ORG_TYPES.DEMO)
+    const billingRow = await DbPromise.get<BillingStateRow>(
+      this.deps.db,
+      `SELECT status, billing_rail, contract_status, grace_until, access_expires_at
+       FROM organization_billing WHERE organization_id = ?`,
+      [organizationId],
+      { fallback: true }
+    );
+    const effectiveOrgType = resolveOrgTypeFromBilling(
+      orgInfo.organizationType,
+      normalizeSubscriptionStatus((billingRow as any)?.status),
+      normalizeBillingRail((billingRow as any)?.billing_rail),
+      normalizeContractStatus((billingRow as any)?.contract_status),
+      (billingRow as any)?.grace_until,
+      (billingRow as any)?.access_expires_at,
+      Boolean(billingRow)
+    );
+    if (effectiveOrgType === ORG_TYPES.DEMO)
       return { allowed: false, reasonCode: 'DEMO_READ_ONLY' };
-    if (trialStatus.expired && orgInfo.organizationType !== ORG_TYPES.PAID)
+    if (trialStatus.expired && effectiveOrgType !== ORG_TYPES.PAID)
       return { allowed: false, reasonCode: 'TRIAL_EXPIRED' };
 
     try {

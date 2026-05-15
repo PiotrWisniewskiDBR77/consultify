@@ -45,6 +45,7 @@ const QUICK_TYPES: ArtifactType[] = [
   'system',
   'kpi',
   'report',
+  'presentation',
   'tool',
   'tool_session',
   'notebook',
@@ -72,6 +73,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
   const [query, setQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<ArtifactLinkRole>('related');
   const [filterType, setFilterType] = useState<ArtifactType | null>(null);
+  const [pasteStatus, setPasteStatus] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = useCallback(
@@ -86,14 +88,21 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
     (text: string) => {
       const parsed = parseArtifactRef(text);
       if (parsed) {
+        setPasteStatus('');
         onAttach(
           { type: parsed.type, id: parsed.id, title: `${parsed.type}:${parsed.id}` },
           selectedRole
         );
         onClose();
+        return;
       }
+      setPasteStatus(
+        isPl
+          ? 'Nieprawidlowy ref artefaktu. Uzyj formatu typ:id.'
+          : 'Invalid artifact ref. Use type:id format.'
+      );
     },
-    [onAttach, onClose, selectedRole]
+    [onAttach, onClose, selectedRole, isPl]
   );
 
   const filteredResults = filterType
@@ -141,6 +150,15 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
               autoFocus
             />
           </div>
+          {pasteStatus && (
+            <div
+              role="status"
+              className="mt-1 text-[10px] text-amber-700 dark:text-amber-400"
+              data-testid="artifact-paste-status"
+            >
+              {pasteStatus}
+            </div>
+          )}
         </div>
 
         {/* Type filter */}

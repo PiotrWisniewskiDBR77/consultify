@@ -14,7 +14,20 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import emailService from './emailService.js';
+import {
+  buildAssignmentManagerScopeClause,
+  type InterviewManagerScope,
+} from './interviewManagerScope.js';
 import notificationService from './notificationService.js';
+
+const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
 
 // ==========================================
 // TYPES
@@ -30,6 +43,73 @@ export type AssignmentStatus =
   | 'completed';
 export type AssignmentPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TeamMemberRole = 'lead' | 'member';
+export type InterviewAiFixType =
+  | 'clarify'
+  | 'add_evidence'
+  | 'expand_answer'
+  | 'make_specific'
+  | 'complete_required_fields'
+  | 'correct_meaning';
+export type InterviewAiAnswerVerdict =
+  | 'sufficient'
+  | 'needs_improvement'
+  | 'insufficient'
+  | 'unanswered';
+export type InterviewAiOverallVerdict =
+  | 'ready_for_approval'
+  | 'needs_improvement'
+  | 'insufficient'
+  | 'empty';
+export type InterviewReviewAlignment =
+  | 'aligned'
+  | 'manager_stricter_than_ai'
+  | 'manager_overrode_ai_warning'
+  | 'no_ai_signal';
+
+export interface InterviewAiWeakAnswerItem {
+  key: string;
+  label: string;
+  questionId?: string;
+  sectionId?: string;
+  score: number;
+  verdict: InterviewAiAnswerVerdict;
+  feedback: string;
+  fixType: InterviewAiFixType;
+  isRequired: boolean;
+}
+
+export interface InterviewAiReviewSnapshot {
+  overallScore: number;
+  overallVerdict: InterviewAiOverallVerdict;
+  questionEvaluations: Array<{
+    questionId: string;
+    score: number;
+    verdict: InterviewAiAnswerVerdict;
+    feedback: string;
+    fixType: InterviewAiFixType;
+  }>;
+  recommendations: string[];
+  weakAnswerMap: InterviewAiWeakAnswerItem[];
+}
+
+export interface InterviewReviewDecisionMemoryEntry {
+  id: string;
+  action: 'approve' | 'send_back' | 'revoke_approval';
+  actorId: string;
+  actorRole?: string;
+  createdAt: string;
+  aiOverallVerdict: InterviewAiOverallVerdict;
+  aiOverallScore: number | null;
+  aiWeakAnswerCount: number;
+  alignment: InterviewReviewAlignment;
+  reason?: string;
+  missingItems?: Array<{
+    key: string;
+    label: string;
+    questionId?: string;
+    sectionId?: string;
+  }>;
+}
 
 export interface CreateAssignmentInput {
   organizationId: string;
@@ -62,6 +142,9 @@ export interface Assignment {
   submittedAt?: string;
   sentBackAt?: string;
   sentBackReason?: string;
+  aiReview?: InterviewAiReviewSnapshot | null;
+  aiReviewedAt?: string;
+  reviewDecisionMemory?: InterviewReviewDecisionMemoryEntry[];
   priority: AssignmentPriority;
   reminderSentAt?: string;
   reminderCount: number;
@@ -74,6 +157,7 @@ export interface Assignment {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  isActive?: boolean;
 }
 
 export interface AssignmentMember {
@@ -227,6 +311,10 @@ class InterviewAssignmentService {
     await ensureAssignmentColumn('is_team_assignment', 'is_team_assignment INTEGER DEFAULT 0');
     await ensureAssignmentColumn('notes', 'notes TEXT');
     await ensureAssignmentColumn('escalate_to', 'escalate_to TEXT');
+    await ensureAssignmentColumn('ai_review_snapshot_json', 'ai_review_snapshot_json TEXT');
+    await ensureAssignmentColumn('ai_reviewed_at', 'ai_reviewed_at TIMESTAMP');
+    await ensureAssignmentColumn('review_decision_memory_json', 'review_decision_memory_json TEXT');
+    await ensureAssignmentColumn('is_active', 'is_active INTEGER DEFAULT 1');
 
     await querySafe(`
       CREATE TABLE IF NOT EXISTS interview_assignment_members (
@@ -255,6 +343,19 @@ class InterviewAssignmentService {
         sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         read_at TIMESTAMP,
         metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await querySafe(`
+      CREATE TABLE IF NOT EXISTS interview_assignment_events (
+        id TEXT PRIMARY KEY,
+        assignment_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        actor_id TEXT,
+        event_type TEXT NOT NULL,
+        reason TEXT,
+        payload_json TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -293,6 +394,17 @@ class InterviewAssignmentService {
       await querySafe(
         `CREATE INDEX IF NOT EXISTS idx_interview_notifications_user
          ON interview_notifications(user_id)`
+      );
+    }
+
+    if (await tableExists('interview_assignment_events')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_assignment
+         ON interview_assignment_events(assignment_id, created_at DESC)`
+      );
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_org
+         ON interview_assignment_events(organization_id, created_at DESC)`
       );
     }
   }
@@ -651,7 +763,7 @@ class InterviewAssignmentService {
     const db = await this.getDb();
     const params: any[] = [organizationId, userId, userId];
 
-    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR EXISTS (
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND (a.assignee_user_id = ? OR EXISTS (
       SELECT 1
       FROM interview_assignment_members m
       WHERE m.assignment_id = a.id AND m.user_id = ?
@@ -687,7 +799,8 @@ class InterviewAssignmentService {
   }
 
   /**
-   * Get assignments created by a manager
+   * Get assignments managed by a user.
+   * Elevated roles (OWNER/ADMIN/SUPERADMIN) can see org-wide assignments.
    */
   async getManagedAssignments(
     managerId: string,
@@ -695,12 +808,19 @@ class InterviewAssignmentService {
     options?: {
       projectId?: string;
       status?: AssignmentStatus;
+      elevated?: boolean;
+      scope?: InterviewManagerScope;
     }
   ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
-    const params: any[] = [organizationId, managerId];
+    const params: any[] = [organizationId];
+    const scope =
+      options?.scope ||
+      (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: managerId });
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
 
-    let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1${scopeClause.clause}`;
+    params.push(...scopeClause.params);
 
     if (options?.projectId) {
       where += ` AND a.project_id = ?`;
@@ -738,16 +858,26 @@ class InterviewAssignmentService {
   /**
    * Get overdue assignments
    */
-  async getOverdueAssignments(organizationId?: string): Promise<AssignmentWithDetails[]> {
+  async getOverdueAssignments(
+    organizationId?: string,
+    options?: { scope?: InterviewManagerScope }
+  ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
     const now = new Date().toISOString();
     const params: any[] = [now];
 
-    let where = `WHERE a.due_at < ? AND a.status NOT IN ('completed', 'submitted')`;
+    let where = `WHERE a.due_at < ? AND COALESCE(a.is_active, 1) = 1 AND a.status NOT IN ('completed', 'submitted')`;
 
     if (organizationId) {
       where += ` AND a.organization_id = ?`;
       params.push(organizationId);
+    }
+    if (options?.scope) {
+      const scopeClause = buildAssignmentManagerScopeClause(options.scope, {
+        assignmentAlias: 'a',
+      });
+      where += scopeClause.clause;
+      params.push(...scopeClause.params);
     }
 
     const rows = await db.all<any>(
@@ -779,18 +909,27 @@ class InterviewAssignmentService {
   /**
    * Get overdue count for a manager
    */
-  async getOverdueCount(managerId: string, organizationId: string): Promise<number> {
+  async getOverdueCount(
+    managerId: string,
+    organizationId: string,
+    options?: { scope?: InterviewManagerScope }
+  ): Promise<number> {
     const db = await this.getDb();
     const now = new Date().toISOString();
+    const scope = options?.scope || { kind: 'creator', creatorId: managerId };
+    const scopeClause = buildAssignmentManagerScopeClause(scope, {
+      assignmentAlias: 'interview_assignments',
+    });
 
     const result = await db.get<{ count: number }>(
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
-         AND created_by = ?
+         ${scopeClause.clause}
+         AND COALESCE(is_active, 1) = 1
          AND due_at < ?
          AND status NOT IN ('completed', 'submitted')`,
-      [organizationId, managerId, now]
+      [organizationId, ...scopeClause.params, now]
     );
 
     return result?.count || 0;
@@ -836,7 +975,8 @@ class InterviewAssignmentService {
       `SELECT a.*, t.name as template_name
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
-       WHERE a.status IN ('assigned', 'in_progress', 'sent_back')
+       WHERE COALESCE(a.is_active, 1) = 1
+         AND a.status IN ('assigned', 'in_progress', 'sent_back')
          AND a.due_at IS NOT NULL
          AND a.due_at > ?`,
       [now.toISOString()]
@@ -923,7 +1063,8 @@ class InterviewAssignmentService {
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        LEFT JOIN users escalation_target ON escalation_target.id = COALESCE(a.escalate_to, a.created_by)
-       WHERE a.status IN ('assigned', 'in_progress', 'sent_back')
+       WHERE COALESCE(a.is_active, 1) = 1
+         AND a.status IN ('assigned', 'in_progress', 'sent_back')
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
          AND (a.escalated_at IS NULL OR a.escalated_at < ?)`,
@@ -1250,6 +1391,12 @@ class InterviewAssignmentService {
       submittedAt: row.submitted_at || undefined,
       sentBackAt: row.sent_back_at || undefined,
       sentBackReason: row.sent_back_reason || undefined,
+      aiReview: parseJson<InterviewAiReviewSnapshot | null>(row.ai_review_snapshot_json, null),
+      aiReviewedAt: row.ai_reviewed_at || undefined,
+      reviewDecisionMemory: parseJson<InterviewReviewDecisionMemoryEntry[]>(
+        row.review_decision_memory_json,
+        []
+      ),
       priority: (row.priority || 'medium') as AssignmentPriority,
       reminderSentAt: row.reminder_sent_at || undefined,
       reminderCount: row.reminder_count || 0,
@@ -1262,6 +1409,7 @@ class InterviewAssignmentService {
       createdBy: row.created_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      isActive: row.is_active !== 0,
     };
   }
 
@@ -1334,10 +1482,10 @@ export const getMyAssignments = (userId: string, organizationId: string, options
   interviewAssignmentService.getMyAssignments(userId, organizationId, options);
 export const getManagedAssignments = (managerId: string, organizationId: string, options?: any) =>
   interviewAssignmentService.getManagedAssignments(managerId, organizationId, options);
-export const getOverdueAssignments = (organizationId?: string) =>
-  interviewAssignmentService.getOverdueAssignments(organizationId);
-export const getOverdueCount = (managerId: string, organizationId: string) =>
-  interviewAssignmentService.getOverdueCount(managerId, organizationId);
+export const getOverdueAssignments = (organizationId?: string, options?: any) =>
+  interviewAssignmentService.getOverdueAssignments(organizationId, options);
+export const getOverdueCount = (managerId: string, organizationId: string, options?: any) =>
+  interviewAssignmentService.getOverdueCount(managerId, organizationId, options);
 export const sendReminder = (assignmentId: string, senderId: string) =>
   interviewAssignmentService.sendReminder(assignmentId, senderId);
 export const checkAndSendReminders = () => interviewAssignmentService.checkAndSendReminders();

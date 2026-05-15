@@ -4,6 +4,7 @@
  */
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import type { Edge, Node } from 'reactflow';
 
 export interface UseWhiteboardNodesOpts {
@@ -80,6 +81,7 @@ export function buildDuplicateSelection(nodes: Node[], edges: Edge[]) {
 
 export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
   const { nodes, setNodes, setEdges, locked, isPl, pushSnapshot } = opts;
+  const { t } = useTranslation();
 
   const deleteSelected = useCallback(() => {
     if (locked) return;
@@ -104,7 +106,7 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     if (locked) return;
     const duplicatePack = buildDuplicateSelection(nodes, []);
     if (duplicatePack.nodes.length === 0) {
-      toast(isPl ? 'Brak odblokowanego zaznaczenia' : 'No unlocked selection', { duration: 900 });
+      toast(t('myWork.whiteboard.toast.noUnlockedSelection'), { duration: 900 });
       return;
     }
     pushSnapshot?.();
@@ -116,14 +118,14 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
       const pack = buildDuplicateSelection(nodes, prev);
       return [...prev, ...pack.edges];
     });
-    toast.success(isPl ? 'Zduplikowano' : 'Duplicated', { duration: 600 });
-  }, [isPl, locked, nodes, pushSnapshot, setEdges, setNodes]);
+    toast.success(t('myWork.whiteboard.toast.duplicated'), { duration: 600 });
+  }, [isPl, locked, nodes, pushSnapshot, setEdges, setNodes, t]);
 
   const groupSelected = useCallback(() => {
     if (locked) return;
     const selected = (nodes as Node[]).filter((n: Node) => n.selected && !isNodeLocked(n));
     if (selected.length < 2) {
-      toast.error(isPl ? 'Zaznacz co najmniej 2 elementy' : 'Select at least 2 elements');
+      toast.error(t('myWork.whiteboard.errors.selectAtLeastTwo'));
       return;
     }
     const xs = selected.map((n) => n.position.x);
@@ -139,7 +141,7 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
       type: 'frameNode',
       position: { x: minX, y: minY },
       data: {
-        label: isPl ? 'Grupa' : 'Group',
+        label: t('myWork.whiteboard.nodes.groupLabel'),
         width: maxX - minX,
         height: maxY - minY,
       },
@@ -154,8 +156,8 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
       });
       return [groupNode, ...updated];
     });
-    toast.success(isPl ? 'Zgrupowano' : 'Grouped', { duration: 600 });
-  }, [isPl, locked, nodes, pushSnapshot, setNodes]);
+    toast.success(t('myWork.whiteboard.toast.grouped'), { duration: 600 });
+  }, [isPl, locked, nodes, pushSnapshot, setNodes, t]);
 
   const ungroupSelected = useCallback(() => {
     if (locked) return;
@@ -179,8 +181,8 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
           return n;
         })
     );
-    toast.success(isPl ? 'Rozgrupowano' : 'Ungrouped', { duration: 600 });
-  }, [isPl, locked, nodes, pushSnapshot, setNodes]);
+    toast.success(t('myWork.whiteboard.toast.ungrouped'), { duration: 600 });
+  }, [isPl, locked, nodes, pushSnapshot, setNodes, t]);
 
   const distributeNodes = useCallback(
     (axis: 'horizontal' | 'vertical') => {

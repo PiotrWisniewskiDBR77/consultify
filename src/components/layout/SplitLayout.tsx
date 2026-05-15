@@ -242,14 +242,14 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
         <div
           ref={sidebarRef}
           style={{ width: chatPanelWidth }}
-          className="shrink-0 shadow-sm bg-white dark:bg-navy-900 flex flex-col hidden lg:flex h-full transition-none relative"
+          className="shrink-0 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700 flex flex-col hidden lg:flex h-full transition-none relative"
         >
           {/* Collapse button - only for legacy chat panel */}
           {!useUnifiedChat && (
             <div className="absolute top-2 right-2 z-10">
               <button
                 onClick={() => toggleChatCollapse()}
-                className="p-1 rounded bg-slate-100 dark:bg-navy-800/40 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400"
+                className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
                 title="Collapse AI Panel"
               >
                 <svg
@@ -285,10 +285,10 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
       )}
       {/* Desktop Collapsed Trigger */}
       {isChatCollapsed && !hideSidebar && (
-        <div className="hidden lg:flex w-12 shadow-sm bg-white dark:bg-navy-900 flex-col items-center py-4 gap-4 h-full shrink-0">
+        <div className="hidden lg:flex w-12 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700 flex-col items-center py-4 gap-4 h-full shrink-0">
           <button
             onClick={() => toggleChatCollapse()}
-            className="w-8 h-8 rounded bg-brand/10 text-brand flex items-center justify-center hover:bg-brand/20 transition-colors"
+            className="w-8 h-8 rounded bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 border border-primary-200 dark:border-primary-800 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
             title="Expand Chat"
           >
             <svg
@@ -304,7 +304,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
-          <div className="writing-vertical-rl text-xs text-slate-400 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
+          <div className="writing-vertical-rl text-xs text-slate-600 dark:text-slate-400 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
             AI Consultant
           </div>
         </div>
@@ -312,10 +312,10 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
       {/* Resizer Handle (Only when visible) */}
       {!isChatCollapsed && !hideSidebar && (
         <div
-          className={`hidden lg:block w-1 hover:w-1.5 -ml-0.5 z-10 cursor-col-resize bg-transparent hover:bg-brand/50 active:bg-brand transition-all duration-150 relative ${isResizing ? 'bg-brand w-1.5' : ''}`}
+          className={`hidden lg:block w-1 hover:w-1.5 -ml-0.5 z-10 cursor-col-resize bg-transparent hover:bg-primary-500/40 active:bg-primary-500 transition-all duration-150 relative ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
           onMouseDown={startResizing}
         >
-          <div className="absolute inset-y-0 left-1/2 w-px bg-slate-200 dark:bg-white/10" />
+          <div className="absolute inset-y-0 left-1/2 w-px bg-slate-300 dark:bg-white/10" />
         </div>
       )}
 
@@ -324,14 +324,14 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
         <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm"
             onClick={() => setIsMobileChatOpen(false)}
           />
 
           {/* Chat Drawer - Different sizes for mobile vs tablet */}
           <div
             className={`
-                            relative bg-white dark:bg-navy-900 h-full flex flex-col shadow-2xl
+                            relative bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 h-full flex flex-col shadow-2xl
                             transition-transform duration-300 ease-out transform
                             ${isMobile ? 'w-full' : 'w-[400px] max-w-[80vw]'}
                         `}
@@ -342,19 +342,21 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-900/30 flex items-center justify-center">
-                  <Sparkles size={16} className="text-purple-400" />
+                <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 flex items-center justify-center">
+                  <Sparkles size={16} className="text-primary-700 dark:text-primary-300" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     AI Consultant
                   </h3>
-                  <p className="text-[10px] text-slate-500">Twój asystent transformacji</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                    Twój asystent transformacji
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsMobileChatOpen(false)}
-                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-slate-400"
+                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
               >
                 <X size={20} />
               </button>
@@ -390,11 +392,11 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               <button
                 onClick={() => toggleArtifactsPanel()}
                 className={`
-                                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1
                                     ${
                                       isArtifactsPanelOpen
-                                        ? 'bg-brand text-white'
-                                        : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                        : 'bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800 dark:hover:bg-primary-900/50'
                                     }
                                 `}
               >
@@ -412,11 +414,11 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             <button
               onClick={() => toggleArtifactsPanel()}
               className={`
-                                flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1
                                 ${
                                   isArtifactsPanelOpen
-                                    ? 'bg-brand text-white'
-                                    : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                    : 'bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800 dark:hover:bg-primary-900/50'
                                 }
                             `}
             >
@@ -483,13 +485,13 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
         <div className="lg:hidden fixed inset-0 z-50">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm"
             onClick={() => toggleArtifactsPanel(false)}
           />
 
           {/* Drawer from bottom */}
           <div
-            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-navy-900 rounded-t-2xl max-h-[80vh] overflow-hidden"
+            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 rounded-t-2xl max-h-[80vh] overflow-hidden"
             style={{ animation: 'slideInFromBottom 0.3s ease-out forwards' }}
           >
             <ArtifactsPanel

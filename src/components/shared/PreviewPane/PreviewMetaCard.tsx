@@ -7,6 +7,8 @@ import { PREVIEW_META_PILL } from './previewStyles';
 
 export interface MetaPill {
   label: string;
+  value?: string | number;
+  tone?: 'info' | 'neutral' | 'success' | 'warning' | 'danger';
   className?: string;
   icon?: React.ElementType;
   dot?: string;
@@ -31,7 +33,10 @@ export interface CompletenessInfo {
 }
 
 export interface PreviewMetaCardProps {
-  pills: MetaPill[];
+  pills?: MetaPill[];
+  metaPills?: MetaPill[];
+  title?: string;
+  subtitle?: string;
   /** Optional right-aligned content (e.g. date, SLA) */
   trailing?: React.ReactNode;
   /** AI-generated action suggestion displayed as a banner below pills */
@@ -44,6 +49,9 @@ export interface PreviewMetaCardProps {
 
 export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
   pills,
+  metaPills,
+  title,
+  subtitle,
   trailing,
   suggestion,
   completeness,
@@ -51,21 +59,32 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
 }) => {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const pillRefs = useRef<(HTMLElement | null)[]>([]);
+  const resolvedPills = pills ?? metaPills ?? [];
 
   const closeEditor = useCallback(() => setEditingIdx(null), []);
 
   return (
     <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+      {title ? (
+        <div className="mb-2">
+          <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+          {subtitle ? (
+            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-          {pills.map((pill, idx) => {
+          {resolvedPills.map((pill, idx) => {
             const Icon = pill.icon;
             const isClickable = !!(pill.onClick || pill.renderEditor);
             const Tag = isClickable ? 'button' : 'span';
+            const resolvedLabel =
+              pill.value !== undefined ? `${pill.label}: ${pill.value}` : pill.label;
 
             return (
               <motion.span
-                key={`${pill.label}-${idx}`}
+                key={`${resolvedLabel}-${idx}`}
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.12, delay: idx * 0.03, ease: 'easeOut' }}
@@ -85,7 +104,16 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                   }
                   className={[
                     PREVIEW_META_PILL,
-                    pill.className ?? 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+                    pill.className ??
+                      (pill.tone === 'success'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                        : pill.tone === 'warning'
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                          : pill.tone === 'danger'
+                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                            : pill.tone === 'info'
+                              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300'
+                              : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'),
                     isClickable
                       ? 'cursor-pointer hover:ring-1 hover:ring-primary-400/30 transition-shadow'
                       : '',
@@ -96,7 +124,7 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                 >
                   {pill.dot ? <span className={`w-1.5 h-1.5 rounded-full ${pill.dot}`} /> : null}
                   {Icon ? <Icon size={11} /> : null}
-                  {pill.label}
+                  {resolvedLabel}
                   {pill.editable ? (
                     <Pencil
                       size={9}

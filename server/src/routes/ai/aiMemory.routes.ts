@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import TableContextService from '../../services/tablePlatform/TableContextService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -99,6 +100,32 @@ router.get(
       }>;
 
       if (memories.length === 0) {
+        const orgId =
+          req.user?.organizationId || req.user?.organization_id || (req as any).organizationId;
+        if (orgId) {
+          const workspaceId = req.query.workspaceId as string | undefined;
+          const tableContext = await TableContextService.getTableContextForOrg(
+            orgId,
+            workspaceId
+          ).catch(() => '');
+
+          let tableDetailContext = '';
+          if (req.query.tableId) {
+            tableDetailContext = await TableContextService.getTableDetailContext(
+              req.query.tableId as string
+            ).catch(() => '');
+          }
+
+          if (tableContext) {
+            return res.json({
+              context: `TABLE DATA:\n${tableContext}`,
+              memories: [],
+              tableData: tableContext,
+              activeTableDetail: tableDetailContext || undefined,
+            });
+          }
+        }
+
         return res.json({ context: null, memories: [] });
       }
 
@@ -147,6 +174,34 @@ router.get(
           if (m.key && m.value) {
             contextParts.push(`- ${m.key}: ${m.value}`);
           }
+        });
+      }
+
+      const orgId =
+        req.user?.organizationId || req.user?.organization_id || (req as any).organizationId;
+      if (orgId) {
+        const workspaceId = req.query.workspaceId as string | undefined;
+        const tableContext = await TableContextService.getTableContextForOrg(
+          orgId,
+          workspaceId
+        ).catch(() => '');
+
+        if (tableContext) {
+          contextParts.push(`\nTABLE DATA:\n${tableContext}`);
+        }
+
+        let tableDetailContext = '';
+        if (req.query.tableId) {
+          tableDetailContext = await TableContextService.getTableDetailContext(
+            req.query.tableId as string
+          ).catch(() => '');
+        }
+
+        return res.json({
+          context: contextParts.join('\n'),
+          memories: memories.map((m) => ({ key: m.key, value: m.value })),
+          tableData: tableContext || undefined,
+          activeTableDetail: tableDetailContext || undefined,
         });
       }
 
@@ -430,6 +485,40 @@ router.post(
     } catch (err: any) {
       logger.error('[AIMemory] Parse error:', err);
       return res.status(500).json({ error: 'Failed to parse response' });
+    }
+  })
+);
+
+// ==================== TABLE CONTEXT ====================
+/**
+ * GET /api/ai-memory/table-context
+ * Standalone endpoint for table platform context (bases, tables, fields)
+ */
+router.get(
+  '/table-context',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId =
+        req.user?.organizationId || req.user?.organization_id || (req as any).organizationId;
+
+      if (!orgId) {
+        return res.status(401).json({ error: 'Organization not found' });
+      }
+
+      const workspaceId = req.query.workspaceId as string | undefined;
+      const tableId = req.query.tableId as string | undefined;
+
+      const tableContext = await TableContextService.getTableContextForOrg(orgId, workspaceId);
+      const tableDetail = tableId ? await TableContextService.getTableDetailContext(tableId) : '';
+
+      return res.json({
+        tableContext: tableContext || null,
+        tableDetail: tableDetail || null,
+      });
+    } catch (err: any) {
+      logger.error('[AIMemory] Table context error:', err);
+      return res.status(500).json({ error: 'Failed to fetch table context' });
     }
   })
 );

@@ -209,6 +209,25 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
     return t('security.dashboard.scorePoor', 'Needs Improvement');
   };
 
+  const exportSecurityReport = () => {
+    const report = {
+      generatedAt: new Date().toISOString(),
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      score,
+      compliance,
+      recentEvents,
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `security-report-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
@@ -484,11 +503,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
         <QuickActionCard
           icon={<Download className="w-6 h-6" />}
           title={t('security.dashboard.actions.export', 'Security Report')}
-          description={t('security.dashboard.actions.downloadReport', 'Download PDF report')}
+          description={t('security.dashboard.actions.downloadReport', 'Download security snapshot')}
           status="info"
-          onClick={() => {
-            /* TODO: Generate report */
-          }}
+          onClick={exportSecurityReport}
         />
       </div>
 

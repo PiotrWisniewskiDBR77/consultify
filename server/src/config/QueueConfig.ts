@@ -38,11 +38,26 @@ export function loadQueueConfig(): QueueConfig {
     return {};
   }
 
+  const redisUrlRaw = String(process.env.REDIS_URL || '').trim();
+  let redisUrl: URL | null = null;
+  if (redisUrlRaw) {
+    try {
+      redisUrl = new URL(redisUrlRaw);
+    } catch {
+      logger.warn('[Queue Config] Invalid REDIS_URL, falling back to REDIS_HOST/REDIS_PORT');
+    }
+  }
+
+  const urlHost = redisUrl?.hostname;
+  const urlPort = redisUrl?.port ? Number(redisUrl.port) : undefined;
+  const urlPassword =
+    redisUrl?.password && redisUrl.password.length > 0 ? redisUrl.password : undefined;
+
   const rawConfig: QueueConfig = {
     connection: {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      password: process.env.REDIS_PASSWORD || undefined,
+      host: process.env.REDIS_HOST || urlHost || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || String(urlPort || 6379), 10),
+      password: process.env.REDIS_PASSWORD || urlPassword,
     },
   };
 

@@ -14,6 +14,7 @@ import {
   RunStateValues,
 } from '../../types/executionSpine.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { get as dbGet } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -143,6 +144,10 @@ router.get(
     const state = typeof req.query.state === 'string' ? req.query.state : undefined;
     const active = String(req.query.active || '').toLowerCase() === 'true';
     const limit = parseLimit(req.query.limit);
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
 
     if (state && !isRunState(state)) {
       return res.status(400).json({
@@ -150,10 +155,31 @@ router.get(
         code: 'INVALID_QUERY_PARAM',
       });
     }
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
 
-    const data = active
-      ? await executionSpineService.getActiveRuns(organizationId)
-      : await executionSpineService.getRunsByOrg(organizationId, state, limit);
+    let data;
+    try {
+      data = active
+        ? await executionSpineService.getActiveRuns(organizationId, initiativeId)
+        : await executionSpineService.getRunsByOrg(organizationId, state, limit, initiativeId);
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load execution runs',
+        code: 'EXECUTION_RUNS_READ_FAILED',
+      });
+    }
 
     return res.json({ data, meta: { version: 'v8' } });
   })
@@ -163,6 +189,28 @@ router.post(
   '/runs',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
+    const metadata =
+      req.body && typeof req.body === 'object' && req.body.metadata && typeof req.body.metadata === 'object'
+        ? (req.body.metadata as Record<string, unknown>)
+        : null;
+    const metadataInitiativeId = metadata?.initiativeId;
+    const initiativeId =
+      typeof metadataInitiativeId === 'string' && metadataInitiativeId.trim()
+        ? metadataInitiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
 
     try {
       const data = await executionSpineService.createRun({

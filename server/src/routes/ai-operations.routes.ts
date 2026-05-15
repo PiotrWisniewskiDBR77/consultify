@@ -12,6 +12,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -71,7 +72,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting mission control status:', error);
+      logger.error('[AI Operations] Error getting mission control status:', error);
       return res.status(500).json({
         error: 'Failed to get status',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -116,7 +117,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting providers:', error);
+      logger.error('[AI Operations] Error getting providers:', error);
       return res.status(500).json({
         error: 'Failed to get providers',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -144,7 +145,7 @@ router.get(
 
       res.json({ success: true, data: alerts });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting alerts:', error);
+      logger.error('[AI Operations] Error getting alerts:', error);
       return res.status(500).json({
         error: 'Failed to get alerts',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -186,7 +187,7 @@ router.post(
 
       res.json({ success: true, message: 'Alert resolved' });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error resolving alert:', error);
+      logger.error('[AI Operations] Error resolving alert:', error);
       return res.status(500).json({
         error: 'Failed to resolve alert',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -277,7 +278,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting performance metrics:', error);
+      logger.error('[AI Operations] Error getting performance metrics:', error);
       return res.status(500).json({
         error: 'Failed to get metrics',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -352,7 +353,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting performance trends:', error);
+      logger.error('[AI Operations] Error getting performance trends:', error);
       return res.status(500).json({
         error: 'Failed to get trends',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -446,7 +447,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting cost summary:', error);
+      logger.error('[AI Operations] Error getting cost summary:', error);
       return res.status(500).json({
         error: 'Failed to get costs',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -509,7 +510,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting cost trends:', error);
+      logger.error('[AI Operations] Error getting cost trends:', error);
       return res.status(500).json({
         error: 'Failed to get trends',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -580,7 +581,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting costs by user:', error);
+      logger.error('[AI Operations] Error getting costs by user:', error);
       return res.status(500).json({
         error: 'Failed to get user costs',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -667,7 +668,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting SLA status:', error);
+      logger.error('[AI Operations] Error getting SLA status:', error);
       return res.status(500).json({
         error: 'Failed to get SLA status',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -716,7 +717,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting SLA history:', error);
+      logger.error('[AI Operations] Error getting SLA history:', error);
       return res.status(500).json({
         error: 'Failed to get SLA history',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -801,7 +802,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting usage analytics:', error);
+      logger.error('[AI Operations] Error getting usage analytics:', error);
       return res.status(500).json({
         error: 'Failed to get analytics',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -903,7 +904,7 @@ router.get(
               ],
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting insights:', error);
+      logger.error('[AI Operations] Error getting insights:', error);
       return res.status(500).json({
         error: 'Failed to get insights',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -972,7 +973,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[AI Operations] Error getting summary:', error);
+      logger.error('[AI Operations] Error getting summary:', error);
       return res.status(500).json({
         error: 'Failed to get summary',
         details: error instanceof Error ? error.message : 'Unknown error',

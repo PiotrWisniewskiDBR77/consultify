@@ -37,6 +37,30 @@ Optional capture: short screen recording or screenshots of steps 2–4 attached 
 - Fourth “materialized type” in a single aggregate row set is **registry runtime** (`report` | `presentation` | `sheet`). Additional lanes (**Documents**, **Sheets**, **Templates** tabs) cover other discoverability paths inside the same hub shell.
 - `native_artifact` runtime rows are not yet mapped in the aggregate UI mapper; they may still appear via typed list endpoints as the registry evolves.
 
+## UI/UX standards audit addendum (2026-04-11)
+
+Full audit conducted against FROZEN_LAYOUTS, app-table-standard, table-preview-pane-standard, and module-hub-standard.
+
+### Gaps found and resolved
+
+| ID | Standard | Gap | Resolution |
+|----|----------|-----|------------|
+| UI-1 | table-preview-pane-standard §4 | Missing `onOpenFull` → no "Open" button in PreviewPaneShell header | Added `onOpenFull` to all 4 tab components (OutputsAggregate, Reports, Presentations, Templates) |
+| UI-2 | table-preview-pane-standard §3.2 | Duplicate title in preview body (PreviewPaneShell already renders title) | Removed title from ReportPreviewBody, PresentationPreviewBody, TemplatePreviewBody |
+| UI-3 | table-preview-pane-standard §4 | OutputsAggregate preview footer had redundant border-t and padding (shell provides these) | Removed redundant styling from footer render |
+| UI-4 | table-preview-pane-standard §4 | OutputsAggregate preview body had redundant p-4 (shell body already padded) | Removed duplicate padding |
+| UI-5 | table-preview-pane-standard §4 | Templates tab missing `onRowDoubleClick` (double-click should open) | Added `onRowDoubleClick` to TemplatesTabContent |
+| G4 | Documentation | TemplatesTabContent header comment drift | Already resolved (header references `/api/artifacts?artifactFamily=template`) |
+
+### Standards compliance summary
+
+- FROZEN_LAYOUTS: 5/5 rules PASS
+- app-table-standard: kebab actions, resizable columns, header filters — all PASS
+- table-preview-pane-standard: PreviewPaneShell with title, close, "Open" header button, scrollable body, sticky footer — all PASS
+- module-hub-standard: ModuleHub pattern with view modes, command row, search — PASS
+
+See full audit: `evidence/P19_FULL_AUDIT_2026-04-11.md`.
+
 ## Ledger
 
 - P19-C verification batch: `93a30d1f04`; ledger SHA annotation: `2ee56f5cfd` (branch `ws/c-artifact-evidence`).

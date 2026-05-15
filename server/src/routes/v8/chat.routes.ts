@@ -8,6 +8,7 @@ import * as chatExecutionService from '../../services/v8/chatExecutionService.js
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -64,15 +65,36 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
 
+    const merged = {
+      ...req.body,
+      organizationId,
+      initiatorUserId: userId,
+    };
+
     try {
-      const data = await contextSnapshotService.captureSnapshot({
-        ...req.body,
-        organizationId,
-        initiatorUserId: userId,
-      });
+      const data = await contextSnapshotService.captureSnapshot(merged);
       return res.status(201).json({ data, meta: { version: 'v8' } });
     } catch (err) {
       if (err instanceof ZodError) {
+        logger.warn('[V8:Chat] Snapshot validation failed', {
+          issues: err.issues,
+          received: {
+            workspaceId: merged.workspaceId,
+            organizationId: merged.organizationId,
+            projectId: merged.projectId,
+            conversationId: merged.conversationId,
+            initiatorUserId: merged.initiatorUserId,
+            consumerClass: merged.consumerClass,
+            effectiveScopeRef: merged.effectiveScopeRef,
+            resolvedRoleRef: merged.resolvedRoleRef,
+            artifactRefsLen: Array.isArray(merged.artifactRefs)
+              ? merged.artifactRefs.length
+              : merged.artifactRefs,
+            sourceContextRefsLen: Array.isArray(merged.sourceContextRefs)
+              ? merged.sourceContextRefs.length
+              : merged.sourceContextRefs,
+          },
+        });
         return res.status(400).json({
           error: 'Invalid snapshot parameters',
           code: 'VALIDATION_ERROR',

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 
-import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { AIOsProductMapSection } from '../components/Landing/AIOsProductMapSection';
+import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
 import { EntryFooter } from '../components/Landing/EntryFooter';
@@ -15,9 +15,11 @@ import { ForWhomSection } from '../components/Landing/ForWhomSection';
 import { HowItWorksSection } from '../components/Landing/HowItWorksSection';
 import { InfoSections } from '../components/Landing/InfoSections';
 import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
-import { LandingNarrativeCtaBand } from '../components/Landing/LandingNarrativeCtaBand';
 import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
+import { LandingNarrativeCtaBand } from '../components/Landing/LandingNarrativeCtaBand';
+import { ModelDeploymentSection } from '../components/Landing/ModelDeploymentSection';
 import { ProblemPlatformSection } from '../components/Landing/ProblemPlatformSection';
+import { ProfitHeroSection } from '../components/Landing/ProfitHeroSection';
 import { TrustStrip } from '../components/Landing/TrustStrip';
 import { ValueJourneySection } from '../components/Landing/ValueJourneySection';
 import { WhereItHappensSection } from '../components/Landing/WhereItHappensSection';
@@ -33,14 +35,43 @@ interface ProductEntryPageProps {
   onRegisterClick: () => void;
 }
 
+type HeroVariant = 'epic' | 'profit';
+
+const HERO_VARIANT_QUERY_KEY = 'hero';
+const HERO_VARIANT_STORAGE_KEY = 'landing.heroVariant';
+
+function normalizeHeroVariant(rawValue: string | null): HeroVariant | null {
+  if (!rawValue) return null;
+
+  const normalized = rawValue.trim().toLowerCase();
+
+  if (['profit', 'classic', 'old'].includes(normalized)) return 'profit';
+  if (['epic', 'new'].includes(normalized)) return 'epic';
+
+  return null;
+}
+
+function getInitialHeroVariant(): HeroVariant {
+  if (typeof window === 'undefined') return 'epic';
+
+  const queryVariant = normalizeHeroVariant(
+    new URLSearchParams(window.location.search).get(HERO_VARIANT_QUERY_KEY)
+  );
+  if (queryVariant) return queryVariant;
+
+  return normalizeHeroVariant(window.localStorage.getItem(HERO_VARIANT_STORAGE_KEY)) ?? 'epic';
+}
+
 export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
   onLoginClick,
   onRegisterClick,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
     useAppStore();
-  const landingVariant = 'epicHeroV1';
+  const [heroVariant, setHeroVariant] = useState<HeroVariant>(getInitialHeroVariant);
+  const landingVariant = heroVariant === 'profit' ? 'profitHeroV1' : 'epicHeroV1';
 
   // Demo Modal State (only for Trial now)
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -48,6 +79,23 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
 
   // Landing video modal (Film 1)
   const [isFilm1ModalOpen, setIsFilm1ModalOpen] = useState(false);
+
+  useEffect(() => {
+    const queryVariant = normalizeHeroVariant(searchParams.get(HERO_VARIANT_QUERY_KEY));
+    if (queryVariant) {
+      setHeroVariant(queryVariant);
+      window.localStorage.setItem(HERO_VARIANT_STORAGE_KEY, queryVariant);
+      return;
+    }
+
+    const storedVariant = normalizeHeroVariant(
+      window.localStorage.getItem(HERO_VARIANT_STORAGE_KEY)
+    );
+
+    if (storedVariant) {
+      setHeroVariant(storedVariant);
+    }
+  }, [searchParams]);
 
   // Reset scroll on mount
   useEffect(() => {
@@ -78,8 +126,13 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     setCurrentUser({ ...user, hasWorkspace: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
-    if (mode === 'demo') setDemoMode(true);
-    else setDemoMode(false);
+    if (mode === 'demo') {
+      sessionStorage.setItem('demo_entry_source', 'landing_page');
+      setDemoMode(true);
+    } else {
+      sessionStorage.removeItem('demo_entry_source');
+      setDemoMode(false);
+    }
     setCurrentView(AppView.DASHBOARD);
     navigate(ROUTES.AI_CHAT);
   };
@@ -120,11 +173,19 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
       />
 
       <main>
-        <EpicHeroSection
-          onOpenDemoNow={handleDemoClick}
-          onLaunchTrial={handleTrialClick}
-          variant={landingVariant}
-        />
+        {heroVariant === 'profit' ? (
+          <ProfitHeroSection
+            onOpenDemoNow={handleDemoClick}
+            onLaunchTrial={handleTrialClick}
+            variant={landingVariant}
+          />
+        ) : (
+          <EpicHeroSection
+            onOpenDemoNow={handleDemoClick}
+            onLaunchTrial={handleTrialClick}
+            variant={landingVariant}
+          />
+        )}
 
         <ProblemPlatformSection />
 
@@ -139,6 +200,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <ExtendedScopeSection />
 
         <ForWhomSection />
+
+        <ModelDeploymentSection />
 
         <LandingNarrativeCtaBand
           onAnnaClick={handleAnnaClick}

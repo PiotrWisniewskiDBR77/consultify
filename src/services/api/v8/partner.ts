@@ -21,6 +21,27 @@ export interface V8PartnerEarningsSummary {
   lastMonth: number;
   readyForPayout: number;
   currency: string;
+  lifecyclePhase?: string;
+  whatNext?: string[];
+  hold?: { amount: number; reasonCode?: string | null; note?: string | null } | null;
+  degraded?: { reason: string; snapshotAt: string };
+}
+
+export interface V8PartnerProgramStatus {
+  lifecyclePhase: 'onboard' | 'activate' | 'earn' | 'payout';
+  partnerOrganizationStatus?: string | null;
+  onboardChecklist?: Record<string, unknown>;
+  payoutSettingsComplete: boolean;
+  balances: {
+    grossEarned: number;
+    paidOut: number;
+    heldAmount: number;
+    availableToPayout: number;
+    currency: string;
+  };
+  whatNext: string[];
+  hold: { amount: number; reasonCode?: string | null; note?: string | null } | null;
+  degraded?: { reason: string; snapshotAt: string };
 }
 
 export interface V8PartnerPayoutRequestPayload {
@@ -35,6 +56,15 @@ export interface V8PartnerPayoutRequestResult {
   netAmount?: number;
   grossAmount?: number;
   currency?: string;
+}
+
+export interface V8PartnerPayoutRequestResponse {
+  payout: V8PartnerPayoutRequestResult;
+  lifecyclePhase: string;
+  balances: V8PartnerProgramStatus['balances'];
+  whatNext: string[];
+  hold: V8PartnerProgramStatus['hold'];
+  error?: string;
 }
 
 export interface V8PartnerPayoutHistoryItem {
@@ -291,6 +321,7 @@ export const V8PartnerApi = {
   getEmployees: () => v8Get<{ employees: V8PartnerEmployee[] }>('/partner/employees'),
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
+  getProgramStatus: () => v8Get<V8PartnerProgramStatus>('/partner/program/status'),
   acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>
     v8Post<V8PartnerOnboardingAcceptTermsResult>('/partner/onboarding/accept-terms', body),
   selectOnboardingTier: (body: V8PartnerOnboardingSelectTierPayload) =>
@@ -305,7 +336,7 @@ export const V8PartnerApi = {
     v8Get<{ transactions: V8PartnerCommissionTransaction[] }>('/partner/commission-transactions'),
   getPayouts: () => v8Get<{ payouts: V8PartnerPayoutHistoryItem[] }>('/partner/payouts'),
   requestPayout: (body: V8PartnerPayoutRequestPayload = {}) =>
-    v8Post<{ payout: V8PartnerPayoutRequestResult }>('/partner/payouts/request', body),
+    v8Post<V8PartnerPayoutRequestResponse>('/partner/payouts/request', body),
   createCampaignLink: (body: V8PartnerCampaignCreatePayload) =>
     v8Post<{ campaignLink: V8PartnerCampaignLink }>('/partner/campaign-links', body),
   deleteCampaignLink: (campaignId: string) =>

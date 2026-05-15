@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Bell,
   BookOpen,
+  Calculator,
   Calendar,
   CheckCircle2,
   CheckSquare,
@@ -186,6 +187,29 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         },
       },
       {
+        id: 'nav-finance',
+        title: t('command.nav.finance', 'Finance'),
+        subtitle: t('command.nav.financeDesc', 'Statements, models, analysis & valuations'),
+        icon: <Calculator size={18} />,
+        category: 'navigation',
+        shortcut: 'G $',
+        keywords: [
+          'finance',
+          'finanse',
+          'economics',
+          'model',
+          'valuation',
+          'budget',
+          'statement',
+          'analysis',
+          'lane',
+        ],
+        action: () => {
+          navigate('/finance');
+          onClose();
+        },
+      },
+      {
         id: 'nav-settings',
         title: t('command.nav.settings', 'Settings'),
         subtitle: t('command.nav.settingsDesc', 'Preferences & notifications'),
@@ -199,7 +223,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         },
       },
     ],
-    [t, onNavigate, onClose]
+    [t, onNavigate, onClose, navigate]
   );
 
   // Action items

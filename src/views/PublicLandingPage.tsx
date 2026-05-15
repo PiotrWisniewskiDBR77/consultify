@@ -82,7 +82,10 @@ export const PublicLandingPage: React.FC = () => {
         <section className="max-w-5xl mx-auto text-center mb-24 animate-fade-in">
           {/* North Star Sentence */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-            {t('pages.public.hero.title', 'Strategic decisions are too complex for intuition and too important for chance.')}
+            {t(
+              'pages.public.hero.title',
+              'Strategic decisions are too complex for intuition and too important for chance.'
+            )}
           </h1>
 
           {/* 6-Card Grid — Experience Navigator */}
@@ -96,9 +99,14 @@ export const PublicLandingPage: React.FC = () => {
                 {t('pages.public.cards.demo.meta', 'Instant Access')}
               </div>
               <div className="mt-8">
-                <h3 className="text-2xl font-bold mb-3">{t('pages.public.cards.demo.title', 'Explore Demo')}</h3>
+                <h3 className="text-2xl font-bold mb-3">
+                  {t('pages.public.cards.demo.title', 'Explore Demo')}
+                </h3>
                 <p className="text-white/50 leading-relaxed text-sm">
-                  {t('pages.public.cards.demo.description', 'Experience a live environment with fictional, realistic data.')}
+                  {t(
+                    'pages.public.cards.demo.description',
+                    'Experience a live environment with fictional, realistic data.'
+                  )}
                 </p>
               </div>
             </div>
@@ -112,9 +120,14 @@ export const PublicLandingPage: React.FC = () => {
                 {t('pages.public.cards.trial.meta', 'Primary Path')}
               </div>
               <div className="mt-8 flex flex-col h-full justify-center">
-                <h3 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.public.cards.trial.title', 'Start Free Trial')}</h3>
+                <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                  {t('pages.public.cards.trial.title', 'Start Free Trial')}
+                </h3>
                 <p className="text-white/60 leading-relaxed mb-6">
-                  {t('pages.public.cards.trial.description', 'Use Consultify on your real organization data and build your transformation roadmap.')}
+                  {t(
+                    'pages.public.cards.trial.description',
+                    'Use Consultify on your real organization data and build your transformation roadmap.'
+                  )}
                 </p>
                 <ArrowRight
                   className="text-brand-400 group-hover:translate-x-2 transition-transform duration-500"
@@ -136,8 +149,12 @@ export const PublicLandingPage: React.FC = () => {
                   <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold mb-1">{t('pages.public.cards.tour.title', 'How It Works')}</h3>
-                  <p className="text-white/40 text-sm">{t('pages.public.cards.tour.description', 'Guided by Dr. Piotr Wiśniewski')}</p>
+                  <h3 className="text-xl font-bold mb-1">
+                    {t('pages.public.cards.tour.title', 'How It Works')}
+                  </h3>
+                  <p className="text-white/40 text-sm">
+                    {t('pages.public.cards.tour.description', 'Guided by Dr. Piotr Wiśniewski')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -166,8 +183,12 @@ export const PublicLandingPage: React.FC = () => {
                     <Sparkles size={32} className="text-cyan-400" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold mb-1 text-white">{t('pages.public.cards.tools.title', 'Learn Our Tools')}</h3>
-                    <p className="text-white/60 text-sm">{t('pages.public.cards.tools.description', 'Watch demos and masterclasses.')}</p>
+                    <h3 className="text-2xl font-bold mb-1 text-white">
+                      {t('pages.public.cards.tools.title', 'Learn Our Tools')}
+                    </h3>
+                    <p className="text-white/60 text-sm">
+                      {t('pages.public.cards.tools.description', 'Watch demos and masterclasses.')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -186,8 +207,12 @@ export const PublicLandingPage: React.FC = () => {
                   <Handshake size={32} className="text-brand-400" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold mb-1">{t('pages.public.cards.partner.title', 'Become Partner')}</h3>
-                  <p className="text-white/40 text-sm">{t('pages.public.cards.partner.description', 'Join our ecosystem.')}</p>
+                  <h3 className="text-2xl font-bold mb-1">
+                    {t('pages.public.cards.partner.title', 'Become Partner')}
+                  </h3>
+                  <p className="text-white/40 text-sm">
+                    {t('pages.public.cards.partner.description', 'Join our ecosystem.')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -195,13 +220,17 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 7: AI Consulting Pitch */}
             <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-purple-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
-                <h3 className="text-3xl font-bold mb-2">{t('pages.public.tagline.line1', 'AI consulting.')}</h3>
+                <h3 className="text-3xl font-bold mb-2">
+                  {t('pages.public.tagline.line1', 'AI consulting.')}
+                </h3>
                 <h3 className="text-3xl font-bold mb-2">
                   <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
                     {t('pages.public.tagline.line2', 'No slides.')}
                   </span>
                 </h3>
-                <h3 className="text-3xl font-bold">{t('pages.public.tagline.line3', 'Just decisions.')}</h3>
+                <h3 className="text-3xl font-bold">
+                  {t('pages.public.tagline.line3', 'Just decisions.')}
+                </h3>
                 <div className="w-12 h-1 bg-brand-500 mt-4 rounded-full" />
               </div>
             </div>
@@ -227,7 +256,10 @@ export const PublicLandingPage: React.FC = () => {
           </div>
 
           <p className="text-xl md:text-2xl text-white/70 font-light mb-12 max-w-2xl mx-auto leading-relaxed">
-            {t('pages.public.cta.body', 'If you feel your organization needs a new discipline in decision-making, we invite you to explore our method.')}
+            {t(
+              'pages.public.cta.body',
+              'If you feel your organization needs a new discipline in decision-making, we invite you to explore our method.'
+            )}
           </p>
 
           <button
@@ -271,10 +303,10 @@ export const PublicLandingPage: React.FC = () => {
             <a href="/docs" className="hover:text-brand-400 transition-colors">
               {t('pages.public.footer.docs', 'Documentation')}
             </a>
-            <a href="/privacy" className="hover:text-brand-400 transition-colors">
+            <a href="/legal/privacy" className="hover:text-brand-400 transition-colors">
               {t('pages.public.footer.privacy', 'Privacy')}
             </a>
-            <a href="/terms" className="hover:text-brand-400 transition-colors">
+            <a href="/legal/terms" className="hover:text-brand-400 transition-colors">
               {t('pages.public.footer.terms', 'Terms')}
             </a>
             <a href="/docs/security" className="hover:text-brand-400 transition-colors">

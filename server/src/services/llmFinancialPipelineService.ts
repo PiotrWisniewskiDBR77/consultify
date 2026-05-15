@@ -9,6 +9,7 @@
  */
 import OpenAI from 'openai';
 
+import logger from '../utils/Logger.js';
 import { llmConfigService } from './ai/llmConfigService.js';
 import {
   type CanonicalLineDefinition,
@@ -833,7 +834,7 @@ export async function runLlmFinancialPipeline(
   // ── Phase 1 ──
   const phase1 = await runPhase1(text, stType, opts);
 
-  console.log(
+  logger.info(
     `  [Phase1] ${stType}: extracted=${phase1.allExtracted.filter((l) => !l.isNonFinancial).length}, ` +
       `accepted(≥0.95)=${phase1.acceptedLines.length}, rejected=${phase1.rejectedLines.length}`
   );
@@ -841,7 +842,7 @@ export async function runLlmFinancialPipeline(
   // ── Phase 2 ──
   const phase2 = await runPhase2(stType, phase1.sectionText, phase1, opts);
 
-  console.log(
+  logger.info(
     `  [Phase2] ${stType}: total=${phase2.lines.length}, confirmed=${phase2.confirmed}, ` +
       `newlyMapped=${phase2.newlyMapped}, corrections=${phase2.corrections}`
   );
@@ -855,7 +856,7 @@ export async function runLlmFinancialPipeline(
     phase1.comparisonPeriod
   );
 
-  console.log(
+  logger.info(
     `  [Phase3] ${stType}: score=${phase3.qualityScore}, verdict=${phase3.verdict}, ` +
       `corrections=${phase3.corrections.length}, missing=${phase3.missingLines.length}`
   );
@@ -981,7 +982,7 @@ export async function runDocumentPipeline(
   const results = new Map<string, PipelineResult>();
 
   for (const stType of types) {
-    console.log(`\n  ── ${stType} ──`);
+    logger.info(`\n  ── ${stType} ──`);
     const result = await runLlmFinancialPipeline(text, stType, {
       ...options,
       documentName,

@@ -40,6 +40,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
@@ -631,7 +633,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       } catch {
         if (!cancelled) {
           toast.error(
-            isPolish ? 'Nie udało się otworzyć wskazanej notatki' : 'Failed to open the requested note'
+            isPolish
+              ? 'Nie udało się otworzyć wskazanej notatki'
+              : 'Failed to open the requested note'
           );
         }
       }
@@ -679,12 +683,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   );
   const canConvertDeliverable = useMemo(() => {
     if (!activePage) return false;
-    return wordCount(activePage.contentText || extractText(activePage.contentJson)) >= 80 || headingOutline.length >= 2;
+    return (
+      wordCount(activePage.contentText || extractText(activePage.contentJson)) >= 80 ||
+      headingOutline.length >= 2
+    );
   }, [activePage, headingOutline.length]);
-  const deliverableGuardMessage = useMemo(
-    () => getDeliverableGuardMessage(isPolish),
-    [isPolish]
-  );
+  const deliverableGuardMessage = useMemo(() => getDeliverableGuardMessage(isPolish), [isPolish]);
 
   const editor = useEditor({
     extensions: [
@@ -1362,9 +1366,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
       } catch (error) {
         console.error('Failed to upload notebook attachments', error);
-        toast.error(
-          isPolish ? 'Nie udało się wgrać załączników' : 'Failed to upload attachments'
-        );
+        toast.error(isPolish ? 'Nie udało się wgrać załączników' : 'Failed to upload attachments');
       }
     },
     [activePage?.id, isPolish]
@@ -1379,37 +1381,38 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
       } catch (error) {
         console.error('Failed to delete notebook attachment', error);
-        toast.error(
-          isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment'
-        );
+        toast.error(isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
       }
     },
     [activePage?.id, isPolish]
   );
 
-  const refreshAIProposals = useCallback(async (pageId: string) => {
-    const requestSeq = ++proposalRequestSeqRef.current;
-    try {
-      setProposalLoadError(false);
-      const result = await Api.notebookGetAIProposals(pageId, { status: 'proposed', limit: 20 });
-      if (proposalRequestSeqRef.current !== requestSeq) return;
-      const proposals = Array.isArray((result as any)?.proposals)
-        ? ((result as any).proposals as NotebookAIProposal[])
-        : Array.isArray(result)
-          ? (result as NotebookAIProposal[])
-          : [];
-      setPendingAIProposals(proposals);
-      setProposalLoadError(false);
-    } catch (error) {
-      if (proposalRequestSeqRef.current !== requestSeq) return;
-      console.error('Failed to refresh notebook AI proposals', error);
-      setProposalLoadError(true);
-      setPendingAIProposals([]);
-      toast.error(
-        isPolish ? 'Nie udało się odświeżyć propozycji AI' : 'Failed to refresh AI proposals'
-      );
-    }
-  }, [isPolish]);
+  const refreshAIProposals = useCallback(
+    async (pageId: string) => {
+      const requestSeq = ++proposalRequestSeqRef.current;
+      try {
+        setProposalLoadError(false);
+        const result = await Api.notebookGetAIProposals(pageId, { status: 'proposed', limit: 20 });
+        if (proposalRequestSeqRef.current !== requestSeq) return;
+        const proposals = Array.isArray((result as any)?.proposals)
+          ? ((result as any).proposals as NotebookAIProposal[])
+          : Array.isArray(result)
+            ? (result as NotebookAIProposal[])
+            : [];
+        setPendingAIProposals(proposals);
+        setProposalLoadError(false);
+      } catch (error) {
+        if (proposalRequestSeqRef.current !== requestSeq) return;
+        console.error('Failed to refresh notebook AI proposals', error);
+        setProposalLoadError(true);
+        setPendingAIProposals([]);
+        toast.error(
+          isPolish ? 'Nie udało się odświeżyć propozycji AI' : 'Failed to refresh AI proposals'
+        );
+      }
+    },
+    [isPolish]
+  );
 
   useEffect(() => {
     if (!activePage?.id) {
@@ -1581,6 +1584,39 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     [activePage, canConvertDeliverable, deliverableGuardMessage, isPolish, emitMyWorkEvent]
   );
 
+  const handleHandoffRadar = useCallback(async () => {
+    if (!activePage) return;
+    try {
+      await Api.post('/v8/notebook/handoff/radar', {
+        noteId: activePage.id,
+        title: activePage.title,
+      });
+      toast.success(isPolish ? 'Wysłano do Radar' : 'Sent to Radar');
+      trackFunnelEvent('notebook_handoff', { target: 'radar', noteId: activePage.id });
+    } catch (err: any) {
+      toast.error(
+        err?.message || (isPolish ? 'Nie udało się wysłać do Radar' : 'Failed to send to Radar')
+      );
+    }
+  }, [activePage, isPolish]);
+
+  const handleHandoffInitiatives = useCallback(async () => {
+    if (!activePage) return;
+    try {
+      await Api.post('/v8/notebook/handoff/inicjatywy', {
+        noteId: activePage.id,
+        title: activePage.title,
+      });
+      toast.success(isPolish ? 'Wysłano do Inicjatyw' : 'Sent to Initiatives');
+      trackFunnelEvent('notebook_handoff', { target: 'initiatives', noteId: activePage.id });
+    } catch (err: any) {
+      toast.error(
+        err?.message ||
+          (isPolish ? 'Nie udało się wysłać do Inicjatyw' : 'Failed to send to Initiatives')
+      );
+    }
+  }, [activePage, isPolish]);
+
   const handleConfirmOutlineDraft = useCallback(async () => {
     if (!activePage || !outlineDraft) return;
     const target = outlineDraft.target;
@@ -1699,13 +1735,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setTemplateModalOpen(true)}
-              className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-              title={t('myWork.notebook.new', 'New page')}
-            >
-              <Plus size={16} />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setTemplateModalOpen(true)}
+                  className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                >
+                  <Plus size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Maturity distribution mini-bar */}
@@ -1908,20 +1948,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {isPolish ? matCfg.labelPl : matCfg.label}
                             </span>
                             {(p as any).verificationStatus === 'verified' && (
-                              <span
-                                className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px]"
+                              <Badge
+                                variant="outline"
+                                className="border-emerald-300/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0 text-[9px]"
                                 title={isPolish ? 'Zweryfikowana' : 'Verified'}
                               >
                                 <CheckCircle2 size={9} className="inline" />
-                              </span>
+                              </Badge>
                             )}
                             {(p as any).staleAt && (
-                              <span
-                                className="rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[9px]"
+                              <Badge
+                                variant="outline"
+                                className="border-amber-300/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0 text-[9px]"
                                 title={isPolish ? 'Nieaktualna' : 'Stale'}
                               >
                                 <AlertTriangle size={9} className="inline" />
-                              </span>
+                              </Badge>
                             )}
                             {(() => {
                               const uploadSource = getNotebookUploadSourceSummary(
@@ -2391,6 +2433,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         })
                       }
                       onConvert={() => void handleConvertFromPanel('report')}
+                      onHandoffRadar={handleHandoffRadar}
+                      onHandoffInitiatives={handleHandoffInitiatives}
                     />
                   </div>
 

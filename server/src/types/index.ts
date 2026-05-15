@@ -21,6 +21,7 @@ export interface AuthenticatedUser {
   organization_id?: string; // Legacy support
   isSuperAdmin?: boolean;
   isDemo?: boolean;
+  superadminCapabilities?: string[];
 }
 
 export interface AuthenticatedRequest<
@@ -373,7 +374,16 @@ export interface CacheService {
 // ERROR TYPES
 // ==========================================
 
+/**
+ * @deprecated Prefer importing AppError from '../utils/ErrorHandler.js' for new code.
+ * This copy exists for backward compatibility (different constructor signature).
+ * Canonical source: utils/ErrorHandler.ts — AppError(message, statusCode, code, details)
+ * This copy:       types/index.ts      — AppError(statusCode, message, code, details)
+ */
 export class AppError extends Error {
+  public status: 'fail' | 'error';
+  public isOperational: boolean;
+
   constructor(
     public statusCode: number,
     public message: string,
@@ -382,6 +392,8 @@ export class AppError extends Error {
   ) {
     super(message);
     this.name = 'AppError';
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true;
   }
 }
 

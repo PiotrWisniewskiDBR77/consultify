@@ -6,6 +6,7 @@
 import * as http from 'http';
 import * as https from 'https';
 
+import WhatsAppService from '../WhatsAppService.js';
 import aiLogger from './logger.js';
 
 export const SEVERITY = {
@@ -65,6 +66,23 @@ type AlertPayload = {
 const alertThrottle = new Map<string, number>();
 const THROTTLE_DURATION = 5 * 60 * 1000;
 
+function getEnvSuffix(): string {
+  return String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
+}
+
+function mapSeverityForSystemAlert(severity: Severity): 'INFO' | 'WARNING' | 'CRITICAL' {
+  if (severity === SEVERITY.CRITICAL || severity === SEVERITY.ERROR) {
+    return 'CRITICAL';
+  }
+  if (severity === SEVERITY.WARNING) {
+    return 'WARNING';
+  }
+  return 'INFO';
+}
+
 export class AlertingService {
   slackWebhook?: string;
   discordWebhook?: string;
@@ -76,7 +94,11 @@ export class AlertingService {
     // - `SLACK_WEBHOOK_URL` is used by product feedback notifications.
     // - AI infra alerting (circuit breakers, provider outages) should NOT spam the same channel by default.
     // Use a dedicated webhook for AI alerting.
-    this.slackWebhook = process.env.AI_SLACK_WEBHOOK_URL;
+    const envSuffix = getEnvSuffix();
+    this.slackWebhook =
+      process.env.AI_SLACK_WEBHOOK_URL ||
+      process.env[`SLACK_WEBHOOK_URL_${envSuffix}`] ||
+      process.env.SLACK_WEBHOOK_URL;
     this.discordWebhook = process.env.DISCORD_WEBHOOK_URL || process.env.AI_DISCORD_WEBHOOK_URL;
     this.genericWebhook = process.env.AI_ALERT_WEBHOOK_URL;
 
@@ -136,6 +158,14 @@ export class AlertingService {
     if (this.genericWebhook) {
       promises.push(this.sendToWebhook(alert));
     }
+    promises.push(
+      WhatsAppService.sendSystemAlert({
+        title: alert.title,
+        message: alert.message,
+        severity: mapSeverityForSystemAlert(alert.severity),
+        source: 'AI/LLM',
+      })
+    );
 
     // Send to Sentry for critical alerts
     if (alert.severity === SEVERITY.CRITICAL || alert.severity === SEVERITY.ERROR) {
@@ -217,10 +247,45 @@ export class AlertingService {
         message = `User ${data.userId} in org ${data.organizationId} exceeded rate limit for ${data.capability}.`;
         break;
       case ALERT_TYPE.PROVIDER_DOWN:
-        severity = SEVERITY.CRITICAL;
-        emoji = '💀';
-        title = `Provider DOWN: ${data.providerId}`;
-        message = `LLM provider ${data.providerId} is not responding. Error: ${data.error}`;
+        // Classify operational vs billing/auth causes so Slack responders know what to do.
+        // `errorCategory` is injected by ProviderSentinel.
+        // - billing/auth/missing_key/rate_limit: actionable config/account issues (WARNING)
+        // - network/unknown: likely outage/infrastructure (CRITICAL)
+        {
+          const cat = String((data as any)?.errorCategory || '').toLowerCase();
+          const provider = String(data.providerId || 'unknown');
+          const err = String((data as any)?.error || '');
+          const http = (data as any)?.httpStatus;
+          const httpPart = typeof http === 'number' ? ` (HTTP ${http})` : '';
+
+          const isConfigIssue =
+            cat === 'billing' || cat === 'auth' || cat === 'missing_key' || cat === 'rate_limit';
+          severity = isConfigIssue ? SEVERITY.WARNING : SEVERITY.CRITICAL;
+          emoji =
+            cat === 'billing'
+              ? '💳'
+              : cat === 'auth'
+                ? '🔑'
+                : cat === 'missing_key'
+                  ? '🧩'
+                  : cat === 'rate_limit'
+                    ? '⏱️'
+                    : '💀';
+
+          const label =
+            cat === 'billing'
+              ? 'Provider billing issue'
+              : cat === 'auth'
+                ? 'Provider auth issue'
+                : cat === 'missing_key'
+                  ? 'Provider missing key'
+                  : cat === 'rate_limit'
+                    ? 'Provider rate-limited'
+                    : 'Provider DOWN';
+
+          title = `${label}: ${provider}${httpPart}`;
+          message = `LLM provider ${provider} is not responding.\nError: ${err}`;
+        }
         break;
       case ALERT_TYPE.PROVIDER_RECOVERED:
         severity = SEVERITY.INFO;

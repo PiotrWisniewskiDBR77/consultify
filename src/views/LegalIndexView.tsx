@@ -4,6 +4,7 @@ import {
   Bot,
   Building2,
   CheckCircle2,
+  ChevronRight,
   Clock,
   Cookie,
   CreditCard,
@@ -13,7 +14,6 @@ import {
   Globe,
   Lock,
   Mail,
-  Phone,
   Receipt,
   Scale,
   Shield,
@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+import { ROUTES } from '../routes/routeConfig';
 
 interface LegalDocumentCard {
   slug: string;
@@ -251,8 +253,26 @@ export const LegalIndexView: React.FC = () => {
           </div>
           <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
             Transparency is fundamental to our relationship with you. Here you'll find all the legal
-            documents that govern the use of Consultify and how we handle your data.
+            documents that govern the use of Consultify, how we handle your data, and which
+            commercial terms support procurement, pricing, and enterprise review.
           </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to={ROUTES.PRICING}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+            >
+              <Receipt className="w-4 h-4" />
+              Pricing overview
+            </Link>
+            <Link
+              to={ROUTES.LEGAL.SUBSCRIPTION}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              <FileText className="w-4 h-4" />
+              Subscription terms
+            </Link>
+          </div>
 
           {/* Company Info Badges */}
           <div className="mt-10 flex flex-wrap gap-4">
@@ -278,8 +298,27 @@ export const LegalIndexView: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        {/* Quick Navigation */}
+        <nav className="mb-12 flex flex-wrap gap-3">
+          {[
+            { label: 'Core Agreements', anchor: '#core' },
+            { label: 'Commercial & Billing', anchor: '#commercial' },
+            { label: 'Security & Compliance', anchor: '#security' },
+            { label: 'Contact', anchor: '#contact' },
+          ].map((item) => (
+            <a
+              key={item.anchor}
+              href={item.anchor}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-purple-300 hover:text-purple-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-purple-500/50 dark:hover:text-purple-400"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
         {/* Core Documents */}
-        <section className="mb-16">
+        <section id="core" className="mb-16 scroll-mt-24">
           <SectionHeader
             title="Core Agreements"
             description="Fundamental documents for all users of Consultify."
@@ -294,10 +333,10 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Business Documents */}
-        <section className="mb-16">
+        <section id="commercial" className="mb-16 scroll-mt-24">
           <SectionHeader
-            title="Business & Billing"
-            description="Additional terms for business customers and paid subscriptions."
+            title="Commercial, Billing & Procurement"
+            description="Commercial terms for pricing, subscriptions, enterprise procurement, and paid plans."
             icon={<CreditCard className="w-6 h-6" />}
             gradient="from-emerald-500 to-teal-600"
           />
@@ -309,7 +348,7 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Reference Documents */}
-        <section className="mb-16">
+        <section id="security" className="mb-16 scroll-mt-24">
           <SectionHeader
             title="Security & Compliance"
             description="Reference documentation about our security practices and data processing."
@@ -324,7 +363,10 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Contact Section */}
-        <section className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm">
+        <section
+          id="contact"
+          className="scroll-mt-24 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm"
+        >
           <div className="flex items-start gap-4 mb-8">
             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
               <Mail className="w-6 h-6" />
@@ -411,7 +453,7 @@ export const LegalIndexView: React.FC = () => {
         <footer className="mt-12 text-center text-sm text-slate-500 dark:text-slate-400">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-full">
             <Sparkles className="w-4 h-4" />
-            <span>Last updated: January 1, 2025 · Version 1.0</span>
+            <span>Last updated: April 2026 · Version 2.0</span>
           </div>
         </footer>
       </main>

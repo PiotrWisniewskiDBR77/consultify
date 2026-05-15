@@ -45,6 +45,7 @@ docs/ui-standards/
 | ------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
 | **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
+| **Czytelność light mode** | [00-foundation/light-mode-readability.md](00-foundation/light-mode-readability.md) | Kontrast, badge taxonomy, metadata i zasady surface hierarchy        |
 | **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
 | **Canvas Mode**          | [00-foundation/canvas-mode.md](00-foundation/canvas-mode.md)                     | Rozszerzenie DBR77 dla experience surfaces (Home tab, landing, onboarding) |
 | **Tożsamość artefaktów** | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md) | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)              |

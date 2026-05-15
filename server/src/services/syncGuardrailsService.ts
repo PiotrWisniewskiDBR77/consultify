@@ -158,29 +158,68 @@ export async function recordRequest(
 
 // ── Error Handling & Retry ─────────────────────────────────────
 
+export type ErrorPostureScenario =
+  | 'reauth_required' // §2.3.8 #1
+  | 'rate_limit' // §2.3.8 #2
+  | 'permission_revoked' // §2.3.8 #3
+  | 'mapping_drift' // §2.3.8 #4
+  | 'run_failed_transient' // §2.3.8 #5
+  | 'run_failed_permanent' // §2.3.8 #6
+  | 'provider_outage' // §2.3.8 #7
+  | 'webhook_delivery_fail' // §2.3.8 #8
+  | 'org_policy_block' // §2.3.8 #9
+  | 'unknown';
+
 export function classifyError(error: Error | string): {
   type: SyncErrorType;
   isRetryable: boolean;
+  scenario: ErrorPostureScenario;
 } {
   const msg = typeof error === 'string' ? error : error.message;
   const lower = msg.toLowerCase();
 
+  if (
+    lower.includes('invalid_grant') ||
+    lower.includes('consent') ||
+    lower.includes('revoked token')
+  ) {
+    return { type: 'AUTH', isRetryable: false, scenario: 'reauth_required' };
+  }
+  if (lower.includes('403') || lower.includes('forbidden') || lower.includes('scope')) {
+    return { type: 'AUTH', isRetryable: false, scenario: 'permission_revoked' };
+  }
   if (lower.includes('401') || lower.includes('unauthorized') || lower.includes('invalid token')) {
-    return { type: 'AUTH', isRetryable: false };
+    return { type: 'AUTH', isRetryable: false, scenario: 'reauth_required' };
   }
   if (lower.includes('429') || lower.includes('rate limit') || lower.includes('too many')) {
-    return { type: 'RATE_LIMIT', isRetryable: true };
+    return { type: 'RATE_LIMIT', isRetryable: true, scenario: 'rate_limit' };
   }
   if (lower.includes('timeout') || lower.includes('econnrefused') || lower.includes('network')) {
-    return { type: 'NETWORK', isRetryable: true };
+    return { type: 'NETWORK', isRetryable: true, scenario: 'run_failed_transient' };
+  }
+  if (lower.includes('webhook') || lower.includes('delivery') || lower.includes('410')) {
+    return { type: 'NETWORK', isRetryable: true, scenario: 'webhook_delivery_fail' };
+  }
+  if (
+    lower.includes('org_disabled') ||
+    lower.includes('policy') ||
+    lower.includes('blocked by org')
+  ) {
+    return { type: 'AUTH', isRetryable: false, scenario: 'org_policy_block' };
+  }
+  if (lower.includes('drift') || lower.includes('schema_mismatch') || lower.includes('mapping')) {
+    return { type: 'VALIDATION', isRetryable: false, scenario: 'mapping_drift' };
   }
   if (lower.includes('validation') || lower.includes('invalid') || lower.includes('400')) {
-    return { type: 'VALIDATION', isRetryable: false };
+    return { type: 'VALIDATION', isRetryable: false, scenario: 'run_failed_permanent' };
   }
-  if (lower.includes('500') || lower.includes('503') || lower.includes('server error')) {
-    return { type: 'PROVIDER', isRetryable: true };
+  if (lower.includes('503') || lower.includes('service unavailable') || lower.includes('outage')) {
+    return { type: 'PROVIDER', isRetryable: true, scenario: 'provider_outage' };
   }
-  return { type: 'UNKNOWN', isRetryable: true };
+  if (lower.includes('500') || lower.includes('server error')) {
+    return { type: 'PROVIDER', isRetryable: true, scenario: 'run_failed_transient' };
+  }
+  return { type: 'UNKNOWN', isRetryable: true, scenario: 'unknown' };
 }
 
 export function calculateRetryDelay(retryCount: number): number {
@@ -195,7 +234,7 @@ export async function logSyncError(
   error: Error | string,
   syncRunId?: string
 ): Promise<SyncError> {
-  const { type, isRetryable } = classifyError(error);
+  const { type, isRetryable, scenario } = classifyError(error);
   const msg = typeof error === 'string' ? error : error.message;
 
   const existing = (await dbAll(
@@ -234,6 +273,76 @@ export async function logSyncError(
     `UPDATE integrations SET error_count = COALESCE(error_count, 0) + 1, updated_at = NOW() WHERE id = ?`,
     [integrationId]
   );
+
+  if (isRetryable && nextRetryAt) {
+    try {
+      await dbRun(
+        `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'run_retry_scheduled', 'system', 'system', ?::JSONB)`,
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({
+            errorId: id,
+            errorType: type,
+            retryCount,
+            nextRetryAt,
+            syncRunId: syncRunId || null,
+          }),
+        ]
+      );
+    } catch {
+      // non-blocking telemetry
+    }
+  }
+
+  if (scenario === 'provider_outage') {
+    try {
+      await dbRun(
+        `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'provider_outage_detected', 'system', 'system', ?::JSONB)`,
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({ errorId: id, errorType: type, message: msg }),
+        ]
+      );
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  if (scenario === 'webhook_delivery_fail') {
+    try {
+      await dbRun(
+        `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'webhook_delivery_failure', 'system', 'system', ?::JSONB)`,
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({ errorId: id, errorType: type, message: msg }),
+        ]
+      );
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  if (scenario === 'org_policy_block') {
+    try {
+      await dbRun(
+        `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, 'org_policy_blocked', 'system', 'system', ?::JSONB)`,
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({ errorId: id, errorType: type, message: msg }),
+        ]
+      );
+    } catch {
+      /* non-blocking */
+    }
+  }
 
   return {
     id,
@@ -294,8 +403,15 @@ export async function getUnresolvedErrors(
   }));
 }
 
-export async function resolveError(errorId: string): Promise<void> {
-  await dbRun(`UPDATE sync_error_log SET resolved_at = NOW() WHERE id = ?`, [errorId]);
+export async function resolveError(errorId: string, organizationId: string): Promise<boolean> {
+  const result = await dbRun(
+    `UPDATE sync_error_log SET resolved_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [errorId, organizationId]
+  );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to resolve sync error');
+  }
+  return Boolean(result.success && (result.changes ?? 0) > 0);
 }
 
 // ── Health Check ───────────────────────────────────────────────

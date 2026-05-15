@@ -42,7 +42,7 @@ async function requireTableColumns(tableName: string): Promise<Map<string, unkno
       'TABLE_NOT_CONFIGURED'
     );
   }
-  return cols as Map<string, unknown>;
+  return cols as unknown as Map<string, unknown>;
 }
 
 async function createMyWorkToolSession(params: {
@@ -372,7 +372,7 @@ export async function convertNotebookPage(params: {
       userId,
       sourceType: 'assessment',
       sourceId: newId,
-      targetType: 'notebook_page',
+      targetType: 'notebook',
       targetId: pageId,
       relation: 'ref',
       containerType: 'mywork_convert',

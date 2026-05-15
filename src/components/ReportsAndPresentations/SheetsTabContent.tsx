@@ -17,6 +17,7 @@ interface SheetsTabContentProps {
   error?: string | null;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
+  initialArtifactId?: string | null;
 }
 
 export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
@@ -29,11 +30,12 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t } = useTranslation();
   const hasRegistrySheets = rows.length > 0;
 
-  if (hasRegistrySheets || loading || error || searchQuery || activeFilters.length > 0) {
+  if (hasRegistrySheets || loading || error || searchQuery || activeFilters.length > 0 || initialArtifactId) {
     return (
       <OutputsAggregateTabContent
         viewMode={viewMode}
@@ -45,6 +47,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
         error={error}
         onRefresh={onRefresh}
         actions={actions}
+        initialArtifactId={initialArtifactId}
       />
     );
   }

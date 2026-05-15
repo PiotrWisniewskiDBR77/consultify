@@ -34,6 +34,14 @@ type HistogramSummary = {
   buckets: Array<{ le: number; count: number }>;
 };
 
+const SLI_BUDGETS_MS = {
+  loginP95: 1500,
+  notificationsP95: 300,
+  unreadCountP95: 200,
+  organizationProfileP95: 400,
+  llmProviderSnapshotP95: 200,
+} as const;
+
 async function summarizeHistogram(metric: any): Promise<HistogramSummary> {
   const raw = await metric?.get?.();
   const values: Array<{ labels?: Record<string, unknown>; value?: number; metricName?: string }> =
@@ -122,7 +130,7 @@ function approxQuantileFromBuckets(summary: HistogramSummary, q: number): number
  *   }
  * }
  */
-router.get('/metrics', async (_req: Request, res: Response) => {
+router.get('/metrics', async (req: Request, res: Response) => {
   try {
     const metricsService = getMetricsService();
     const register = metricsService.getRegistry();
@@ -136,6 +144,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
 
     const response = {
       timestamp: new Date().toISOString(),
+      sliBudgetsMs: SLI_BUDGETS_MS,
       latency,
       throughput,
       errors,
@@ -149,7 +158,10 @@ router.get('/metrics', async (_req: Request, res: Response) => {
     logger.error('[PerformanceRoutes] Error generating performance metrics:', err);
     return res.status(500).json({
       error: 'Failed to generate performance metrics',
-      details: err.message,
+      correlationId:
+        (req as Request & { correlationId?: string }).correlationId ||
+        req.get('X-Correlation-ID') ||
+        null,
     });
   }
 });

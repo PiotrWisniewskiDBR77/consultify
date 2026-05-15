@@ -1,4 +1,13 @@
-import { CheckCircle, Copy, Download, Eye, RefreshCw, Trash2, TrendingUp } from 'lucide-react';
+import {
+  CheckCircle,
+  Copy,
+  Download,
+  Eye,
+  MessageCircle,
+  RefreshCw,
+  Trash2,
+  TrendingUp,
+} from 'lucide-react';
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -61,6 +70,7 @@ async function getModelDetailWithFallback(modelId: string) {
 interface UseFinanceRowActionsParams {
   handleOpenFull: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
+  handleOpenEntityChat?: (row: FinanceRow) => void;
   handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
   handleCreateAnalysisFromStatements: (row: FinanceStatementRow) => void;
   loadStatements: () => Promise<void>;
@@ -77,6 +87,7 @@ interface UseFinanceRowActionsParams {
 export function useFinanceRowActions({
   handleOpenFull,
   handleExport,
+  handleOpenEntityChat,
   handleCreateModelFromStatement,
   handleCreateAnalysisFromStatements,
   loadStatements,
@@ -249,6 +260,16 @@ export function useFinanceRowActions({
           icon: Eye,
           onClick: () => handleOpenFull(row),
         },
+        ...(handleOpenEntityChat
+          ? [
+              {
+                id: 'chat',
+                label: t('common.chatAbout', 'Chat'),
+                icon: MessageCircle,
+                onClick: () => handleOpenEntityChat(row),
+              },
+            ]
+          : []),
         ...(row.kind === 'statements'
           ? []
           : [

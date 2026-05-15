@@ -13,6 +13,7 @@ import type {
   V8ArtifactRef,
 } from '../../types/contextSnapshot.js';
 import logger from '../../utils/Logger.js';
+import * as artifactRegistryService from './artifactRegistryService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 
 // ==========================================
@@ -245,4 +246,23 @@ export async function getInheritanceChain(
   );
 
   return chain;
+}
+
+/**
+ * Build artifactRefs from the organization's recent outputs for auto-suggestion
+ * when constructing a new chat snapshot. Allows AI to reference recently produced
+ * artifacts without the client having to pass them explicitly every turn.
+ */
+export async function getRecentArtifactRefsForOrg(
+  organizationId: string,
+  limit = 5
+): Promise<V8ArtifactRef[]> {
+  const recent = await artifactRegistryService.getRecentArtifactRefsForOrg(organizationId, limit);
+
+  return recent.map((r) => ({
+    artifactId: r.artifactId,
+    artifactType: r.outputType,
+    artifactModule: 'outputs_library',
+    relationship: 'reference' as const,
+  }));
 }

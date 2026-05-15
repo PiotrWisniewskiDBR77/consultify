@@ -18,6 +18,7 @@ interface SubscriptionPlan {
 
 export const SuperAdminPlansView: React.FC = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -31,9 +32,17 @@ export const SuperAdminPlansView: React.FC = () => {
   const fetchPlans = async () => {
     try {
       const data = await Api.get('/billing/admin/plans');
-      setPlans(data);
+      const payload = data?.data ?? data;
+      setPlans(Array.isArray(payload?.plans) ? payload.plans : []);
+      setNotice(
+        payload?.type === 'not_configured'
+          ? 'Subscription plans are not configured yet for this environment.'
+          : null
+      );
     } catch (error) {
       console.error('Failed to fetch plans:', error);
+      setPlans([]);
+      setNotice('Subscription plans are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
@@ -107,6 +116,12 @@ export const SuperAdminPlansView: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

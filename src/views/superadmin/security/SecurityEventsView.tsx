@@ -3,16 +3,52 @@
  * Displays and manages security events and alerts
  */
 
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+
+const SECURITY_EVENTS_COPY = {
+  loadFailedTitle: 'Security events unavailable',
+  malformedPayload: 'Security events response was not a list',
+  resolveNotConfirmed: 'Security event resolution was not confirmed by the server',
+  resolveFailed: 'Failed to resolve event',
+};
+
+const LEAKY_DETAILS = ['sqlstate', '/var/', 'internal:', 'secret', 'stack', 'trace', 'token'];
+
+function safeErrorDetail(error: unknown): string | null {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const detail = message.trim();
+  if (!detail) return null;
+  const lowered = detail.toLowerCase();
+  if (LEAKY_DETAILS.some((token) => lowered.includes(token))) return null;
+  return detail;
+}
+
+function isResolvedValue(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return false;
+}
+
+function formatEventDate(input: unknown): string {
+  const parsed = new Date(typeof input === 'string' ? input : '');
+  if (Number.isNaN(parsed.getTime())) return 'Unknown date';
+  return parsed.toLocaleString();
+}
 
 export const SecurityEventsView: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorTitle, setLoadErrorTitle] = useState<string | null>(null);
+  const [loadErrorDetail, setLoadErrorDetail] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     organizationId: '',
     userId: '',
@@ -22,41 +58,74 @@ export const SecurityEventsView: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchEvents();
+    void fetchEvents();
   }, [filters]);
 
-  const normalizeEvents = (payload: unknown): any[] => {
+  const normalizeEvents = (payload: unknown): any[] | null => {
     if (Array.isArray(payload)) return payload;
-    if (payload && typeof payload === 'object') {
-      const anyPayload = payload as any;
-      if (Array.isArray(anyPayload.events)) return anyPayload.events;
-      if (Array.isArray(anyPayload.data)) return anyPayload.data;
-      if (Array.isArray(anyPayload.items)) return anyPayload.items;
+    if (!payload || typeof payload !== 'object') return null;
+
+    const anyPayload = payload as any;
+    const candidates: unknown[] = [
+      anyPayload.events,
+      anyPayload.data,
+      anyPayload.items,
+      anyPayload?.data?.events,
+      anyPayload?.data?.data?.events,
+      anyPayload?.data?.data?.items,
+    ];
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) return candidate;
     }
-    return [];
+    return null;
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (): Promise<any[] | null> => {
     setLoading(true);
-    setLoadError(null);
+    setLoadErrorTitle(null);
+    setLoadErrorDetail(null);
     try {
       const eventList = await Api.getSecurityEvents(filters);
-      setEvents(normalizeEvents(eventList));
+      const normalized = normalizeEvents(eventList);
+      if (!normalized) {
+        setEvents([]);
+        setLoadErrorTitle(SECURITY_EVENTS_COPY.loadFailedTitle);
+        setLoadErrorDetail(SECURITY_EVENTS_COPY.malformedPayload);
+        return null;
+      }
+      setEvents(normalized);
+      return normalized;
     } catch (err) {
-      toast.error('Failed to fetch security events');
-      setLoadError('Failed to fetch security events.');
+      setEvents([]);
+      setLoadErrorTitle(SECURITY_EVENTS_COPY.loadFailedTitle);
+      setLoadErrorDetail(safeErrorDetail(err) || SECURITY_EVENTS_COPY.resolveFailed);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
   const handleResolve = async (eventId: string) => {
+    setLoadErrorTitle(null);
+    setLoadErrorDetail(null);
     try {
       await Api.resolveSecurityEvent(eventId);
+      const refreshed = await fetchEvents();
+      const confirmed =
+        !!refreshed &&
+        (refreshed.some((event) => String(event?.id || '') === eventId && isResolvedValue(event?.resolved)) ||
+          refreshed.every((event) => String(event?.id || '') !== eventId));
+
+      if (!confirmed) {
+        setLoadErrorTitle(SECURITY_EVENTS_COPY.loadFailedTitle);
+        setLoadErrorDetail(SECURITY_EVENTS_COPY.resolveNotConfirmed);
+        return;
+      }
+
       toast.success('Event resolved');
-      fetchEvents();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resolve event');
+    } catch (err) {
+      setLoadErrorTitle(SECURITY_EVENTS_COPY.loadFailedTitle);
+      setLoadErrorDetail(safeErrorDetail(err) || SECURITY_EVENTS_COPY.resolveFailed);
     }
   };
 
@@ -120,6 +189,10 @@ export const SecurityEventsView: React.FC = () => {
         </select>
       </div>
 
+      {loadErrorTitle ? (
+        <DegradedState title={loadErrorTitle} description={loadErrorDetail || undefined} />
+      ) : null}
+
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : (
@@ -151,16 +224,7 @@ export const SecurityEventsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {loadError ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-center text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20"
-                  >
-                    {loadError}
-                  </td>
-                </tr>
-              ) : events.length === 0 ? (
+              {loadErrorTitle ? null : events.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -173,14 +237,18 @@ export const SecurityEventsView: React.FC = () => {
                 events.map((event) => (
                   <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {new Date(event.created_at).toLocaleString()}
+                      {formatEventDate(event.created_at)}
                     </td>
-                    <td className="px-6 py-4 text-slate-900 dark:text-white">{event.event_type}</td>
+                    <td className="px-6 py-4 text-slate-900 dark:text-white">
+                      {String(event.event_type || '').trim() || 'Unknown event'}
+                    </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-xs border ${getSeverityColor(event.severity)}`}
+                        className={`px-2 py-1 rounded text-xs border ${getSeverityColor(
+                          String(event.severity || 'unknown').toLowerCase()
+                        )}`}
                       >
-                        {event.severity}
+                        {String(event.severity || 'unknown').toLowerCase()}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
@@ -192,7 +260,7 @@ export const SecurityEventsView: React.FC = () => {
                         : '-'}
                     </td>
                     <td className="px-6 py-4">
-                      {event.resolved ? (
+                      {isResolvedValue(event.resolved) ? (
                         <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400">
                           Resolved
                         </span>
@@ -203,10 +271,11 @@ export const SecurityEventsView: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {!event.resolved && (
+                      {!isResolvedValue(event.resolved) && (
                         <button
                           onClick={() => handleResolve(event.id)}
                           className="text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                          aria-label={`Resolve security event ${event.id}`}
                           title="Resolve event"
                         >
                           <CheckCircle size={18} />

@@ -46,6 +46,7 @@ export type CapabilityName =
   | 'validateRoadmap'
   | 'chat'
   | 'chatStream'
+  | 'help'
   | 'nlToInitiative'
   | 'senseCheck'
   | 'riskScore'
@@ -163,6 +164,12 @@ export interface AIContext {
   screenId?: string;
   persona?: string;
   language?: string;
+  /**
+   * Base locale (e.g. 'en', 'pl') to be used by prompt builders. Populated by AIPipeline
+   * during buildContext from the authoritative request language. Added 2026-04-18 as
+   * part of the i18n-teresa fix so downstream services no longer silently default to PL.
+   */
+  conversationLanguage?: string;
   focusMode?: string;
   selectedText?: string;
   attachments?: AIAttachment[];
@@ -243,6 +250,18 @@ export interface AIOptions {
    */
   role?: string;
   systemInstruction?: string;
+  /**
+   * Authoritative UI language / chat locale for this request (e.g. 'en', 'pl').
+   * Takes precedence over sticky user-memory preferences when building the system prompt.
+   * Added 2026-04-18 as part of the i18n-teresa fix.
+   */
+  language?: string;
+  /**
+   * When true, skip prompt assembly (persona, org context) and use ONLY
+   * `systemInstruction` as the system prompt. Used by specialized services
+   * (e.g. WorkbookGeneratorService) that need full control of the system prompt.
+   */
+  dedicatedSystemPrompt?: boolean;
 }
 
 // ==========================================

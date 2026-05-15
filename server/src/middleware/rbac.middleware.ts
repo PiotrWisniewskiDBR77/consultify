@@ -21,11 +21,93 @@ type UserRole = string;
 
 type CanonicalRole = 'superadmin' | 'admin' | 'user' | string;
 
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const RBAC_FORBIDDEN_CODES = {
+  INSUFFICIENT_ROLE: 'RBAC_INSUFFICIENT_ROLE',
+  ORGANIZATION_ACCESS_REQUIRED: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+} as const;
+const RBAC_MAX_ROLE_INPUT_CHARS = 1024;
+const RBAC_MAX_REQUIRED_ROLES = 64;
+const RBAC_MAX_ORG_ID_CHARS = 256;
+const responseWriteBlocked = (res: Response): boolean =>
+  safeRead(() => res.headersSent, false) ||
+  safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded, false) ||
+  safeRead(() => (res as Response & { writableFinished?: boolean }).writableFinished, false) ||
+  safeRead(() => (res as Response & { finished?: boolean }).finished, false) ||
+  safeRead(() => (res as Response & { destroyed?: boolean }).destroyed, false);
+const invokeNextIfFunction = (next: NextFunction): boolean => {
+  if (typeof next !== 'function') return false;
+  try {
+    next();
+  } catch {
+    return false;
+  }
+  return true;
+};
+
+const sendRbacForbidden = (res: Response, error: string, code: string): void => {
+  if (!res) return;
+  const statusWriter = (res as Response & { status?: unknown }).status;
+  if (typeof statusWriter !== 'function') return;
+  const jsonWriter = (res as Response & { json?: unknown }).json;
+  const sendWriter = (res as Response & { send?: unknown }).send;
+  if (responseWriteBlocked(res)) return;
+  try {
+    res.status(403);
+  } catch {
+    return;
+  }
+  if (responseWriteBlocked(res)) return;
+  if (typeof jsonWriter === 'function') {
+    try {
+      res.json({ error, code });
+      return;
+    } catch {
+      // Fall through to send() fallback when available.
+    }
+  }
+  if (typeof sendWriter === 'function' && !responseWriteBlocked(res)) {
+    try {
+      (sendWriter as (body: unknown) => unknown).call(res, { error, code });
+    } catch {
+      // fail-closed: RBAC deny path should not throw
+    }
+  }
+};
+const isInvalidOrgToken = (value: string): boolean => {
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'null' || normalized === 'undefined' || normalized === 'none';
+};
+const containsInvalidOrgChars = (value: string): boolean =>
+  /[\u0000-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069\u200B-\u200D\uFEFF]/.test(value);
+const containsDisallowedOrgIdDelimiters = (value: string): boolean =>
+  value.includes('..') || value.includes('//') || value.includes('\\') || value.includes('<') || value.includes('>');
+
 const toCanonicalRole = (role: UserRole | undefined): CanonicalRole => {
-  const r = String(role || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_');
+  const r = safeRead(
+    () => {
+      const raw = String(role ?? '');
+      if (raw.length > RBAC_MAX_ROLE_INPUT_CHARS) return '';
+      return raw
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_');
+    },
+    ''
+  );
 
   if (!r) return '';
 
@@ -53,9 +135,11 @@ const toCanonicalRole = (role: UserRole | undefined): CanonicalRole => {
 
 const getRequestRole = (req: AuthRequest): CanonicalRole => {
   // Prefer raw role from token (req.userRole). `req.user.role` may be mapped (e.g. SUPERADMIN -> owner).
-  const raw = toCanonicalRole(req.userRole);
+  const raw = toCanonicalRole(normalizeOptionalString(safeRead(() => req.userRole, undefined as unknown)));
   if (raw) return raw;
-  return toCanonicalRole(req.user?.role);
+  return toCanonicalRole(
+    normalizeOptionalString(safeRead(() => req.user?.role, undefined as unknown))
+  );
 };
 
 const roleSatisfies = (userRole: CanonicalRole, requiredRole: CanonicalRole): boolean => {
@@ -87,20 +171,46 @@ const roleSatisfies = (userRole: CanonicalRole, requiredRole: CanonicalRole): bo
  */
 export const requireRole = (...roles: UserRole[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!roles || roles.length === 0) {
-      return next();
+    try {
+      if (req == null) {
+        sendRbacForbidden(
+          res,
+          'Insufficient role',
+          RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
+        );
+        return;
+      }
+      const safeRoles: UserRole[] = Array.isArray(roles) ? roles.slice(0, RBAC_MAX_REQUIRED_ROLES) : [];
+      if (safeRoles.length === 0) {
+        invokeNextIfFunction(next);
+        return;
+      }
+
+      const userRole = getRequestRole(req);
+      const required = safeRead(
+        () => safeRoles.map(toCanonicalRole).filter(Boolean),
+        [] as CanonicalRole[]
+      );
+      const allowed = safeRead(() => required.some((r) => roleSatisfies(userRole, r)), false);
+
+      if (!allowed) {
+        sendRbacForbidden(
+          res,
+          'Insufficient role',
+          RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
+        );
+        return;
+      }
+      if (responseWriteBlocked(res)) return;
+
+      invokeNextIfFunction(next);
+    } catch {
+      sendRbacForbidden(
+        res,
+        'Insufficient role',
+        RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
+      );
     }
-
-    const userRole = getRequestRole(req);
-    const required = roles.map(toCanonicalRole).filter(Boolean);
-    const allowed = required.some((r) => roleSatisfies(userRole, r));
-
-    if (!allowed) {
-      res.status(403).json({ error: 'Insufficient role' });
-      return;
-    }
-
-    next();
   };
 };
 
@@ -109,14 +219,44 @@ export const requireRole = (...roles: UserRole[]) => {
  */
 export const requireOrgAccess = () => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    const orgId = req.user?.organizationId || req.organizationId;
+    try {
+      if (req == null) {
+        sendRbacForbidden(
+          res,
+          'Organization access required',
+          RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
+        );
+        return;
+      }
+      const orgId =
+        normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
+        normalizeOptionalString(safeRead(() => req.user?.organization_id, undefined as unknown)) ||
+        normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown));
 
-    if (!orgId) {
-      res.status(403).json({ error: 'Organization access required' });
-      return;
+      if (
+        !orgId ||
+        isInvalidOrgToken(orgId) ||
+        orgId.length > RBAC_MAX_ORG_ID_CHARS ||
+        containsInvalidOrgChars(orgId) ||
+        containsDisallowedOrgIdDelimiters(orgId)
+      ) {
+        sendRbacForbidden(
+          res,
+          'Organization access required',
+          RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
+        );
+        return;
+      }
+      if (responseWriteBlocked(res)) return;
+
+      invokeNextIfFunction(next);
+    } catch {
+      sendRbacForbidden(
+        res,
+        'Organization access required',
+        RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
+      );
     }
-
-    next();
   };
 };
 

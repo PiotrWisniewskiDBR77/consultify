@@ -28,6 +28,7 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
+  AI_CHAT_V10_RUNTIME: '/internal/v10-runtime',
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',
@@ -120,12 +121,18 @@ export const ROUTES = {
   ADMIN: {
     ROOT: '/admin',
     OVERVIEW: '/admin/overview',
-    ORGANIZATION: '/admin/organization',
-    TEAM: '/admin/team',
-    WORKSPACE: '/admin/workspace',
-    AI: '/admin/ai',
-    BILLING: '/admin/billing',
+    PEOPLE: '/admin/people',
+    MEMBERS: '/admin/people',
     SECURITY: '/admin/security',
+    BILLING: '/admin/billing',
+    AI: '/admin/ai',
+    INTEGRATIONS: '/admin/integrations',
+    AUDIT: '/admin/audit',
+    OPERATIONS: '/admin/operations',
+    ORGANIZATION: '/admin/operations',
+    TEAM: '/admin/people',
+    WORKSPACE: '/admin/operations',
+    COLLABORATION: '/admin/security',
     COMPLIANCE: '/admin/compliance',
   },
 
@@ -146,12 +153,30 @@ export const ROUTES = {
     ROOT: '/superadmin',
     OVERVIEW: '/superadmin/overview',
     CUSTOMERS: '/superadmin/customers',
+    CUSTOMERS_ORGANIZATIONS: '/superadmin/customers/organizations',
+    CUSTOMERS_USERS: '/superadmin/customers/users',
+    CUSTOMERS_FEEDBACK: '/superadmin/customers/feedback',
+    CUSTOMERS_BULK_OPS: '/superadmin/customers/bulk-ops',
+    CUSTOMERS_PLAYBOOKS: '/superadmin/customers/playbooks',
     CUSTOMERS_COMMUNICATION: '/superadmin/customers/communication',
+    CUSTOMERS_COMMERCIAL: '/superadmin/customers/commercial',
+    CUSTOMERS_BILLING: '/superadmin/customers/commercial/billing',
+    CUSTOMERS_INVOICES: '/superadmin/customers/commercial/invoices',
     AI_PLATFORM: '/superadmin/ai-platform',
+    AI_PLATFORM_LLM: '/superadmin/ai-platform/configuration/llm-providers',
+    AI_PLATFORM_SETTINGS: '/superadmin/ai-platform/configuration/settings',
+    AI_PLATFORM_INTELLIGENCE: '/superadmin/ai-platform/development/prompt-builder',
+    AI_PLATFORM_KNOWLEDGE: '/superadmin/ai-platform/knowledge',
     SYSTEM: '/superadmin/system',
+    SYSTEM_API_KEYS: '/superadmin/system/api-keys',
     CONTENT: '/superadmin/content',
+    CONTENT_COMPLIANCE: '/superadmin/content/compliance',
     SECURITY: '/superadmin/security',
+    SECURITY_SSO: '/superadmin/security/sso',
+    SECURITY_POLICIES: '/superadmin/security/policies',
     CONFIGURATION: '/superadmin/configuration',
+    CONFIGURATION_SETTINGS: '/superadmin/configuration/settings',
+    CONFIGURATION_WHITELABEL: '/superadmin/configuration/whitelabel',
     REVENUE: '/superadmin/revenue',
     ANALYTICS: '/superadmin/analytics',
     VIRTUAL_WORKERS: '/superadmin/virtual-workers',
@@ -161,6 +186,7 @@ export const ROUTES = {
   PARTNER: {
     LANDING: '/partner',
     ONBOARDING: '/partner/onboarding',
+    PUBLIC_APPLY: '/become-partner/apply',
     PRICING: '/partner/pricing',
     DASHBOARD: '/partner/dashboard',
     CLIENTS: '/partner/clients',
@@ -178,6 +204,9 @@ export const ROUTES = {
   // Wizards
   ORG_SETUP: '/setup/organization',
   ONBOARDING: '/setup/onboarding',
+  ONBOARDING_ADMIN: '/setup/onboarding/admin',
+  ONBOARDING_SEED: '/setup/onboarding/seed/:persona',
+  ONBOARDING_SEED_BASE: '/setup/onboarding/seed',
   TRIAL_ENTRY: '/trial',
 
   // Affiliate
@@ -186,16 +215,27 @@ export const ROUTES = {
   // AI Actions
   AI_ACTIONS: '/ai-actions',
 
+  // Vector
+  VECTOR: '/vector',
+
   // Legal
   LEGAL: {
     ABOUT: '/about',
     CONTACT: '/contact',
-    TERMS: '/terms',
-    PRIVACY: '/privacy',
-    COOKIES: '/cookies',
-    SECURITY: '/security',
+    TERMS: '/legal/terms',
+    PRIVACY: '/legal/privacy',
+    COOKIES: '/legal/cookies',
+    SECURITY: '/legal/security',
     CENTER: '/legal',
     DOCUMENT: '/legal/:docSlug',
+    ACCEPTABLE_USE: '/legal/acceptable-use',
+    AI_POLICY: '/legal/ai-policy',
+    SUBSCRIPTION: '/legal/subscription',
+    DPA: '/legal/dpa',
+    SLA: '/legal/sla',
+    REFUNDS: '/legal/refunds',
+    CUSTOMER_SECURITY: '/legal/customer-security',
+    SUBPROCESSORS: '/legal/subprocessors',
   },
 
   // Status & Changelog
@@ -206,6 +246,7 @@ export const ROUTES = {
   DOCS: '/docs',
   KNOWLEDGE_BASE: '/knowledge',
   KNOWLEDGE_BASE_PUBLIC: '/knowledge-base',
+  CASE_STUDIES: '/business-cases',
   PRICING: '/pricing',
   APP_PRICING: '/app/pricing',
   EXECUTIVE: '/executive',
@@ -222,6 +263,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // Main
   [AppView.AI_CHAT]: ROUTES.AI_CHAT,
+  [AppView.AI_CHAT_V10_RUNTIME]: ROUTES.AI_CHAT_V10_RUNTIME,
   [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -314,63 +356,63 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.ADMIN_ORGANIZATION]: ROUTES.ADMIN.ORGANIZATION,
   [AppView.ADMIN_ORGANIZATION_SETTINGS]: ROUTES.ADMIN.ORGANIZATION,
   [AppView.ADMIN_TEAM]: ROUTES.ADMIN.TEAM,
-  [AppView.ADMIN_WORKSPACE]: ROUTES.ADMIN.WORKSPACE,
-  [AppView.ADMIN_PROJECT_DETAILS]: ROUTES.ADMIN.WORKSPACE,
+  [AppView.ADMIN_WORKSPACE]: ROUTES.ADMIN.INTEGRATIONS,
+  [AppView.ADMIN_PROJECT_DETAILS]: ROUTES.ADMIN.INTEGRATIONS,
   [AppView.ADMIN_AI]: ROUTES.ADMIN.AI,
   [AppView.ADMIN_BILLING]: ROUTES.ADMIN.BILLING,
   [AppView.ADMIN_SECURITY]: ROUTES.ADMIN.SECURITY,
   [AppView.ADMIN_SETTINGS]: ROUTES.ADMIN.SECURITY,
-  [AppView.ADMIN_USERS]: ROUTES.ADMIN.TEAM,
-  [AppView.ADMIN_PROJECTS]: ROUTES.ADMIN.WORKSPACE,
+  [AppView.ADMIN_USERS]: ROUTES.ADMIN.PEOPLE,
+  [AppView.ADMIN_PROJECTS]: ROUTES.ADMIN.OPERATIONS,
   [AppView.ADMIN_LLM]: ROUTES.ADMIN.AI,
   [AppView.ADMIN_AI_HEALTH]: ROUTES.ADMIN.AI,
   [AppView.ADMIN_KNOWLEDGE]: ROUTES.ADMIN.AI,
-  [AppView.ADMIN_TEAMS]: ROUTES.ADMIN.TEAM,
-  [AppView.ADMIN_ANALYTICS]: ROUTES.ADMIN.ROOT,
-  [AppView.ADMIN_FEEDBACK]: ROUTES.ADMIN.ROOT,
-  [AppView.ADMIN_METRICS]: ROUTES.ADMIN.ROOT,
+  [AppView.ADMIN_TEAMS]: ROUTES.ADMIN.PEOPLE,
+  [AppView.ADMIN_ANALYTICS]: ROUTES.ADMIN.OVERVIEW,
+  [AppView.ADMIN_FEEDBACK]: ROUTES.ADMIN.OVERVIEW,
+  [AppView.ADMIN_METRICS]: ROUTES.ADMIN.OVERVIEW,
   [AppView.ADMIN_API_KEYS]: ROUTES.ADMIN.SECURITY,
   [AppView.ADMIN_BILLING_MANAGEMENT]: ROUTES.ADMIN.BILLING,
-  [AppView.ADMIN_BULK_OPERATIONS]: ROUTES.ADMIN.ROOT,
-  [AppView.ADMIN_WORK_MODE]: ROUTES.ADMIN.ROOT,
-  [AppView.ADMIN_SETTINGS_CONSULTANTS]: ROUTES.ADMIN.TEAM,
-  [AppView.ADMIN_INVITATIONS]: ROUTES.ADMIN.TEAM,
+  [AppView.ADMIN_BULK_OPERATIONS]: ROUTES.ADMIN.OPERATIONS,
+  [AppView.ADMIN_WORK_MODE]: ROUTES.ADMIN.OVERVIEW,
+  [AppView.ADMIN_SETTINGS_CONSULTANTS]: ROUTES.ADMIN.PEOPLE,
+  [AppView.ADMIN_INVITATIONS]: ROUTES.ADMIN.PEOPLE,
   [AppView.ADMIN_TOKEN_MANAGEMENT]: ROUTES.ADMIN.SECURITY,
 
   // Settings
   [AppView.SETTINGS_PROFILE]: ROUTES.SETTINGS.PROFILE,
   [AppView.SETTINGS_BILLING]: ROUTES.SETTINGS.BILLING,
-  [AppView.SETTINGS_AI]: ROUTES.SETTINGS.AI,
-  [AppView.SETTINGS_NOTIFICATIONS]: ROUTES.SETTINGS.NOTIFICATIONS,
+  [AppView.SETTINGS_AI]: `${ROUTES.SETTINGS.ROOT}/ai-behavior`,
+  [AppView.SETTINGS_NOTIFICATIONS]: `${ROUTES.SETTINGS.ROOT}/notifications-overview`,
   [AppView.SETTINGS_INTEGRATIONS]: ROUTES.SETTINGS.INTEGRATIONS,
-  [AppView.SETTINGS_ORGANIZATION]: ROUTES.SETTINGS.ORGANIZATION,
-  [AppView.SETTINGS_MFA]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_ACTIVE_SESSIONS]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_LOGIN_HISTORY]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_DATA_CONTROLS]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_API_KEYS]: ROUTES.SETTINGS.SECURITY,
+  [AppView.SETTINGS_ORGANIZATION]: `${ROUTES.SETTINGS.ROOT}/tenant-defaults`,
+  [AppView.SETTINGS_MFA]: `${ROUTES.SETTINGS.ROOT}/auth-access`,
+  [AppView.SETTINGS_ACTIVE_SESSIONS]: `${ROUTES.SETTINGS.ROOT}/auth-access`,
+  [AppView.SETTINGS_LOGIN_HISTORY]: `${ROUTES.SETTINGS.ROOT}/auth-access`,
+  [AppView.SETTINGS_DATA_CONTROLS]: `${ROUTES.SETTINGS.ROOT}/data-controls`,
+  [AppView.SETTINGS_API_KEYS]: `${ROUTES.SETTINGS.ROOT}/api-keys`,
   [AppView.SETTINGS_WEBHOOKS]: ROUTES.SETTINGS.INTEGRATIONS,
   [AppView.SETTINGS_CALENDAR_SYNC]: ROUTES.SETTINGS.INTEGRATIONS,
-  [AppView.SETTINGS_APPEARANCE]: ROUTES.SETTINGS.PROFILE,
-  [AppView.SETTINGS_AI_MEMORY]: ROUTES.SETTINGS.AI,
-  [AppView.SETTINGS_AI_RESPONSE_STYLE]: ROUTES.SETTINGS.AI,
-  [AppView.SETTINGS_AI_CHAT_HISTORY]: ROUTES.SETTINGS.AI,
-  [AppView.SETTINGS_AI_VOICE]: ROUTES.SETTINGS.AI,
-  [AppView.SETTINGS_SECURITY]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_API_ACCESS]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_PRIVACY]: ROUTES.SETTINGS.SECURITY,
-  [AppView.SETTINGS_SSO]: ROUTES.SETTINGS.SECURITY,
+  [AppView.SETTINGS_APPEARANCE]: `${ROUTES.SETTINGS.ROOT}/theme`,
+  [AppView.SETTINGS_AI_MEMORY]: `${ROUTES.SETTINGS.ROOT}/ai-memory`,
+  [AppView.SETTINGS_AI_RESPONSE_STYLE]: `${ROUTES.SETTINGS.ROOT}/ai-behavior`,
+  [AppView.SETTINGS_AI_CHAT_HISTORY]: `${ROUTES.SETTINGS.ROOT}/ai-chat-history`,
+  [AppView.SETTINGS_AI_VOICE]: `${ROUTES.SETTINGS.ROOT}/ai-voice`,
+  [AppView.SETTINGS_SECURITY]: `${ROUTES.SETTINGS.ROOT}/security-dashboard`,
+  [AppView.SETTINGS_API_ACCESS]: `${ROUTES.SETTINGS.ROOT}/api-keys`,
+  [AppView.SETTINGS_PRIVACY]: `${ROUTES.SETTINGS.ROOT}/privacy`,
+  [AppView.SETTINGS_SSO]: `${ROUTES.SETTINGS.ROOT}/auth-access`,
   [AppView.SETTINGS_LEGAL]: ROUTES.SETTINGS.PROFILE,
-  [AppView.SETTINGS_WORK_PREFERENCES]: ROUTES.SETTINGS.PROFILE,
-  [AppView.SETTINGS_DASHBOARD_PREFERENCES]: ROUTES.SETTINGS.PROFILE,
-  [AppView.SETTINGS_ACCESSIBILITY]: ROUTES.SETTINGS.PROFILE,
+  [AppView.SETTINGS_WORK_PREFERENCES]: `${ROUTES.SETTINGS.ROOT}/work-preferences`,
+  [AppView.SETTINGS_DASHBOARD_PREFERENCES]: `${ROUTES.SETTINGS.ROOT}/dashboard`,
+  [AppView.SETTINGS_ACCESSIBILITY]: `${ROUTES.SETTINGS.ROOT}/accessibility`,
   [AppView.SETTINGS_PROFILE_MODULE]: ROUTES.SETTINGS.PROFILE,
-  [AppView.SETTINGS_AI_MODULE]: ROUTES.SETTINGS.AI,
-  [AppView.SETTINGS_NOTIFICATIONS_MODULE]: ROUTES.SETTINGS.NOTIFICATIONS,
-  [AppView.SETTINGS_SECURITY_MODULE]: ROUTES.SETTINGS.SECURITY,
+  [AppView.SETTINGS_AI_MODULE]: `${ROUTES.SETTINGS.ROOT}/ai-behavior`,
+  [AppView.SETTINGS_NOTIFICATIONS_MODULE]: `${ROUTES.SETTINGS.ROOT}/notifications-overview`,
+  [AppView.SETTINGS_SECURITY_MODULE]: `${ROUTES.SETTINGS.ROOT}/security-dashboard`,
   [AppView.SETTINGS_INTEGRATIONS_MODULE]: ROUTES.SETTINGS.INTEGRATIONS,
-  [AppView.SETTINGS_APPEARANCE_MODULE]: ROUTES.SETTINGS.PROFILE,
-  [AppView.SETTINGS_REGIONALIZATION]: ROUTES.SETTINGS.PROFILE,
+  [AppView.SETTINGS_APPEARANCE_MODULE]: `${ROUTES.SETTINGS.ROOT}/theme`,
+  [AppView.SETTINGS_REGIONALIZATION]: `${ROUTES.SETTINGS.ROOT}/regional`,
 
   // SuperAdmin
   [AppView.SUPERADMIN_OVERVIEW]: ROUTES.SUPERADMIN.OVERVIEW,
@@ -382,30 +424,30 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SUPERADMIN_AI_OPERATIONS]: ROUTES.SUPERADMIN.AI_PLATFORM,
   [AppView.SUPERADMIN_SYSTEM]: ROUTES.SUPERADMIN.SYSTEM,
   [AppView.SUPERADMIN_CONTENT]: ROUTES.SUPERADMIN.CONTENT,
-  [AppView.SUPERADMIN_REVENUE]: ROUTES.SUPERADMIN.REVENUE,
+  [AppView.SUPERADMIN_REVENUE]: ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL,
   [AppView.SUPERADMIN_SECURITY]: ROUTES.SUPERADMIN.SECURITY,
   [AppView.SUPERADMIN_CONFIGURATION]: ROUTES.SUPERADMIN.CONFIGURATION,
   [AppView.SUPERADMIN_ANALYTICS]: ROUTES.SUPERADMIN.ANALYTICS,
   [AppView.SUPERADMIN_VIRTUAL_WORKERS]: ROUTES.SUPERADMIN.VIRTUAL_WORKERS,
-  [AppView.SUPERADMIN_DASHBOARD]: ROUTES.SUPERADMIN.ROOT,
-  [AppView.SUPERADMIN_ORGANIZATIONS]: ROUTES.SUPERADMIN.CUSTOMERS,
-  [AppView.SUPERADMIN_USERS]: ROUTES.SUPERADMIN.CUSTOMERS,
-  [AppView.SUPERADMIN_BILLING]: ROUTES.SUPERADMIN.REVENUE,
-  [AppView.SUPERADMIN_AI_CONFIG]: ROUTES.SUPERADMIN.AI_PLATFORM,
-  [AppView.SUPERADMIN_LLM_MANAGEMENT]: ROUTES.SUPERADMIN.AI_PLATFORM,
-  [AppView.SUPERADMIN_AI_INTELLIGENCE]: ROUTES.SUPERADMIN.AI_PLATFORM,
-  [AppView.SUPERADMIN_KNOWLEDGE]: ROUTES.SUPERADMIN.AI_PLATFORM,
-  [AppView.SUPERADMIN_SETTINGS]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_SSO]: ROUTES.SUPERADMIN.SECURITY,
-  [AppView.SUPERADMIN_SECURITY_POLICIES]: ROUTES.SUPERADMIN.SECURITY,
-  [AppView.SUPERADMIN_API_MANAGEMENT]: ROUTES.SUPERADMIN.SECURITY,
-  [AppView.SUPERADMIN_WHITELABEL]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_COMPLIANCE]: ROUTES.SUPERADMIN.SECURITY,
-  [AppView.SUPERADMIN_INVOICES]: ROUTES.SUPERADMIN.REVENUE,
-  [AppView.SUPERADMIN_FEEDBACK]: ROUTES.SUPERADMIN.ANALYTICS,
-  [AppView.SUPERADMIN_BULK_OPERATIONS]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: ROUTES.SUPERADMIN.SYSTEM,
+  [AppView.SUPERADMIN_DASHBOARD]: ROUTES.SUPERADMIN.OVERVIEW,
+  [AppView.SUPERADMIN_ORGANIZATIONS]: ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS,
+  [AppView.SUPERADMIN_USERS]: ROUTES.SUPERADMIN.CUSTOMERS_USERS,
+  [AppView.SUPERADMIN_BILLING]: ROUTES.SUPERADMIN.CUSTOMERS_BILLING,
+  [AppView.SUPERADMIN_AI_CONFIG]: ROUTES.SUPERADMIN.AI_PLATFORM_SETTINGS,
+  [AppView.SUPERADMIN_LLM_MANAGEMENT]: ROUTES.SUPERADMIN.AI_PLATFORM_LLM,
+  [AppView.SUPERADMIN_AI_INTELLIGENCE]: ROUTES.SUPERADMIN.AI_PLATFORM_INTELLIGENCE,
+  [AppView.SUPERADMIN_KNOWLEDGE]: ROUTES.SUPERADMIN.AI_PLATFORM_KNOWLEDGE,
+  [AppView.SUPERADMIN_SETTINGS]: ROUTES.SUPERADMIN.CONFIGURATION_SETTINGS,
+  [AppView.SUPERADMIN_SSO]: ROUTES.SUPERADMIN.SECURITY_SSO,
+  [AppView.SUPERADMIN_SECURITY_POLICIES]: ROUTES.SUPERADMIN.SECURITY_POLICIES,
+  [AppView.SUPERADMIN_API_MANAGEMENT]: ROUTES.SUPERADMIN.SYSTEM_API_KEYS,
+  [AppView.SUPERADMIN_WHITELABEL]: ROUTES.SUPERADMIN.CONFIGURATION_WHITELABEL,
+  [AppView.SUPERADMIN_COMPLIANCE]: ROUTES.SUPERADMIN.CONTENT_COMPLIANCE,
+  [AppView.SUPERADMIN_INVOICES]: ROUTES.SUPERADMIN.CUSTOMERS_INVOICES,
+  [AppView.SUPERADMIN_FEEDBACK]: ROUTES.SUPERADMIN.CUSTOMERS_FEEDBACK,
+  [AppView.SUPERADMIN_BULK_OPERATIONS]: ROUTES.SUPERADMIN.CUSTOMERS_BULK_OPS,
+  [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: ROUTES.SUPERADMIN.CUSTOMERS_PLAYBOOKS,
+  [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: ROUTES.SUPERADMIN.CUSTOMERS_PLAYBOOKS,
   [AppView.ADMIN_PLAYBOOK_RUNS]: ROUTES.ADMIN.ROOT,
 
   // Partner
@@ -460,6 +502,12 @@ export function getRouteFromAppView(view: AppView): string {
   const route = APP_VIEW_TO_ROUTE[view];
 
   if (!route) {
+    if (view.startsWith('SUPERADMIN_')) {
+      console.warn(
+        `[routeConfig] WARNING: No route mapping for superadmin view "${view}", falling back to superadmin root`
+      );
+      return ROUTES.SUPERADMIN.ROOT;
+    }
     console.warn(
       `[routeConfig] WARNING: No route mapping for view "${view}", falling back to chat`
     );
@@ -475,6 +523,41 @@ export function getRouteFromAppView(view: AppView): string {
  * Used for backward compatibility
  */
 export function getAppViewFromRoute(path: string): AppView | null {
+  const canonicalRouteOrder: AppView[] = [
+    AppView.SUPERADMIN_OVERVIEW,
+    AppView.SUPERADMIN_DASHBOARD,
+    AppView.SUPERADMIN_CUSTOMERS,
+    AppView.SUPERADMIN_ORGANIZATIONS,
+    AppView.SUPERADMIN_USERS,
+    AppView.SUPERADMIN_FEEDBACK,
+    AppView.SUPERADMIN_BULK_OPERATIONS,
+    AppView.SUPERADMIN_PLAYBOOK_TEMPLATES,
+    AppView.SUPERADMIN_COMMUNICATION,
+    AppView.SUPERADMIN_REVENUE,
+    AppView.SUPERADMIN_BILLING,
+    AppView.SUPERADMIN_INVOICES,
+    AppView.SUPERADMIN_AI_PLATFORM,
+    AppView.SUPERADMIN_LLM_MANAGEMENT,
+    AppView.SUPERADMIN_AI_CONFIG,
+    AppView.SUPERADMIN_AI_INTELLIGENCE,
+    AppView.SUPERADMIN_KNOWLEDGE,
+    AppView.SUPERADMIN_CONFIGURATION,
+    AppView.SUPERADMIN_SETTINGS,
+    AppView.SUPERADMIN_WHITELABEL,
+    AppView.SUPERADMIN_ANALYTICS,
+    AppView.SUPERADMIN_SYSTEM,
+    AppView.SUPERADMIN_API_MANAGEMENT,
+    AppView.SUPERADMIN_CONTENT,
+    AppView.SUPERADMIN_COMPLIANCE,
+    AppView.SUPERADMIN_SECURITY,
+    AppView.SUPERADMIN_SSO,
+    AppView.SUPERADMIN_SECURITY_POLICIES,
+  ];
+
+  for (const view of canonicalRouteOrder) {
+    if (APP_VIEW_TO_ROUTE[view] === path) return view;
+  }
+
   const entry = Object.entries(APP_VIEW_TO_ROUTE).find(([_, route]) => route === path);
   return entry ? (entry[0] as AppView) : null;
 }
@@ -489,32 +572,85 @@ export function getAppViewFromPath(path: string): AppView | null {
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
 
+  if (normalized === ROUTES.AI_CHAT_V10_RUNTIME) return AppView.AI_CHAT_V10_RUNTIME;
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
   if (normalized.startsWith(ROUTES.DOCS)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE_PUBLIC)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
+  if (normalized.startsWith(ROUTES.INITIATIVES)) return AppView.FULL_STEP2_INITIATIVES;
+  if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
+    return AppView.PORTFOLIO_ROADMAP;
+  }
+  if (normalized.startsWith(ROUTES.ROI)) return AppView.FULL_STEP4_ROI;
+  if (normalized.startsWith(ROUTES.PROJECT_INTELLIGENCE)) return AppView.PROJECT_INTELLIGENCE;
+  if (normalized.startsWith(ROUTES.AI_ACTIONS)) return AppView.AI_ACTION_PROPOSALS;
+  if (normalized.startsWith(ROUTES.CONSULTANT.PANEL)) return AppView.CONSULTANT_PANEL;
+  if (normalized.startsWith(ROUTES.CONSULTANT.INVITES)) return AppView.CONSULTANT_INVITES;
+  if (normalized.startsWith(ROUTES.AFFILIATE)) return AppView.AFFILIATE_DASHBOARD;
+  if (normalized.startsWith(ROUTES.ORG_SETUP)) return AppView.ORG_SETUP_WIZARD;
+  if (normalized.startsWith(ROUTES.ONBOARDING)) return AppView.ONBOARDING_WIZARD;
+  if (normalized.startsWith(ROUTES.ONBOARDING_ADMIN)) return AppView.ONBOARDING_WIZARD;
+  if (normalized.startsWith(ROUTES.ONBOARDING_SEED_BASE)) return AppView.ONBOARDING_WIZARD;
+  if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.IMPLEMENTATION;
+  if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
+  if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
+  if (normalized.startsWith(ROUTES.BENEFITS)) return AppView.BENEFITS_REALIZATION;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;
+  if (normalized.startsWith(ROUTES.PARTNER.ONBOARDING)) return AppView.PARTNER_LANDING;
   if (normalized.startsWith(ROUTES.PARTNER.LANDING)) return AppView.PARTNER_LANDING;
   // SuperAdmin: map nested routes to the correct section view
   if (normalized.startsWith(ROUTES.SUPERADMIN.OVERVIEW)) return AppView.SUPERADMIN_OVERVIEW;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_PLAYBOOKS))
+    return AppView.SUPERADMIN_PLAYBOOK_TEMPLATES;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_BULK_OPS))
+    return AppView.SUPERADMIN_BULK_OPERATIONS;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_FEEDBACK))
+    return AppView.SUPERADMIN_FEEDBACK;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_INVOICES))
+    return AppView.SUPERADMIN_INVOICES;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_BILLING)) return AppView.SUPERADMIN_BILLING;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL))
+    return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION))
     return AppView.SUPERADMIN_COMMUNICATION;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_USERS)) return AppView.SUPERADMIN_USERS;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS))
+    return AppView.SUPERADMIN_ORGANIZATIONS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS)) return AppView.SUPERADMIN_CUSTOMERS;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.AI_PLATFORM_LLM))
+    return AppView.SUPERADMIN_LLM_MANAGEMENT;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.AI_PLATFORM_SETTINGS))
+    return AppView.SUPERADMIN_AI_CONFIG;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.AI_PLATFORM_INTELLIGENCE))
+    return AppView.SUPERADMIN_AI_INTELLIGENCE;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.AI_PLATFORM_KNOWLEDGE))
+    return AppView.SUPERADMIN_KNOWLEDGE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.AI_PLATFORM)) return AppView.SUPERADMIN_AI_PLATFORM;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CONTENT_COMPLIANCE))
+    return AppView.SUPERADMIN_COMPLIANCE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CONTENT)) return AppView.SUPERADMIN_CONTENT;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.SYSTEM_API_KEYS))
+    return AppView.SUPERADMIN_API_MANAGEMENT;
   if (normalized.startsWith(ROUTES.SUPERADMIN.SYSTEM)) return AppView.SUPERADMIN_SYSTEM;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.SECURITY_POLICIES))
+    return AppView.SUPERADMIN_SECURITY_POLICIES;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.SECURITY_SSO)) return AppView.SUPERADMIN_SSO;
   if (normalized.startsWith(ROUTES.SUPERADMIN.SECURITY)) return AppView.SUPERADMIN_SECURITY;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION_WHITELABEL))
+    return AppView.SUPERADMIN_WHITELABEL;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION_SETTINGS))
+    return AppView.SUPERADMIN_SETTINGS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION))
     return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS))
     return AppView.SUPERADMIN_VIRTUAL_WORKERS;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_OVERVIEW;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_CUSTOMERS;
   if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;
   if (normalized.startsWith(ROUTES.CONTEXT_BUILDER.ROOT)) return AppView.CONTEXT_BUILDER;
@@ -529,6 +665,16 @@ export function getAppViewFromPath(path: string): AppView | null {
     if (normalized.startsWith(ROUTES.REPORTS.MANAGEMENT)) return AppView.REPORTS_MANAGEMENT;
     return AppView.FULL_STEP6_REPORTS; // builder or builder/:id
   }
+
+  // KIMI-style workspaces
+  if (normalized.startsWith(ROUTES.WORDY)) return AppView.WORDY;
+  if (normalized.startsWith(ROUTES.EXCELE)) return AppView.EXCELE;
+  if (normalized.startsWith(ROUTES.PREZENTACJE_GEN)) return AppView.PREZENTACJE_GEN;
+
+  // Meeting & MCP
+  if (normalized.startsWith(ROUTES.MEETING)) return AppView.MEETING;
+  if (normalized.startsWith(ROUTES.MCP_IRIS)) return AppView.MCP_IRIS_COMING_SOON;
+  if (normalized.startsWith(ROUTES.MCP_MARKETPLACE)) return AppView.MCP_MARKETPLACE_COMING_SOON;
 
   // Outputs library and nested presentation flows stay under one visible module.
   if (normalized.startsWith(ROUTES.PRESENTATIONS)) {

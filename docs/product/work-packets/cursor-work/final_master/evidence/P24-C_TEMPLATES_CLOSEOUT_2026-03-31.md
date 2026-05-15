@@ -36,3 +36,10 @@ Result: **PASS** on 2026-03-31
 
 - Presentation template editing remains bounded to wizard entrypoints in this packet.
 - This closeout verifies the governed runtime and rollback posture through deterministic regression coverage rather than a two-user staging recording.
+
+## 5) Post-verification hardening (P24-D)
+
+A full UI/UX Golden Standard V3 compliance audit was conducted on 2026-04-11, resulting in:
+- **P24-D** evidence: `P24-D_UI_UX_COMPLIANCE_AND_GAP_CLOSURE_2026-04-11.md`
+- Fixes: TEMPLATE_STATUS_META, grid status mapping, row action completeness, deprecation flow (endpoint + UI), error handling, i18n preview
+- Remaining P1 bounded gaps documented in P24-D §5

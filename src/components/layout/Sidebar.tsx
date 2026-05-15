@@ -415,37 +415,37 @@ export const Sidebar: React.FC = () => {
       },
       {
         id: 'ADMIN_ORGANIZATION',
-        label: t('admin.modules.organization', 'Organization'),
+        label: t('admin.modules.operations', 'Organization Ops'),
         viewId: AppView.ADMIN_ORGANIZATION,
         icon: <Building2 size={16} />,
       },
       {
         id: 'ADMIN_TEAM',
-        label: t('admin.modules.team', 'Team'),
+        label: t('admin.modules.people', 'People & Access'),
         viewId: AppView.ADMIN_TEAM,
         icon: <Users size={16} />,
       },
       {
         id: 'ADMIN_WORKSPACE',
-        label: t('admin.modules.workspace', 'Workspace'),
+        label: t('admin.modules.integrations', 'Integrations'),
         viewId: AppView.ADMIN_WORKSPACE,
         icon: <Briefcase size={16} />,
       },
       {
         id: 'ADMIN_AI',
-        label: t('admin.modules.ai', 'AI'),
+        label: t('admin.modules.ai', 'AI Governance'),
         viewId: AppView.ADMIN_AI,
         icon: <Brain size={16} />,
       },
       {
         id: 'ADMIN_BILLING',
-        label: t('admin.modules.billing', 'Billing'),
+        label: t('admin.modules.billing', 'Billing & FinOps'),
         viewId: AppView.ADMIN_BILLING,
         icon: <CreditCard size={16} />,
       },
       {
         id: 'ADMIN_SECURITY',
-        label: t('admin.modules.security', 'Security'),
+        label: t('admin.modules.security', 'Security & Identity'),
         viewId: AppView.ADMIN_SECURITY,
         icon: <Lock size={16} />,
       },
@@ -583,7 +583,7 @@ export const Sidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isActive = item.viewId === currentView;
     const isCompleted = item.viewId && completedViews.includes(item.viewId);
-    const badgeLabel = item.badge === 'soon' ? 'In development' : item.badge;
+    const badgeLabel = item.badge === 'soon' ? 'Coming soon' : item.badge;
 
     // Check if locked
     const isLocked =

@@ -8,12 +8,12 @@
  */
 
 import {
-  InitiativeStatus,
-  VALID_TRANSITIONS,
   GATE_TRANSITIONS,
-  isValidTransition,
-  validateTransition,
+  InitiativeStatus,
   type InitiativeStatusType,
+  isValidTransition,
+  VALID_TRANSITIONS,
+  validateTransition,
 } from '../../constants/initiativeStatuses.js';
 
 /** Frozen set from FINAL_IMPLEMENTATION_PLAN_11 §2.3.1 (order preserved). */
@@ -135,13 +135,11 @@ export function buildInitiativeOutboundHandoffPayload(input: {
 }): InitiativeOutboundHandoffPayload {
   const row = input.initiativeRow;
   const id = String(row.id || '');
-  const title =
-    String(row.title || row.name || row.summary || 'Initiative').trim() || 'Initiative';
+  const title = String(row.title || row.name || row.summary || 'Initiative').trim() || 'Initiative';
   const rawStatus = row.status;
   const dbStatus = normalizeInitiativeDbStatusForRead(rawStatus);
   const lifecycle = mapDbStatusToP11Lifecycle(rawStatus);
-  const ownerId =
-    (row.owner_execution_id as string) || (row.owner_business_id as string) || null;
+  const ownerId = (row.owner_execution_id as string) || (row.owner_business_id as string) || null;
   const start =
     (row.planned_start_date as string) ||
     (row.start_date as string) ||
@@ -216,11 +214,11 @@ export function buildInitiativeOutboundHandoffPayload(input: {
  * downstream consumers can import everything lifecycle-related from one module.
  */
 export {
-  VALID_TRANSITIONS as P11_VALID_TRANSITIONS,
+  type InitiativeStatusType,
   GATE_TRANSITIONS as P11_GATE_TRANSITIONS,
+  VALID_TRANSITIONS as P11_VALID_TRANSITIONS,
   isValidTransition as p11IsValidTransition,
   validateTransition as p11ValidateTransition,
-  type InitiativeStatusType,
 };
 
 /** Guard: refuse to propose persisting unknown enum-like status (write path helper). */

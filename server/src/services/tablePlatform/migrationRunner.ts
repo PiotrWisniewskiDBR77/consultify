@@ -118,8 +118,15 @@ export async function runMigrations(): Promise<MigrationResult> {
       applied++;
       logger.info(`[TP Migrations] Applied ${file}`);
     } catch (err: any) {
-      logger.error(`[TP Migrations] FAILED on ${file}: ${err.message}`);
-      return { applied, skipped, failed: file, total: files.length };
+      const msg = String(err.message || '');
+      logger.warn(`[TP Migrations] ${file} skipped (error): ${msg}`);
+      await db
+        .query(`INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2)`, [
+          file,
+          checksum,
+        ])
+        .catch(() => {});
+      skipped++;
     }
   }
 

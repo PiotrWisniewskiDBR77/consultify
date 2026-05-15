@@ -1,0 +1,234 @@
+/**
+ * ProblemPreview — right-side preview pane (Outlook-style) for a selected problem row.
+ *
+ * Header: severity badge, title, root cause
+ * Body: source entity link, affected entities, timeline, meta details
+ * Footer: action buttons matching the problem's actions list
+ */
+
+import { ChevronRight, ExternalLink, Info, Link2, X } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { ManagerProblemRow, ProblemAction, ProblemSeverity } from './types';
+
+interface ProblemPreviewProps {
+  problem: ManagerProblemRow;
+  onAction: (action: ProblemAction) => void;
+  onClose: () => void;
+  onOpenEntity?: (type: string, id: string) => void;
+}
+
+const SEVERITY_COLORS: Record<
+  ProblemSeverity,
+  { bg: string; text: string; border: string; label: string }
+> = {
+  critical: {
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    text: 'text-rose-700 dark:text-rose-400',
+    border: 'border-rose-200 dark:border-rose-800/40',
+    label: 'Critical',
+  },
+  warning: {
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-700 dark:text-amber-400',
+    border: 'border-amber-200 dark:border-amber-800/40',
+    label: 'Warning',
+  },
+  info: {
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    text: 'text-blue-700 dark:text-blue-400',
+    border: 'border-blue-200 dark:border-blue-800/40',
+    label: 'Info',
+  },
+};
+
+const SOURCE_ICONS: Record<string, React.ReactNode> = {
+  INITIATIVE: <span className="text-sm">🎯</span>,
+  TASK: <span className="text-sm">📋</span>,
+  DECISION: <span className="text-sm">⚖️</span>,
+  RAID_ITEM: <span className="text-sm">🛡️</span>,
+  PERSON: <span className="text-sm">👤</span>,
+};
+
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-2 py-1.5">
+      <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap">
+        {label}
+      </span>
+      <span className="text-xs text-right text-slate-700 dark:text-slate-300">{value}</span>
+    </div>
+  );
+}
+
+function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () => void }) {
+  const base =
+    'h-8 px-3 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5';
+  const variants: Record<string, string> = {
+    primary: `${base} bg-cyan-600 text-white hover:bg-cyan-700`,
+    danger: `${base} bg-rose-600 text-white hover:bg-rose-700`,
+    default: `${base} bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700`,
+  };
+  return (
+    <button type="button" onClick={onClick} className={variants[action.variant || 'default']}>
+      {action.label}
+    </button>
+  );
+}
+
+export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: ProblemPreviewProps) {
+  const { t } = useTranslation();
+  const sev = SEVERITY_COLORS[problem.severity];
+  const typeLabel = problem.problemType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const meta = problem.meta || {};
+  const metaEntries = Object.entries(meta).filter(
+    ([, v]) => v !== null && v !== undefined && v !== ''
+  );
+
+  return (
+    <div className="flex flex-col h-full border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+      {/* ─── Header ─── */}
+      <div className={`p-4 ${sev.bg} border-b ${sev.border}`}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span
+              className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded ${sev.bg} ${sev.text} border ${sev.border}`}
+            >
+              {sev.label}
+            </span>
+            <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
+              {typeLabel}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0"
+          >
+            <X size={16} className="text-slate-400" />
+          </button>
+        </div>
+
+        <h3 className="mt-3 text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+          {problem.title}
+        </h3>
+
+        <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          {problem.rootCause}
+        </p>
+      </div>
+
+      {/* ─── Body ─── */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Source entity */}
+        <div>
+          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            {t('manager.preview.sourceEntity', 'Source Entity')}
+          </h4>
+          <button
+            type="button"
+            onClick={() => onOpenEntity?.(problem.sourceEntityType, problem.sourceEntityId)}
+            className="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group"
+          >
+            {SOURCE_ICONS[problem.sourceEntityType] || <Info size={14} />}
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
+                {problem.sourceEntityName}
+              </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                {problem.sourceEntityType.replace(/_/g, ' ')}
+              </p>
+            </div>
+            <ExternalLink
+              size={12}
+              className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors shrink-0"
+            />
+          </button>
+        </div>
+
+        {/* Details */}
+        <div>
+          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            {t('manager.preview.details', 'Details')}
+          </h4>
+          <div className="divide-y divide-slate-100 dark:divide-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+            {problem.ownerName && <DetailRow label="Owner" value={problem.ownerName} />}
+            {problem.daysOverdue !== null && (
+              <DetailRow
+                label="Deadline"
+                value={
+                  problem.daysOverdue > 0 ? (
+                    <span className="text-rose-600 dark:text-rose-400 font-medium">
+                      {problem.daysOverdue} days overdue
+                    </span>
+                  ) : problem.daysOverdue < 0 ? (
+                    <span className="text-slate-500">In {Math.abs(problem.daysOverdue)} days</span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400">Due today</span>
+                  )
+                }
+              />
+            )}
+            <DetailRow
+              label="Impact"
+              value={
+                problem.impactCount > 0 ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    {problem.impactCount} downstream affected
+                  </span>
+                ) : (
+                  '—'
+                )
+              }
+            />
+            {metaEntries.map(([key, val]) => (
+              <DetailRow key={key} label={key.replace(/_/g, ' ')} value={String(val)} />
+            ))}
+          </div>
+        </div>
+
+        {/* Affected entities */}
+        {problem.affectedEntities.length > 0 && (
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              {t('manager.preview.affected', 'Affected Entities')} (
+              {problem.affectedEntities.length})
+            </h4>
+            <div className="space-y-1">
+              {problem.affectedEntities.map((ent) => (
+                <button
+                  key={ent.id}
+                  type="button"
+                  onClick={() => onOpenEntity?.(ent.type, ent.id)}
+                  className="w-full flex items-center gap-2 p-2 rounded-lg border border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group text-left"
+                >
+                  {SOURCE_ICONS[ent.type] || <Link2 size={12} />}
+                  <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">
+                    {ent.name}
+                  </span>
+                  <ChevronRight
+                    size={12}
+                    className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 shrink-0"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Footer — Actions ─── */}
+      {problem.actions.length > 0 && (
+        <div className="p-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+          <div className="flex flex-wrap gap-2">
+            {problem.actions.map((action) => (
+              <ActionButton key={action.id} action={action} onClick={() => onAction(action)} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

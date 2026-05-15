@@ -98,6 +98,25 @@ router.get(
   })
 );
 
+router.post(
+  '/kpi-connectors/:connectorId/run',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    try {
+      res.json(
+        await resultsEnterpriseService.runConnectorNow(id.orgId, req.params.connectorId, id.userId)
+      );
+    } catch (error: any) {
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Connector not found' });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
 // ── RSLT-04: ROI evidence ──
 
 router.post(
@@ -193,6 +212,22 @@ router.get(
   })
 );
 
+router.get(
+  '/kpi-report-schedules/:scheduleId/delivery-log',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
+    res.json({
+      deliveries: await resultsEnterpriseService.getScheduleDeliveryLog(
+        id.orgId,
+        req.params.scheduleId,
+        limit
+      ),
+    });
+  })
+);
+
 router.post(
   '/kpi-report-schedules/:scheduleId/approve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -208,6 +243,38 @@ router.post(
       return;
     }
     res.json({ ok: true });
+  })
+);
+
+router.post(
+  '/kpi-report-schedules/:scheduleId/run',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    try {
+      res.json(
+        await resultsEnterpriseService.runReportScheduleNow(
+          id.orgId,
+          req.params.scheduleId,
+          id.userId
+        )
+      );
+    } catch (error: any) {
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Schedule not found' });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/runtime/run-due',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    res.json(await resultsEnterpriseService.runDueWork(id.orgId));
   })
 );
 

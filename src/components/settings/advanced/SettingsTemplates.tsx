@@ -39,6 +39,20 @@ interface Template {
   createdAt?: string;
 }
 
+interface SettingsTemplatesResponse {
+  templates?: Template[];
+}
+
+interface ExportSettingsResponse {
+  data?: {
+    settings?: Record<string, unknown>;
+  };
+}
+
+interface CreateTemplateResponse {
+  template?: Template;
+}
+
 export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUser }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -56,11 +70,18 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
   const loadData = async () => {
     try {
       setLoading(true);
-      const response = await Api.getSettingsTemplates();
+      const response = (await Api.getSettingsTemplates()) as
+        | SettingsTemplatesResponse
+        | null
+        | undefined;
 
       if (response?.templates) {
-        const systemTemplates = response.templates.filter((t: Template) => t.type === 'system');
-        const customTpls = response.templates.filter((t: Template) => t.type === 'custom');
+        const normalizedTemplates = response.templates.map((template: Template) => ({
+          ...template,
+          categories: Array.isArray(template.categories) ? template.categories : ['All'],
+        }));
+        const systemTemplates = normalizedTemplates.filter((t: Template) => t.type === 'system');
+        const customTpls = normalizedTemplates.filter((t: Template) => t.type === 'custom');
         setTemplates(systemTemplates);
         setCustomTemplates(customTpls);
       }
@@ -95,20 +116,29 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
     try {
       // Get current settings to save as template
-      const exportResponse = await Api.exportSettings();
+      const exportResponse = (await Api.exportSettings()) as
+        | ExportSettingsResponse
+        | null
+        | undefined;
       const settingsData = exportResponse?.data?.settings || {};
 
-      const response = await Api.createSettingsTemplate({
+      const response = (await Api.createSettingsTemplate({
         name: newTemplateName,
         description: newTemplateDesc || 'Custom settings template',
         icon: '📋',
         settingsData,
-      });
+      })) as unknown as CreateTemplateResponse | null | undefined;
 
       if (response?.template) {
         setCustomTemplates([
           ...customTemplates,
-          { ...response.template, type: 'custom', categories: ['All'] },
+          {
+            ...response.template,
+            type: 'custom',
+            categories: Array.isArray(response.template.categories)
+              ? response.template.categories
+              : ['All'],
+          },
         ]);
       }
 

@@ -106,7 +106,7 @@ class AuditEventsService {
         return id;
       } catch (legacyErr: any) {
         logger.error('[AuditEventsService] Failed to log:', legacyErr?.message || message);
-        return id;
+        throw new Error(`AUDIT_WRITE_FAILED: ${legacyErr?.message || message}`);
       }
     }
   }

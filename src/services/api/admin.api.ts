@@ -118,6 +118,97 @@ export const AdminApi = {
     return res.json();
   },
 
+  getOrganizationAISettings: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/org/${organizationId}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch organization AI settings');
+  },
+
+  updateOrganizationAISettings: async (
+    organizationId: string,
+    settings: Record<string, unknown>
+  ): Promise<unknown> => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/org/${organizationId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(settings),
+    });
+    return handleResponse(res, 'Failed to save organization AI settings');
+  },
+
+  getOrganizationOwnership: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(`${API_URL}/organizations/${organizationId}/ownership`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch organization ownership');
+  },
+
+  getOrganizationAdmins: async (organizationId: string): Promise<unknown[]> => {
+    const res = await fetchWithRetry(`${API_URL}/organizations/${organizationId}/admins`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch organization admins');
+  },
+
+  getPendingOwnershipTransfer: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/ownership/pending-transfer`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch pending ownership transfer');
+  },
+
+  transferOrganizationOwnership: async (
+    organizationId: string,
+    payload: { toUserId: string; reason?: string }
+  ): Promise<unknown> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/ownership/transfer`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to initiate ownership transfer');
+  },
+
+  cancelOrganizationOwnershipTransfer: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/ownership/cancel-transfer`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to cancel ownership transfer');
+  },
+
+  acceptOrganizationOwnershipTransfer: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/ownership/accept-transfer`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to accept ownership transfer');
+  },
+
+  scheduleOrganizationDeletion: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/schedule-deletion`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to schedule organization deletion');
+  },
+
   // ==========================================
   // ORGANIZATION MANAGEMENT (SuperAdmin)
   // ==========================================
@@ -160,10 +251,26 @@ export const AdminApi = {
   // USER MANAGEMENT (SuperAdmin)
   // ==========================================
 
-  getSuperAdminUsers: async (): Promise<User[]> => {
-    const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+  getSuperAdminUsers: async (filters?: {
+    organizationId?: string;
+    role?: string;
+    status?: string;
+  }): Promise<User[]> => {
+    const params = new URLSearchParams();
+    if (filters?.organizationId) params.set('organizationId', filters.organizationId);
+    if (filters?.role) params.set('role', filters.role);
+    if (filters?.status) params.set('status', filters.status);
+    const query = params.toString();
+    const res = await fetch(`${API_URL}/superadmin/users${query ? `?${query}` : ''}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error('Failed to fetch users');
-    return res.json();
+    if (Array.isArray(data)) return data as User[];
+    if (data && typeof data === 'object' && Array.isArray((data as { users?: unknown }).users)) {
+      return (data as { users: User[] }).users;
+    }
+    return [];
   },
 
   updateSuperAdminUser: async (

@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  ExternalLink,
   Key,
   Lock,
   RefreshCw,
@@ -31,6 +30,72 @@ interface AdminSecuritySettingsProps {
   className?: string;
 }
 
+const ADMIN_SECURITY_COPY = {
+  loadUnavailableTitle: 'Security settings unavailable',
+  loadUnavailableBody:
+    'We could not load organization security settings. Retry before making policy changes.',
+  oauthUnavailable: 'OAuth provider status unavailable',
+  saveFailed: 'Failed to save security settings. Please try again.',
+  saveNotConfirmed: 'Security settings save was not confirmed by the server',
+};
+
+function parseErrorCode(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const value = (payload as Record<string, unknown>).code;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized ? normalized : null;
+}
+
+function sameWhitespaceNormalized(left: string, right: string): boolean {
+  const normalize = (value: string) => value.trim().replace(/\r\n/g, '\n');
+  return normalize(left) === normalize(right);
+}
+
+function normalizeSettingsPayload(raw: unknown): {
+  mfaRequired: boolean;
+  ssoEnabled: boolean;
+  sessionTimeout: number;
+  ipWhitelist: string;
+  loginMaxAttempts: number;
+  lockoutDuration: number;
+} | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const value = raw as Record<string, unknown>;
+  const parseNumber = (input: unknown, fallback: number): number => {
+    const parsed = Number(input);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+  return {
+    mfaRequired: Boolean(value.mfaRequired),
+    ssoEnabled: Boolean(value.ssoEnabled),
+    sessionTimeout: parseNumber(value.sessionTimeout, 30),
+    ipWhitelist: typeof value.ipWhitelist === 'string' ? value.ipWhitelist : '',
+    loginMaxAttempts: parseNumber(value.loginMaxAttempts, 5),
+    lockoutDuration: parseNumber(value.lockoutDuration, 30),
+  };
+}
+
+function normalizeOAuthPayload(raw: unknown): OAuthStatus | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const value = raw as Record<string, unknown>;
+  const normalizeProvider = (
+    key: 'google' | 'microsoft' | 'linkedin'
+  ): { configured: boolean; loginUrl: string } => {
+    const entry =
+      value[key] && typeof value[key] === 'object' ? (value[key] as Record<string, unknown>) : {};
+    return {
+      configured: Boolean(entry.configured),
+      loginUrl: typeof entry.loginUrl === 'string' ? entry.loginUrl : '',
+    };
+  };
+  return {
+    google: normalizeProvider('google'),
+    microsoft: normalizeProvider('microsoft'),
+    linkedin: normalizeProvider('linkedin'),
+  };
+}
+
 export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [mfaRequired, setMfaRequired] = useState(false);
@@ -42,48 +107,75 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [oauthStatusError, setOauthStatusError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveErrorCode, setSaveErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSettings();
-    fetchOAuthStatus();
+    void Promise.allSettled([fetchSettings(), fetchOAuthStatus()]);
   }, []);
 
   const fetchOAuthStatus = async () => {
+    setOauthStatusError(null);
     try {
       const response = await fetch('/api/auth/oauth/status');
       if (response.ok) {
         const data = await response.json();
-        setOAuthStatus(data);
+        setOAuthStatus(normalizeOAuthPayload(data));
+        return;
       }
+      setOAuthStatus(null);
+      setOauthStatusError(ADMIN_SECURITY_COPY.oauthUnavailable);
     } catch (error) {
       console.error('Failed to fetch OAuth status:', error);
+      setOAuthStatus(null);
+      setOauthStatusError(ADMIN_SECURITY_COPY.oauthUnavailable);
     }
   };
 
   const fetchSettings = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const response = await fetch('/api/security/admin-settings', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (response.ok) {
-        const data = await response.json();
-        setMfaRequired(data.mfaRequired ?? false);
-        setSsoEnabled(data.ssoEnabled ?? false);
-        setSessionTimeout(data.sessionTimeout ?? 30);
-        setIpWhitelist(data.ipWhitelist ?? '');
-        setLoginMaxAttempts(data.loginMaxAttempts ?? 5);
-        setLockoutDuration(data.lockoutDuration ?? 30);
+      if (!response.ok) {
+        setLoadError(ADMIN_SECURITY_COPY.loadUnavailableTitle);
+        return;
       }
+      const data = normalizeSettingsPayload(await response.json());
+      if (!data) {
+        setLoadError(ADMIN_SECURITY_COPY.loadUnavailableTitle);
+        return;
+      }
+      setMfaRequired(data.mfaRequired);
+      setSsoEnabled(data.ssoEnabled);
+      setSessionTimeout(data.sessionTimeout);
+      setIpWhitelist(data.ipWhitelist);
+      setLoginMaxAttempts(data.loginMaxAttempts);
+      setLockoutDuration(data.lockoutDuration);
     } catch (error) {
       console.error('Failed to fetch security settings:', error);
+      setLoadError(ADMIN_SECURITY_COPY.loadUnavailableTitle);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSave = async () => {
+    setSaveError(null);
+    setSaveErrorCode(null);
     setSaving(true);
+    const expectedState = {
+      mfaRequired,
+      ssoEnabled,
+      sessionTimeout,
+      ipWhitelist,
+      loginMaxAttempts,
+      lockoutDuration,
+    };
     try {
       const response = await fetch('/api/security/admin-settings', {
         method: 'PUT',
@@ -100,14 +192,42 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           lockoutDuration,
         }),
       });
-      if (response.ok) {
-        toast.success(t('admin.security.saved', 'Security settings saved'));
-      } else {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to save');
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const code = parseErrorCode(payload);
+        setSaveError(ADMIN_SECURITY_COPY.saveFailed);
+        setSaveErrorCode(code);
+        toast.error(ADMIN_SECURITY_COPY.saveFailed);
+        return;
       }
-    } catch (error: any) {
-      toast.error(error.message || t('admin.security.saveError', 'Failed to save settings'));
+
+      const readBackResponse = await fetch('/api/security/admin-settings', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!readBackResponse.ok) {
+        setSaveError(ADMIN_SECURITY_COPY.saveNotConfirmed);
+        toast.error(ADMIN_SECURITY_COPY.saveNotConfirmed);
+        return;
+      }
+      const readBackSettings = normalizeSettingsPayload(await readBackResponse.json());
+      const isConfirmed =
+        readBackSettings &&
+        readBackSettings.mfaRequired === expectedState.mfaRequired &&
+        readBackSettings.ssoEnabled === expectedState.ssoEnabled &&
+        readBackSettings.sessionTimeout === expectedState.sessionTimeout &&
+        sameWhitespaceNormalized(readBackSettings.ipWhitelist, expectedState.ipWhitelist) &&
+        readBackSettings.loginMaxAttempts === expectedState.loginMaxAttempts &&
+        readBackSettings.lockoutDuration === expectedState.lockoutDuration;
+      if (!isConfirmed) {
+        setSaveError(ADMIN_SECURITY_COPY.saveNotConfirmed);
+        toast.error(ADMIN_SECURITY_COPY.saveNotConfirmed);
+        return;
+      }
+      toast.success(t('admin.security.saved', 'Security settings saved'));
+    } catch (error) {
+      console.error('Failed to save security settings:', error);
+      setSaveError(ADMIN_SECURITY_COPY.saveFailed);
+      toast.error(ADMIN_SECURITY_COPY.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -115,14 +235,51 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div
+        className="flex items-center justify-center gap-2 p-12"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading security settings"
+      >
         <Clock className="w-8 h-8 text-slate-300 animate-spin" />
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          {t('admin.security.loading', 'Loading security settings...')}
+        </span>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div
+        role="alert"
+        className={`rounded-xl border border-rose-300/70 bg-rose-50/90 p-4 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100 ${className}`}
+      >
+        <p className="font-semibold">{ADMIN_SECURITY_COPY.loadUnavailableTitle}</p>
+        <p className="mt-1 text-sm">{ADMIN_SECURITY_COPY.loadUnavailableBody}</p>
       </div>
     );
   }
 
   return (
     <div className={`space-y-6 ${className}`}>
+      {saveError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-300/70 bg-rose-50/90 p-3 text-sm text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100"
+        >
+          <p>{saveError}</p>
+          {saveErrorCode ? <p className="mt-1 font-mono text-xs">Code: {saveErrorCode}</p> : null}
+        </div>
+      )}
+      {oauthStatusError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-300/70 bg-amber-50/90 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          {oauthStatusError}
+        </div>
+      )}
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <Shield size={24} />

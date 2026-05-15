@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 const PERSONA_KEYS = ['founders', 'executives', 'consultingFirms', 'aiLeaders'] as const;
 
 const PERSONA_VISUALS = [
-  { icon: Rocket,    color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
-  { icon: Users,     color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
+  { icon: Rocket, color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
+  { icon: Users, color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
   { icon: Building2, color: '#059669', glow: 'rgba(5,150,105,0.25)' },
-  { icon: Brain,     color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
+  { icon: Brain, color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
 ];
 
 export const ForWhomSection: React.FC = () => {
@@ -20,7 +20,7 @@ export const ForWhomSection: React.FC = () => {
       <div
         className="absolute top-0 left-0 right-0 h-px"
         style={{
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.15), transparent)',
         }}
       />
 
@@ -33,8 +33,8 @@ export const ForWhomSection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 mb-5"
           >
-            <BarChart3 size={12} className="text-emerald-400" />
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+            <BarChart3 size={12} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               {t('landing.forWhom.badge', 'For whom')}
             </span>
           </motion.div>
@@ -76,19 +76,18 @@ export const ForWhomSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.08 }}
-                className="group relative p-7 rounded-2xl transition-all duration-300 hover:scale-[1.01]"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
+                className="group relative p-7 rounded-2xl transition-all duration-300 hover:scale-[1.01]
+                  bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08]
+                  shadow-sm dark:shadow-none"
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = `${visual.color}45`;
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    `0 0 40px -12px ${visual.glow}`;
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.borderColor = `${visual.color}45`;
+                  el.style.boxShadow = `0 0 40px -12px ${visual.glow}`;
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.borderColor = '';
+                  el.style.boxShadow = '';
                 }}
               >
                 <div
@@ -134,7 +133,9 @@ export const ForWhomSection: React.FC = () => {
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ background: visual.color }}
                         />
-                        <span className="text-xs text-slate-500 dark:text-white/55 font-medium">{point}</span>
+                        <span className="text-xs text-slate-500 dark:text-white/55 font-medium">
+                          {point}
+                        </span>
                       </div>
                     ))}
                   </div>

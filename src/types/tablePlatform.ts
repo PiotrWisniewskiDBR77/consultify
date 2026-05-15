@@ -193,6 +193,10 @@ export interface ViewConfig {
   sorts?: SortRule[];
   groupBy?: GroupConfig;
   rowHeight?: 'short' | 'medium' | 'tall';
+  /** Field IDs still in `visibleFieldIds` but removed from schema; grid shows degraded columns */
+  missing_fields?: string[];
+  /** Display names captured when a field was deleted (field id → name) */
+  missing_field_names?: Record<string, string>;
 }
 
 /** Filter expression group (AND/OR logic) */

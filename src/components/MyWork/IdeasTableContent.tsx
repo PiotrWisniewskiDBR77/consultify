@@ -34,7 +34,7 @@ import type {
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
-import type { IdeaStage, MyIdea, SortDir, SortField } from './MyIdeasListContent';
+import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
 
 const STAGE_META: Record<
   IdeaStage,
@@ -338,9 +338,11 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
     const contextParts: string[] = [];
     if (idea.sourceType) contextParts.push(`${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`);
-    if (typeof idea.mapItems === 'number') contextParts.push(`${isPolish ? 'Elementy' : 'Items'}: ${idea.mapItems}`);
+    if (typeof idea.mapItems === 'number')
+      contextParts.push(`${isPolish ? 'Elementy' : 'Items'}: ${idea.mapItems}`);
     if (typeof idea.mapNodes === 'number') contextParts.push(`Nodes: ${idea.mapNodes}`);
-    if (typeof idea.mapEdges === 'number') contextParts.push(`${isPolish ? 'Połączenia' : 'Edges'}: ${idea.mapEdges}`);
+    if (typeof idea.mapEdges === 'number')
+      contextParts.push(`${isPolish ? 'Połączenia' : 'Edges'}: ${idea.mapEdges}`);
 
     return (
       <div className="space-y-4">
@@ -359,10 +361,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
           ) : null}
         </PreviewMetaCard>
 
-        <PreviewDetailsSection
-          text={detailsText}
-          label={isPolish ? 'Szczegóły' : 'Details'}
-        >
+        <PreviewDetailsSection text={detailsText} label={isPolish ? 'Szczegóły' : 'Details'}>
           {contextParts.length > 0 ? (
             <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-white/[0.06]">
               <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
@@ -427,7 +426,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
         <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-        <PreviewRelations items={relationItems} emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'} />
+        <PreviewRelations
+          items={relationItems}
+          emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
+        />
 
         <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 

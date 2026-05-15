@@ -6,21 +6,15 @@ import { AppView } from '../types';
 
 // Admin section titles mapping
 const ADMIN_SECTION_TITLES: Record<string, string> = {
-  organization: 'Strategic Profile',
-  branding: 'Branding',
-  billing: 'Plans',
-  payment: 'Payment',
-  tax: 'Tax',
-  alerts: 'Alerts',
-  security: 'Security',
-  governance: 'Governance',
-  audit: 'Audit',
-  'report-creator': 'Report Templates',
-  'initiative-templates': 'Initiative Templates',
-  'initiative-sections': 'Section Library',
-  integrations: 'Integrations',
-  api: 'API',
-  feedback: 'Feedback',
+  overview: 'Overview',
+  people: 'People & Access',
+  members: 'People & Access',
+  security: 'Security & Identity',
+  billing: 'Billing & FinOps',
+  ai: 'AI Governance & Operations',
+  integrations: 'Integrations & Sync',
+  audit: 'Audit, Compliance & Risk',
+  operations: 'Organization Operations',
 };
 
 /**
@@ -42,6 +36,8 @@ const ADMIN_SECTION_TITLES: Record<string, string> = {
 export const useBreadcrumbs = (): string[] | null => {
   const { t } = useTranslation();
   const { currentView } = useAppStore();
+  const myWorkBreadcrumbs = useAppStore((s) => s.myWorkBreadcrumbs);
+  const interviewBreadcrumbs = useAppStore((s) => s.interviewBreadcrumbs);
   const location = useLocation();
 
   // Important: prefer route-provided breadcrumbs whenever possible.
@@ -65,9 +61,13 @@ export const useBreadcrumbs = (): string[] | null => {
   // INTERVIEW / DISCOVERY CONSULTANT
   // =====================================================
   else if (
+    currentView === AppView.INTERVIEW ||
     currentView === AppView.DISCOVERY_CONSULTANT ||
     currentView === AppView.PROJECT_INTELLIGENCE
   ) {
+    if (interviewBreadcrumbs && interviewBreadcrumbs.length > 0) {
+      return interviewBreadcrumbs;
+    }
     return null;
   }
   // =====================================================
@@ -80,7 +80,9 @@ export const useBreadcrumbs = (): string[] | null => {
   // MY WORK
   // =====================================================
   else if (currentView === AppView.MY_WORK) {
-    // Route-level crumb is the source of truth; deep-link sub-crumbs can be layered later.
+    if (myWorkBreadcrumbs && myWorkBreadcrumbs.length > 0) {
+      return myWorkBreadcrumbs;
+    }
     return null;
   }
   // =====================================================
@@ -145,16 +147,70 @@ export const useBreadcrumbs = (): string[] | null => {
     return null;
   }
   // =====================================================
-  // BENEFITS MODULE
+  // BENEFITS MODULE (Results / KPI)
   // =====================================================
   else if (currentView === AppView.BENEFITS_REALIZATION) {
-    return null;
+    section = t('sidebar.results', 'Results');
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    const mode = params.get('mode');
+    const rmode = params.get('rmode');
+
+    if (tab === 'results_kpi') {
+      sub =
+        mode === 'overview'
+          ? t('results.tabs.kpiOverview', 'KPI Overview')
+          : mode === 'queue'
+            ? t('results.tabs.kpiQueue', 'KPI Queue')
+            : mode === 'scorecards'
+              ? t('results.tabs.kpiScorecards', 'Scorecards')
+              : t('results.tabs.kpi', 'KPI');
+    } else if (tab === 'results_reports') {
+      sub =
+        rmode === 'reports'
+          ? t('results.tabs.kpiReports', 'Reports')
+          : rmode === 'schedules'
+            ? t('results.tabs.schedules', 'Schedules')
+            : rmode === 'wallboards'
+              ? t('results.tabs.wallboards', 'Wallboards')
+              : rmode === 'connectors'
+                ? t('results.tabs.connectors', 'Connectors')
+                : t('results.tabs.kpiReports', 'Reports');
+    } else if (tab === 'roi') {
+      sub = t('results.tabs.roi', 'ROI');
+    } else if (tab === 'roi_analysis') {
+      sub = t('results.tabs.roiAnalysis', 'ROI Analysis');
+    }
   }
   // =====================================================
   // ECONOMICS MODULE
   // =====================================================
   else if (currentView === AppView.ECONOMICS || currentView === AppView.FULL_STEP4_ROI) {
-    return null;
+    section = t('sidebar.finance', 'Finance');
+    const params = new URLSearchParams(location.search || '');
+    const tab = (params.get('tab') || '').toLowerCase();
+    const TAB_LABELS: Record<string, string> = {
+      statements: t('finance.tabs.statements', 'Statements'),
+      models: t('finance.tabs.models', 'Models'),
+      analysis: t('finance.tabs.analysis', 'Analysis'),
+      prediction: t('finance.tabs.prediction', 'Prediction'),
+      valuation: t('finance.tabs.valuation', 'Valuation'),
+      investment: t('finance.tabs.investment', 'Investment'),
+    };
+    const tabLabel = TAB_LABELS[tab] || null;
+    if (tabLabel) {
+      return [section, tabLabel];
+    }
+    const deepMatch = location.pathname.match(/^\/finance\/(statements|models|analyses)\/(.+)$/);
+    if (deepMatch) {
+      const segLabels: Record<string, string> = {
+        statements: t('finance.tabs.statements', 'Statements'),
+        models: t('finance.tabs.models', 'Models'),
+        analyses: t('finance.tabs.analysis', 'Analysis'),
+      };
+      return [section, segLabels[deepMatch[1]] || deepMatch[1]];
+    }
+    return [section];
   }
   // =====================================================
   // REPORTS MODULE (V3-A04 / V3-J01)
@@ -167,9 +223,26 @@ export const useBreadcrumbs = (): string[] | null => {
     return null;
   }
   // =====================================================
-  // PRESENTATIONS MODULE
+  // PRESENTATIONS MODULE (Outputs Library)
   // =====================================================
   else if (currentView === AppView.PRESENTATIONS) {
+    const params = new URLSearchParams(location.search || '');
+    const tab = (params.get('tab') || '').toLowerCase();
+    const TAB_LABELS: Record<string, string> = {
+      all: t('rap.tabs.all', 'All'),
+      mine: t('rap.tabs.mine', 'Mine'),
+      needs_review: t('rap.tabs.needsReview', 'Needs review'),
+      review: t('rap.tabs.needsReview', 'Needs review'),
+      documents: t('rap.tabs.documents', 'Documents'),
+      reports: t('rap.tabs.documents', 'Documents'),
+      presentations: t('rap.tabs.presentations', 'Presentations'),
+      sheets: t('rap.tabs.sheets', 'Sheets'),
+      templates: t('rap.tabs.templates', 'Templates'),
+    };
+    const tabLabel = TAB_LABELS[tab] || null;
+    if (tabLabel) {
+      return [t('sidebar.outputsLibrary', 'Outputs'), tabLabel];
+    }
     return null;
   }
   // =====================================================
@@ -190,26 +263,27 @@ export const useBreadcrumbs = (): string[] | null => {
   else if (viewParts.includes('ADMIN') || location.pathname.startsWith('/admin')) {
     section = t('sidebar.adminPanel', 'Admin Panel');
 
-    // Check URL tab parameter for AdminSettingsModule sections
+    const pathSection = location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
-    if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
+    if (pathSection && ADMIN_SECTION_TITLES[pathSection]) {
+      sub = ADMIN_SECTION_TITLES[pathSection];
+    } else if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
       sub = ADMIN_SECTION_TITLES[tabParam];
-    } else if (currentView === AppView.ADMIN_USERS) sub = t('common.users', 'Users');
-    else if (currentView === AppView.ADMIN_PROJECTS) sub = t('common.projects', 'Projects');
-    else if (currentView === AppView.ADMIN_LLM) sub = 'LLM';
-    else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = t('sidebar.knowledge', 'Knowledge');
-    else if (currentView === AppView.ADMIN_FEEDBACK) sub = t('widgets.feedback.title', 'Feedback');
-    else if (currentView === AppView.ADMIN_BILLING) sub = t('settings.billing', 'Billing');
-    else if (currentView === AppView.ADMIN_ANALYTICS) sub = t('common.analytics', 'Analytics');
+    } else if (currentView === AppView.ADMIN_USERS) sub = 'People & Access';
+    else if (currentView === AppView.ADMIN_PROJECTS) sub = 'Organization Operations';
+    else if (currentView === AppView.ADMIN_LLM) sub = 'AI Governance & Operations';
+    else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = 'AI Governance & Operations';
+    else if (currentView === AppView.ADMIN_FEEDBACK) sub = 'Overview';
+    else if (currentView === AppView.ADMIN_BILLING) sub = 'Billing & FinOps';
+    else if (currentView === AppView.ADMIN_ANALYTICS) sub = 'Overview';
     else if (currentView === AppView.ADMIN_OVERVIEW) sub = t('assessment.overview', 'Overview');
-    else if (currentView === AppView.ADMIN_ORGANIZATION)
-      sub = t('sidebar.organization', 'Organization');
-    else if (currentView === AppView.ADMIN_TEAM) sub = t('common.team', 'Team');
-    else if (currentView === AppView.ADMIN_WORKSPACE) sub = t('common.workspace', 'Workspace');
-    else if (currentView === AppView.ADMIN_AI) sub = 'AI';
-    else if (currentView === AppView.ADMIN_SECURITY) sub = t('settings.security', 'Security');
-    else sub = 'Strategic Profile'; // Default to first section
+    else if (currentView === AppView.ADMIN_ORGANIZATION) sub = 'Organization Operations';
+    else if (currentView === AppView.ADMIN_TEAM) sub = 'People & Access';
+    else if (currentView === AppView.ADMIN_WORKSPACE) sub = 'Integrations & Sync';
+    else if (currentView === AppView.ADMIN_AI) sub = 'AI Governance & Operations';
+    else if (currentView === AppView.ADMIN_SECURITY) sub = 'Security & Identity';
+    else sub = 'Overview';
   }
   // =====================================================
   // SETTINGS VIEWS

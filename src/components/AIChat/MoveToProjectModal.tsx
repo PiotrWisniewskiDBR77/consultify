@@ -7,6 +7,7 @@
 
 import { Folder, Plus, Search, Users, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useChatProjectStore } from '../../store/useChatProjectStore';
@@ -124,7 +125,13 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  // chat-history fix (feedback #45e50d65, #84f6e58f, #fb2d4e30):
+  // Modal was rendered inline inside <ConversationItem>, which has an onClick that
+  // selects the conversation. Clicking anywhere in the modal (search input, folder
+  // button) bubbled up to that parent and either navigated away or re-rendered the
+  // sidebar, tearing down the modal. React Portal moves the modal to document.body
+  // so DOM events no longer bubble through ConversationItem / ConversationActions.
+  const modal = (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       role="dialog"
@@ -132,6 +139,11 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
       aria-label={t('aiChat.moveToFolder', 'Move to folder')}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
+      }}
+      onClick={(e) => {
+        // Extra defense-in-depth: never let clicks inside this portal bubble
+        // through to whatever React parent owns this modal instance.
+        e.stopPropagation();
       }}
     >
       <div className="bg-white dark:bg-navy-900 rounded-2xl w-[420px] max-w-[92vw] shadow-2xl border border-slate-200 dark:border-navy-700">
@@ -329,6 +341,12 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
       </div>
     </div>
   );
+
+  // Render through a portal so clicks never bubble back to the conversation list
+  // item that owns this component instance. Fallback to inline rendering if the
+  // document body is not available (SSR / tests).
+  if (typeof document === 'undefined' || !document.body) return modal;
+  return createPortal(modal, document.body);
 };
 
 const MAX_VISIBLE_FOLDERS = 4; // C3.5: max 4 per section + scroll

@@ -16,6 +16,7 @@ import rateLimit from 'express-rate-limit';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
@@ -364,7 +365,20 @@ router.post(
     }
 
     try {
-      // TODO: Add ownership verification
+      const codeRecord = await dbGet<{ created_by?: string }>(
+        'SELECT created_by FROM access_codes WHERE id = ? LIMIT 1',
+        [req.params.id],
+        { fallback: true }
+      );
+
+      if (!codeRecord) {
+        return res.status(404).json({ error: 'Access code not found' });
+      }
+
+      if (codeRecord.created_by !== req.user?.id && !req.user?.isSuperAdmin) {
+        return res.status(403).json({ error: 'Not authorized to revoke this access code' });
+      }
+
       await AccessCodeService.revokeCode(req.params.id);
       return res.json({ success: true });
     } catch (err: any) {

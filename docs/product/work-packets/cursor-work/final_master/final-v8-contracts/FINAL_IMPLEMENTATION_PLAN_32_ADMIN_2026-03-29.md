@@ -4,6 +4,8 @@ Owner: Product + Engineering
 Status: verified(evidence) — P32-A/B/C complete  
 Last updated: 2026-03-31 (P32-C verification closure)
 
+> Superseded for enterprise scope by `FINAL_IMPLEMENTATION_PLAN_32_ADMIN_ENTERPRISE_2026-04-11.md`.
+
 ## 1. Executive summary
 - **Intent**: Dopasować UI/UX; połączyć z Settings i Superadmin; zarządzanie rolami i organizacją.
 - **Primary users**: tenant operatorzy (admins/owners).

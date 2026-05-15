@@ -541,6 +541,20 @@ export async function deleteAttachment(attachmentId: string): Promise<void> {
 }
 
 // ============================================================================
+// GLOBAL SEARCH
+// ============================================================================
+
+/** Search across all tables in the organization */
+export async function searchRecordsGlobal(query: string, limit?: number): Promise<any> {
+  const params = new URLSearchParams({ q: query });
+  if (limit) params.set('limit', String(limit));
+  const res = await fetchWithRetry(`${BASE_PATH}/search?${params}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to search records globally');
+}
+
+// ============================================================================
 // SEARCH RECORDS
 // ============================================================================
 
@@ -681,12 +695,13 @@ export async function addRecordComment(
   tableId: string,
   content: string,
   authorName?: string,
-  parentId?: string
+  parentId?: string,
+  mentions?: string[]
 ): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/records/${recordId}/comments`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({ tableId, content, authorName, parentId }),
+    body: JSON.stringify({ tableId, content, authorName, parentId, mentions }),
   });
   return handleResponse(res, 'Failed to add comment');
 }

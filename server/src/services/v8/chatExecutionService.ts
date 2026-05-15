@@ -308,7 +308,13 @@ export async function getHandoffsByConversation(
 
 /**
  * Create a ChatActionProposal wrapping an existing ActionProposal
- * with chat-specific rendering hints.
+ * with chat-specific rendering hints (Decision W2-2).
+ *
+ * V8: additionally persist a first-class `execution_proposal` row into
+ * `conversation_messages`, so the proposal is visible and reviewable directly
+ * in the chat thread (CHAT_V8_ACTIONS_AND_APPROVALS). The facade row in
+ * `v8_chat_action_proposals` remains the canonical record of rendering hints
+ * and the link to the underlying governance proposal.
  */
 export async function createChatActionProposal(
   params: CreateChatActionProposalParams
@@ -345,6 +351,38 @@ export async function createChatActionProposal(
       chatProposal.createdAt,
     ]
   );
+
+  // V8 first-class thread visibility — persist an execution_proposal message
+  // so the proposal is immediately visible as a governed bubble. Best-effort:
+  // failures are logged and swallowed to avoid poisoning the facade write.
+  try {
+    const messageId = uuidv4();
+    await dbRun(
+      `INSERT INTO conversation_messages
+         (id, conversation_id, role, content, message_type, metadata, created_at)
+       VALUES (?, ?, 'ai', ?, 'execution_proposal', ?, ?)`,
+      [
+        messageId,
+        validated.conversationId,
+        validated.displaySummary,
+        JSON.stringify({
+          executionProposal: {
+            proposalId: validated.underlyingProposalId,
+            chatProposalId,
+            lifecycleState: 'pending_review',
+            planSummary: validated.displaySummary,
+            risk: validated.renderingHints?.showRiskBadge ? 'medium' : undefined,
+          },
+          renderingHints: validated.renderingHints,
+        }),
+        now,
+      ]
+    );
+  } catch (err: any) {
+    logger.warn(
+      `${LOG_PREFIX} Failed to persist execution_proposal message for chat proposal ${chatProposalId}: ${err?.message || String(err)}`
+    );
+  }
 
   logger.info(
     `${LOG_PREFIX} ChatProposal ${chatProposalId} wrapping ${validated.underlyingProposalId} in conversation ${validated.conversationId}`

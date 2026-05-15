@@ -13,6 +13,7 @@
  */
 
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
@@ -229,7 +230,7 @@ class TierAutoAssignmentJob {
         ],
         (err) => {
           if (err) {
-            console.error('[TierAutoAssignment] Failed to log change:', err.message);
+            logger.error('[TierAutoAssignment] Failed to log change:', err.message);
           }
           resolve();
         }
@@ -243,7 +244,7 @@ class TierAutoAssignmentJob {
   async sendTierChangeNotification(user, oldTier, newTier, changeType) {
     // This would integrate with your notification system
     // For now, just log it
-    console.log(
+    logger.info(
       `[TierAutoAssignment] ${changeType === 'promoted' ? '📈' : '📉'} User ${user.userName} (${user.userId}) ${changeType} from ${oldTier} to ${newTier}`
     );
 
@@ -280,7 +281,7 @@ class TierAutoAssignmentJob {
         [organizationId],
         (err, rows) => {
           if (err) {
-            console.error('[TierAutoAssignment] Failed to get users:', err.message);
+            logger.error('[TierAutoAssignment] Failed to get users:', err.message);
             resolve([]);
             return;
           }
@@ -303,7 +304,7 @@ class TierAutoAssignmentJob {
         [],
         (err, rows) => {
           if (err) {
-            console.error('[TierAutoAssignment] Failed to get organizations:', err.message);
+            logger.error('[TierAutoAssignment] Failed to get organizations:', err.message);
             resolve([]);
             return;
           }
@@ -351,13 +352,13 @@ class TierAutoAssignmentJob {
    */
   async runGlobal() {
     if (this.isRunning) {
-      console.log('[TierAutoAssignment] Job already running, skipping');
+      logger.info('[TierAutoAssignment] Job already running, skipping');
       return { skipped: true, reason: 'Already running' };
     }
 
     this.isRunning = true;
     const startTime = Date.now();
-    console.log('[TierAutoAssignment] Starting global tier assignment job');
+    logger.info('[TierAutoAssignment] Starting global tier assignment job');
 
     try {
       const organizations = await this.getEnabledOrganizations();
@@ -382,7 +383,7 @@ class TierAutoAssignmentJob {
         results,
       };
 
-      console.log(
+      logger.info(
         `[TierAutoAssignment] Job completed in ${duration}ms. ${summary.totalChanges} tier changes.`
       );
       return summary;

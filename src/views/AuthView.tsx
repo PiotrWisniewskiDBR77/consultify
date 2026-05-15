@@ -2,12 +2,13 @@ import { AlertCircle, ArrowRight, ChevronLeft, Lock, Sparkles, X } from 'lucide-
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api, API_URL } from '@/services/api';
+import { ROUTES } from '@/routes/routeConfig';
 import {
   clearAnnaLpCtaContext,
   readAnnaLpCtaContext,
   updateAnnaLpCtaContext,
 } from '@/services/annaLpCtaContext';
+import { Api, API_URL } from '@/services/api';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
@@ -54,6 +55,63 @@ interface AuthViewProps {
   onBack: () => void;
 }
 
+type InviteCodeInfo = {
+  code: string;
+  organizationName?: string;
+  role?: string;
+} | null;
+
+const AUTH_PUBLIC_ERROR_COPY = {
+  quickAccessFailed: 'Quick access is temporarily unavailable. Please sign in with your account.',
+  inviteVerifyFailed: 'Failed to verify access code. Please try again.',
+  demoSignupFailed: 'Demo signup is temporarily unavailable. Please try again.',
+  registrationFailed: 'Registration failed. Please try again.',
+  loginFailed: 'Login failed. Please try again.',
+  loginRetryFailed: 'Login failed. Please check your connection and try again.',
+} as const;
+
+type PublicAuthErrorContext =
+  | 'quickAccess'
+  | 'inviteVerify'
+  | 'demoSignup'
+  | 'registration'
+  | 'login'
+  | 'loginRetry';
+
+function mapPublicAuthError(error: unknown, context: PublicAuthErrorContext): string {
+  const raw = error as { code?: unknown; error?: { code?: unknown } } | null;
+  const code =
+    typeof raw?.code === 'string'
+      ? raw.code
+      : typeof raw?.error?.code === 'string'
+        ? raw.error.code
+        : null;
+
+  if (code === 'AUTH_LOGIN_INVALID_CREDENTIALS' || code === 'AUTH_INVALID_CREDENTIALS') {
+    return 'Invalid email or password.';
+  }
+  if (code === 'AUTH_PENDING_APPROVAL') {
+    return 'Your account is pending approval.';
+  }
+
+  switch (context) {
+    case 'quickAccess':
+      return AUTH_PUBLIC_ERROR_COPY.quickAccessFailed;
+    case 'inviteVerify':
+      return AUTH_PUBLIC_ERROR_COPY.inviteVerifyFailed;
+    case 'demoSignup':
+      return AUTH_PUBLIC_ERROR_COPY.demoSignupFailed;
+    case 'registration':
+      return AUTH_PUBLIC_ERROR_COPY.registrationFailed;
+    case 'login':
+      return AUTH_PUBLIC_ERROR_COPY.loginFailed;
+    case 'loginRetry':
+      return AUTH_PUBLIC_ERROR_COPY.loginRetryFailed;
+    default:
+      return AUTH_PUBLIC_ERROR_COPY.loginFailed;
+  }
+}
+
 /**
  * Hosts where the hidden quick-access PIN panel (Ctrl/Cmd+Shift+K) may appear.
  * Production is limited to the public marketing domain — PINs are filtered in
@@ -64,8 +122,12 @@ export function isQuickAccessShortcutHost(hostname: string): boolean {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname.startsWith('stage.') ||
+    hostname.startsWith('staging.') ||
     hostname === 'consultify.ai' ||
-    hostname === 'www.consultify.ai'
+    hostname === 'www.consultify.ai' ||
+    hostname === 'app.consultify.com' ||
+    hostname.endsWith('.consultify.com') ||
+    hostname.endsWith('.railway.app')
   );
 }
 
@@ -104,6 +166,29 @@ export function resolveQuickAccessCredentials(
   return devStagingCodes[code] ?? null;
 }
 
+function formatInviteRoleLabel(role?: string): string {
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
+
+  switch (normalized) {
+    case 'OWNER':
+      return 'Owner';
+    case 'ADMIN':
+      return 'Admin';
+    case 'PROJECT_MANAGER':
+    case 'MANAGER':
+      return 'Manager';
+    case 'GUEST':
+      return 'Guest';
+    case 'MEMBER':
+    case 'USER':
+      return 'Participant';
+    default:
+      return 'Participant';
+  }
+}
+
 export const AuthView: React.FC<AuthViewProps> = ({
   initialStep,
   targetMode,
@@ -117,6 +202,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [showDemoRedirect, setShowDemoRedirect] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
+  const [hasAcceptedLegal, setHasAcceptedLegal] = useState(false);
   const quickAccessEnabled = isQuickAccessShortcutHost(window.location.hostname);
 
   useEffect(() => {
@@ -152,6 +238,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setFromDemoRedirect(false);
     setShowQuickAccess(false);
     setQuickCode('');
+    setHasAcceptedLegal(false);
   }, [initialStep, targetMode]);
 
   // Quick access should never leak into normal auth flow.
@@ -215,7 +302,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         onAuthSuccess(user);
       } catch (err: any) {
-        setError('Quick access failed: ' + err.message);
+        setError(mapPublicAuthError(err, 'quickAccess'));
       } finally {
         setIsDemoLoading(false);
       }
@@ -244,8 +331,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   // --- CODE ENTRY STATE ---
-  const [code, setCode] = useState(['', '', '', '', '', '']);
-  const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const storedInviteCode = sessionStorage.getItem('attribution_invite') || '';
+  const [inviteCode, setInviteCode] = useState(storedInviteCode);
+  const [inviteCodeInfo, setInviteCodeInfo] = useState<InviteCodeInfo>(
+    storedInviteCode ? { code: storedInviteCode } : null
+  );
+  const [isVerifyingInviteCode, setIsVerifyingInviteCode] = useState(false);
 
   // --- FORM STATE ---
   const [formData, setFormData] = useState({
@@ -256,37 +347,100 @@ export const AuthView: React.FC<AuthViewProps> = ({
     companyName: '',
     password: '',
     accessCode: sessionStorage.getItem('attribution_invite') || '',
+    jobTitle: '',
+    department: '',
+    siteLocation: '',
   });
 
-  const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
+  const applyInviteCode = React.useCallback(
+    (
+      code: string,
+      details?: {
+        organizationName?: string;
+        role?: string;
+      }
+    ) => {
+      const normalizedCode = code.trim().toUpperCase();
+      sessionStorage.setItem('attribution_invite', normalizedCode);
+      setInviteCode(normalizedCode);
+      setInviteCodeInfo({
+        code: normalizedCode,
+        organizationName: details?.organizationName,
+        role: details?.role,
+      });
+      setFormData((current) => ({
+        ...current,
+        accessCode: normalizedCode,
+        companyName: details?.organizationName || current.companyName,
+      }));
+    },
+    []
+  );
 
-    if (value && index < 5) {
-      codeRefs.current[index + 1]?.focus();
+  const clearInviteCode = React.useCallback(() => {
+    sessionStorage.removeItem('attribution_invite');
+    setInviteCode('');
+    setInviteCodeInfo(null);
+    setFormData((current) => ({
+      ...current,
+      accessCode: '',
+    }));
+  }, []);
+
+  const verifyInviteCode = async () => {
+    const normalizedCode = inviteCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      setError('Enter the access code you received from the administrator');
+      return;
     }
-  };
 
-  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      codeRefs.current[index - 1]?.focus();
-    }
-  };
+    setError(null);
+    setIsVerifyingInviteCode(true);
 
-  const verifyCode = () => {
-    const fullCode = code.join('');
-    if (fullCode === '123456') {
+    try {
+      const validation = await Api.verifyAccessCode(normalizedCode);
+      if (!validation.valid) {
+        setInviteCodeInfo(null);
+        setError(validation.reason || 'Invalid or expired access code');
+        return;
+      }
+
+      applyInviteCode(normalizedCode, {
+        organizationName: validation.organizationName,
+        role: validation.role,
+      });
       setStep(AuthStep.REGISTER);
-      setError(null);
-    } else {
-      setError('Invalid code');
+    } catch (err: any) {
+      setInviteCodeInfo(null);
+      setError(mapPublicAuthError(err, 'inviteVerify'));
+    } finally {
+      setIsVerifyingInviteCode(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!hasAcceptedLegal) {
+      setError(
+        t(
+          'auth.legalConsentRequired',
+          'Please confirm that you accept the Terms of Service and Privacy Policy to continue.'
+        )
+      );
+      return;
+    }
+
+    if (formData.accessCode.trim() && (!formData.jobTitle.trim() || !formData.department.trim())) {
+      setError(
+        t(
+          'auth.functionProfileRequired',
+          'Please provide your function and department before joining the workspace.'
+        )
+      );
+      return;
+    }
 
     // Demo mode or from demo redirect: use register-demo (minimal signup, demo org, track contact)
     if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
@@ -310,6 +464,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           email: formData.email,
           password: formData.password,
           firstName: formData.firstName || undefined,
+          acceptedLegalDocs: ['TOS', 'PRIVACY'],
+          legalConsentAt: new Date().toISOString(),
         });
 
         if (ctx && ctx.cta_type === 'demo') {
@@ -326,7 +482,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         }
         onAuthSuccess({ ...user, hasWorkspace: true } as any);
       } catch (err: any) {
-        setError(err?.message || 'Demo signup failed');
+        setError(mapPublicAuthError(err, 'demoSignup'));
 
         const ctx = readAnnaLpCtaContext();
         if (ctx && ctx.cta_type === 'demo') {
@@ -373,10 +529,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
         phone: formData.phone,
         password: formData.password,
         accessCode: formData.accessCode,
+        jobTitle: formData.jobTitle.trim() || undefined,
+        department: formData.department.trim() || undefined,
+        siteLocation: formData.siteLocation.trim() || undefined,
         role: UserRole.CEO,
         accessLevel: targetMode === SessionMode.FULL ? 'full' : 'free',
         partner_code: sessionStorage.getItem('attribution_ref') || undefined,
         utm_medium: 'web_app_flow',
+        acceptedLegalDocs: ['TOS', 'PRIVACY'],
+        legalConsentAt: new Date().toISOString(),
       });
 
       // Check if the user status or a specific message implies pending
@@ -391,9 +552,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setIsPending(true);
         return;
       }
-      setError(err.message || 'Registration failed');
+      setError(mapPublicAuthError(err, 'registration'));
     }
   };
+
+  const hasInviteCode = formData.accessCode.trim().length > 0;
 
   const startDemoFlow = () => {
     setFromDemoRedirect(true);
@@ -437,7 +600,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         await Api.enterDemo();
         onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
-        setError(err?.message || 'Login failed');
+        setError(mapPublicAuthError(err, 'login'));
       } finally {
         setIsDemoLoading(false);
       }
@@ -504,9 +667,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
     // All retries failed
     if (lastError) {
-      setError(lastError.message || 'Login failed. Please check your connection and try again.');
+      setError(mapPublicAuthError(lastError, 'loginRetry'));
     } else {
-      setError('Login failed. Please try again.');
+      setError(mapPublicAuthError(null, 'login'));
     }
   };
 
@@ -596,42 +759,59 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <Lock className="text-blue-600 dark:text-blue-400" size={24} />
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {t('auth.unlockFull')}
+          {t('auth.unlockFull', 'Join Workspace')}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
-          {t('auth.enterCode')}
+          {t(
+            'auth.enterCode',
+            'Enter the organization access code to create your participant account.'
+          )}
         </p>
       </div>
 
-      <div className="flex justify-center gap-3 mb-8" dir="ltr">
-        {code.map((digit, idx) => (
-          <input
-            key={idx}
-            ref={(el) => {
-              codeRefs.current[idx] = el;
-            }}
-            type="text"
-            maxLength={1}
-            value={digit}
-            onChange={(e) => handleCodeChange(idx, e.target.value)}
-            onKeyDown={(e) => handleCodeKeyDown(idx, e)}
-            className="w-12 h-16 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-2xl font-bold text-navy-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:bg-slate-50 dark:focus:bg-navy-900 outline-none transition-all shadow-sm dark:shadow-inner"
-          />
-        ))}
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+          placeholder="WPISZ KOD (np. ABCD1234)"
+          autoComplete="off"
+          className="w-full px-4 py-3 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-navy-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:bg-slate-50 dark:focus:bg-navy-900 outline-none transition-all shadow-sm dark:shadow-inner"
+        />
+        {inviteCodeInfo?.code && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <div className="font-semibold">Code accepted</div>
+            <div className="mt-1">
+              {inviteCodeInfo.organizationName
+                ? `Workspace: ${inviteCodeInfo.organizationName}`
+                : 'Workspace will be selected automatically after registration.'}
+            </div>
+            <div className="mt-1">
+              Role after registration: {formatInviteRoleLabel(inviteCodeInfo.role)}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20">
+        <div
+          className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20"
+          role="alert"
+          aria-live="assertive"
+        >
           <AlertCircle size={16} />
           {error}
         </div>
       )}
 
       <button
-        onClick={verifyCode}
+        onClick={() => void verifyInviteCode()}
+        disabled={isVerifyingInviteCode}
         className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 text-sm"
       >
-        {t('auth.verifyCode')}
+        {isVerifyingInviteCode
+          ? t('auth.verifyingCode', 'Verifying code...')
+          : t('auth.verifyCode', 'Continue')}
       </button>
     </div>
   );
@@ -640,12 +820,47 @@ export const AuthView: React.FC<AuthViewProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {targetMode === SessionMode.FREE ? t('auth.startQuick') : t('auth.setupFull')}
+          {hasInviteCode
+            ? t('auth.joinWorkspaceTitle', 'Create your participant account')
+            : targetMode === SessionMode.FREE
+              ? t('auth.startQuick')
+              : t('auth.setupFull')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">{t('auth.personalize')}</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
+          {hasInviteCode
+            ? t(
+                'auth.joinWorkspaceDescription',
+                'Complete your personal details and we will connect you to the invited workspace.'
+              )
+            : t('auth.personalize')}
+        </p>
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
+        {hasInviteCode && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs leading-5 text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+            <div className="font-semibold">
+              {inviteCodeInfo?.organizationName
+                ? `Joining ${inviteCodeInfo.organizationName}`
+                : 'Joining invited workspace'}
+            </div>
+            <div className="mt-1">
+              Access code: <span className="font-mono">{formData.accessCode}</span>
+            </div>
+            <div className="mt-1">Planned role: {formatInviteRoleLabel(inviteCodeInfo?.role)}</div>
+            <button
+              type="button"
+              onClick={() => {
+                clearInviteCode();
+                setStep(AuthStep.CODE_ENTRY);
+              }}
+              className="mt-2 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+            >
+              Change access code
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -696,17 +911,76 @@ export const AuthView: React.FC<AuthViewProps> = ({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            {t('auth.company')} <span className="text-purple-500 dark:text-purple-400">*</span>
-          </label>
-          <input
-            required
-            value={formData.companyName}
-            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
-          />
-        </div>
+        {!hasInviteCode && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {t('auth.company')}
+            </label>
+            <input
+              value={formData.companyName}
+              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+            />
+          </div>
+        )}
+
+        {hasInviteCode && (
+          <div className="rounded-lg border border-purple-200 bg-purple-50/70 p-3 dark:border-purple-500/20 dark:bg-purple-500/10">
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-navy-900 dark:text-white">
+                {t('auth.functionProfileTitle', 'Your function in the organization')}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'auth.functionProfileDescription',
+                  'This helps interpret survey answers and route future project work to the right people.'
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {t('auth.jobTitle', 'Function / job title')}{' '}
+                  <span className="text-purple-500 dark:text-purple-400">*</span>
+                </label>
+                <input
+                  required={hasInviteCode}
+                  value={formData.jobTitle}
+                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                  placeholder={t('auth.jobTitlePlaceholder', 'e.g. Production Manager')}
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {t('auth.department', 'Department')}{' '}
+                  <span className="text-purple-500 dark:text-purple-400">*</span>
+                </label>
+                <input
+                  required={hasInviteCode}
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  placeholder={t('auth.departmentPlaceholder', 'e.g. Operations')}
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all text-xs"
+                />
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {t('auth.siteLocation', 'Site / location')}{' '}
+                <span className="text-slate-400 dark:text-slate-500 font-normal">
+                  ({t('auth.optional')})
+                </span>
+              </label>
+              <input
+                value={formData.siteLocation}
+                onChange={(e) => setFormData({ ...formData, siteLocation: e.target.value })}
+                placeholder={t('auth.siteLocationPlaceholder', 'Optional')}
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all text-xs"
+              />
+            </div>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -717,7 +991,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </label>
           <input
             value={formData.accessCode}
-            onChange={(e) => setFormData({ ...formData, accessCode: e.target.value })}
+            onChange={(e) => {
+              const nextCode = e.target.value.toUpperCase();
+              setFormData({ ...formData, accessCode: nextCode });
+              setInviteCode(nextCode);
+              setInviteCodeInfo(null);
+            }}
             placeholder={t('auth.accessCodePlaceholder')}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
@@ -738,11 +1017,60 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20 mt-4">
+          <div
+            className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20 mt-4"
+            role="alert"
+            aria-live="assertive"
+          >
             <AlertCircle size={16} />
             {error}
           </div>
         )}
+
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-600 dark:border-navy-700 dark:bg-navy-950/50 dark:text-slate-400">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={hasAcceptedLegal}
+              onChange={(e) => setHasAcceptedLegal(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+            />
+            <span>
+              {t('auth.legalConsentPrefix', 'I agree to the')}{' '}
+              <a
+                href={ROUTES.LEGAL.TERMS}
+                className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+              >
+                {t('auth.termsLink', 'Terms of Service')}
+              </a>{' '}
+              {t('auth.legalConsentAnd', 'and')}{' '}
+              <a
+                href={ROUTES.LEGAL.PRIVACY}
+                className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+              >
+                {t('auth.privacyLink', 'Privacy Policy')}
+              </a>
+              .
+            </span>
+          </label>
+          <p className="mt-2 pl-7 text-[11px] text-slate-500 dark:text-slate-500">
+            {t('auth.legalReviewNote', 'Review pricing and legal materials in')}{' '}
+            <a
+              href={ROUTES.LEGAL.SUBSCRIPTION}
+              className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+            >
+              {t('auth.subscriptionLink', 'Subscription Terms')}
+            </a>{' '}
+            {t('auth.legalReviewDivider', 'or visit the')}{' '}
+            <a
+              href={ROUTES.LEGAL.CENTER}
+              className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+            >
+              {t('auth.legalCenterLink', 'Legal Center')}
+            </a>
+            .
+          </p>
+        </div>
 
         <button className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group text-sm">
           {t('auth.createStart')}
@@ -792,6 +1120,20 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {t('auth.logIn')}
           </button>
         </div>
+
+        {!hasInviteCode && (
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {t('auth.haveAccessCodePrompt', 'Have an organization code?')}{' '}
+            <button
+              type="button"
+              onClick={() => setStep(AuthStep.CODE_ENTRY)}
+              className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              <Lock size={12} />
+              {t('auth.enterAccessCodeCta', 'Enter access code')}
+            </button>
+          </div>
+        )}
 
         <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
           <button
@@ -854,7 +1196,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20">
+          <div
+            className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20"
+            role="alert"
+            aria-live="assertive"
+          >
             <AlertCircle size={16} />
             {error}
           </div>
@@ -911,20 +1257,41 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </button>
       </div>
 
+      <div className="text-center -mt-4">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+          {t('auth.haveAccessCodePrompt', 'Have an organization code?')}
+        </div>
+        <button
+          type="button"
+          onClick={() => setStep(AuthStep.CODE_ENTRY)}
+          className="mt-2 inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15"
+        >
+          <Lock size={13} />
+          {t('auth.enterAccessCodeCta', 'Enter access code')}
+        </button>
+      </div>
+
       {/* Privacy Policy Link */}
       <div className="text-center pt-3 border-t border-slate-200 dark:border-navy-700">
         <a
-          href="/privacy"
+          href={ROUTES.LEGAL.PRIVACY}
           className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
         <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
         <a
-          href="/terms"
+          href={ROUTES.LEGAL.TERMS}
           className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
+        </a>
+        <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
+        <a
+          href={ROUTES.LEGAL.CENTER}
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+        >
+          {t('auth.legalCenterLink', 'Legal Center')}
         </a>
       </div>
     </div>

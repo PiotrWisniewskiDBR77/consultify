@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 
-import type { MyIdea } from './MyIdeasListContent';
+import type { MyIdea } from './myIdeasTypes';
 
 interface IdeasMindMapProps {
   ideas: MyIdea[];

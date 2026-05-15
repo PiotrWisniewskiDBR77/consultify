@@ -257,7 +257,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
               {criticalCount > 0 && (
                 <span className="text-rose-500 dark:text-rose-400 font-medium">
-                  {criticalCount} critical
+                  {criticalCount} {t('executive.actions.critical', 'critical')}
                 </span>
               )}
               {criticalCount > 0 && highCount > 0 && (
@@ -265,7 +265,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
               )}
               {highCount > 0 && (
                 <span className="text-amber-600 dark:text-amber-400 font-medium">
-                  {highCount} high priority
+                  {highCount} {t('executive.actions.highPriority', 'high priority')}
                 </span>
               )}
             </p>

@@ -8,7 +8,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import usageService from '../../services/usageService.js';
+import usageService from '../services/usageService.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
@@ -57,21 +57,204 @@ interface Dependencies {
   usageService: UsageService;
 }
 
+const MAX_RECORDED_TOKENS = 50_000_000;
+const MAX_RECORDED_BYTES = 5 * 1024 * 1024 * 1024;
+const MAX_ACCESS_POLICY_STRING_CHARS = 512;
+const MAX_RECORD_ACTION_CHARS = 128;
+const MAX_RECORD_METADATA_CHARS = 512;
+const MAX_QUOTA_ORG_ID_CHARS = 256;
+
 // ==========================================
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
 let deps: Dependencies = { usageService };
 
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const safeSetHeader = (res: Response, name: string, value: string): void => {
+  try {
+    if (typeof res.set === 'function') {
+      res.set(name, value);
+      return;
+    }
+    if (typeof (res as Response & { setHeader?: (n: string, v: string) => void }).setHeader === 'function') {
+      (res as Response & { setHeader: (n: string, v: string) => void }).setHeader(name, value);
+    }
+  } catch {
+    // Quota warnings are optional metadata only.
+  }
+};
+const sendQuotaJson = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>,
+  writeErrorLogLabel: string
+): boolean => {
+  if (
+    safeRead(
+      () =>
+        Boolean(
+          res.headersSent ||
+            (res as Response & { finished?: boolean }).finished === true ||
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean; closed?: boolean })
+              .destroyed === true ||
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean; closed?: boolean })
+              .closed === true
+        ),
+      false
+    )
+  ) {
+    return false;
+  }
+  try {
+    if (typeof res.status !== 'function') {
+      logger.error(writeErrorLogLabel);
+      return false;
+    }
+    const statusResult = res.status(statusCode) as Response | { json?: (value: unknown) => unknown };
+    if (!statusResult || typeof statusResult.json !== 'function') {
+      logger.error(writeErrorLogLabel);
+      return false;
+    }
+    statusResult.json(payload);
+    return true;
+  } catch {
+    logger.error(writeErrorLogLabel);
+    return false;
+  }
+};
+const callNextIfFunction = (next: NextFunction): void => {
+  if (typeof next !== 'function') return;
+  try {
+    next();
+  } catch {
+    // Never surface next-handler failures from quota middleware internals.
+  }
+};
+
+const finiteNumberOrZero = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+const finiteNonNegativeNumberOrZero = (value: unknown): number =>
+  Math.max(0, finiteNumberOrZero(value));
+
+const isValidQuotaInfo = (value: unknown): value is QuotaInfo =>
+  !!value &&
+  typeof value === 'object' &&
+  typeof (value as QuotaInfo).allowed === 'boolean' &&
+  typeof (value as QuotaInfo).used === 'number' &&
+  typeof (value as QuotaInfo).limit === 'number' &&
+  typeof (value as QuotaInfo).percentage === 'number';
+
+const finitePositiveRecordAmount = (value: number, max: number): number | undefined => {
+  if (!Number.isFinite(value) || value <= 0) return undefined;
+  const normalized = Math.min(Math.floor(value), max);
+  return normalized > 0 ? normalized : undefined;
+};
+const finitePositiveRecordAmountFromUnknown = (value: unknown, max: number): number | undefined => {
+  if (typeof value === 'number') return finitePositiveRecordAmount(value, max);
+  if (typeof value === 'string') {
+    const normalized = normalizeOptionalString(value);
+    if (!normalized) return undefined;
+    return finitePositiveRecordAmount(Number(normalized), max);
+  }
+  return undefined;
+};
+const toFiniteQuotaNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const normalized = normalizeOptionalString(value);
+    if (!normalized) return undefined;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+const normalizeQuotaPayloadShape = (value: unknown): unknown => {
+  if (!value || typeof value !== 'object') return value;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.allowed !== 'boolean') return value;
+  const used = toFiniteQuotaNumber(candidate.used);
+  const limit = toFiniteQuotaNumber(candidate.limit);
+  const percentage = toFiniteQuotaNumber(candidate.percentage);
+  if (used === undefined || limit === undefined || percentage === undefined) return value;
+  return {
+    allowed: candidate.allowed,
+    used,
+    limit,
+    percentage,
+  };
+};
+
+const bytesToGbString = (value: unknown): string =>
+  (finiteNumberOrZero(value) / (1024 * 1024 * 1024)).toFixed(2);
+const truncateString = (value: string, maxChars: number): string =>
+  value.length > maxChars ? value.slice(0, maxChars) : value;
+const normalizeAccessPolicyResult = (
+  value: unknown
+): { allowed: boolean; reason: string; errorCode: string } | null => {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.allowed !== 'boolean') return null;
+  const reasonRaw = normalizeOptionalString(candidate.reason) || '';
+  const errorCodeRaw = normalizeOptionalString(candidate.errorCode) || '';
+  return {
+    allowed: candidate.allowed,
+    reason: truncateString(reasonRaw || 'Access denied', MAX_ACCESS_POLICY_STRING_CHARS),
+    errorCode: truncateString(errorCodeRaw || 'ACCESS_POLICY_DENIED', MAX_ACCESS_POLICY_STRING_CHARS),
+  };
+};
+
+const toQuotaWarningPercentage = (value: unknown): number | undefined => {
+  const normalized = finiteNumberOrZero(value);
+  if (normalized < 80 || normalized >= 100) return undefined;
+  return normalized;
+};
+
+const readOrgId = (req: QuotaRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
+  normalizeOptionalString(
+    safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined as unknown)
+  ) ||
+  normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown));
+const isSafeQuotaOrgId = (orgId: string): boolean => orgId.length <= MAX_QUOTA_ORG_ID_CHARS;
+
+const readUserId = (req: QuotaRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.userId, undefined as unknown));
+
 let accessPolicyService: any = null;
 async function getAccessPolicyService() {
   if (accessPolicyService) return accessPolicyService;
   try {
     const mod = await import('../services/accessPolicyService.js');
-    accessPolicyService = mod.default || mod;
+    const candidate = (mod.default ?? mod) as unknown;
+    if (
+      !candidate ||
+      typeof candidate !== 'object' ||
+      typeof (candidate as { checkAccess?: unknown }).checkAccess !== 'function'
+    ) {
+      logger.error('[QuotaMiddleware] AccessPolicyService export missing checkAccess');
+      throw new Error('AccessPolicyService export missing checkAccess');
+    }
+    accessPolicyService = candidate;
     return accessPolicyService;
-  } catch {
-    return null;
+  } catch (error) {
+    logger.error('[QuotaMiddleware] Failed to load AccessPolicyService:', error);
+    throw error;
   }
 }
 
@@ -90,19 +273,42 @@ export async function enforceTokenQuota(
 ): Promise<void> {
   try {
     const { usageService } = deps;
-    const orgId = req.user?.organizationId;
+    const orgId = readOrgId(req);
 
-    if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
+    if (!orgId || !isSafeQuotaOrgId(orgId)) {
+      const wroteResponse = sendQuotaJson(
+        res,
+        401,
+        { error: 'Unauthorized - no organization' },
+        '[QuotaMiddleware] Failed to write token unauthorized response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
-    const aps = await getAccessPolicyService();
-    if (aps) {
-      try {
-        const accessResult = await aps.checkAccess(orgId, 'ai_call');
-        if (!accessResult.allowed) {
-          res.status(429).json({
+    try {
+      const aps = await getAccessPolicyService();
+      const accessResult = normalizeAccessPolicyResult(await aps.checkAccess(orgId, 'ai_call'));
+      if (!accessResult) {
+        logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
+        const wroteResponse = sendQuotaJson(
+          res,
+          503,
+          {
+            error: 'Access policy is temporarily unavailable',
+            errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+            code: 'ACCESS_POLICY_UNAVAILABLE',
+          },
+          '[QuotaMiddleware] Failed to write token access-policy unavailable response'
+        );
+        if (!wroteResponse) callNextIfFunction(next);
+        return;
+      }
+      if (!accessResult.allowed) {
+        const wroteResponse = sendQuotaJson(
+          res,
+          429,
+          {
             error: accessResult.reason,
             errorCode: accessResult.errorCode,
             code: accessResult.errorCode,
@@ -112,43 +318,95 @@ export async function enforceTokenQuota(
               accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
                 ? 'Add payment method'
                 : 'Upgrade plan',
-          });
-          return;
-        }
-      } catch (policyErr) {
-        logger.warn('[QuotaMiddleware] Access policy check failed, falling through:', policyErr);
+          },
+          '[QuotaMiddleware] Failed to write token access-policy deny response'
+        );
+        if (!wroteResponse) callNextIfFunction(next);
+        return;
       }
-    }
-
-    const quota = await usageService.checkQuota(orgId, 'token');
-    req.quotaInfo = quota;
-
-    if (!quota.allowed) {
-      res.status(429).json({
-        error: 'Token quota exceeded',
-        errorCode: 'QUOTA_EXCEEDED',
-        code: 'QUOTA_EXCEEDED',
-        usage: {
-          used: quota.used,
-          limit: quota.limit,
-          percentage: quota.percentage,
+    } catch (policyErr) {
+      logger.error('[QuotaMiddleware] Access policy check failed:', policyErr);
+      const wroteResponse = sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Access policy is temporarily unavailable',
+          errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+          code: 'ACCESS_POLICY_UNAVAILABLE',
         },
-        message:
-          'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
-        upgradeUrl: '/settings?tab=billing',
-      });
+        '[QuotaMiddleware] Failed to write token access-policy failure response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
-    if (quota.percentage >= 80 && quota.percentage < 100) {
-      res.set('X-Quota-Warning', 'true');
-      res.set('X-Quota-Percentage', quota.percentage.toString());
+    const quotaCandidate = normalizeQuotaPayloadShape(await usageService.checkQuota(orgId, 'token'));
+    if (!isValidQuotaInfo(quotaCandidate)) {
+      logger.error('[QuotaMiddleware] Invalid token quota payload', { orgId });
+      const wroteResponse = sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Token quota service unavailable',
+          errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+          code: 'QUOTA_CHECK_UNAVAILABLE',
+        },
+        '[QuotaMiddleware] Failed to write token quota unavailable response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
+      return;
+    }
+    const quota: QuotaInfo = {
+      allowed: quotaCandidate.allowed,
+      used: finiteNonNegativeNumberOrZero(quotaCandidate.used),
+      limit: finiteNonNegativeNumberOrZero(quotaCandidate.limit),
+      percentage: finiteNumberOrZero(quotaCandidate.percentage),
+    };
+    req.quotaInfo = quota;
+
+    if (!quota.allowed) {
+      const wroteResponse = sendQuotaJson(
+        res,
+        429,
+        {
+          error: 'Token quota exceeded',
+          errorCode: 'QUOTA_EXCEEDED',
+          code: 'QUOTA_EXCEEDED',
+          usage: {
+            used: finiteNumberOrZero(quota.used),
+            limit: finiteNumberOrZero(quota.limit),
+            percentage: finiteNumberOrZero(quota.percentage),
+          },
+          message:
+            'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
+          upgradeUrl: '/settings?tab=billing',
+        },
+        '[QuotaMiddleware] Failed to write token quota exceeded response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
+      return;
     }
 
-    next();
+    const warningPercentage = toQuotaWarningPercentage(quota.percentage);
+    if (warningPercentage !== undefined) {
+      safeSetHeader(res, 'X-Quota-Warning', 'true');
+      safeSetHeader(res, 'X-Quota-Percentage', String(Math.round(warningPercentage)));
+    }
+
+    callNextIfFunction(next);
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
-    next();
+    const wroteResponse = sendQuotaJson(
+      res,
+      503,
+      {
+        error: 'Token quota service unavailable',
+        errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+        code: 'QUOTA_CHECK_UNAVAILABLE',
+      },
+      '[QuotaMiddleware] Failed to write token quota catch-all response'
+    );
+    if (!wroteResponse) callNextIfFunction(next);
   }
 }
 
@@ -163,56 +421,130 @@ export async function enforceStorageQuota(
 ): Promise<void> {
   try {
     const { usageService } = deps;
-    const orgId = req.user?.organizationId;
+    const orgId = readOrgId(req);
 
-    if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
+    if (!orgId || !isSafeQuotaOrgId(orgId)) {
+      const wroteResponse = sendQuotaJson(
+        res,
+        401,
+        { error: 'Unauthorized - no organization' },
+        '[QuotaMiddleware] Failed to write storage unauthorized response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
-    const aps = await getAccessPolicyService();
-    if (aps) {
-      try {
-        const accessResult = await aps.checkAccess(orgId, 'upload');
-        if (!accessResult.allowed) {
-          res.status(429).json({
+    try {
+      const aps = await getAccessPolicyService();
+      const accessResult = normalizeAccessPolicyResult(await aps.checkAccess(orgId, 'upload'));
+      if (!accessResult) {
+        logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
+        const wroteResponse = sendQuotaJson(
+          res,
+          503,
+          {
+            error: 'Access policy is temporarily unavailable',
+            errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+            code: 'ACCESS_POLICY_UNAVAILABLE',
+          },
+          '[QuotaMiddleware] Failed to write storage access-policy unavailable response'
+        );
+        if (!wroteResponse) callNextIfFunction(next);
+        return;
+      }
+      if (!accessResult.allowed) {
+        const wroteResponse = sendQuotaJson(
+          res,
+          429,
+          {
             error: accessResult.reason,
             errorCode: accessResult.errorCode,
             code: accessResult.errorCode,
             message: accessResult.reason,
             upgradeUrl: '/settings?tab=billing',
-          });
-          return;
-        }
-      } catch {
-        // fall through to usageService check
+          },
+          '[QuotaMiddleware] Failed to write storage access-policy deny response'
+        );
+        if (!wroteResponse) callNextIfFunction(next);
+        return;
       }
-    }
-
-    const quota = await usageService.checkQuota(orgId, 'storage');
-    req.storageQuotaInfo = quota;
-
-    if (!quota.allowed) {
-      res.status(429).json({
-        error: 'Storage quota exceeded',
-        errorCode: 'STORAGE_QUOTA_EXCEEDED',
-        code: 'STORAGE_QUOTA_EXCEEDED',
-        usage: {
-          usedGB: (quota.used / (1024 * 1024 * 1024)).toFixed(2),
-          limitGB: (quota.limit / (1024 * 1024 * 1024)).toFixed(2),
-          percentage: quota.percentage,
+    } catch (policyErr) {
+      logger.error('[QuotaMiddleware] Storage access policy check failed:', policyErr);
+      const wroteResponse = sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Access policy is temporarily unavailable',
+          errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+          code: 'ACCESS_POLICY_UNAVAILABLE',
         },
-        message:
-          'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
-        upgradeUrl: '/settings?tab=billing',
-      });
+        '[QuotaMiddleware] Failed to write storage access-policy failure response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
-    next();
+    const quotaCandidate = normalizeQuotaPayloadShape(await usageService.checkQuota(orgId, 'storage'));
+    if (!isValidQuotaInfo(quotaCandidate)) {
+      logger.error('[QuotaMiddleware] Invalid storage quota payload', { orgId });
+      const wroteResponse = sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Storage quota service unavailable',
+          errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+          code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+        },
+        '[QuotaMiddleware] Failed to write storage quota unavailable response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
+      return;
+    }
+    const quota: QuotaInfo = {
+      allowed: quotaCandidate.allowed,
+      used: finiteNonNegativeNumberOrZero(quotaCandidate.used),
+      limit: finiteNonNegativeNumberOrZero(quotaCandidate.limit),
+      percentage: finiteNumberOrZero(quotaCandidate.percentage),
+    };
+    req.storageQuotaInfo = quota;
+
+    if (!quota.allowed) {
+      const wroteResponse = sendQuotaJson(
+        res,
+        429,
+        {
+          error: 'Storage quota exceeded',
+          errorCode: 'STORAGE_QUOTA_EXCEEDED',
+          code: 'STORAGE_QUOTA_EXCEEDED',
+          usage: {
+            usedGB: bytesToGbString(quota.used),
+            limitGB: bytesToGbString(quota.limit),
+            percentage: finiteNumberOrZero(quota.percentage),
+          },
+          message:
+            'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
+          upgradeUrl: '/settings?tab=billing',
+        },
+        '[QuotaMiddleware] Failed to write storage quota exceeded response'
+      );
+      if (!wroteResponse) callNextIfFunction(next);
+      return;
+    }
+
+    callNextIfFunction(next);
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
-    next();
+    const wroteResponse = sendQuotaJson(
+      res,
+      503,
+      {
+        error: 'Storage quota service unavailable',
+        errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+        code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+      },
+      '[QuotaMiddleware] Failed to write storage quota catch-all response'
+    );
+    if (!wroteResponse) callNextIfFunction(next);
   }
 }
 
@@ -229,13 +561,28 @@ export async function recordTokenUsageAfterResponse(
   try {
     const { usageService } = deps;
 
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
+    const orgId = readOrgId(req);
+    const userId = readUserId(req);
+    const normalizedAction = truncateString(
+      normalizeOptionalString(action) || 'unknown',
+      MAX_RECORD_ACTION_CHARS
+    );
+    const endpoint = truncateString(
+      normalizeOptionalString(safeRead(() => req.path, undefined as unknown)) || '',
+      MAX_RECORD_METADATA_CHARS
+    );
+    const model = truncateString(
+      normalizeOptionalString(
+        safeRead(() => (req.body as { model?: string })?.model, undefined as unknown)
+      ) || 'default',
+      MAX_RECORD_METADATA_CHARS
+    );
 
-    if (orgId && tokens > 0) {
-      await usageService.recordTokenUsage(orgId, userId, tokens, action, {
-        endpoint: req.path,
-        model: (req.body as { model?: string })?.model || 'default',
+    const safeTokens = finitePositiveRecordAmountFromUnknown(tokens, MAX_RECORDED_TOKENS);
+    if (orgId && isSafeQuotaOrgId(orgId) && safeTokens !== undefined) {
+      await usageService.recordTokenUsage(orgId, userId, safeTokens, normalizedAction, {
+        endpoint,
+        model,
       });
     }
   } catch (error: unknown) {
@@ -254,12 +601,25 @@ export async function recordStorageAfterUpload(
   try {
     const { usageService } = deps;
 
-    const orgId = (req as AuthRequest).user?.organizationId;
+    const orgId = readOrgId(req as QuotaRequest);
+    const normalizedAction = truncateString(
+      normalizeOptionalString(action) || 'upload',
+      MAX_RECORD_ACTION_CHARS
+    );
+    const endpoint = truncateString(
+      normalizeOptionalString(safeRead(() => req.path, undefined as unknown)) || '',
+      MAX_RECORD_METADATA_CHARS
+    );
+    const filename = truncateString(
+      normalizeOptionalString(safeRead(() => req.file?.originalname, undefined as unknown)) || '',
+      MAX_RECORD_METADATA_CHARS
+    );
 
-    if (orgId && bytes > 0) {
-      await usageService.recordStorageUsage(orgId, bytes, action, {
-        endpoint: req.path,
-        filename: req.file?.originalname,
+    const safeBytes = finitePositiveRecordAmountFromUnknown(bytes, MAX_RECORDED_BYTES);
+    if (orgId && isSafeQuotaOrgId(orgId) && safeBytes !== undefined) {
+      await usageService.recordStorageUsage(orgId, safeBytes, normalizedAction, {
+        endpoint,
+        filename: filename || undefined,
       });
     }
   } catch (error: unknown) {

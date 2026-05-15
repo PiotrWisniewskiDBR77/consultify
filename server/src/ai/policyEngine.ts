@@ -12,8 +12,8 @@
  * - All decisions are deterministic and auditable
  * - Can be globally disabled by SUPERADMIN
  */
-
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 
 // Type definitions for database rows
@@ -218,7 +218,7 @@ const PolicyEngine = {
     for (const [conditionKey, conditionValue] of Object.entries(conditions)) {
       const handler = (handlers as any)[conditionKey];
       if (!handler) {
-        console.warn(`[PolicyEngine] Unknown condition: ${conditionKey}`);
+        logger.warn(`[PolicyEngine] Unknown condition: ${conditionKey}`);
         return false; // Unknown condition = no match for safety
       }
 

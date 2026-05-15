@@ -170,8 +170,15 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // A1.1: Determine if we have real data – score 0 with no previous score likely means no data loaded
-  const hasData = score > 0 || (previousScore !== undefined && previousScore > 0);
+  const hasData =
+    typeof score === 'number' &&
+    (score > 0 ||
+      (previousScore !== undefined && previousScore > 0) ||
+      (breakdown !== undefined &&
+        (breakdown.execution > 0 ||
+          breakdown.decisions > 0 ||
+          breakdown.capacity > 0 ||
+          breakdown.risk > 0)));
 
   const scoreDiff = previousScore !== undefined ? score - previousScore : 0;
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
@@ -365,8 +372,6 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 {t('executive.health.noBreakdown', 'Breakdown data not yet available')}
               </p>
               <p className="text-xs text-slate-700 dark:text-slate-300 dark:text-slate-600 mt-1">
-                {/* A1.1: TODO – populate breakdown.decisions from decision velocity,
-                    breakdown.capacity from team workload, breakdown.risk from risk assessment */}
                 {t(
                   'executive.health.noBreakdownHint',
                   'Data will appear as tasks and decisions are tracked'

@@ -30,6 +30,7 @@ import {
 } from '@/hooks/useV8Execution';
 import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { downloadSheetArtifactXlsx } from '@/utils/sheetArtifactOpen';
 
@@ -42,6 +43,7 @@ function deriveEffectiveStatus(
   if (
     runStatus === 'completed' ||
     runStatus === 'failed' ||
+    runStatus === 'cancelled' ||
     runStatus === 'retry_requested'
   ) {
     return runStatus;
@@ -64,6 +66,8 @@ function deriveEffectiveStatus(
       return 'rejected';
     case 'failed':
       return 'failed';
+    case 'cancelled':
+      return 'cancelled';
     default:
       return runStatus;
   }
@@ -84,8 +88,20 @@ function mapRunToSteps(
   effectiveStatus: ArtifactRunRecord['runStatus'] | null,
   hasSnapshot: boolean,
   hasPlan: boolean,
-  contentGenerated: boolean
+  contentGenerated: boolean,
+  isStarting: boolean
 ): TaskStep[] {
+  if (isStarting && !hasPlan && !effectiveStatus) {
+    return [
+      { id: 'snapshot', label: 'Capture context snapshot', status: 'running' },
+      ...PIPELINE_STEPS.slice(1).map((s) => ({
+        id: s.id,
+        label: s.label,
+        status: 'pending' as const,
+      })),
+    ];
+  }
+
   if (!hasSnapshot && !hasPlan && !effectiveStatus) {
     return PIPELINE_STEPS.map((s) => ({ id: s.id, label: s.label, status: 'pending' as const }));
   }
@@ -178,7 +194,7 @@ function mapRunToSteps(
     return steps;
   }
 
-  if (effectiveStatus === 'failed') {
+  if (effectiveStatus === 'failed' || effectiveStatus === 'cancelled') {
     const failIdx = steps.length;
     steps.push(
       ...PIPELINE_STEPS.slice(failIdx).map((s) => ({
@@ -200,9 +216,7 @@ function mapRunToSteps(
   return steps;
 }
 
-async function fetchWorkbookPreview(
-  workbookId: string
-): Promise<{
+async function fetchWorkbookPreview(workbookId: string): Promise<{
   sheetNames: string[];
   kpiItems: Array<{ label: string; value: string }>;
   downloadUrl: string;
@@ -216,9 +230,7 @@ async function fetchWorkbookPreview(
   }
 }
 
-async function fetchSheetPreviewData(
-  tableId: string
-): Promise<{
+async function fetchSheetPreviewData(tableId: string): Promise<{
   sheetNames: string[];
   kpiItems: Array<{ label: string; value: string }>;
   rows: Array<Record<string, unknown>>;
@@ -270,29 +282,33 @@ export interface KimiPipelineState {
   isGenerating: boolean;
   isCompleted: boolean;
   isFailed: boolean;
+  failureReason: string | null;
   preview: ArtifactPreview | null;
   currentRun: ArtifactRunRecord | null;
   isBusy: boolean;
 
-  startGeneration: (goal: string) => Promise<void>;
+  startGeneration: (goal: string, templateArtifactId?: string) => Promise<void>;
   advancePipeline: () => Promise<void>;
   handleReplay: () => void;
   handleRemix: () => void;
   handleDownload: () => Promise<void>;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuidLike = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v.trim());
+
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
-  const { activeConversationId } = useConversationStore();
-  const conversationId = activeConversationId;
+  const conversationId = useConversationStore((s) => s.activeConversationId);
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const currentProjectId = useAppStore((s) => s.currentProjectId);
+  const currentUser = useAppStore((s) => s.currentUser);
 
   const outputType: ArtifactPlanOutputType =
     lane === 'wordy' ? 'report' : lane === 'excele' ? 'sheet' : 'presentation';
   const artifactFamily: ArtifactFamily =
     lane === 'wordy' ? 'document' : lane === 'excele' ? 'sheet' : 'presentation';
 
-  const { data: snapshots } = useV8Snapshots(
-    conversationId ? conversationId : undefined
-  );
+  const { data: snapshots } = useV8Snapshots(conversationId ? conversationId : undefined);
   const captureSnapshot = useV8CaptureSnapshot();
   const createRun = useV8CreateArtifactRunFromChat();
   const acceptPlan = useV8AcceptArtifactRunPlan();
@@ -307,6 +323,8 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const [preview, setPreview] = useState<ArtifactPreview | null>(null);
   const [contentGenerated, setContentGenerated] = useState(false);
   const [lastGoal, setLastGoal] = useState('');
+  const [isStartingPipeline, setIsStartingPipeline] = useState(false);
+  const [startupError, setStartupError] = useState<string | null>(null);
   const contentGenerationTriggered = useRef(false);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
@@ -337,17 +355,23 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         effectiveStatus,
         !!latestSnapshot?.snapshotId,
         !!currentPlan,
-        contentGenerated
+        contentGenerated,
+        isStartingPipeline
       ),
-    [effectiveStatus, latestSnapshot?.snapshotId, currentPlan, contentGenerated]
+    [effectiveStatus, latestSnapshot?.snapshotId, currentPlan, contentGenerated, isStartingPipeline]
   );
 
   const completedSteps = taskSteps.filter((s) => s.status === 'completed').length;
   const isGenerating =
-    (!!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed') ||
+    isStartingPipeline ||
+    (!!currentRun &&
+      effectiveStatus !== 'completed' &&
+      effectiveStatus !== 'failed' &&
+      effectiveStatus !== 'cancelled') ||
     (effectiveStatus === 'completed' && !contentGenerated);
   const isCompleted = effectiveStatus === 'completed' && contentGenerated;
-  const isFailed = effectiveStatus === 'failed';
+  const isFailed =
+    Boolean(startupError) || effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
 
   useEffect(() => {
     if (effectiveStatus !== 'completed' || !currentRun || contentGenerationTriggered.current) {
@@ -365,16 +389,43 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         const deckId = origin.originRecordId;
 
         const generateAndFetch = async () => {
-          try {
-            await Api.post(`/presentations/generate/deck`, {
-              deckId,
-              outline: [],
-              setup: { goal: lastGoal, selectedTemplate: '' },
-            });
-          } catch {
-            // generation may already be done or endpoint may not match — continue to fetch
+          const unwrap = <T = any>(res: any): T => {
+            const data = res?.data;
+            if (data && typeof data === 'object' && 'data' in data) return data.data as T;
+            return data as T;
+          };
+
+          const initialDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+          const hasGeneratedContent = Boolean(initialDeck?.deck_json || initialDeck?.unified_json);
+
+          if (!hasGeneratedContent) {
+            try {
+              await Api.post(`/presentations/generate/deck`, {
+                deckId,
+                outline: Array.isArray(initialDeck?.outline_json) ? initialDeck.outline_json : [],
+                setup: {
+                  title: initialDeck?.title || title,
+                  templateId:
+                    typeof initialDeck?.template_id === 'string' && initialDeck.template_id.trim()
+                      ? initialDeck.template_id
+                      : undefined,
+                  audience: initialDeck?.audience || 'internal',
+                  goal: initialDeck?.goal || 'inform',
+                  language: initialDeck?.language || 'en',
+                  theme: initialDeck?.theme || 'modern',
+                  confidentiality: initialDeck?.confidentiality || 'internal',
+                  sourceArtifacts: Array.isArray(initialDeck?.source_artifacts)
+                    ? initialDeck.source_artifacts
+                    : [],
+                  sourceType: initialDeck?.source_type || undefined,
+                  sourceId: initialDeck?.source_id || undefined,
+                },
+              });
+            } catch {
+              // generation may already be done or a legacy payload may still be accepted
+            }
           }
-          return Api.get(`/presentations/decks/${deckId}`);
+          return unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
         };
 
         generateAndFetch()
@@ -389,7 +440,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               typeof deckData?.deck_json === 'string'
                 ? JSON.parse(deckData.deck_json)
                 : deckData?.deck_json || deckData?.unified_json;
-            const rawSlides = unifiedJson?.slides || [];
+            const rawSlides =
+              unifiedJson?.slides ||
+              (Array.isArray(deckData?.outline_json)
+                ? deckData.outline_json.map((item: any, index: number) => ({
+                    id: item?.slideId || String(index + 1),
+                    intent: item?.intent || 'content',
+                    title: item?.title || `Slide ${index + 1}`,
+                    blocks: item?.keyMessage ? [{ type: 'text', text: item.keyMessage }] : [],
+                  }))
+                : []);
             for (const s of rawSlides) {
               const blocks = s.blocks || s.content_blocks || [];
               const bulletPoints = blocks
@@ -415,12 +475,11 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                 { label: 'Format', value: 'PPTX / PDF' },
                 {
                   label: 'Status',
-                  value:
-                    deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft',
+                  value: deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft',
                 },
               ],
               deckId,
-              deckStatus: deckData?.export_path ? 'exported' : (deckData?.status || 'draft'),
+              deckStatus: deckData?.export_path ? 'exported' : deckData?.status || 'draft',
               deckSlides: slides,
             });
             setContentGenerated(true);
@@ -444,7 +503,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         const reportId = origin.originRecordId;
         Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
           .then(() => {
-            const pdfUrl = `/api/report-builder/reports/${reportId}/export/pdf`;
+            const pdfUrl = `/api/report-builder/${reportId}/export/pdf`;
             setPreview({
               type: 'pdf',
               title,
@@ -457,7 +516,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             setPreview({
               type: 'pdf',
               title,
-              url: `/api/report-builder/reports/${reportId}/export/pdf`,
+              url: `/api/report-builder/${reportId}/export/pdf`,
               fileName: `${title.replace(/\s+/g, '_')}.pdf`,
             });
             setContentGenerated(true);
@@ -571,45 +630,107 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, [effectiveStatus, currentRun, lane, lastGoal]);
 
   const startGeneration = useCallback(
-    async (goal: string) => {
-      if (!conversationId) {
-        toast.error('No active conversation. Start a chat first.');
-        return;
-      }
-
+    async (goal: string, templateArtifactId?: string) => {
+      setIsStartingPipeline(true);
+      setStartupError(null);
       setLastGoal(goal);
       contentGenerationTriggered.current = false;
       setContentGenerated(false);
+      setCurrentRun(null);
+      setCurrentPlan(null);
+      setPreview(null);
+
+      let activeConvId = conversationId;
+
+      // Auto-create conversation if none exists
+      if (!activeConvId) {
+        try {
+          const laneTitle =
+            lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation';
+          await useConversationStore.getState().createConversation({
+            title: `${laneTitle}: ${goal.slice(0, 60)}`,
+          });
+          activeConvId = useConversationStore.getState().activeConversationId;
+        } catch {
+          // ignore — will be caught below
+        }
+        if (!activeConvId) {
+          setStartupError('Could not create a conversation. Please try again.');
+          toast.error('Could not create a conversation. Please try again.');
+          return;
+        }
+      }
 
       try {
         let snapshotId = latestSnapshot?.snapshotId;
         if (!snapshotId) {
-          const snap = await captureSnapshot.mutateAsync({
-            workspaceId: conversationId,
-            projectId: null,
-            conversationId,
+          const orgId = currentOrganization?.id;
+          const resolvedWorkspaceId = isUuidLike(currentProjectId)
+            ? currentProjectId
+            : orgId && orgId.trim().length > 0
+              ? orgId
+              : activeConvId;
+
+          const resolvedProjectId = isUuidLike(currentProjectId) ? currentProjectId : null;
+
+          const resolvedRoleRef =
+            typeof currentUser?.role === 'string' && currentUser.role.trim().length > 0
+              ? currentUser.role.trim().toLowerCase()
+              : 'member';
+
+          const snapshotParams: Record<string, unknown> = {
+            workspaceId: resolvedWorkspaceId,
+            projectId: resolvedProjectId,
+            conversationId: activeConvId,
             executionRunId: null,
             artifactRefs: [],
             effectiveScopeRef: 'workspace',
-            resolvedRoleRef: 'member',
+            resolvedRoleRef,
             consumerClass: 'chat',
             privacyMode: false,
             sourceContextRefs: [],
-          });
-          snapshotId = (snap as { snapshotId?: string })?.snapshotId;
+          };
+
+          if (orgId && orgId.trim().length > 0) {
+            (snapshotParams.sourceContextRefs as Array<Record<string, unknown>>).push({
+              sourceId: orgId,
+              scopeType: 'organization',
+              sourceKind: 'organization_profile',
+              freshnessAt: new Date().toISOString(),
+            });
+          }
+
+          console.debug('[KIMI Pipeline] captureSnapshot params:', snapshotParams);
+
+          try {
+            const snap = await captureSnapshot.mutateAsync(snapshotParams);
+            snapshotId = (snap as { snapshotId?: string })?.snapshotId;
+          } catch (snapErr: any) {
+            const details = snapErr?.data?.details ?? snapErr?.response?.data?.details;
+            setStartupError(
+              snapErr instanceof Error ? snapErr.message : 'Failed to capture context snapshot.'
+            );
+            console.error('[KIMI Pipeline] Snapshot capture failed:', {
+              error: snapErr?.message,
+              details: JSON.stringify(details, null, 2),
+              params: snapshotParams,
+            });
+          }
         }
 
         if (!snapshotId) {
-          toast.error('Failed to capture context snapshot.');
+          setStartupError('Failed to capture context snapshot. Try sending a message first.');
+          toast.error('Failed to capture context snapshot. Try sending a message first.');
           return;
         }
 
         const result = await createRun.mutateAsync({
-          conversationId,
+          conversationId: activeConvId,
           contextSnapshotId: snapshotId,
           goal: goal.trim(),
           requestedArtifactFamily: artifactFamily,
           requestedOutputType: outputType,
+          ...(templateArtifactId ? { templateArtifactId } : {}),
         });
         setCurrentRun(result.run);
         setCurrentPlan(result.artifactPlan);
@@ -626,24 +747,65 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           const accepted = await acceptPlan.mutateAsync(result.run.runId);
           setCurrentRun(accepted);
           setCurrentPlan(accepted.plan);
+
+          if (accepted.executionRunId) {
+            try {
+              await submitReview.mutateAsync(accepted.executionRunId);
+            } catch {
+              // fallback to interval-driven advance
+            }
+
+            try {
+              await approveRun.mutateAsync({
+                runId: accepted.executionRunId,
+                reason: 'KIMI auto-approval for governed artifact generation',
+              });
+            } catch {
+              // fallback to interval-driven advance
+            }
+          }
+
+          try {
+            const materialized = await materializeRun.mutateAsync({
+              runId: accepted.runId,
+              params: {
+                title: accepted.plan.titleHint,
+                config: outputType === 'sheet' ? { tableName: accepted.plan.titleHint } : undefined,
+              },
+            });
+            setCurrentRun(materialized);
+            setCurrentPlan(materialized.plan);
+          } catch {
+            // fallback to interval-driven advance
+          }
         } catch {
           // accept failures surface via state
         }
       } catch (error) {
-        toast.error(
+        setStartupError(
           error instanceof Error ? error.message : 'Failed to start artifact generation'
         );
+        toast.error(error instanceof Error ? error.message : 'Failed to start artifact generation');
+      } finally {
+        setIsStartingPipeline(false);
       }
     },
     [
       conversationId,
+      lane,
       latestSnapshot,
       captureSnapshot,
       createRun,
       preflightRun,
       acceptPlan,
+      submitReview,
+      approveRun,
+      materializeRun,
       artifactFamily,
       outputType,
+      currentOrganization?.id,
+      currentProjectId,
+      currentUser?.role,
     ]
   );
 
@@ -651,15 +813,18 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     if (!currentRun) return;
 
     try {
-      if (effectiveStatus === 'proposal_created') {
-        const accepted = await acceptPlan.mutateAsync(currentRun.runId);
-        setCurrentRun(accepted);
-        setCurrentPlan(accepted.plan);
+      setStartupError(null);
+
+      if (effectiveStatus === 'proposal_created' && currentRun.executionRunId) {
+        await submitReview.mutateAsync(currentRun.executionRunId);
         return;
       }
 
       if (effectiveStatus === 'awaiting_review' && currentRun.executionRunId) {
-        await submitReview.mutateAsync(currentRun.executionRunId);
+        await approveRun.mutateAsync({
+          runId: currentRun.executionRunId,
+          reason: 'KIMI auto-approval for governed artifact generation',
+        });
         return;
       }
 
@@ -671,12 +836,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           runId: currentRun.runId,
           params: {
             title: currentRun.plan.titleHint,
-            config:
-              outputType === 'sheet'
-                ? { tableId: '' }
-                : outputType === 'presentation'
-                  ? { templateId: '' }
-                  : undefined,
+            config: outputType === 'sheet' ? { tableName: currentRun.plan.titleHint } : undefined,
           },
         });
         setCurrentRun(completed);
@@ -684,11 +844,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         return;
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to advance pipeline'
-      );
+      setStartupError(error instanceof Error ? error.message : 'Failed to advance pipeline');
+      toast.error(error instanceof Error ? error.message : 'Failed to advance pipeline');
     }
-  }, [currentRun, effectiveStatus, acceptPlan, submitReview, materializeRun, outputType]);
+  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType]);
 
   const handleReplay = useCallback(() => {
     contentGenerationTriggered.current = false;
@@ -696,6 +855,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     setCurrentPlan(null);
     setPreview(null);
     setContentGenerated(false);
+    setStartupError(null);
     if (lastGoal) {
       void startGeneration(lastGoal);
     }
@@ -707,6 +867,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     setCurrentPlan(null);
     setPreview(null);
     setContentGenerated(false);
+    setStartupError(null);
   }, []);
 
   const handleDownload = useCallback(async () => {
@@ -719,16 +880,14 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     if (!currentRun) return;
 
     if (lane === 'excele' && currentRun.materializationOrigin?.originRecordId) {
-      const ok = await downloadSheetArtifactXlsx(
-        currentRun.materializationOrigin.originRecordId
-      );
+      const ok = await downloadSheetArtifactXlsx(currentRun.materializationOrigin.originRecordId);
       if (!ok) toast.error('Download failed');
       return;
     }
 
     if (lane === 'wordy' && currentRun.materializationOrigin?.originRecordId) {
       const reportId = currentRun.materializationOrigin.originRecordId;
-      window.open(`/api/report-builder/reports/${reportId}/export/docx`, '_blank');
+      window.open(`/api/report-builder/${reportId}/export/docx`, '_blank');
       return;
     }
 
@@ -741,6 +900,34 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     toast.error('No artifact available for download yet');
   }, [currentRun, lane]);
 
+  const failureReason = isFailed
+    ? (startupError ??
+      (currentRun as any)?.failureReason ??
+      (currentRun as any)?.failurePackage?.message ??
+      null)
+    : null;
+
+  const myWorkNotified = useRef(false);
+  useEffect(() => {
+    if (!isCompleted || myWorkNotified.current || !currentRun) return;
+    myWorkNotified.current = true;
+
+    const origin = currentRun.materializationOrigin;
+    const artifactPath = origin?.originRecordId
+      ? `/${lane === 'wordy' ? 'wordy' : lane === 'prezentacje' ? 'prezentacje' : 'excele'}?artifactId=${origin.originRecordId}`
+      : null;
+
+    Api.post('/mywork/items', {
+      type: 'artifact_completion',
+      title: currentRun.plan?.titleHint || 'Artifact completed',
+      description: `${lane} pipeline completed`,
+      linkPath: artifactPath,
+      artifactRunId: currentRun.runId,
+    }).catch(() => {
+      // Non-critical; My Work notification is best-effort
+    });
+  }, [isCompleted, currentRun, lane]);
+
   return {
     taskSteps,
     totalSteps: PIPELINE_STEPS.length,
@@ -748,6 +935,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     isGenerating,
     isCompleted,
     isFailed,
+    failureReason,
     preview,
     currentRun,
     isBusy,

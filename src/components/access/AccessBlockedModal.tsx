@@ -18,18 +18,16 @@ type AccessBlockedDetail = {
   accessContext?: any;
 };
 
-const SALES_CALL_URL =
-  'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
-
 const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   ORG_NOT_FOUND: { labelKey: 'access.cta.goToBilling', href: '/auth?mode=login' },
   ORG_INACTIVE: { labelKey: 'access.cta.goToBilling', href: '/auth?mode=login' },
   TRIAL_PROFILE_INCOMPLETE: { labelKey: 'access.cta.completeSetup', href: ROUTES.ORG_SETUP },
-  DEMO_TIME_EXPIRED: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
-  DEMO_AI_SESSION_LIMIT_REACHED: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
-  DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
+  DEMO_TIME_EXPIRED: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
+  DEMO_AI_SESSION_LIMIT_REACHED: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
+  DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   TRIAL_EXPIRED: { labelKey: 'access.cta.upgradeNow', href: '/settings?tab=billing' },
   AI_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  FEATURE_ACCESS_DENIED: { labelKey: 'access.cta.goToMyWork', href: ROUTES.MY_WORK },
   AI_TOKEN_BUDGET_EXCEEDED: {
     labelKey: 'access.cta.addPaymentMethod',
     href: '/settings?tab=billing',
@@ -93,9 +91,20 @@ export const AccessBlockedModal: React.FC = () => {
     };
     const onDemoBlocked = (evt: Event) => {
       const e = evt as CustomEvent<{ message?: string; action?: string }>;
+      // Feedback #4180b14f: backend was returning a hardcoded English
+      // "Demo mode cannot…" message which was rendered verbatim for every
+      // locale, so DE/ES/AR/JP users never saw a translated popup. We now
+      // always prefer the localized access.blocked.DEMO_READ_ONLY string and
+      // only fall back to the backend message when the i18n catalog is
+      // genuinely missing the key (shouldn't happen after this sprint).
+      const localized = t('access.blocked.DEMO_READ_ONLY');
+      const fallbackMessage =
+        !localized || localized === 'access.blocked.DEMO_READ_ONLY'
+          ? e.detail?.message || 'Demo mode is read-only.'
+          : localized;
       setDetail({
         code: 'DEMO_READ_ONLY',
-        message: e.detail?.message || t('access.blocked.DEMO_READ_ONLY'),
+        message: fallbackMessage,
       });
       setOpen(true);
     };
@@ -138,26 +147,6 @@ export const AccessBlockedModal: React.FC = () => {
         )}
 
         <div className="mt-6 flex flex-wrap gap-2 justify-end">
-          {resolved.isDemoBlock && (
-            <button
-              onClick={() => {
-                try {
-                  trackFunnelEvent('upgrade_cta_clicked', {
-                    reason: resolved.code,
-                    location: 'blocked_modal',
-                    action: 'book_call',
-                  });
-                } catch {
-                  // ignore
-                }
-                window.open(SALES_CALL_URL, '_blank');
-              }}
-              className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 text-navy-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-            >
-              {t('access.modal.bookCall')}
-            </button>
-          )}
-
           <button
             onClick={() => setOpen(false)}
             className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"

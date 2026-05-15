@@ -253,6 +253,20 @@ export function PromptManagementUI() {
     }
   };
 
+  const handleBlockPreview = (preview: string) => {
+    setShowPreview(true);
+    setPreviewLoading(false);
+    setPreviewResult(preview);
+    toast.success('Preview generated');
+  };
+
+  const handlePromptBenchResults = (results: any[]) => {
+    setShowPreview(true);
+    setPreviewLoading(false);
+    setPreviewResult(JSON.stringify(results, null, 2));
+    toast.success(`Completed ${results.length} prompt tests`);
+  };
+
   const handleCopyPrompt = () => {
     if (selectedPrompt) {
       navigator.clipboard.writeText(selectedPrompt.system_prompt);
@@ -581,7 +595,7 @@ export function PromptManagementUI() {
                   <PromptBlockBuilder
                     selectedBlocks={selectedBlocks}
                     onBlocksChange={setSelectedBlocks}
-                    onPreview={(preview) => console.log('Preview:', preview)}
+                    onPreview={handleBlockPreview}
                   />
                 )}
 
@@ -589,7 +603,7 @@ export function PromptManagementUI() {
                 {activeTab === 'test' && (
                   <PromptTestBench
                     templateCode={selectedPrompt?.name || editForm.name}
-                    onTestComplete={(results) => console.log('Test results:', results)}
+                    onTestComplete={handlePromptBenchResults}
                   />
                 )}
 

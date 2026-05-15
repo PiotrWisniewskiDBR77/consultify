@@ -65,6 +65,86 @@ export interface V8ExecutionOverspendSignal {
   message: string;
 }
 
+export interface V8ManagerProblemAction {
+  id: string;
+  label: string;
+  variant?: 'default' | 'primary' | 'danger';
+}
+
+export interface V8ManagerProblemRow {
+  id: string;
+  severity: 'critical' | 'warning' | 'info';
+  problemType: string;
+  title: string;
+  rootCause: string;
+  sourceEntityType: 'INITIATIVE' | 'TASK' | 'DECISION' | 'RAID_ITEM' | 'PERSON';
+  sourceEntityId: string;
+  sourceEntityName: string;
+  ownerId: string | null;
+  ownerName: string | null;
+  daysOverdue: number | null;
+  impactCount: number;
+  affectedEntities: Array<{ id: string; name: string; type: string }>;
+  actions: V8ManagerProblemAction[];
+  meta: Record<string, unknown>;
+}
+
+export interface V8ManagerActionExecutionResult {
+  success: boolean;
+  message: string;
+  changedCount: number;
+  changedEntities: Array<{ entityType: string; entityId: string }>;
+}
+
+// AI recommendation types
+export interface V8AiStep {
+  order: number;
+  action: string;
+  owner: string;
+  timeframe: string;
+  outcome: string;
+}
+
+export interface V8AiRecommendation {
+  problemId: string;
+  diagnosis: string;
+  recommendation: string;
+  steps: V8AiStep[];
+  confidence: number;
+  reasoning: string;
+  alternativeApproach: string;
+}
+
+export interface V8AiTriageCluster {
+  theme: string;
+  severity: 'critical' | 'warning' | 'info';
+  problemIds: string[];
+  summary: string;
+  suggestedAction: string;
+}
+
+export interface V8AiTriageResult {
+  clusters: V8AiTriageCluster[];
+  topPriority: string[];
+  executiveSummary: string;
+}
+
+export interface V8AiManageAllCluster {
+  theme: string;
+  severity: 'critical' | 'warning' | 'info';
+  diagnosis: string;
+  steps: V8AiStep[];
+  affectedProblemIds: string[];
+}
+
+export interface V8AiManageAllResult {
+  laneId: string;
+  executiveSummary: string;
+  clusters: V8AiManageAllCluster[];
+  quickWins: string[];
+  escalationNeeded: string[];
+}
+
 export interface V8ExecutionTimelineWarning {
   initiativeId: string;
   initiativeName: string;
@@ -124,6 +204,80 @@ export interface V8ExecutionRaidMitigationPayload {
   mitigationOwnerId?: string;
   mitigationDueDate?: string;
   mitigationStatus?: 'OPEN' | 'IN_PROGRESS' | 'MITIGATED' | 'ACCEPTED' | 'CLOSED';
+}
+
+// ── Manager Lane Analysis Types ────────────────────────────────────────────
+
+export interface V8LaneObservation {
+  id: string;
+  metric: string;
+  scope: string;
+  since?: string;
+  trend: 'rising' | 'stable' | 'improving';
+  severity: 'info' | 'warning' | 'critical';
+  entityId?: string;
+  entityName?: string;
+}
+
+export interface V8LaneInsight {
+  id: string;
+  observationIds: string[];
+  interpretation: string;
+  isSystemic: boolean;
+  requiresAction: boolean;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface V8LaneEffect {
+  id: string;
+  insightId: string;
+  consequence: string;
+  blastRadius: number;
+  costImpact?: string;
+  timelineImpact?: string;
+  affectedEntities?: Array<{ id: string; name: string; type: string }>;
+}
+
+export interface V8LaneSuggestion {
+  id: string;
+  action: string;
+  reason: string;
+  expectedOutcome: string;
+  cost: string;
+  feasibility: 'immediate' | 'manager_decision' | 'leadership_decision' | 'not_feasible_now';
+  requiresApproval: boolean;
+  recommendedOwner?: string;
+  category: 'operational' | 'organizational' | 'governance' | 'quality';
+}
+
+export interface V8LaneDecision {
+  id: string;
+  suggestionId: string;
+  state: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  notes?: string;
+}
+
+export interface V8LaneExecutionPlan {
+  id: string;
+  decisionId: string;
+  tasks: Array<{ title: string; owner: string; deadline: string; status: string }>;
+  beforeState?: string;
+  afterState?: string;
+  verificationStatus: 'pending' | 'in_progress' | 'verified' | 'failed';
+}
+
+export interface V8LaneAnalysisResponse {
+  observations: V8LaneObservation[];
+  insights: V8LaneInsight[];
+  effects: V8LaneEffect[];
+  suggestions: V8LaneSuggestion[];
+  decisions: V8LaneDecision[];
+  executionPlan: V8LaneExecutionPlan[];
+  severity: 'ok' | 'warning' | 'critical';
+  confidence: 'high' | 'medium' | 'low' | 'degraded';
+  lastRefreshed: string;
 }
 
 export const V8ExecutionControlApi = {
@@ -220,4 +374,116 @@ export const V8ExecutionControlApi = {
 
   createBudgetEntry: (payload: V8ExecutionBudgetEntryPayload) =>
     v8Post<{ success: boolean; id: string }>('/execution-control/budget/entries', payload),
+
+  // ── Manager Lane Analysis (6-Lane Cockpit) ──────────────────────────────
+
+  getControlTowerQueues: (projectId?: string) =>
+    v8Get<{ queues: Record<string, unknown[]>; counts: Record<string, number> }>(
+      '/execution-control/control-tower/queues',
+      projectId ? { projectId } : undefined
+    ),
+
+  getControlTowerItemDetail: (entityType: string, entityId: string, projectId?: string) =>
+    v8Get<{ why: string[]; whatNext: string[]; affectsNext: string[] }>(
+      `/execution-control/control-tower/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}/drill-down`,
+      projectId ? { projectId } : undefined
+    ),
+
+  getLaneAnalysis: (laneId: string, projectId?: string) =>
+    v8Get<V8LaneAnalysisResponse>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/analysis`,
+      projectId ? { projectId } : undefined
+    ),
+
+  getManagerProblems: (laneId: string, projectId?: string) =>
+    v8Get<{ problems: V8ManagerProblemRow[]; count: number }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problems`,
+      projectId ? { projectId } : undefined
+    ),
+
+  executeManagerProblemAction: (
+    laneId: string,
+    payload: { problemId: string; actionId: string },
+    projectId?: string
+  ) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8ManagerActionExecutionResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problem-actions/execute${qs}`,
+      payload
+    );
+  },
+
+  applyManagerSuggestion: (
+    laneId: string,
+    payload: { suggestionId: string },
+    projectId?: string
+  ) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8ManagerActionExecutionResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/suggestions/apply${qs}`,
+      payload
+    );
+  },
+
+  submitLaneDecision: (
+    laneId: string,
+    payload: { suggestionId: string; state: string; notes?: string }
+  ) =>
+    v8Post<{ success: boolean; decisionId: string }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/decisions`,
+      payload
+    ),
+
+  executeLanePlan: (laneId: string, payload: { decisionId: string }) =>
+    v8Post<{ success: boolean; planId: string }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/execute`,
+      payload
+    ),
+
+  getLaneVerification: (laneId: string, projectId?: string) =>
+    v8Get<{ plans: V8LaneExecutionPlan[] }>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/verification`,
+      projectId ? { projectId } : undefined
+    ),
+
+  interveneReassign: (payload: {
+    entityType: string;
+    entityId: string;
+    newOwnerId: string;
+    reason?: string;
+  }) => v8Post<{ success: boolean }>('/execution-control/interventions/reassign', payload),
+
+  interveneSmooth: (payload: { entityId: string; strategy: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/smooth', payload),
+
+  interveneReplan: (payload: { entityId: string; newDeadline: string; reason: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/replan', payload),
+
+  interveneEscalate: (payload: { entityId: string; severity: string; message: string }) =>
+    v8Post<{ success: boolean }>('/execution-control/interventions/escalate', payload),
+
+  // AI Manager endpoints
+  getAiRecommendation: (laneId: string, problemId: string, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8AiRecommendation>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/recommend${qs}`,
+      { problemId }
+    );
+  },
+
+  getAiTriage: (laneId: string, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8AiTriageResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/triage${qs}`,
+      {}
+    );
+  },
+
+  getAiManageAll: (laneId: string, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8AiManageAllResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/manage-all${qs}`,
+      {}
+    );
+  },
 };

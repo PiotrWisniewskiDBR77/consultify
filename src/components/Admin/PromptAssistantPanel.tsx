@@ -26,6 +26,8 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PromptAssistantApi } from '../../services/api/promptAssistant.api';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -111,25 +113,13 @@ How can I help you today?`,
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/prompt-assistant/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          promptId,
-          promptContent,
-          templateCode,
-          conversationId,
-        }),
+      const data = await PromptAssistantApi.sendChatMessage({
+        message: userMessage.content,
+        promptId,
+        promptContent,
+        templateCode,
+        conversationId,
       });
-
-      if (!response.ok) throw new Error('Failed to send message');
-
-      const data = await response.json();
 
       if (data.data?.conversationId) {
         setConversationId(data.data.conversationId);
@@ -227,15 +217,7 @@ How can I help you today?`,
 
   const clearHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/prompt-assistant/chat/history', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ conversationId }),
-      });
+      await PromptAssistantApi.clearChatHistory(conversationId);
 
       setMessages([]);
       setConversationId(null);

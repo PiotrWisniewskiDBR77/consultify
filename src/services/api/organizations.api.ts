@@ -41,6 +41,14 @@ export interface OrganizationMember {
   joinedAt: string;
 }
 
+export interface SwitchOrganizationResult {
+  success: boolean;
+  organization: { id: string; name: string; role: string; plan: string };
+  token: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
 export const OrganizationApi = {
   // ==========================================
   // ORGANIZATIONS
@@ -48,9 +56,22 @@ export const OrganizationApi = {
 
   getUserOrganizations: async (): Promise<Organization[]> => {
     const res = await fetch(`${API_URL}/organizations/current`, { headers: getHeaders() });
-    return handleResponse<Organization[]>(res, 'Failed to fetch organizations').then(
-      (data) => data || []
+    const data = await handleResponse<{ organizations: Organization[] } | Organization[]>(
+      res,
+      'Failed to fetch organizations'
     );
+    if (Array.isArray(data)) return data;
+    return (data as { organizations: Organization[] })?.organizations || [];
+  },
+
+  switchOrganization: async (organizationId: string): Promise<SwitchOrganizationResult> => {
+    const res = await fetch(`${API_URL}/auth/switch-organization`, {
+      method: 'POST',
+      headers: getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ organizationId }),
+    });
+    return handleResponse<SwitchOrganizationResult>(res, 'Failed to switch organization');
   },
 
   getOrganization: async (orgId: string): Promise<Organization> => {

@@ -25,26 +25,33 @@ describe('chatPermissionService: checkChatPermission', () => {
   it('returns contributor role and allows create_thread', async () => {
     dbGet.mockResolvedValueOnce({ role: 'MEMBER' });
     const res = await checkChatPermission('u-1', 'org-1', 'create_thread');
-    expect(res).toEqual({ allowed: true, role: 'contributor' });
+    expect(res.allowed).toBe(true);
+    expect(res.role).toBe('contributor');
+    expect(res.reason).toBe('');
   });
 
-  it('denies delete_project for contributor when not creator', async () => {
+  it('denies delete_project for contributor when not creator with reason', async () => {
     dbGet.mockResolvedValueOnce({ role: 'MEMBER' });
     const res = await checkChatPermission('u-1', 'org-1', 'delete_project', { isCreator: false });
     expect(res.allowed).toBe(false);
     expect(res.role).toBe('contributor');
+    expect(res.reason).toContain('folder creator');
   });
 
   it('allows delete_project for contributor when creator', async () => {
     dbGet.mockResolvedValueOnce({ role: 'MEMBER' });
     const res = await checkChatPermission('u-1', 'org-1', 'delete_project', { isCreator: true });
-    expect(res).toEqual({ allowed: true, role: 'contributor' });
+    expect(res.allowed).toBe(true);
+    expect(res.role).toBe('contributor');
+    expect(res.reason).toBe('');
   });
 
-  it('denies add_message for viewer', async () => {
+  it('denies add_message for viewer with reason', async () => {
     dbGet.mockResolvedValueOnce({ role: 'CONSULTANT' });
     const res = await checkChatPermission('u-1', 'org-1', 'add_message');
-    expect(res).toEqual({ allowed: false, role: 'viewer' });
+    expect(res.allowed).toBe(false);
+    expect(res.role).toBe('viewer');
+    expect(res.reason).toContain('Viewers');
   });
 
   it('calls DB lookup with correct parameters (and touches real validators)', async () => {

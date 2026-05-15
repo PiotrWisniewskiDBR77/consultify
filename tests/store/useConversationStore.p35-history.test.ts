@@ -112,6 +112,38 @@ describe('P35-B: useConversationStore — History Library', () => {
       expect(after.activeMessages).toEqual([]);
     });
 
+    it('createConversation forwards chatProjectId and stores folder-scoped conversation', async () => {
+      mockApi.createConversation.mockResolvedValueOnce({
+        id: 'folder-conv-1',
+        title: 'Folder chat',
+        title_source: 'auto',
+        project_id: null,
+        chat_project_id: 'folder-123',
+        organization_id: 'org-1',
+        starred: false,
+        archived: false,
+        tags: [],
+        pmo_context: {},
+        message_count: 0,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+        language: 'pl',
+      });
+
+      const state = useConversationStore.getState();
+      const conversation = await state.createConversation({ chatProjectId: 'folder-123' });
+
+      expect(mockApi.createConversation).toHaveBeenCalledWith({
+        title: undefined,
+        projectId: undefined,
+        chatProjectId: 'folder-123',
+        pmoContext: undefined,
+        language: expect.any(String),
+      });
+      expect(conversation.chatProjectId).toBe('folder-123');
+      expect(useConversationStore.getState().conversations[0]?.chatProjectId).toBe('folder-123');
+    });
+
     it('serverSearch calls API with correct params and returns structured result', async () => {
       mockApi.get.mockResolvedValueOnce({
         conversations: [{ id: 'found-1', title: 'Match', created_at: '2026-01-01' }],

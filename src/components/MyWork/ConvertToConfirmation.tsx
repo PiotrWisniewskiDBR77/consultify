@@ -24,6 +24,10 @@ const OUTPUT_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
   initiative: { en: 'Initiative', pl: 'Inicjatywa' },
   report: { en: 'Report', pl: 'Raport' },
   presentation: { en: 'Presentation', pl: 'Prezentacja' },
+  financial_model: { en: 'Financial Model', pl: 'Model finansowy' },
+  budget: { en: 'Budget', pl: 'Budżet' },
+  valuation: { en: 'Valuation', pl: 'Wycena' },
+  analysis: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
 };
 
 function ConvertToConfirmationContent({

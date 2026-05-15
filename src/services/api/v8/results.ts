@@ -1,5 +1,10 @@
 import { v8Delete, v8Get, v8Post, v8Put } from './client';
 
+/**
+ * @deprecated V8 Results API (`/api/v8/results/*`) is the canonical SSOT.
+ * Legacy `/api/benefits/*` paths are deprecated and will be removed.
+ * This fallback exists only for backward compatibility during migration.
+ */
 export const shouldFallbackToLegacyResults = (error: any) => {
   const status = Number(error?.status);
   return [400, 404, 405, 501].includes(status);
@@ -128,10 +133,13 @@ export interface V8ResultsRoiInitiativeDetail {
 
 export interface V8ResultsKpiCatalogEntry {
   id: string;
+  mappingId?: string | null;
   initiativeId?: string | null;
   initiativeName?: string | null;
+  initiativeStatus?: string | null;
   name: string;
   description?: string | null;
+  category?: string | null;
   unit?: string | null;
   baselineValue?: number | null;
   targetValue: number | null;
@@ -155,6 +163,21 @@ export interface V8ResultsKpiCatalogEntry {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+  realizationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
+  postImplementationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
   openDeviationCase?: {
     id: string;
     severity: 'AMBER' | 'RED';
@@ -166,13 +189,37 @@ export interface V8ResultsKpiCatalogMapping {
   id: string;
   initiativeId: string;
   initiativeName?: string | null;
+  initiativeStatus?: string | null;
   kpiId: string;
   kpiName?: string | null;
   impactDirection?: string | null;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+}
+
+export interface V8ResultsTrackedInitiativeEntry {
+  initiativeId: string;
+  initiativeName: string;
+  initiativeStatus: string;
+  lifecycleBucket: 'in-realization' | 'realized';
+  trackedKpiCount: number;
+  realizationKpiCount: number;
+  postImplementationKpiCount: number;
+  belowTargetCount: number;
+  needsEntryCount: number;
+  openDeviationCount: number;
+  openReportCount: number;
+  lastReportTitle?: string | null;
+  lastReportId?: string | null;
+  lastReportCreatedAt?: string | null;
 }
 
 export interface V8ResultsKpiCatalog {
   organizationId: string;
+  initiatives: V8ResultsTrackedInitiativeEntry[];
   kpis: V8ResultsKpiCatalogEntry[];
   mappings: V8ResultsKpiCatalogMapping[];
 }
@@ -226,6 +273,17 @@ export interface V8ResultsKpiDrawerDetail {
       updatedAt?: string | null;
     }>;
   } | null;
+  auditLog: Array<{
+    id: string;
+    section: string;
+    eventType: string;
+    source: string;
+    actorUserId?: string | null;
+    summary?: string | null;
+    before: Record<string, unknown>;
+    after: Record<string, unknown>;
+    createdAt: string;
+  }>;
 }
 
 export interface V8ResultsCreateKpiTimeSeriesPayload {
@@ -372,6 +430,7 @@ export interface V8ResultsCreateKpiReportPayload {
   title?: string;
   filters?: Record<string, unknown> | null;
   kpiIds?: string[];
+  initiativeIds?: string[];
 }
 
 export interface V8ResultsCreateKpiReportResponse {
@@ -414,11 +473,17 @@ export interface V8ResultsCreateRoiRealizedResponse {
 }
 
 export const V8ResultsApi = {
-  getDashboard: () => v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard'),
-  getKpiCatalog: (params?: { kpiId?: string }) =>
+  getDashboard: (options?: { initiativeId?: string }) =>
+    v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard', options),
+  getKpiCatalog: (params?: { kpiId?: string; initiativeId?: string }) =>
     v8Get<V8ResultsKpiCatalog>(
       '/results/kpis/catalog',
-      params?.kpiId ? { kpiId: params.kpiId } : undefined
+      params?.kpiId || params?.initiativeId
+        ? {
+            ...(params?.kpiId ? { kpiId: params.kpiId } : {}),
+            ...(params?.initiativeId ? { initiativeId: params.initiativeId } : {}),
+          }
+        : undefined
     ),
   getKpiDrawerDetail: (kpiId: string) =>
     v8Get<V8ResultsKpiDrawerDetail>(`/results/kpis/${encodeURIComponent(kpiId)}/drawer-detail`),
@@ -427,8 +492,8 @@ export const V8ResultsApi = {
       `/results/kpis/${encodeURIComponent(kpiId)}/time-series`,
       payload
     ),
-  getRoiPortfolioSummary: () =>
-    v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary'),
+  getRoiPortfolioSummary: (options?: { initiativeId?: string }) =>
+    v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary', options),
   getRoiInitiativeDetail: (initiativeId: string) =>
     v8Get<V8ResultsRoiInitiativeDetail>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/detail`
@@ -481,6 +546,11 @@ export const V8ResultsApi = {
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
+  refreshKpiReport: (snapshotId: string) =>
+    v8Post<V8ResultsCreateKpiReportResponse>(
+      `/results/kpi-reports/${encodeURIComponent(snapshotId)}/refresh`,
+      {}
+    ),
   updateRoiInitiativeAssumptions: (
     initiativeId: string,
     payload: V8ResultsUpdateRoiAssumptionsPayload
@@ -497,4 +567,15 @@ export const V8ResultsApi = {
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/realized`,
       payload
     ),
+  getWorkflowSignals: () =>
+    v8Get<{
+      data: Array<{
+        signalId: string;
+        kpiId: string;
+        severity: string;
+        description: string;
+        createdAt: string;
+        kpiName?: string;
+      }>;
+    }>('/results/workflow/signals'),
 };

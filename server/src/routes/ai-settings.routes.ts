@@ -14,6 +14,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -86,7 +87,7 @@ try {
   const settingsModule = await import('../../services/aiSettingsService.js');
   AISettingsService = (settingsModule.default || settingsModule) as AISettingsServiceInterface;
 } catch {
-  console.warn('[AI Settings Routes] AISettingsService not available');
+  logger.warn('[AI Settings Routes] AISettingsService not available');
 }
 
 try {
@@ -94,7 +95,7 @@ try {
   AIProactivityEngine = (proactivityModule.default ||
     proactivityModule) as AIProactivityEngineInterface;
 } catch {
-  console.warn('[AI Settings Routes] AIProactivityEngine not available');
+  logger.warn('[AI Settings Routes] AIProactivityEngine not available');
 }
 
 // ==========================================
@@ -119,7 +120,7 @@ router.get(
       const settings = await AISettingsService.getSuperAdminSettings();
       res.json(settings);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting superadmin settings:', error);
+      logger.error('[AI Settings] Error getting superadmin settings:', error);
       return res.status(500).json({
         error: 'Failed to get settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -163,7 +164,7 @@ router.put(
 
       res.json(updated);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error updating superadmin settings:', error);
+      logger.error('[AI Settings] Error updating superadmin settings:', error);
       return res.status(500).json({
         error: 'Failed to update settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -203,7 +204,7 @@ router.get(
       const settings = await AISettingsService.getOrgSettings(orgIdStr);
       res.json(settings);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting org settings:', error);
+      logger.error('[AI Settings] Error getting org settings:', error);
       return res.status(500).json({
         error: 'Failed to get settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -260,7 +261,7 @@ router.put(
 
       res.json(updated);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error updating org settings:', error);
+      logger.error('[AI Settings] Error updating org settings:', error);
       return res.status(500).json({
         error: 'Failed to update settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -294,7 +295,7 @@ router.get(
       const settings = await AISettingsService.getUserSettings(userId);
       res.json(settings);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting user settings:', error);
+      logger.error('[AI Settings] Error getting user settings:', error);
       return res.status(500).json({
         error: 'Failed to get settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -342,7 +343,7 @@ router.put(
       const updated = await AISettingsService.updateUserSettings(userId, settings);
       res.json(updated);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error updating user settings:', error);
+      logger.error('[AI Settings] Error updating user settings:', error);
       return res.status(500).json({
         error: 'Failed to update settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -379,7 +380,7 @@ router.get(
       const effective = await AISettingsService.getEffectiveSettings(userId, organizationId);
       res.json(effective);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting effective settings:', error);
+      logger.error('[AI Settings] Error getting effective settings:', error);
       return res.status(500).json({
         error: 'Failed to get settings',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -416,7 +417,7 @@ router.get(
       const models = await AISettingsService.getAvailableModels(userId, organizationId);
       res.json(models);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting available models:', error);
+      logger.error('[AI Settings] Error getting available models:', error);
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({
           error: error.message,
@@ -462,7 +463,7 @@ router.get(
       const proactivity = await AIProactivityEngine.getEffectiveProactivity(userId, organizationId);
       res.json(proactivity);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting proactivity:', error);
+      logger.error('[AI Settings] Error getting proactivity:', error);
       return res.status(500).json({
         error: 'Failed to get proactivity',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -487,7 +488,7 @@ router.get(
       const modes = AIProactivityEngine.getAllModes();
       res.json(modes);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting proactivity modes:', error);
+      logger.error('[AI Settings] Error getting proactivity modes:', error);
       return res.status(500).json({
         error: 'Failed to get modes',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -543,7 +544,7 @@ router.get(
       const auditLog = await AISettingsService.getAuditLog(filters);
       res.json(auditLog);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting audit log:', error);
+      logger.error('[AI Settings] Error getting audit log:', error);
       return res.status(500).json({
         error: 'Failed to get audit log',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -585,7 +586,7 @@ router.get(
 
       res.json(auditLog);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting org audit log:', error);
+      logger.error('[AI Settings] Error getting org audit log:', error);
       return res.status(500).json({
         error: 'Failed to get audit log',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -621,7 +622,7 @@ router.get(
       const costs = await AISettingsService.getUserCostHistory(userId, period as string);
       res.json(costs);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting user costs:', error);
+      logger.error('[AI Settings] Error getting user costs:', error);
       return res.status(500).json({
         error: 'Failed to get cost history',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -663,7 +664,7 @@ router.get(
       const tiers = await AISettingsService.getOrgUserTiers(orgIdStr);
       res.json(tiers);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting user tiers:', error);
+      logger.error('[AI Settings] Error getting user tiers:', error);
       return res.status(500).json({
         error: 'Failed to get user tiers',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -712,7 +713,7 @@ router.put(
       const result = await AISettingsService.assignUserTier(orgIdStr, userIdStr, tier);
       res.json(result);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error assigning user tier:', error);
+      logger.error('[AI Settings] Error assigning user tier:', error);
       return res.status(500).json({
         error: 'Failed to assign tier',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -755,7 +756,7 @@ router.get(
       const costs = await AISettingsService.getOrgCostAttribution(orgIdStr, period as string);
       res.json(costs);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error getting cost attribution:', error);
+      logger.error('[AI Settings] Error getting cost attribution:', error);
       return res.status(500).json({
         error: 'Failed to get costs',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -846,7 +847,7 @@ router.get(
         res.json(report);
       }
     } catch (error: unknown) {
-      console.error('[AI Settings] Error generating compliance report:', error);
+      logger.error('[AI Settings] Error generating compliance report:', error);
       return res.status(500).json({
         error: 'Failed to generate report',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -886,7 +887,7 @@ router.post(
       const report = await AISettingsService.generateComplianceReport(orgIdStr, standard, 'json');
       res.json(report);
     } catch (error: unknown) {
-      console.error('[AI Settings] Error generating compliance report:', error);
+      logger.error('[AI Settings] Error generating compliance report:', error);
       return res.status(500).json({
         error: 'Failed to generate report',
         message: error instanceof Error ? error.message : 'Unknown error',

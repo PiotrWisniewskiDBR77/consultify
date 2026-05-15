@@ -1,4 +1,14 @@
-import { BarChart3, Bot, Brain, MessageSquare, Sparkles, Users } from 'lucide-react';
+import {
+  BarChart3,
+  Bot,
+  Brain,
+  Eye,
+  FlaskConical,
+  MessageSquare,
+  Rocket,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
@@ -19,9 +29,12 @@ export const VirtualWorkersModule: React.FC<VirtualWorkersModuleProps> = ({ init
       ? [
           { id: 'profile', label: 'Profile', icon: <Bot size={16} /> },
           { id: 'knowledge', label: 'Knowledge', icon: <Brain size={16} /> },
+          { id: 'preview', label: 'Preview', icon: <Eye size={16} /> },
           { id: 'conversations', label: 'Conversations', icon: <MessageSquare size={16} /> },
           { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
           { id: 'insights', label: 'AI Insights', icon: <Sparkles size={16} /> },
+          { id: 'evaluations', label: 'Evaluations', icon: <FlaskConical size={16} /> },
+          { id: 'release', label: 'Release', icon: <Rocket size={16} /> },
         ]
       : []),
   ];

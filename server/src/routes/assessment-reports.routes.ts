@@ -22,6 +22,7 @@ import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/asse
 import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
 
 const router = Router();
 const notConfigured = (res: Response, details?: Record<string, unknown>) =>
@@ -120,9 +121,19 @@ const all = async <T = any>(sql: string, params: any[] = []): Promise<T[]> => {
   });
 };
 
+let ensureAssessmentReportsSchemaPromise: Promise<void> | null = null;
+let assessmentReportsSchemaReady = false;
+
 const ensureAssessmentReportsSchema = async (): Promise<void> => {
-  await run(
-    `CREATE TABLE IF NOT EXISTS assessment_reports (
+  if (assessmentReportsSchemaReady) return;
+  if (ensureAssessmentReportsSchemaPromise) {
+    await ensureAssessmentReportsSchemaPromise;
+    return;
+  }
+
+  ensureAssessmentReportsSchemaPromise = (async () => {
+    await run(
+      `CREATE TABLE IF NOT EXISTS assessment_reports (
       id TEXT PRIMARY KEY,
       assessment_id TEXT NOT NULL,
       organization_id TEXT NOT NULL,
@@ -150,49 +161,49 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
-  );
+    );
 
-  // SQLite migrations in this repo vary; patch missing columns (best-effort).
-  try {
-    const dbType = getDatabaseType();
-    const tableInfoQuery =
-      dbType === 'postgres'
-        ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_reports'`
-        : `PRAGMA table_info(assessment_reports)`;
-    const cols = await all<any>(tableInfoQuery, []);
-    const existing = new Set((cols || []).map((c: any) => String(c.name)));
-    const add = async (name: string, type: string) => {
-      if (existing.has(name)) return;
-      await run(`ALTER TABLE assessment_reports ADD COLUMN ${name} ${type}`);
-      existing.add(name);
-    };
-    await add('project_id', 'TEXT');
-    await add('name', 'TEXT');
-    await add('status', "TEXT DEFAULT 'DRAFT'");
-    await add('template_id', 'TEXT');
-    await add('builder_report_id', 'TEXT');
-    await add('axis_data', 'TEXT');
-    await add('executive_summary', 'TEXT');
-    await add('detailed_analysis', 'TEXT');
-    await add('recommendations', 'TEXT');
-    await add('generated_by', 'TEXT');
-    await add('generation_params', 'TEXT');
-    await add('created_by', 'TEXT');
-    await add('updated_by', 'TEXT');
-    await add('approved_by', 'TEXT');
-    await add('approved_at', 'TIMESTAMP');
-    await add('rejected_by', 'TEXT');
-    await add('rejected_at', 'TIMESTAMP');
-    await add('rejection_reason', 'TEXT');
-    await add('utilized_by', 'TEXT');
-    await add('utilized_at', 'TIMESTAMP');
-    await add('utilization_notes', 'TEXT');
-  } catch (e) {
-    // ignore; table might be locked or pragma not available in some environments
-  }
+    // SQLite migrations in this repo vary; patch missing columns (best-effort).
+    try {
+      const dbType = getDatabaseType();
+      const tableInfoQuery =
+        dbType === 'postgres'
+          ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_reports'`
+          : `PRAGMA table_info(assessment_reports)`;
+      const cols = await all<any>(tableInfoQuery, []);
+      const existing = new Set((cols || []).map((c: any) => String(c.name)));
+      const add = async (name: string, type: string) => {
+        if (existing.has(name)) return;
+        await run(`ALTER TABLE assessment_reports ADD COLUMN ${name} ${type}`);
+        existing.add(name);
+      };
+      await add('project_id', 'TEXT');
+      await add('name', 'TEXT');
+      await add('status', "TEXT DEFAULT 'DRAFT'");
+      await add('template_id', 'TEXT');
+      await add('builder_report_id', 'TEXT');
+      await add('axis_data', 'TEXT');
+      await add('executive_summary', 'TEXT');
+      await add('detailed_analysis', 'TEXT');
+      await add('recommendations', 'TEXT');
+      await add('generated_by', 'TEXT');
+      await add('generation_params', 'TEXT');
+      await add('created_by', 'TEXT');
+      await add('updated_by', 'TEXT');
+      await add('approved_by', 'TEXT');
+      await add('approved_at', 'TIMESTAMP');
+      await add('rejected_by', 'TEXT');
+      await add('rejected_at', 'TIMESTAMP');
+      await add('rejection_reason', 'TEXT');
+      await add('utilized_by', 'TEXT');
+      await add('utilized_at', 'TIMESTAMP');
+      await add('utilization_notes', 'TEXT');
+    } catch (e) {
+      // ignore; table might be locked or pragma not available in some environments
+    }
 
-  await run(
-    `CREATE TABLE IF NOT EXISTS assessment_report_sections (
+    await run(
+      `CREATE TABLE IF NOT EXISTS assessment_report_sections (
       id TEXT PRIMARY KEY,
       report_id TEXT NOT NULL,
       section_type TEXT NOT NULL,
@@ -209,41 +220,41 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
-  );
-  await run(`CREATE INDEX IF NOT EXISTS idx_ars_report ON assessment_report_sections(report_id)`);
-  await run(
-    `CREATE INDEX IF NOT EXISTS idx_ars_report_order ON assessment_report_sections(report_id, order_index)`
-  );
+    );
+    await run(`CREATE INDEX IF NOT EXISTS idx_ars_report ON assessment_report_sections(report_id)`);
+    await run(
+      `CREATE INDEX IF NOT EXISTS idx_ars_report_order ON assessment_report_sections(report_id, order_index)`
+    );
 
-  try {
-    const dbType = getDatabaseType();
-    const tableInfoQuery =
-      dbType === 'postgres'
-        ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_report_sections'`
-        : `PRAGMA table_info(assessment_report_sections)`;
-    const cols = await all<any>(tableInfoQuery, []);
-    const existing = new Set((cols || []).map((c: any) => String(c.name)));
-    const add = async (name: string, type: string) => {
-      if (existing.has(name)) return;
-      await run(`ALTER TABLE assessment_report_sections ADD COLUMN ${name} ${type}`);
-      existing.add(name);
-    };
-    await add('section_type', 'TEXT');
-    await add('axis_id', 'TEXT');
-    await add('area_id', 'TEXT');
-    await add('content', 'TEXT');
-    await add('data_snapshot', 'TEXT');
-    await add('order_index', 'INTEGER DEFAULT 0');
-    await add('is_ai_generated', 'INTEGER DEFAULT 0');
-    await add('version', 'INTEGER DEFAULT 1');
-    await add('created_by', 'TEXT');
-    await add('updated_by', 'TEXT');
-  } catch {
-    // ignore
-  }
+    try {
+      const dbType = getDatabaseType();
+      const tableInfoQuery =
+        dbType === 'postgres'
+          ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_report_sections'`
+          : `PRAGMA table_info(assessment_report_sections)`;
+      const cols = await all<any>(tableInfoQuery, []);
+      const existing = new Set((cols || []).map((c: any) => String(c.name)));
+      const add = async (name: string, type: string) => {
+        if (existing.has(name)) return;
+        await run(`ALTER TABLE assessment_report_sections ADD COLUMN ${name} ${type}`);
+        existing.add(name);
+      };
+      await add('section_type', 'TEXT');
+      await add('axis_id', 'TEXT');
+      await add('area_id', 'TEXT');
+      await add('content', 'TEXT');
+      await add('data_snapshot', 'TEXT');
+      await add('order_index', 'INTEGER DEFAULT 0');
+      await add('is_ai_generated', 'INTEGER DEFAULT 0');
+      await add('version', 'INTEGER DEFAULT 1');
+      await add('created_by', 'TEXT');
+      await add('updated_by', 'TEXT');
+    } catch {
+      // ignore
+    }
 
-  await run(
-    `CREATE TABLE IF NOT EXISTS assessment_report_section_history (
+    await run(
+      `CREATE TABLE IF NOT EXISTS assessment_report_section_history (
       id TEXT PRIMARY KEY,
       report_id TEXT NOT NULL,
       section_id TEXT NOT NULL,
@@ -253,10 +264,20 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       created_by TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
-  );
-  await run(
-    `CREATE INDEX IF NOT EXISTS idx_arsh_section ON assessment_report_section_history(report_id, section_id, version)`
-  );
+    );
+    await run(
+      `CREATE INDEX IF NOT EXISTS idx_arsh_section ON assessment_report_section_history(report_id, section_id, version)`
+    );
+
+    assessmentReportsSchemaReady = true;
+  })();
+
+  try {
+    await ensureAssessmentReportsSchemaPromise;
+  } catch (error) {
+    ensureAssessmentReportsSchemaPromise = null;
+    throw error;
+  }
 };
 
 const mapTemplateSectionType = (tplTypeRaw: string | undefined, keyRaw?: string): SectionType => {
@@ -430,11 +451,6 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
   return {};
 };
 
-// Best-effort init (avoid breaking route in case of migrations ordering)
-ensureAssessmentReportsSchema().catch((e) =>
-  logger.error('[AssessmentReports] Failed ensuring schema:', e)
-);
-
 const ensureExportDir = async (): Promise<string> => {
   const exportDir = path.resolve(process.cwd(), 'exports', 'assessment-reports');
   await fs.promises.mkdir(exportDir, { recursive: true });
@@ -534,7 +550,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const assessmentId = req.query?.assessmentId ? String(req.query.assessmentId) : null;
     const projectId = req.query?.projectId ? String(req.query.projectId) : null;
     const statusRaw = req.query?.status ? String(req.query.status) : null;
@@ -618,7 +635,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/templates', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const sourceType = String(req.query?.sourceType || 'ASSESSMENT').toUpperCase();
     if (sourceType !== 'ASSESSMENT') {
       return res.status(400).json({ error: 'Unsupported sourceType', sourceType });
@@ -761,7 +779,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { assessmentId, name, templateId } = req.body || {};
 
@@ -858,7 +877,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const reportRow = await get<any>(
@@ -941,7 +961,8 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
 router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
     const { templateId, language } = req.body || {};
@@ -1154,7 +1175,8 @@ Requirements:
 router.get('/:reportId/sections', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const reportRow = await get<any>(
@@ -1194,7 +1216,8 @@ router.get('/:reportId/sections', async (req: AuthRequest, res: Response) => {
 router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
     const { sectionType, axisId, areaId, title, content, orderIndex } = req.body || {};
@@ -1252,7 +1275,8 @@ router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
 router.put('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId, sectionId } = req.params;
     const { content, title, saveHistory } = req.body || {};
@@ -1312,7 +1336,8 @@ router.put('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Respo
 router.delete('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId, sectionId } = req.params;
 
     const reportRow = await get<any>(
@@ -1336,7 +1361,8 @@ router.delete('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Re
 router.put('/:reportId/sections/reorder', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
     const { sectionOrder } = req.body || {};
@@ -1370,7 +1396,8 @@ router.put('/:reportId/sections/reorder', async (req: AuthRequest, res: Response
 router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId, sectionId } = req.params;
     const { action, language, customPrompt } = req.body || {};
@@ -1497,7 +1524,8 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
 router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId, sectionId } = req.params;
 
     const reportRow = await get<any>(
@@ -1524,7 +1552,8 @@ router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, re
 router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const { reportId } = req.params;
     const { sectionId, instruction, content } = req.body || {};
@@ -1610,7 +1639,8 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -1665,7 +1695,8 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
     const { name, content } = req.body || {};
 
@@ -1709,7 +1740,8 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
 router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const row = await get<any>(
@@ -1723,9 +1755,11 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
     // Best-effort cascade
     await run(`DELETE FROM assessment_report_section_history WHERE report_id = ?`, [
       reportId,
-    ]).catch(() => {});
+    ]).catch((err: unknown) =>
+      logger.warn('[AssessmentReports] cascade delete section_history failed', err)
+    );
     await run(`DELETE FROM assessment_report_sections WHERE report_id = ?`, [reportId]).catch(
-      () => {}
+      (err: unknown) => logger.warn('[AssessmentReports] cascade delete sections failed', err)
     );
 
     await run(`DELETE FROM assessment_reports WHERE id = ? AND organization_id = ?`, [
@@ -1738,7 +1772,9 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
       await run(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
         builderReportId,
         organizationId,
-      ]).catch(() => {});
+      ]).catch((err: unknown) =>
+        logger.warn('[AssessmentReports] cascade delete builder report failed', err)
+      );
     }
 
     return res.json({ success: true });
@@ -1755,7 +1791,8 @@ router.post('/:reportId/finalize', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
 
@@ -2054,7 +2091,8 @@ router.get('/:reportId/export/pdf', async (_req: AuthRequest, res: Response) => 
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(_req, res);
+    if (!organizationId) return;
     const { reportId } = _req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -2091,7 +2129,8 @@ router.get('/:reportId/export/pptx', async (_req: AuthRequest, res: Response) =>
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(_req, res);
+    if (!organizationId) return;
     const { reportId } = _req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -2131,7 +2170,8 @@ router.get('/:reportId/export/excel', async (_req: AuthRequest, res: Response) =
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(_req, res);
+    if (!organizationId) return;
     const { reportId } = _req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -2191,7 +2231,8 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
     const language = (req.query?.language as string) === 'pl' ? 'pl' : 'en';
 

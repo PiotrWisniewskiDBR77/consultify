@@ -10,23 +10,18 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  all as dbAll,
-  get as dbGet,
-  run as dbRun,
-  tableExists,
-} from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun, tableExists } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import {
-  P14_SEMANTIC_OBJECTS,
-  P14_VALIDATION_RULES,
+  isValidMessageFlow,
+  isValidSemanticObject,
   P14_DEGRADED_SCENARIOS,
+  P14_SEMANTIC_OBJECTS,
   P14_TOOLBELT,
+  P14_VALIDATION_RULES,
   type ProcessFlowSemanticObject,
   type ProcessFlowTool,
   validateSemanticRule,
-  isValidSemanticObject,
-  isValidMessageFlow,
 } from './processFlowCanon.js';
 
 const LOG_PREFIX = '[P14-ProcessFlowService]';
@@ -127,7 +122,17 @@ export interface AIProposal {
 }
 
 export interface AIProposalOperation {
-  op: 'create_node' | 'update_label' | 'connect' | 'reconnect' | 'delete_node' | 'delete_edge' | 'move_node' | 'set_gateway_kind' | 'set_lane' | 'auto_layout';
+  op:
+    | 'create_node'
+    | 'update_label'
+    | 'connect'
+    | 'reconnect'
+    | 'delete_node'
+    | 'delete_edge'
+    | 'move_node'
+    | 'set_gateway_kind'
+    | 'set_lane'
+    | 'auto_layout';
   target_id?: string;
   params?: Record<string, unknown>;
 }
@@ -222,7 +227,8 @@ function mapNodeRow(row: NodeRow): ProcessFlowNode {
     parent_subprocess_id: row.parent_subprocess_id,
     position_x: Number(row.position_x) || 0,
     position_y: Number(row.position_y) || 0,
-    gateway_kind: row.gateway_kind === 'xor' || row.gateway_kind === 'and' ? row.gateway_kind : null,
+    gateway_kind:
+      row.gateway_kind === 'xor' || row.gateway_kind === 'and' ? row.gateway_kind : null,
     metadata: parseMetadata(row.metadata),
     created_at: toTimestamp(row.created_at),
     updated_at: toTimestamp(row.updated_at),
@@ -249,24 +255,39 @@ function opResult(
   operation: string,
   node_id: string | null,
   edge_id: string | null,
-  extra?: { error?: string; error_code?: string },
+  extra?: { error?: string; error_code?: string }
 ): ProcessFlowOperationResult {
-  return { success, operation, node_id, edge_id, error: extra?.error, error_code: extra?.error_code };
+  return {
+    success,
+    operation,
+    node_id,
+    edge_id,
+    error: extra?.error,
+    error_code: extra?.error_code,
+  };
 }
 
 async function nodesTableReady(): Promise<boolean> {
-  try { return await tableExists('v8_process_flow_nodes'); } catch { return false; }
+  try {
+    return await tableExists('v8_process_flow_nodes');
+  } catch {
+    return false;
+  }
 }
 
 async function edgesTableReady(): Promise<boolean> {
-  try { return await tableExists('v8_process_flow_edges'); } catch { return false; }
+  try {
+    return await tableExists('v8_process_flow_edges');
+  } catch {
+    return false;
+  }
 }
 
 async function loadNodes(processId: string, orgId: string): Promise<ProcessFlowNode[]> {
   const rows = await dbAll<NodeRow>(
     `SELECT * FROM ${NODES_TABLE} WHERE process_id = $1 AND organization_id = $2 ORDER BY created_at ASC`,
     [processId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
   return rows.map(mapNodeRow);
 }
@@ -275,16 +296,12 @@ async function loadEdges(processId: string, orgId: string): Promise<ProcessFlowE
   const rows = await dbAll<EdgeRow>(
     `SELECT * FROM ${EDGES_TABLE} WHERE process_id = $1 AND organization_id = $2 ORDER BY created_at ASC`,
     [processId, orgId],
-    { fallback: true },
+    { fallback: true }
   );
   return rows.map(mapEdgeRow);
 }
 
-function countNestingDepth(
-  nodeId: string | null,
-  nodes: ProcessFlowNode[],
-  depth = 0,
-): number {
+function countNestingDepth(nodeId: string | null, nodes: ProcessFlowNode[], depth = 0): number {
   if (!nodeId || depth > MAX_NESTING + 1) return depth;
   const node = nodes.find((n) => n.id === nodeId);
   if (!node || !node.parent_subprocess_id) return depth;
@@ -297,11 +314,13 @@ function countNestingDepth(
 
 export async function getProcessObjects(
   processId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ProcessFlowNodesResult> {
   const nReady = await nodesTableReady();
   if (!nReady) {
-    logger.warn(`${LOG_PREFIX} v8_process_flow_nodes missing; returning empty graph`, { processId });
+    logger.warn(`${LOG_PREFIX} v8_process_flow_nodes missing; returning empty graph`, {
+      processId,
+    });
     return { nodes: [], edges: [], degraded: true };
   }
   const nodes = await loadNodes(processId, organizationId);
@@ -325,7 +344,7 @@ export async function createNode(
     position_x?: number;
     position_y?: number;
     gateway_kind?: string | null;
-  },
+  }
 ): Promise<ProcessFlowOperationResult> {
   if (!isValidSemanticObject(params.object_type)) {
     return opResult(false, 'create_node', null, null, {
@@ -369,7 +388,8 @@ export async function createNode(
   }
 
   const id = uuidv4();
-  const gk = params.gateway_kind === 'xor' || params.gateway_kind === 'and' ? params.gateway_kind : null;
+  const gk =
+    params.gateway_kind === 'xor' || params.gateway_kind === 'and' ? params.gateway_kind : null;
 
   const runRes = await dbRun(
     `INSERT INTO ${NODES_TABLE}
@@ -377,17 +397,27 @@ export async function createNode(
        parent_subprocess_id, position_x, position_y, gateway_kind, metadata, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULL, NOW(), NOW())`,
     [
-      id, processId, organizationId, params.object_type, label || '',
-      params.lane_id ?? null, params.pool_id ?? null,
+      id,
+      processId,
+      organizationId,
+      params.object_type,
+      label || '',
+      params.lane_id ?? null,
+      params.pool_id ?? null,
       params.parent_subprocess_id ?? null,
-      params.position_x ?? 0, params.position_y ?? 0, gk,
+      params.position_x ?? 0,
+      params.position_y ?? 0,
+      gk,
     ],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success) {
     logger.warn(`${LOG_PREFIX} createNode failed`, { processId, error: runRes.error });
-    return opResult(false, 'create_node', null, null, { error: runRes.error || 'Insert failed', error_code: 'DB_ERROR' });
+    return opResult(false, 'create_node', null, null, {
+      error: runRes.error || 'Insert failed',
+      error_code: 'DB_ERROR',
+    });
   }
 
   return opResult(true, 'create_node', id, null);
@@ -400,21 +430,27 @@ export async function createNode(
 export async function updateNodeLabel(
   nodeId: string,
   organizationId: string,
-  newLabel: string,
+  newLabel: string
 ): Promise<ProcessFlowOperationResult> {
   const label = (newLabel || '').trim();
   if (!label) {
-    return opResult(false, 'update_label', nodeId, null, { error: 'Label is required', error_code: 'INVALID_LABEL' });
+    return opResult(false, 'update_label', nodeId, null, {
+      error: 'Label is required',
+      error_code: 'INVALID_LABEL',
+    });
   }
 
   const runRes = await dbRun(
     `UPDATE ${NODES_TABLE} SET label = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
     [label, nodeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'update_label', nodeId, null, { error: 'Node not found or update failed', error_code: runRes.changes === 0 ? 'NOT_FOUND' : 'DB_ERROR' });
+    return opResult(false, 'update_label', nodeId, null, {
+      error: 'Node not found or update failed',
+      error_code: runRes.changes === 0 ? 'NOT_FOUND' : 'DB_ERROR',
+    });
   }
 
   return opResult(true, 'update_label', nodeId, null);
@@ -427,17 +463,20 @@ export async function updateNodeLabel(
 export async function moveNode(
   nodeId: string,
   organizationId: string,
-  position: { x: number; y: number },
+  position: { x: number; y: number }
 ): Promise<ProcessFlowOperationResult> {
   const runRes = await dbRun(
     `UPDATE ${NODES_TABLE} SET position_x = $1, position_y = $2, updated_at = NOW()
      WHERE id = $3 AND organization_id = $4`,
     [position.x, position.y, nodeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'move_node', nodeId, null, { error: 'Node not found or move failed', error_code: 'NOT_FOUND' });
+    return opResult(false, 'move_node', nodeId, null, {
+      error: 'Node not found or move failed',
+      error_code: 'NOT_FOUND',
+    });
   }
 
   return opResult(true, 'move_node', nodeId, null);
@@ -449,25 +488,28 @@ export async function moveNode(
 
 export async function deleteNode(
   nodeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ProcessFlowOperationResult> {
   const edgesOk = await edgesTableReady();
   if (edgesOk) {
     await dbRun(
       `DELETE FROM ${EDGES_TABLE} WHERE (source_node_id = $1 OR target_node_id = $1) AND organization_id = $2`,
       [nodeId, organizationId],
-      { fallback: true },
+      { fallback: true }
     );
   }
 
   const runRes = await dbRun(
     `DELETE FROM ${NODES_TABLE} WHERE id = $1 AND organization_id = $2`,
     [nodeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'delete_node', nodeId, null, { error: 'Node not found', error_code: 'NOT_FOUND' });
+    return opResult(false, 'delete_node', nodeId, null, {
+      error: 'Node not found',
+      error_code: 'NOT_FOUND',
+    });
   }
 
   return opResult(true, 'delete_node', nodeId, null);
@@ -485,26 +527,43 @@ export async function createEdge(
     source_node_id: string;
     target_node_id: string;
     label?: string | null;
-  },
+  }
 ): Promise<ProcessFlowOperationResult> {
   const edgeType = params.edge_type === 'message_flow' ? 'message_flow' : 'sequence_flow';
 
   const tableOk = await edgesTableReady();
   if (!tableOk) {
-    return opResult(false, 'connect', null, null, { error: 'Edge storage is not available', error_code: 'TABLE_MISSING' });
+    return opResult(false, 'connect', null, null, {
+      error: 'Edge storage is not available',
+      error_code: 'TABLE_MISSING',
+    });
   }
 
   if (edgeType === 'message_flow') {
     const [src, tgt] = await Promise.all([
-      dbGet<NodeRow>(`SELECT pool_id FROM ${NODES_TABLE} WHERE id = $1 AND organization_id = $2`, [params.source_node_id, organizationId], { fallback: true }),
-      dbGet<NodeRow>(`SELECT pool_id FROM ${NODES_TABLE} WHERE id = $1 AND organization_id = $2`, [params.target_node_id, organizationId], { fallback: true }),
+      dbGet<NodeRow>(
+        `SELECT pool_id FROM ${NODES_TABLE} WHERE id = $1 AND organization_id = $2`,
+        [params.source_node_id, organizationId],
+        { fallback: true }
+      ),
+      dbGet<NodeRow>(
+        `SELECT pool_id FROM ${NODES_TABLE} WHERE id = $1 AND organization_id = $2`,
+        [params.target_node_id, organizationId],
+        { fallback: true }
+      ),
     ]);
     if (!src || !tgt) {
-      return opResult(false, 'connect', null, null, { error: 'Source or target node not found', error_code: 'NOT_FOUND' });
+      return opResult(false, 'connect', null, null, {
+        error: 'Source or target node not found',
+        error_code: 'NOT_FOUND',
+      });
     }
     const mfCheck = isValidMessageFlow(src.pool_id, tgt.pool_id);
     if (!mfCheck.valid) {
-      return opResult(false, 'connect', null, null, { error: mfCheck.error!, error_code: 'INVALID_MESSAGE_FLOW' });
+      return opResult(false, 'connect', null, null, {
+        error: mfCheck.error!,
+        error_code: 'INVALID_MESSAGE_FLOW',
+      });
     }
   }
 
@@ -513,12 +572,23 @@ export async function createEdge(
     `INSERT INTO ${EDGES_TABLE}
       (id, process_id, organization_id, edge_type, source_node_id, target_node_id, label, metadata, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NOW(), NOW())`,
-    [id, processId, organizationId, edgeType, params.source_node_id, params.target_node_id, params.label ?? null],
-    { fallback: true },
+    [
+      id,
+      processId,
+      organizationId,
+      edgeType,
+      params.source_node_id,
+      params.target_node_id,
+      params.label ?? null,
+    ],
+    { fallback: true }
   );
 
   if (!runRes.success) {
-    return opResult(false, 'connect', null, null, { error: runRes.error || 'Insert failed', error_code: 'DB_ERROR' });
+    return opResult(false, 'connect', null, null, {
+      error: runRes.error || 'Insert failed',
+      error_code: 'DB_ERROR',
+    });
   }
 
   return opResult(true, 'connect', null, id);
@@ -530,16 +600,19 @@ export async function createEdge(
 
 export async function deleteEdge(
   edgeId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ProcessFlowOperationResult> {
   const runRes = await dbRun(
     `DELETE FROM ${EDGES_TABLE} WHERE id = $1 AND organization_id = $2`,
     [edgeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'delete_edge', null, edgeId, { error: 'Edge not found', error_code: 'NOT_FOUND' });
+    return opResult(false, 'delete_edge', null, edgeId, {
+      error: 'Edge not found',
+      error_code: 'NOT_FOUND',
+    });
   }
 
   return opResult(true, 'delete_edge', null, edgeId);
@@ -552,16 +625,19 @@ export async function deleteEdge(
 export async function updateEdgeLabel(
   edgeId: string,
   organizationId: string,
-  newLabel: string,
+  newLabel: string
 ): Promise<ProcessFlowOperationResult> {
   const runRes = await dbRun(
     `UPDATE ${EDGES_TABLE} SET label = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
     [newLabel, edgeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'update_label', null, edgeId, { error: 'Edge not found or update failed', error_code: 'NOT_FOUND' });
+    return opResult(false, 'update_label', null, edgeId, {
+      error: 'Edge not found or update failed',
+      error_code: 'NOT_FOUND',
+    });
   }
 
   return opResult(true, 'update_label', null, edgeId);
@@ -573,7 +649,7 @@ export async function updateEdgeLabel(
 
 export async function validateProcess(
   processId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ValidationResult> {
   const nodes = await loadNodes(processId, organizationId);
   const edges = await loadEdges(processId, organizationId);
@@ -583,8 +659,12 @@ export async function validateProcess(
 
   // Layer 1: semantic_first
   for (const node of nodes) {
-    const incoming = edges.filter((e) => e.target_node_id === node.id && e.edge_type === 'sequence_flow').length;
-    const outgoing = edges.filter((e) => e.source_node_id === node.id && e.edge_type === 'sequence_flow').length;
+    const incoming = edges.filter(
+      (e) => e.target_node_id === node.id && e.edge_type === 'sequence_flow'
+    ).length;
+    const outgoing = edges.filter(
+      (e) => e.source_node_id === node.id && e.edge_type === 'sequence_flow'
+    ).length;
     const semResult = validateSemanticRule(node.object_type, incoming, outgoing);
     for (const err of semResult.errors) {
       errors.push({ layer: 'semantic_first', object_id: node.id, rule: err, message: err });
@@ -663,7 +743,12 @@ export async function validateProcess(
     connectedIds.add(e.target_node_id);
   }
   for (const node of nodes) {
-    if (!connectedIds.has(node.id) && node.object_type !== 'annotation' && node.object_type !== 'lane' && node.object_type !== 'pool') {
+    if (
+      !connectedIds.has(node.id) &&
+      node.object_type !== 'annotation' &&
+      node.object_type !== 'lane' &&
+      node.object_type !== 'pool'
+    ) {
       warnings.push({
         layer: 'structural_bounded',
         object_id: node.id,
@@ -732,9 +817,13 @@ export async function validateProcess(
   const hasSemanticErrors = errors.some((e) => e.layer === 'semantic_first');
   const hasStructuralErrors = errors.some((e) => e.layer === 'structural_bounded');
   const layer: ValidationResult['layer'] =
-    hasSemanticErrors && hasStructuralErrors ? 'both' :
-    hasSemanticErrors ? 'semantic_first' :
-    hasStructuralErrors ? 'structural_bounded' : 'both';
+    hasSemanticErrors && hasStructuralErrors
+      ? 'both'
+      : hasSemanticErrors
+        ? 'semantic_first'
+        : hasStructuralErrors
+          ? 'structural_bounded'
+          : 'both';
 
   return { valid: errors.length === 0, layer, errors, warnings };
 }
@@ -745,7 +834,7 @@ export async function validateProcess(
 
 export async function semanticReadback(
   processId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<ReadbackResult> {
   const nodes = await loadNodes(processId, organizationId);
   const edges = await loadEdges(processId, organizationId);
@@ -779,7 +868,9 @@ export async function semanticReadback(
     const node = nodes.find((n) => n.id === nodeId);
     if (!node) return null;
 
-    const outEdges = edges.filter((e) => e.source_node_id === nodeId && e.edge_type === 'sequence_flow');
+    const outEdges = edges.filter(
+      (e) => e.source_node_id === nodeId && e.edge_type === 'sequence_flow'
+    );
 
     if (node.object_type === 'start_event') {
       const step: ReadbackStep = { type: 'start', id: node.id, label: node.label || 'Start' };
@@ -800,7 +891,11 @@ export async function semanticReadback(
       }
       const step: ReadbackStep = { type: 'step', id: node.id, label: node.label || '[unlabeled]' };
       if (outEdges.length > 0) {
-        step.branches = [outEdges.map((e) => traverse(e.target_node_id, depth + 1)).filter(Boolean) as ReadbackStep[]];
+        step.branches = [
+          outEdges
+            .map((e) => traverse(e.target_node_id, depth + 1))
+            .filter(Boolean) as ReadbackStep[],
+        ];
       }
       return step;
     }
@@ -825,7 +920,9 @@ export async function semanticReadback(
     }
 
     if (node.object_type === 'parallel_gateway') {
-      const incoming = edges.filter((e) => e.target_node_id === nodeId && e.edge_type === 'sequence_flow');
+      const incoming = edges.filter(
+        (e) => e.target_node_id === nodeId && e.edge_type === 'sequence_flow'
+      );
       const isJoin = incoming.length > 1 && outEdges.length <= 1;
       const step: ReadbackStep = {
         type: isJoin ? 'parallel_join' : 'parallel_split',
@@ -841,7 +938,11 @@ export async function semanticReadback(
 
     const step: ReadbackStep = { type: 'step', id: node.id, label: node.label || node.object_type };
     if (outEdges.length > 0) {
-      step.branches = [outEdges.map((e) => traverse(e.target_node_id, depth + 1)).filter(Boolean) as ReadbackStep[]];
+      step.branches = [
+        outEdges
+          .map((e) => traverse(e.target_node_id, depth + 1))
+          .filter(Boolean) as ReadbackStep[],
+      ];
     }
     return step;
   }
@@ -863,7 +964,7 @@ export async function semanticReadback(
 export async function exportProcess(
   processId: string,
   organizationId: string,
-  format: 'json' | 'readback',
+  format: 'json' | 'readback'
 ): Promise<ExportResult> {
   const nodes = await loadNodes(processId, organizationId);
   const edges = await loadEdges(processId, organizationId);
@@ -882,8 +983,10 @@ export async function exportProcess(
       else if (step.type === 'end') lines.push(`${pad}■ END: ${step.label}`);
       else if (step.type === 'step') lines.push(`${pad}→ Step [${step.id}]: ${step.label}`);
       else if (step.type === 'decision') lines.push(`${pad}◇ Decision [${step.id}]: ${step.label}`);
-      else if (step.type === 'parallel_split') lines.push(`${pad}║ Parallel split [${step.id}]: ${step.label}`);
-      else if (step.type === 'parallel_join') lines.push(`${pad}║ Parallel join [${step.id}]: ${step.label}`);
+      else if (step.type === 'parallel_split')
+        lines.push(`${pad}║ Parallel split [${step.id}]: ${step.label}`);
+      else if (step.type === 'parallel_join')
+        lines.push(`${pad}║ Parallel join [${step.id}]: ${step.label}`);
       else if (step.type === 'warning') lines.push(`${pad}⚠ ${step.label}`);
 
       if (step.branches) {
@@ -929,7 +1032,7 @@ export function createAIProposal(
     after_readback: string;
     validation_report: ValidationResult;
     risk_flags: { destructive_count: number; branch_changes: number };
-  },
+  }
 ): AIProposal {
   const id = uuidv4();
   const proposal: StoredAIProposal = {
@@ -946,24 +1049,43 @@ export function createAIProposal(
     created_at: new Date().toISOString(),
   };
   aiProposalStore.set(id, proposal);
-  logger.info(`${LOG_PREFIX} AI proposal created`, { id, processId, ops: params.operations.length });
+  logger.info(`${LOG_PREFIX} AI proposal created`, {
+    id,
+    processId,
+    ops: params.operations.length,
+  });
   return proposal;
 }
 
-export function getAIProposal(proposalId: string): AIProposal | null {
-  return aiProposalStore.get(proposalId) ?? null;
+export function getAIProposal(proposalId: string, organizationId: string): AIProposal | null {
+  const proposal = aiProposalStore.get(proposalId);
+  if (!proposal || proposal.organization_id !== organizationId) {
+    return null;
+  }
+  return proposal;
 }
 
 export async function resolveAIProposal(
   proposalId: string,
   action: 'accept' | 'reject',
-): Promise<{ success: boolean; proposal?: AIProposal; applied_count?: number; error?: string; error_code?: string }> {
+  organizationId: string
+): Promise<{
+  success: boolean;
+  proposal?: AIProposal;
+  applied_count?: number;
+  error?: string;
+  error_code?: string;
+}> {
   const proposal = aiProposalStore.get(proposalId);
-  if (!proposal) {
+  if (!proposal || proposal.organization_id !== organizationId) {
     return { success: false, error: 'Proposal not found', error_code: 'PROPOSAL_NOT_FOUND' };
   }
   if (proposal.status !== 'pending') {
-    return { success: false, error: `Proposal already ${proposal.status}`, error_code: 'INVALID_STATE' };
+    return {
+      success: false,
+      error: `Proposal already ${proposal.status}`,
+      error_code: 'INVALID_STATE',
+    };
   }
 
   if (action === 'reject') {
@@ -986,7 +1108,11 @@ export async function resolveAIProposal(
         });
         if (res.success) applied++;
       } else if (op.op === 'update_label' && op.target_id && op.params?.label) {
-        const res = await updateNodeLabel(op.target_id, proposal.organization_id, op.params.label as string);
+        const res = await updateNodeLabel(
+          op.target_id,
+          proposal.organization_id,
+          op.params.label as string
+        );
         if (res.success) applied++;
       } else if (op.op === 'connect' && op.params) {
         const res = await createEdge(proposal.process_id, proposal.organization_id, {
@@ -1012,7 +1138,12 @@ export async function resolveAIProposal(
     } catch (err) {
       logger.warn(`${LOG_PREFIX} AI proposal op failed`, { proposalId, op: op.op, error: err });
       proposal.status = 'rejected';
-      return { success: false, proposal, error: 'Apply failed — atomic rollback', error_code: 'APPLY_FAILED' };
+      return {
+        success: false,
+        proposal,
+        error: 'Apply failed — atomic rollback',
+        error_code: 'APPLY_FAILED',
+      };
     }
   }
 
@@ -1026,7 +1157,7 @@ export async function resolveAIProposal(
 
 export async function getDegradedState(
   processId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<DegradedState> {
   const nReady = await nodesTableReady();
   if (!nReady) {
@@ -1037,7 +1168,8 @@ export async function getDegradedState(
   const nodes = await loadNodes(processId, organizationId);
   if (nodes.length > MAX_OBJECTS) {
     const s = P14_DEGRADED_SCENARIOS.find((d) => d.scenario.includes('object limit'));
-    if (s) return { degraded: true, scenario: s.scenario, posture: s.posture, recovery: s.recovery };
+    if (s)
+      return { degraded: true, scenario: s.scenario, posture: s.posture, recovery: s.recovery };
   }
 
   return { degraded: false, scenario: null, posture: null, recovery: null };
@@ -1050,17 +1182,20 @@ export async function getDegradedState(
 export async function setGatewayKind(
   nodeId: string,
   organizationId: string,
-  kind: 'xor' | 'and',
+  kind: 'xor' | 'and'
 ): Promise<ProcessFlowOperationResult> {
   const runRes = await dbRun(
     `UPDATE ${NODES_TABLE} SET gateway_kind = $1, updated_at = NOW()
      WHERE id = $2 AND organization_id = $3 AND (object_type = 'decision_gateway' OR object_type = 'parallel_gateway')`,
     [kind, nodeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'set_gateway_kind', nodeId, null, { error: 'Gateway not found or update failed', error_code: 'NOT_FOUND' });
+    return opResult(false, 'set_gateway_kind', nodeId, null, {
+      error: 'Gateway not found or update failed',
+      error_code: 'NOT_FOUND',
+    });
   }
 
   return opResult(true, 'set_gateway_kind', nodeId, null);
@@ -1073,16 +1208,19 @@ export async function setGatewayKind(
 export async function setLane(
   nodeId: string,
   organizationId: string,
-  laneId: string | null,
+  laneId: string | null
 ): Promise<ProcessFlowOperationResult> {
   const runRes = await dbRun(
     `UPDATE ${NODES_TABLE} SET lane_id = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
     [laneId, nodeId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!runRes.success || !runRes.changes) {
-    return opResult(false, 'set_lane', nodeId, null, { error: 'Node not found or update failed', error_code: 'NOT_FOUND' });
+    return opResult(false, 'set_lane', nodeId, null, {
+      error: 'Node not found or update failed',
+      error_code: 'NOT_FOUND',
+    });
   }
 
   return opResult(true, 'set_lane', nodeId, null);

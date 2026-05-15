@@ -532,7 +532,10 @@ async function listOneDriveFiles(source: CloudSource, folderId?: string): Promis
   }));
 }
 
-async function downloadOneDriveFile(source: CloudSource, fileId: string): Promise<CloudDownloadResult> {
+async function downloadOneDriveFile(
+  source: CloudSource,
+  fileId: string
+): Promise<CloudDownloadResult> {
   if (!source.accessToken) throw new Error('OneDrive access token not configured');
 
   const metaResp = await fetch(
@@ -600,7 +603,10 @@ async function listDropboxFiles(source: CloudSource, folderId?: string): Promise
   }));
 }
 
-async function downloadDropboxFile(source: CloudSource, fileId: string): Promise<CloudDownloadResult> {
+async function downloadDropboxFile(
+  source: CloudSource,
+  fileId: string
+): Promise<CloudDownloadResult> {
   if (!source.accessToken) throw new Error('Dropbox access token not configured');
 
   const response = await fetch('https://content.dropboxapi.com/2/files/download', {
@@ -623,7 +629,9 @@ async function downloadDropboxFile(source: CloudSource, fileId: string): Promise
         fileName = parsed.name;
         mimeType = guessMimeType(parsed.name);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -698,24 +706,29 @@ export async function processImportJob(jobId: string, organizationId: string): P
   const job = await getImportJob(jobId, organizationId);
   if (!job) throw new Error('Import job not found');
 
-  await db.run(
-    `UPDATE cloud_import_jobs SET status = 'downloading', progress = 10 WHERE id = ?`,
-    [jobId]
-  );
+  await db.run(`UPDATE cloud_import_jobs SET status = 'downloading', progress = 10 WHERE id = ?`, [
+    jobId,
+  ]);
 
   try {
     const downloaded = await downloadCloudFile(job.cloudSourceId, organizationId, job.filePath);
 
-    await db.run(
-      `UPDATE cloud_import_jobs SET status = 'processing', progress = 50 WHERE id = ?`,
-      [jobId]
-    );
+    await db.run(`UPDATE cloud_import_jobs SET status = 'processing', progress = 50 WHERE id = ?`, [
+      jobId,
+    ]);
 
     const textContent = downloaded.content.toString('utf-8').slice(0, 500_000);
 
     await db.run(
       `UPDATE cloud_import_jobs SET status = 'completed', progress = 100, result = ?, completed_at = NOW() WHERE id = ?`,
-      [JSON.stringify({ fileName: downloaded.fileName, mimeType: downloaded.mimeType, textLength: textContent.length }), jobId]
+      [
+        JSON.stringify({
+          fileName: downloaded.fileName,
+          mimeType: downloaded.mimeType,
+          textLength: textContent.length,
+        }),
+        jobId,
+      ]
     );
 
     logger.info(`[CloudData] Import job ${jobId} completed: ${downloaded.fileName}`);

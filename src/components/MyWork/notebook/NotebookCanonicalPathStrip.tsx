@@ -1,4 +1,12 @@
-import { ArrowRight, CheckCircle2, FileOutput, Paperclip, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileOutput,
+  Lightbulb,
+  Paperclip,
+  Radar,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 
 interface NotebookCanonicalPathStripProps {
@@ -10,6 +18,8 @@ interface NotebookCanonicalPathStripProps {
   onCreateAIProposal: () => void;
   onReviewAIProposal: () => void;
   onConvert: () => void;
+  onHandoffRadar?: () => void;
+  onHandoffInitiatives?: () => void;
 }
 
 export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProps> = ({
@@ -21,6 +31,8 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
   onCreateAIProposal,
   onReviewAIProposal,
   onConvert,
+  onHandoffRadar,
+  onHandoffInitiatives,
 }) => {
   return (
     <div className="mt-3 rounded-2xl border border-indigo-200/70 bg-indigo-50/80 px-3 py-3 dark:border-indigo-500/20 dark:bg-indigo-500/10">
@@ -55,14 +67,20 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
         <WorkflowStep
           icon={<Paperclip size={13} />}
           title={isPolish ? '1. Dodaj źródła' : '1. Add sources'}
-          helper={isPolish ? 'Załącz pliki i materiały wejściowe.' : 'Attach files and source material.'}
+          helper={
+            isPolish ? 'Załącz pliki i materiały wejściowe.' : 'Attach files and source material.'
+          }
           actionLabel={isPolish ? 'Attachments' : 'Attachments'}
           onClick={onOpenAttachments}
         />
         <WorkflowStep
           icon={<Sparkles size={13} />}
           title={isPolish ? '2. Zrób propozycję AI' : '2. Draft AI proposal'}
-          helper={isPolish ? 'Uruchom AI action plan dla tej notatki.' : 'Run an AI action-plan proposal for this note.'}
+          helper={
+            isPolish
+              ? 'Uruchom AI action plan dla tej notatki.'
+              : 'Run an AI action-plan proposal for this note.'
+          }
           actionLabel={isPolish ? 'AI proposal' : 'AI proposal'}
           onClick={onCreateAIProposal}
         />
@@ -85,12 +103,46 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
         <WorkflowStep
           icon={<FileOutput size={13} />}
           title={isPolish ? '4. Konwertuj' : '4. Convert'}
-          helper={canConvertDeliverable ? (isPolish ? 'Konwertuj do raportu, gdy outline jest gotowy.' : 'Convert to a report once the outline is ready.') : convertBlockedReason}
+          helper={
+            canConvertDeliverable
+              ? isPolish
+                ? 'Konwertuj do raportu, gdy outline jest gotowy.'
+                : 'Convert to a report once the outline is ready.'
+              : convertBlockedReason
+          }
           actionLabel={isPolish ? 'To report' : 'To report'}
           onClick={onConvert}
           disabled={!canConvertDeliverable}
         />
       </div>
+
+      {(onHandoffRadar || onHandoffInitiatives) && (
+        <div className="mt-3 flex items-center gap-2 border-t border-indigo-200/50 pt-3 dark:border-indigo-500/15">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600/70 dark:text-indigo-300/60">
+            {isPolish ? 'Przekaż do:' : 'Send to:'}
+          </span>
+          {onHandoffRadar && (
+            <button
+              type="button"
+              onClick={onHandoffRadar}
+              className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-500/20 dark:bg-navy-950/40 dark:text-indigo-300 dark:hover:bg-indigo-500/15"
+            >
+              <Radar size={12} />
+              Radar
+            </button>
+          )}
+          {onHandoffInitiatives && (
+            <button
+              type="button"
+              onClick={onHandoffInitiatives}
+              className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-500/20 dark:bg-navy-950/40 dark:text-indigo-300 dark:hover:bg-indigo-500/15"
+            >
+              <Lightbulb size={12} />
+              {isPolish ? 'Inicjatywy' : 'Initiatives'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

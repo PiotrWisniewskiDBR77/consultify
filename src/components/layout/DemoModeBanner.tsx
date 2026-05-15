@@ -14,7 +14,6 @@ import {
   FlaskConical,
   HelpCircle,
   Lightbulb,
-  Users,
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -33,8 +32,15 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser } = useAppStore();
-  const { isDemoMode, demoOrganization, demoStats, demoHints, isDemoLoading, exitDemoMode } =
-    useDemo();
+  const {
+    isDemoMode,
+    demoExperienceType,
+    demoOrganization,
+    demoStats,
+    demoHints,
+    isDemoLoading,
+    exitDemoMode,
+  } = useDemo();
   const { snapshot, isApproachingLimit } = usePolicySnapshot();
   const approachingAi = isApproachingLimit('aiCalls');
   const approachingTokens = isApproachingLimit('tokens');
@@ -43,6 +49,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
   // Don't show demo banner for SuperAdmin - they have access to all orgs including demo
   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
+  const isWorkspaceDemo = demoExperienceType === 'workspace_demo';
 
   if (!isDemoMode || isSuperAdmin) return null;
 
@@ -54,12 +61,22 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
   return (
     <AnimatePresence>
+      {/*
+       * Feedback #f574311b "Pasek Limitations - wizualnie": previously the
+       * outer banner animated in with `y: -100 → 0` (CSS translate). During
+       * the enter animation the banner is visually offset upwards while
+       * still occupying its layout slot, which made the translated banner
+       * draw on top of the sibling `TrialBanner` below — reproducing the
+       * "bar overlaps bar below" report. Opacity-only entry keeps the
+       * layout stable so the expanded section only pushes content down in
+       * normal document flow and never floats above other bars.
+       */}
       <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -100, opacity: 0 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className={`bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 ${className}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18 }}
+        className={`relative z-0 bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 ${className}`}
       >
         {/* Main Banner Row */}
         <div className="px-4 py-2">
@@ -69,14 +86,16 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5">
                 <FlaskConical className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase">
-                  {t('demo.banner.mode', 'Demo Mode')}
+                  {isWorkspaceDemo
+                    ? t('demo.banner.sampleWorkspace', 'Sample Workspace')
+                    : t('demo.banner.mode', 'Demo Mode')}
                 </span>
               </div>
 
               <div className="hidden sm:flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
                 <span className="font-medium text-sm">
-                  {demoOrganization?.name || 'Atelier ToolToys'}
+                  {demoOrganization?.name || 'Atelier Toys'}
                 </span>
               </div>
 
@@ -99,8 +118,17 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                         : 'bg-navy-800/50 text-slate-400 border-white/5'
                     }`}
+                    title={t('demo.banner.aiUsageTooltip', 'AI calls used today / daily limit')}
                   >
-                    AI: {snapshot.usageToday.aiCalls ?? 0}/{snapshot.limits.maxAICallsPerDay ?? 10}
+                    {/*
+                      Feedback #a26d96f3: the old "AI: 25/25" label was read by
+                      users as "25 remaining of 25", so they assumed they still
+                      had quota while the chat was actually blocked. Show the
+                      direction explicitly with a "used" suffix and keep the
+                      tooltip for the full explanation.
+                    */}
+                    {t('demo.banner.aiUsageLabel', 'AI')} {snapshot.usageToday.aiCalls ?? 0}/
+                    {snapshot.limits.maxAICallsPerDay ?? 10} {t('demo.banner.used', 'used')}
                   </span>
                 )}
                 {snapshot?.limits &&
@@ -112,9 +140,11 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                           : 'bg-navy-800/50 text-slate-400 border-white/5'
                       }`}
+                      title={t('demo.banner.tokenUsageTooltip', 'Tokens used today / daily limit')}
                     >
                       {(snapshot.usageToday.tokensUsed ?? 0) / 1000}k/
-                      {(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k
+                      {(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k{' '}
+                      {t('demo.banner.used', 'used')}
                     </span>
                   )}
               </div>
@@ -122,13 +152,20 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
-              {/* Expand/collapse button */}
+              {/* Expand/collapse button — feedback #b85f5a91 wants a clear
+                   "Limitations" label across all locales. The toggle flips
+                   between "Limitations" / "Ograniczenia" when collapsed and
+                   "Hide" / "Ukryj" when expanded. */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`hidden sm:flex ${buttonSecondaryClass}`}
               >
                 <Lightbulb className="w-3.5 h-3.5" />
-                <span>{t('demo.banner.hints', 'Hints')}</span>
+                <span>
+                  {isExpanded
+                    ? t('demo.banner.hideLimitations', 'Hide')
+                    : t('demo.banner.showLimitations', 'Limitations')}
+                </span>
                 {isExpanded ? (
                   <ChevronUp className="w-3.5 h-3.5" />
                 ) : (
@@ -147,7 +184,11 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                 ) : (
                   <X className="w-4 h-4" />
                 )}
-                <span className="hidden sm:inline">{t('demo.banner.exit', 'Exit Demo')}</span>
+                <span className="hidden sm:inline">
+                  {isWorkspaceDemo
+                    ? t('demo.banner.exitWorkspace', 'Exit Sample Workspace')
+                    : t('demo.banner.exit', 'Exit Demo')}
+                </span>
               </button>
             </div>
           </div>
@@ -176,7 +217,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                             {t('demo.banner.readOnlyTitle', 'Read-only mode')}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {t('demo.banner.readOnlyDesc', 'Changes are not saved')}
+                            {t(
+                              'demo.banner.readOnlyDesc',
+                              'Changes are not saved and the sample can be explored safely'
+                            )}
                           </p>
                         </div>
                       </div>
@@ -186,10 +230,13 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         <Eye className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-slate-200">
-                            {t('demo.banner.exploreTitle', 'Explore features')}
+                            {t('demo.banner.exploreTitle', 'Understand the workflow')}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {t('demo.banner.exploreDesc', 'Browse all modules')}
+                            {t(
+                              'demo.banner.exploreDesc',
+                              'See how dashboards, initiatives, and AI fit together'
+                            )}
                           </p>
                         </div>
                       </div>
@@ -199,11 +246,14 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         <Lightbulb className="w-4 h-4 text-primary-400 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-slate-200">
-                            {t('demo.banner.hintTitle', 'Hint')}
+                            {t('demo.banner.hintTitle', 'What to review next')}
                           </p>
                           <p className="text-slate-400 text-xs">
                             {demoHints?.[0] ||
-                              t('demo.banner.defaultHint', 'Click on initiatives to see details')}
+                              t(
+                                'demo.banner.defaultHint',
+                                'Open one initiative and trace the linked tasks, decisions, and AI context'
+                              )}
                           </p>
                         </div>
                       </div>
@@ -220,13 +270,13 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         <span>{t('demo.banner.help', 'Help')}</span>
                       </button>
 
-                      {/* Partner Program Button */}
+                      {/* Return to workspace */}
                       <button
-                        onClick={() => navigate('/partner')}
+                        onClick={() => void exitDemoMode()}
                         className={`${buttonSecondaryClass} bg-white/10 hover:bg-white/20`}
                       >
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{t('demo.banner.partnerProgram', 'Partner Program')}</span>
+                        <X className="w-3.5 h-3.5" />
+                        <span>{t('demo.banner.backToWorkspace', 'Back to my workspace')}</span>
                       </button>
                     </div>
                   </div>

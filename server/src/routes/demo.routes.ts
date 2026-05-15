@@ -18,6 +18,17 @@ import {
 } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
+  getAtelierToysDemoScenarios,
+  getAtelierToysToolCoverage,
+} from '../services/demo/atelierToysDemoTemplate.js';
+import { normalizeDemoLocale } from '../services/demo/demoLocale.js';
+import {
+  cleanupExpiredDemoSessions,
+  endDemoSession,
+  getActiveDemoSession,
+  resolveOrCreateDemoSession,
+} from '../services/demo/demoSessionService.js';
+import {
   DEMO_TRIAL_EVENT_TYPES,
   recordDemoTrialEvent,
 } from '../services/demoTrialTelemetryService.js';
@@ -37,6 +48,23 @@ function preferredLanguage(raw: string | undefined): string | null {
   return normalized || null;
 }
 
+function getRequestedDemoLocale(req: AuthRequest): 'en' | 'pl' {
+  return normalizeDemoLocale(String(req.get('X-App-Language') || req.get('Accept-Language') || ''));
+}
+
+function getDemoExperienceType(source: string | undefined | null): 'sales_demo' | 'workspace_demo' {
+  const normalized = String(source || '')
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return 'sales_demo';
+  if (normalized.includes('profile_menu') || normalized.includes('workspace')) {
+    return 'workspace_demo';
+  }
+
+  return 'sales_demo';
+}
+
 // Apply rate limiting
 router.use(authRateLimiter);
 
@@ -53,7 +81,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const { enabled } = req.body;
+    const { enabled, source } = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -63,8 +91,12 @@ router.post(
     }
 
     const isDemoEnabled = enabled === true || enabled === 'true' || enabled === 1;
+    const telemetrySource =
+      typeof source === 'string' && source.trim().length > 0 ? source.trim() : 'demo_toggle';
+    const requestedLocale = getRequestedDemoLocale(req);
 
     try {
+      await cleanupExpiredDemoSessions();
       // Save preference to database (non-blocking if storage unavailable)
       try {
         await setUserDemoPreference(userId, isDemoEnabled);
@@ -78,8 +110,16 @@ router.post(
       if (isDemoEnabled) {
         let demoOrganization: any;
         let stats: any;
+        let session: Awaited<ReturnType<typeof resolveOrCreateDemoSession>> | null = null;
+        const demoExperienceType = getDemoExperienceType(telemetrySource);
         try {
-          [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
+          session = await resolveOrCreateDemoSession(userId, telemetrySource, requestedLocale, {
+            restartOnLocaleMismatch: true,
+          });
+          [demoOrganization, stats] = await Promise.all([
+            getDemoOrganization(session.session_org_id),
+            getDemoStats(session.session_org_id),
+          ]);
         } catch (error: any) {
           const message = String(error?.message || error);
           logger.warn('[DemoMode] Demo enable failed:', message);
@@ -95,22 +135,35 @@ router.post(
         const language = preferredLanguage(String(req.get('Accept-Language') || ''));
         await recordDemoTrialEvent({
           eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_ENABLED,
-          organizationId: demoOrganization.id || DEMO_ORG_ID,
+          organizationId: demoOrganization.id || session?.session_org_id || DEMO_ORG_ID,
           userId,
-          source: 'demo_toggle',
+          source: telemetrySource,
           language,
+          metadata: { experienceType: demoExperienceType },
         });
         await recordDemoTrialEvent({
           eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
-          organizationId: demoOrganization.id || DEMO_ORG_ID,
+          organizationId: demoOrganization.id || session?.session_org_id || DEMO_ORG_ID,
           userId,
-          source: 'demo_toggle',
+          source: telemetrySource,
           language,
+          metadata: { experienceType: demoExperienceType },
         });
 
         return res.json({
           success: true,
           isDemoMode: true,
+          demoExperienceType,
+          demoSession: session
+            ? {
+                id: session.id,
+                organizationId: session.session_org_id,
+                locale: session.locale,
+                expiresAt: session.expires_at,
+                anchorDate: session.anchor_date,
+              }
+            : null,
+          demoLocale: session?.locale || requestedLocale,
           demoOrganization: {
             id: demoOrganization.id,
             name: demoOrganization.name || DEMO_ORG_NAME,
@@ -118,21 +171,26 @@ router.post(
             description: demoOrganization.description,
           },
           stats,
+          coverage: getAtelierToysToolCoverage(session?.locale || requestedLocale),
           message: 'Demo mode enabled',
         });
       } else {
+        await endDemoSession(userId);
         logger.info(`[DemoMode] User ${userId} disabled demo mode`);
         await recordDemoTrialEvent({
           eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_DISABLED,
           organizationId: DEMO_ORG_ID,
           userId,
-          source: 'demo_toggle',
+          source: telemetrySource,
           language: preferredLanguage(String(req.get('Accept-Language') || '')),
+          metadata: { experienceType: getDemoExperienceType(telemetrySource) },
         });
 
         return res.json({
           success: true,
           isDemoMode: false,
+          demoExperienceType: getDemoExperienceType(telemetrySource),
+          demoSession: null,
           message: 'Demo mode disabled',
         });
       }
@@ -170,13 +228,20 @@ router.get(
     }
 
     try {
+      await cleanupExpiredDemoSessions();
       const isDemoEnabled = await checkUserDemoPreference(userId);
+      const requestedLocale = getRequestedDemoLocale(req);
 
       if (isDemoEnabled) {
         let demoOrganization: any;
         let stats: any;
+        let session: Awaited<ReturnType<typeof resolveOrCreateDemoSession>> | null = null;
         try {
-          [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
+          session = await resolveOrCreateDemoSession(userId, 'status_refresh', requestedLocale);
+          [demoOrganization, stats] = await Promise.all([
+            getDemoOrganization(session.session_org_id),
+            getDemoStats(session.session_org_id),
+          ]);
         } catch (error: any) {
           const message = String(error?.message || error);
           return res.status(503).json({
@@ -190,6 +255,17 @@ router.get(
         return res.json({
           success: true,
           isDemoMode: true,
+          demoExperienceType: getDemoExperienceType(session?.source || 'status_refresh'),
+          demoSession: session
+            ? {
+                id: session.id,
+                organizationId: session.session_org_id,
+                locale: session.locale,
+                expiresAt: session.expires_at,
+                anchorDate: session.anchor_date,
+              }
+            : null,
+          demoLocale: session?.locale || requestedLocale,
           demoOrganization: {
             id: demoOrganization.id,
             name: demoOrganization.name,
@@ -197,11 +273,14 @@ router.get(
             description: demoOrganization.description,
           },
           stats,
+          coverage: getAtelierToysToolCoverage(session?.locale || requestedLocale),
         });
       } else {
         return res.json({
           success: true,
           isDemoMode: false,
+          demoExperienceType: null,
+          demoSession: null,
         });
       }
     } catch (error: any) {
@@ -229,9 +308,27 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
+      await cleanupExpiredDemoSessions();
+      const session = req.user?.id ? await getActiveDemoSession(req.user.id) : null;
+      const orgId = session?.session_org_id || DEMO_ORG_ID;
+      const locale = session?.locale || getRequestedDemoLocale(req);
+      const [demoOrganization, stats] = await Promise.all([
+        getDemoOrganization(orgId),
+        getDemoStats(orgId),
+      ]);
       return res.json({
         success: true,
+        demoExperienceType: getDemoExperienceType(session?.source || null),
+        demoSession: session
+          ? {
+              id: session.id,
+              organizationId: session.session_org_id,
+              locale: session.locale,
+              expiresAt: session.expires_at,
+              anchorDate: session.anchor_date,
+            }
+          : null,
+        demoLocale: locale,
         organization: {
           id: demoOrganization.id,
           name: demoOrganization.name || DEMO_ORG_NAME,
@@ -239,29 +336,8 @@ router.get(
           description: demoOrganization.description,
         },
         stats,
-        scenarios: [
-          {
-            id: 'executive-overview',
-            title: 'Executive Overview',
-            duration: '8 min',
-            audience: 'C-suite, board members',
-            persona: 'Katarzyna Nowak (Admin)',
-          },
-          {
-            id: 'initiatives-execution',
-            title: 'Deep Dive: Initiatives & Execution',
-            duration: '10 min',
-            audience: 'PMO, program managers',
-            persona: 'Tomasz Kowalski (PMO)',
-          },
-          {
-            id: 'finance-roi',
-            title: 'Deep Dive: Finance & ROI',
-            duration: '8 min',
-            audience: 'CFO, finance team',
-            persona: 'Aleksandra Wiśniewska (CFO)',
-          },
-        ],
+        scenarios: getAtelierToysDemoScenarios(locale),
+        coverage: getAtelierToysToolCoverage(locale),
       });
     } catch (error: any) {
       logger.error('[DemoMode] Error getting demo organization:', error);

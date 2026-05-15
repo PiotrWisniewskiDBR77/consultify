@@ -10,6 +10,7 @@ import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
+import { recordQueryPerformance } from '../utils/queryHelpers.js';
 import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
@@ -55,12 +56,11 @@ async function ensureDatabaseExistsForTests(err: any): Promise<boolean> {
             .includes('permission denied')
         ) {
           testDatabaseOverride = 'postgres';
-          logger.warn(
-            '[Postgres] No permission to create test DB; falling back to postgres database',
-            {
-              requestedDatabase: dbName,
-            }
-          );
+          const log =
+            process.env.NODE_ENV === 'test' ? logger.info.bind(logger) : logger.warn.bind(logger);
+          log('[Postgres] No permission to create test DB; falling back to postgres database', {
+            requestedDatabase: dbName,
+          });
           return true;
         }
         throw e;
@@ -188,7 +188,7 @@ function getPool(): Pool {
     });
 
     pool.on('connect', (client: PoolClient) => {
-      logger.info('[Postgres] Client connected');
+      logger.debug('[Postgres] Client connected');
       client.query('SET search_path TO public, v8').catch((err: Error) => {
         logger.warn('[Postgres] Failed to set search_path:', err.message);
       });
@@ -225,7 +225,7 @@ function getPool(): Pool {
       if (skipSchemaInit) {
         logger.warn('[Postgres] DB_MANAGED_SCHEMA is disabled; skipping initDb()');
       } else if (process.env.NODE_ENV === 'test') {
-        logger.warn('[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)');
+        logger.info('[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)');
       }
       initDbPromise = Promise.resolve();
     }
@@ -277,6 +277,7 @@ async function executeWithLogging<T>(
     const res = await pool.query(sql, safeParams);
 
     const duration = Date.now() - start;
+    recordQueryPerformance(method.toLowerCase(), duration);
     if (duration > SLOW_QUERY_THRESHOLD_MS) {
       logger.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
     }
@@ -296,10 +297,12 @@ async function executeWithLogging<T>(
       const retryPool = poolFn();
       if (initDbPromise) await initDbPromise;
       const res = await retryPool.query(sql, safeParams);
+      recordQueryPerformance(method.toLowerCase(), Date.now() - start);
       return { rows: res.rows as T[], rowCount: res.rowCount };
     }
 
     // Log query error with context
+    recordQueryPerformance(method.toLowerCase(), Date.now() - start);
     logger.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
     logger.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
     throw err;
@@ -367,39 +370,26 @@ function adaptQuery(sql: string): string {
   // Also replace SQLite specific functions if possible
   adapted = adapted.replace(/\?/g, () => `$${paramIndex++}`);
 
+  // Replace pragma_page_count()/pragma_page_size() with PostgreSQL equivalent
+  if (adapted.includes('pragma_page_count') || adapted.includes('pragma_page_size')) {
+    adapted = adapted.replace(
+      /SELECT\s+page_count\s*\*\s*page_size\s+as\s+size\s+FROM\s+pragma_page_count\(\)\s*,\s*pragma_page_size\(\)/gi,
+      'SELECT pg_database_size(current_database()) as size'
+    );
+  }
+
   // Replace datetime('now') and datetime("now") with NOW()
-  adapted = adapted.replace(/datetime\(['"]now['"]\)/g, 'NOW()');
+  adapted = adapted.replace(/datetime\(['"]now['"]\)/gi, 'NOW()');
 
-  // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days'
+  // Generic: datetime('now', '-/+N <unit>') → NOW() -/+ INTERVAL 'N <unit>'
+  // Handles all units: minutes, hours, days, months, years, seconds, etc.
   adapted = adapted.replace(
-    /datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi,
-    (_match, days) => {
-      return `NOW() - INTERVAL '${days} days'`;
-    }
+    /datetime\(['"]now['"],\s*['"]-(\d+)\s+(minutes?|hours?|days?|months?|years?|seconds?)['"]\)/gi,
+    (_match, n, unit) => `NOW() - INTERVAL '${n} ${unit}'`
   );
-
-  // Replace datetime('now', '+N days') with NOW() + INTERVAL 'N days'
   adapted = adapted.replace(
-    /datetime\(['"]now['"],\s*['"]\+(\d+)\s+days?['"]\)/gi,
-    (_match, days) => {
-      return `NOW() + INTERVAL '${days} days'`;
-    }
-  );
-
-  // Replace datetime('now', '-N hours') with NOW() - INTERVAL 'N hours'
-  adapted = adapted.replace(
-    /datetime\(['"]now['"],\s*['"]-(\d+)\s+hours?['"]\)/gi,
-    (_match, hours) => {
-      return `NOW() - INTERVAL '${hours} hours'`;
-    }
-  );
-
-  // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days' (without quotes around interval)
-  adapted = adapted.replace(
-    /datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi,
-    (_match, days) => {
-      return `NOW() - INTERVAL '${days} days'`;
-    }
+    /datetime\(['"]now['"],\s*['"](?:\+)?(\d+)\s+(minutes?|hours?|days?|months?|years?|seconds?)['"]\)/gi,
+    (_match, n, unit) => `NOW() + INTERVAL '${n} ${unit}'`
   );
 
   // Replace datetime(date, '+' || N || ' days') with date + INTERVAL 'N days'
@@ -442,39 +432,34 @@ function adaptQuery(sql: string): string {
     "date_trunc('month', CURRENT_DATE)"
   );
 
-  // Debug: Log if date functions are still present (for troubleshooting)
-  if (adapted.includes("date('now'") || adapted.includes('date("now"')) {
-    logger.warn(
-      '[Postgres] adaptQuery: Date function still present after replacement:',
-      adapted.substring(0, 200)
-    );
-  }
-
   // Replace date('now') with CURRENT_DATE
   adapted = adapted.replace(/date\s*\(\s*['"]now['"]\s*\)/g, 'CURRENT_DATE');
 
   // Replace date(column) with column::date (PostgreSQL cast)
-  // This must come LAST - all date('now', ...) patterns should already be replaced above
-  // Match date(anything) that hasn't been replaced yet (doesn't start with quotes or 'now')
+  // Must come after all date('now', ...) patterns are replaced above
   adapted = adapted.replace(/date\s*\(\s*([^'"]+?)\s*\)/g, (match, content) => {
-    // Skip if it looks like it might be a date('now', ...) pattern that wasn't caught
     if (content.trim().startsWith('now')) {
-      return match; // Don't replace
+      return match;
     }
     return `${content}::date`;
   });
 
   // Replace datetime(column) with just column (PostgreSQL timestamps can be compared directly)
-  // This must come after datetime('now', ...) patterns are replaced
-  // Match datetime(column) where column is not 'now' or a string literal
+  // Must come after datetime('now', ...) patterns are replaced
   adapted = adapted.replace(/datetime\s*\(\s*([^'"]+?)\s*\)/gi, (match, content) => {
-    // Skip if it looks like datetime('now', ...) that wasn't caught
-    if (content.trim().startsWith('now') || content.trim().startsWith('now')) {
-      return match; // Don't replace
+    if (content.trim().startsWith('now')) {
+      return match;
     }
-    // Return just the column/expression - PostgreSQL timestamps can be compared directly
     return content.trim();
   });
+
+  // Debug: warn if SQLite date functions survived all replacements
+  if (/datetime\s*\(/i.test(adapted) || /\bdate\s*\(\s*['"]now/i.test(adapted)) {
+    logger.warn(
+      '[Postgres] adaptQuery: SQLite date function still present after replacement:',
+      adapted.substring(0, 300)
+    );
+  }
 
   // Replace strftime(format, column) with TO_CHAR(column, pg_format)
   adapted = adapted.replace(
@@ -493,8 +478,9 @@ function adaptQuery(sql: string): string {
     }
   );
 
-  // Replace DATETIME column type with TIMESTAMP for PostgreSQL
-  adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
+  // Replace DATETIME column type with TIMESTAMP for PostgreSQL (DDL only, not function calls)
+  // Only match DATETIME when it appears as a type (preceded by space/paren, not followed by '(')
+  adapted = adapted.replace(/\bDATETIME\b(?!\s*\()/gi, 'TIMESTAMP');
 
   // Replace INSERT OR REPLACE with INSERT ... ON CONFLICT DO UPDATE
   // This is complex - we'll handle common cases
@@ -1433,6 +1419,52 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
 
+    await query(`CREATE TABLE IF NOT EXISTS user_preferences(
+                user_id TEXT NOT NULL,
+                key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(user_id, key),
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+    await query(`CREATE TABLE IF NOT EXISTS demo_sessions(
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                base_org_id TEXT NOT NULL,
+                session_org_id TEXT NOT NULL,
+                source TEXT DEFAULT 'demo_toggle',
+                status TEXT DEFAULT 'active',
+                anchor_date TIMESTAMP NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ended_at TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(base_org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(session_org_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_demo_sessions_user_status ON demo_sessions(user_id, status)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_demo_sessions_expires_at ON demo_sessions(expires_at)`
+    );
+
+    await query(`CREATE TABLE IF NOT EXISTS demo_session_tenants(
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                tenant_org_id TEXT NOT NULL,
+                base_org_id TEXT NOT NULL,
+                ttl_expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(session_id) REFERENCES demo_sessions(id) ON DELETE CASCADE,
+                FOREIGN KEY(tenant_org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(base_org_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_demo_session_tenants_ttl ON demo_session_tenants(ttl_expires_at)`
+    );
+
     // 2FA state
     await query(`CREATE TABLE IF NOT EXISTS user_2fa(
                 user_id TEXT PRIMARY KEY,
@@ -2158,6 +2190,7 @@ export async function initDb(): Promise<void> {
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             price_monthly REAL NOT NULL,
+            billing_model TEXT DEFAULT 'subscription',
             token_limit INTEGER,
             storage_limit_gb REAL,
             memory_limit_mb INTEGER,
@@ -2184,6 +2217,7 @@ export async function initDb(): Promise<void> {
       };
 
       await ensurePlanCol('token_limit', 'token_limit INTEGER');
+      await ensurePlanCol('billing_model', `billing_model TEXT DEFAULT 'subscription'`);
       await ensurePlanCol('storage_limit_gb', 'storage_limit_gb REAL');
       await ensurePlanCol('memory_limit_mb', 'memory_limit_mb INTEGER');
       await ensurePlanCol('cpu_quota_percent', 'cpu_quota_percent REAL');
@@ -2285,6 +2319,16 @@ export async function initDb(): Promise<void> {
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL UNIQUE,
             subscription_plan_id TEXT,
+            billing_rail TEXT DEFAULT 'stripe_subscription',
+            contract_status TEXT,
+            contract_type TEXT,
+            renewal_at TIMESTAMP,
+            grace_until TIMESTAMP,
+            access_expires_at TIMESTAMP,
+            external_invoice_ref TEXT,
+            notes TEXT,
+            managed_by_user_id TEXT,
+            is_manual_override INTEGER DEFAULT 0,
             stripe_customer_id TEXT,
             stripe_subscription_id TEXT,
             billing_email TEXT,
@@ -2299,6 +2343,26 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
         )`);
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS billing_rail TEXT DEFAULT 'stripe_subscription'`
+    );
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS contract_status TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS contract_type TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS renewal_at TIMESTAMP`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS grace_until TIMESTAMP`);
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMP`
+    );
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS external_invoice_ref TEXT`
+    );
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS notes TEXT`);
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS managed_by_user_id TEXT`
+    );
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS is_manual_override INTEGER DEFAULT 0`
+    );
 
     // Usage Records
     await query(`CREATE TABLE IF NOT EXISTS usage_records(
@@ -2337,6 +2401,7 @@ export async function initDb(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS invoices(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
+            source TEXT DEFAULT 'stripe',
             stripe_invoice_id TEXT UNIQUE,
             invoice_number TEXT,
             subtotal REAL,
@@ -2360,6 +2425,7 @@ export async function initDb(): Promise<void> {
 
     // Ensure newer invoice fields exist even when table pre-dates them
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_number TEXT`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'stripe'`);
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS subtotal REAL`);
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_amount REAL`);
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS total REAL`);

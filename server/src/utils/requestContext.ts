@@ -7,6 +7,11 @@
  */
 
 import type { Request } from 'express';
+import {
+  normalizeOptionalString,
+  resolveRequestOrganizationId,
+  safeRead,
+} from './requestOrganization.js';
 
 export interface RequestContext {
   userId: string | null;
@@ -25,20 +30,31 @@ export interface RequestContext {
 export const getRequestContext = (req: Request): RequestContext => {
   // Depending on auth middleware, user info might be in req.user or req.session.user
   const anyReq = req as any;
-  const user = anyReq.user || (anyReq.session && anyReq.session.user) || {};
+  const requestUser = safeRead(() => anyReq.user, undefined) || safeRead(() => anyReq.session?.user, undefined);
+  const userId =
+    normalizeOptionalString(safeRead(() => anyReq.userId, null)) ||
+    normalizeOptionalString(safeRead(() => requestUser?.id, null));
+  const orgId = resolveRequestOrganizationId(req as Request);
+  const role =
+    normalizeOptionalString(safeRead(() => anyReq.userRole, null)) ||
+    normalizeOptionalString(safeRead(() => requestUser?.role, null)) ||
+    'GUEST';
 
   return {
-    userId: user.id || null,
-    orgId: user.organization_id || user.organizationId || null,
-    role: user.role || 'GUEST',
-    ip: req.ip || anyReq.connection?.remoteAddress || 'unknown',
-    userAgent: req.get('User-Agent') || 'unknown',
-    method: req.method,
-    path: req.path,
+    userId,
+    orgId,
+    role,
+    ip:
+      normalizeOptionalString(safeRead(() => req.ip, null)) ||
+      normalizeOptionalString(safeRead(() => anyReq.connection?.remoteAddress, null)) ||
+      'unknown',
+    userAgent: normalizeOptionalString(safeRead(() => req.get('User-Agent'), null)) || 'unknown',
+    method: normalizeOptionalString(safeRead(() => req.method, null)) || 'unknown',
+    path: normalizeOptionalString(safeRead(() => req.path, null)) || 'unknown',
     requestId:
-      anyReq.correlationId ||
-      (req.get('X-Correlation-ID') as string) ||
-      (req.get('X-Request-Id') as string) ||
+      normalizeOptionalString(safeRead(() => anyReq.correlationId, null)) ||
+      normalizeOptionalString(safeRead(() => req.get('X-Correlation-ID') as string, null)) ||
+      normalizeOptionalString(safeRead(() => req.get('X-Request-Id') as string, null)) ||
       'none',
   };
 };

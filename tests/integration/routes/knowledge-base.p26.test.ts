@@ -216,4 +216,77 @@ describe('P26-B: Knowledge Base — Collections, Tags, Surfaces', () => {
       expect(a.title.length).toBeGreaterThan(0);
     }
   });
+
+  // ================================================================
+  // Additional coverage (collections/tags happy path, deprecation,
+  // PL fallback, unknown surface, faceted + collection filter)
+  // ================================================================
+
+  it('GET /collections/:slug returns collection details for valid slug', async () => {
+    const { data: listData } = await apiGet('/collections?lang=en');
+    const collections = listData?.data?.collections || [];
+    if (collections.length === 0) return;
+
+    const firstSlug = collections[0].slug;
+    const { status, data } = await apiGet(`/collections/${firstSlug}`);
+    expect(status).toBe(200);
+    expect(data?.data?.collection).toBeDefined();
+    expect(data.data.collection.slug).toBe(firstSlug);
+  });
+
+  it('GET /tags/:slug/articles returns articles for valid tag', async () => {
+    const { data: tagsData } = await apiGet('/tags?lang=en');
+    const tags = tagsData?.data?.tags || [];
+    if (tags.length === 0) return;
+
+    const firstSlug = tags[0].slug;
+    const { status, data } = await apiGet(`/tags/${firstSlug}/articles?lang=en`);
+    expect(status).toBe(200);
+    expect(data?.data?.articles).toBeDefined();
+    expect(Array.isArray(data.data.articles)).toBe(true);
+  });
+
+  it('GET /articles/:slug/redirect returns deprecation info for deprecated article', async () => {
+    const { data: artData } = await apiGet('/articles?lang=en&limit=1');
+    const articles = artData?.data?.articles || [];
+    if (articles.length === 0) return;
+
+    const slug = articles[0].slug;
+    const { status, data } = await apiGet(`/articles/${slug}/redirect`);
+    expect(status).toBe(200);
+    expect(data?.data).toHaveProperty('redirectSlug');
+    expect(data?.data).toHaveProperty('deprecationReason');
+  });
+
+  it('GET /articles?lang=pl includes fallback metadata fields', async () => {
+    const { status, data } = await apiGet('/articles?lang=pl&limit=3');
+    expect(status).toBe(200);
+    const articles = data?.data?.articles || [];
+    if (articles.length === 0) return;
+
+    for (const article of articles) {
+      expect(article.title).toBeTruthy();
+      expect(typeof article.title).toBe('string');
+    }
+  });
+
+  it('GET /surface/:surface returns empty for non-existent surface', async () => {
+    const { status, data } = await apiGet('/surface/nonexistent_surface?lang=en');
+    expect(status).toBe(200);
+    expect(data?.data?.articles).toBeDefined();
+    expect(data.data.articles).toHaveLength(0);
+  });
+
+  it('GET /search/faceted with collection filter narrows results', async () => {
+    const { data: collData } = await apiGet('/collections?lang=en');
+    const collections = collData?.data?.collections || [];
+    if (collections.length === 0) return;
+
+    const collSlug = collections[0].slug;
+    const { status, data } = await apiGet(`/search/faceted?q=consultify&lang=en&collection=${collSlug}`);
+    expect(status).toBe(200);
+    expect(data?.data).toHaveProperty('articles');
+    expect(data?.data).toHaveProperty('facets');
+    expect(data?.data).toHaveProperty('total');
+  });
 });

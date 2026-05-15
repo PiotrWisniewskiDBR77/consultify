@@ -537,6 +537,121 @@ describe('V8SyncApi', () => {
     expect(data.health.authState).toBe('healthy');
   });
 
+  it('requests run history from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      runs: [
+        {
+          id: 'run-1',
+          integrationId: 'int-1',
+          provider: 'jira',
+          direction: 'pull',
+          status: 'completed',
+          itemsProcessed: 42,
+          durationMs: 1234,
+          errorSummary: null,
+          triggeredBy: 'manual',
+          startedAt: '2026-04-11T10:00:00.000Z',
+          completedAt: '2026-04-11T10:00:01.234Z',
+        },
+      ],
+      total: 1,
+    });
+
+    const data = await V8SyncApi.getRuns({ integrationId: 'int-1', limit: 10 });
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/runs', {
+      integrationId: 'int-1',
+      limit: '10',
+    });
+    expect(data.runs).toHaveLength(1);
+    expect(data.runs[0].status).toBe('completed');
+    expect(data.total).toBe(1);
+  });
+
+  it('requests mapping data for an integration from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      integrationId: 'int-1',
+      connectorId: 'jira',
+      fieldMappings: [{ from: 'summary', to: 'title' }],
+      entityMappings: [],
+      driftEvents: [],
+      syncStates: [],
+    });
+
+    const data = await V8SyncApi.getMappings('int-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/integrations/int-1/mappings');
+    expect(data.fieldMappings).toHaveLength(1);
+    expect(data.connectorId).toBe('jira');
+  });
+
+  it('saves mapping configuration for an integration', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, fieldCount: 2 });
+
+    const data = await V8SyncApi.saveMappings('int-1', [
+      { from: 'summary', to: 'title' },
+      { from: 'description', to: 'body' },
+    ]);
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/mappings', {
+      fieldMappings: [
+        { from: 'summary', to: 'title' },
+        { from: 'description', to: 'body' },
+      ],
+    });
+    expect(data.fieldCount).toBe(2);
+  });
+
+  it('requests secrets rotation status from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      secrets: [{ secretId: 's-1', connectorId: 'jira', secretKey: 'oauth_client', ageDays: 120, needsRotation: true }],
+      summary: { total: 1, needsRotation: 1, healthy: 0 },
+    });
+
+    const data = await V8SyncApi.getSecretsStatus();
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/secrets/status');
+    expect(data.summary.needsRotation).toBe(1);
+  });
+
+  it('rotates a secret and receives confirmation', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, secretId: 's-1', rotatedAt: '2026-04-11T12:00:00Z' });
+
+    const data = await V8SyncApi.rotateSecret('s-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/secrets/s-1/rotate', {});
+    expect(data.success).toBe(true);
+  });
+
+  it('gets workflow policy for an integration', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      integrationId: 'int-1',
+      workflowPolicy: 'safety_gate',
+      reason: 'Pending review',
+      setBy: 'admin',
+      setAt: '2026-04-11T00:00:00Z',
+      isPaused: true,
+    });
+
+    const data = await V8SyncApi.getWorkflowPolicy('int-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/integrations/int-1/workflow-policy');
+    expect(data.workflowPolicy).toBe('safety_gate');
+    expect(data.isPaused).toBe(true);
+  });
+
+  it('sets workflow policy for an integration', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, policy: 'blocked', isPaused: true });
+
+    const data = await V8SyncApi.setWorkflowPolicy('int-1', 'blocked', 'Security incident');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/workflow-policy', {
+      policy: 'blocked',
+      reason: 'Security incident',
+    });
+    expect(data.isPaused).toBe(true);
+  });
+
   it('falls back to legacy sync routes only for bounded compatibility statuses', () => {
     expect(shouldFallbackToLegacySync({ status: 404 })).toBe(true);
     expect(shouldFallbackToLegacySync({ status: 500 })).toBe(false);

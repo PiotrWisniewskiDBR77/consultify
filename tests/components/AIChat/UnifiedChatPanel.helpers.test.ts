@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { __private__ } from '../../../src/components/AIChat/UnifiedChatPanel';
 
-const { firstMatchIndex, isLikelyAiFailureText, extractSlashPayload, parseChatSaveIntent } =
-  __private__;
+const {
+  firstMatchIndex,
+  isLikelyAiFailureText,
+  extractSlashPayload,
+  parseChatSaveIntent,
+  detectCoreNavigationIntent,
+} = __private__;
 
 describe('UnifiedChatPanel helpers (L2)', () => {
   it('firstMatchIndex returns the earliest match across patterns', () => {
@@ -46,5 +51,24 @@ describe('UnifiedChatPanel helpers (L2)', () => {
     expect(isLikelyAiFailureText('')).toBe(true);
     expect(isLikelyAiFailureText('AI returned no output')).toBe(true);
     expect(isLikelyAiFailureText('All good')).toBe(false);
+  });
+
+  it('detectCoreNavigationIntent maps explicit Teresa navigation requests', () => {
+    expect(detectCoreNavigationIntent('open my work inbox')).toEqual(
+      expect.objectContaining({ target: 'my_work', route: '/my-work?source=teresa&tab=inbox' })
+    );
+    expect(detectCoreNavigationIntent('go to interview assignments')).toEqual(
+      expect.objectContaining({
+        target: 'interview',
+        route: '/interview?source=teresa&tab=my_assignments',
+      })
+    );
+    expect(detectCoreNavigationIntent('show me portfolio')).toEqual(
+      expect.objectContaining({ target: 'portfolio', route: '/portfolio?source=teresa' })
+    );
+    expect(detectCoreNavigationIntent('open benefits module')).toEqual(
+      expect.objectContaining({ target: 'benefits', route: '/benefits?source=teresa' })
+    );
+    expect(detectCoreNavigationIntent('draft a quarterly report')).toBeNull();
   });
 });

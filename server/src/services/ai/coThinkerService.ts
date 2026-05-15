@@ -39,7 +39,10 @@ const LANGUAGE_MAP: Record<string, string> = {
 
 function langInstruction(lang: string): string {
   const name = LANGUAGE_MAP[lang] || LANGUAGE_MAP['en'];
-  return `[LANGUAGE: Respond in the same language the user writes to you. UI locale hint: ${name}.]`;
+  // i18n-teresa fix 2026-04-18: Co-Thinker previously told the model to auto-detect the
+  // user's writing language. That contradicted the authoritative [LANGUAGE INSTRUCTION]
+  // enforced by the pipeline and led to mixed PL/EN output. Now strict & non-negotiable.
+  return `[LANGUAGE INSTRUCTION: You MUST always respond in ${name}. This is the user's chosen application language and takes absolute priority. Even if the user writes in a different language, your response must be in ${name}. Never mix languages within a single response. This is non-negotiable.]`;
 }
 
 export const CO_THINKER_MODES: CoThinkerModeConfig[] = [

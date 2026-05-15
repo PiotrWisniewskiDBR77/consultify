@@ -21,7 +21,18 @@ export type WorkspaceType =
   | 'report'
   | 'dashboard'
   | 'project'
+  | 'notebook'
+  | 'finance'
+  | 'insight'
+  | 'interview'
+  | 'presentation'
   | 'general'
+  // Chat V8 workspace contexts — surfaces added by the unified interview /
+  // insight / presentation workflows. Additive on purpose so existing callers
+  // keep compiling even when they only know the original types.
+  | 'interview'
+  | 'insight'
+  | 'presentation'
   | 'empty';
 
 /**
@@ -121,6 +132,10 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
     [AppView.REPORTS_MANAGEMENT]: 'report',
     [AppView.DASHBOARD]: 'dashboard',
     [AppView.USER_DASHBOARD]: 'dashboard',
+    [AppView.WORDY]: 'document',
+    [AppView.EXCELE]: 'artifact',
+    [AppView.PREZENTACJE_GEN]: 'artifact',
+    [AppView.ECONOMICS]: 'finance',
   };
 
   return viewTypeMap[view] || 'empty';

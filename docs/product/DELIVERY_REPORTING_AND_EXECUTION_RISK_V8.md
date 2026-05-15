@@ -124,6 +124,10 @@ Every report should declare:
 - data sources,
 - follow-up expectations after reading.
 
+Detailed template-level contract:
+
+- `EXECUTION_REPORT_TEMPLATES_P03_V8.md`
+
 ---
 
 ## 6. Accountability doctrine
@@ -143,6 +147,7 @@ This is necessary both for team operations and executive trust.
 ## 7. Related canonical docs
 
 - `EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
+- `EXECUTION_REPORT_TEMPLATES_P03_V8.md`
 - `EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
 - `EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
 - `EXECUTION_READINESS_AUDIT_V8.md`

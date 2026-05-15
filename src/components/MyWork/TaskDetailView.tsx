@@ -89,6 +89,7 @@ import {
   RiskCanvas,
   type SortOrder,
 } from '../shared/NModeSections';
+import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import {
   type Alternative,
   AlternativesSection,
@@ -118,7 +119,6 @@ import {
   type WarningThresholds,
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
-import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
@@ -3652,9 +3652,13 @@ Return ONLY the final comment text.`;
                   {sourceType === 'decision' && <Scale size={14} className="text-purple-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
                     {sourceType === 'idea'
-                      ? 'Created from Idea'
+                      ? isPolish
+                        ? 'Utworzone z pomysłu'
+                        : 'Created from Idea'
                       : sourceType === 'notebook'
-                        ? 'Created from Note'
+                        ? isPolish
+                          ? 'Utworzone z notatki'
+                          : 'Created from Note'
                         : `Created from ${sourceType}`}
                   </span>
                   <button
@@ -3665,13 +3669,20 @@ Return ONLY the final comment text.`;
                             type: sourceType === 'notebook' ? 'notebook' : sourceType,
                             id: sourceId,
                             name: `Source ${sourceType}`,
+                            initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
                           },
                         })
                       );
                     }}
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
-                    View source →
+                    {sourceType === 'idea'
+                      ? isPolish
+                        ? 'Pokaż źródło w mapie →'
+                        : 'View source in mindmap →'
+                      : isPolish
+                        ? 'Pokaż źródło →'
+                        : 'View source →'}
                   </button>
                 </div>
               )}

@@ -1,11 +1,25 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, ChevronRight, Info, Sparkles } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Info,
+  Lightbulb,
+  Sparkles,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
+import { useV8 } from '@/providers/V8Provider';
+import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
+import { V8ResultsApi } from '@/services/api/v8/results';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { AIPulseCore } from './AIPulseCore';
 import { DecisionTemperatureBlock } from './DecisionTemperatureBlock';
@@ -13,9 +27,11 @@ import { ExecutionCurrentBlock } from './ExecutionCurrentBlock';
 import type { HomeBlock, HomeScreenAction, HomeTimeMode } from './homeV2Types';
 import { IndustryLensBlock } from './IndustryLensBlock';
 import { MomentumBlock } from './MomentumBlock';
+import { RadarTriageCard } from './RadarTriageCard';
 import { SparkField } from './SparkField';
 import { TeamSignalBlock } from './TeamSignalBlock';
 import { useHomeData } from './useHomeData';
+import { useRadarTriageData } from './useRadarTriageData';
 
 interface HomeViewProps {
   userName?: string;
@@ -23,13 +39,69 @@ interface HomeViewProps {
   onAction: (action: HomeScreenAction) => void;
 }
 
+class HomeBlockErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown): void {
+    console.error('[MyWorkHome] block render failed', error);
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { isV8Enabled } = useV8();
+  const isPolish = i18n.language === 'pl';
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
-  const pl = lang.startsWith('pl');
   const { screen, blocks, layout, loading, error, refresh } = useHomeData(refreshTrigger);
-  const roofSummary = useV8MyWorkRoofSummary();
+  const triageData = useRadarTriageData(undefined, isV8Enabled);
+  const roofSummary = useV8MyWorkRoofSummary(isV8Enabled);
   const [roofMetaOpen, setRoofMetaOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const [recentInsights, setRecentInsights] = useState<V8InterviewInsight[]>([]);
+  useEffect(() => {
+    if (!isV8Enabled) {
+      setRecentInsights([]);
+      return;
+    }
+    V8InterviewApi.listInsights({ limit: 5 })
+      .then((res) => setRecentInsights(res?.insights ?? []))
+      .catch(() => setRecentInsights([]));
+  }, [isV8Enabled, refreshTrigger]);
+
+  const [kpiAlerts, setKpiAlerts] = useState<
+    Array<{
+      signalId: string;
+      kpiId: string;
+      severity: string;
+      description: string;
+      createdAt: string;
+      kpiName?: string;
+    }>
+  >([]);
+  useEffect(() => {
+    if (!isV8Enabled) {
+      setKpiAlerts([]);
+      return;
+    }
+    V8ResultsApi.getWorkflowSignals()
+      .then((res) => setKpiAlerts((res?.data ?? []).slice(0, 5)))
+      .catch(() => setKpiAlerts([]));
+  }, [isV8Enabled, refreshTrigger]);
 
   const alignedHomeBlocks = useMemo(() => {
     const homeBlocks = roofSummary.data?.homeBlocks;
@@ -47,14 +119,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
 
   const roofTruthStrip = useMemo(() => {
     if (roofSummary.isLoading) {
-      return pl ? 'Roof truth: sprawdzanie...' : 'Roof truth: checking...';
+      return t('myWork.radar.roofTruthChecking');
     }
     if (roofSummary.isError || !roofSummary.data) {
       return null;
     }
 
     const counts = roofSummary.data.counts;
-    const surfaceMode = getSurfaceModeLabel(roofSummary.data.surfaceMode, pl);
+    const surfaceMode = getSurfaceModeLabel(roofSummary.data.surfaceMode);
     const realShown =
       alignedHomeBlocks.length > 0 ? alignedRealCount : counts.backed_by_real_service;
 
@@ -62,7 +134,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   }, [
     alignedHomeBlocks.length,
     alignedRealCount,
-    pl,
+    t,
     roofSummary.data,
     roofSummary.isError,
     roofSummary.isLoading,
@@ -93,16 +165,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#060B18]">
         <div className="w-full max-w-xl px-6">
           <EmptyStateInline
-            message={
-              pl ? 'Radar jest chwilowo niedostepny.' : 'Radar is temporarily unavailable.'
-            }
-            hint={
-              pl
-                ? 'To nie oznacza pustego dnia. Sprobuj ponownie wczytac ekran glowny.'
-                : 'This does not mean the day is empty. Retry loading the home screen.'
-            }
+            message={t('myWork.radar.unavailable')}
+            hint={t('myWork.radar.unavailableHint')}
             action={{
-              label: pl ? 'Ponow' : 'Retry',
+              label: t('myWork.radar.retry'),
               onClick: () => {
                 void refresh();
               },
@@ -124,10 +190,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       <div className="relative z-10 flex items-center justify-between gap-4 px-4 md:px-5 pt-2.5 pb-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-            {screen.pulseLabel ||
-              (pl
-                ? 'Radar \u00b7 kontekst, pomys\u0142y i spokojny kierunek'
-                : 'Radar \u00b7 context, ideas, and a gentle steer')}
+            {screen.pulseLabel || t('myWork.radar.pulseLabel')}
             {userName ? ` \u00b7 ${userName}` : ''}
           </span>
           {alignedHomeBlocks.length ? (
@@ -135,28 +198,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
               type="button"
               onClick={() => setRoofMetaOpen((v) => !v)}
               className="inline-flex items-center gap-1 rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300"
-              title={
-                pl
-                  ? 'Rozwi\u0144 lub zwi\u0144 list\u0119 modu\u0142\u00f3w roof i audyt sp\u00f3jno\u015bci danych.'
-                  : 'Expand or collapse roof module list and data-coherence audit.'
-              }
+              title={t('myWork.radar.roofExpandHint')}
             >
               {roofMetaOpen ? (
                 <ChevronDown className="h-3 w-3" />
               ) : (
                 <ChevronRight className="h-3 w-3" />
               )}
-              {pl
-                ? `Roof \u00b7 ${alignedHomeBlocks.length} modu\u0142\u00f3w`
-                : `Roof \u00b7 ${alignedHomeBlocks.length} modules`}
+              {t('myWork.radar.roofModules', { count: alignedHomeBlocks.length })}
             </button>
           ) : null}
         </div>
         <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500 dark:text-slate-500">
-          {new Date(screen.updatedAt).toLocaleTimeString(pl ? 'pl-PL' : 'en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+          {new Date(screen.updatedAt).toLocaleTimeString(
+            lang === 'ar' ? 'ar-SA' : `${lang}-${lang.toUpperCase()}`,
+            {
+              hour: '2-digit',
+              minute: '2-digit',
+            }
+          )}
         </span>
       </div>
 
@@ -180,10 +240,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
               {alignedHomeBlocks.map((block) => (
                 <span
                   key={block.blockName}
-                  title={getHomeBlockChipHint(block.blockName, pl)}
+                  title={t(`myWork.radar.blockHints.${block.blockName}`, { defaultValue: '' })}
                   className="cursor-default rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[8px] font-medium uppercase tracking-wider text-slate-500"
                 >
-                  {getHomeBlockLabel(block.blockName)}
+                  {t(`myWork.radar.blocks.${block.blockName}`, { defaultValue: block.blockName })}
                 </span>
               ))}
             </div>
@@ -193,14 +253,85 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
 
       {pulseBlock ? (
         <div className="relative z-10 px-4 md:px-5 pb-2">
-          <RadarExecutiveBrief block={pulseBlock} pl={pl} onAction={onAction} />
+          <RadarExecutiveBrief block={pulseBlock} onAction={onAction} />
         </div>
       ) : null}
+
+      {triageData.signals.length > 0 && (
+        <div className="relative z-10 px-4 md:px-5 pb-3">
+          <div className="mb-2">
+            <h2 className="text-sm font-semibold text-white">{t('myWork.radar.triage.title')}</h2>
+            <p className="text-[11px] text-slate-400">{t('myWork.radar.triage.subtitle')}</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+            {triageData.signals.map((signal) => (
+              <RadarTriageCard key={signal.signalId} signal={signal} onAction={onAction} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {kpiAlerts.length > 0 && (
+        <div className="relative z-10 px-4 md:px-5 pb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <AlertTriangle size={14} className="text-amber-400" />
+                {t('myWork.radar.kpiAlerts.title', 'KPI Alerts')}
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                {t('myWork.radar.kpiAlerts.subtitle', 'Open deviations requiring attention')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
+              className="text-[11px] text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
+            >
+              {t('common.viewAll', 'View all')} <ArrowRight size={12} />
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {kpiAlerts.map((alert) => (
+              <button
+                key={alert.signalId}
+                type="button"
+                onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
+                className="w-full text-left flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition hover:bg-white/[0.06]"
+              >
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full shrink-0',
+                    alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
+                  )}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-slate-200 truncate">
+                    {alert.kpiName || alert.kpiId}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate">{alert.description}</p>
+                </div>
+                <span className="text-[10px] text-slate-500 shrink-0 tabular-nums">
+                  {new Date(alert.createdAt).toLocaleDateString(lang)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recentInsights.length > 0 && (
+        <div className="relative z-10 px-4 md:px-5 pb-3">
+          <RecentInsightsCard insights={recentInsights} isPolish={isPolish} />
+        </div>
+      )}
 
       <div className="relative z-10 flex-1 overflow-auto px-4 md:px-5 pb-4">
         <div className="grid grid-cols-12 gap-2.5">
           {blocks.map((block) => (
-            <React.Fragment key={block.id}>{renderHomeBlock(block, onAction)}</React.Fragment>
+            <HomeBlockErrorBoundary key={block.id}>
+              {renderHomeBlock(block, onAction)}
+            </HomeBlockErrorBoundary>
           ))}
         </div>
       </div>
@@ -232,70 +363,25 @@ function renderHomeBlock(
   }
 }
 
-function getSurfaceModeLabel(surfaceMode: string, pl: boolean): string {
+function getSurfaceModeLabel(surfaceMode: string): string {
   switch (surfaceMode) {
     case 'home_v2_aggregated_with_outputs_bridge':
-      return pl ? 'Home V2 aggregated + outputs bridge' : 'Home V2 aggregated + outputs bridge';
+      return 'Home V2 aggregated + outputs bridge';
     case 'radar_overlay_with_outputs_bridge':
-      return pl ? 'Radar overlay + outputs bridge' : 'Radar overlay + outputs bridge';
+      return 'Radar overlay + outputs bridge';
     default:
       return surfaceMode;
   }
 }
 
-function getHomeBlockLabel(blockName: string): string {
-  switch (blockName) {
-    case 'aiPulseCore':
-      return 'AI Pulse Core';
-    case 'industryLens':
-      return 'Industry Lens';
-    case 'executionCurrent':
-      return 'Execution Current';
-    case 'sparkField':
-      return 'Spark Field';
-    case 'decisionTemperature':
-      return 'Decision Temperature';
-    case 'teamSignal':
-      return 'Team Signal';
-    case 'momentum':
-      return 'Momentum';
-    default:
-      return blockName;
-  }
-}
-
-function getHomeBlockChipHint(blockName: string, pl: boolean): string {
-  switch (blockName) {
-    case 'aiPulseCore':
-      return pl
-        ? 'Skr\u00f3t pulsu: headline dnia, fokus i pulse score.'
-        : 'Pulse summary: headline, focus, and pulse score.';
-    case 'momentum':
-      return pl ? 'Tempo programu: statystyki i sygna\u0142y post\u0119pu.' : 'Program momentum: stats and progress signals.';
-    case 'sparkField':
-      return pl ? 'Pomys\u0142y i notatki: runtime notes oraz outputy.' : 'Ideas & notes: runtime and recent outputs.';
-    case 'decisionTemperature':
-      return pl ? 'Decyzje: kolejka, blokery, najgor\u0119tszy temat.' : 'Decisions: queue, blockers, hottest item.';
-    case 'industryLens':
-      return pl ? 'Kontekst bran\u017cowy: rynek, tech, benchmark, peer case.' : 'Industry context: market, tech, benchmark, peer case.';
-    case 'executionCurrent':
-      return pl ? 'Wykonanie: strumienie pracy i artefakty.' : 'Execution: work streams and artifacts.';
-    case 'teamSignal':
-      return pl ? 'Zesp\u00f3\u0142: alignment i sygna\u0142y organizacyjne.' : 'Team: alignment and org signals.';
-    default:
-      return '';
-  }
-}
-
 function RadarExecutiveBrief({
   block,
-  pl,
   onAction,
 }: {
   block: Extract<HomeBlock, { id: 'aiPulseCore' }>;
-  pl: boolean;
   onAction: (action: HomeScreenAction) => void;
 }) {
+  const { t } = useTranslation();
   const payload = block.payload;
   const top = payload.focusItems?.[0];
   const headline = typeof payload.headline === 'string' ? payload.headline : '';
@@ -309,7 +395,7 @@ function RadarExecutiveBrief({
       <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-300/70" />
       <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-200">{lead}</p>
       <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
-        {pl ? 'Puls' : 'Pulse'}{' '}
+        {t('myWork.radar.pulse')}{' '}
         {typeof payload.pulseScore === 'number' ? payload.pulseScore : '\u2014'}
       </span>
       <button
@@ -320,10 +406,8 @@ function RadarExecutiveBrief({
             packet: {
               sourceBlock: 'aiPulseCore',
               intent: 'gentle_explain',
-              title: pl ? 'Spokojne wyja\u015bnienie' : 'Gentle explanation',
-              starterPrompt: pl
-                ? 'Wyja\u015bnij ten skr\u00f3t prosto i bez presji \u2014 daj mi 3 punkty: co to znaczy, dlaczego teraz, co mog\u0119 zrobi\u0107 ma\u0142ym krokiem.'
-                : 'Explain this briefing in plain language, no pressure \u2014 3 bullets: what it means, why now, and one small step I can take.',
+              title: t('myWork.radar.gentleExplanation'),
+              starterPrompt: t('myWork.radar.explainBriefing'),
               entityType: 'home',
               entityId: 'pulse-core',
               contextData: { headline: lead, insight: payload.insight },
@@ -332,7 +416,7 @@ function RadarExecutiveBrief({
         }
         className="shrink-0 rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-300 transition hover:bg-white/[0.08]"
       >
-        {pl ? 'Wyja\u015bnij' : 'Explain'}
+        {t('myWork.radar.explain')}
       </button>
       <button
         type="button"
@@ -343,9 +427,7 @@ function RadarExecutiveBrief({
               sourceBlock: 'aiPulseCore',
               intent: 'prioritize_transformation',
               title: block.title,
-              starterPrompt: pl
-                ? 'Pom\u00f3\u017c mi pouk\u0142ada\u0107 ten materia\u0142 na spokojny plan \u2014 bez pogoni, krok po kroku.'
-                : 'Help me turn this into a calm, step-by-step plan \u2014 no rush.',
+              starterPrompt: t('myWork.radar.calmPlan'),
               entityType: 'home',
               entityId: 'pulse-core',
               contextData: { headline: lead, insight: payload.insight },
@@ -405,3 +487,97 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
     />
   </>
 );
+
+const INSIGHT_STATUS_STYLES: Record<
+  string,
+  { bg: string; text: string; label: string; labelPl: string }
+> = {
+  draft: { bg: 'bg-slate-500/20', text: 'text-slate-300', label: 'Draft', labelPl: 'Szkic' },
+  in_review: {
+    bg: 'bg-amber-500/20',
+    text: 'text-amber-300',
+    label: 'In Review',
+    labelPl: 'W przeglądzie',
+  },
+  published: {
+    bg: 'bg-emerald-500/20',
+    text: 'text-emerald-300',
+    label: 'Published',
+    labelPl: 'Opublikowany',
+  },
+};
+
+const PROMPT_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
+  themes: { en: 'Themes', pl: 'Tematy' },
+  issues: { en: 'Issues', pl: 'Problemy' },
+  opportunities: { en: 'Opportunities', pl: 'Szanse' },
+  synthesis: { en: 'Synthesis', pl: 'Synteza' },
+};
+
+function RecentInsightsCard({
+  insights,
+  isPolish,
+}: {
+  insights: V8InterviewInsight[];
+  isPolish: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-lime-400/20 bg-white/[0.025] backdrop-blur-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
+        <Lightbulb size={14} className="text-lime-400/80" />
+        <h3 className="text-sm font-semibold text-white">
+          {isPolish ? 'Ostatnie insighty' : 'Recent Insights'}
+        </h3>
+        <span className="ml-auto font-mono text-[9px] text-slate-500 uppercase tracking-wider">
+          INS
+        </span>
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {insights.map((insight) => {
+          const statusMeta = INSIGHT_STATUS_STYLES[insight.status] ?? INSIGHT_STATUS_STYLES.draft;
+          const promptLabel = PROMPT_TYPE_LABELS[insight.promptType];
+          const insightPath = getArtifactPath('insight', insight.id);
+          return (
+            <a
+              key={insight.id}
+              href={insightPath}
+              className="flex items-center gap-3 px-3 py-2 hover:bg-white/[0.04] transition-colors group"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-medium text-slate-200 truncate group-hover:text-white transition-colors">
+                  {insight.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-[9px] font-medium',
+                      statusMeta.bg,
+                      statusMeta.text
+                    )}
+                  >
+                    {isPolish ? statusMeta.labelPl : statusMeta.label}
+                  </span>
+                  {promptLabel && (
+                    <span className="text-[9px] text-slate-500">
+                      {isPolish ? promptLabel.pl : promptLabel.en}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span className="shrink-0 font-mono text-[9px] tabular-nums text-slate-600">
+                {new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+              <ExternalLink
+                size={10}
+                className="shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors"
+              />
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

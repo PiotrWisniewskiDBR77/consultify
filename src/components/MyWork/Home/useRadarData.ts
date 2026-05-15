@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Api from '@/services/api';
 
@@ -12,6 +13,7 @@ type RadarDataState = {
 };
 
 export function useRadarData(refreshTrigger?: number): RadarDataState {
+  const { t } = useTranslation();
   const [data, setData] = useState<RadarViewPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function useRadarData(refreshTrigger?: number): RadarDataState {
       setError(null);
       hasLoadedRef.current = true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load Radar');
+      setError(err instanceof Error ? err.message : t('myWork.radar.loadError'));
       if (isInitialLoad) {
         setData(null);
       }

@@ -14,7 +14,10 @@ export const LEGAL_DOC_TYPES = [
   'DPA',
   'SUBSCRIPTION',
   'SLA',
-  'REFUNDS',
+  'REFUND',
+  'SECURITY',
+  'CUSTOMER_SECURITY',
+  'SUBPROCESSORS',
 ] as const;
 
 export const acceptDocumentsSchema = z.object({

@@ -8,21 +8,24 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
-import * as mindmapService from '../../services/v8/mindmapService.js';
 import type { MindmapNodeOperation } from '../../services/v8/mindmapCanon.js';
-import type { MindmapAIProposal, MindmapOperationResult } from '../../services/v8/mindmapService.js';
 import {
   P12_ACCEPTANCE_CHECKLIST,
-  P12_DEGRADED_SCENARIOS,
-  P12_NODE_OPERATIONS,
-  P12_NODE_KINDS,
+  P12_AI_COBUILDING_RULES,
   P12_CALM_LOOP_RULES,
+  P12_DEGRADED_SCENARIOS,
   P12_EXPORT_FORMATS,
   P12_EXPORT_RULES,
-  P12_AI_COBUILDING_RULES,
+  P12_NODE_KINDS,
+  P12_NODE_OPERATIONS,
   P12_UNDO_REDO_RULES,
 } from '../../services/v8/mindmapCanon.js';
+import type {
+  MindmapAIProposal,
+  MindmapOperationResult,
+} from '../../services/v8/mindmapService.js';
+import * as mindmapService from '../../services/v8/mindmapService.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 export const P12_MINDMAP_HTTP_STATUSES = {
   OK: 200,
@@ -95,7 +98,7 @@ router.get(
       },
       meta: mindmapMeta({ contract: 'P12' }),
     });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -105,6 +108,7 @@ router.get(
 router.post(
   '/ai-proposals/:proposalId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
     const action = req.body?.action;
     if (action !== 'accept' && action !== 'reject') {
       return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
@@ -113,7 +117,7 @@ router.post(
         meta: mindmapMeta(),
       });
     }
-    const result = await mindmapService.resolveAIProposal(req.params.proposalId, action);
+    const result = await mindmapService.resolveAIProposal(req.params.proposalId, action, organizationId);
     if (!result.success) {
       const code = result.error_code ?? 'UNKNOWN';
       const status =
@@ -132,9 +136,12 @@ router.post(
     }
     return res.json({
       data: result.proposal,
-      meta: mindmapMeta({ action: `proposal_${result.proposal?.status}`, applied: result.applied_count }),
+      meta: mindmapMeta({
+        action: `proposal_${result.proposal?.status}`,
+        applied: result.applied_count,
+      }),
     });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -149,7 +156,7 @@ router.put(
     const result = await mindmapService.renameNode(req.params.nodeId, organizationId, label);
     if (!result.success) return sendOpFailure(res, result);
     return res.json({ data: result, meta: mindmapMeta({ action: 'renamed' }) });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -161,24 +168,22 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const raw = req.body?.new_parent_id;
-    if (raw !== null && (typeof raw !== 'string' || raw === '')) {
+    if (raw === null || raw === undefined) {
+      const result = await mindmapService.moveNode(req.params.nodeId, organizationId, null);
+      if (!result.success) return sendOpFailure(res, result);
+      return res.json({ data: result, meta: mindmapMeta({ action: 'moved' }) });
+    }
+    if (typeof raw !== 'string' || raw.trim() === '') {
       return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
         error: 'new_parent_id must be a non-empty string (target parent node id)',
         code: 'VALIDATION',
         meta: mindmapMeta(),
       });
     }
-    if (typeof raw !== 'string') {
-      return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
-        error: 'new_parent_id required',
-        code: 'VALIDATION',
-        meta: mindmapMeta(),
-      });
-    }
-    const result = await mindmapService.moveNode(req.params.nodeId, organizationId, raw);
+    const result = await mindmapService.moveNode(req.params.nodeId, organizationId, raw.trim());
     if (!result.success) return sendOpFailure(res, result);
     return res.json({ data: result, meta: mindmapMeta({ action: 'moved' }) });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -192,7 +197,7 @@ router.delete(
     const result = await mindmapService.deleteNode(req.params.nodeId, organizationId);
     if (!result.success) return sendOpFailure(res, result);
     return res.json({ data: result, meta: mindmapMeta({ action: 'deleted' }) });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -206,7 +211,7 @@ router.put(
     const result = await mindmapService.toggleCollapse(req.params.nodeId, organizationId);
     if (!result.success) return sendOpFailure(res, result);
     return res.json({ data: result, meta: mindmapMeta({ action: 'collapse_toggled' }) });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -222,7 +227,7 @@ router.get(
       data: nodes,
       meta: mindmapMeta({ degraded }),
     });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -244,7 +249,7 @@ router.post(
       data: result,
       meta: mindmapMeta({ action: 'node_created' }),
     });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -264,9 +269,12 @@ router.get(
       });
     }
     const result = await mindmapService.exportMindmap(req.params.mindmapId, organizationId, fmt);
-    res.setHeader('Content-Type', fmt === 'json' ? 'application/json' : 'text/markdown; charset=utf-8');
+    res.setHeader(
+      'Content-Type',
+      fmt === 'json' ? 'application/json' : 'text/markdown; charset=utf-8'
+    );
     return res.status(P12_MINDMAP_HTTP_STATUSES.OK).send(result.content);
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -295,7 +303,7 @@ router.post(
       data: proposal,
       meta: mindmapMeta({ action: 'ai_proposal_created' }),
     });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -344,7 +352,7 @@ router.post(
       });
     }
     return res.json({ data: { valid: true }, meta: mindmapMeta({ action: 'validated' }) });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -360,7 +368,7 @@ router.get(
       data: state,
       meta: mindmapMeta({ degraded: state.degraded }),
     });
-  }),
+  })
 );
 
 export default router;

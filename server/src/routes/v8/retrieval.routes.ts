@@ -1,13 +1,15 @@
 import type { Response } from 'express';
 import { Router } from 'express';
-import { ZodError, z } from 'zod';
+import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { evaluateRetrievalPolicyDecision } from '../../services/ai/chatPolicyGateway.js';
 import type { CandidateSource } from '../../services/v8/governedRetrievalService.js';
 import * as governedRetrievalService from '../../services/v8/governedRetrievalService.js';
 import * as knowledgeRetrievalService from '../../services/v8/knowledgeRetrievalService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -66,7 +68,31 @@ router.get(
 router.post(
   '/requests',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
+
+    try {
+      const polResult = await evaluateRetrievalPolicyDecision({
+        consumerClass: req.body?.consumerClass || 'chat',
+        organizationId,
+        userId,
+        query: String(req.body?.query || ''),
+      });
+      if (polResult.decision.allowed === false) {
+        return res.status(403).json({
+          error: polResult.decision.rationale || 'Request refused by policy gateway',
+          code: 'POLICY_GATEWAY_REFUSED',
+        });
+      }
+    } catch (polErr: any) {
+      logger.error(
+        '[V8 Retrieval] Policy gateway unavailable (fail-closed):',
+        polErr?.message || String(polErr)
+      );
+      return res.status(503).json({
+        error: 'Policy gateway unavailable',
+        code: 'POLICY_GATEWAY_UNAVAILABLE',
+      });
+    }
 
     try {
       const data = await governedRetrievalService.createRetrievalRequest({
@@ -96,9 +122,33 @@ router.get(
 router.post(
   '/requests/:requestId/pipeline',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const requestRecord = await ensureRequestExists(req.params.requestId, organizationId, res);
     if (!requestRecord) return;
+
+    try {
+      const polResult = await evaluateRetrievalPolicyDecision({
+        consumerClass: 'chat',
+        organizationId,
+        userId,
+        query: '',
+      });
+      if (polResult.decision.allowed === false) {
+        return res.status(403).json({
+          error: polResult.decision.rationale || 'Request refused by policy gateway',
+          code: 'POLICY_GATEWAY_REFUSED',
+        });
+      }
+    } catch (polErr: any) {
+      logger.error(
+        '[V8 Retrieval] Policy gateway unavailable (fail-closed):',
+        polErr?.message || String(polErr)
+      );
+      return res.status(503).json({
+        error: 'Policy gateway unavailable',
+        code: 'POLICY_GATEWAY_UNAVAILABLE',
+      });
+    }
 
     const sources = req.body?.sources;
     if (!Array.isArray(sources)) {

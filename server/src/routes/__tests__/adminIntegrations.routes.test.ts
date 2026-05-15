@@ -97,4 +97,3 @@ describe('Admin integrations monitoring routes (PO1)', () => {
     expect(res.body.items[0].connectorId).toBe('jira');
   });
 });
-
