@@ -381,7 +381,7 @@ Validation evidence:
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
-Status: `GO_WITH_P2_UI_SMOKE_FOLLOWUP`; authenticated API tenant/save/read-back smoke passed, with Work Canvas UI smoke stabilization tracked as P2.
+Status: `GO`; authenticated tenant/ACL + save/read-back smoke passed, including stabilized Work Canvas UI smoke.
 
 Goal:
 
@@ -415,7 +415,7 @@ Wave 6 result:
 - Targeted blocker files after remediation: `203/203` passing.
 - Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`.
 - Runtime after remediation: `/api/health` reported `gitSha = 77f727197b57c2dd4d91c8f287752b44f1cbb720`, `/ping = pong`, homepage `HTTP 200`.
-- Current runtime during final-smoke attempt: `/api/health` reported `gitSha = 5890455bf822b752a5a091dfd5d4df381682a557`, `/ping = pong`, homepage `HTTP 200`.
+- Current runtime during final closeout: `/api/health` reported `gitSha = df0bb346c96c47f752e6494865c92bef5ec9d654`, `/ping = pong`, homepage `HTTP 200`.
 - Live unauthenticated API probes returned controlled `401` responses with `{"error":"No token provided"}`.
 - Live response headers did not expose `X-Powered-By`; CSP, HSTS, frame, content-type, and referrer controls were present.
 - Static Organization Context Engine smoke: `41/41` passing.
@@ -425,7 +425,8 @@ Wave 6 result:
 - Authenticated browser auth smoke: `3/3` passing.
 - Authenticated API smoke: passing for owner, member, and superadmin test accounts.
 - Authenticated API smoke coverage: owner create/read/update/read-back, artifact promotion read-back, member proposal approval denial with `403 CANVAS_PROPOSAL_CAPABILITY_REQUIRED`, member isolation from owner private draft with `404`, and superadmin create/read-back.
-- Work Canvas UI deeplink smoke loaded when seeded with the full demo-session state used by the smoke helpers.
+- Stabilized Work Canvas core smoke: `2/2` passing (owner save/read-back refresh, member restricted actions disabled).
+- Work Canvas smoke helpers now seed auth/session state consistently and ensure the canvas panel is opened before assertions.
 
 Blocking findings:
 
@@ -434,21 +435,19 @@ Blocking findings:
 - Resolved by documenting trial AI onboarding behavior in tests: initial trial AI grace calls are allowed before onboarding completion, and calls are denied once the grace usage threshold is reached.
 - Resolved: authenticated browser smoke could run after installing Playwright Chromium.
 - Resolved: controlled staging owner/member/superadmin test accounts were available for the final smoke.
-- P2 follow-up: Work Canvas UI save/read-back automation is not fully deterministic unless the expected demo-session localStorage state is seeded before the deeplink assertion.
+- Resolved: Work Canvas UI save/read-back automation is deterministic after smoke-helper stabilization.
 
 Residual risks:
 
 - Runtime auth/access behavior was not changed during remediation; the fix was test-contract alignment only.
-- Authenticated API tenant/save/read-back smoke passed, but UI automation for Work Canvas save/read-back still needs stabilization around demo-session localStorage setup.
+- No open P1/P2 residuals for this rollout gate.
 
 ## Immediate Next Step
 
-Proceed toward merge only under `GO_WITH_P2_UI_SMOKE_FOLLOWUP`:
+Proceed toward merge under `GO`:
 
 1. Keep branch frozen.
-2. Treat authenticated API smoke evidence as the merge gate for tenant/save/read-back.
-3. Stabilize Work Canvas UI smoke helper to seed demo-session state before asserting deeplink save/read-back.
-4. Re-run UI smoke as a P2 release-candidate follow-up.
+2. Merge with the current validated staging baseline.
 
 Previous Wave 5 continuation command sequence:
 

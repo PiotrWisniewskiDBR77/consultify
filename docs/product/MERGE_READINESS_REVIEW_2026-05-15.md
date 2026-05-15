@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`GO_WITH_P2_UI_SMOKE_FOLLOWUP`; staging is healthy and authenticated API tenant/save/read-back smoke passed, with a remaining UI automation stabilization follow-up.
+`GO`; staging is healthy and authenticated tenant/ACL + save/read-back smoke is complete, including stabilized Work Canvas UI smoke.
 
-The staging runtime is healthy and the critical auth/access-policy automated gate is green after aligning tests to the current canonical role and trial AI access contracts. Authenticated owner/member/superadmin API smoke passed on staging, including save/read-back, artifact promotion read-back, member capability denial, and private draft isolation. UI automation still needs stabilization because Work Canvas deeplink rendering is sensitive to demo-session state; this is tracked as P2 follow-up rather than a tenant/security blocker.
+The staging runtime is healthy and the critical auth/access-policy automated gate is green after aligning tests to the current canonical role and trial AI access contracts. Authenticated owner/member/superadmin smoke passed on staging at both API and Work Canvas UI levels, including owner save/read-back refresh and member restriction checks. No open P1/P2 blockers remain for this rollout gate.
 
 ## Assessed Baseline
 
@@ -15,7 +15,7 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Runtime checks: `/api/health` healthy, `/ping = pong`, homepage `HTTP 200`
 - Remediation SHA: `77f727197b57c2dd4d91c8f287752b44f1cbb720`
 - Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`
-- Current runtime SHA during final-smoke attempt: `5890455bf822b752a5a091dfd5d4df381682a557`
+- Current runtime SHA during final closeout: `df0bb346c96c47f752e6494865c92bef5ec9d654`
 
 ## Scope Size
 
@@ -41,7 +41,8 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Authenticated browser auth smoke passed with `3/3` checks.
 - Authenticated API smoke passed for owner, member, and superadmin test accounts.
 - API smoke covered owner create/read/update/read-back, artifact promotion read-back, member proposal approval denial with `403 CANVAS_PROPOSAL_CAPABILITY_REQUIRED`, member isolation from owner private draft with `404`, and superadmin create/read-back.
-- Work Canvas UI deeplink loaded when seeded with the full demo session state used by the smoke helpers.
+- Stabilized Work Canvas core smoke passed with `2/2` checks (owner save/read-back refresh, member restricted actions disabled).
+- Work Canvas smoke helpers now consistently seed auth/session state and open the work panel before asserting canvas controls.
 
 ## Blocking Gates
 
@@ -50,7 +51,7 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Targeted blocker files pass with `203/203` tests passing.
 - Resolved: Playwright Chromium was installed locally and the basic authenticated browser smoke passed.
 - Resolved: controlled staging owner/member/superadmin test accounts were provided for the final smoke.
-- P2 follow-up: Work Canvas UI save/read-back automation is not fully deterministic without the expected demo-session localStorage state, even though the authenticated API save/read-back gate passed.
+- Resolved: Work Canvas UI save/read-back automation is deterministic after helper stabilization.
 
 Resolved categories:
 
@@ -65,9 +66,8 @@ Resolved categories:
 ## Required Fix Before Merge
 
 1. Keep branch frozen for merge.
-2. Stabilize the Work Canvas Playwright smoke helper so deeplink tests always seed the required demo-session state before asserting UI save/read-back.
-3. Re-run UI smoke after merge as a P2 release-candidate follow-up.
+2. Proceed with merge under `GO`.
 
 ## Recommendation
 
-Proceed as `GO_WITH_P2_UI_SMOKE_FOLLOWUP` if the team accepts API-level tenant/save/read-back evidence as the merge gate. Do not add more product or middleware slices before merge; handle UI smoke stabilization as a focused follow-up.
+Proceed with merge under `GO`. Do not add more product or middleware slices before merge.

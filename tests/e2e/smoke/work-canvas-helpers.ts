@@ -6,6 +6,27 @@ export const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD || '';
 export const MEMBER_EMAIL = process.env.E2E_MEMBER_EMAIL || '';
 export const MEMBER_PASSWORD = process.env.E2E_MEMBER_PASSWORD || '';
 
+type LoginUserShape = Partial<{
+  id: string;
+  email: string;
+  role: string;
+  organizationId: string;
+  organizationName: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+}>;
+
+type WorkCanvasDraftRef = {
+  id: string;
+  conversationId: string;
+  title?: string;
+};
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function assertCredentials(email: string, password: string, label: string) {
   expect(email.trim().length, `${label}: missing email env`).toBeGreaterThan(0);
   expect(password.trim().length, `${label}: missing password env`).toBeGreaterThan(0);
@@ -21,9 +42,24 @@ export async function loginAsUser(page: Page, email: string, password: string): 
   const login = await loginResponse.json();
   const token = login.token || login.accessToken;
   expect(token).toBeTruthy();
+  const user = (login.user || {}) as LoginUserShape;
+  const derivedUser = {
+    id: String(user.id || `smoke-${Date.now()}`),
+    email: String(user.email || email),
+    role: String(user.role || 'USER'),
+    organizationId: String(user.organizationId || 'unknown-org'),
+    organizationName: String(user.organizationName || user.companyName || 'Unknown Organization'),
+    firstName: String(user.firstName || ''),
+    lastName: String(user.lastName || ''),
+    companyName: String(user.companyName || user.organizationName || 'Unknown Organization'),
+    isAuthenticated: true,
+    accessLevel: 'full',
+  };
 
-  await page.addInitScript((authToken) => {
+  await page.addInitScript(({ authToken, authUser }) => {
     window.localStorage.setItem('token', String(authToken));
+    window.localStorage.setItem('refreshToken', 'playwright-smoke-refresh');
+    window.localStorage.setItem('user', JSON.stringify(authUser));
     window.localStorage.setItem(
       'consultinity_demo_session',
       JSON.stringify({
@@ -39,7 +75,21 @@ export async function loginAsUser(page: Page, email: string, password: string): 
         milestones: [],
       })
     );
-  }, token);
+    window.localStorage.setItem(
+      'consultinity-storage',
+      JSON.stringify({
+        state: {
+          sessionMode: 'FULL',
+          currentUser: authUser,
+          currentOrganization: {
+            id: authUser.organizationId,
+            name: authUser.organizationName || authUser.companyName || 'Organization',
+          },
+        },
+        version: 0,
+      })
+    );
+  }, { authToken: token, authUser: derivedUser });
 
   return token;
 }
@@ -179,4 +229,48 @@ export async function expectNoRawInternals(page: Page) {
   await expect(page.getByText(/\[object Object\]|Invalid Date|TypeError|ReferenceError/)).toHaveCount(
     0
   );
+}
+
+export async function ensureWorkCanvasVisible(page: Page, expectedTitle?: string) {
+  const titleInput = page.getByLabel('Canvas document title');
+  const saveButton = page.getByRole('button', { name: 'Save Canvas document' });
+  const openPanelButton = page
+    .locator('button[aria-label="Open work panel"], [data-testid="chat-work-panel-button"]')
+    .first();
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const inputVisible = await titleInput.isVisible({ timeout: 2500 }).catch(() => false);
+    const saveVisible = await saveButton.isVisible({ timeout: 2500 }).catch(() => false);
+
+    if (inputVisible && saveVisible) {
+      if (expectedTitle && expectedTitle.trim()) {
+        await expect(titleInput).toHaveValue(new RegExp(escapeRegex(expectedTitle.trim())), {
+          timeout: 10000,
+        });
+      }
+      return;
+    }
+
+    const canOpenPanel = await openPanelButton.isVisible({ timeout: 1000 }).catch(() => false);
+    if (canOpenPanel) {
+      await openPanelButton.click({ timeout: 3000 }).catch(() => {});
+    }
+    await page.waitForTimeout(1200);
+  }
+
+  await expect(titleInput).toBeVisible({ timeout: 10000 });
+  await expect(saveButton).toBeVisible({ timeout: 10000 });
+  if (expectedTitle && expectedTitle.trim()) {
+    await expect(titleInput).toHaveValue(new RegExp(escapeRegex(expectedTitle.trim())), {
+      timeout: 10000,
+    });
+  }
+}
+
+export async function openWorkCanvasDraft(page: Page, draft: WorkCanvasDraftRef) {
+  await page.goto(`/ai/work-canvas?draftId=${draft.id}&conversationId=${draft.conversationId}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
+  await ensureWorkCanvasVisible(page, draft.title);
 }
