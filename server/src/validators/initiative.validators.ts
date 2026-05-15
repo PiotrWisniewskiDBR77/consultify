@@ -54,8 +54,7 @@ export const SourceTypeEnum = z
   .enum(['manual', 'tool', 'assessment', 'assessment_report', 'financial_analysis'])
   .or(z.string().max(50));
 
-export const CreateInitiativeSchema = z
-  .object({
+const InitiativePayloadBaseSchema = z.object({
     projectId: z.string().optional(),
     title: z.string().min(1).max(255),
     category: z.string().max(255).optional(),
@@ -113,8 +112,9 @@ export const CreateInitiativeSchema = z
     reportName: z.string().max(500).optional(),
     // V4-INIT-02: Program hierarchy
     programId: z.string().max(255).optional().nullable(),
-  })
-  .refine(
+  });
+
+export const CreateInitiativeSchema = InitiativePayloadBaseSchema.refine(
     (data) => {
       const st = (data.sourceType || 'manual').toLowerCase();
       if (st !== 'manual' && !data.sourceId) return false;
@@ -123,7 +123,7 @@ export const CreateInitiativeSchema = z
     { message: 'sourceId is required when sourceType is not manual', path: ['sourceId'] }
   );
 
-export const UpdateInitiativeSchema = CreateInitiativeSchema.partial().omit({ projectId: true });
+export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({ projectId: true }).partial();
 
 export const UpdateInitiativeStatusSchema = z.object({
   status: InitiativeStatusEnum,
