@@ -353,7 +353,7 @@ Validation evidence:
 
 ### Wave 5.5 - Security Header Disclosure Guard
 
-Status: `READY_FOR_DEPLOY`.
+Status: `DONE` and deployed.
 
 Source candidate:
 
@@ -376,6 +376,8 @@ Validation evidence:
 
 - Focused security headers gate: `9/9` passing.
 - Production build: passing with larger Node heap.
+- Railway deployment: `f8e2e787-be4c-4f46-8c43-a9debef82022`, `SUCCESS`.
+- Runtime: `/ping = pong`, homepage `HTTP 200`, `/api/health` reported `gitSha = 762aac530a4ef4658934ef18bd93918a0efdc426`.
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
