@@ -23,6 +23,7 @@ interface MetricsBucket {
 }
 
 const LATENCY_BUCKETS = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
+const MAX_RECORDED_REQUEST_DURATION_MS = 600_000;
 
 const metrics: MetricsBucket = {
   requests: 0,
@@ -86,25 +87,41 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   const start = Date.now();
   metrics.requests++;
   metrics.byMethod[req.method] = (metrics.byMethod[req.method] || 0) + 1;
+  let recorded = false;
 
-  const originalEnd = res.end.bind(res) as (...args: any[]) => any;
-  (res as any).end = function (...args: any[]) {
-    const duration = Date.now() - start;
+  const recordCompletion = () => {
+    if (recorded) return;
+    recorded = true;
+    const rawDuration = Date.now() - start;
+    const duration = Number.isFinite(rawDuration) && rawDuration >= 0 ? rawDuration : 0;
+    const recordedDuration = Math.min(duration, MAX_RECORDED_REQUEST_DURATION_MS);
     const status = res.statusCode;
 
-    metrics.latencySum += duration;
+    metrics.latencySum += recordedDuration;
     metrics.byStatus[status] = (metrics.byStatus[status] || 0) + 1;
 
     if (status >= 500) metrics.errors++;
 
     for (const bucket of LATENCY_BUCKETS) {
-      if (duration <= bucket) {
+      if (recordedDuration <= bucket) {
         metrics.latencyBuckets[`le_${bucket}`]++;
       }
     }
+  };
 
+  const originalEnd = res.end.bind(res) as (...args: any[]) => any;
+  (res as any).end = function (...args: any[]) {
+    recordCompletion();
     return originalEnd(...args);
   };
+
+  if (typeof (res as any).once === 'function') {
+    (res as any).once('finish', recordCompletion);
+    (res as any).once('close', recordCompletion);
+  } else if (typeof (res as any).on === 'function') {
+    (res as any).on('finish', recordCompletion);
+    (res as any).on('close', recordCompletion);
+  }
 
   next();
 };

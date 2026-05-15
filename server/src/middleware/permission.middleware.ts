@@ -40,6 +40,8 @@ const normalizeRoleForDb = (role?: string): string => {
   return getRoleCandidates(role)[0] || 'USER';
 };
 
+const MAX_PERMISSION_KEYS_PER_REQUEST = 32;
+
 async function shadowCompareEffectiveAccess(
   req: AuthRequest,
   permissionKey: string,
@@ -233,6 +235,20 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
         return;
       }
 
+      if (permissionKeys.length > MAX_PERMISSION_KEYS_PER_REQUEST) {
+        logger.warn('[PermissionMiddleware] Denied: permission key list exceeds max count', {
+          userId,
+          count: permissionKeys.length,
+          max: MAX_PERMISSION_KEYS_PER_REQUEST,
+        });
+        res.status(403).json({
+          error: 'Permission denied',
+          requiredAny: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+
       const roleCandidates = getRoleCandidates(userRole);
       for (const permissionKey of permissionKeys) {
         const effectiveDecision = await evaluateEffectiveAccess(req, permissionKey);
@@ -295,6 +311,20 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
         res.status(401).json({
           error: 'Authentication required',
           code: 'AUTH_REQUIRED',
+        });
+        return;
+      }
+
+      if (permissionKeys.length > MAX_PERMISSION_KEYS_PER_REQUEST) {
+        logger.warn('[PermissionMiddleware] Denied: permission key list exceeds max count', {
+          userId,
+          count: permissionKeys.length,
+          max: MAX_PERMISSION_KEYS_PER_REQUEST,
+        });
+        res.status(403).json({
+          error: 'Permission denied',
+          missing: [],
+          code: 'PERMISSION_DENIED',
         });
         return;
       }
@@ -362,6 +392,10 @@ export const auditAction = (options: AuditOptions) => {
 
     // Override json to intercept response
     res.json = (async (data: unknown) => {
+      if (res.headersSent) {
+        return originalJson(data);
+      }
+
       // Only audit on success (2xx status codes)
       if (res.statusCode >= 200 && res.statusCode < 300) {
         try {

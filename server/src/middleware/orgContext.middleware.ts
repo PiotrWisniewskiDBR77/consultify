@@ -77,6 +77,8 @@ interface Dependencies {
   // No longer needed - using DbPromise directly
 }
 
+const MAX_ORG_CONTEXT_ROLE_CHARS = 64;
+
 // ==========================================
 // DEPENDENCIES (injectable for testing)
 // ==========================================
@@ -176,6 +178,15 @@ async function getUserOrganizations(
   const uniqueOrgs = Array.from(new Map(orgs.map((o) => [o.id, o])).values());
 
   return uniqueOrgs;
+}
+
+function sanitizeOrgContextRole(role: unknown, isConsultant: boolean): string {
+  if (isConsultant) return 'CONSULTANT';
+  if (typeof role !== 'string') return 'MEMBER';
+  const trimmed = role.trim();
+  if (!trimmed || trimmed.length > MAX_ORG_CONTEXT_ROLE_CHARS) return 'MEMBER';
+  if (/[\u0000-\u001F\u007F]/.test(trimmed)) return 'MEMBER';
+  return trimmed;
 }
 
 // ==========================================
@@ -284,7 +295,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         source: orgSource || 'unknown',
         isMember: access.isMember || false,
         isConsultant: access.isConsultant || false,
-        role: access.role || 'MEMBER',
+        role: sanitizeOrgContextRole(access.role, access.isConsultant === true),
         permissionScope: access.permissionScope,
         membershipId: access.membershipId || access.linkId,
       };
@@ -295,7 +306,9 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
       next();
     } catch (error: unknown) {
       logger.error('[OrgContextMiddleware] Error:', error);
-      res.status(500).json({ error: 'Internal error resolving organization context' });
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Internal error resolving organization context' });
+      }
     }
   };
 }

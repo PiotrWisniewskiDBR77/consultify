@@ -168,7 +168,7 @@ Validation evidence:
 
 ## Wave 4 - Settings / AI Governance / Admin Controls
 
-Status: `PLANNED`.
+Status: `DONE` and deployed.
 
 Goal:
 
@@ -192,9 +192,23 @@ Gate:
 - No raw sensitive payloads in logs or UI.
 - Memory/privacy route tests must pass.
 
+Delivered slice:
+
+- AI memory preferences fail-closed backend route behavior.
+- Coded AI governance and privacy error envelopes.
+- Canonical AI memory and chat history settings surfaces.
+- Superadmin AI governance unavailable/degraded states.
+
+Validation evidence:
+
+- Focused settings/governance tests: `58/58` passing.
+- Production build: passing with larger Node heap.
+- GitHub/Railway deployment: `7f94fcb7d` live on `demo.consultify.ai`.
+- Runtime: `/ping = pong`, homepage `HTTP 200`, `/api/health` reported `gitSha = 7f94fcb7dc48c51c7e72c4ce05f02968af9e32c4`.
+
 ## Wave 5 - Runtime Hardening / RBAC / Org Context / Middleware
 
-Status: `DEFERRED`.
+Status: `IN_PROGRESS` via small manual slices.
 
 Goal:
 
@@ -223,6 +237,34 @@ Gate:
 - Existing `effectiveAccess` model must not regress.
 - Any uncertain authorization behavior must default to deny or stop the wave.
 
+### Wave 5.1 - Middleware Edge Guards
+
+Status: `READY_FOR_DEPLOY`.
+
+Source candidate:
+
+- `8a816422b` - `fix(middleware): harden metrics, permissions, and org context edge paths`
+
+Delivered slice:
+
+- Metrics middleware records completion on `finish`/`close` as well as `end`, avoids double recording, and caps impossible latency jumps.
+- Org context middleware sanitizes attached role values and avoids catch-path 500 writes after headers are already sent.
+- Permission middleware denies excessive `requireAnyPermission` / `requireAllPermissions` key lists before DB checks and skips audit logging after headers are sent.
+
+Hard stops preserved:
+
+- No bulk middleware cherry-pick.
+- No auth model rewrite.
+- No tenant resolution rewrite.
+- No `EFFECTIVE_ACCESS_ENFORCE` behavior change.
+- No migration or schema change.
+
+Validation evidence:
+
+- Focused non-DB middleware gate: `36/36` passing.
+- Production build: passing with larger Node heap.
+- DB-backed `orgContext.middleware.test.ts` was not used as a local blocker because local Postgres failed before test execution with `role "iris" does not exist`; equivalent new safety coverage was added with mocked DB dependencies.
+
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
 Status: `PLANNED`.
@@ -248,13 +290,12 @@ Final verdict options:
 
 ## Immediate Next Step
 
-Start Wave 4.
+Deploy Wave 5.1 after commit/push, then verify `/ping`, homepage, `/api/health`, and proceed only if runtime stays green.
 
 First command sequence:
 
-1. Inspect diffs and conflict risk for Settings / AI Governance / Admin Controls.
-2. Apply the smallest viable governance/settings slice.
-3. Run scoped tests.
-4. Build.
-5. Deploy only after green gates.
+1. Commit and push Wave 5.1 middleware edge guards to `origin/staging`.
+2. Wait for Railway staging deployment.
+3. Verify runtime health on `demo.consultify.ai`.
+4. Continue Wave 5 only with the next independently testable middleware-family slice.
 
