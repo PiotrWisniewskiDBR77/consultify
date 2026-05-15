@@ -384,12 +384,15 @@ describe('V8 results read-only routes', () => {
 
   it('POST /api/v8/results/kpis creates a KPI in the governed V8 namespace', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/kpis').send({
-      name: 'Revenue Growth',
-      targetValue: 100,
-      measurementFrequency: 'MONTHLY',
-      direction: 'HIGHER_IS_BETTER',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/kpis')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        name: 'Revenue Growth',
+        targetValue: 100,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -405,18 +408,21 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
 
     const app = createApp();
-    const res = await request(app).put('/api/v8/results/kpis/kpi-1').send({
-      name: 'KPI Alpha Updated',
-      description: 'Updated description',
-      unit: '%',
-      baselineValue: 10,
-      targetValue: 20,
-      measurementFrequency: 'MONTHLY',
-      direction: 'HIGHER_IS_BETTER',
-      thresholdMode: 'PERCENT_FROM_TARGET',
-      amberThresholdPct: 5,
-      redThresholdPct: 10,
-    });
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-1')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        name: 'KPI Alpha Updated',
+        description: 'Updated description',
+        unit: '%',
+        baselineValue: 10,
+        targetValue: 20,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+        thresholdMode: 'PERCENT_FROM_TARGET',
+        amberThresholdPct: 5,
+        redThresholdPct: 10,
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -445,7 +451,9 @@ describe('V8 results read-only routes', () => {
     mockDbAll.mockResolvedValueOnce([{ id: 'case-1' }]);
 
     const app = createApp();
-    const res = await request(app).delete('/api/v8/results/kpis/kpi-1');
+    const res = await request(app)
+      .delete('/api/v8/results/kpis/kpi-1')
+      .set('x-kpi-role', 'kpi_owner');
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -508,6 +516,7 @@ describe('V8 results read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/results/deviation-cases/case-1/acknowledge')
+      .set('x-kpi-role', 'kpi_owner')
       .send({});
 
     expect(res.status).toBe(200);
@@ -527,9 +536,12 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).put('/api/v8/results/deviation-cases/case-1/rca').send({
-      rcaText: 'Root cause analysis details',
-    });
+    const res = await request(app)
+      .put('/api/v8/results/deviation-cases/case-1/rca')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        rcaText: 'Root cause analysis details',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -550,10 +562,13 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/actions').send({
-      title: 'Create mitigation plan',
-      dueDate: '2026-03-31',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/actions')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        title: 'Create mitigation plan',
+        dueDate: '2026-03-31',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -575,6 +590,7 @@ describe('V8 results read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .put('/api/v8/results/deviation-cases/case-1/actions/action-1')
+      .set('x-kpi-role', 'kpi_owner')
       .send({
         status: 'DONE',
       });
@@ -597,7 +613,10 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/resolve').send({});
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/resolve')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({});
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -616,10 +635,13 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/close').send({
-      evidenceText: 'Verified mitigation in review pack',
-      resolutionNotes: 'Closed after governance review',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/close')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        evidenceText: 'Verified mitigation in review pack',
+        resolutionNotes: 'Closed after governance review',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -647,6 +669,7 @@ describe('V8 results read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/results/kpi-reports')
+      .set('x-kpi-role', 'kpi_owner')
       .send({
         periodStart: '2026-02-01',
         periodEnd: '2026-02-28',
@@ -684,11 +707,14 @@ describe('V8 results read-only routes', () => {
 
   it('POST /api/v8/results/kpis/:kpiId/time-series records governed KPI measurement', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/kpis/kpi-1/time-series').send({
-      value: 24,
-      periodStart: '2026-03-01',
-      notes: 'March value',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/kpis/kpi-1/time-series')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        value: 24,
+        periodStart: '2026-03-01',
+        notes: 'March value',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
