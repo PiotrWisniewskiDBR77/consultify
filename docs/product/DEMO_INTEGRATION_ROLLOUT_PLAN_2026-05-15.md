@@ -297,7 +297,7 @@ Validation evidence:
 
 ### Wave 5.3 - Request Access Prototype Guard
 
-Status: `READY_FOR_DEPLOY`.
+Status: `DONE` and deployed.
 
 Source candidate:
 
@@ -320,6 +320,8 @@ Validation evidence:
 
 - Focused request access helper gate: `6/6` passing.
 - Production build: passing with larger Node heap.
+- Railway deployment: `6c673c2b-3afb-42ef-8cc1-544265007a0e`, `SUCCESS`.
+- Runtime: `/ping = pong`, `/api/health` reported `gitSha = 1dd0c4022bdee1c629a8fc99f9f9f176dfeed621`.
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
