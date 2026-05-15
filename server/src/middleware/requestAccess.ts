@@ -2,6 +2,23 @@ import type { AuthRequest } from './auth.middleware.js';
 
 export type RequestAccessRole = 'superadmin' | 'owner' | 'admin' | 'member' | 'guest' | '';
 
+const hasOwn = (obj: object, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
+const isOwnSuperAdminTrue = (user: AuthRequest['user'] | undefined): boolean => {
+  if (!user || typeof user !== 'object' || !hasOwn(user as object, 'isSuperAdmin')) {
+    return false;
+  }
+  return user.isSuperAdmin === true;
+};
+
+const getOwnUserRole = (user: AuthRequest['user'] | undefined): unknown => {
+  if (!user || typeof user !== 'object' || !hasOwn(user as object, 'role')) {
+    return undefined;
+  }
+  return user.role;
+};
+
 export const normalizeAccessRole = (role?: string): RequestAccessRole => {
   const normalized = String(role || '')
     .trim()
@@ -24,7 +41,7 @@ export const normalizeAccessRole = (role?: string): RequestAccessRole => {
 };
 
 export const isRequestSuperAdmin = (req: AuthRequest): boolean => {
-  if (req.user?.isSuperAdmin) return true;
+  if (isOwnSuperAdminTrue(req.user)) return true;
   return normalizeAccessRole(req.userRole) === 'superadmin';
 };
 
@@ -34,7 +51,7 @@ export const getRequestAccessRole = (req: AuthRequest): RequestAccessRole => {
   const rawRole = normalizeAccessRole(req.userRole);
   if (rawRole) return rawRole;
 
-  return normalizeAccessRole(req.user?.role);
+  return normalizeAccessRole(getOwnUserRole(req.user));
 };
 
 export const getSettingsActorRole = (

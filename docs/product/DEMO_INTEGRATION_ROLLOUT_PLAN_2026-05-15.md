@@ -295,6 +295,32 @@ Validation evidence:
 - Railway deployment: `0c6aba50-ee61-4390-a9b3-4ede7a100b13`, `SUCCESS`.
 - Runtime: `/ping = pong`, homepage `HTTP 200`, `/api/health` reported `gitSha = fde05d354afb041b849082bae22e96d451438182`.
 
+### Wave 5.3 - Request Access Prototype Guard
+
+Status: `READY_FOR_DEPLOY`.
+
+Source candidate:
+
+- `d7e547713` - `fix(middleware): harden runtime guards across auth/version/quota`
+
+Delivered slice:
+
+- `requestAccess` now ignores inherited `user.isSuperAdmin` and inherited `user.role` values.
+- Own `user.isSuperAdmin`, `req.userRole`, and own `user.role` behavior remains unchanged.
+- No auth middleware, tenant resolution, quota policy, or schema behavior changed.
+
+Hard stops preserved:
+
+- No bulk middleware cherry-pick.
+- No auth token fallback change.
+- No tenant/ACL model change.
+- No database or migration change.
+
+Validation evidence:
+
+- Focused request access helper gate: `6/6` passing.
+- Production build: passing with larger Node heap.
+
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
 Status: `PLANNED`.
