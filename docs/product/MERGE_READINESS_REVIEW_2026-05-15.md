@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`DEPLOYED_AFTER_REMEDIATION`; final authenticated staging smoke still pending.
+`BLOCKED_ON_AUTHENTICATED_SMOKE`; staging is healthy, but final authenticated save/read-back smoke is not complete.
 
-The staging runtime is healthy and the critical auth/access-policy automated gate is now green after aligning tests to the current canonical role and trial AI access contracts. Final merge still requires authenticated tenant/ACL smoke before changing the verdict to `GO`.
+The staging runtime is healthy and the critical auth/access-policy automated gate is green after aligning tests to the current canonical role and trial AI access contracts. Safe final-smoke gates passed where credentials were not required, but the final merge verdict cannot move to `GO` until controlled staging owner/member credentials are available and the authenticated tenant/ACL save/read-back smoke passes.
 
 ## Assessed Baseline
 
@@ -15,6 +15,7 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Runtime checks: `/api/health` healthy, `/ping = pong`, homepage `HTTP 200`
 - Remediation SHA: `77f727197b57c2dd4d91c8f287752b44f1cbb720`
 - Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`
+- Current runtime SHA during final-smoke attempt: `d7be37e4ca275cdb1e03966a80ddb7c432391cca`
 
 ## Scope Size
 
@@ -34,12 +35,17 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Live runtime probes: `/api/health`, `/ping`, homepage all healthy.
 - Unauthenticated API probes returned controlled `401` responses.
 - Live headers did not expose `X-Powered-By`; security headers were present.
+- Static Organization Context Engine smoke passed with `41/41` checks.
+- Cross-application Organization Context Engine audit passed with `6/6` checks and no forbidden frontend ingestion imports.
+- Read-only tenant split audit passed for real staging tenants `vts,dbr77`; required orgs present, forbidden org `org-dbr77-system` absent.
 
 ## Blocking Gates
 
 - Previous blocker: `npm run test:unit:critical` failed with `3` files failed, `11` tests failed, `522/533` tests passed.
 - Remediation result: `npm run test:unit:critical` now passes with `534/534` tests passing.
 - Targeted blocker files pass with `203/203` tests passing.
+- Authenticated browser smoke is blocked locally because Playwright Chromium is not installed.
+- Authenticated tenant/ACL save/read-back smoke is blocked because `E2E_OWNER_EMAIL`, `E2E_OWNER_PASSWORD`, `E2E_MEMBER_EMAIL`, and `E2E_MEMBER_PASSWORD` are not configured locally.
 
 Resolved categories:
 
@@ -53,8 +59,10 @@ Resolved categories:
 
 ## Required Fix Before Merge
 
-1. Run authenticated tenant/ACL and save/read-back smoke with test accounts.
-2. Re-issue final merge verdict after the authenticated smoke gate.
+1. Provide controlled staging owner/member test credentials through local env or CI secrets.
+2. Install the Playwright browser runtime or run the smoke in CI where browsers are already provisioned.
+3. Run authenticated tenant/ACL and save/read-back smoke with test accounts.
+4. Re-issue final merge verdict after the authenticated smoke gate.
 
 ## Recommendation
 

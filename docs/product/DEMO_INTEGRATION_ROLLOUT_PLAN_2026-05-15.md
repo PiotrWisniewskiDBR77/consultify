@@ -381,7 +381,7 @@ Validation evidence:
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
-Status: `DEPLOYED_AFTER_REMEDIATION`; authenticated manual smoke still pending before final `GO`.
+Status: `BLOCKED_ON_AUTHENTICATED_SMOKE`; safe staging gates passed, final authenticated save/read-back smoke still pending before final `GO`.
 
 Goal:
 
@@ -415,14 +415,21 @@ Wave 6 result:
 - Targeted blocker files after remediation: `203/203` passing.
 - Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`.
 - Runtime after remediation: `/api/health` reported `gitSha = 77f727197b57c2dd4d91c8f287752b44f1cbb720`, `/ping = pong`, homepage `HTTP 200`.
+- Current runtime during final-smoke attempt: `/api/health` reported `gitSha = d7be37e4ca275cdb1e03966a80ddb7c432391cca`, `/ping = pong`, homepage `HTTP 200`.
 - Live unauthenticated API probes returned controlled `401` responses with `{"error":"No token provided"}`.
 - Live response headers did not expose `X-Powered-By`; CSP, HSTS, frame, content-type, and referrer controls were present.
+- Static Organization Context Engine smoke: `41/41` passing.
+- Cross-application Organization Context Engine audit: `6/6` passing; no forbidden frontend ingestion imports.
+- Read-only tenant split audit for real staging tenants `vts,dbr77`: passing; both required tenants present and forbidden `org-dbr77-system` absent.
+- Default tenant split audit still expects `atelier`; staging currently has `vts,dbr77` only, so the default required-org list is not a valid merge blocker unless `atelier` is intentionally required for this RC.
 
 Blocking findings:
 
 - Resolved: `npm run test:unit:critical` now passes.
 - Resolved by aligning tests to the current canonical role model: platform `superadmin` remains `superadmin`, manager-like application roles fall back to `team_member` / `USER`, and permission checks use the current `USER` fallback.
 - Resolved by documenting trial AI onboarding behavior in tests: initial trial AI grace calls are allowed before onboarding completion, and calls are denied once the grace usage threshold is reached.
+- New blocker: authenticated browser smoke could not run locally because Playwright Chromium is not installed.
+- New blocker: authenticated tenant/ACL save/read-back smoke cannot run safely because `E2E_OWNER_EMAIL`, `E2E_OWNER_PASSWORD`, `E2E_MEMBER_EMAIL`, and `E2E_MEMBER_PASSWORD` are not configured locally.
 
 Residual risks:
 
@@ -433,9 +440,11 @@ Residual risks:
 
 Run the final authenticated staging smoke before merge:
 
-1. Use test accounts to validate tenant/ACL isolation.
-2. Validate save/read-back/refresh on the agreed critical flows.
-3. If no P0/P1 appears, change final merge verdict to `GO` or `GO_WITH_P2`.
+1. Provide controlled staging owner/member credentials via local env or CI secrets.
+2. Install the Playwright browser runtime locally or run the smoke in CI where browsers are provisioned.
+3. Use test accounts to validate tenant/ACL isolation.
+4. Validate save/read-back/refresh on the agreed critical flows.
+5. If no P0/P1 appears, change final merge verdict to `GO` or `GO_WITH_P2`.
 
 Previous Wave 5 continuation command sequence:
 
