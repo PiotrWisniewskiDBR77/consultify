@@ -323,6 +323,32 @@ Validation evidence:
 - Railway deployment: `6c673c2b-3afb-42ef-8cc1-544265007a0e`, `SUCCESS`.
 - Runtime: `/ping = pong`, `/api/health` reported `gitSha = 1dd0c4022bdee1c629a8fc99f9f9f176dfeed621`.
 
+### Wave 5.4 - Deprecation Header Response Guard
+
+Status: `READY_FOR_DEPLOY`.
+
+Source candidate:
+
+- `8e8a60ad9` - `fix(middleware): extend runtime hardening across access and quota guards`
+
+Delivered slice:
+
+- `deprecationHeader` now skips header writes when the response has already been committed.
+- Successor `Link` header values are capped to a hard limit.
+- No auth middleware, tenant resolution, quota policy, validation policy, or schema behavior changed.
+
+Hard stops preserved:
+
+- No bulk middleware cherry-pick.
+- No auth/tenant behavior change.
+- No rate-limit or quota behavior change.
+- No database or migration change.
+
+Validation evidence:
+
+- Focused deprecation header gate: `3/3` passing.
+- Production build: passing with larger Node heap.
+
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
 Status: `PLANNED`.
