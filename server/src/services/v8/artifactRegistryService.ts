@@ -29,6 +29,7 @@ import {
 } from '../../types/artifactRegistry.js';
 import type { RunState } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
 import {
   buildWave5LineDiffForPreview,
@@ -3287,6 +3288,15 @@ export async function materializeArtifactRun(
       detail: { failureReason, stage: 'materialize', ghostArtifactsCleanedUp },
     });
 
-    throw error;
+    // Surface a controlled operational error to the API layer so the UI
+    // gets a meaningful materialization message instead of a generic 500.
+    throw new AppError(failureReason, 409, 'ARTIFACT_MATERIALIZE_FAILED', {
+      runId: validated.runId,
+      outputType: current.plan.outputType,
+      executionRunId: current.executionRunId,
+      stage: 'materialize',
+      ghostArtifactsCleanedUp,
+      cleanupNotes,
+    });
   }
 }

@@ -217,4 +217,22 @@ describe('useKimiArtifactPipeline — 4-lane regression (L2.4)', () => {
     expect(mockV8.acceptPlan).not.toHaveBeenCalled();
     expect(mockV8.materializeRun).not.toHaveBeenCalled();
   });
+
+  it('stops before materialize when approve step fails', async () => {
+    conversationStoreState.activeConversationId = 'conversation-1';
+    mockV8.approveRun.mockRejectedValueOnce(new Error('approval endpoint unavailable'));
+
+    const { result } = renderHook(() => useKimiArtifactPipeline('prezentacje'));
+
+    await act(async () => {
+      await result.current.startGeneration('Create a board update deck');
+    });
+
+    await waitFor(() => {
+      expect(result.current.isFailed).toBe(true);
+    });
+
+    expect(result.current.failureReason).toBe('approval endpoint unavailable');
+    expect(mockV8.materializeRun).not.toHaveBeenCalled();
+  });
 });

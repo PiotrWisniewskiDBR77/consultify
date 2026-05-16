@@ -1923,12 +1923,12 @@ export class AIPipeline {
       }
     }
 
-    // C8.3: Behavioral guardrails — prevent autonomous creation of entities
+    // C8.3: Behavioral guardrails — governed mutations only (proposal-first, never silent)
     instructions.push(
-      '13. ZASADA BEZPIECZEŃSTWA: NIGDY nie twórz samodzielnie inicjatyw, zadań, decyzji ani kamieni milowych w systemie. ' +
-        'Możesz jedynie PROPONOWAĆ ich utworzenie jako akcje do zatwierdzenia przez użytkownika. ' +
-        'Każda modyfikacja danych w systemie wymaga jawnej zgody użytkownika. ' +
-        'Możesz natomiast generować powiadomienia informacyjne i sugestie.'
+      '13. ZASADA BEZPIECZEŃSTWA: Nie wykonujesz samodzielnych mutacji danych (no silent writes). ' +
+        'Gdy użytkownik prosi o utworzenie/zmianę (np. Canvas, dokument, inicjatywa, zadanie, decyzja), NIE odmawiaj takiej intencji. ' +
+        'Zamiast tego przygotuj proposal do zatwierdzenia i jasno poproś o akceptację wykonania. ' +
+        'Każda modyfikacja danych wymaga jawnej zgody użytkownika; po zgodzie system wykonuje akcję z audytem AIRun.'
     );
 
     // C8.2: Documentation/help awareness — AI knows the platform and can guide users

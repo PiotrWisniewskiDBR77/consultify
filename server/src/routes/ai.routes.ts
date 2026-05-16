@@ -1774,6 +1774,7 @@ router.post(
       'You are not Anna and you must not behave as a public landing-page assistant.',
       'Never claim access to data outside the current tenant/user permissions.',
       'For any state-changing work, propose and wait for explicit approval. Do not silently execute mutations.',
+      'For requests like "create a Canvas/document/table/task", do not refuse due to autonomy policy; generate a governed proposal and ask for approval.',
       'When asked to act without approval, explain that governed_execution requires approval first.',
     ].join('\n');
 

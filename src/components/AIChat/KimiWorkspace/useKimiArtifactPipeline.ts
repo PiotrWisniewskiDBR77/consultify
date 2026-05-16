@@ -923,24 +923,53 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             try {
               await submitReview.mutateAsync(accepted.executionRunId);
             } catch (submitErr: any) {
-              console.error('[KIMI Pipeline] submitReview failed (non-fatal):', {
+              const details = submitErr?.data?.details ?? submitErr?.response?.data?.details;
+              const message =
+                submitErr instanceof Error
+                  ? submitErr.message
+                  : 'Failed to submit execution review.';
+              setStartupError(message);
+              toast.error(`Review: ${message}`);
+              console.error('[KIMI Pipeline] submitReview failed:', {
                 executionRunId: accepted.executionRunId,
                 error: submitErr?.message,
-                details: submitErr?.data?.details ?? submitErr?.response?.data?.details,
+                details,
               });
+              setIsStartingPipeline(false);
+              return;
             }
 
             try {
-              await approveRun.mutateAsync({
+              const approved = await approveRun.mutateAsync({
                 runId: accepted.executionRunId,
                 reason: 'KIMI auto-approval for governed artifact generation',
               });
+              if (approved?.state !== 'approved_for_apply' && approved?.state !== 'applying') {
+                const message = `Execution run is not ready for materialization (state: ${String(approved?.state || 'unknown')})`;
+                setStartupError(message);
+                toast.error(`Approve: ${message}`);
+                console.error('[KIMI Pipeline] approveRun returned non-ready state:', {
+                  executionRunId: accepted.executionRunId,
+                  state: approved?.state,
+                });
+                setIsStartingPipeline(false);
+                return;
+              }
             } catch (approveErr: any) {
-              console.error('[KIMI Pipeline] approveRun failed (non-fatal):', {
+              const details = approveErr?.data?.details ?? approveErr?.response?.data?.details;
+              const message =
+                approveErr instanceof Error
+                  ? approveErr.message
+                  : 'Failed to approve execution run.';
+              setStartupError(message);
+              toast.error(`Approve: ${message}`);
+              console.error('[KIMI Pipeline] approveRun failed:', {
                 executionRunId: accepted.executionRunId,
                 error: approveErr?.message,
-                details: approveErr?.data?.details ?? approveErr?.response?.data?.details,
+                details,
               });
+              setIsStartingPipeline(false);
+              return;
             }
           }
 
