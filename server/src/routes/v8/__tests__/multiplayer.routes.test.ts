@@ -4,6 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { V8_MULTIPLAYER_READ_CONTRACT } from '../multiplayer.routes.js';
 
+vi.mock('tesseract.js', () => ({
+  default: {
+    recognize: vi.fn(),
+  },
+}));
+
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   getV8Flags: vi.fn().mockResolvedValue({ v8_enabled: true }),
   getAllOrgFlags: vi.fn().mockResolvedValue([]),

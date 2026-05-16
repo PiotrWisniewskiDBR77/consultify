@@ -2,24 +2,7 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_MULTIPLAYER_READ_CONTRACT } from '../multiplayer.routes.js';
-
-vi.mock('../../../services/v8/featureFlagService.js', () => ({
-  getV8Flags: vi.fn().mockResolvedValue({ v8_enabled: true }),
-  getAllOrgFlags: vi.fn().mockResolvedValue([]),
-  setV8OrgFlag: vi.fn().mockResolvedValue({}),
-  isV8Enabled: vi.fn().mockResolvedValue(true),
-  isV8ShadowMode: vi.fn().mockResolvedValue(false),
-}));
-
-vi.mock('../../../utils/v8MetricsStore.js', () => ({
-  recordV8Request: vi.fn(),
-  getV8MetricsSnapshot: vi.fn().mockReturnValue({}),
-}));
-
-vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
-  v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
-}));
+import multiplayerRoutes, { V8_MULTIPLAYER_READ_CONTRACT } from '../multiplayer.routes.js';
 
 const mockResolveRoomBinding = vi.fn();
 const mockGetWorkspacePresence = vi.fn();
@@ -44,49 +27,27 @@ let mockUser: {
   isSuperAdmin: boolean;
 } | null = null;
 
-vi.mock('../../../middleware/auth.middleware.js', () => ({
-  default: (req: any, res: any, next: () => void) => {
-    if (!mockUser) {
-      res.status(401).json({ error: 'No token provided' });
-      return;
-    }
-    req.userId = mockUser.id;
-    req.userRole = mockUser.role;
-    req.organizationId = mockUser.organizationId;
-    req.user = mockUser;
-    req.can = () => true;
-    next();
-  },
-  verifyToken: (req: any, res: any, next: () => void) => {
-    if (!mockUser) {
-      res.status(401).json({ error: 'No token provided' });
-      return;
-    }
-    req.userId = mockUser.id;
-    req.userRole = mockUser.role;
-    req.organizationId = mockUser.organizationId;
-    req.user = mockUser;
-    req.can = () => true;
-    next();
-  },
-  requireSuperAdmin: (req: any, res: any, next: () => void) => {
-    if (!req.user?.isSuperAdmin) {
-      res.status(403).json({ error: 'Super admin access required' });
-      return;
-    }
-    next();
-  },
-  requireRole: () => (_req: unknown, _res: unknown, next: () => void) => next(),
-  requireOrganization: (_req: unknown, _res: unknown, next: () => void) => next(),
-  isAuthenticated: (_req: unknown, _res: unknown, next: () => void) => next(),
-}));
-
-import v8Router from '../index.js';
-
 function createApp(): Express {
   const app = express();
   app.use(express.json());
-  app.use('/api/v8', v8Router);
+  app.use((req: any, res, next) => {
+    if (!mockUser) {
+      res.status(401).json({ error: 'No token provided' });
+      return;
+    }
+    req.userId = mockUser.id;
+    req.userRole = mockUser.role;
+    req.organizationId = mockUser.organizationId;
+    req.user = mockUser;
+    req.v8Context = {
+      organizationId: mockUser.organizationId,
+      userId: mockUser.id,
+      userRole: mockUser.role,
+      isSuperAdmin: mockUser.isSuperAdmin,
+    };
+    next();
+  });
+  app.use('/api/v8/multiplayer', multiplayerRoutes);
   return app;
 }
 
