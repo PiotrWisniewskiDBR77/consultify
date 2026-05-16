@@ -41,12 +41,13 @@ describe('ErrorBoundary', () => {
 
     render(
       <ErrorBoundary>
-        <Thrower message="Boom" />
+        <Thrower message="LEAK_SECRET_DB_CONNECTION_STRING" />
       </ErrorBoundary>
     );
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-    expect(screen.getByText('Boom')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Runtime details are hidden for safety');
+    expect(screen.queryByText('LEAK_SECRET_DB_CONNECTION_STRING')).not.toBeInTheDocument();
 
     await user.click(screen.getByText('Reset Application Data (Fix)'));
     expect(window.localStorage.getItem('__test_key__')).toBeNull();
