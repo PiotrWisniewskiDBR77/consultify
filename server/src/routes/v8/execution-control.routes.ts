@@ -39,7 +39,7 @@ import {
 } from '../../services/v8ExecutionControlTowerService.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -448,7 +448,21 @@ router.get(
   '/capacity/timeline',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const initiativeId = firstQueryString(req.query.initiativeId);
+    const initiativeRaw = firstQueryString(req.query.initiativeId);
+    const initiativeId = initiativeRaw && initiativeRaw.trim() ? initiativeRaw.trim() : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
     const weeks = await getCapacityTimeline(organizationId, initiativeId);
     return res.json({
       data: { weeks },
@@ -501,6 +515,21 @@ router.post(
   validateBody(CreateBudgetEntrySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
+    const initiativeId =
+      typeof req.body?.initiativeId === 'string' && req.body.initiativeId.trim()
+        ? req.body.initiativeId.trim()
+        : '';
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
     const id = await createBudgetEntry(organizationId, { ...req.body, createdBy: userId });
     return res.json({
       data: { success: true, id },

@@ -6,6 +6,16 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
@@ -14,7 +24,15 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, onTabChange, onNewItem, commandRowContent, children }: any) => (
+  ModuleHub: ({
+    tabs,
+    activeTab,
+    onTabChange,
+    onNewItem,
+    commandRowContent,
+    commandRowRightContent,
+    children,
+  }: any) => (
     <div>
       <div data-testid="active-tab">{activeTab}</div>
       <div>
@@ -29,7 +47,10 @@ vi.mock('../../../src/components/shared/ModuleHub/ModuleHub', () => ({
           </button>
         ) : null}
       </div>
-      <div data-testid="command-row">{commandRowContent}</div>
+      <div data-testid="command-row">
+        {commandRowContent}
+        {commandRowRightContent}
+      </div>
       <div>{children}</div>
     </div>
   ),
@@ -156,6 +177,7 @@ import { V8ResultsApi } from '../../../src/services/api/v8/results';
 describe('ResultsHub V8 runtime strip', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockReset();
 
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/benefits/kpis') {
@@ -410,6 +432,60 @@ describe('ResultsHub V8 runtime strip', () => {
         'Growth Program'
       );
     });
+    expect(V8ResultsApi.getDashboard).toHaveBeenCalledWith({ initiativeId: 'ini-1' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Execution' }));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/implementation?initiativeId=ini-1&open=ini-1&mode=doc&tab=list&view=table'
+    );
+  });
+
+  it('shows Open in Execution in KPI lane when initiative scope is present', async () => {
+    render(
+      <MemoryRouter initialEntries={['/benefits?tab=results_kpi&initiativeId=ini-1']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Execution' }));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/implementation?initiativeId=ini-1&open=ini-1&mode=doc&tab=list&view=table'
+    );
+  });
+
+  it('shows Open in Execution in ROI lane when initiative scope is present', async () => {
+    render(
+      <MemoryRouter initialEntries={['/benefits?tab=roi&initiativeId=ini-1']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('roi');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Execution' }));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/implementation?initiativeId=ini-1&open=ini-1&mode=doc&tab=list&view=table'
+    );
+  });
+
+  it('keeps unscoped dashboard call when initiativeId is absent', async () => {
+    render(
+      <MemoryRouter initialEntries={['/benefits?tab=results_reports&rmode=reports']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_reports');
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalled();
+    });
+    expect(V8ResultsApi.getDashboard).toHaveBeenCalledWith({ initiativeId: undefined });
   });
 
   it('deletes KPI from the hub through the governed V8 seam first', async () => {

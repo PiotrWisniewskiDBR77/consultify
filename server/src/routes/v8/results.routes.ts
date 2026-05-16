@@ -129,7 +129,6 @@ async function p04AssertKpiPermission(
   res: Response,
   action: P04KpiGuardedAction
 ): Promise<boolean> {
-  const { canPerformKpiAction } = await import('../../services/v8/kpiWorkflowCanon.js');
   const role = p04KpiRoleFromRequest(req);
   if (!canPerformKpiAction(role, action)) {
     res.status(403).json({ error: 'Permission denied', code: 'P04_PERMISSION_DENIED' });
@@ -199,7 +198,24 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const kpiId = typeof req.query.kpiId === 'string' ? req.query.kpiId.trim() : undefined;
-    const catalog = await getResultsKpiCatalog(organizationId, { kpiId });
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    const catalog = await getResultsKpiCatalog(organizationId, { kpiId, initiativeId });
     return res.json({
       data: catalog,
       meta: resultsMeta(),
@@ -571,6 +587,31 @@ router.post(
         code: 'RESULTS_KPI_MAPPING_REQUIRED_FIELDS',
       });
     }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(initiativeId), organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
+    const kpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), organizationId],
+      { fallback: true }
+    );
+    if (!kpi?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -923,6 +964,23 @@ router.post(
         code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
       });
     }
+    const safeLinkedInitiativeId =
+      typeof linkedInitiativeId === 'string' && linkedInitiativeId.trim()
+        ? linkedInitiativeId.trim()
+        : '';
+    if (safeLinkedInitiativeId) {
+      const linkedInitiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [safeLinkedInitiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!linkedInitiative?.id) {
+        return res.status(404).json({
+          error: 'Initiative not found',
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
 
     try {
       await dbRun(
@@ -936,7 +994,7 @@ router.post(
           safeEvidenceRef || null,
           userId || null,
           safeResolutionNotes || null,
-          linkedInitiativeId || null,
+          safeLinkedInitiativeId || null,
           linkedTaskId || null,
           caseId,
           organizationId,
@@ -974,13 +1032,41 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
     if (!kpiId) {
       return res.status(400).json({
         error: 'kpiId is required',
         code: 'RESULTS_KPI_ID_REQUIRED',
       });
     }
-    const detail = await getResultsKpiDrawerDetail(kpiId, organizationId);
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    let detail;
+    try {
+      detail = await getResultsKpiDrawerDetail(kpiId, organizationId, { initiativeId });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'RESULTS_KPI_NOT_FOUND') {
+        return res.status(404).json({
+          error: `KPI ${kpiId} not found`,
+          code: 'RESULTS_KPI_NOT_FOUND',
+        });
+      }
+      throw error;
+    }
     return res.json({
       data: detail,
       meta: resultsMeta(),
@@ -1120,7 +1206,27 @@ router.get(
   '/roi/portfolio-summary',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const portfolio = await getROIPortfolioSummary(organizationId);
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    const portfolio = await getROIPortfolioSummary(
+      organizationId,
+      initiativeId ? { initiativeId } : undefined
+    );
     return res.json({
       data: portfolio,
       meta: resultsMeta(),
@@ -1240,6 +1346,17 @@ router.get(
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
       });
     }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
     const detail = await getROIInitiativeDetail(initiativeId, organizationId);
     return res.json({
       data: detail,
@@ -1262,6 +1379,17 @@ router.put(
       return res.status(400).json({
         error: 'initiativeId is required',
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
+      });
+    }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
       });
     }
 
@@ -1337,6 +1465,17 @@ router.post(
       return res.status(400).json({
         error: 'initiativeId is required',
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
+      });
+    }
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
       });
     }
 

@@ -702,6 +702,37 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
   }, [deepLinkHandled, searchParams, setSearchParams]);
 
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    const currentTab = String(next.get('tab') || '').trim().toLowerCase();
+    const desiredTab = String(activeTab || '').trim().toLowerCase();
+    if (desiredTab && currentTab !== desiredTab) {
+      next.set('tab', desiredTab);
+      changed = true;
+    }
+    const currentView = String(next.get('view') || '').trim().toLowerCase();
+    const desiredView = String(viewMode || '').trim().toLowerCase();
+    if (desiredView && currentView !== desiredView) {
+      next.set('view', desiredView);
+      changed = true;
+    }
+    const currentInitiativeScope = String(next.get('initiativeId') || '').trim();
+    const desiredInitiativeScope =
+      activeDocumentId && !activeDocumentId.startsWith('report:') ? activeDocumentId : '';
+    if (desiredInitiativeScope) {
+      if (currentInitiativeScope !== desiredInitiativeScope) {
+        next.set('initiativeId', desiredInitiativeScope);
+        changed = true;
+      }
+    } else if (currentInitiativeScope) {
+      next.delete('initiativeId');
+      changed = true;
+    }
+    if (!changed) return;
+    setSearchParams(next, { replace: true });
+  }, [activeDocumentId, activeTab, searchParams, setSearchParams, viewMode]);
+
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
     const todayStart = new Date(now);
@@ -1520,14 +1551,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
-        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+        const query = new URLSearchParams();
+        query.set('open', encodeURIComponent(id));
+        query.set('mode', 'doc');
+        query.set('initiativeId', encodeURIComponent(id));
+        query.set('tab', String(activeTab || 'list'));
+        query.set('view', String(viewMode || 'table'));
+        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?${query.toString()}`;
         await navigator.clipboard.writeText(url);
         toast.success(t('common.copied', 'Copied'));
       } catch {
         toast.error(t('common.copyFailed', 'Copy failed'));
       }
     },
-    [t]
+    [activeTab, t, viewMode]
   );
 
   // Tab configuration
@@ -3247,6 +3284,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
     );
   }, [
+    activeDocumentId,
     activeTab,
     actionCenter,
     actionQueueItems.length,
@@ -3259,6 +3297,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     riskSignals.length,
     t,
     tasks.length,
+    navigate,
   ]);
 
   const renderActionCenter = () => {

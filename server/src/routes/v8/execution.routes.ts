@@ -181,6 +181,28 @@ router.post(
   '/runs',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
+    const metadata =
+      req.body && typeof req.body === 'object' && req.body.metadata && typeof req.body.metadata === 'object'
+        ? (req.body.metadata as Record<string, unknown>)
+        : null;
+    const metadataInitiativeId = metadata?.initiativeId;
+    const initiativeId =
+      typeof metadataInitiativeId === 'string' && metadataInitiativeId.trim()
+        ? metadataInitiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
 
     try {
       const data = await executionSpineService.createRun({
