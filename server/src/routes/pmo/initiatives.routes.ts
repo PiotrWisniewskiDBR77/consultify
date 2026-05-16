@@ -47,13 +47,37 @@ import {
 } from '../../validators/initiative.validators.js';
 
 const router = Router();
-const notConfigured = (res: Response) =>
-  res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
-  });
+
+function resolvePmoInitiativesCorrelationId(req: any): string | null {
+  return req?.correlationId || req?.get?.('X-Correlation-ID') || null;
+}
+
+function buildPmoInitiativesFailClosedError(
+  req: any,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolvePmoInitiativesCorrelationId(req),
+  };
+}
+
+const notConfigured = (req: any, res: Response) =>
+  res.status(503).json(
+    buildPmoInitiativesFailClosedError(
+      req,
+      503,
+      'PMO_INITIATIVES_SERVICE_NOT_CONFIGURED',
+      'PMO initiatives service is temporarily unavailable.'
+    )
+  );
 
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
@@ -311,7 +335,16 @@ router.delete(
 router.get('/programs', async (req: any, res: any) => {
   try {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!orgId) {
+      return res.status(401).json(
+        buildPmoInitiativesFailClosedError(
+          req,
+          401,
+          'PMO_INITIATIVES_UNAUTHORIZED',
+          'Authentication is required to access PMO initiatives.'
+        )
+      );
+    }
 
     const rows = await queryHelpers.queryAll(
       `SELECT p.*,
@@ -340,8 +373,15 @@ router.get('/programs', async (req: any, res: any) => {
     }));
 
     return res.json({ programs });
-  } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch programs', message: err.message });
+  } catch {
+    return res.status(500).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        500,
+        'PMO_INITIATIVES_PROGRAMS_READ_FAILED',
+        'Failed to fetch PMO programs.'
+      )
+    );
   }
 });
 
@@ -1512,13 +1552,17 @@ router.post('/generate-section', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return notConfigured(res);
+      return notConfigured(req, res);
     }
 
-    return res.status(statusCode).json({
-      error: 'Failed to generate section content',
-      message: err?.message,
-    });
+    return res.status(statusCode).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        statusCode,
+        'PMO_INITIATIVES_SECTION_GENERATION_FAILED',
+        'Failed to generate section content.'
+      )
+    );
   }
 });
 
@@ -1626,12 +1670,17 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return notConfigured(res);
+      return notConfigured(req, res);
     }
 
-    return res
-      .status(statusCode)
-      .json({ error: 'Failed to analyze readiness', message: err?.message });
+    return res.status(statusCode).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        statusCode,
+        'PMO_INITIATIVES_READINESS_ANALYSIS_FAILED',
+        'Failed to analyze readiness.'
+      )
+    );
   }
 });
 
@@ -1659,13 +1708,17 @@ router.post('/suggest-sections', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return notConfigured(res);
+      return notConfigured(req, res);
     }
 
-    return res.status(statusCode).json({
-      error: 'Failed to suggest sections',
-      message: err?.message,
-    });
+    return res.status(statusCode).json(
+      buildPmoInitiativesFailClosedError(
+        req,
+        statusCode,
+        'PMO_INITIATIVES_SUGGEST_SECTIONS_FAILED',
+        'Failed to suggest sections.'
+      )
+    );
   }
 });
 
