@@ -214,11 +214,25 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid CRDT document payload',
+        code: 'REALTIME_CRDT_DOCUMENT_CREATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createCrdtDocument(id.orgId, p.data);
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.createCrdtDocument(id.orgId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -227,16 +241,30 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const doc = await realtimePlatformService.getCrdtDocument(
-      id.orgId,
-      req.params.resourceType,
-      req.params.resourceId
-    );
-    if (!doc) {
-      res.status(404).json({ error: 'CRDT document not found' });
-      return;
+    try {
+      const doc = await realtimePlatformService.getCrdtDocument(
+        id.orgId,
+        req.params.resourceType,
+        req.params.resourceId
+      );
+      if (!doc) {
+        res.status(404).json({
+          error: 'CRDT document not found',
+          code: 'REALTIME_CRDT_DOCUMENT_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(doc);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
     }
-    res.json(doc);
   })
 );
 
@@ -248,15 +276,29 @@ router.put(
     const s = z.object({ stateVector: z.string(), snapshotData: z.string() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid CRDT snapshot payload',
+        code: 'REALTIME_CRDT_SNAPSHOT_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(
-      await realtimePlatformService.saveCrdtSnapshot(req.params.docId, {
-        ...p.data,
-        userId: id.userId,
-      })
-    );
+    try {
+      res.json(
+        await realtimePlatformService.saveCrdtSnapshot(req.params.docId, {
+          ...p.data,
+          userId: id.userId,
+        })
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -268,14 +310,28 @@ router.post(
     const s = z.object({ updateData: z.string(), originClientId: z.string().optional() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid CRDT update payload',
+        code: 'REALTIME_CRDT_UPDATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.appendCrdtUpdate(req.params.docId, {
-      ...p.data,
-      originUserId: id.userId,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.appendCrdtUpdate(req.params.docId, {
+        ...p.data,
+        originUserId: id.userId,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -285,7 +341,18 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     const afterSeq = Number(req.query.afterSequence) || 0;
-    res.json({ updates: await realtimePlatformService.getCrdtUpdates(req.params.docId, afterSeq) });
+    try {
+      res.json({ updates: await realtimePlatformService.getCrdtUpdates(req.params.docId, afterSeq) });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
