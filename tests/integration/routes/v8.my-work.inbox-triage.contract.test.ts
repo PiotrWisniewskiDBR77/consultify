@@ -16,6 +16,24 @@ vi.mock('../../../server/src/services/inboxTriageService.js', async () => {
   };
 });
 
+vi.mock('../../../server/src/services/notebookConversionService.js', () => {
+  class NotebookConversionError extends Error {
+    status: number;
+    code?: string;
+
+    constructor(status: number, message: string, code?: string) {
+      super(message);
+      this.status = status;
+      this.code = code;
+    }
+  }
+
+  return {
+    convertNotebookPage: vi.fn(),
+    NotebookConversionError,
+  };
+});
+
 vi.mock('../../../server/src/utils/dbSchema.js', () => ({
   getTableColumns: vi.fn(async (table: string) => {
     if (table === 'canonical_inbox_items') return new Set(['id']);
