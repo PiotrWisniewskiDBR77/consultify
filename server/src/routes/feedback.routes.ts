@@ -2525,7 +2525,14 @@ router.post(
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json(
+        buildFailClosedFeedbackError(
+          req,
+          401,
+          'FEEDBACK_FEATURE_VOTE_UNAUTHORIZED',
+          'Authentication is required to vote for features.'
+        )
+      );
     }
 
     // Check if already voted
@@ -2535,7 +2542,14 @@ router.post(
     );
 
     if (existing) {
-      return res.status(400).json({ error: 'Already voted' });
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_FEATURE_VOTE_DUPLICATE',
+          'Feature vote already exists for this user.'
+        )
+      );
     }
 
     // Add vote
@@ -3025,17 +3039,6 @@ router.get(
       );
     }
     if (!file) {
-      return res.status(404).json(
-        buildFailClosedFeedbackError(
-          req,
-          404,
-          'FEEDBACK_SCREENSHOT_NOT_FOUND',
-          'Feedback screenshot was not found.'
-        )
-      );
-    }
-    let file = await readFeedbackScreenshot(id);
-    if (!file) {
       const row = await dbGet<{ metadata_json?: string }>(
         `SELECT metadata_json FROM feedback_items WHERE id = ? LIMIT 1`,
         [id]
@@ -3057,7 +3060,16 @@ router.get(
         }
       }
     }
-    if (!file) return res.status(404).json({ error: 'Screenshot not found' });
+    if (!file) {
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_SCREENSHOT_NOT_FOUND',
+          'Feedback screenshot was not found.'
+        )
+      );
+    }
     res.setHeader('Content-Type', file.mimeType);
     res.setHeader(
       'Content-Disposition',
@@ -3079,7 +3091,14 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     if (!isUuidLike(id)) {
-      return res.status(400).json({ error: 'Invalid feedback id' });
+      return res.status(400).json(
+        buildFailClosedFeedbackError(
+          req,
+          400,
+          'FEEDBACK_CURSOR_BRIEF_ID_INVALID',
+          'Feedback id must be a valid UUID.'
+        )
+      );
     }
     const row = await dbGet<any>(
       `SELECT id, title, description, feedback_type, severity, priority, status,
@@ -3087,7 +3106,15 @@ router.get(
        FROM feedback_items WHERE id = ? LIMIT 1`,
       [id]
     );
-    if (!row) return res.status(404).json({ error: 'Feedback not found' });
+    if (!row)
+      return res.status(404).json(
+        buildFailClosedFeedbackError(
+          req,
+          404,
+          'FEEDBACK_CURSOR_BRIEF_NOT_FOUND',
+          'Feedback item was not found.'
+        )
+      );
 
     const meta: Record<string, unknown> = (() => {
       try {
