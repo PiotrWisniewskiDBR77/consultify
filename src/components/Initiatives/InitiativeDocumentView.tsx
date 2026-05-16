@@ -97,6 +97,7 @@ import {
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   type NModeAction,
   NModeCanvas,
@@ -7901,6 +7902,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }
 
   if (error || !initiative) {
+    const message = error || t('initiatives.document.notFound', 'Initiative not found');
     return (
       <div className="flex flex-col items-center justify-center h-96 text-center">
         <AlertTriangle className="w-12 h-12 text-rose-400 mb-4" />

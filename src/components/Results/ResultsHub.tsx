@@ -15,6 +15,7 @@ import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -198,6 +199,8 @@ export const ResultsHub: React.FC = () => {
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kpiLoadError, setKpiLoadError] = useState<string | null>(null);
+  const [kpiLoadErrorCode, setKpiLoadErrorCode] = useState<string | null>(null);
   const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
   const [resultsSource, setResultsSource] = useState<'v8' | 'legacy' | 'empty' | 'showcase'>(
     'empty'
@@ -299,15 +302,26 @@ export const ResultsHub: React.FC = () => {
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
+    setKpiLoadError(null);
+    setKpiLoadErrorCode(null);
     try {
       const result = await loadResultsKpis();
       setTrackedInitiatives(result.initiatives);
       setKpis(result.kpis);
       setResultsSource(result.source);
-    } catch {
-      setTrackedInitiatives([]);
-      setKpis([]);
-      setResultsSource('empty');
+    } catch (error: any) {
+      const message =
+        typeof error?.data?.error === 'string' && error.data.error.trim()
+          ? error.data.error.trim()
+          : typeof error?.message === 'string' && error.message.trim()
+            ? error.message.trim()
+            : 'Failed to load KPI catalog.';
+      const code =
+        typeof error?.data?.code === 'string' && error.data.code.trim()
+          ? error.data.code.trim()
+          : null;
+      setKpiLoadError(message);
+      setKpiLoadErrorCode(code);
     } finally {
       setLoading(false);
     }
@@ -1385,6 +1399,21 @@ export const ResultsHub: React.FC = () => {
             onBack={() => setActiveSignalSheet(null)}
             onRecorded={() => void refreshResultsTruth()}
             onOpenKpi={openKpiDrawer}
+          />
+        ) : kpiLoadError ? (
+          <HubWorkAreaLoadError
+            title={t('results.hub.failedToLoadKpis', 'Failed to load KPI catalog.')}
+            message={kpiLoadError}
+            errorCode={kpiLoadErrorCode}
+            retryLabel={t('results.hub.retry', 'Retry')}
+            dismissLabel={t('results.hub.dismiss', 'Dismiss')}
+            onRetry={() => {
+              void fetchKPIs();
+            }}
+            onDismiss={() => {
+              setKpiLoadError(null);
+              setKpiLoadErrorCode(null);
+            }}
           />
         ) : activeTab === 'results_initiatives' ? (
           <ResultsInitiativesView

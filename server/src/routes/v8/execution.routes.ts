@@ -169,9 +169,17 @@ router.get(
       }
     }
 
-    const data = active
-      ? await executionSpineService.getActiveRuns(organizationId, initiativeId)
-      : await executionSpineService.getRunsByOrg(organizationId, state, limit, initiativeId);
+    let data;
+    try {
+      data = active
+        ? await executionSpineService.getActiveRuns(organizationId, initiativeId)
+        : await executionSpineService.getRunsByOrg(organizationId, state, limit, initiativeId);
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load execution runs',
+        code: 'EXECUTION_RUNS_READ_FAILED',
+      });
+    }
 
     return res.json({ data, meta: { version: 'v8' } });
   })

@@ -207,6 +207,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
   const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
@@ -338,6 +339,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       try {
         setLoadError(null);
+        setLoadErrorCode(null);
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
         // Scope-based filtering: 'active' sends only core statuses, 'all' sends everything.
@@ -411,6 +413,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             'Failed to load initiatives from the active data source.'
           )
         );
+        const code =
+          typeof error?.data?.code === 'string' && error.data.code.trim()
+            ? error.data.code.trim()
+            : null;
+        setLoadErrorCode(code);
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -1182,11 +1189,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
 
     if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     if (initiatives.length === 0) {
@@ -1370,7 +1373,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </div>
                 {searchedInitiatives.length === 0 && (
                   <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-                    No initiatives found
+                    {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
                   </div>
                 )}
               </div>

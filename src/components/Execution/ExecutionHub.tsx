@@ -32,7 +32,6 @@ import {
   FileText,
   GripVertical,
   LayoutDashboard,
-  Loader2,
   MessageSquare,
   Scale,
   Shield,
@@ -41,7 +40,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -68,7 +67,6 @@ import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilo
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
-import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -78,6 +76,8 @@ import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterableTable,
   FilterChip,
+  HubWorkAreaLoadError,
+  HubWorkAreaLoading,
   ModuleHub,
   ModuleTab,
   OpenDocument,
@@ -107,6 +107,12 @@ import {
 } from './executionReports';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ReportDocumentView } from './ReportDocumentView';
+
+const ExecutionInitiativeDocumentView = React.lazy(() =>
+  import('../Initiatives/InitiativeDocumentView').then((module) => ({
+    default: module.InitiativeDocumentView,
+  }))
+);
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -571,6 +577,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const initRetryRef = React.useRef(0);
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
+  const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [decisions, setDecisions] = useState<ExecutionDecision[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -927,6 +935,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     initRetryRef.current = 0;
     const loadInitiatives = async () => {
       setIsLoading(true);
+      setInitiativesLoadError(null);
+      setInitiativesLoadErrorCode(null);
       try {
         const response = await Api.getInitiatives(currentProjectId || undefined);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
@@ -956,12 +966,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );
         setInitiatives(executionInitiatives);
+        const message =
+          typeof err?.data?.error === 'string' && err.data.error.trim()
+            ? err.data.error.trim()
+            : typeof err?.message === 'string' && err.message.trim()
+              ? err.message.trim()
+              : t('execution.hub.failedToLoad', 'Failed to load execution initiatives.');
+        const code =
+          typeof err?.data?.code === 'string' && err.data.code.trim() ? err.data.code.trim() : null;
+        setInitiativesLoadError(message);
+        setInitiativesLoadErrorCode(code);
       } finally {
         setIsLoading(false);
       }
     };
     loadInitiatives();
-  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives]);
+  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -4452,12 +4472,16 @@ Please return:
 
   // Render content
   const renderContent = () => {
-    if (isLoading) {
+    if (initiativesLoadError) {
       return (
         <div className="flex items-center justify-center h-full">
           <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
+    }
+
+    if (isLoading) {
+      return <HubWorkAreaLoading />;
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
@@ -4494,12 +4518,14 @@ Please return:
         }
       }
       return (
-        <InitiativeDocumentView
-          initiativeId={activeDocumentId}
-          onBack={handleShowList}
-          onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
-          sourceModule="execution"
-        />
+        <Suspense fallback={<HubWorkAreaLoading />}>
+          <ExecutionInitiativeDocumentView
+            initiativeId={activeDocumentId}
+            onBack={handleShowList}
+            onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
+            sourceModule="execution"
+          />
+        </Suspense>
       );
     }
 

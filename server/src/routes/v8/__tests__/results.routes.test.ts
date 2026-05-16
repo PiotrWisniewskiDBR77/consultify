@@ -342,6 +342,16 @@ describe('V8 results read-only routes', () => {
     expect(mockGetResultsDashboard).not.toHaveBeenCalled();
   });
 
+  it('GET /api/v8/results/dashboard returns 500 with code when getResultsDashboard rejects', async () => {
+    mockGetResultsDashboard.mockRejectedValueOnce(new Error('dashboard down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/dashboard');
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('RESULTS_DASHBOARD_READ_FAILED');
+    expect(res.body.error).toBe('Failed to load results dashboard');
+  });
+
   it('GET /api/v8/results/roi/portfolio-summary returns envelope and delegates to getROIPortfolioSummary', async () => {
     const app = createApp();
     const res = await request(app).get('/api/v8/results/roi/portfolio-summary');
@@ -380,6 +390,16 @@ describe('V8 results read-only routes', () => {
     expect(mockGetROIPortfolioSummary).not.toHaveBeenCalled();
   });
 
+  it('GET /api/v8/results/roi/portfolio-summary returns 500 with code when portfolio service rejects', async () => {
+    mockGetROIPortfolioSummary.mockRejectedValueOnce(new Error('portfolio down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/roi/portfolio-summary');
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('RESULTS_ROI_PORTFOLIO_READ_FAILED');
+    expect(res.body.error).toBe('Failed to load ROI portfolio summary');
+  });
+
   it('GET /api/v8/results/kpis/catalog returns envelope and delegates to getResultsKpiCatalog', async () => {
     const app = createApp();
     const res = await request(app).get('/api/v8/results/kpis/catalog').query({ kpiId: 'kpi-1' });
@@ -410,6 +430,48 @@ describe('V8 results read-only routes', () => {
       kpiId: undefined,
       initiativeId: 'init-1',
     });
+  });
+
+  it('GET /api/v8/results/kpis/catalog normalizes missing arrays in response data', async () => {
+    mockGetResultsKpiCatalog.mockResolvedValueOnce({
+      organizationId: ORG,
+      kpis: undefined,
+    } as any);
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/kpis/catalog');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.organizationId).toBe(ORG);
+    expect(res.body.data?.initiatives).toEqual([]);
+    expect(res.body.data?.kpis).toEqual([]);
+    expect(res.body.data?.mappings).toEqual([]);
+  });
+
+  it('GET /api/v8/results/kpis/catalog coerces non-array catalog collections to empty arrays', async () => {
+    mockGetResultsKpiCatalog.mockResolvedValueOnce({
+      organizationId: ORG,
+      initiatives: {} as any,
+      kpis: 'invalid' as any,
+      mappings: 42 as any,
+    });
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/kpis/catalog');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.organizationId).toBe(ORG);
+    expect(res.body.data?.initiatives).toEqual([]);
+    expect(res.body.data?.kpis).toEqual([]);
+    expect(res.body.data?.mappings).toEqual([]);
+  });
+
+  it('GET /api/v8/results/kpis/catalog returns 500 with code when catalog service rejects', async () => {
+    mockGetResultsKpiCatalog.mockRejectedValueOnce(new Error('catalog down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/kpis/catalog');
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('RESULTS_CATALOG_READ_FAILED');
+    expect(res.body.error).toBe('Failed to load KPI catalog');
   });
 
   it('GET /api/v8/results/kpis/catalog returns 404 for invalid initiative scope', async () => {
@@ -502,6 +564,16 @@ describe('V8 results read-only routes', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+  });
+
+  it('GET /api/v8/results/kpis/:kpiId/drawer-detail returns 500 with code on unexpected drawer failure', async () => {
+    mockGetResultsKpiDrawerDetail.mockRejectedValueOnce(new Error('drawer down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/kpis/kpi-1/drawer-detail');
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('RESULTS_KPI_DRAWER_READ_FAILED');
+    expect(res.body.error).toBe('Failed to load KPI drawer detail');
   });
 
   it('POST /api/v8/results/kpis creates a KPI in the governed V8 namespace', async () => {
