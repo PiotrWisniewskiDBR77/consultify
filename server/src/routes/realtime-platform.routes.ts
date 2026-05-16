@@ -463,14 +463,28 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation session payload',
+        code: 'REALTIME_FACILITATION_SESSION_CREATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createFacilitationSession(id.orgId, {
-      ...p.data,
-      facilitatorId: id.userId,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.createFacilitationSession(id.orgId, {
+        ...p.data,
+        facilitatorId: id.userId,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -479,12 +493,26 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const s = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
-    if (!s) {
-      res.status(404).json({ error: 'Facilitation session not found' });
-      return;
+    try {
+      const s = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!s) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(s);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
     }
-    res.json(s);
   })
 );
 
@@ -496,12 +524,32 @@ router.put(
     const s = z.object({ timerState: z.record(z.string(), z.unknown()) });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation timer payload',
+        code: 'REALTIME_FACILITATION_TIMER_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(
-      await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState)
-    );
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -513,10 +561,32 @@ router.put(
     const s = z.object({ phase: z.string() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation phase payload',
+        code: 'REALTIME_FACILITATION_PHASE_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase));
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -525,7 +595,26 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.endFacilitationSession(req.params.sessionId));
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(await realtimePlatformService.endFacilitationSession(req.params.sessionId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -542,14 +631,36 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation vote payload',
+        code: 'REALTIME_FACILITATION_VOTE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.castVote(req.params.sessionId, {
-      voterId: id.userId,
-      ...p.data,
-    });
-    res.status(201).json(r);
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      const r = await realtimePlatformService.castVote(req.params.sessionId, {
+        voterId: id.userId,
+        ...p.data,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -584,11 +695,33 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation role payload',
+        code: 'REALTIME_FACILITATION_ROLE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
-    res.status(201).json(r);
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -616,11 +749,33 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation outcome payload',
+        code: 'REALTIME_FACILITATION_OUTCOME_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createOutcome(req.params.sessionId, p.data);
-    res.status(201).json(r);
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      const r = await realtimePlatformService.createOutcome(req.params.sessionId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -641,16 +796,30 @@ router.put(
     const s = z.object({ exportType: z.string(), exportId: z.string() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation export payload',
+        code: 'REALTIME_FACILITATION_EXPORT_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(
-      await realtimePlatformService.exportOutcome(
-        req.params.outcomeId,
-        p.data.exportType,
-        p.data.exportId
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.exportOutcome(
+          req.params.outcomeId,
+          p.data.exportType,
+          p.data.exportId
+        )
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
