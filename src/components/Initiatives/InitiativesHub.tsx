@@ -61,6 +61,7 @@ import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
+  MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
   MENU_3_BADGE_INACTIVE,
@@ -1646,7 +1647,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <button
             type="button"
             onClick={() => setShowInitiativeWizard(true)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
+            className={MENU_3_ACTION_NEUTRAL}
           >
             <Sparkles className="h-3.5 w-3.5" />
             AI Initiative Wizard

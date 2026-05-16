@@ -684,6 +684,10 @@ const BRANCH_COLORS: Record<
 // V5-IDEA-43: Hierarchical color system — depth-based opacity modulation
 const DEPTH_OPACITY = [1, 0.85, 0.7, 0.55, 0.4] as const;
 
+function getNodeDepth(data: IdeaNodeData) {
+  return data._depth ?? 0;
+}
+
 function branchColor(key: string, depth?: number) {
   const base = BRANCH_COLORS[key] || BRANCH_COLORS.uncategorized;
   if (depth == null || depth <= 0) return base;
@@ -1157,7 +1161,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     );
   }
 
-  const depth = data._depth ?? 0;
+  const depth = getNodeDepth(data);
   const depthScale = depth <= 1 ? 1 : depth === 2 ? 0.95 : 0.9;
   const depthOpacity = depth <= 1 ? '' : depth === 2 ? 'opacity-90' : 'opacity-80';
   const accentColor = inferNodeAccentColor(data);

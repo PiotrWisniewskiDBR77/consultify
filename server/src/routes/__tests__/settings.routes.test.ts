@@ -390,11 +390,12 @@ describe('settings integrations authority continuity', () => {
         status: 'pending',
         config: {
           site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },
-        configuredFields: ['site_url', 'client_id', 'client_secret'],
-        requiredFields: ['site_url', 'client_id', 'client_secret'],
+        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+        requiredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
       })
     );
     expect(
@@ -405,6 +406,7 @@ describe('settings integrations authority continuity', () => {
             JSON.stringify([
               JSON.stringify({
                 site_url: 'https://acme.atlassian.net',
+                cloud_id: 'cloud-1',
                 client_id: 'jira-client-id',
                 client_secret: 'jira-client-secret',
               }),
@@ -429,6 +431,7 @@ describe('settings integrations authority continuity', () => {
         mode: 'connect',
         config: {
           site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },

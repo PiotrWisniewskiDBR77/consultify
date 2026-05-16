@@ -330,6 +330,13 @@ const metadataService = {
            WHERE table_id = $3 AND $1 = ANY(visible_field_ids)`,
           [fieldId, fieldName, tableId]
         );
+        await db.query(
+          `UPDATE tp_views
+           SET visible_field_ids = array_remove(visible_field_ids, $1),
+           updated_at = NOW()
+           WHERE table_id = $2 AND $1 = ANY(visible_field_ids)`,
+          [fieldId, tableId]
+        );
       }
 
       // Cascade: remove field references from form configs

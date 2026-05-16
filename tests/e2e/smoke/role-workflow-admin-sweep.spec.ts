@@ -71,7 +71,7 @@ test.describe('Login flow — identity correctness', () => {
       expect(String(body?.user?.email || '')).toContain('@');
       // role must be ADMIN (or OWNER which maps internally for orgs) — not SUPERADMIN
       const role = String(body?.user?.role || '').toUpperCase();
-      expect(['ADMIN', 'OWNER']).toContain(role);
+      expect(['ADMIN', 'ADMINISTRATOR', 'OWNER']).toContain(role);
     } finally {
       await admin.ctx.dispose();
     }

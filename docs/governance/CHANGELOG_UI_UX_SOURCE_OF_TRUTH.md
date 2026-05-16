@@ -9,6 +9,29 @@ Use `docs/governance/DOC_CHANGE_TEMPLATE.md` as the seed for new entries.
 
 ---
 
+## 2026-05-16 — Final Global Gate Parity Refresh
+
+**Doc:** DRD/UI_UX_SOURCE_OF_TRUTH.md
+**Risk tier:** P1
+**Rationale:**
+Recorded the current global UI/UX source-of-truth state for the final module closeout
+program after documentation canon reconciliation. This keeps the controlled-doc
+parity gate current before the next Business Owner 100% closeout phase.
+
+**Impact note:**
+- Code: none
+- Docs: changelog entry only
+- Tests: `npm run docs:check`, `npm run docs:parity`
+
+**Reviewer:** `<Design Lead>` (Design owner per `DOC_OWNER_REGISTRY.md`)
+**Linked PR / ticket:** Final Global Module Gate — Business Owner 100% plan update
+
+**Diff summary:**
+- Refreshed the controlled-doc changelog baseline for `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
+- The UI/UX source of truth itself was NOT modified by this change.
+
+---
+
 ## 2026-05-15 — Sprint 4 Closeout Baseline
 
 **Doc:** DRD/UI_UX_SOURCE_OF_TRUTH.md

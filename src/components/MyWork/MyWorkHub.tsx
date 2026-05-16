@@ -2158,64 +2158,82 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (openDocuments.length === 0) return null;
 
     const isListActive = activeDocumentId === null;
+    const showIdeasDetailAiAction = activeTab === 'ideas' && !!activeDocumentId;
 
     return (
       <div className={MENU_3_ROW_CLASS}>
-        <div className="flex min-h-8 items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
-          {/* List button */}
-          <button
-            onClick={handleShowList}
-            className={
-              isListActive
-                ? TAB_ACTIVE.replace('border-l-2', '')
-                : TAB_INACTIVE.replace('border-l-2', '')
-            }
-            style={{ flexShrink: 0 }}
-          >
-            <List size={14} />
-            <span>{isPolish ? 'Lista' : 'List'}</span>
-          </button>
+        <div className={MENU_3_INNER_CLASS}>
+          <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+            {/* List button */}
+            <button
+              onClick={handleShowList}
+              className={
+                isListActive
+                  ? TAB_ACTIVE.replace('border-l-2', '')
+                  : TAB_INACTIVE.replace('border-l-2', '')
+              }
+              style={{ flexShrink: 0 }}
+            >
+              <List size={14} />
+              <span>{isPolish ? 'Lista' : 'List'}</span>
+            </button>
 
-          {/* Separator */}
-          <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+            {/* Separator */}
+            <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
 
-          {/* Document Tabs */}
-          {openDocuments.map((doc) => {
-            const isActive = doc.id === activeDocumentId;
-            const leftBorderColor = TYPE_COLORS[doc.type];
-            const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
+            {/* Document Tabs */}
+            {openDocuments.map((doc) => {
+              const isActive = doc.id === activeDocumentId;
+              const leftBorderColor = TYPE_COLORS[doc.type];
+              const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
 
-            return (
-              <div
-                key={doc.id}
-                className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
-                onClick={() => setActiveDocumentId(doc.id)}
-              >
-                {/* Type Icon */}
-                {doc.type === 'task' && <CheckSquare size={14} />}
-                {doc.type === 'idea' && <Lightbulb size={14} />}
-                {doc.type === 'decision' && <Scale size={14} />}
-                {doc.type === 'notification' && <Bell size={14} />}
-
-                {/* Name (truncated) */}
-                <span className="max-w-[150px] truncate">{doc.name}</span>
-
-                {/* Status Dot */}
-                <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
-
-                {/* Close Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCloseDocument(doc.id);
-                  }}
-                  className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+              return (
+                <div
+                  key={doc.id}
+                  className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
+                  onClick={() => setActiveDocumentId(doc.id)}
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            );
-          })}
+                  {/* Type Icon */}
+                  {doc.type === 'task' && <CheckSquare size={14} />}
+                  {doc.type === 'idea' && <Lightbulb size={14} />}
+                  {doc.type === 'decision' && <Scale size={14} />}
+                  {doc.type === 'notification' && <Bell size={14} />}
+
+                  {/* Name (truncated) */}
+                  <span className="max-w-[150px] truncate">{doc.name}</span>
+
+                  {/* Status Dot */}
+                  <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+
+                  {/* Close Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseDocument(doc.id);
+                    }}
+                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {showIdeasDetailAiAction ? (
+            <div className={MENU_3_RIGHT_CLASS}>
+              <button
+                onClick={() => toggleChatCollapse()}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
+                data-testid="mywork-area-ai-button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Kontekst' : 'AI Context'}
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -3531,22 +3549,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
-            {/* Area AI Context Button — opens/closes the side chat panel with module context */}
-            {activeTab === 'ideas' && activeDocumentId && (
-              <button
-                onClick={() => toggleChatCollapse()}
-                className={`inline-flex items-center justify-center h-9 w-9 rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
-                  !isChatCollapsed
-                    ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
-                    : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                }`}
-                title={isPolish ? 'AI Kontekst' : 'AI Context'}
-                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
-                data-testid="mywork-area-ai-button"
-              >
-                <Sparkles size={16} />
-              </button>
-            )}
+            {/* Ideas detail AI action lives in Menu 3 right slot. */}
           </div>
         </div>
       </div>

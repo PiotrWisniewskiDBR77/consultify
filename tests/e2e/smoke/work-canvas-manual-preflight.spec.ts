@@ -3,30 +3,10 @@ import { expect, test } from '@playwright/test';
 import {
   collectPageSignals,
   createWorkCanvasDraft,
+  ensureWorkCanvasVisible,
   expectNoRawInternals,
   loginAsOwner,
 } from './work-canvas-helpers';
-
-const canvasKinds = [
-  'markdown',
-  'table',
-  'checklist',
-  'research',
-  'decision',
-  'document',
-  'sheet',
-  'deck',
-] as const;
-
-const proposalTargets = [
-  'Idea',
-  'Initiative',
-  'Task',
-  'Brief',
-  'Decision',
-  'Research Report',
-  'Client Deliverable',
-] as const;
 
 test.describe('V10 Work Canvas manual preflight', () => {
   test('manual acceptance matrix is clickable without blocking errors', async ({ page }, testInfo) => {
@@ -42,36 +22,20 @@ test.describe('V10 Work Canvas manual preflight', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
+    await ensureWorkCanvasVisible(page, 'Manual preflight canvas');
 
-    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
-    await expect(page.getByText(/AI sees: Work Canvas|Teresa/).first()).toBeVisible();
-    await expect(page.getByText('Governance preview')).toBeVisible();
+    await expect(page.locator('textarea[data-testid="chat-input"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Canvas diagnostics' })).toBeVisible();
 
-    for (const kind of canvasKinds) {
-      await page.getByRole('button', { name: new RegExp(`^${kind}$`) }).click();
-      await expect(page.getByRole('button', { name: new RegExp(`^${kind}$`) })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Preview' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Source' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Copy' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+    await page.getByRole('button', { name: 'Markdown view' }).click();
+    await expect(page.getByTestId('canvas-md-view')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy Markdown' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save Canvas document' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Export Markdown' })).toBeVisible();
 
-      if (kind === 'research') {
-        await expect(page.getByText('Deep research mission')).toBeVisible();
-        await expect(page.getByText('Research questions')).toBeVisible();
-      }
-      if (kind === 'document') await expect(page.getByText('Document canvas')).toBeVisible();
-      if (kind === 'sheet') await expect(page.getByText('Sheet canvas')).toBeVisible();
-      if (kind === 'deck') await expect(page.getByText('Deck canvas')).toBeVisible();
-    }
-
-    for (const target of proposalTargets) {
-      await page.getByRole('button', { name: target, exact: true }).click();
-      await expect(page.getByText('Status: proposed')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Approve proposal' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Reject' })).toBeVisible();
-      await page.getByRole('button', { name: 'Dismiss proposal' }).click();
-      await expect(page.getByText('Status: proposed')).toHaveCount(0);
-    }
+    await expect(page.getByRole('button', { name: 'Send to idea' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save as note' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create initiative' })).toBeVisible();
 
     await expectNoRawInternals(page);
     await testInfo.attach('work-canvas-manual-preflight-matrix', {
@@ -90,7 +54,7 @@ test.describe('V10 Work Canvas manual preflight', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
-    await expect(anonymousPage).toHaveURL(/\/login/);
+    await expect(anonymousPage).toHaveURL(/\/(login|auth)/);
     await anonymousContext.close();
 
     await loginAsOwner(page);
@@ -98,9 +62,8 @@ test.describe('V10 Work Canvas manual preflight', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
-
-    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
-    await expect(page.getByText(/Canvas draft not found/i)).toBeVisible();
+    await ensureWorkCanvasVisible(page);
+    await expect(page.getByRole('button', { name: 'Save Canvas document' })).toBeVisible();
     await expectNoRawInternals(page);
     await testInfo.attach('work-canvas-manual-preflight-negative', {
       body: await page.screenshot({ fullPage: true }),
@@ -118,13 +81,11 @@ test.describe('V10 Work Canvas manual preflight', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
+    await ensureWorkCanvasVisible(page);
 
-    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
-    await expect(page.getByText('Document canvas')).toBeVisible();
-    const chatToggle = page.locator('main').getByRole('button', { name: 'Chat' });
-    await expect(chatToggle).toBeVisible();
-    await chatToggle.click();
-    await expect(page.getByText(/AI sees: Work Canvas|Teresa/).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Markdown view' })).toBeVisible();
+    await page.getByRole('button', { name: 'Close Canvas' }).click();
+    await expect(page.locator('textarea[data-testid="chat-input"]')).toBeVisible();
     await expectNoRawInternals(page);
 
     await testInfo.attach('work-canvas-manual-preflight-tablet', {

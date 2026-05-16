@@ -20,6 +20,7 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { IdeaWorkspaceSeedIntent } from '../ideaEntryTypes';
+import { IDEA_STARTING_POINTS } from '../ideaStartingPoints';
 import type { CanvasToolType } from '../ideaSelectionTypes';
 
 interface IdeaStartupTemplatesProps {
@@ -46,6 +47,9 @@ const WORKSPACE_OPTIONS: {
   { id: 'table', icon: Table2, labelPl: 'Tabela', labelEn: 'Table', color: 'emerald' },
   { id: 'whiteboard', icon: PenTool, labelPl: 'Whiteboard', labelEn: 'Whiteboard', color: 'amber' },
 ];
+
+const TEMPLATES = WORKSPACE_OPTIONS;
+const popularStarts = IDEA_STARTING_POINTS.slice(0, 4);
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; ring: string }> = {
   violet: {
@@ -83,6 +87,12 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const [heroText, setHeroText] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState<CanvasToolType>('mindmap');
+  const [showStructuredBrief, setShowStructuredBrief] = useState(false);
+  const [structuredBrief, setStructuredBrief] = useState({
+    problem: '',
+    goal: '',
+    constraints: '',
+  });
 
   const handleSelect = useCallback(
     (startMode: 'describe_with_ai' | 'blank_canvas' | 'use_template') => {
@@ -93,14 +103,60 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         templateId: null,
         popularStartId: null,
         popularStartLabel: null,
-        structuredBrief: null,
+        structuredBrief: showStructuredBrief
+          ? {
+              problem: structuredBrief.problem.trim(),
+              desiredOutcome: structuredBrief.goal.trim(),
+              constraints: structuredBrief.constraints
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .join('\n'),
+            }
+          : null,
         source: 'seed_surface',
       });
       setHeroText('');
       setSelectedWorkspace('mindmap');
+      setShowStructuredBrief(false);
+      setStructuredBrief({ problem: '', goal: '', constraints: '' });
       onClose();
     },
-    [heroText, selectedWorkspace, onClose, onSelect]
+    [heroText, selectedWorkspace, showStructuredBrief, structuredBrief, onClose, onSelect]
+  );
+
+  const handlePopularStart = useCallback(
+    (start: (typeof popularStarts)[number]) => {
+      const prompt = isPl ? start.promptPl : start.promptEn;
+      setHeroText(prompt);
+      setSelectedWorkspace(start.preferredSystem);
+      onSelect({
+        startMode: 'describe_with_ai',
+        seedText: prompt,
+        preferredSystem: start.preferredSystem,
+        templateId: null,
+        popularStartId: start.id,
+        popularStartLabel: isPl ? start.labelPl : start.labelEn,
+        structuredBrief: null,
+        source: 'seed_surface',
+      });
+      onClose();
+    },
+    [isPl, onClose, onSelect]
+  );
+
+  const PrimaryStartButton = ({
+    children,
+    onClick,
+    className,
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    className: string;
+  }) => (
+    <button type="button" onClick={onClick} className={className}>
+      {children}
+    </button>
   );
 
   if (!open) return null;
@@ -171,8 +227,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
           {/* 3 Action Cards */}
           <div className="grid grid-cols-3 gap-3">
             {/* Start with AI */}
-            <button
-              type="button"
+            <PrimaryStartButton
               onClick={() => handleSelect('describe_with_ai')}
               className="group flex flex-col items-center gap-2.5 rounded-xl border border-primary-500/20 bg-gradient-to-b from-primary-500/[0.08] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-primary-500/40 hover:shadow-lg hover:shadow-primary-500/10 hover:-translate-y-0.5"
             >
@@ -193,11 +248,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 size={12}
                 className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
               />
-            </button>
+            </PrimaryStartButton>
 
             {/* Blank canvas */}
-            <button
-              type="button"
+            <PrimaryStartButton
               onClick={() => handleSelect('blank_canvas')}
               className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/50 dark:border-white/[0.06] bg-gradient-to-b from-slate-500/[0.05] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-slate-300/80 dark:hover:border-white/[0.12] hover:shadow-lg hover:shadow-slate-500/5 hover:-translate-y-0.5"
             >
@@ -218,11 +272,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 size={12}
                 className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
               />
-            </button>
+            </PrimaryStartButton>
 
             {/* Use template */}
-            <button
-              type="button"
+            <PrimaryStartButton
               onClick={() => handleSelect('use_template')}
               className="group flex flex-col items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.08] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5"
             >
@@ -243,7 +296,67 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 size={12}
                 className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
               />
-            </button>
+            </PrimaryStartButton>
+          </div>
+
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-slate-50/60 dark:bg-white/[0.02] p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-500">
+                {isPl ? 'Popularne starty' : 'Popular starts'}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStructuredBrief((next) => !next)}
+                className="text-[11px] font-medium text-primary-600 dark:text-primary-300 hover:underline"
+              >
+                {showStructuredBrief
+                  ? isPl
+                    ? 'Ukryj brief'
+                    : 'Hide brief'
+                  : isPl
+                    ? 'Dodaj brief'
+                    : 'Add brief'}
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {popularStarts.map((start) => (
+                <button
+                  key={start.id}
+                  type="button"
+                  onClick={() => handlePopularStart(start)}
+                  className="rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-primary-500/40 hover:text-primary-600 dark:hover:text-primary-300"
+                >
+                  {isPl ? start.labelPl : start.labelEn}
+                </button>
+              ))}
+            </div>
+            {showStructuredBrief && (
+              <div className="mt-3 grid gap-2">
+                <input
+                  value={structuredBrief.problem}
+                  onChange={(e) =>
+                    setStructuredBrief((prev) => ({ ...prev, problem: e.target.value }))
+                  }
+                  placeholder={isPl ? 'Problem' : 'Problem'}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs"
+                />
+                <input
+                  value={structuredBrief.goal}
+                  onChange={(e) => setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))}
+                  placeholder={isPl ? 'Cel / wynik' : 'Goal / outcome'}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs"
+                />
+                <textarea
+                  value={structuredBrief.constraints}
+                  onChange={(e) =>
+                    setStructuredBrief((prev) => ({ ...prev, constraints: e.target.value }))
+                  }
+                  rows={2}
+                  placeholder={isPl ? 'Ograniczenia, po jednym w linii' : 'Constraints, one per line'}
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs resize-none"
+                />
+              </div>
+            )}
           </div>
 
           {/* Workspace selector */}
@@ -252,7 +365,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               {isPl ? 'Workspace' : 'Workspace'}
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {WORKSPACE_OPTIONS.map((ws) => {
+              {TEMPLATES.map((ws) => {
                 const active = selectedWorkspace === ws.id;
                 const c = COLOR_MAP[ws.color];
                 const Icon = ws.icon;

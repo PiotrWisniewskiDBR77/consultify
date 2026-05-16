@@ -41,9 +41,9 @@ const TONE_RING: Array<{ bg: string; text: string; border: string }> = [
     border: 'border-indigo-200 dark:border-indigo-800/50',
   },
   {
-    bg: 'bg-violet-100 dark:bg-violet-900/30',
-    text: 'text-violet-700 dark:text-violet-300',
-    border: 'border-violet-200 dark:border-violet-800/50',
+    bg: 'bg-primary-100 dark:bg-primary-900/30',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-800/50',
   },
   {
     bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',

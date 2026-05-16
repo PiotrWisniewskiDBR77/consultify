@@ -5,6 +5,7 @@ export const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL || '';
 export const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD || '';
 export const MEMBER_EMAIL = process.env.E2E_MEMBER_EMAIL || '';
 export const MEMBER_PASSWORD = process.env.E2E_MEMBER_PASSWORD || '';
+const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 
 type LoginUserShape = Partial<{
   id: string;
@@ -32,6 +33,130 @@ function assertCredentials(email: string, password: string, label: string) {
   expect(password.trim().length, `${label}: missing password env`).toBeGreaterThan(0);
 }
 
+function isStrictCanvasGate(): boolean {
+  return process.env.E2E_STRICT_CANVAS === 'true' || Boolean(process.env.CI);
+}
+
+async function seedSessionStorage(page: Page, token: string, authUser: Record<string, unknown>) {
+  await page.addInitScript(({ authToken, user }) => {
+    window.localStorage.setItem('token', String(authToken));
+    window.localStorage.setItem('refreshToken', 'playwright-smoke-refresh');
+    window.localStorage.setItem('user', JSON.stringify(user));
+    window.localStorage.setItem(
+      'consultinity_demo_session',
+      JSON.stringify({
+        sessionId: 'work-canvas-playwright-smoke',
+        startTime: new Date().toISOString(),
+        hasCompletedTour: true,
+        hasSeenWelcome: true,
+        hasInteractedWithAI: true,
+        aiInteractionsUsed: 1,
+        featuresExplored: ['work-canvas'],
+        upgradePromptsShown: 0,
+        exitIntentTriggered: false,
+        milestones: [],
+      })
+    );
+    window.localStorage.setItem(
+      'consultinity-storage',
+      JSON.stringify({
+        state: {
+          sessionMode: 'FULL',
+          currentUser: user,
+          currentOrganization: {
+            id: user.organizationId,
+            name: user.organizationName || user.companyName || 'Organization',
+          },
+        },
+        version: 0,
+      })
+    );
+  }, { authToken: token, user: authUser });
+}
+
+async function loginViaBootstrap(page: Page, role: 'ADMIN' | 'USER', label: string): Promise<string> {
+  const issues: string[] = [];
+  const runId = `work-canvas-${label}-${Date.now().toString(36)}`;
+
+  try {
+    const bootstrapResponse = await page.request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+      data: { runId, role },
+    });
+    if (bootstrapResponse.ok()) {
+      const payload = await bootstrapResponse.json();
+      const token = String(payload?.token || '').trim();
+      if (!token) throw new Error('bootstrap payload is missing token');
+      const authUser = {
+        id: String(payload?.userId || `bootstrap-${label}`),
+        email: `e2e+${runId}@local.test`,
+        role,
+        organizationId: String(payload?.organizationId || 'e2e-org-id'),
+        organizationName: 'E2E Organization',
+        firstName: 'E2E',
+        lastName: label === 'owner' ? 'Owner' : 'Member',
+        companyName: 'E2E Organization',
+        isAuthenticated: true,
+        accessLevel: 'full',
+      };
+      await seedSessionStorage(page, token, authUser);
+      return token;
+    }
+    issues.push(
+      `test-support/bootstrap ${bootstrapResponse.status()}: ${await bootstrapResponse.text().catch(() => '<no-body>')}`
+    );
+  } catch (error) {
+    issues.push(
+      `test-support/bootstrap failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  try {
+    const demoLoginResponse = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`, { data: {} });
+    if (demoLoginResponse.ok()) {
+      const login = await demoLoginResponse.json();
+      const token = String(login?.token || login?.accessToken || '').trim();
+      if (!token) throw new Error('demo-login payload is missing token');
+      const user = (login?.user || {}) as LoginUserShape;
+      const authUser = {
+        id: String(user.id || `demo-${label}`),
+        email: String(user.email || `e2e+${runId}@local.test`),
+        role: String(user.role || role),
+        organizationId: String(user.organizationId || 'e2e-org-id'),
+        organizationName: String(user.organizationName || user.companyName || 'E2E Organization'),
+        firstName: String(user.firstName || 'E2E'),
+        lastName: String(user.lastName || (label === 'owner' ? 'Owner' : 'Member')),
+        companyName: String(user.companyName || user.organizationName || 'E2E Organization'),
+        isAuthenticated: true,
+        accessLevel: 'full',
+      };
+      await seedSessionStorage(page, token, authUser);
+      return token;
+    }
+    issues.push(
+      `auth/demo-login ${demoLoginResponse.status()}: ${await demoLoginResponse.text().catch(() => '<no-body>')}`
+    );
+  } catch (error) {
+    issues.push(`auth/demo-login failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  if (isStrictCanvasGate()) {
+    throw new Error(
+      [
+        `Strict Canvas gate: unable to acquire ${label} auth token without credentials.`,
+        'Provide E2E owner/member credentials or enable test support/demo login in the target backend.',
+        ...issues.map((item) => `- ${item}`),
+      ].join('\n')
+    );
+  }
+  throw new Error(
+    [
+      `Unable to acquire ${label} auth token for Work Canvas tests.`,
+      ...issues.map((item) => `- ${item}`),
+    ].join('\n')
+  );
+}
+
 export async function loginAsUser(page: Page, email: string, password: string): Promise<string> {
   assertCredentials(email, password, 'E2E user credentials');
   const loginResponse = await page.request.post(`${API_BASE_URL}/api/auth/login`, {
@@ -56,52 +181,23 @@ export async function loginAsUser(page: Page, email: string, password: string): 
     accessLevel: 'full',
   };
 
-  await page.addInitScript(({ authToken, authUser }) => {
-    window.localStorage.setItem('token', String(authToken));
-    window.localStorage.setItem('refreshToken', 'playwright-smoke-refresh');
-    window.localStorage.setItem('user', JSON.stringify(authUser));
-    window.localStorage.setItem(
-      'consultinity_demo_session',
-      JSON.stringify({
-        sessionId: 'work-canvas-playwright-smoke',
-        startTime: new Date().toISOString(),
-        hasCompletedTour: true,
-        hasSeenWelcome: true,
-        hasInteractedWithAI: true,
-        aiInteractionsUsed: 1,
-        featuresExplored: ['work-canvas'],
-        upgradePromptsShown: 0,
-        exitIntentTriggered: false,
-        milestones: [],
-      })
-    );
-    window.localStorage.setItem(
-      'consultinity-storage',
-      JSON.stringify({
-        state: {
-          sessionMode: 'FULL',
-          currentUser: authUser,
-          currentOrganization: {
-            id: authUser.organizationId,
-            name: authUser.organizationName || authUser.companyName || 'Organization',
-          },
-        },
-        version: 0,
-      })
-    );
-  }, { authToken: token, authUser: derivedUser });
+  await seedSessionStorage(page, token, derivedUser);
 
   return token;
 }
 
 export async function loginAsOwner(page: Page): Promise<string> {
-  assertCredentials(OWNER_EMAIL, OWNER_PASSWORD, 'E2E owner credentials');
-  return loginAsUser(page, OWNER_EMAIL, OWNER_PASSWORD);
+  if (OWNER_EMAIL.trim() && OWNER_PASSWORD.trim()) {
+    return loginAsUser(page, OWNER_EMAIL, OWNER_PASSWORD);
+  }
+  return loginViaBootstrap(page, 'ADMIN', 'owner');
 }
 
 export async function loginAsMember(page: Page): Promise<string> {
-  assertCredentials(MEMBER_EMAIL, MEMBER_PASSWORD, 'E2E member credentials');
-  return loginAsUser(page, MEMBER_EMAIL, MEMBER_PASSWORD);
+  if (MEMBER_EMAIL.trim() && MEMBER_PASSWORD.trim()) {
+    return loginAsUser(page, MEMBER_EMAIL, MEMBER_PASSWORD);
+  }
+  return loginViaBootstrap(page, 'USER', 'member');
 }
 
 export async function createWorkCanvasDraft(

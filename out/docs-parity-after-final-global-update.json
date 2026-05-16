@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-05-16T03:23:56.056Z",
+  "changelogDir": "docs/governance",
+  "since": "2026-04-16",
+  "totals": {
+    "files": 9,
+    "pass": 8,
+    "passWithWarnings": 0,
+    "fail": 1,
+    "skipped": 0
+  },
+  "gitAvailable": true,
+  "files": [
+    {
+      "docPath": "docs/product/PRESENTATION_ARTIFACT_ENGINE_SYSTEM_AND_BACKLOG.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_ARTIFACT_ENGINE_SYSTEM_AND_BACKLOG.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-07",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/product/PRESENTATION_ARTIFACT_ENGINE_REFERENCE.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_ARTIFACT_ENGINE_REFERENCE.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-15",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/product/PRESENTATION_RUNTIME_AND_CONFIDENTIALITY_ROLLOUT_RUNBOOK.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_RUNTIME_AND_CONFIDENTIALITY_ROLLOUT_RUNBOOK.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-07",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/product/PRESENTATION_RBAC_MATRIX.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_RBAC_MATRIX.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-07",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/testing/PRESENTATION_QUALITY_GOVERNANCE_SCORECARD.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_QUALITY_GOVERNANCE_SCORECARD.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-07",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/testing/PRESENTATION_SLI_SLO.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_SLI_SLO.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-15",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/product/EXECUTION_TASK_METADATA_STANDARD.md",
+      "changelogPath": "docs/governance/CHANGELOG_EXECUTION_TASK_METADATA_STANDARD.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-15",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "docs/product/PRESENTATION_STAGE_GATE_WORKFLOW.md",
+      "changelogPath": "docs/governance/CHANGELOG_PRESENTATION_STAGE_GATE_WORKFLOW.md",
+      "verdict": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-15",
+      "withinSinceWindow": true,
+      "issues": []
+    },
+    {
+      "docPath": "DRD/UI_UX_SOURCE_OF_TRUTH.md",
+      "changelogPath": "docs/governance/CHANGELOG_UI_UX_SOURCE_OF_TRUTH.md",
+      "verdict": "FAIL",
+      "errors": 1,
+      "warnings": 0,
+      "changelogLastEntryDate": "2026-05-15",
+      "withinSinceWindow": true,
+      "issues": [
+        {
+          "field": "doc_changed_without_changelog",
+          "severity": "error",
+          "reason": "Doc has meaningful changes vs the snapshot at the last changelog commit, but the latest changelog entry is dated 2026-05-15 (before today 2026-05-16). Add a fresh entry per Documentation Change Control § 3."
+        }
+      ]
+    }
+  ]
+}

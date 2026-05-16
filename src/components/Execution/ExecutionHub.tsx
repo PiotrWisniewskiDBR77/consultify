@@ -95,6 +95,7 @@ import {
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -1437,10 +1438,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         result = result.filter((i) => i.status === filter.value);
       }
       if (filter.column === 'attention') {
+        const isMissingDatesFilter = filter.value === 'missing_dates';
         result = result.filter((i) =>
           matchesAttentionPreset(
             i,
-            filter.value as
+            (isMissingDatesFilter ? 'missing_dates' : filter.value) as
               | 'blocked'
               | 'missing_dates'
               | 'overdue'
@@ -3259,6 +3261,70 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     tasks.length,
   ]);
 
+  const renderActionCenter = () => {
+    const kpiDeviationItems = actionQueueItems.filter(
+      (item) => item.type === 'kpi_deviation_no_plan'
+    );
+    const missingPlanItems = actionCenter.missingDates;
+    const rows = [
+      {
+        id: 'action-queue',
+        label: t('execution.actionCenter.actionQueue', 'Action queue'),
+        count: actionQueueItems.length,
+        description: t(
+          'execution.actionCenter.actionQueueDesc',
+          'Overdue decisions, risks, communications, and KPI deviations that need owner action.'
+        ),
+        onClick: () => openInitiativesWithAttention('overdue_decisions'),
+      },
+      {
+        id: 'missing-plan-handling',
+        label: t('execution.actionCenter.missingPlan', 'Missing-plan handling'),
+        count: missingPlanItems.length,
+        description: t(
+          'execution.actionCenter.missingPlanDesc',
+          'Initiatives without start/end dates stay visible as degraded planning state instead of disappearing from reports.'
+        ),
+        onClick: () => openInitiativesWithAttention('missing_dates'),
+      },
+      {
+        id: 'kpi-deviation-no-plan',
+        label: t('execution.actionCenter.kpiNoPlan', 'KPI deviation without plan'),
+        count: kpiDeviationItems.length,
+        description: t(
+          'execution.actionCenter.kpiNoPlanDesc',
+          'KPI deviations without recovery plans are tracked in the same action queue.'
+        ),
+        onClick: () => setActiveTab('people_change' as ModuleTab),
+      },
+    ];
+
+    return (
+      <div className="grid gap-3 md:grid-cols-3">
+        {rows.map((row) => (
+          <button
+            key={row.id}
+            type="button"
+            onClick={row.onClick}
+            className="text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 hover:border-primary-500/40 transition-colors"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {row.label}
+              </div>
+              <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 px-2 py-0.5">
+                {row.count}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              {row.description}
+            </p>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   // ---------------------------------------------------------------------------
   // RAPORTY — pre-defined report catalog (§5 of EXECUTION_SURFACES spec)
   // Every report declares: audience, cadence, scope, data sources,
@@ -4243,7 +4309,7 @@ Please return:
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              {t('execution.reportCatalog.heading', 'Execution Reports')}
+              {t('execution.reports.title', 'Execution reports')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               {t(
@@ -4260,6 +4326,22 @@ Please return:
             {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
           </button>
         </div>
+
+        {renderActionCenter()}
+
+        <details className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+          <summary className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('execution.reports.workloadPreview', 'Workload preview')}
+          </summary>
+          <div className="border-t border-slate-200 dark:border-navy-700">
+            <ExecutionWorkloadView
+              initiatives={dashboardBaseInitiatives as FullInitiative[]}
+              onInitiativeClick={handleOpenSidePanel}
+              projectId={currentProjectId || undefined}
+              showControls={false}
+            />
+          </div>
+        </details>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filteredReportCatalog.map((report) => {

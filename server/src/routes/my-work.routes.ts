@@ -632,6 +632,12 @@ const createMyWorkToolSession = async (params: {
   const { userId, orgId, sourceType, sourceId, title, summary } = params;
   const cols = await getTableColumns('tool_sessions');
   if (!cols || cols.size === 0) {
+    const isMockGateway =
+      (process.env.NODE_ENV === 'test' || process.env.E2E_MODE === 'true') &&
+      (process.env.MOCK_DB === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true');
+    if (isMockGateway) {
+      return `mock-tool-session-${sourceType}-${sourceId}`;
+    }
     throw new Error(
       'Database table missing: tool_sessions. Run migrations (npm run db:migrate:*).'
     );

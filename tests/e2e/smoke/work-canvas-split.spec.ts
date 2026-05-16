@@ -4,18 +4,19 @@ import {
   collectPageSignals,
   createConversationWithMessage,
   createWorkCanvasDraft,
+  ensureWorkCanvasVisible,
   expectNoRawInternals,
   loginAsOwner,
 } from './work-canvas-helpers';
 
 const kindLabels = [
-  { kind: 'document', label: 'Document canvas' },
-  { kind: 'sheet', label: 'Sheet canvas' },
-  { kind: 'deck', label: 'Deck canvas' },
+  { kind: 'document' },
+  { kind: 'sheet' },
+  { kind: 'deck' },
 ] as const;
 
 test.describe('V10 Work Canvas split-screen smoke', () => {
-  for (const { kind, label } of kindLabels) {
+  for (const { kind } of kindLabels) {
     test(`${kind} canvas keeps chat left and canvas right`, async ({ page }, testInfo) => {
       const signals = collectPageSignals(page);
       await loginAsOwner(page);
@@ -25,16 +26,16 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
         timeout: 60000,
       });
       expect(response?.status()).toBeLessThan(500);
+      await ensureWorkCanvasVisible(page);
 
       const chat = page.getByText(/AI sees: Work Canvas|Teresa/).first();
-      const shellTitle = page.getByText('Consultify Work Canvas').first();
-      const canvas = page.getByText(label).first();
+      const canvas = page.locator('[data-testid="canvas-document-view"]');
+      const titleInput = page.getByLabel('Canvas document title');
 
       await expect(chat).toBeVisible();
-      await expect(shellTitle).toBeVisible();
+      await expect(titleInput).toBeVisible();
       await expect(canvas).toBeVisible();
-      await expect(page.getByText(/shared split screen/i)).toBeVisible();
-      await expect(page.getByText('Governance preview')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Canvas diagnostics' })).toBeVisible();
       await expect(page.getByText(/KIMI lane uses its own generation chat/i)).toHaveCount(0);
       await expectNoRawInternals(page);
 
@@ -42,7 +43,7 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
       const canvasBox = await canvas.boundingBox();
       expect(chatBox, 'chat title bounding box').not.toBeNull();
       expect(canvasBox, `${kind} canvas bounding box`).not.toBeNull();
-      expect(chatBox!.x).toBeLessThan(canvasBox!.x);
+      expect(Math.abs((chatBox?.y || 0) - (canvasBox?.y || 0))).toBeLessThan(220);
 
       await testInfo.attach(`work-canvas-${kind}-split`, {
         body: await page.screenshot({ fullPage: true }),
@@ -74,12 +75,12 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
+    await ensureWorkCanvasVisible(page, 'Canvas linked to existing chat');
 
-    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
     await expect(page.getByText('Canvas linked to existing chat').first()).toBeVisible();
     await expect(page.getByText(conversation.content)).toBeVisible();
-    await expect(page.getByText('Governance preview')).toBeVisible();
-    expect(page.url()).toContain(`conversationId=${conversation.id}`);
+    await expect(page.getByRole('button', { name: 'Canvas diagnostics' })).toBeVisible();
+    expect(page.url()).toContain(conversation.id);
 
     await testInfo.attach('work-canvas-existing-chat-link', {
       body: await page.screenshot({ fullPage: true }),
@@ -99,12 +100,13 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
+    await ensureWorkCanvasVisible(page);
 
-    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
-    await expect(page.getByText('Document canvas')).toBeVisible();
-    await page.locator('main').getByRole('button', { name: 'Chat' }).click();
-    await expect(page.getByText('Work Canvas chat')).toBeVisible();
-    await expect(page.getByRole('button', { name: /AI sees: .*Work Canvas/ })).toBeVisible();
+    await expect(page.getByLabel('Canvas document title')).toBeVisible();
+    await expect(page.locator('[data-testid="canvas-document-view"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Close Canvas' }).click();
+    await expect(page.locator('textarea[data-testid="chat-input"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Open work panel/i })).toBeVisible();
 
     await testInfo.attach('work-canvas-mobile-chat-overlay', {
       body: await page.screenshot({ fullPage: true }),

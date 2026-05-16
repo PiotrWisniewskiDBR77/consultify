@@ -3,8 +3,8 @@ module_id: MODULE_PRESENTATIONS
 doc_kind: STATUS
 version: 0.1
 owner: user
-status: draft
-last_updated: 2026-05-09
+status: canonical
+last_updated: 2026-05-15
 ---
 
 # Status — Prezentacje (Presentation Studio)

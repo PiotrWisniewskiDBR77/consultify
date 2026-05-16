@@ -122,6 +122,23 @@ async function requireInboxTriageTables(res: Response): Promise<boolean> {
 }
 
 async function requireNotebookPagesTable(res: Response): Promise<boolean> {
+  const isTestGateway =
+    process.env.NODE_ENV === 'test' ||
+    process.env.E2E_MODE === 'true' ||
+    process.env.ENABLE_TEST_GATEWAY === 'true';
+  const mockDbEnabled =
+    process.env.MOCK_DB === 'true' ||
+    process.env.E2E_MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false');
+
+  // Mock/test gateways often do not expose schema introspection reliably.
+  // Skip table-introspection gating there to avoid false 503s.
+  if (isTestGateway && mockDbEnabled) {
+    return true;
+  }
+
   const cols = await getTableColumns('notebook_pages');
   if (!cols?.size) {
     res.status(503).json({

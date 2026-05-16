@@ -773,16 +773,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Sync editor when switching pages or when the same page gets fresher server content.
   useEffect(() => {
     if (!editor) return;
+    // Tiptap can briefly expose an editor whose command bridge is not ready.
+    // Accessing `editor.commands` may throw in that transition window.
+    const safeSetContent = (content: unknown) => {
+      try {
+        editor.commands.setContent(content as any, { emitUpdate: false });
+        return true;
+      } catch {
+        return false;
+      }
+    };
     if (!activePage) {
-      editor.commands.setContent({ type: 'doc', content: [] }, { emitUpdate: false });
+      if (!safeSetContent({ type: 'doc', content: [] })) return;
       setTitle('');
       setPageProjectId('');
       setPageTags([]);
       return;
     }
-    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, {
-      emitUpdate: false,
-    });
+    if (!safeSetContent(activePage.contentJson || { type: 'doc', content: [] })) return;
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
     setPageTags(activePage.tags || []);
