@@ -1,0 +1,45 @@
+name: Module Contract Rerun Gate
+
+on:
+  schedule:
+    # Weekly sprint cadence rerun
+    - cron: '0 6 * * 1'
+  push:
+    tags:
+      - 'v*'
+      - 'release-*'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for rerun (sprint, pre-release, manual)'
+        required: false
+        default: 'manual'
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  module-contract-rerun:
+    name: 🔁 Module Contract Consistency (19 modules)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run module contract rerun gate
+        run: npx tsx scripts/testing/module-contract-rerun-gate.ts
+      - name: Upload rerun report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: module-contract-rerun-report
+          path: |
+            test-results/module-contract-gate/module-contract-gate.md
+            test-results/module-contract-gate/module-contract-gate.json
+          retention-days: 30

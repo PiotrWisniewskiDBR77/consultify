@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="with-signal-suite" tests="2" failures="0" errors="0" skipped="0" time="0.02">
+    <testcase classname="suite.alpha" name="stable test" time="0.01"></testcase>
+    <testcase classname="suite.alpha" name="flaky retried test" time="0.01" flaky="true"></testcase>
+  </testsuite>
+</testsuites>
