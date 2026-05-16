@@ -94,6 +94,36 @@ interface UserDataExport {
   }>;
 }
 
+function resolveGdprCorrelationId(req: AuthRequest): string | null {
+  const reqCorrelationId =
+    (req as AuthRequest & { correlationId?: string }).correlationId ||
+    req.get('X-Correlation-ID');
+  return typeof reqCorrelationId === 'string' && reqCorrelationId.trim().length > 0
+    ? reqCorrelationId.trim()
+    : null;
+}
+
+function buildGdprError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+): {
+  status: 'fail' | 'error';
+  correlationId: string | null;
+  error: { code: string; message: string; timestamp: string };
+} {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    correlationId: resolveGdprCorrelationId(req),
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+  };
+}
+
 // ==========================================
 // DATABASE HELPERS
 // ==========================================
@@ -172,7 +202,14 @@ router.put(
       const { consents } = req.body as { consents?: GDPRConsents };
 
       if (!consents) {
-        return res.status(400).json({ error: 'Consents data required' });
+        return res.status(400).json(
+          buildGdprError(
+            req,
+            400,
+            'GDPR_CONSENTS_PAYLOAD_REQUIRED',
+            'Consents payload is required.'
+          )
+        );
       }
 
       await dbRun(
@@ -200,7 +237,9 @@ router.put(
       return res.json({ success: true, message: 'Consents updated' });
     } catch (err: any) {
       logger.error('[GDPR] Update consents error:', err);
-      return res.status(500).json({ error: 'Failed to update consents' });
+      return res.status(500).json(
+        buildGdprError(req, 500, 'GDPR_CONSENTS_UPDATE_FAILED', 'Failed to update consents.')
+      );
     }
   })
 );
@@ -262,12 +301,26 @@ router.put(
       const { retention } = req.body as { retention?: DataRetention };
 
       if (!retention) {
-        return res.status(400).json({ error: 'Retention data required' });
+        return res.status(400).json(
+          buildGdprError(
+            req,
+            400,
+            'GDPR_RETENTION_PAYLOAD_REQUIRED',
+            'Retention payload is required.'
+          )
+        );
       }
 
       const validPeriods = ['30', '90', '180', '365', 'forever'];
       if (!validPeriods.includes(retention.period)) {
-        return res.status(400).json({ error: 'Invalid retention period' });
+        return res.status(400).json(
+          buildGdprError(
+            req,
+            400,
+            'GDPR_RETENTION_PERIOD_INVALID',
+            'Retention period is invalid.'
+          )
+        );
       }
 
       await dbRun(
@@ -284,7 +337,9 @@ router.put(
       return res.json({ success: true, message: 'Retention settings updated' });
     } catch (err: any) {
       logger.error('[GDPR] Update retention error:', err);
-      return res.status(500).json({ error: 'Failed to update retention' });
+      return res.status(500).json(
+        buildGdprError(req, 500, 'GDPR_RETENTION_UPDATE_FAILED', 'Failed to update retention.')
+      );
     }
   })
 );
@@ -343,7 +398,12 @@ router.post(
 
       if (existing) {
         return res.status(400).json({
-          error: 'An export request is already in progress',
+          ...buildGdprError(
+            req,
+            400,
+            'GDPR_EXPORT_REQUEST_ALREADY_IN_PROGRESS',
+            'An export request is already in progress.'
+          ),
         });
       }
 
@@ -389,7 +449,9 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[GDPR] Export request error:', err);
-      return res.status(500).json({ error: 'Failed to request export' });
+      return res.status(500).json(
+        buildGdprError(req, 500, 'GDPR_EXPORT_REQUEST_FAILED', 'Failed to request export.')
+      );
     }
   })
 );
@@ -412,12 +474,16 @@ router.get(
       );
 
       if (!request) {
-        return res.status(404).json({ error: 'Export not found or not ready' });
+        return res.status(404).json(
+          buildGdprError(req, 404, 'GDPR_EXPORT_NOT_READY', 'Export was not found or is not ready.')
+        );
       }
 
       // Check expiration
       if (new Date(request.expires_at) < new Date()) {
-        return res.status(410).json({ error: 'Export has expired' });
+        return res.status(410).json(
+          buildGdprError(req, 410, 'GDPR_EXPORT_EXPIRED', 'Export has expired.')
+        );
       }
 
       // Generate fresh export data
@@ -431,7 +497,9 @@ router.get(
       return res.send(JSON.stringify(userData, null, 2));
     } catch (err: any) {
       logger.error('[GDPR] Download export error:', err);
-      return res.status(500).json({ error: 'Failed to download export' });
+      return res.status(500).json(
+        buildGdprError(req, 500, 'GDPR_EXPORT_DOWNLOAD_FAILED', 'Failed to download export.')
+      );
     }
   })
 );
