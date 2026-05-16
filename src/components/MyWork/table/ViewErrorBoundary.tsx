@@ -9,7 +9,6 @@ export interface ViewErrorBoundaryProps {
 
 interface ViewErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
 }
 
 /**
@@ -21,11 +20,11 @@ export class ViewErrorBoundary extends React.Component<
 > {
   constructor(props: ViewErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ViewErrorBoundaryState {
-    return { hasError: true, error };
+    return { hasError: true };
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
@@ -33,12 +32,12 @@ export class ViewErrorBoundary extends React.Component<
   }
 
   private handleRetry = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false });
   };
 
   override render(): React.ReactNode {
     const { children, viewName, onSwitchToGrid, locale } = this.props;
-    const { hasError, error } = this.state;
+    const { hasError } = this.state;
 
     if (!hasError) {
       return children;
@@ -58,17 +57,7 @@ export class ViewErrorBoundary extends React.Component<
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             The <span className="font-medium text-slate-700 dark:text-slate-200">{viewName}</span>{' '}
-            layout hit an unexpected error
-            {error?.message ? (
-              <>
-                :{' '}
-                <span className="break-words text-slate-600 dark:text-slate-300">
-                  {error.message}
-                </span>
-              </>
-            ) : (
-              '.'
-            )}
+            layout hit an unexpected error. Runtime details are hidden for safety.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">

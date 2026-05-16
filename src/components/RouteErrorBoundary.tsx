@@ -9,7 +9,6 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
   didAutoReload: boolean;
   telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
 }
@@ -26,7 +25,6 @@ export class RouteErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null,
       didAutoReload: false,
       telemetryDelivery: 'idle',
     };
@@ -36,7 +34,6 @@ export class RouteErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null,
       didAutoReload: false,
       telemetryDelivery: 'idle',
     };
@@ -45,10 +42,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[RouteErrorBoundary] Caught error:', error, errorInfo);
 
-    this.setState({
-      error,
-      errorInfo,
-    });
+    this.setState({ error });
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
       window
@@ -120,7 +114,6 @@ export class RouteErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null,
       telemetryDelivery: 'idle',
     });
   };
@@ -139,13 +132,9 @@ export class RouteErrorBoundary extends Component<Props, State> {
       // Default error UI
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8"
-          >
-            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/20 rounded-full mb-4">
-              <AlertTriangle className="w-8 h-8 text-rose-600 dark:text-rose-400" />
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
 
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2">
@@ -156,13 +145,18 @@ export class RouteErrorBoundary extends Component<Props, State> {
               Wystąpił nieoczekiwany błąd podczas ładowania tej strony.
             </p>
 
-            {this.state.error && (
-              <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm text-rose-600 dark:text-rose-400">
-                  Crash details were captured and redacted for safety.
-                </p>
-              </div>
-            )}
+            <div
+              className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                Strona napotkała problem i została bezpiecznie zatrzymana.
+              </p>
+              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony głównej.
+              </p>
+            </div>
             {this.state.telemetryDelivery === 'sent' && (
               <p
                 data-testid="route-error-boundary-telemetry-sent"

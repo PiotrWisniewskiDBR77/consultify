@@ -25,11 +25,7 @@ const state = {
 };
 
 vi.mock('../../src/store/useAppStore', () => ({
-  useAppStore: Object.assign((selector: any) => selector(state), {
-    getState: () => state,
-    setState: (next: Partial<typeof state>) => Object.assign(state, next),
-    subscribe: vi.fn(),
-  }),
+  useAppStore: (selector: any) => selector(state),
 }));
 
 describe('AcceptInvitationView', () => {
@@ -113,5 +109,72 @@ describe('AcceptInvitationView', () => {
     expect(await screen.findByText('Invalid Invitation')).toBeInTheDocument();
     expect(screen.getByText('Invalid invitation link')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not leak backend details on validation failure and exposes alert role', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        error: { message: 'postgres://rw:secret@host/db', code: 'INVITATION_TOKEN_INVALID' },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <MemoryRouter>
+        <AcceptInvitationView token="abc-token" />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Invalid Invitation')).toBeInTheDocument();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('We could not validate this invitation');
+    expect(alert).not.toHaveTextContent('postgres://rw:secret@host/db');
+  });
+
+  it('does not leak backend details on accept failure and exposes form alert role', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          valid: true,
+          invitationType: 'ORG',
+          organizationName: 'Org One',
+          email: 'user@example.com',
+          roleToAssign: 'USER',
+          expiresAt: '2026-06-01T00:00:00.000Z',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({
+          error: { message: 'internal stack trace', code: 'INVITATION_ACCEPTANCE_FAILED' },
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <MemoryRouter>
+        <AcceptInvitationView token="abc-token" />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Join Org One');
+    await user.type(screen.getByLabelText('First Name *'), 'Jane');
+    await user.type(screen.getByLabelText('Last Name *'), 'Doe');
+    await user.type(screen.getByLabelText('Function / Job Title *'), 'Manager');
+    await user.type(screen.getByLabelText('Department *'), 'Ops');
+    await user.type(screen.getByLabelText('Password *'), 'secret123');
+    await user.type(screen.getByLabelText('Confirm Password *'), 'secret123');
+    await user.click(screen.getByLabelText(/I agree to the/i));
+    await user.click(screen.getByRole('button', { name: 'Accept & Join' }));
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('We could not complete invitation acceptance');
+      expect(alert).not.toHaveTextContent('internal stack trace');
+    });
   });
 });
