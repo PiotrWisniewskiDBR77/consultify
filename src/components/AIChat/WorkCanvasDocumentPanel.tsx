@@ -802,7 +802,7 @@ export function WorkCanvasDocumentPanel({
         capabilityMap.map(async ([key, capability]) => {
           try {
             const response = await fetch(
-              `/api/access?capability=${encodeURIComponent(capability)}`,
+              `/api/access/effective?capability=${encodeURIComponent(capability)}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }

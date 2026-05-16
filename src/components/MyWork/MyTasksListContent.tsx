@@ -862,7 +862,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const [aiError, setAiError] = useState<string | null>(null);
 
   // Focus state: entity_id → focus column (today / thisWeek / later)
-  // TODO: Wire to /api/my-work/focus/state when endpoint is available
   const [focusState, setFocusState] = useState<Record<string, string>>({});
 
   // Selection state
@@ -1033,6 +1032,34 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       .then((context) => setDataContext(context))
       .catch(() => setDataContext(null));
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    Api.get('/my-work/focus/state')
+      .then((response) => {
+        if (cancelled) return;
+        const items = Array.isArray((response as any)?.data?.items)
+          ? (response as any).data.items
+          : [];
+        const next: Record<string, string> = {};
+        for (const item of items) {
+          const itemKey = String(item?.itemKey || '');
+          const column = String(item?.column || '');
+          if (!itemKey.startsWith('task:')) continue;
+          if (!['today', 'thisWeek', 'later'].includes(column)) continue;
+          const taskId = itemKey.slice('task:'.length).trim();
+          if (!taskId) continue;
+          next[taskId] = column;
+        }
+        setFocusState(next);
+      })
+      .catch(() => {
+        if (!cancelled) setFocusState({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
 
   // Group tasks
   const groupedTasks = useMemo(() => {

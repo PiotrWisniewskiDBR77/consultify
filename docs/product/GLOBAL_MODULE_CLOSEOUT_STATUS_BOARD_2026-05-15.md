@@ -46,6 +46,17 @@ Block 15 closeout addendum (2026-05-16): strict-dev documentary handoff is clean
 
 Blocks 9-15 documentary closeout addendum (2026-05-16): strict-dev documentary implementation is complete for Calendar, Task Management, PMO Functions, Excel/Table Studio, Word/Documents, Presentations, and Settings/Admin/RBAC, with one canonical aggregation artifact `docs/testing/reports/BLOCKS_9_15_DOCUMENTARY_CLOSEOUT_PACK_2026-05-16.md`.
 
+Blocks 1-15 BO execution addendum (2026-05-16): operational closure workflow and per-block open-item tracker are centralized in `docs/testing/reports/BO_EXECUTION_TRACKER_BLOCKS_1_15_2026-05-16.md`.
+
+Code readiness hardening addendum (2026-05-16, post-closeout):
+- Canvas capability contract mismatch closed in `src/components/AIChat/WorkCanvasDocumentPanel.tsx` (`/api/access/effective`).
+- Idea Table duplicate-table runtime action implemented in `src/components/MyWork/IdeaTableTool.tsx` (`POST /table-platform/tables/:tableId/duplicate`).
+- Task module parity hardening in `src/components/MyWork/MyTasksListContent.tsx` and `src/components/MyWork/WorkCenter.tsx` (persisted Focus state mapping + real urgent counter source).
+
+Manual readiness + cleanup planning addendum (2026-05-16):
+- Ordered manual execution pack for Blocks 1-15 is available in `docs/testing/reports/MANUAL_TEST_READINESS_PACK_BLOCKS_1_15_2026-05-16.md`.
+- Branch/worktree cleanup is prepared as approval-first plan (no destructive action executed) in `docs/operations/CLEANUP_PLAN_BRANCHES_WORKTREES_APPROVAL_FIRST_2026-05-16.md`.
+
 ## Sprint 0 Gate Result
 
 `PASS_WITH_OPEN_WORK`

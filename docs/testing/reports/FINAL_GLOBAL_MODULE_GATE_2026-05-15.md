@@ -190,6 +190,12 @@ This pack confirms full documentary implementation for Blocks 9-15 on strict-dev
 - [x] Dedicated strict-dev closeout reports exist for every block in `9..15`.
 - [x] Status reconciliation for `9..15` is synchronized as `READY_FOR_MANUAL` with no active developer `BLOCKED_P1`.
 - [x] Open items in this range are explicitly manual Business Owner gates only.
+- [x] BO execution tracker is available for full closure workflow:
+  - `BO_EXECUTION_TRACKER_BLOCKS_1_15_2026-05-16.md`.
+- [x] Manual test readiness pack is prepared for ordered BO execution:
+  - `MANUAL_TEST_READINESS_PACK_BLOCKS_1_15_2026-05-16.md`.
+- [x] Cleanup plan (branches/worktrees) is prepared in approval-first mode:
+  - `docs/operations/CLEANUP_PLAN_BRANCHES_WORKTREES_APPROVAL_FIRST_2026-05-16.md`.
 
 ## Why This Is Not GLOBAL_ALL_MODULES_GO
 
@@ -356,6 +362,9 @@ Developer execution update (2026-05-16, strict-dev-only):
 - Owner save/read-back, deep-link, split, and mobile overlay slices all pass in the current strict-dev rerun.
 - Supporting staging probes stay green (`/ai/work-canvas` -> `200`, `/chat?workPanel=1` -> `200`, unauth `/api/work-canvas/drafts` -> `401`).
 - Evidence report added: `CANVAS_BUSINESS_OWNER_PASS_2026-05-16.md`.
+- Post-pass hardening applied in app code (2026-05-16):
+  - Canvas capability runtime endpoint mismatch closed in `src/components/AIChat/WorkCanvasDocumentPanel.tsx` (`/api/access/effective?capability=...`).
+  - Result: Canvas runtime capability flags now resolve from the active access contract instead of fallback-false on missing route.
 
 Interpretation:
 
@@ -717,6 +726,9 @@ Developer execution update (2026-05-16, strict-dev-only):
     - Result: `43/43 PASS`.
 - Dedicated strict-dev evidence report added:
   - `IDEA_TABLE_BLOCK8_STRICT_DEV_CLOSEOUT_2026-05-16.md`.
+- Post-pass hardening applied in app code (2026-05-16):
+  - Idea Table "Duplicate table" action moved from placeholder toast to real API call in `src/components/MyWork/IdeaTableTool.tsx`.
+  - Runtime now executes `POST /table-platform/tables/:tableId/duplicate`, updates table list, and switches context to the duplicated table.
 
 Interpretation:
 
@@ -855,6 +867,9 @@ Developer execution update (2026-05-16, strict-dev-only):
   - `GET /my-work/tasks` -> `200`.
 - Dedicated Block 10 strict-dev report added:
   - `TASK_MANAGEMENT_BLOCK10_STRICT_DEV_CLOSEOUT_2026-05-16.md`.
+- Post-pass hardening applied in app code (2026-05-16):
+  - My Tasks focus badges are now loaded from persisted Focus state in `src/components/MyWork/MyTasksListContent.tsx` (`GET /my-work/focus/state` mapping `task:<id>` -> column).
+  - WorkCenter urgent counter now uses real `counts.urgent` in `src/components/MyWork/WorkCenter.tsx` (removed overdue-as-urgent fallback).
 
 Interpretation:
 

@@ -727,10 +727,34 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   const handleTabDuplicateTable = useCallback(
-    async (_tableId: string) => {
-      toast(isPl ? 'Duplikowanie tabeli — wkrótce' : 'Duplicate table — coming soon');
+    async (tableId: string) => {
+      const sourceTable = baseTables.find((t) => t.id === tableId);
+      const suggestedName = sourceTable?.name
+        ? `${sourceTable.name} ${isPl ? 'Kopia' : 'Copy'}`
+        : isPl
+          ? 'Nowa kopia'
+          : 'New copy';
+      const name = window.prompt(
+        isPl ? 'Nazwa duplikatu tabeli:' : 'Duplicate table name:',
+        suggestedName
+      );
+      if (!name?.trim()) return;
+      try {
+        const duplicated = await Api.post(`/table-platform/tables/${tableId}/duplicate`, {
+          name: name.trim(),
+        });
+        const duplicatedId = String((duplicated as any)?.id || '').trim();
+        const duplicatedName = String((duplicated as any)?.name || name.trim()).trim();
+        if (!duplicatedId) throw new Error('missing duplicated table id');
+        setBaseTables((prev) => [...prev, { id: duplicatedId, name: duplicatedName }]);
+        setPlatformTableOverrideId(duplicatedId);
+        setExpandedRecordId(null);
+        toast.success(isPl ? 'Tabela zduplikowana' : 'Table duplicated');
+      } catch {
+        toast.error(isPl ? 'Nie udało się zduplikować tabeli' : 'Failed to duplicate table');
+      }
     },
-    [isPl]
+    [baseTables, isPl]
   );
 
   const handleTabDeleteTable = useCallback(
