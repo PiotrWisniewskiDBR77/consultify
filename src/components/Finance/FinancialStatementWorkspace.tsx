@@ -714,7 +714,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <FileText size={18} className="text-cyan-500" />
+                <FileText size={18} className="text-blue-500" />
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                   {detail.period_label || detail.source_file_name || detail.id}
                 </h3>
@@ -843,7 +843,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           <div className="mt-4 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
             <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/70 p-4">
               <div className="flex items-center gap-2">
-                <Database size={16} className="text-cyan-500" />
+                <Database size={16} className="text-blue-500" />
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {t(
                     'finance.statements.systemTables',
@@ -867,10 +867,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                       key={section.id}
                       type="button"
                       onClick={() => scrollToSection(section.id)}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-cyan-300 hover:bg-cyan-50/50 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-cyan-700/60 dark:hover:bg-cyan-900/10"
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/50 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-blue-700/60 dark:hover:bg-blue-900/10"
                     >
                       <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
-                        <Icon size={14} className="text-cyan-500" />
+                        <Icon size={14} className="text-blue-500" />
                         {section.label}
                       </div>
                       <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -888,7 +888,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <FileText size={16} className="text-cyan-500" />
+                  <FileText size={16} className="text-blue-500" />
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                     {t(
                       'finance.statements.documentsLoaded',
@@ -918,8 +918,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                       onClick={() => !isCurrent && onOpenStatement?.(statement.id)}
                       className={`w-full rounded-xl border px-3 py-3 text-left transition ${
                         isCurrent
-                          ? 'border-cyan-300 bg-cyan-50 dark:border-cyan-700/60 dark:bg-cyan-900/20'
-                          : 'border-slate-200 bg-white hover:border-cyan-300 hover:bg-cyan-50/40 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-cyan-700/60 dark:hover:bg-cyan-900/10'
+                          ? 'border-blue-300 bg-blue-50 dark:border-blue-700/60 dark:bg-blue-900/20'
+                          : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/40 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-blue-700/60 dark:hover:bg-blue-900/10'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -944,7 +944,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                             {statement.unmapped_line_count || 0}
                           </div>
                         </div>
-                        <span className="text-xs font-medium text-cyan-600 dark:text-cyan-300">
+                        <span className="text-xs font-medium text-blue-600 dark:text-blue-300">
                           {isCurrent
                             ? t('finance.statements.currentDocument', isPl ? 'Aktualny' : 'Current')
                             : t('finance.statements.openDocument', isPl ? 'Otwórz' : 'Open')}
@@ -969,7 +969,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300">
             {error}
           </div>
         )}

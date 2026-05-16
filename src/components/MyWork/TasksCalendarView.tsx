@@ -293,11 +293,11 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
       </div>
 
       {overdue.length > 0 && activeFilter !== 'overdue' && (
-        <div className="rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50/70 dark:bg-red-500/10 p-3">
-          <div className="flex items-center gap-2 text-xs font-medium text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-500/10 p-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-rose-700 dark:text-rose-300">
             <Clock size={14} />
             <span>{t('myWork.calendar.overdue', 'Overdue')}</span>
-            <span className="ml-1 rounded-full bg-red-100 dark:bg-red-500/20 px-2 py-0.5 text-[10px]">
+            <span className="ml-1 rounded-full bg-rose-100 dark:bg-rose-500/20 px-2 py-0.5 text-[10px]">
               {overdue.length}
             </span>
           </div>
@@ -305,7 +305,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
             {overdue.slice(0, 6).map((task) => (
               <button
                 key={task.id}
-                className="text-left rounded-md px-2 py-1 text-xs text-red-800 dark:text-red-200 hover:bg-red-100/70 dark:hover:bg-red-500/10"
+                className="text-left rounded-md px-2 py-1 text-xs text-rose-800 dark:text-rose-200 hover:bg-rose-100/70 dark:hover:bg-rose-500/10"
                 onClick={() => onTaskClick(task.id, task)}
               >
                 {task.title || t('myWork.tasks.untitled', 'Untitled task')}
@@ -409,7 +409,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
                             key={task.id}
                             className={`rounded-md px-2 py-1 text-left text-[11px] transition-colors ${
                               isUrgent(task.priority)
-                                ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-900 dark:text-orange-200 hover:bg-orange-100/70 dark:hover:bg-orange-500/15'
+                                ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
                                 : 'bg-slate-50 dark:bg-navy-950 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800'
                             }`}
                             onClick={() => onTaskClick(task.id, task)}

@@ -12,6 +12,7 @@
 
 import { AlertTriangle, BarChart3, Clock, Loader2, RefreshCw, TrendingUp } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
@@ -41,6 +42,8 @@ function formatHours(value: number | null): string {
 function renderBreakdown(
   title: string,
   entries: Record<string, number>,
+  filterKey: 'status' | 'type' | 'severity' | 'env',
+  onSelect: (key: 'status' | 'type' | 'severity' | 'env', value: string) => void,
   max = 6
 ): React.ReactElement {
   const sorted = Object.entries(entries)
@@ -58,17 +61,27 @@ function renderBreakdown(
             const pct = Math.round((count / total) * 100);
             return (
               <li key={label} className="text-xs">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-mono text-slate-700 dark:text-slate-300 truncate pr-2">
-                    {label}
-                  </span>
-                  <span className="text-slate-600 dark:text-slate-400 tabular-nums">
-                    {count} ({pct}%)
-                  </span>
-                </div>
-                <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500" style={{ width: `${Math.max(2, pct)}%` }} />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onSelect(filterKey, label)}
+                  className="w-full rounded-md p-1 text-left transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-800"
+                  title={`Filter feedback by ${title.toLowerCase()}: ${label}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-mono text-slate-700 dark:text-slate-300 truncate pr-2">
+                      {label}
+                    </span>
+                    <span className="text-slate-600 dark:text-slate-400 tabular-nums">
+                      {count} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-500"
+                      style={{ width: `${Math.max(2, pct)}%` }}
+                    />
+                  </div>
+                </button>
               </li>
             );
           })}
@@ -79,6 +92,7 @@ function renderBreakdown(
 }
 
 export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +114,14 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const openFeedbackFilter = useCallback(
+    (key: 'status' | 'type' | 'severity' | 'env', value: string) => {
+      const params = new URLSearchParams({ [key]: value });
+      navigate(`/superadmin/feedback?${params.toString()}`);
+    },
+    [navigate]
+  );
 
   if (loading && !data) {
     return (
@@ -208,7 +230,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
             {[
               { label: '< 24h', value: data.aging.under24h, color: 'bg-emerald-500' },
               { label: '24–48h', value: data.aging.h24_48, color: 'bg-amber-500' },
-              { label: '2–7d', value: data.aging.d2_7, color: 'bg-orange-500' },
+              { label: '2–7d', value: data.aging.d2_7, color: 'bg-amber-500' },
               { label: '> 7d', value: data.aging.over7d, color: 'bg-rose-500' },
             ].map((bucket) => {
               const total =
@@ -216,31 +238,38 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
               const pct = Math.round((bucket.value / total) * 100);
               return (
                 <li key={bucket.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-slate-700 dark:text-slate-300">{bucket.label}</span>
-                    <span className="text-slate-600 dark:text-slate-400 tabular-nums">
-                      {bucket.value} ({pct}%)
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${bucket.color}`}
-                      style={{ width: `${Math.max(2, pct)}%` }}
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openFeedbackFilter('status', 'NEW')}
+                    className="w-full rounded-md p-1 text-left transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-800"
+                    title="Filter feedback by NEW status"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-slate-700 dark:text-slate-300">{bucket.label}</span>
+                      <span className="text-slate-600 dark:text-slate-400 tabular-nums">
+                        {bucket.value} ({pct}%)
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${bucket.color}`}
+                        style={{ width: `${Math.max(2, pct)}%` }}
+                      />
+                    </div>
+                  </button>
                 </li>
               );
             })}
           </ul>
         </div>
 
-        {renderBreakdown('By status', data.totals.byStatus)}
+        {renderBreakdown('By status', data.totals.byStatus, 'status', openFeedbackFilter)}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {renderBreakdown('By type', data.totals.byType)}
-        {renderBreakdown('By severity', data.totals.bySeverity)}
-        {renderBreakdown('By environment', data.totals.byEnv)}
+        {renderBreakdown('By type', data.totals.byType, 'type', openFeedbackFilter)}
+        {renderBreakdown('By severity', data.totals.bySeverity, 'severity', openFeedbackFilter)}
+        {renderBreakdown('By environment', data.totals.byEnv, 'env', openFeedbackFilter)}
       </div>
 
       <p className="text-[11px] text-slate-500 dark:text-slate-500">

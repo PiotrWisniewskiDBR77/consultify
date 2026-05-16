@@ -35,7 +35,7 @@ export const DocsCategoryView: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-        <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
+        <Link to="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
@@ -64,7 +64,7 @@ export const DocsCategoryView: React.FC = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('docs.category.searchPlaceholder', 'Search in this category...')}
-          className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+          className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
         />
       </div>
 
@@ -104,11 +104,11 @@ export const DocsCategoryView: React.FC = () => {
             >
               <Link
                 to={`/docs/${categorySlug}/${article.slug}`}
-                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
+                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {article.title}
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
@@ -134,7 +134,7 @@ export const DocsCategoryView: React.FC = () => {
                   </div>
                   <ChevronRight
                     size={20}
-                    className="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                    className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
                   />
                 </div>
               </Link>
@@ -147,7 +147,7 @@ export const DocsCategoryView: React.FC = () => {
       <div className="mt-8">
         <Link
           to="/docs"
-          className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           <ArrowLeft size={16} />
           {t('docs.category.backToCategories', 'Back to all categories')}

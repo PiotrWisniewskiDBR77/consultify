@@ -10,35 +10,27 @@
  */
 
 import {
-  AlertTriangle,
-  Check,
-  CheckCircle,
   ChevronDown,
   ChevronRight,
-  Copy,
   Download,
   Edit,
   Eye,
   EyeOff,
-  GitCompare,
   History,
   Loader2,
   Lock,
   Plus,
-  RefreshCw,
   RotateCcw,
-  Save,
   Search,
-  Settings,
   Trash2,
-  Upload,
   X,
-  XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 
 interface ConfigItem {
   id: string;
@@ -64,6 +56,11 @@ interface ConfigVersion {
   reason?: string;
 }
 
+type ConfigCreatePayload = Pick<
+  ConfigItem,
+  'key' | 'value' | 'type' | 'category' | 'description' | 'is_sensitive'
+>;
+
 const CATEGORIES = [
   { id: 'all', label: 'All', icon: '📋' },
   { id: 'general', label: 'General', icon: '⚙️' },
@@ -85,9 +82,120 @@ const TYPE_ICONS = {
   secret: '🔐',
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const toBool = (value: unknown) =>
+  value === true || value === 'true' || value === 1 || value === '1';
+
+const normalizeConfigType = (value: unknown): ConfigItem['type'] => {
+  if (
+    value === 'string' ||
+    value === 'number' ||
+    value === 'boolean' ||
+    value === 'json' ||
+    value === 'secret'
+  ) {
+    return value;
+  }
+  return 'string';
+};
+
+const normalizeConfigItem = (value: unknown): ConfigItem | null => {
+  if (!isRecord(value)) return null;
+  return {
+    id: asText(value.id, ''),
+    key: asText(value.key),
+    value: asText(value.value, ''),
+    type: normalizeConfigType(value.type),
+    category: asText(value.category, 'general'),
+    description:
+      value.description === null || value.description === undefined
+        ? undefined
+        : String(value.description),
+    is_sensitive: toBool(value.is_sensitive),
+    is_locked: toBool(value.is_locked),
+    environment:
+      value.environment === null || value.environment === undefined
+        ? undefined
+        : String(value.environment),
+    updated_at: asText(value.updated_at, ''),
+    updated_by:
+      value.updated_by === null || value.updated_by === undefined
+        ? undefined
+        : String(value.updated_by),
+  };
+};
+
+const normalizeConfigs = (data: unknown): ConfigItem[] => {
+  const candidate = Array.isArray(data)
+    ? data
+    : isRecord(data)
+      ? data.configs || data.items || data.data
+      : null;
+  if (!Array.isArray(candidate)) {
+    throw new Error('System configuration response was not a list');
+  }
+  return candidate.map(normalizeConfigItem).filter((config): config is ConfigItem => !!config);
+};
+
+const getCreatedConfigId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const config = isRecord(result.config) ? result.config : null;
+  return String(
+    result.id || config?.id || data?.id || (isRecord(data?.config) ? data.config.id : '') || ''
+  );
+};
+
+const configMatchesCreate = (
+  config: ConfigItem,
+  expected: ConfigCreatePayload,
+  expectedId: string
+) =>
+  config.id === expectedId &&
+  config.key === expected.key &&
+  config.value === expected.value &&
+  config.category === expected.category &&
+  config.is_sensitive === expected.is_sensitive;
+
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const normalizeVersions = (data: unknown): ConfigVersion[] => {
+  const candidate = Array.isArray(data)
+    ? data
+    : isRecord(data)
+      ? data.versions || data.items || data.data
+      : null;
+  if (Array.isArray(candidate)) {
+    return candidate.filter(isRecord).map((version) => ({
+      id: asText(version.id, ''),
+      config_key: asText(version.config_key, ''),
+      old_value: asText(version.old_value, ''),
+      new_value: asText(version.new_value, ''),
+      changed_at: asText(version.changed_at, ''),
+      changed_by: asText(version.changed_by),
+      reason:
+        version.reason === null || version.reason === undefined
+          ? undefined
+          : String(version.reason),
+    }));
+  }
+  return [];
+};
+
 export const EnterpriseConfigurationPanel: React.FC = () => {
   const [configs, setConfigs] = useState<ConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedEnvironment, setSelectedEnvironment] = useState('development');
@@ -96,6 +204,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyConfig, setHistoryConfig] = useState<ConfigItem | null>(null);
   const [versions, setVersions] = useState<ConfigVersion[]>([]);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     'general',
     'security',
@@ -103,36 +212,46 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   ]);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<string, string>>({});
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleRollback = async (version: ConfigVersion) => {
     if (!historyConfig) return;
     const reason = window.prompt('Rollback reason (optional):') || undefined;
     try {
       await Api.rollbackSystemConfig(historyConfig.id, version.id, reason);
+      const refreshed = await fetchConfigs();
+      if (
+        !refreshed?.some(
+          (config) => config.id === historyConfig.id && config.value === version.new_value
+        )
+      ) {
+        throw new Error('Configuration rollback was not confirmed by the server');
+      }
+      const data = await Api.getSystemConfigVersions(historyConfig.id);
+      setVersions(normalizeVersions(data));
       toast.success('Rollback completed');
-      // Refresh both the configs list and the versions list
-      await Promise.allSettled([
-        fetchConfigs(),
-        (async () => {
-          const data = await Api.getSystemConfigVersions(historyConfig.id);
-          setVersions((data as any)?.versions || []);
-        })(),
-      ]);
-    } catch (e) {
-      console.error('Rollback failed:', e);
-      toast.error('Failed to rollback configuration');
+    } catch (error) {
+      const message = normalizeApiErrorMessage(error, 'Failed to rollback configuration');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const fetchConfigs = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await Api.getSystemConfigs(selectedEnvironment);
-      setConfigs(Array.isArray(data) ? data : []);
+      const configsData = normalizeConfigs(data);
+      setConfigs(configsData);
+      return configsData;
     } catch (error) {
-      console.error('[Config] Failed to fetch from API:', error);
-      toast.error('Failed to load system configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to load system configuration');
+      setLoadError(message);
+      toast.error(message);
       setConfigs([]);
+      setUnsavedChanges({});
+      return null;
     } finally {
       setLoading(false);
     }
@@ -143,39 +262,72 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   }, [fetchConfigs, selectedEnvironment]);
 
   const handleSaveConfig = async (config: ConfigItem, newValue: string) => {
+    setActionError(null);
     try {
       await Api.updateSystemConfig(config.id, { value: newValue });
-      toast.success(`Configuration "${config.key}" updated`);
+      const refreshed = await fetchConfigs();
+      if (!refreshed?.some((item) => item.id === config.id && item.value === newValue)) {
+        throw new Error('Configuration update was not confirmed by the server');
+      }
       setUnsavedChanges((prev) => {
         const next = { ...prev };
         delete next[config.id];
         return next;
       });
-      fetchConfigs();
       setEditingConfig(null);
+      toast.success(`Configuration "${config.key}" updated`);
     } catch (error) {
-      toast.error('Failed to update configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to update configuration');
+      setActionError(message);
+      toast.error(message);
+      throw new Error(message);
     }
   };
 
   const handleDeleteConfig = async (id: string) => {
     if (!confirm('Are you sure you want to delete this configuration?')) return;
+    setActionError(null);
     try {
       await Api.deleteSystemConfig(id);
+      const refreshed = await fetchConfigs();
+      if (!refreshed || refreshed.some((config) => config.id === id)) {
+        throw new Error('Configuration deletion was not confirmed by the server');
+      }
       toast.success('Configuration deleted');
-      fetchConfigs();
     } catch (error) {
-      toast.error('Failed to delete configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to delete configuration');
+      setActionError(message);
+      toast.error(message);
     }
+  };
+
+  const handleAddConfigSaved = async (expected: ConfigCreatePayload, createdId: string) => {
+    setActionError(null);
+    if (!createdId) {
+      const message = 'Configuration creation response was incomplete';
+      setActionError(message);
+      throw new Error(message);
+    }
+    const refreshed = await fetchConfigs();
+    if (!refreshed?.some((config) => configMatchesCreate(config, expected, createdId))) {
+      const message = 'Configuration creation was not confirmed by the server';
+      setActionError(message);
+      throw new Error(message);
+    }
+    setShowAddModal(false);
   };
 
   const handleViewHistory = async (config: ConfigItem) => {
     setHistoryConfig(config);
     setShowHistoryModal(true);
+    setHistoryLoadError(null);
     try {
       const data = await Api.getSystemConfigVersions(config.id);
-      setVersions((data as any)?.versions || []);
+      setVersions(normalizeVersions(data));
     } catch (error) {
+      setHistoryLoadError(
+        error instanceof Error ? error.message : 'Failed to load configuration version history'
+      );
       setVersions([]);
     }
   };
@@ -253,6 +405,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportConfig}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
@@ -260,6 +413,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowAddModal(true)}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -274,10 +428,11 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           <button
             key={env}
             onClick={() => setSelectedEnvironment(env)}
+            disabled={loading}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               selectedEnvironment === env
                 ? env === 'production'
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                   : env === 'staging'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -301,6 +456,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             placeholder="Search configurations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={!!loadError}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
@@ -309,6 +465,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
+              disabled={!!loadError}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
                   ? 'bg-primary-600 text-white'
@@ -322,36 +479,55 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       </div>
 
       {/* Config Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {configs.length}
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+        >
+          {actionError}
+        </div>
+      )}
+
+      {loadError ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState title="Configuration overview unavailable" description={loadError} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {configs.length}
+            </div>
+          </div>
+          <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
+            <div className="text-2xl font-bold text-amber-400">
+              {configs.filter((c) => c.is_sensitive).length}
+            </div>
+          </div>
+          <div className="p-4 bg-primary-600/10 rounded-xl border border-primary-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Categories</div>
+            <div className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+              {new Set(configs.map((c) => c.category)).size}
+            </div>
+          </div>
+          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
+            <div className="text-2xl font-bold text-primary-400">
+              {Object.keys(unsavedChanges).length}
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
-          <div className="text-2xl font-bold text-amber-400">
-            {configs.filter((c) => c.is_sensitive).length}
-          </div>
-        </div>
-        <div className="p-4 bg-primary-600/10 rounded-xl border border-primary-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Categories</div>
-          <div className="text-2xl font-bold text-primary-700 dark:text-primary-300">
-            {new Set(configs.map((c) => c.category)).size}
-          </div>
-        </div>
-        <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
-          <div className="text-2xl font-bold text-purple-400">
-            {Object.keys(unsavedChanges).length}
-          </div>
-        </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        </div>
+      ) : loadError ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState title="System configuration unavailable" description={loadError} />
         </div>
       ) : (
         <div className="space-y-4">
@@ -421,10 +597,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {showAddModal && (
         <ConfigAddModal
           onClose={() => setShowAddModal(false)}
-          onSave={() => {
-            fetchConfigs();
-            setShowAddModal(false);
-          }}
+          onSave={handleAddConfigSaved}
           categories={CATEGORIES.filter((c) => c.id !== 'all')}
         />
       )}
@@ -434,10 +607,13 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <ConfigHistoryModal
           config={historyConfig}
           versions={versions}
+          loadError={historyLoadError}
           onRollback={handleRollback}
           onClose={() => {
             setShowHistoryModal(false);
             setHistoryConfig(null);
+            setHistoryLoadError(null);
+            setVersions([]);
           }}
         />
       )}
@@ -478,7 +654,7 @@ const ConfigRow: React.FC<{
               config.type === 'boolean'
                 ? config.value === 'true'
                   ? 'text-emerald-400'
-                  : 'text-red-400'
+                  : 'text-rose-400'
                 : 'text-slate-700 dark:text-slate-300'
             } font-mono truncate max-w-md`}
           >
@@ -517,11 +693,11 @@ const ConfigRow: React.FC<{
         </button>
         <button
           onClick={onDelete}
-          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+          className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
           title="Delete"
           disabled={config.is_locked}
         >
-          <Trash2 className="w-4 h-4 text-red-400" />
+          <Trash2 className="w-4 h-4 text-rose-400" />
         </button>
       </div>
     </div>
@@ -532,16 +708,23 @@ const ConfigRow: React.FC<{
 const ConfigEditModal: React.FC<{
   config: ConfigItem;
   onClose: () => void;
-  onSave: (value: string) => void;
+  onSave: (value: string) => Promise<void>;
 }> = ({ config, onClose, onSave }) => {
   const [value, setValue] = useState(config.value);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await onSave(value);
-    setSaving(false);
+    setSaveError(null);
+    try {
+      await onSave(value);
+    } catch (error) {
+      setSaveError(normalizeApiErrorMessage(error, 'Failed to update configuration'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -558,11 +741,20 @@ const ConfigEditModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {saveError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
+            >
+              {saveError}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Key
             </label>
-            <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-400 rounded-lg font-mono">
+            <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-blue-400 rounded-lg font-mono">
               {config.key}
             </code>
           </div>
@@ -597,6 +789,7 @@ const ConfigEditModal: React.FC<{
                       : 'text'
                 }
                 value={value}
+                aria-label="Configuration Value"
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               />
@@ -635,7 +828,7 @@ const ConfigEditModal: React.FC<{
 // Add Modal
 const ConfigAddModal: React.FC<{
   onClose: () => void;
-  onSave: () => void;
+  onSave: (expected: ConfigCreatePayload, createdId: string) => Promise<void>;
   categories: { id: string; label: string }[];
 }> = ({ onClose, onSave, categories }) => {
   const [formData, setFormData] = useState({
@@ -647,22 +840,26 @@ const ConfigAddModal: React.FC<{
     is_sensitive: false,
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
     try {
-      await Api.createSystemConfig({
+      const result = await Api.createSystemConfig({
         key: formData.key,
         value: formData.value,
         description: formData.description || undefined,
         category: formData.category || undefined,
         is_sensitive: !!formData.is_sensitive,
       });
+      await onSave(formData, getCreatedConfigId(result));
       toast.success('Configuration created');
-      onSave();
     } catch (error) {
-      toast.error('Failed to create configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to create configuration');
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -682,6 +879,15 @@ const ConfigAddModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {saveError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
+            >
+              {saveError}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Key *
@@ -752,6 +958,7 @@ const ConfigAddModal: React.FC<{
                 type={formData.type === 'number' ? 'number' : 'text'}
                 required
                 value={formData.value}
+                aria-label="Configuration Value"
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               />
@@ -810,9 +1017,10 @@ const ConfigAddModal: React.FC<{
 const ConfigHistoryModal: React.FC<{
   config: ConfigItem;
   versions: ConfigVersion[];
+  loadError?: string | null;
   onRollback: (version: ConfigVersion) => void;
   onClose: () => void;
-}> = ({ config, versions, onRollback, onClose }) => (
+}> = ({ config, versions, loadError, onRollback, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
@@ -828,7 +1036,9 @@ const ConfigHistoryModal: React.FC<{
         </button>
       </div>
 
-      {versions.length === 0 ? (
+      {loadError ? (
+        <DegradedState title="Version history unavailable" description={loadError} />
+      ) : versions.length === 0 ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">
           <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No version history available</p>
@@ -856,13 +1066,13 @@ const ConfigHistoryModal: React.FC<{
                   </span>
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {new Date(version.changed_at).toLocaleString()}
+                  {formatDateTime(version.changed_at)}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 text-xs">Previous:</span>
-                  <code className="block mt-1 text-red-400 bg-red-500/10 px-2 py-1 rounded">
+                  <code className="block mt-1 text-rose-400 bg-rose-500/10 px-2 py-1 rounded">
                     {version.old_value}
                   </code>
                 </div>

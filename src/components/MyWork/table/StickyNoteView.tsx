@@ -82,7 +82,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
         onDragEnd={handleDragEnd}
         onDragOver={(e) => handleDragOver(e, idx)}
         onDrop={() => handleDrop(idx)}
-        className={`group relative w-full text-left rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border border-white/40 dark:border-white/[0.06] ${dragId === node.id ? 'opacity-40 scale-95' : ''} ${dragOverIdx === idx && dragId !== node.id ? 'ring-2 ring-violet-500/40' : ''}`}
+        className={`group relative w-full text-left rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border border-white/40 dark:border-white/[0.06] ${dragId === node.id ? 'opacity-40 scale-95' : ''} ${dragOverIdx === idx && dragId !== node.id ? 'ring-2 ring-primary-500/40' : ''}`}
         style={{ backgroundColor: `${color}15`, borderLeftColor: color, borderLeftWidth: 4 }}
       >
         {/* Icon/emoji */}
@@ -165,7 +165,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
               <Paperclip size={8} /> {attachCount}
             </span>
           )}
-          {node.data?.aiInsights && <Sparkles size={8} className="text-violet-400" />}
+          {node.data?.aiInsights && <Sparkles size={8} className="text-primary-400" />}
         </div>
       </button>
     );

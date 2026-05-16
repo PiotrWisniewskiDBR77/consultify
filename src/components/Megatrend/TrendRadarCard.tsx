@@ -36,8 +36,8 @@ const ringOrder: Record<RadarMegatrend['ring'], number> = {
 // Colours and emojis per type
 const typeColors: Record<RadarMegatrend['type'], { bg: string; border: string; emoji: string }> = {
   Technology: { bg: 'bg-blue-500', border: 'border-blue-700', emoji: '🔵' },
-  Business: { bg: 'bg-purple-500', border: 'border-purple-700', emoji: '🟣' },
-  Societal: { bg: 'bg-orange-500', border: 'border-orange-700', emoji: '🟠' },
+  Business: { bg: 'bg-primary-500', border: 'border-primary-700', emoji: '🟣' },
+  Societal: { bg: 'bg-amber-500', border: 'border-amber-700', emoji: '🟠' },
 };
 
 interface TrendRadarCardProps {
@@ -137,7 +137,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
           <span>Loading radar data…</span>
         </div>
       )}
-      {error && <p className="text-red-600 dark:text-red-400">Error: {error}</p>}
+      {error && <p className="text-rose-600 dark:text-rose-400">Error: {error}</p>}
 
       <div className="relative mx-auto" style={{ width: size, height: size }}>
         {/* Base radar grid – dummy max values just to draw the web */}

@@ -14,6 +14,9 @@ const LANE_TO_KIND: Record<KimiLane, UnifiedOutputRow['kind']> = {
   wordy: 'document',
   excele: 'sheet',
   prezentacje: 'presentation',
+  // Tabele uses the existing 'sheet' artifact kind. Sprint 5 may introduce
+  // a dedicated 'table' kind — keeping 'sheet' is additive-safe today.
+  tabele: 'sheet',
 };
 
 export function useModuleRecentArtifacts(lane: KimiLane, limit = 6) {

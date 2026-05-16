@@ -200,7 +200,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </p>
           <button
             onClick={() => setIsCreateOrgModalOpen(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             Create Organization
           </button>
@@ -212,7 +212,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                  <Building2 size={20} className="text-purple-500" />
+                  <Building2 size={20} className="text-primary-500" />
                   Create Organization
                 </h3>
                 <button
@@ -232,7 +232,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     value={newOrgName}
                     onChange={(e) => setNewOrgName(e.target.value)}
                     placeholder="e.g., Acme Corporation"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-navy-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-navy-900 dark:text-white"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
                     autoFocus
                   />
@@ -247,7 +247,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   <button
                     onClick={handleCreateOrganization}
                     disabled={creatingOrg || !newOrgName.trim()}
-                    className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {creatingOrg && <Loader2 size={16} className="animate-spin" />}
                     {creatingOrg ? 'Creating...' : 'Create Organization'}
@@ -268,7 +268,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Building2 className="text-purple-500" />
+            <Building2 className="text-primary-500" />
             Organization Settings
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -373,7 +373,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         <div
                           className={`h-2.5 rounded-full transition-all ${
                             remaining < lowThreshold
-                              ? 'bg-red-500'
+                              ? 'bg-rose-500'
                               : remaining < medThreshold
                                 ? 'bg-amber-500'
                                 : 'bg-green-500'
@@ -382,7 +382,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         />
                       </div>
                       {remaining < lowThreshold && (
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-2 text-center">
+                        <p className="text-xs text-rose-600 dark:text-rose-400 mt-2 text-center">
                           ⚠️ Low balance! Upgrade to continue using AI features.
                         </p>
                       )}
@@ -441,7 +441,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                           entry.type === 'CREDIT'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
                         }`}
                       >
                         {entry.type}
@@ -531,7 +531,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           <button
             onClick={handleSaveFinanceSettings}
             disabled={savingFinance}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {savingFinance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {savingFinance ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -548,7 +548,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </h3>
           <button
             onClick={() => setIsAddMemberOpen(!isAddMemberOpen)}
-            className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Member
@@ -622,7 +622,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${
                     member.role === 'OWNER'
-                      ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-500/30'
+                      ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-500/30'
                       : member.role === 'ADMIN'
                         ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500/30'
                         : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-navy-800 dark:text-slate-300 dark:border-slate-700'

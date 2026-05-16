@@ -239,7 +239,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
             </span>
           </div>
           <div
-            className={`text-2xl font-bold ${metrics.roi5Year > 0 ? 'text-green-600' : 'text-red-600'}`}
+            className={`text-2xl font-bold ${metrics.roi5Year > 0 ? 'text-green-600' : 'text-rose-600'}`}
           >
             {metrics.roi5Year > 0 ? '+' : ''}
             {metrics.roi5Year}%
@@ -304,7 +304,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
               type="monotone"
               dataKey="investment"
               name={isPolish ? 'Inwestycja (kumulatywna)' : 'Investment (cumulative)'}
-              stroke="#ef4444"
+              stroke="#f43f5e"
               fill="#fee2e2"
               strokeWidth={2}
             />

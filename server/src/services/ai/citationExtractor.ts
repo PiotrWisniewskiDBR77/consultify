@@ -37,8 +37,30 @@ export interface CitationExtractionResult {
 }
 
 const NUMERIC_RE = /\[(\d{1,3})\]/g;
+const ATTACHMENT_RE = /\[A(\d{1,3})\]/gi;
 const NAMED_RE = /\[(Source|Ref|Reference|Doc):\s*([^\]]+)\]/gi;
 const URL_RE = /https?:\/\/[^\s\])]+/g;
+
+function resolveCitationTitle(meta: Record<string, unknown>, num: number, source?: any): string {
+  const candidates = [
+    meta.title,
+    meta.documentTitle,
+    meta.fileName,
+    meta.filename,
+    meta.sourceName,
+    source?.source,
+    source?.filename,
+  ];
+  for (const value of candidates) {
+    if (typeof value !== 'string') continue;
+    const title = value.trim();
+    if (title && !/^source\s+\d+$/i.test(title) && !/^rag_\d+$/i.test(title)) return title;
+  }
+  const sourceType = typeof meta.sourceType === 'string' ? meta.sourceType : '';
+  if (sourceType === 'external' || typeof meta.url === 'string') return `External source ${num}`;
+  if (sourceType === 'document' || sourceType === 'attachment') return `Attached document ${num}`;
+  return `Knowledge base source ${num}`;
+}
 
 class CitationExtractorService {
   extract(
@@ -49,6 +71,28 @@ class CitationExtractorService {
     const citations: Citation[] = [];
     let idx = 0;
 
+    for (const m of responseText.matchAll(ATTACHMENT_RE)) {
+      const num = parseInt(m[1], 10);
+      const src = ragChunks.length >= num ? ragChunks[num - 1] : null;
+      const meta = src?.metadata || {};
+      citations.push({
+        id: `cit_${++idx}`,
+        index: num,
+        text: m[0],
+        sourceType: 'document',
+        sourceId:
+          (meta.documentId as string) ||
+          (meta.sourceId as string) ||
+          ((src as any)?.documentId as string) ||
+          undefined,
+        sourceTitle: resolveCitationTitle(meta, num, src),
+        sourceUrl: meta.url as string | undefined,
+        confidence: src ? 0.9 : 0.35,
+        startOffset: m.index,
+        endOffset: m.index != null ? m.index + m[0].length : undefined,
+      });
+    }
+
     for (const m of responseText.matchAll(NUMERIC_RE)) {
       const num = parseInt(m[1], 10);
       const src = ragChunks.length >= num ? ragChunks[num - 1] : null;
@@ -58,8 +102,8 @@ class CitationExtractorService {
         index: num,
         text: m[0],
         sourceType: (meta.sourceType as any) || 'document',
-        sourceId: (meta.documentId as string) || `rag_${num}`,
-        sourceTitle: (meta.title as string) || `Source ${num}`,
+        sourceId: (meta.documentId as string) || (meta.sourceId as string) || undefined,
+        sourceTitle: resolveCitationTitle(meta, num, src),
         sourceUrl: meta.url as string | undefined,
         confidence: src ? 0.85 : 0.3,
         startOffset: m.index,

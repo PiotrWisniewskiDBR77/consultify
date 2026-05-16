@@ -569,16 +569,11 @@ router.patch(
         }
       }
 
-      // Build update query (bump version on every write)
+      // Build update query. Keep it schema-tolerant: older staging schemas do not
+      // have the optimistic `version` column yet, and failing the whole update
+      // makes rename/folder moves look successful in the UI but disappear later.
       const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
       const params: (string | boolean | null)[] = [];
-
-      // Bump version for conflict detection
-      try {
-        setClauses.push('version = COALESCE(version, 1) + 1');
-      } catch {
-        // version column may not exist yet
-      }
 
       if (updates.title !== undefined) {
         setClauses.push('title = ?');
@@ -618,7 +613,14 @@ router.patch(
 
       params.push(id);
 
-      await dbRun(`UPDATE conversations SET ${setClauses.join(', ')} WHERE id = ?`, params);
+      const updateResult = await dbRun(
+        `UPDATE conversations SET ${setClauses.join(', ')} WHERE id = ?`,
+        params,
+        { fallback: false }
+      );
+      if (updateResult.success === false) {
+        return res.status(500).json({ error: updateResult.error || 'Conversation update failed' });
+      }
 
       const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [id]);
 
@@ -779,24 +781,12 @@ router.post(
       const now = new Date().toISOString();
       const authorUserId = role === 'user' ? req.userId! : null;
 
-      // Resolve active session for this conversation (§2.3.1 session linkage)
-      let activeSessionId: string | null = null;
-      try {
-        const session = await dbGet(
-          `SELECT id FROM conversation_sessions WHERE conversation_id = ? AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
-          [conversationId]
-        );
-        activeSessionId = (session as any)?.id || null;
-      } catch {
-        /* session table may not exist */
-      }
-
-      await dbRun(
+      const insertResult = await dbRun(
         `
                 INSERT INTO conversation_messages (
                     id, conversation_id, role, content, message_type, 
-                    metadata, token_count, model_used, author_user_id, session_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    metadata, token_count, model_used, author_user_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           messageId,
@@ -808,10 +798,13 @@ router.post(
           tokenCount || null,
           modelUsed || null,
           authorUserId,
-          activeSessionId,
           now,
-        ]
+        ],
+        { fallback: false }
       );
+      if (insertResult.success === false) {
+        return res.status(500).json({ error: insertResult.error || 'Message insert failed' });
+      }
 
       // Auto-persist metadata.attachments to conversation_message_attachments (L4 bridge)
       if (metadata && Array.isArray((metadata as any).attachments)) {

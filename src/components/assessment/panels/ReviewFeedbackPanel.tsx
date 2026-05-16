@@ -175,8 +175,8 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
       id: 'REJECT',
       label: 'Odrzuć',
       icon: <XCircle size={20} />,
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-500/30',
+      color: 'text-rose-600 dark:text-rose-400',
+      bgColor: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-500/30',
     },
   ];
 
@@ -267,7 +267,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                 {/* Recommendation */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Twoja rekomendacja <span className="text-red-500">*</span>
+                    Twoja rekomendacja <span className="text-rose-500">*</span>
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     {recommendations.map((rec) => (
@@ -310,14 +310,14 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Komentarze i feedback
-                    {recommendation === 'REJECT' && <span className="text-red-500"> *</span>}
+                    {recommendation === 'REJECT' && <span className="text-rose-500"> *</span>}
                   </label>
                   <textarea
                     value={comments}
                     onChange={(e) => setComments(e.target.value)}
                     placeholder="Twoje uwagi do całego assessmentu..."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
 
@@ -346,7 +346,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                             onChange={(e) => handleAxisCommentChange(axisId, e.target.value)}
                             placeholder={`Komentarz do ${label}...`}
                             rows={2}
-                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
                           />
                         </div>
                       ))}
@@ -356,7 +356,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
 
                 {/* Error */}
                 {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
+                  <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
                     <AlertTriangle size={16} />
                     {error}
                   </div>
@@ -382,7 +382,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                         flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                         ${
                                           recommendation && !submitting
-                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                            ? 'bg-primary-600 hover:bg-primary-500 text-white'
                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                         }
                                     `}

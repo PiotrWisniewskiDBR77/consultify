@@ -69,25 +69,49 @@ interface AppProvidersProps {
   children: React.ReactNode;
 }
 
-const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <V8Provider>
-    <OrgProvider>
-      <AccessPolicyProvider>
-        <TrialProvider>
-          <AIProvider>
-            <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
-          </AIProvider>
-        </TrialProvider>
-      </AccessPolicyProvider>
-    </OrgProvider>
-  </V8Provider>
+const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = React.memo(
+  ({ children }) => (
+    <V8Provider>
+      <OrgProvider>
+        <AccessPolicyProvider>
+          <TrialProvider>
+            <AIProvider>
+              <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
+            </AIProvider>
+          </TrialProvider>
+        </AccessPolicyProvider>
+      </OrgProvider>
+    </V8Provider>
+  )
 );
 
-export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
-  // Log initialization for debugging
-  React.useEffect(() => {
-    console.log('[AppProviders] Initializing providers...');
-  }, []);
+const shouldEnableHeavyProviders = (hasCurrentUser: boolean): boolean => {
+  if (hasCurrentUser) return true;
+  if (typeof window === 'undefined') return false;
+  try {
+    return Boolean(localStorage.getItem('token') || localStorage.getItem('refreshToken'));
+  } catch {
+    return false;
+  }
+};
+
+const shouldEnableProvidersForRoute = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname || '/';
+
+  if (path === '/') return false;
+  if (path.startsWith('/invite/')) return false;
+  if (path.startsWith('/report/')) return false;
+  if (path.startsWith('/shared/report/')) return false;
+
+  return true;
+};
+
+export const AppProviders: React.FC<AppProvidersProps> = React.memo(({ children }) => {
+  const hasCurrentUser = useAppStore((s) => Boolean(s.currentUser?.id));
+  const isAuthInitializing = useAppStore((s) => s.isAuthInitializing);
+  const enableHeavyProviders =
+    shouldEnableHeavyProviders(hasCurrentUser) || shouldEnableProvidersForRoute();
 
   return (
     <ErrorBoundary>
@@ -98,7 +122,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
             <AutoSaveProvider>
               <TourProvider>
                 <HelpProvider>
-                  <AuthenticatedProviders>{children}</AuthenticatedProviders>
+                  {enableHeavyProviders || isAuthInitializing ? (
+                    <AuthenticatedProviders>{children}</AuthenticatedProviders>
+                  ) : (
+                    children
+                  )}
                   <Toaster position="bottom-right" />
                 </HelpProvider>
               </TourProvider>
@@ -108,4 +136,4 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       </QueryClientProvider>
     </ErrorBoundary>
   );
-};
+});

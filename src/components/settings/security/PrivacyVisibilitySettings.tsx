@@ -150,8 +150,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
     }[] = [
       { value: 'public', label: 'Public', icon: Globe, color: 'text-green-600' },
       { value: 'organization', label: 'Organization', icon: Building2, color: 'text-blue-600' },
-      { value: 'team', label: 'Team Only', icon: Users, color: 'text-purple-600' },
-      { value: 'private', label: 'Private', icon: Lock, color: 'text-red-600' },
+      { value: 'team', label: 'Team Only', icon: Users, color: 'text-primary-600' },
+      { value: 'private', label: 'Private', icon: Lock, color: 'text-rose-600' },
     ];
 
     return (
@@ -176,7 +176,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 onClick={() => onChange(option.value)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   value === option.value
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
@@ -213,7 +213,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         <button
           onClick={() => onChange(!value)}
           className={`relative w-12 h-6 rounded-full transition-colors ${
-            value ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+            value ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span
@@ -229,7 +229,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -242,7 +242,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Eye size={28} className="text-purple-500" />
+            <Eye size={28} className="text-primary-500" />
             {t('settings.privacy.visibility.title', 'Privacy & Visibility')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -252,7 +252,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? 'Saving...' : 'Save Changes'}

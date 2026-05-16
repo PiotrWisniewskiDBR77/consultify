@@ -276,7 +276,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             )}
             <div>
               <h1 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                <FileBarChart2 size={28} className="text-violet-500" />
+                <FileBarChart2 size={28} className="text-primary-500" />
                 Management Reports
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -301,7 +301,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   onClick={() => setViewMode(tab.id as ViewModeExtended)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
+                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                       : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -313,7 +313,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             {viewMode !== 'selector' && (
               <button
                 onClick={() => setViewMode('selector')}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
               >
                 <Plus size={18} />
                 <span>New Report</span>
@@ -329,7 +329,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
           <div className="max-w-3xl mx-auto">
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
               <div className="flex items-center gap-2 mb-6">
-                <Sparkles size={20} className="text-violet-500" />
+                <Sparkles size={20} className="text-primary-500" />
                 <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
                   Generate New Report
                 </h2>
@@ -380,8 +380,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                         onClick={() => setOutputFormat(format)}
                         className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                           outputFormat === format
-                            ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                            : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-300'
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                            : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-300'
                         }`}
                       >
                         {format}
@@ -402,8 +402,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       onClick={() => setScheduleMode('ONE_TIME')}
                       className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         scheduleMode === 'ONE_TIME'
-                          ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-300'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-300'
                       }`}
                     >
                       One-time
@@ -412,8 +412,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       onClick={() => setScheduleMode('RECURRING')}
                       className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         scheduleMode === 'RECURRING'
-                          ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-300'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-300'
                       }`}
                     >
                       Recurring
@@ -517,7 +517,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 <button
                   onClick={handleGenerateReport}
                   disabled={generating || (scope === 'PROJECT' && !selectedProjectId)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-violet-500 hover:bg-violet-600 disabled:bg-violet-300 text-white rounded-xl font-semibold text-lg transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-xl font-semibold text-lg transition-colors"
                 >
                   {generating ? (
                     <>

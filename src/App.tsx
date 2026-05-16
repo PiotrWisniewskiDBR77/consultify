@@ -1,5 +1,3 @@
-import './services/tokenService'; // Initialize token service
-
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,13 +7,14 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { initializeTokenServiceOnce } from '@/services/tokenService';
+import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
 import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
 import { ChatV9FlagsResetHandler } from './components/Admin/ChatV9FlagsResetHandler';
 import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
 import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
-import { BackToChatShortcut } from './components/navigation/BackToChatShortcut';
 import { RouterSync } from './components/RouterSync';
 import { EnvironmentBadge } from './components/layout/EnvironmentBadge';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
@@ -29,6 +28,49 @@ import { User } from './types';
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
+// Sprint 13 — read-only Subscriber Dashboard (Bearer-token auth, no JWT).
+// Lives next to the other public, lazy-loaded routes so the main app's
+// auth-bootstrapping path does not gate the page on a logged-in
+// Consultify user — external HMAC alert subscribers do not have one.
+const SubscriberDashboardPage = React.lazy(
+  () => import('./views/subscriber/SubscriberDashboardPage')
+);
+
+type AuthBootState = {
+  inflightMeRequest: Promise<User | null> | null;
+  lastAttemptAt: number;
+  lastFailureAt: number;
+};
+
+const AUTH_BOOT_STATE_KEY = '__consultifyAuthBootState__';
+const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
+
+const getAuthBootState = (): AuthBootState => {
+  if (typeof window === 'undefined') {
+    return { inflightMeRequest: null, lastAttemptAt: 0, lastFailureAt: 0 };
+  }
+  const scopedWindow = window as typeof window & { [AUTH_BOOT_STATE_KEY]?: AuthBootState };
+  if (!scopedWindow[AUTH_BOOT_STATE_KEY]) {
+    scopedWindow[AUTH_BOOT_STATE_KEY] = {
+      inflightMeRequest: null,
+      lastAttemptAt: 0,
+      lastFailureAt: 0,
+    };
+  }
+  return scopedWindow[AUTH_BOOT_STATE_KEY] as AuthBootState;
+};
+
+const isAuthLoopGuardOpen = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = sessionStorage.getItem(AUTH_LOOP_GUARD_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Number(parsed?.blockedUntil || 0) > Date.now();
+  } catch {
+    return false;
+  }
+};
 
 const InviteRouteWrapper = () => {
   const { token } = useParams<{ token: string }>();
@@ -73,6 +115,7 @@ function AppContent() {
   } = useAppStore();
 
   const { i18n } = useTranslation();
+  const skipRouterSync = isRuntimeDiagnosticMode('no-router-sync');
 
   // Handle Dark/Light Theme class - use useLayoutEffect to prevent flicker
   // This runs synchronously before browser paint, preventing visual flicker
@@ -114,11 +157,31 @@ function AppContent() {
     }
   }, []);
 
+  useEffect(() => {
+    if (skipRouterSync) {
+      logRuntimeDiagnosticMarker('router_sync_skipped');
+    }
+  }, [skipRouterSync]);
+
+  useEffect(() => {
+    if (isRuntimeDiagnosticMode('no-auth')) {
+      logRuntimeDiagnosticMarker('auth_boot_skipped');
+      return;
+    }
+    if (isAuthLoopGuardOpen()) return;
+    const hasAnyAuthToken = Boolean(
+      localStorage.getItem('token') || localStorage.getItem('refreshToken')
+    );
+    if (hasAnyAuthToken) {
+      initializeTokenServiceOnce();
+    }
+  }, []);
+
   // Listen for token expiry
   useEffect(() => {
     const handleTokenExpired = () => {
       console.log('[Auth] Token expired event received');
-      logout();
+      logout({ reload: false });
       // Optional: Redirect handled by state change in AppRoutes
     };
 
@@ -131,6 +194,18 @@ function AppContent() {
     let isMounted = true;
 
     const verifyAuth = async () => {
+      if (isRuntimeDiagnosticMode('no-auth')) {
+        logRuntimeDiagnosticMarker('auth_verification_skipped');
+        if (isMounted) {
+          setCurrentUser(null);
+          setAuthInitializing(false);
+        }
+        return;
+      }
+      if (isAuthLoopGuardOpen()) {
+        if (isMounted) setAuthInitializing(false);
+        return;
+      }
       const token = localStorage.getItem('token');
       if (!token) {
         if (currentUser && isMounted) setCurrentUser(null);
@@ -156,9 +231,30 @@ function AppContent() {
         }
       }
 
-      // 2. Background sync (only update if different from restored user)
+      // 2. Background sync (only update if different from restored user).
+      // Singleflight + cooldown to avoid auth storms across remounts/retries.
       try {
-        const user = await Api.getMe();
+        const authBoot = getAuthBootState();
+        const now = Date.now();
+        if (authBoot.lastFailureAt && now - authBoot.lastFailureAt < 10000 && restoredUser) {
+          if (isMounted) setAuthInitializing(false);
+          return;
+        }
+
+        if (!authBoot.inflightMeRequest) {
+          authBoot.lastAttemptAt = now;
+          authBoot.inflightMeRequest = Api.getMe()
+            .then((u) => u)
+            .catch((error) => {
+              authBoot.lastFailureAt = Date.now();
+              throw error;
+            })
+            .finally(() => {
+              authBoot.inflightMeRequest = null;
+            });
+        }
+
+        const user = await authBoot.inflightMeRequest;
         if (!isMounted) return; // Component unmounted, don't update state
 
         if (user) {
@@ -193,7 +289,7 @@ function AppContent() {
         // If token is invalid/expired, treat as logged out (don't keep stale restored user).
         const statusCode = (error as any)?.status;
         if (statusCode === 401 || statusCode === 403) {
-          logout();
+          logout({ reload: false });
           if (isMounted) setCurrentUser(null);
         } else {
           // If API fails but we have stored user, keep it
@@ -223,7 +319,7 @@ function AppContent() {
     <>
       <ImpersonationBanner />
       {/* Single source of truth for URL ↔ State sync */}
-      <RouterSync />
+      {skipRouterSync ? null : <RouterSync />}
       {/* Chat V9 / ADMIN AG1 — URL-triggered flag dashboard. Mounted
           globally so `?v9flags=1` opens it on any route without a new
           route definition. Returns null when inactive (zero cost). */}
@@ -243,12 +339,6 @@ function AppContent() {
           the overlay listens to. Returns null for non-admins and for
           sessions with zero overrides — no chrome by default. */}
       <ChatV9FlagsIndicator />
-      {/* Chat V9 / NAV NAV-M1.1 — headless Alt+Shift+C shortcut that
-          triggers the same `returnToFullChat()` action. Shares the
-          same view / conversation gates as the button, plus a
-          focus-in-editable-element guard so it never hijacks typing.
-          Kill-switch: flag OFF detaches the listener entirely. */}
-      <BackToChatShortcut />
       {/* Chat V9 / VOICE VM3.1 — global Alt+Shift+V opens the voice-
           modes legend popover from anywhere. Headless; dispatches a
           `chat-v9-voice-legend:open` CustomEvent that the mounted
@@ -294,6 +384,20 @@ function AppContent() {
               }
             >
               <PublicReportBuilderView />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/subscriber/dashboard"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <SubscriberDashboardPage />
             </React.Suspense>
           }
         />

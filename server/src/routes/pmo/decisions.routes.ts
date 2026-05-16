@@ -11,6 +11,7 @@ import DecisionControllerRaw from '../../controllers/DecisionController.js';
 const DecisionController = DecisionControllerRaw as any;
 import DecisionPlaybookControllerRaw from '../../controllers/DecisionPlaybookController.js';
 const DecisionPlaybookController = DecisionPlaybookControllerRaw as any;
+import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -34,14 +35,20 @@ router.use(verifyToken);
 // ==========================================
 
 router.get('/playbooks', DecisionPlaybookController.listPlaybooks);
-router.post('/playbooks', validateBody(PlaybookSchema), DecisionPlaybookController.createPlaybook);
+router.post(
+  '/playbooks',
+  verifyAdmin,
+  validateBody(PlaybookSchema),
+  DecisionPlaybookController.createPlaybook
+);
 router.get('/playbooks/:playbookId', DecisionPlaybookController.getPlaybook);
 router.put(
   '/playbooks/:playbookId',
+  verifyAdmin,
   validateBody(PlaybookSchema),
   DecisionPlaybookController.updatePlaybook
 );
-router.delete('/playbooks/:playbookId', DecisionPlaybookController.deletePlaybook);
+router.delete('/playbooks/:playbookId', verifyAdmin, DecisionPlaybookController.deletePlaybook);
 
 // ==========================================
 // DECISION CRUD
@@ -97,10 +104,11 @@ router.put('/:id/decide', validateBody(DecideSchema), DecisionController.decide)
 
 /**
  * POST /api/decisions/:id/escalate
- * Escalate decision
+ * Escalate decision — requires ADMIN or OWNER (or SUPERADMIN)
  */
 router.post(
   '/:id/escalate',
+  verifyAdmin,
   validateBody(EscalateDecisionSchema),
   DecisionController.escalateDecision
 );
@@ -121,7 +129,8 @@ router.get('/:id/created-tasks', DecisionController.getCreatedTasks);
  * PATCH /api/decisions/:id/workflow
  * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
  * Body: { toStatus: 'proposed'|'review'|'approve'|'published' }
+ * Requires ADMIN or OWNER (approve + publish trigger task creation)
  */
-router.patch('/:id/workflow', DecisionController.transitionWorkflow);
+router.patch('/:id/workflow', verifyAdmin, DecisionController.transitionWorkflow);
 
 export default router;

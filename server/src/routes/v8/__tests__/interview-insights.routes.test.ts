@@ -7,6 +7,12 @@ const mockGetInsightById = vi.fn();
 const mockListCandidates = vi.fn();
 const mockTriageCandidate = vi.fn();
 const mockPromoteCandidateToFinding = vi.fn();
+const mockBuildSourcePack = vi.fn();
+const mockUpdateFindingReadback = vi.fn();
+const mockListFindings = vi.fn();
+const mockGetFinding = vi.fn();
+const mockBuildHandoffPayload = vi.fn();
+const mockRecordHandoff = vi.fn();
 const permissionMockState = vi.hoisted(() => ({
   registeredPermissionKeys: [] as string[],
 }));
@@ -38,14 +44,16 @@ vi.mock('../../../services/v8/interviewInsightFindingsService.js', () => ({
   validateLifecycleTransition: vi
     .fn()
     .mockReturnValue({ allowed: true, targetStatus: 'published' }),
-  listFindings: vi.fn().mockResolvedValue([]),
-  getFinding: vi.fn(),
+  listFindings: (...args: unknown[]) => mockListFindings(...args),
+  getFinding: (...args: unknown[]) => mockGetFinding(...args),
   addFinding: vi.fn(),
   updateFinding: vi.fn(),
+  updateFindingReadback: (...args: unknown[]) => mockUpdateFindingReadback(...args),
   addEvidencePointer: vi.fn(),
   removeEvidencePointer: vi.fn(),
-  buildHandoffPayload: vi.fn(),
-  recordHandoff: vi.fn(),
+  buildHandoffPayload: (...args: unknown[]) => mockBuildHandoffPayload(...args),
+  buildSourcePack: (...args: unknown[]) => mockBuildSourcePack(...args),
+  recordHandoff: (...args: unknown[]) => mockRecordHandoff(...args),
 }));
 
 vi.mock('../../../services/v8/interviewInsightCandidateService.js', () => ({
@@ -112,6 +120,10 @@ describe('V8 interview insights candidate routes', () => {
       createdBy: 'user_2',
       status: 'completed',
     });
+    mockListFindings.mockResolvedValue([]);
+    mockGetFinding.mockResolvedValue(null);
+    mockBuildHandoffPayload.mockResolvedValue({ payload: { findingId: 'finding_1' } });
+    mockRecordHandoff.mockResolvedValue(undefined);
   });
 
   it('GET /candidates returns V8 envelope with candidate list', async () => {
@@ -236,5 +248,105 @@ describe('V8 interview insights candidate routes', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('P10_CANDIDATE_ACTION_REQUIRED');
+  });
+
+  it('GET /source-pack returns explicit evidence package', async () => {
+    mockBuildSourcePack.mockResolvedValue({
+      insightId: 'insight_1',
+      sourceSessionIds: ['sess_1'],
+      entries: [
+        {
+          answerId: 'ans_1',
+          questionText: 'What changed?',
+          answerSnippet: 'Ownership is clearer.',
+          linkedThemes: ['Ownership'],
+          linkedIssues: [],
+          linkedOpportunities: [],
+          capturedPointers: [],
+          degradedReason: 'missing_pointer',
+        },
+      ],
+      degraded: true,
+      degradedReasons: ['missing_pointer'],
+      activePointerCount: 0,
+    });
+
+    const res = await request(createApp()).get('/api/v8/interview/insights/insight_1/source-pack');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.sourcePack?.degraded).toBe(true);
+    expect(res.body.data?.sourcePack?.entries?.[0]?.answerId).toBe('ans_1');
+    expect(mockBuildSourcePack).toHaveBeenCalledWith('insight_1');
+  });
+
+  it('PATCH /findings/:id/readback updates readback workflow state', async () => {
+    mockUpdateFindingReadback.mockResolvedValue({
+      finding: {
+        id: 'finding_1',
+        readback_status: 'confirmed_by_client',
+        readback_summary: 'Client confirmed.',
+      },
+    });
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/insight_1/findings/finding_1/readback')
+      .send({
+        readback_status: 'confirmed_by_client',
+        readback_summary: 'Client confirmed.',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.finding?.readback_status).toBe('confirmed_by_client');
+    expect(mockUpdateFindingReadback).toHaveBeenCalledWith(
+      'insight_1',
+      'finding_1',
+      {
+        readback_status: 'confirmed_by_client',
+        readback_summary: 'Client confirmed.',
+      },
+      'user_1'
+    );
+  });
+
+  it('blocks publish when finding has no confirmed readback', async () => {
+    mockListFindings.mockResolvedValue([
+      {
+        id: 'finding_1',
+        confidence_level: 'high',
+        limits: 'Scoped to the interview sample.',
+        next_action: 'Execute bounded initiative.',
+        evidence_pointers: [{ isTombstone: false }],
+        readback_status: 'shared_for_readback',
+      },
+    ]);
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/insight_1/lifecycle')
+      .send({ action: 'publish' });
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('P10_READBACK_REQUIRED');
+    expect(res.body.findingId).toBe('finding_1');
+  });
+
+  it('blocks handoff when finding has no confirmed readback', async () => {
+    mockGetFinding.mockResolvedValue({
+      id: 'finding_1',
+      finding_statement: 'Ownership is unclear.',
+      confidence_level: 'high',
+      limits: 'Scoped to interview sample.',
+      next_action: 'Review with sponsor.',
+      evidence_pointers: [{ isTombstone: false }],
+      readback_status: 'shared_for_readback',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+      .send({});
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('P10_READBACK_REQUIRED');
+    expect(mockBuildHandoffPayload).not.toHaveBeenCalled();
+    expect(mockRecordHandoff).not.toHaveBeenCalled();
   });
 });

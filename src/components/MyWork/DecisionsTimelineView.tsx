@@ -64,8 +64,8 @@ export interface DecisionsTimelineContainerProps {
 /* ─── Priority bar styles (muted, DBR77) ─── */
 
 const PRIORITY_STYLES: Record<string, { bg: string; border: string; dot: string }> = {
-  CRITICAL: { bg: 'bg-red-500/20', border: 'border-red-500/40', dot: 'bg-red-500' },
-  HIGH: { bg: 'bg-orange-500/20', border: 'border-orange-500/40', dot: 'bg-orange-500' },
+  CRITICAL: { bg: 'bg-rose-500/20', border: 'border-rose-500/40', dot: 'bg-rose-500' },
+  HIGH: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', dot: 'bg-amber-500' },
   MEDIUM: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', dot: 'bg-amber-500' },
   LOW: { bg: 'bg-slate-500/20', border: 'border-slate-500/40', dot: 'bg-slate-400' },
 };
@@ -81,11 +81,11 @@ const getStatusBadge = (status?: string) => {
     case 'APPROVED':
       return { label: 'Approved', cls: 'bg-emerald-500/20 text-emerald-400' };
     case 'REJECTED':
-      return { label: 'Rejected', cls: 'bg-red-500/20 text-red-400' };
+      return { label: 'Rejected', cls: 'bg-rose-500/20 text-rose-400' };
     case 'DEFERRED':
       return { label: 'Deferred', cls: 'bg-amber-500/20 text-amber-400' };
     case 'ESCALATED':
-      return { label: 'Escalated', cls: 'bg-purple-500/20 text-purple-400' };
+      return { label: 'Escalated', cls: 'bg-amber-500/20 text-amber-400' };
     default:
       return { label: 'Pending', cls: 'bg-slate-500/20 text-slate-400' };
   }

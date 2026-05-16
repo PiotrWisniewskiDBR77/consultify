@@ -74,19 +74,21 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
     <div
       onMouseDown={handleMouseDown}
       className={`
-        absolute right-0 top-0 h-full w-5 cursor-col-resize
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
         touch-none select-none
         group/resizer
         ${isDragging ? 'z-50' : 'z-10'}
       `}
+      title="Resize column"
+      aria-label="Resize column"
     >
-      {/* Visual handle - single subtle line (SSOT: no double separators) */}
+      {/* Excel-like: grip sits exactly on the column boundary. */}
       <div
         className={[
-          'absolute right-2 top-2 bottom-2 w-px rounded-full transition-colors duration-150',
+          'absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150',
           isDragging
-            ? 'bg-primary-500 dark:bg-primary-400'
-            : 'bg-slate-300 dark:bg-white/[0.06] group-hover/resizer:bg-primary-500 dark:group-hover/resizer:bg-white/[0.10]',
+            ? 'bg-primary-500 dark:bg-primary-300'
+            : 'bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-primary-400/80 dark:group-hover/resizer:bg-primary-300/70',
         ].join(' ')}
       />
     </div>

@@ -76,7 +76,7 @@ const ProgressRing: React.FC<{ progress: number; size?: number }> = ({ progress,
           cy={size / 2}
         />
         <circle
-          className="text-cyan-500 transition-all duration-500"
+          className="text-blue-500 transition-all duration-500"
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -110,7 +110,7 @@ const TaskItem: React.FC<{
       <button
         onClick={() => onToggle(task.id, !isDone)}
         className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-          isDone ? 'bg-cyan-500 border-cyan-500' : 'border-slate-500 hover:border-cyan-500'
+          isDone ? 'bg-blue-500 border-blue-500' : 'border-slate-500 hover:border-blue-500'
         }`}
       >
         {isDone && <CheckCircle2 size={12} className="text-white" />}
@@ -175,7 +175,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder={t('execution.statusChange.reasonPlaceholder', 'Enter reason...')}
-            className="w-full p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
+            className="w-full p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:border-blue-500"
             rows={3}
           />
         )}
@@ -193,9 +193,9 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
             disabled={isLoading || (action.requiresReason && !reason.trim())}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
               action.variant === 'danger'
-                ? 'bg-red-600 hover:bg-red-500 text-white'
+                ? 'bg-rose-600 hover:bg-rose-500 text-white'
                 : action.variant === 'primary'
-                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
                   : 'bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-900 dark:text-white'
             }`}
           >
@@ -321,7 +321,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                   <span
                     className={`text-xs font-medium ${
                       initiative.priority === 'Critical'
-                        ? 'text-red-400'
+                        ? 'text-rose-400'
                         : initiative.priority === 'High'
                           ? 'text-amber-400'
                           : 'text-slate-500 dark:text-slate-400'
@@ -350,9 +350,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                   disabled={isUpdating}
                   className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                     action.variant === 'danger'
-                      ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                      ? 'bg-rose-600/20 text-rose-400 hover:bg-rose-600/30'
                       : action.variant === 'primary'
-                        ? 'bg-cyan-600 text-white hover:bg-cyan-500'
+                        ? 'bg-blue-600 text-white hover:bg-blue-500'
                         : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
                   }`}
                 >
@@ -383,12 +383,12 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
 
             {/* Blocked Reason */}
             {initiative.status === InitiativeStatus.BLOCKED && initiative.blockedReason && (
-              <div className="bg-red-500/10 rounded-xl p-5 border border-red-500/30">
-                <h3 className="text-sm font-semibold text-red-400 mb-3 flex items-center gap-2">
+              <div className="bg-rose-500/10 rounded-xl p-5 border border-rose-500/30">
+                <h3 className="text-sm font-semibold text-rose-400 mb-3 flex items-center gap-2">
                   <AlertTriangle size={16} />
                   Blocked Reason
                 </h3>
-                <p className="text-sm text-red-300">{initiative.blockedReason}</p>
+                <p className="text-sm text-rose-300">{initiative.blockedReason}</p>
               </div>
             )}
 
@@ -433,7 +433,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
                             risk.metric === 'High'
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : risk.metric === 'Medium'
                                 ? 'bg-amber-500/20 text-amber-400'
                                 : 'bg-green-500/20 text-green-400'
@@ -488,7 +488,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       className={`text-sm ${
                         new Date(initiative.plannedEndDate) < new Date() &&
                         initiative.status !== InitiativeStatus.DONE
-                          ? 'text-red-400'
+                          ? 'text-rose-400'
                           : 'text-slate-900 dark:text-white'
                       }`}
                     >
@@ -518,8 +518,8 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
               <div className="space-y-3">
                 {initiative.ownerBusiness && (
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                      <span className="text-xs text-purple-400">
+                    <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center">
+                      <span className="text-xs text-primary-400">
                         {initiative.ownerBusiness.firstName?.[0]}
                         {initiative.ownerBusiness.lastName?.[0]}
                       </span>
@@ -536,8 +536,8 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 )}
                 {initiative.ownerTechnical && (
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                      <span className="text-xs text-cyan-400">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <span className="text-xs text-blue-400">
                         {initiative.ownerTechnical.firstName?.[0]}
                         {initiative.ownerTechnical.lastName?.[0]}
                       </span>

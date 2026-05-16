@@ -134,7 +134,7 @@ export const FinanceLaneStrip: React.FC<FinanceLaneStripProps> = ({
 
       <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
         <span
-          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${activeLaneRun.versionType === 'actual' ? 'bg-violet-400' : 'bg-sky-400'}`}
+          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${activeLaneRun.versionType === 'actual' ? 'bg-primary-400' : 'bg-sky-400'}`}
         />
         <span>
           {activeLaneRun.versionType === 'actual'

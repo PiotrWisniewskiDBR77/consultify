@@ -100,11 +100,11 @@ export const SecurityPanel: React.FC = () => {
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
-                <div className="text-2xl font-bold text-red-400">{stats.critical || 0}</div>
+                <div className="text-2xl font-bold text-rose-400">{stats.critical || 0}</div>
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                 <div className="text-sm text-slate-400 dark:text-slate-500">High</div>
-                <div className="text-2xl font-bold text-orange-400">{stats.high || 0}</div>
+                <div className="text-2xl font-bold text-amber-400">{stats.high || 0}</div>
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Unresolved</div>
@@ -130,9 +130,9 @@ export const SecurityPanel: React.FC = () => {
                         <span
                           className={`px-2 py-1 text-xs rounded ${
                             event.severity === 'CRITICAL'
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : event.severity === 'HIGH'
-                                ? 'bg-orange-500/20 text-orange-400'
+                                ? 'bg-amber-500/20 text-amber-400'
                                 : event.severity === 'MEDIUM'
                                   ? 'bg-yellow-500/20 text-yellow-400'
                                   : 'bg-green-500/20 text-green-400'
@@ -144,7 +144,7 @@ export const SecurityPanel: React.FC = () => {
                         {event.resolved ? (
                           <CheckCircle size={16} className="text-green-400" />
                         ) : (
-                          <XCircle size={16} className="text-red-400" />
+                          <XCircle size={16} className="text-rose-400" />
                         )}
                       </div>
                       <p className="text-sm text-slate-400 dark:text-slate-500">
@@ -191,7 +191,7 @@ export const SecurityPanel: React.FC = () => {
                         <span
                           className="px-2 py-1 text-xs rounded ${
                                                     record.status === 'compliant' ? 'bg-green-500/20 text-green-400' :
-                                                    record.status === 'non_compliant' ? 'bg-red-500/20 text-red-400' :
+                                                    record.status === 'non_compliant' ? 'bg-rose-500/20 text-rose-400' :
                                                     'bg-slate-500/20 text-slate-400 dark:text-slate-500'
                                                 }"
                         >

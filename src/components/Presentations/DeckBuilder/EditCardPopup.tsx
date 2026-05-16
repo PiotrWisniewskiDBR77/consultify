@@ -144,7 +144,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-navy-700">
         <div className="flex items-center gap-1.5">
-          <Sparkles size={14} className="text-purple-500" />
+          <Sparkles size={14} className="text-primary-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-white">
             {t('presentations.builder.editCard.title', 'Edit this card')}
           </span>
@@ -170,7 +170,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
           <button
             onClick={handleSend}
             disabled={!prompt.trim()}
-            className="p-1 text-purple-500 disabled:opacity-30"
+            className="p-1 text-primary-500 disabled:opacity-30"
           >
             <Send size={12} />
           </button>
@@ -185,7 +185,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             onClick={() => setActiveCategory(cat.id)}
             className={`flex-1 px-2 py-1.5 text-[10px] font-medium transition-colors ${
               activeCategory === cat.id
-                ? 'text-purple-600 border-b-2 border-purple-500'
+                ? 'text-primary-600 border-b-2 border-primary-500'
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -202,7 +202,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             <button
               key={action.id}
               onClick={() => onQuickAction(action.id)}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:text-purple-600 transition-colors"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 transition-colors"
             >
               <Icon size={12} className="flex-shrink-0" />
               {t(action.labelKey, action.id.replace(/_/g, ' '))}

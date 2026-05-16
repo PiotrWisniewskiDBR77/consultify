@@ -27,6 +27,7 @@ import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getAlertEmailService } from '../services/AlertEmailService.js';
 import feedbackAIService from '../services/feedbackAIService.js';
 import {
+  decodeDataUrl,
   readScreenshot as readFeedbackScreenshot,
   saveScreenshotFromDataUrl,
 } from '../services/feedbackArtifacts.js';
@@ -1861,11 +1862,26 @@ router.get(
   verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const limit = Math.min(Math.max(Number(req.query.limit || 200), 1), 500);
+    const taskCols = await getTableColumns('tasks');
+    const selectCols = [
+      'id',
+      'organization_id',
+      'title',
+      'description',
+      'status',
+      'priority',
+      'tags',
+      taskCols.has('reporter_id') ? 'reporter_id' : 'NULL as reporter_id',
+      taskCols.has('owner_id') ? 'owner_id' : 'NULL as owner_id',
+      taskCols.has('assignee_id') ? 'assignee_id' : 'NULL as assignee_id',
+      taskCols.has('assigned_to') ? 'assigned_to' : 'NULL as assigned_to',
+      'created_at',
+      taskCols.has('updated_at') ? 'updated_at' : 'NULL as updated_at',
+    ];
     const rows = await dbAll<any>(
       `
         SELECT
-          id, organization_id, title, description, status, priority,
-          tags, reporter_id, owner_id, created_at, updated_at
+          ${selectCols.join(', ')}
         FROM tasks
         WHERE CAST(tags AS TEXT) LIKE ?
         ORDER BY created_at DESC
@@ -1881,11 +1897,145 @@ router.get(
       return {
         ...r,
         tags,
+        assigneeId: r.owner_id || r.assignee_id || r.assigned_to || null,
         feedbackId: feedbackTag ? String(feedbackTag).slice('feedback:'.length) : null,
       };
     });
 
     return res.json(shaped);
+  })
+);
+
+/**
+ * PATCH /api/feedback/backlog/tasks/:id
+ * Update a feedback-created backlog task status/assignee and optionally add a note.
+ */
+router.patch(
+  '/backlog/tasks/:id',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const status = req.body?.status !== undefined ? String(req.body.status).trim() : undefined;
+    const assigneeId =
+      req.body?.assigneeId !== undefined ? String(req.body.assigneeId || '').trim() : undefined;
+    const comment = req.body?.comment !== undefined ? String(req.body.comment || '').trim() : '';
+
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid task id' });
+    }
+
+    const allowedStatuses = new Set([
+      'todo',
+      'open',
+      'in_progress',
+      'review',
+      'blocked',
+      'done',
+      'cancelled',
+      'archived',
+    ]);
+    const normalizedStatus = status ? status.toLowerCase() : undefined;
+    if (normalizedStatus && !allowedStatuses.has(normalizedStatus)) {
+      return res.status(400).json({ error: 'Invalid backlog task status' });
+    }
+
+    const taskCols = await getTableColumns('tasks');
+    const task = await dbGet<any>(`SELECT id, tags FROM tasks WHERE id = ?`, [id]);
+    if (!task) return res.status(404).json({ error: 'Backlog task not found' });
+
+    const tags = safeJsonParse<string[]>(task.tags, []);
+    if (!tags.some((tag) => typeof tag === 'string' && tag.startsWith('feedback:'))) {
+      return res.status(400).json({ error: 'Task is not linked to feedback' });
+    }
+
+    const updateCols: string[] = [];
+    const updateVals: unknown[] = [];
+    if (normalizedStatus && taskCols.has('status')) {
+      updateCols.push('status = ?');
+      updateVals.push(normalizedStatus);
+    }
+    const assigneeColumn = ['owner_id', 'assignee_id', 'assigned_to'].find((col) =>
+      taskCols.has(col)
+    );
+    if (assigneeId !== undefined && assigneeColumn) {
+      updateCols.push(`${assigneeColumn} = ?`);
+      updateVals.push(assigneeId || null);
+    }
+    if (taskCols.has('updated_at') && updateCols.length > 0) {
+      updateCols.push('updated_at = CURRENT_TIMESTAMP');
+    }
+
+    if (updateCols.length === 0 && !comment) {
+      return res.status(400).json({ error: 'No backlog task changes provided' });
+    }
+
+    if (updateCols.length > 0) {
+      const result = await dbRun(`UPDATE tasks SET ${updateCols.join(', ')} WHERE id = ?`, [
+        ...updateVals,
+        id,
+      ]);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update backlog task');
+      }
+    }
+
+    let commentSaved = false;
+    if (comment) {
+      try {
+        const commentCols = await getTableColumns('task_comments');
+        if (commentCols.size > 0) {
+          const insertCols = ['id', 'task_id', 'content'];
+          const values: unknown[] = [uuidv4(), id, comment];
+          if (commentCols.has('user_id')) {
+            insertCols.push('user_id');
+            values.push((req as any).user?.id || 'superadmin');
+          }
+          if (commentCols.has('created_at')) {
+            insertCols.push('created_at');
+            values.push(new Date().toISOString());
+          }
+          if (commentCols.has('updated_at')) {
+            insertCols.push('updated_at');
+            values.push(new Date().toISOString());
+          }
+          const placeholders = insertCols.map(() => '?').join(', ');
+          const result = await dbRun(
+            `INSERT INTO task_comments (${insertCols.join(', ')}) VALUES (${placeholders})`,
+            values
+          );
+          commentSaved = Boolean(result.success);
+        }
+      } catch (err) {
+        logger.warn('[Feedback] Failed to save backlog task comment', err);
+      }
+    }
+
+    const updated = await dbGet<any>(
+      `
+        SELECT
+          id, organization_id, title, description, status, priority, tags,
+          ${taskCols.has('reporter_id') ? 'reporter_id' : 'NULL as reporter_id'},
+          ${taskCols.has('owner_id') ? 'owner_id' : 'NULL as owner_id'},
+          ${taskCols.has('assignee_id') ? 'assignee_id' : 'NULL as assignee_id'},
+          ${taskCols.has('assigned_to') ? 'assigned_to' : 'NULL as assigned_to'},
+          created_at,
+          ${taskCols.has('updated_at') ? 'updated_at' : 'NULL as updated_at'}
+        FROM tasks
+        WHERE id = ?
+      `,
+      [id]
+    );
+    const updatedTags = safeJsonParse<string[]>(updated?.tags, []);
+    const feedbackTag =
+      updatedTags.find((tag) => typeof tag === 'string' && tag.startsWith('feedback:')) || null;
+
+    return res.json({
+      ...updated,
+      tags: updatedTags,
+      assigneeId: updated?.owner_id || updated?.assignee_id || updated?.assigned_to || null,
+      feedbackId: feedbackTag ? String(feedbackTag).slice('feedback:'.length) : null,
+      commentSaved,
+    });
   })
 );
 
@@ -2576,9 +2726,35 @@ router.get(
     if (!isUuidLike(id)) {
       return res.status(400).json({ error: 'Invalid feedback id' });
     }
-    const file = await readFeedbackScreenshot(id);
+    let file = await readFeedbackScreenshot(id);
+    if (!file) {
+      const row = await dbGet<{ metadata_json?: string }>(
+        `SELECT metadata_json FROM feedback_items WHERE id = ? LIMIT 1`,
+        [id]
+      );
+      if (row?.metadata_json) {
+        try {
+          const meta = JSON.parse(row.metadata_json) as Record<string, any>;
+          const screenshotDataUrl =
+            meta?.dossier?.screenshot?.dataUrl ||
+            meta?.screenshot?.dataUrl ||
+            meta?.artifacts?.find?.((artifact: any) => artifact?.dataUrl)?.dataUrl;
+          const decoded =
+            typeof screenshotDataUrl === 'string' ? decodeDataUrl(screenshotDataUrl) : null;
+          if (decoded) {
+            file = decoded;
+          }
+        } catch {
+          // fall through to 404
+        }
+      }
+    }
     if (!file) return res.status(404).json({ error: 'Screenshot not found' });
     res.setHeader('Content-Type', file.mimeType);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="feedback-${id.slice(0, 8)}-screenshot"`
+    );
     res.setHeader('Cache-Control', 'private, max-age=300');
     return res.end(file.buffer);
   })

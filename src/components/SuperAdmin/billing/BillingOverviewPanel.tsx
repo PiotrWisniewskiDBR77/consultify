@@ -90,7 +90,7 @@ export const BillingOverviewPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 size={32} className="animate-spin text-violet-500" />
+        <Loader2 size={32} className="animate-spin text-primary-500" />
       </div>
     );
   }
@@ -108,7 +108,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   period === p
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'text-slate-400 dark:text-slate-500 hover:text-white'
                 }`}
               >
@@ -159,7 +159,7 @@ export const BillingOverviewPanel: React.FC = () => {
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-400 dark:text-slate-500">Active Subscriptions</span>
-            <Users size={20} className="text-violet-400" />
+            <Users size={20} className="text-primary-400" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-white">
@@ -211,8 +211,8 @@ export const BillingOverviewPanel: React.FC = () => {
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-              <PieChart size={20} className="text-violet-400" />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+              <PieChart size={20} className="text-primary-400" />
             </div>
             <div>
               <h3 className="font-semibold text-white">Plan Distribution</h3>
@@ -228,7 +228,7 @@ export const BillingOverviewPanel: React.FC = () => {
               );
               const percentage = total > 0 ? (plan.subscriber_count / total) * 100 : 0;
               const colors = [
-                'bg-violet-500',
+                'bg-primary-500',
                 'bg-blue-500',
                 'bg-emerald-500',
                 'bg-amber-500',
@@ -292,7 +292,7 @@ export const BillingOverviewPanel: React.FC = () => {
                     <ArrowUpRight size={14} />
                     <span className="text-sm">+{day.new_subscriptions}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-red-400">
+                  <div className="flex items-center gap-1 text-rose-400">
                     <ArrowDownRight size={14} />
                     <span className="text-sm">-{day.churned}</span>
                   </div>

@@ -312,7 +312,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
         {/* Footer */}
         <div className="p-6 border-t border-slate-200 dark:border-slate-700">
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+            <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm">
               {error}
             </div>
           )}

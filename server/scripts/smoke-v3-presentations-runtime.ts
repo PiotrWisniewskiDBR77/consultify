@@ -18,6 +18,7 @@ function main(): void {
 
   const routes = read(root, 'server/src/routes/presentations.routes.ts');
   const deckBuilder = read(root, 'src/components/Presentations/DeckBuilder/DeckBuilder.tsx');
+  const exportService = read(root, 'src/services/presentationExport.ts');
   const agentPanel = read(root, 'src/components/Presentations/DeckBuilder/AgentPanel.tsx');
   const mediaBrowser = read(root, 'src/components/Presentations/DeckBuilder/MediaLibraryBrowser.tsx');
 
@@ -26,28 +27,30 @@ function main(): void {
     pass: includesAll(routes, [
       "'/decks/:deckId/export/pdf'",
       "'/decks/:deckId/agent-edit'",
-      'applyAgentEdit(',
+      "'/decks/:deckId/agent-edit/:operationId/accept'",
       'deck_json = ?',
     ]),
   });
 
   checks.push({
     name: 'Deck builder export buttons hit real deck endpoints with correct formats',
-    pass: includesAll(deckBuilder, [
-      "/api/presentations/decks/${deck.deck_id}/download",
-      "/api/presentations/decks/${deck.deck_id}/export/png",
-      "/api/presentations/decks/${deck.deck_id}/export/pdf",
-      "extension: 'zip'",
-    ]),
+    pass:
+      includesAll(deckBuilder, ['exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format })']) &&
+      includesAll(exportService, [
+        '/api/presentations/decks/${deckId}/download',
+        '/api/presentations/decks/${deckId}/export/png',
+        '/api/presentations/decks/${deckId}/export/${format}',
+        "extension: 'zip'",
+      ]),
   });
 
   checks.push({
-    name: 'Deck AI agent uses backend edits instead of coming soon stub',
+    name: 'Deck AI panel exposes runtime activity feed without local chat stub',
     pass:
       includesAll(agentPanel, [
-        'await onSendMessage?.(message)',
-        'presentations.agent.updated',
-        'presentations.agent.failed',
+        'AgentActivityPanel',
+        'events = []',
+        'degraded = false',
       ]) &&
       !agentPanel.includes('AI deck editing is coming soon. This feature is not yet connected to a backend.'),
   });

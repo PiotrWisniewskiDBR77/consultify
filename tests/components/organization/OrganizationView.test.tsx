@@ -73,7 +73,13 @@ vi.mock('../../../src/components/Organization/OrganizationAdminPanel', () => ({
 }));
 
 vi.mock('../../../src/components/settings/OrganizationContextOverview', () => ({
-  OrganizationContextOverview: ({ organizationId, canRebuild }: { organizationId: string; canRebuild?: boolean }) => (
+  OrganizationContextOverview: ({
+    organizationId,
+    canRebuild,
+  }: {
+    organizationId: string;
+    canRebuild?: boolean;
+  }) => (
     <div data-testid="organization-context-overview">
       {organizationId}:{canRebuild ? 'rebuild' : 'readonly'}
     </div>
@@ -86,6 +92,9 @@ vi.mock('../../../src/components/Organization/KnowledgeGraphExplorer', () => ({
 
 vi.mock('../../../src/views/ContextBuilder/modules/CompanyProfileModule', () => ({
   CompanyProfileModule: () => <div data-testid="module-profile" />,
+}));
+vi.mock('../../../src/views/ContextBuilder/modules/OrganizationProfileModule', () => ({
+  OrganizationProfileModule: () => <div data-testid="module-profile" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/GoalsExpectationsModule', () => ({
   GoalsExpectationsModule: () => <div data-testid="module-goals" />,
@@ -173,7 +182,9 @@ describe('OrganizationView (L2)', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /^Goals$/i })[0]);
 
     expect(h.navigateMock).toHaveBeenCalledWith(`${ROUTES.ORGANIZATION.ROOT}/goals`);
-    expect(h.trackFunnelEventMock).toHaveBeenCalledWith('org_workspace_opened', { section: 'goals' });
+    expect(h.trackFunnelEventMock).toHaveBeenCalledWith('org_workspace_opened', {
+      section: 'goals',
+    });
   });
 
   it('back button navigates to chat and sets current view', async () => {

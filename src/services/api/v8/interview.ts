@@ -60,7 +60,7 @@ export interface V8InterviewWeakAnswerItem {
 
 export interface V8InterviewReviewDecisionMemoryEntry {
   id: string;
-  action: 'approve' | 'send_back' | 'revoke_approval';
+  action: 'approve' | 'send_back';
   actorId: string;
   actorRole?: string;
   createdAt: string;
@@ -119,30 +119,18 @@ export interface V8InterviewAssignment {
   };
 }
 
-export interface V8InterviewManageAssignmentPayload {
-  assigneeUserId?: string;
-  templateId?: string;
-  dueAt?: string | null;
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  notes?: string | null;
-  mode?: 'update' | 'restart' | 'assign_again';
-  reason?: string;
-}
-
-export interface V8InterviewManageAssignmentResponse {
-  assignment: V8InterviewAssignment | null;
-  action: 'updated' | 'restarted' | 'assigned_again';
-  createdFreshAssignment: boolean;
-  previousAssignmentId?: string;
-  previousAssignmentDeactivated?: boolean;
-}
-
 export interface V8InterviewInsight {
   id: string;
   organizationId: string;
   title: string;
   promptType: string;
   sourceSessionIds: string[];
+  analysisScope?: V8InsightAnalysisScope;
+  materialQuality?: V8InsightMaterialQuality | null;
+  contextMode?: V8InsightContextMode;
+  analysisMode?: V8InsightAnalysisMode;
+  topicFocus?: string[];
+  generationContext?: Record<string, unknown>;
   content?: string;
   executiveSummary?: string;
   themes?: Array<{
@@ -183,6 +171,183 @@ export interface V8InterviewInsight {
   updatedAt: string;
 }
 
+export type V8InsightAnalysisMode =
+  | 'general_consulting_synthesis'
+  | 'focused_topic_synthesis'
+  | 'contradiction_scan'
+  | 'initiative_opportunity_scan'
+  | 'material_quality_scan'
+  | 'hypothesis_validation'
+  | 'between_the_lines';
+
+export type V8InsightContextMode =
+  | 'selected_interview_material_only'
+  | 'selected_material_plus_approved_org_knowledge';
+
+export interface V8InsightAnalysisScope {
+  source_session_ids: string[];
+  source_scope_status: 'approved_only';
+  respondent_filters: string[];
+  role_filters: string[];
+  department_filters: string[];
+  template_filters: string[];
+  date_range?: { from?: string; to?: string };
+  topic_focus: string[];
+  analysis_mode: V8InsightAnalysisMode;
+  context_mode: V8InsightContextMode;
+  consultant_note?: string | null;
+  leading_question?: string | null;
+}
+
+export type V8ContextDocumentStatus =
+  | 'uploaded'
+  | 'processing'
+  | 'ready'
+  | 'ocr_required'
+  | 'unreadable'
+  | 'failed';
+
+export interface V8ContextDocument {
+  id: string;
+  filename: string;
+  mimeType: string;
+  fileSize: number;
+  status: V8ContextDocumentStatus;
+  scope: 'project' | 'user';
+  projectId?: string | null;
+  ownerId: string;
+  sourceUpload?: string;
+  processingError?: string | null;
+  chunkCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface V8InsightMaterialQuality {
+  overall_material_score: number;
+  answer_quality_posture: 'strong' | 'usable' | 'thin' | 'poor';
+  coverage_posture:
+    | 'single_perspective'
+    | 'partial_coverage'
+    | 'good_coverage'
+    | 'strong_cross_function_coverage';
+  approved_session_count: number;
+  respondent_count: number;
+  role_coverage: string[];
+  department_coverage: string[];
+  thin_answer_count: number;
+  missing_voices: string[];
+  evidence_gap_count: number;
+  contradiction_count: number;
+  limitations: string[];
+  recommended_followups: string[];
+}
+
+export type V8InterviewReportWorksheetStatus = 'generated' | 'partial' | 'empty' | 'degraded';
+
+export interface V8InterviewReportWorksheet {
+  key: string;
+  title: string;
+  required: boolean;
+  status: V8InterviewReportWorksheetStatus;
+  completenessScore: number;
+  warnings: string[];
+  rows: Array<Record<string, unknown>>;
+  markdown?: string;
+}
+
+export interface V8InterviewReportPack {
+  id: string;
+  insightId: string;
+  title: string;
+  status: 'draft' | 'in_review' | 'published';
+  worksheets: V8InterviewReportWorksheet[];
+  completenessScore: number;
+  degraded: boolean;
+  degradedReasons: string[];
+}
+
+export interface V8InterviewReportReadinessIssue {
+  worksheetKey?: string;
+  severity: 'blocker' | 'warning';
+  message: string;
+}
+
+export interface V8InterviewReportReadiness {
+  reportPackId: string;
+  insightId: string;
+  status: 'blocked' | 'ready_with_warnings' | 'ready_for_review';
+  completenessScore: number;
+  blockers: V8InterviewReportReadinessIssue[];
+  warnings: V8InterviewReportReadinessIssue[];
+  worksheetBreakdown: Array<{
+    key: string;
+    title: string;
+    status: V8InterviewReportWorksheetStatus;
+    completenessScore: number;
+    ready: boolean;
+  }>;
+}
+
+export interface V8InterviewReportReviewSubmitResult {
+  reportPack: V8InterviewReportPack;
+  readiness: V8InterviewReportReadiness;
+  submitted: boolean;
+  blocked: boolean;
+  alreadyInReview: boolean;
+}
+
+export interface V8InterviewReportPublishResult {
+  reportPack: V8InterviewReportPack;
+  readiness: V8InterviewReportReadiness;
+  published: boolean;
+  blocked: boolean;
+  alreadyPublished: boolean;
+}
+
+export interface V8InterviewReportExportManifest {
+  reportPackId: string;
+  insightId: string;
+  title: string;
+  status: 'published';
+  exportedAt: string;
+  manifestHash: string;
+  completenessScore: number;
+  degraded: boolean;
+  degradedReasons: string[];
+  readiness: V8InterviewReportReadiness;
+  worksheetCount: number;
+  worksheets: V8InterviewReportWorksheet[];
+}
+
+export interface V8InterviewReportMarkdownExport {
+  reportPackId: string;
+  insightId: string;
+  title: string;
+  status: 'published';
+  exportedAt: string;
+  format: 'markdown';
+  filename: string;
+  markdown: string;
+  sourceManifestHash: string;
+  exportHash: string;
+  worksheetCount: number;
+}
+
+export interface V8InterviewReportRevision {
+  id: string;
+  reportPackId: string;
+  insightId: string;
+  version: number;
+  manifestHash: string;
+  createdAt: string;
+}
+
+export interface V8InterviewReportRevisionResult {
+  reportPack: V8InterviewReportPack;
+  revision: V8InterviewReportRevision;
+}
+
 export interface V8InsightEvidencePointer {
   pointerId: string;
   type: string;
@@ -207,8 +372,41 @@ export interface V8InsightFinding {
   source_section_index?: number | null;
   source_key?: string | null;
   review_status?: 'draft' | 'in_review' | 'published';
+  readback_status:
+    | 'draft_interpretation'
+    | 'shared_for_readback'
+    | 'confirmed_by_client'
+    | 'partially_confirmed'
+    | 'challenged_by_client'
+    | 'needs_more_evidence';
+  readback_summary?: string | null;
+  readback_updated_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface V8InsightSourcePackEntry {
+  answerId: string;
+  questionText: string;
+  answerSnippet: string;
+  respondentLabel?: string | null;
+  respondentRole?: string | null;
+  department?: string | null;
+  sourceSessionId?: string | null;
+  linkedThemes: string[];
+  linkedIssues: string[];
+  linkedOpportunities: string[];
+  capturedPointers: V8InsightEvidencePointer[];
+  degradedReason?: 'missing_pointer' | 'source_unavailable';
+}
+
+export interface V8InsightSourcePack {
+  insightId: string;
+  sourceSessionIds: string[];
+  entries: V8InsightSourcePackEntry[];
+  degraded: boolean;
+  degradedReasons: string[];
+  activePointerCount: number;
 }
 
 export interface V8InsightAnalysisLens {
@@ -405,18 +603,6 @@ export const V8InterviewApi = {
   remindAssignment: (id: string) =>
     v8Post(`/interview/assignments/${encodeURIComponent(id)}/remind`, {}),
 
-  manageAssignment: (id: string, payload: V8InterviewManageAssignmentPayload) =>
-    v8Patch<V8InterviewManageAssignmentResponse>(
-      `/interview/assignments/${encodeURIComponent(id)}/manage`,
-      payload
-    ),
-
-  archiveAssignment: (id: string) =>
-    v8Post<{ success: boolean; archived: boolean; assignmentId: string }>(
-      `/interview/assignments/${encodeURIComponent(id)}/archive`,
-      {}
-    ),
-
   sendBackAssignment: (
     id: string,
     payload: { reason: string; missingItems?: Array<string | Record<string, unknown>> }
@@ -430,13 +616,6 @@ export const V8InterviewApi = {
       entersContext: boolean;
       aiReview?: V8InterviewSessionEvaluation | null;
     }>(`/interview/assignments/${encodeURIComponent(id)}/approve`, {}),
-
-  revokeApproval: (id: string, payload: { reason: string }) =>
-    v8Post<{
-      assignment: V8InterviewAssignment;
-      session: V8InterviewSession;
-      entersContext: boolean;
-    }>(`/interview/assignments/${encodeURIComponent(id)}/revoke-approval`, payload),
 
   // --- Insights ---
 
@@ -453,14 +632,92 @@ export const V8InterviewApi = {
   getInsight: (id: string) =>
     v8Get<{ insight: V8InterviewInsight }>(`/interview/insights/${encodeURIComponent(id)}`),
 
+  getInsightReportPack: (id: string) =>
+    v8Get<{ reportPack: V8InterviewReportPack }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack`
+    ),
+
+  getInsightReportReadiness: (id: string) =>
+    v8Get<{ readiness: V8InterviewReportReadiness }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/readiness`
+    ),
+
+  submitInsightReportForReview: (id: string) =>
+    v8Post<{ result: V8InterviewReportReviewSubmitResult }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/submit-review`,
+      {}
+    ),
+
+  publishInsightReportPack: (id: string) =>
+    v8Post<{ result: V8InterviewReportPublishResult }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/publish`,
+      {}
+    ),
+
+  getInsightReportExportManifest: (id: string) =>
+    v8Get<{ exportManifest: V8InterviewReportExportManifest }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/export-manifest`
+    ),
+
+  getInsightReportMarkdownExport: (id: string) =>
+    v8Get<{ markdownExport: V8InterviewReportMarkdownExport }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/export-markdown`
+    ),
+
+  createInsightReportRevision: (id: string) =>
+    v8Post<{ result: V8InterviewReportRevisionResult }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/revisions`,
+      {}
+    ),
+
+  updateInsightReportWorksheet: (
+    id: string,
+    worksheetKey: string,
+    payload: {
+      status?: V8InterviewReportWorksheetStatus;
+      completenessScore?: number;
+      warnings?: string[];
+      rows?: Array<Record<string, unknown>>;
+      markdown?: string | null;
+    }
+  ) =>
+    v8Patch<{ reportPack: V8InterviewReportPack }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/worksheets/${encodeURIComponent(
+        worksheetKey
+      )}`,
+      payload
+    ),
+
   createInsight: (payload: {
     title?: string;
     sessionIds?: string[];
     sessionId?: string;
     promptType?: string;
     filters?: Record<string, unknown>;
+    analysisScope?: Partial<V8InsightAnalysisScope>;
+    analysisMode?: V8InsightAnalysisMode;
+    contextMode?: V8InsightContextMode;
+    topicFocus?: string[];
+    consultantNote?: string;
+    leadingQuestion?: string;
     customPrompt?: string;
+    selectedContextDocumentIds?: string[];
   }) => v8Post<{ insight: V8InterviewInsight }>('/interview/insights', payload),
+
+  listContextDocuments: (params?: { scope?: 'project' | 'user' | 'all'; projectId?: string }) =>
+    v8Get<{ documents: V8ContextDocument[] }>('/interview/context-documents', params),
+
+  uploadContextDocument: (payload: {
+    file: File;
+    scope?: 'project' | 'user';
+    projectId?: string;
+  }) => {
+    const form = new FormData();
+    form.append('file', payload.file);
+    form.append('scope', payload.scope || 'user');
+    if (payload.projectId) form.append('projectId', payload.projectId);
+    return v8Post<{ document: V8ContextDocument }>('/interview/context-documents/upload', form);
+  },
 
   regenerateInsight: (id: string) =>
     v8Post<{ insight: V8InterviewInsight }>(
@@ -557,6 +814,11 @@ export const V8InterviewApi = {
       `/interview/insights/${encodeURIComponent(insightId)}/analysis`
     ),
 
+  getSourcePack: (insightId: string) =>
+    v8Get<{ sourcePack: V8InsightSourcePack; insightId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/source-pack`
+    ),
+
   listFindings: (insightId: string) =>
     v8Get<{ findings: V8InsightFinding[]; insightId: string }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings`
@@ -585,6 +847,25 @@ export const V8InterviewApi = {
   updateFinding: (insightId: string, findingId: string, payload: Record<string, unknown>) =>
     v8Patch<{ finding: V8InsightFinding; pointer_warnings?: string[] }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}`,
+      payload
+    ),
+
+  updateFindingReadback: (
+    insightId: string,
+    findingId: string,
+    payload: {
+      readback_status:
+        | 'draft_interpretation'
+        | 'shared_for_readback'
+        | 'confirmed_by_client'
+        | 'partially_confirmed'
+        | 'challenged_by_client'
+        | 'needs_more_evidence';
+      readback_summary?: string | null;
+    }
+  ) =>
+    v8Patch<{ finding: V8InsightFinding; insightId: string; findingId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}/readback`,
       payload
     ),
 

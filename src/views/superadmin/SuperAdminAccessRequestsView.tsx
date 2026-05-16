@@ -1,7 +1,10 @@
 import { Building2, CheckCircle, Clock, Mail, Shield, UserPlus, XCircle } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface AccessRequest {
   id: string;
@@ -18,6 +21,50 @@ interface AccessRequest {
   rejection_reason: string | null;
 }
 
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const normalizeRequest = (request: AccessRequest): AccessRequest => ({
+  ...request,
+  status: asText(request.status, 'pending').toLowerCase(),
+});
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
 export const SuperAdminAccessRequestsView: React.FC = () => {
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,38 +75,66 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
   const [approvalRole, setApprovalRole] = useState('ADMIN');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    loadRequests();
-  }, [statusFilter]);
-
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async (): Promise<AccessRequest[] | null> => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getAccessRequests();
-      setRequests(data);
-    } catch (err) {
-      console.error('Failed to load access requests:', err);
+      const normalized = getListPayload<AccessRequest>(data, [
+        'requests',
+        'accessRequests',
+        'items',
+      ]).map(normalizeRequest);
+      if (!hasListShape(data, ['requests', 'accessRequests', 'items'])) {
+        throw new Error('Access requests response was not a list');
+      }
+      setRequests(normalized);
+      return normalized;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load access requests');
+      setRequests([]);
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadRequests();
+  }, [loadRequests]);
 
   const handleApprove = async () => {
-    if (!selectedRequest || !approvalPassword) {
-      alert('Please provide a password for the new account');
-      return;
-    }
+    if (!selectedRequest) return;
 
     try {
+      setProcessing(true);
+      setActionError(null);
+      const requestId = selectedRequest.id;
       await Api.approveAccessRequest(selectedRequest.id, approvalPassword, approvalRole);
+      const refreshed = await loadRequests();
+      if (!refreshed) {
+        throw new Error('Access request approval could not be confirmed by read-back');
+      }
+      const updatedRequest = refreshed?.find((request) => request.id === requestId);
+      if (updatedRequest && updatedRequest.status !== 'approved') {
+        throw new Error('Access request approval was not confirmed by the server');
+      }
       setShowApprovalDialog(false);
       setSelectedRequest(null);
       setApprovalPassword('');
-      await loadRequests();
-      alert('Access request approved successfully!');
-    } catch (err: any) {
-      alert(err.message || 'Failed to approve request');
+      toast.success('Access request approved');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to approve request');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -67,16 +142,35 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
     if (!selectedRequest) return;
 
     try {
+      setProcessing(true);
+      setActionError(null);
+      const requestId = selectedRequest.id;
       await Api.rejectAccessRequest(selectedRequest.id, rejectionReason);
+      const refreshed = await loadRequests();
+      if (!refreshed) {
+        throw new Error('Access request rejection could not be confirmed by read-back');
+      }
+      const updatedRequest = refreshed?.find((request) => request.id === requestId);
+      if (updatedRequest && updatedRequest.status !== 'rejected') {
+        throw new Error('Access request rejection was not confirmed by the server');
+      }
       setShowRejectDialog(false);
       setSelectedRequest(null);
       setRejectionReason('');
-      await loadRequests();
-      alert('Access request rejected');
-    } catch (err: any) {
-      alert(err.message || 'Failed to reject request');
+      toast.success('Access request rejected');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to reject request');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setProcessing(false);
     }
   };
+
+  const visibleRequests =
+    statusFilter === 'all'
+      ? requests
+      : requests.filter((request) => request.status === statusFilter);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -85,16 +179,22 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       case 'approved':
         return <CheckCircle className="text-green-600 dark:text-green-400" size={20} />;
       case 'rejected':
-        return <XCircle className="text-red-600 dark:text-red-400" size={20} />;
+        return <XCircle className="text-rose-600 dark:text-rose-400" size={20} />;
       default:
         return <Clock className="text-slate-400" size={20} />;
     }
   };
 
+  const formatRequestedAt = (value?: string | null) => {
+    if (!value) return 'Unknown date';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -115,9 +215,10 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
           <button
             key={status}
             onClick={() => setStatusFilter(status)}
+            disabled={Boolean(loadError)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               statusFilter === status
-                ? 'bg-purple-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'
             }`}
           >
@@ -126,102 +227,117 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
         ))}
       </div>
 
+      {loadError && <DegradedState title="Access requests unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* Requests List */}
-      <div className="space-y-3">
-        {requests.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
-            <UserPlus className="mx-auto text-slate-300 dark:text-slate-600 mb-3" size={48} />
-            <p className="text-slate-500 dark:text-slate-400">No {statusFilter} requests</p>
-          </div>
-        ) : (
-          requests.map((request) => (
-            <div
-              key={request.id}
-              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-5"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    {getStatusIcon(request.status)}
-                    <div>
-                      <h3 className="font-semibold text-navy-900 dark:text-white">
-                        {request.first_name} {request.last_name}
-                      </h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {new Date(request.requested_at).toLocaleString()}
-                      </p>
+      {!loadError && (
+        <div className="space-y-3">
+          {visibleRequests.length === 0 ? (
+            <div className="text-center py-12 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
+              <UserPlus className="mx-auto text-slate-300 dark:text-slate-600 mb-3" size={48} />
+              <p className="text-slate-500 dark:text-slate-400">No {statusFilter} requests</p>
+            </div>
+          ) : (
+            visibleRequests.map((request) => (
+              <div
+                key={request.id}
+                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-5"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      {getStatusIcon(request.status)}
+                      <div>
+                        <h3 className="font-semibold text-navy-900 dark:text-white">
+                          {asText(request.first_name)} {asText(request.last_name, '')}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {formatRequestedAt(request.requested_at)}
+                        </p>
+                      </div>
                     </div>
+
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mb-1">
+                          <Mail size={14} />
+                          Email
+                        </div>
+                        <div className="font-medium text-navy-900 dark:text-white">
+                          {asText(request.email)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mb-1">
+                          <Building2 size={14} />
+                          Organization
+                        </div>
+                        <div className="font-medium text-navy-900 dark:text-white">
+                          {asText(request.organization_name)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mb-1">
+                          <Shield size={14} />
+                          Requested Role
+                        </div>
+                        <div className="font-medium text-navy-900 dark:text-white">
+                          {asText(request.requested_role)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {request.rejection_reason && (
+                      <div className="mt-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/30 rounded-lg">
+                        <p className="text-sm text-rose-700 dark:text-rose-400">
+                          <strong>Rejection Reason:</strong> {asText(request.rejection_reason)}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mb-1">
-                        <Mail size={14} />
-                        Email
-                      </div>
-                      <div className="font-medium text-navy-900 dark:text-white">
-                        {request.email}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mb-1">
-                        <Building2 size={14} />
-                        Organization
-                      </div>
-                      <div className="font-medium text-navy-900 dark:text-white">
-                        {request.organization_name}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mb-1">
-                        <Shield size={14} />
-                        Requested Role
-                      </div>
-                      <div className="font-medium text-navy-900 dark:text-white">
-                        {request.requested_role}
-                      </div>
-                    </div>
-                  </div>
-
-                  {request.rejection_reason && (
-                    <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
-                      <p className="text-sm text-red-700 dark:text-red-400">
-                        <strong>Rejection Reason:</strong> {request.rejection_reason}
-                      </p>
+                  {request.status === 'pending' && (
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setShowApprovalDialog(true);
+                          setApprovalRole('ADMIN');
+                        }}
+                        aria-label={`Approve access request ${request.id}`}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <CheckCircle size={18} />
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setShowRejectDialog(true);
+                        }}
+                        aria-label={`Reject access request ${request.id}`}
+                        className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <XCircle size={18} />
+                        Reject
+                      </button>
                     </div>
                   )}
                 </div>
-
-                {request.status === 'pending' && (
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setShowApprovalDialog(true);
-                        setApprovalRole('ADMIN');
-                      }}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors flex items-center gap-2"
-                    >
-                      <CheckCircle size={18} />
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setShowRejectDialog(true);
-                      }}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors flex items-center gap-2"
-                    >
-                      <XCircle size={18} />
-                      Reject
-                    </button>
-                  </div>
-                )}
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Approval Dialog */}
       {showApprovalDialog && selectedRequest && (
@@ -233,9 +349,9 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
               Approving request for{' '}
               <strong>
-                {selectedRequest.first_name} {selectedRequest.last_name}
+                {asText(selectedRequest.first_name)} {asText(selectedRequest.last_name, '')}
               </strong>{' '}
-              to create organization "<strong>{selectedRequest.organization_name}</strong>"
+              to create organization "<strong>{asText(selectedRequest.organization_name)}</strong>"
             </p>
 
             <div className="space-y-4">
@@ -254,7 +370,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Initial Password
+                  Initial Password (optional)
                 </label>
                 <input
                   type="password"
@@ -264,7 +380,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  User can change this later in their settings
+                  Leave empty when approving an organization-only access request.
                 </p>
               </div>
             </div>
@@ -272,9 +388,10 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleApprove}
-                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium"
+                disabled={processing}
+                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium disabled:opacity-60"
               >
-                Approve
+                {processing ? 'Approving...' : 'Approve'}
               </button>
               <button
                 onClick={() => {
@@ -300,7 +417,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
               Rejecting request from{' '}
               <strong>
-                {selectedRequest.first_name} {selectedRequest.last_name}
+                {asText(selectedRequest.first_name)} {asText(selectedRequest.last_name, '')}
               </strong>
             </p>
 
@@ -320,9 +437,10 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleReject}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-medium"
+                disabled={processing}
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors font-medium disabled:opacity-60"
               >
-                Reject
+                {processing ? 'Rejecting...' : 'Reject'}
               </button>
               <button
                 onClick={() => {

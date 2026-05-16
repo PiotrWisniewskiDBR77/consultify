@@ -166,7 +166,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
           className="fixed inset-0 z-[9998] pointer-events-none"
           style={{
             background: `radial-gradient(
-                            ellipse ${targetRect.width + spotlightPadding * 2}px ${targetRect.height + spotlightPadding * 2}px 
+                            ellipse ${targetRect.width + spotlightPadding * 2}px ${targetRect.height + spotlightPadding * 2}px
                             at ${targetRect.left + targetRect.width / 2}px ${targetRect.top + targetRect.height / 2}px,
                             transparent 0%,
                             rgba(0, 0, 0, 0.7) 100%
@@ -194,7 +194,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800/30">
+        <div className="flex items-center justify-between px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800/30">
           <h3 className="font-semibold text-navy-900 dark:text-white text-sm">{title}</h3>
           {onDismiss && (
             <button
@@ -234,7 +234,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             {onNext && (
               <button
                 onClick={onNext}
-                className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
               >
                 {step && step.current === step.total ? 'Zakończ' : 'Dalej'}
                 {step && step.current !== step.total && <ChevronRight size={14} />}

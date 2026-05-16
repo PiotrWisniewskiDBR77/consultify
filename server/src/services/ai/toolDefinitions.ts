@@ -77,6 +77,50 @@ export const AI_TOOLS: ToolDefinition[] = [
   {
     type: 'function',
     function: {
+      name: 'list_enterprise_connectors',
+      description:
+        'List enterprise connectors available to this organization with health, freshness and ACL state. Read-only.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_id: {
+            type: 'string',
+            description: 'Optional project id to apply project-level connector ACL filtering.',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_enterprise_connector',
+      description:
+        'Search an approved enterprise connector through the Wave 7 governed connector runtime. Read/search only; write actions require separate AIRun approval.',
+      parameters: {
+        type: 'object',
+        properties: {
+          connector_id: {
+            type: 'string',
+            description: 'Wave 7 connector id returned by list_enterprise_connectors.',
+          },
+          query: {
+            type: 'string',
+            description: 'Query to filter records from the connector source.',
+          },
+          project_id: {
+            type: 'string',
+            description: 'Optional project id for ACL enforcement.',
+          },
+        },
+        required: ['connector_id', 'query'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'get_assessment_data',
       description:
         'Retrieve digital maturity assessment scores for the current project. Use when discussing maturity gaps, benchmarks, or improvement areas.',
@@ -428,6 +472,10 @@ export async function executeToolCall(
         return await executeWebSearch(args, context);
       case 'search_knowledge_base':
         return await executeKBSearch(args, context);
+      case 'list_enterprise_connectors':
+        return await executeListEnterpriseConnectors(args, context);
+      case 'search_enterprise_connector':
+        return await executeSearchEnterpriseConnector(args, context);
       case 'get_assessment_data':
         return await executeGetAssessment(args, context);
       case 'calculate_financial':
@@ -680,6 +728,68 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     });
   } catch (err: any) {
     return JSON.stringify({ source: 'knowledge_base', error: err.message });
+  }
+}
+
+async function executeListEnterpriseConnectors(
+  args: any,
+  ctx: ToolExecutionContext
+): Promise<string> {
+  try {
+    const { listWave7Connectors } = await import('../wave7ConnectorRuntimeService.js');
+    const connectors = await listWave7Connectors({
+      organizationId: ctx.organizationId,
+      projectId: args.project_id || ctx.projectId || null,
+    });
+    return JSON.stringify({
+      source: 'wave7_connectors',
+      connectors: connectors.map((connector: any) => ({
+        connectorId: connector.connectorId,
+        provider: connector.provider,
+        displayName: connector.displayName,
+        status: connector.status,
+        freshnessAgeMinutes: connector.freshnessAgeMinutes,
+        failureState: connector.failureState,
+        sourceBinding: connector.tenantPolicy?.externalConnectorId ? 'linked' : 'registry_only',
+      })),
+    });
+  } catch (err: any) {
+    return JSON.stringify({ source: 'wave7_connectors', error: err.message });
+  }
+}
+
+async function executeSearchEnterpriseConnector(
+  args: any,
+  ctx: ToolExecutionContext
+): Promise<string> {
+  try {
+    const { executeWave7ConnectorTool } = await import('../wave7ConnectorRuntimeService.js');
+    const result = await executeWave7ConnectorTool({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      connectorId: String(args.connector_id || ''),
+      toolName: 'search_enterprise_connector',
+      toolKind: 'search',
+      query: String(args.query || ''),
+      projectId: args.project_id || ctx.projectId || null,
+    });
+    return JSON.stringify({
+      source: 'wave7_connector_search',
+      allowed: result.allowed,
+      connector: result.connector
+        ? {
+            connectorId: result.connector.connectorId,
+            provider: result.connector.provider,
+            status: result.connector.status,
+          }
+        : null,
+      freshnessWarning: result.freshnessWarning,
+      sourceTrace: result.sourceTrace,
+      results: result.results,
+      error: result.run?.error || null,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ source: 'wave7_connector_search', error: err.message });
   }
 }
 

@@ -450,7 +450,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-950 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <div className="text-purple-500">{icon}</div>
+        <div className="text-primary-500">{icon}</div>
         <span className="font-semibold text-navy-900 dark:text-white">{title}</span>
         {completionPct !== undefined && (
           <span
@@ -473,7 +473,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="animate-spin text-purple-500" size={32} />
+        <Loader2 className="animate-spin text-primary-500" size={32} />
       </div>
     );
   }
@@ -484,7 +484,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Building2 className="text-purple-500" />
+            <Building2 className="text-primary-500" />
             Strategic Profile
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -512,7 +512,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 cx="32"
                 cy="32"
                 r="28"
-                className="stroke-purple-500"
+                className="stroke-primary-500"
                 strokeWidth="4"
                 fill="none"
                 strokeDasharray={`${completeness * 1.76} 176`}
@@ -534,7 +534,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save Profile
@@ -573,7 +573,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   <select
                     value={profile.industry || ''}
                     onChange={(e) => updateField('industry', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     <option value="">Select Industry</option>
                     {INDUSTRIES.map((ind) => (
@@ -592,7 +592,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     value={profile.industry_subsector || ''}
                     onChange={(e) => updateField('industry_subsector', e.target.value)}
                     placeholder="e.g., SaaS, Fintech, E-commerce"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -612,7 +612,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                         value={profile.industry_code || ''}
                         onChange={(e) => updateField('industry_code', e.target.value)}
                         placeholder={codeSystem.placeholder}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                       />
                     </>
                   );
@@ -635,7 +635,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   <select
                     value={profile.company_size || 'MID_MARKET'}
                     onChange={(e) => updateField('company_size', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     {COMPANY_SIZES.map((size) => (
                       <option key={size.value} value={size.value}>
@@ -655,7 +655,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       updateField('employee_count', parseInt(e.target.value) || null)
                     }
                     placeholder="e.g., 500"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -674,12 +674,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                         updateField('annual_revenue', parseFloat(e.target.value) || null)
                       }
                       placeholder="e.g., 50000000"
-                      className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                      className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                     />
                     <select
                       value={profile.currency || getDefaultCurrency(profile.headquarters_country)}
                       onChange={(e) => updateField('currency', e.target.value)}
-                      className="w-28 px-2 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm"
+                      className="w-28 px-2 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm"
                     >
                       {CURRENCIES.map((c) => (
                         <option key={c.code} value={c.code}>
@@ -698,7 +698,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     value={profile.founding_year || ''}
                     onChange={(e) => updateField('founding_year', parseInt(e.target.value) || null)}
                     placeholder="e.g., 2010"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -711,7 +711,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.headquarters_country || ''}
                   onChange={(e) => updateField('headquarters_country', e.target.value)}
                   placeholder="e.g., Poland"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -731,7 +731,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   <select
                     value={profile.competitive_position || 'CHALLENGER'}
                     onChange={(e) => updateField('competitive_position', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     {COMPETITIVE_POSITIONS.map((pos) => (
                       <option key={pos.value} value={pos.value}>
@@ -753,7 +753,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   <select
                     value={profile.growth_stage || 'MATURE'}
                     onChange={(e) => updateField('growth_stage', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     {GROWTH_STAGES.map((stage) => (
                       <option key={stage.value} value={stage.value}>
@@ -774,7 +774,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.strategic_priorities || []}
                   onChange={(val) => updateField('strategic_priorities', val)}
                   placeholder="e.g., Digital transformation, Customer experience, Cost optimization"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -786,7 +786,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   onChange={(e) => updateField('mission_statement', e.target.value)}
                   rows={2}
                   placeholder="What is your organization's mission?"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -813,7 +813,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       updateField('digital_maturity_overall', parseFloat(e.target.value) || null)
                     }
                     placeholder="e.g., 4.5"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -823,7 +823,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   <select
                     value={profile.cloud_adoption_level || 'PARTIAL'}
                     onChange={(e) => updateField('cloud_adoption_level', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   >
                     {CLOUD_LEVELS.map((level) => (
                       <option key={level.value} value={level.value}>
@@ -846,7 +846,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     updateField('digital_budget_percent', parseFloat(e.target.value) || null)
                   }
                   placeholder="e.g., 25"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -857,7 +857,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.technology_stack || []}
                   onChange={(val) => updateField('technology_stack', val)}
                   placeholder="e.g., AWS, React, Python, Kubernetes"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -877,7 +877,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.primary_markets || []}
                   onChange={(val) => updateField('primary_markets', val)}
                   placeholder="e.g., Poland, DACH, CEE"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -888,7 +888,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.customer_segments || []}
                   onChange={(val) => updateField('customer_segments', val)}
                   placeholder="e.g., B2B, Enterprise, SMB"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -899,7 +899,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.key_competitors || []}
                   onChange={(val) => updateField('key_competitors', val)}
                   placeholder="e.g., Competitor A, Competitor B"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -915,7 +915,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     updateField('market_share_estimate', parseFloat(e.target.value) || null)
                   }
                   placeholder="e.g., 15"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -946,8 +946,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       onClick={() => updateArrayField('regulatory_environment', reg)}
                       className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                         (profile.regulatory_environment || []).includes(reg)
-                          ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-purple-300'
+                          ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'
                       }`}
                     >
                       {reg}
@@ -966,8 +966,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       onClick={() => updateField('risk_appetite', risk.value)}
                       className={`flex-1 p-3 rounded-lg border text-center transition-colors ${
                         profile.risk_appetite === risk.value
-                          ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-purple-300'
+                          ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'
                       }`}
                     >
                       <div className="font-medium">{risk.label}</div>
@@ -996,7 +996,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     defaultValue:
                       'e.g., Max 500k EUR/year for digital initiatives; IT modernization capped at 200k',
                   })}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none"
                 />
               </div>
               <div>
@@ -1019,7 +1019,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     defaultValue:
                       'e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026',
                   })}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -1032,7 +1032,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           Save Strategic Profile

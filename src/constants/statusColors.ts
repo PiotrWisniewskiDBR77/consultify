@@ -37,9 +37,9 @@ export interface BadgeStyle {
 
 const ALARM = {
   red: {
-    bg: 'bg-red-100 dark:bg-red-500/20',
-    text: 'text-red-700 dark:text-red-400',
-    dot: 'bg-red-500',
+    bg: 'bg-rose-100 dark:bg-rose-500/20',
+    text: 'text-rose-700 dark:text-rose-400',
+    dot: 'bg-rose-500',
     tier: 'alarm' as const,
   },
   amber: {
@@ -70,9 +70,9 @@ const SUBTLE = {
     tier: 'subtle' as const,
   },
   red: {
-    bg: 'bg-red-50/70 dark:bg-red-500/10',
-    text: 'text-red-600 dark:text-red-400',
-    dot: 'bg-red-500',
+    bg: 'bg-rose-50/70 dark:bg-rose-500/10',
+    text: 'text-rose-600 dark:text-rose-400',
+    dot: 'bg-rose-500',
     tier: 'subtle' as const,
   },
 };

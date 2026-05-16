@@ -283,7 +283,7 @@ export const SecuritySettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-8 h-8 animate-spin text-purple-500" />
+        <RefreshCw className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -373,7 +373,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, require2fa: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-purple-600 transition-colors"></div>
+                <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-primary-600 transition-colors"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white dark:bg-navy-900 rounded-full peer-checked:translate-x-5 transition-transform"></div>
               </label>
             </div>
@@ -404,7 +404,7 @@ export const SecuritySettings: React.FC = () => {
                         <Check size={14} /> Enabled
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm">
+                      <span className="flex items-center gap-1 px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-sm">
                         <X size={14} /> Not Enabled
                       </span>
                     )}
@@ -452,7 +452,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireUppercase: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
+                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-slate-300">Require uppercase letter (A-Z)</span>
               </label>
@@ -464,7 +464,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireNumber: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
+                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-slate-300">Require number (0-9)</span>
               </label>
@@ -476,7 +476,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireSpecial: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
+                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-slate-300">Require special character (!@#$%^&*)</span>
               </label>
@@ -544,7 +544,7 @@ export const SecuritySettings: React.FC = () => {
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 text-white rounded-lg font-medium transition-colors"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
               Save Settings
@@ -612,7 +612,7 @@ export const SecuritySettings: React.FC = () => {
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => handleTerminateSession(session.id)}
-                            className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-400"
+                            className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
                             title="Terminate session"
                           >
                             <LogOut size={16} />
@@ -678,7 +678,7 @@ export const SecuritySettings: React.FC = () => {
                             <Check size={14} /> Success
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-red-400 text-xs">
+                          <span className="flex items-center gap-1 text-rose-400 text-xs">
                             <X size={14} /> Failed
                             {item.failureReason && (
                               <span className="text-slate-500 dark:text-slate-400">

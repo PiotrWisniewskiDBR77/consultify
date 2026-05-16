@@ -9,13 +9,10 @@
  */
 
 import {
-  AlertTriangle,
   Building2,
-  Calendar,
   CheckCircle2,
   Clock,
   Database,
-  HardDrive,
   History,
   Loader2,
   Play,
@@ -28,6 +25,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { ReadOnlyState } from '../../Admin/AdminState';
 
 interface BackupConfig {
   id?: string;
@@ -56,15 +54,18 @@ interface Organization {
   name: string;
 }
 
+const backupConfigWorkflowUnavailableReason =
+  'Backup configuration is disabled here until this legacy data-export backup panel is reconciled with the audited SuperAdmin backup schedule workflow.';
+
 export const BackupConfigPanel: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [config, setConfig] = useState<BackupConfig | null>(null);
   const [history, setHistory] = useState<BackupHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [triggering, setTriggering] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const saving = false;
+  const triggering = false;
+  const [, setHasChanges] = useState(false);
 
   const fetchOrganizations = useCallback(async () => {
     try {
@@ -83,12 +84,8 @@ export const BackupConfigPanel: React.FC = () => {
 
     setLoading(true);
     try {
-      const [configResult, historyResult] = await Promise.all([
-        Api.get(`/data-export/backup-config?organizationId=${selectedOrgId}`),
-        Api.get(`/data-export/backup-history?organizationId=${selectedOrgId}`),
-      ]);
-      setConfig(configResult.config);
-      setHistory(historyResult.history || []);
+      setConfig(null);
+      setHistory([]);
       setHasChanges(false);
     } catch (error) {
       console.error('Failed to fetch backup config:', error);
@@ -108,37 +105,11 @@ export const BackupConfigPanel: React.FC = () => {
   }, [selectedOrgId, fetchConfig]);
 
   const handleSave = async () => {
-    if (!config) return;
-
-    setSaving(true);
-    try {
-      await Api.put(`/data-export/backup-config?organizationId=${selectedOrgId}`, {
-        enabled: config.enabled,
-        frequency: config.frequency,
-        retentionDays: config.retention_days,
-        includeAttachments: config.include_attachments,
-        includeAuditLogs: config.include_audit_logs,
-      });
-      toast.success('Backup configuration saved');
-      setHasChanges(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save configuration');
-    } finally {
-      setSaving(false);
-    }
+    toast.error(backupConfigWorkflowUnavailableReason);
   };
 
   const handleTriggerBackup = async () => {
-    setTriggering(true);
-    try {
-      await Api.post('/data-export/backup-config/trigger', { organizationId: selectedOrgId });
-      toast.success('Backup triggered');
-      fetchConfig();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to trigger backup');
-    } finally {
-      setTriggering(false);
-    }
+    toast.error(backupConfigWorkflowUnavailableReason);
   };
 
   const updateConfig = (field: keyof BackupConfig, value: any) => {
@@ -162,7 +133,6 @@ export const BackupConfigPanel: React.FC = () => {
   const getNextBackupTime = () => {
     if (!config?.enabled) return 'Disabled';
 
-    const now = new Date();
     const nextBackup = new Date();
 
     switch (config.frequency) {
@@ -193,7 +163,7 @@ export const BackupConfigPanel: React.FC = () => {
         <select
           value={selectedOrgId}
           onChange={(e) => setSelectedOrgId(e.target.value)}
-          className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none min-w-[200px]"
+          className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none min-w-[200px]"
         >
           <option value="" disabled>
             Select Organization
@@ -217,16 +187,18 @@ export const BackupConfigPanel: React.FC = () => {
           </button>
           <button
             onClick={handleTriggerBackup}
-            disabled={triggering || !config?.enabled}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+            disabled
+            title={backupConfigWorkflowUnavailableReason}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
           >
             {triggering ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}
             Run Backup Now
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || !hasChanges}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+            disabled
+            title={backupConfigWorkflowUnavailableReason}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save Changes
@@ -241,7 +213,14 @@ export const BackupConfigPanel: React.FC = () => {
         </div>
       ) : loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
+        </div>
+      ) : !config ? (
+        <div className="py-6">
+          <ReadOnlyState
+            title="Backup configuration workflow unavailable"
+            description={backupConfigWorkflowUnavailableReason}
+          />
         </div>
       ) : (
         config && (
@@ -249,8 +228,8 @@ export const BackupConfigPanel: React.FC = () => {
             {/* Configuration */}
             <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                  <Settings size={20} className="text-violet-400" />
+                <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                  <Settings size={20} className="text-primary-400" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">Backup Configuration</h3>
@@ -276,7 +255,7 @@ export const BackupConfigPanel: React.FC = () => {
                       className="sr-only"
                     />
                     <div
-                      className={`w-12 h-6 rounded-full transition-colors ${config.enabled ? 'bg-violet-600' : 'bg-slate-700'}`}
+                      className={`w-12 h-6 rounded-full transition-colors ${config.enabled ? 'bg-primary-600' : 'bg-slate-700'}`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full bg-white dark:bg-navy-900 shadow transform transition-transform ${config.enabled ? 'translate-x-6' : 'translate-x-0.5'} mt-0.5`}
@@ -293,7 +272,7 @@ export const BackupConfigPanel: React.FC = () => {
                     value={config.frequency}
                     onChange={(e) => updateConfig('frequency', e.target.value)}
                     disabled={!config.enabled}
-                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none disabled:opacity-50"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -313,7 +292,7 @@ export const BackupConfigPanel: React.FC = () => {
                     value={config.retention_days}
                     onChange={(e) => updateConfig('retention_days', parseInt(e.target.value))}
                     disabled={!config.enabled}
-                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none disabled:opacity-50"
                   />
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Backups older than this will be deleted
@@ -327,7 +306,7 @@ export const BackupConfigPanel: React.FC = () => {
                       checked={config.include_attachments}
                       onChange={(e) => updateConfig('include_attachments', e.target.checked)}
                       disabled={!config.enabled}
-                      className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-violet-500 disabled:opacity-50"
+                      className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 disabled:opacity-50"
                     />
                     <div>
                       <span className="text-slate-300 group-hover:text-white">
@@ -345,7 +324,7 @@ export const BackupConfigPanel: React.FC = () => {
                       checked={config.include_audit_logs}
                       onChange={(e) => updateConfig('include_audit_logs', e.target.checked)}
                       disabled={!config.enabled}
-                      className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-violet-500 disabled:opacity-50"
+                      className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 disabled:opacity-50"
                     />
                     <div>
                       <span className="text-slate-300 group-hover:text-white">
@@ -389,7 +368,7 @@ export const BackupConfigPanel: React.FC = () => {
                         className={`inline-flex items-center gap-1 mt-1 text-xs ${
                           config.last_backup_status === 'success'
                             ? 'text-emerald-400'
-                            : 'text-red-400'
+                            : 'text-rose-400'
                         }`}
                       >
                         {config.last_backup_status === 'success' ? (
@@ -416,7 +395,7 @@ export const BackupConfigPanel: React.FC = () => {
                       Next Scheduled Backup
                     </p>
                     <p className="text-white font-medium flex items-center gap-2">
-                      <Clock size={14} className="text-violet-400" />
+                      <Clock size={14} className="text-primary-400" />
                       {getNextBackupTime()}
                     </p>
                   </div>
@@ -450,7 +429,7 @@ export const BackupConfigPanel: React.FC = () => {
                           {item.status === 'success' ? (
                             <CheckCircle2 size={16} className="text-emerald-400" />
                           ) : (
-                            <XCircle size={16} className="text-red-400" />
+                            <XCircle size={16} className="text-rose-400" />
                           )}
                           <div>
                             <p className="text-sm text-white">

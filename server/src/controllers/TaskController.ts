@@ -3436,6 +3436,9 @@ export class TaskController {
         extractedId = query;
       }
 
+      const effectiveQuery = extractedId || query;
+      const effectiveLike = `%${effectiveQuery}%`;
+
       // If we extracted an ID, search by ID first, then also by title as fallback
       const tasks = await DbPromise.all<{
         id: string;
@@ -3449,19 +3452,24 @@ export class TaskController {
          FROM tasks t
          LEFT JOIN initiatives i ON i.id = t.initiative_id
          WHERE t.organization_id = ?
-           AND t.id != ?
-           AND (t.title LIKE ? OR t.id = ? OR t.id LIKE ?)
+           AND (? = '' OR CAST(t.id AS TEXT) <> ?)
+           AND (
+             lower(CAST(t.title AS TEXT)) LIKE lower(?)
+             OR CAST(t.id AS TEXT) = ?
+             OR CAST(t.id AS TEXT) LIKE ?
+           )
          ORDER BY
-           CASE WHEN t.id = ? THEN 0 ELSE 1 END,
+           CASE WHEN CAST(t.id AS TEXT) = ? THEN 0 ELSE 1 END,
            t.updated_at DESC
          LIMIT 20`,
         [
           orgId,
-          excludeId || '',
-          `%${extractedId || query}%`,
-          extractedId || '',
-          `%${extractedId || query}%`,
-          extractedId || '',
+          excludeId,
+          excludeId,
+          effectiveLike,
+          effectiveQuery,
+          effectiveLike,
+          effectiveQuery,
         ]
       );
 

@@ -127,12 +127,12 @@ const SEVERITY_CONFIG = {
   },
   CRITICAL: {
     label: { en: 'Critical', pl: 'Krytyczne' },
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
-    bgColor: 'bg-red-500/10',
-    borderColor: 'border-red-500/30',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
+    bgColor: 'bg-rose-500/10',
+    borderColor: 'border-rose-500/30',
     icon: AlertCircle,
-    dotColor: 'bg-red-500',
+    dotColor: 'bg-rose-500',
   },
 };
 
@@ -140,27 +140,27 @@ const SEVERITY_CONFIG = {
 
 const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   TASK_ASSIGNED: { icon: CheckSquare, color: 'text-blue-400' },
-  TASK_OVERDUE: { icon: Clock, color: 'text-red-400' },
-  TASK_BLOCKED: { icon: AlertCircle, color: 'text-red-400' },
-  DECISION_REQUIRED: { icon: Scale, color: 'text-purple-400' },
-  DECISION_OVERDUE: { icon: Scale, color: 'text-red-400' },
+  TASK_OVERDUE: { icon: Clock, color: 'text-rose-400' },
+  TASK_BLOCKED: { icon: AlertCircle, color: 'text-rose-400' },
+  DECISION_REQUIRED: { icon: Scale, color: 'text-primary-400' },
+  DECISION_OVERDUE: { icon: Scale, color: 'text-rose-400' },
   INITIATIVE_STARTED: { icon: Target, color: 'text-emerald-400' },
   INITIATIVE_STALLED: { icon: Target, color: 'text-amber-400' },
   INITIATIVE_COMPLETED: { icon: Target, color: 'text-emerald-400' },
   AI_RISK_DETECTED: { icon: AlertTriangle, color: 'text-amber-400' },
-  AI_RECOMMENDATION: { icon: Info, color: 'text-purple-400' },
-  AI_OVERLOAD_DETECTED: { icon: AlertTriangle, color: 'text-red-400' },
+  AI_RECOMMENDATION: { icon: Info, color: 'text-primary-400' },
+  AI_OVERLOAD_DETECTED: { icon: AlertTriangle, color: 'text-rose-400' },
   AI_DEPENDENCY_CONFLICT: { icon: AlertCircle, color: 'text-amber-400' },
   SYSTEM_ALERT: { icon: Bell, color: 'text-slate-400' },
   // App / billing comms
-  PAYMENT_FAILED: { icon: CreditCard, color: 'text-red-400' },
+  PAYMENT_FAILED: { icon: CreditCard, color: 'text-rose-400' },
   USAGE_ALERT: { icon: AlertTriangle, color: 'text-amber-400' },
   SUBSCRIPTION_CHANGE: { icon: CreditCard, color: 'text-indigo-400' },
   BILLING_LIMIT_WARNING: { icon: AlertTriangle, color: 'text-amber-400' },
-  BILLING_LIMIT_REACHED: { icon: AlertCircle, color: 'text-red-400' },
+  BILLING_LIMIT_REACHED: { icon: AlertCircle, color: 'text-rose-400' },
   INVOICE_READY: { icon: CreditCard, color: 'text-emerald-400' },
   // DBR77 comms
-  DBR77_UPDATE: { icon: Megaphone, color: 'text-purple-400' },
+  DBR77_UPDATE: { icon: Megaphone, color: 'text-primary-400' },
   DBR77_RELEASE_NOTES: { icon: Megaphone, color: 'text-indigo-400' },
   DBR77_KB_NEW: { icon: BookOpen, color: 'text-emerald-400' },
   DBR77_INSTRUCTION: { icon: BookOpen, color: 'text-amber-400' },
@@ -987,7 +987,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       case 'TASK':
         return <CheckSquare size={14} className="text-blue-400" />;
       case 'DECISION':
-        return <Scale size={14} className="text-purple-400" />;
+        return <Scale size={14} className="text-primary-400" />;
       case 'INITIATIVE':
         return <Target size={14} className="text-emerald-400" />;
       case 'PROJECT':
@@ -1383,7 +1383,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               : notification.data?.createdByName || (isPolish ? 'Użytkownik' : 'User');
           const CreatorIcon = isAICreated ? Bot : isSystemCreated ? Monitor : Users;
           const creatorColor = isAICreated
-            ? 'text-purple-500 bg-purple-500/10 border-purple-400/40'
+            ? 'text-primary-500 bg-primary-500/10 border-primary-400/40'
             : isSystemCreated
               ? 'text-slate-500 bg-slate-500/10 border-slate-400/40'
               : 'text-blue-500 bg-blue-500/10 border-blue-400/40';
@@ -1391,7 +1391,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           // Severity border color for left accent
           const severityBorderAccent =
             notification.severity === 'CRITICAL'
-              ? 'border-l-red-500'
+              ? 'border-l-rose-500'
               : notification.severity === 'WARNING'
                 ? 'border-l-amber-500'
                 : 'border-l-blue-400';
@@ -1405,7 +1405,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     {isPolish ? 'Co się dzieje' : "What's Happening"}
                   </h2>
                   {isAnalyzingWorksheet && (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-purple-500 dark:text-purple-400 animate-pulse">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-primary-500 dark:text-primary-400 animate-pulse">
                       <Loader2 size={12} className="animate-spin" />
                       {isPolish ? 'AI analizuje...' : 'AI analyzing...'}
                     </span>
@@ -1602,7 +1602,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </h2>
                 <button
                   onClick={handleAskAI}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                 >
                   <Sparkles size={13} />
                   {isPolish ? 'Zapytaj AI' : 'Ask AI'}
@@ -1616,7 +1616,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                         aiAnalysis.riskLevel === 'critical'
-                          ? 'bg-red-500/10 text-red-500'
+                          ? 'bg-rose-500/10 text-rose-500'
                           : aiAnalysis.riskLevel === 'high'
                             ? 'bg-amber-500/10 text-amber-500'
                             : aiAnalysis.riskLevel === 'medium'
@@ -1627,7 +1627,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
                     </span>
                     {aiAnalysis.confidence && (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-500">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
                         {isPolish ? 'Pewność' : 'Confidence'}: {aiAnalysis.confidence}
                       </span>
                     )}
@@ -1653,10 +1653,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
                       {isPolish ? 'Rekomendacja' : 'Recommendation'}
                     </label>
-                    <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-500/10 border border-purple-200/40 dark:border-purple-500/20">
+                    <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-500/10 border border-primary-200/40 dark:border-primary-500/20">
                       <div className="flex items-start gap-2">
-                        <Zap size={14} className="text-purple-500 mt-0.5 shrink-0" />
-                        <p className="text-sm text-purple-700 dark:text-purple-300 leading-relaxed">
+                        <Zap size={14} className="text-primary-500 mt-0.5 shrink-0" />
+                        <p className="text-sm text-primary-700 dark:text-primary-300 leading-relaxed">
                           {aiAnalysis.recommendation}
                         </p>
                       </div>
@@ -1666,7 +1666,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {/* AI chat CTA */}
                   <button
                     onClick={handleAskAI}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
                   >
                     <MessageSquare size={14} />
                     {isPolish ? 'Zapytaj AI o więcej szczegółów' : 'Ask AI for more details'}
@@ -1789,13 +1789,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       // Urgency-based left accent
                       const urgencyBorder =
                         urgency === 'critical'
-                          ? 'border-l-2 border-l-red-400/70'
+                          ? 'border-l-2 border-l-rose-400/70'
                           : urgency === 'optional'
                             ? 'border-l-2 border-l-slate-200/50 dark:border-l-navy-700/50'
                             : '';
                       const urgencyText =
                         urgency === 'critical' && !done
-                          ? 'text-red-600 dark:text-red-400 font-medium'
+                          ? 'text-rose-600 dark:text-rose-400 font-medium'
                           : urgency === 'optional' && !done
                             ? 'text-slate-500 dark:text-slate-400'
                             : done
@@ -1817,7 +1817,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               done
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
                                 : urgency === 'critical'
-                                  ? 'border-red-300 dark:border-red-500/50 hover:border-red-400'
+                                  ? 'border-rose-300 dark:border-rose-500/50 hover:border-rose-400'
                                   : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400 dark:hover:border-emerald-500'
                             }`}
                           >
@@ -1867,7 +1867,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </h2>
                 <button
                   onClick={handleAskAI}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                 >
                   <Sparkles size={13} />
                   {isPolish ? 'AI komentarz' : 'AI comment'}
@@ -1926,7 +1926,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   </p>
                   <button
                     onClick={handleOpenChat}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-purple-300 dark:border-purple-500/30 text-purple-600 dark:text-purple-400 hover:border-purple-400 dark:hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm font-medium"
                   >
                     <MessageSquare size={14} />
                     {isPolish ? 'Otwórz czat z kontekstem' : 'Open contextual chat'}
@@ -1957,10 +1957,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </div>
                             <button
                               onClick={() => handleDeleteComment(comment.id)}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
-                              <Trash2 size={12} className="text-red-400" />
+                              <Trash2 size={12} className="text-rose-400" />
                             </button>
                           </div>
                           {/* Body */}
@@ -1995,8 +1995,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               bg: 'bg-blue-100 dark:bg-blue-500/20',
             },
             comment_deleted: {
-              icon: <Trash2 size={14} className="text-red-400" />,
-              bg: 'bg-red-100 dark:bg-red-500/20',
+              icon: <Trash2 size={14} className="text-rose-400" />,
+              bg: 'bg-rose-100 dark:bg-rose-500/20',
             },
           };
           const defaultIcon = {
@@ -2359,7 +2359,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       onClick={() =>
                         onNavigateToSource?.('decision', (contract.primaryCta as any).id)
                       }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-400/50 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                     >
                       <Scale size={13} />
                       {contract.primaryCta.label}
@@ -2502,7 +2502,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {/* Delete */}
                   <button
                     onClick={handleDelete}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                   >
                     <Trash2 size={13} />
                     {isPolish ? 'Usuń' : 'Delete'}
@@ -2564,7 +2564,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                           <Info size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -2631,15 +2631,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 dark:from-purple-500/20 dark:to-indigo-500/20">
-                          <Bot size={18} className="text-purple-500 dark:text-purple-400" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-indigo-500/10 dark:from-primary-500/20 dark:to-indigo-500/20">
+                          <Bot size={18} className="text-primary-500 dark:text-primary-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                           {isPolish ? 'Analiza AI' : 'AI Analysis'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Sparkles size={14} className="text-purple-400" />
+                        <Sparkles size={14} className="text-primary-400" />
                         <motion.div
                           animate={{ rotate: expandedSections.has('ai-analysis') ? 180 : 0 }}
                         >
@@ -2658,12 +2658,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="p-5 space-y-4">
                             <div className="flex items-center gap-3">
                               <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-red-500/10 text-red-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-rose-500/10 text-rose-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
                               >
                                 {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
                               </span>
                               {aiAnalysis.confidence && (
-                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-500">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary-500/10 text-primary-500">
                                   {isPolish ? 'Pewność' : 'Confidence'}: {aiAnalysis.confidence}
                                 </span>
                               )}
@@ -2676,17 +2676,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                               {aiAnalysis.impact}
                             </div>
-                            <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
+                            <div className="p-3 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
                               <div className="flex items-start gap-2">
-                                <Zap size={16} className="text-purple-500 mt-0.5 shrink-0" />
-                                <div className="text-sm text-purple-700 dark:text-purple-300">
+                                <Zap size={16} className="text-primary-500 mt-0.5 shrink-0" />
+                                <div className="text-sm text-primary-700 dark:text-primary-300">
                                   {aiAnalysis.recommendation}
                                 </div>
                               </div>
                             </div>
                             <button
                               onClick={handleAskAI}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors text-sm font-medium"
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors text-sm font-medium"
                             >
                               <MessageSquare size={14} />
                               {isPolish
@@ -2711,7 +2711,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20">
                           <CheckSquare
                             size={18}
                             className="text-emerald-500 dark:text-emerald-400"
@@ -2834,7 +2834,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
                           <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -2866,7 +2866,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </p>
                             <button
                               onClick={handleOpenChat}
-                              className="w-full px-4 py-2.5 rounded-xl border border-dashed border-purple-300 dark:border-purple-500/30 text-purple-600 dark:text-purple-400 hover:border-purple-400 dark:hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-colors text-sm flex items-center justify-center gap-2"
+                              className="w-full px-4 py-2.5 rounded-xl border border-dashed border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:border-primary-400 dark:hover:border-primary-400/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 transition-colors text-sm flex items-center justify-center gap-2"
                             >
                               <MessageSquare size={14} />
                               {isPolish ? 'Otwórz czat z kontekstem' : 'Open contextual chat'}
@@ -2965,8 +2965,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 dark:from-purple-500/20 dark:to-indigo-500/20">
-                          <Flag size={18} className="text-purple-500 dark:text-purple-400" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-indigo-500/10 dark:from-primary-500/20 dark:to-indigo-500/20">
+                          <Flag size={18} className="text-primary-500 dark:text-primary-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                           Control
@@ -3061,7 +3061,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 </button>
                                 <button
                                   onClick={handleDelete}
-                                  className="flex-1 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+                                  className="flex-1 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                   <Trash2 size={14} />
                                   <span>{isPolish ? 'Usuń' : 'Delete'}</span>
@@ -3086,8 +3086,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20">
-                          <Users size={18} className="text-cyan-500 dark:text-cyan-400" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
+                          <Users size={18} className="text-blue-500 dark:text-blue-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                           {isPolish ? 'Interesariusze' : 'Stakeholders'}
@@ -3125,7 +3125,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             )}
                             {sourceEntity?.decider && (
                               <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
-                                <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-bold text-purple-500">
+                                <div className="w-7 h-7 rounded-full bg-primary-500/20 flex items-center justify-center text-xs font-bold text-primary-500">
                                   {String(sourceEntity.decider).charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -3161,7 +3161,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     >
                       <div className="flex items-center justify-between px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
                             <Info size={18} className="text-amber-500 dark:text-amber-400" />
                           </div>
                           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">

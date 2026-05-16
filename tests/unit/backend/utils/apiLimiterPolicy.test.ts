@@ -1,13 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildApiLimiterKey, getApiLimiterLimit } from '../../../../server/src/utils/apiLimiterPolicy.ts';
 
 describe('apiLimiterPolicy', () => {
+  afterEach(() => {
+    delete process.env.APP_ENV;
+    delete process.env.RAILWAY_ENVIRONMENT_NAME;
+    delete process.env.RAILWAY_ENVIRONMENT;
+  });
+
   it('uses a higher global limit for authenticated requests', () => {
     const req: any = { _rateLimitUserId: 'user-1' };
 
     expect(getApiLimiterLimit(req, true)).toBe(1000);
     expect(getApiLimiterLimit(req, false)).toBe(20000);
+  });
+
+  it('uses a manual-QA friendly authenticated cap in stage-like environments', () => {
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'staging';
+    const req: any = { _rateLimitUserId: 'user-1' };
+
+    expect(getApiLimiterLimit(req, true)).toBe(20000);
   });
 
   it('keeps the anonymous production cap for requests without a user key', () => {

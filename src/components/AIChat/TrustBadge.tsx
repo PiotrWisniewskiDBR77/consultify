@@ -145,22 +145,53 @@ function bucketSourceCount(n: number): SourceCountBucket {
 function normalizeCitations(raw: unknown): ChatCitation[] {
   if (!Array.isArray(raw)) return [];
   const out: ChatCitation[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== 'object') continue;
+  raw.forEach((entry, index) => {
+    if (!entry || typeof entry !== 'object') return;
     const e = entry as Record<string, unknown>;
-    const id = typeof e.id === 'string' ? e.id : undefined;
-    const title = typeof e.title === 'string' ? e.title : undefined;
-    if (!id || !title) continue;
+    const id = typeof e.id === 'string' && e.id.trim() ? e.id.trim() : `citation-${index + 1}`;
+    const rawTitle =
+      typeof e.title === 'string'
+        ? e.title
+        : typeof e.sourceTitle === 'string'
+          ? e.sourceTitle
+          : '';
+    const rawType =
+      typeof e.type === 'string'
+        ? e.type
+        : typeof e.sourceType === 'string'
+          ? e.sourceType
+          : 'external';
+    const type = ['assessment', 'initiative', 'report', 'roadmap', 'external'].includes(rawType)
+      ? (rawType as ChatCitation['type'])
+      : 'external';
+    const genericTitle =
+      /^source\s+\d+$/i.test(rawTitle.trim()) || /^rag_\d+$/i.test(rawTitle.trim());
+    const title =
+      rawTitle.trim() && !genericTitle
+        ? rawTitle.trim()
+        : type === 'external'
+          ? 'External source'
+          : 'Knowledge base source';
     out.push({
       id,
       title,
-      type: (typeof e.type === 'string' ? e.type : 'external') as ChatCitation['type'],
-      reference: typeof e.reference === 'string' ? e.reference : '',
-      link: typeof e.link === 'string' ? e.link : undefined,
+      type,
+      reference:
+        typeof e.reference === 'string'
+          ? e.reference
+          : typeof e.sourceId === 'string'
+            ? e.sourceId
+            : '',
+      link:
+        typeof e.link === 'string'
+          ? e.link
+          : typeof e.sourceUrl === 'string'
+            ? e.sourceUrl
+            : undefined,
       excerpt: typeof e.excerpt === 'string' ? e.excerpt : undefined,
       entityId: typeof e.entityId === 'string' ? e.entityId : undefined,
     });
-  }
+  });
   return out;
 }
 
@@ -344,7 +375,9 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
     }
   }, [humanizeEnabled, modelLabel, reasoningObservations, writeToClipboard]);
 
-  if (!isEnabled()) return null;
+  // If there are no citations, don't render the badge: it is often interpreted as a system error
+  // ("No cited sources" while the answer contains [1] markers) and creates noise for simple chats.
+  if (!isEnabled() || !hasSources) return null;
 
   const Icon = hasSources ? CheckCircle2 : AlertCircle;
   const sourceLabel = hasSources

@@ -38,6 +38,21 @@ interface ValidationSchema {
 
 const rateLimitStore = new Map<string, number[]>();
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const safeRemoveHeader = (res: Response, key: string): void => {
+  safeRead(() => {
+    res.removeHeader(key);
+    return true;
+  }, false);
+};
+
 // Periodic cleanup of rate limit store (every 5 minutes)
 setInterval(() => {
   const now = Date.now();
@@ -61,6 +76,8 @@ setInterval(() => {
  * Apply security headers to responses
  */
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
+  safeRemoveHeader(res, 'X-Powered-By');
+
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
 

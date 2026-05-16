@@ -31,13 +31,11 @@ export interface CardProps extends Omit<HTMLMotionProps<'div'>, 'ref'> {
 const variantStyles: Record<CardVariant, string> = {
   elevated: `
     bg-white dark:bg-navy-800
-    border border-slate-200 dark:border-navy-700
     shadow-[0_4px_6px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.06)]
     dark:shadow-[0_4px_6px_rgba(0,0,0,0.25),0_2px_4px_rgba(0,0,0,0.3)]
   `,
   filled: `
     bg-slate-50 dark:bg-navy-900
-    border border-slate-200 dark:border-navy-700
   `,
   outlined: `
     bg-white dark:bg-navy-900
@@ -45,10 +43,11 @@ const variantStyles: Record<CardVariant, string> = {
   `,
   glass: `
     backdrop-blur-[20px]
-    bg-white/95 dark:bg-navy-900/70
+    bg-gradient-to-br from-white/90 to-white/70
+    dark:from-navy-900/80 dark:to-navy-900/60
     shadow-[0_4px_6px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.06)]
     dark:shadow-[0_4px_6px_rgba(0,0,0,0.25),0_2px_4px_rgba(0,0,0,0.3)]
-    border border-slate-200 dark:border-navy-700
+    border border-white/20 dark:border-navy-700
   `,
 };
 
@@ -136,12 +135,12 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
       <div ref={ref} className={`flex items-start justify-between gap-4 ${className}`} {...props}>
         <div className="flex-1 min-w-0">
           {title && (
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white truncate">
+            <h3 className="text-base font-semibold text-navy-900 dark:text-white truncate">
               {title}
             </h3>
           )}
           {description && (
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
           )}
           {children}
         </div>

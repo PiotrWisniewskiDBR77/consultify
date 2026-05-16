@@ -54,9 +54,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const variantStyles = {
     danger: {
-      iconBg: 'bg-red-100 dark:bg-red-500/15',
-      iconColor: 'text-red-600 dark:text-red-400',
-      confirmBg: 'bg-red-600 hover:bg-red-700 focus:ring-red-500/40',
+      iconBg: 'bg-rose-100 dark:bg-rose-500/15',
+      iconColor: 'text-rose-600 dark:text-rose-400',
+      confirmBg: 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500/40',
       defaultIcon: <Trash2 size={20} />,
     },
     warning: {

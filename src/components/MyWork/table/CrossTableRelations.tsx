@@ -67,7 +67,7 @@ const RELATION_TYPES: {
 }[] = [
   { id: 'related_to', label: 'Related to', labelPl: 'Powiązany z', color: '#6366f1' },
   { id: 'depends_on', label: 'Depends on', labelPl: 'Zależy od', color: '#f59e0b' },
-  { id: 'blocks', label: 'Blocks', labelPl: 'Blokuje', color: '#ef4444' },
+  { id: 'blocks', label: 'Blocks', labelPl: 'Blokuje', color: '#f43f5e' },
   { id: 'duplicates', label: 'Duplicates', labelPl: 'Duplikuje', color: '#94a3b8' },
   { id: 'parent_of', label: 'Parent of', labelPl: 'Rodzic', color: '#10b981' },
 ];
@@ -216,7 +216,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Network size={16} className="text-violet-500" />
+          <Network size={16} className="text-primary-500" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {isPl ? 'Relacje między tabelami' : 'Cross-Table Relations'}
           </span>
@@ -235,7 +235,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {tab === 'relations'
                 ? isPl
@@ -268,7 +268,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                       <button
                         key={map.id}
                         onClick={() => handleSelectMap(map)}
-                        className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] transition-colors ${selectedMap?.id === map.id ? 'bg-violet-500/10 text-violet-600 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
+                        className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] transition-colors ${selectedMap?.id === map.id ? 'bg-primary-500/10 text-primary-600 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
                       >
                         <div className="font-medium truncate">{map.title}</div>
                         <div className="text-[8px] text-slate-400">
@@ -332,7 +332,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                             <button
                               key={n.id}
                               onClick={() => setLinkSource(n.id)}
-                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-white dark:bg-navy-800 border border-slate-200/40 dark:border-navy-700/40 text-slate-600 dark:text-slate-300 hover:border-violet-500/40 transition-colors truncate max-w-[120px]"
+                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-white dark:bg-navy-800 border border-slate-200/40 dark:border-navy-700/40 text-slate-600 dark:text-slate-300 hover:border-primary-500/40 transition-colors truncate max-w-[120px]"
                             >
                               {n.data?.label || n.id}
                             </button>
@@ -342,7 +342,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                     )}
 
                     {linkSource && (
-                      <div className="mb-2 flex items-center gap-1 text-[9px] text-violet-600">
+                      <div className="mb-2 flex items-center gap-1 text-[9px] text-primary-600">
                         <span className="font-bold">
                           {currentNodes.find((n) => n.id === linkSource)?.data?.label || linkSource}
                         </span>
@@ -378,7 +378,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                             {linkSource && (
                               <button
                                 onClick={() => handleCreateLink(node.id)}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-violet-600 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-primary-600 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                               >
                                 <Link2 size={8} />
                                 {isPl ? 'Połącz' : 'Link'}
@@ -398,7 +398,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
           {activeTab === 'network' && (
             <div className="p-5">
               <div className="text-center mb-4">
-                <Network size={32} className="text-violet-500/30 mx-auto mb-2" />
+                <Network size={32} className="text-primary-500/30 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   {isPl ? 'Sieć pomysłów' : 'Idea Network'}
                 </p>
@@ -464,7 +464,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                         label: 'Cross-table count',
                       })
                     }
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-violet-600 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-primary-600 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                   >
                     <Plus size={10} />
                     {isPl ? 'Dodaj kolumnę rollup' : 'Add rollup column'}

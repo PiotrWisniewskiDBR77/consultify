@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PlaybookExecutor } from '../../server/src/ai/actionExecutors/playbookExecutor';
+import { PlaybookExecutor } from '../../server/src/ai/actionExecutors/playbookExecutor.ts';
 
 describe('AI Playbook Branching (PlaybookExecutor) - REAL_CODE', () => {
   it('execute returns completed result for empty steps', async () => {

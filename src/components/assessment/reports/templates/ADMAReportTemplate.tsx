@@ -146,7 +146,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         </h2>
         <div className="grid grid-cols-6 gap-4">
           {/* Overall Score */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-4 text-center">
+          <div className="bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-indigo-900/20 dark:to-primary-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
               {data.overallMaturity?.toFixed(1) || '0.0'}
             </div>
@@ -383,7 +383,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                         {dim.target}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded font-bold text-sm">
+                        <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded font-bold text-sm">
                           -{dim.gap}
                         </span>
                       </td>
@@ -461,7 +461,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                   <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     Luka
                   </div>
-                  <div className="text-lg font-bold text-red-600">-{dim.gap}</div>
+                  <div className="text-lg font-bold text-rose-600">-{dim.gap}</div>
                 </div>
               </div>
             );
@@ -603,8 +603,8 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                 </div>
               )}
               {longTermItems.length > 0 && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
-                  <h4 className="font-semibold text-purple-700 dark:text-purple-400 mb-2 text-sm">
+                <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4">
+                  <h4 className="font-semibold text-primary-700 dark:text-primary-400 mb-2 text-sm">
                     Long-term (gap 3+)
                   </h4>
                   {longTermItems.map((d) => (
@@ -625,7 +625,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
           <CheckCircle size={20} className="text-blue-600" />
           Assessment Conclusions
         </h2>
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-indigo-900/20 dark:to-primary-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-6">
           <div className="grid grid-cols-4 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">

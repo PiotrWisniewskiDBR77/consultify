@@ -167,7 +167,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
                               size={12}
                               className={
                                 action.id === 'expand' || action.id === 'summarize'
-                                  ? 'text-purple-500'
+                                  ? 'text-primary-500'
                                   : ''
                               }
                             />

@@ -469,7 +469,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       </button>
                       <button
                         onClick={() => handleDelete(dist.id)}
-                        className="p-1.5 rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                         title={isPl ? 'Usuń' : 'Delete'}
                       >
                         <Trash2 size={12} />

@@ -67,8 +67,8 @@ DBR77 Vector is the DBR77 proprietary LLM and industrial reasoning layer. It is 
 const CONSULTIFY_FALLBACK_CONTEXT = `Product: Consultify
 Consultify is the main public product priority. It is an AI-powered platform for structured digital transformation work: diagnosis, roadmap building, initiatives, execution support, ROI logic, and reporting. Anna should default to explaining Consultify first, especially for value, adoption, demo, trial, workflow, onboarding, and business impact questions.`;
 
-const DBR77_FALLBACK_CONTEXT = `Product: DBR77 Ecosystem
-DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`;
+const DBR77_FALLBACK_CONTEXT = `Company: DBR77
+DBR77 is the organization behind a portfolio of industrial and transformation products, including Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT and Marketplace. Do not describe DBR77 itself as only a technology ecosystem; separate the company from its individual products and platforms.`;
 
 const IRIS_FALLBACK_CONTEXT = `Product: IRIS
 IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`;

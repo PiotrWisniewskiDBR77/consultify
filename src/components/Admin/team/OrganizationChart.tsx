@@ -84,7 +84,7 @@ const OrgNodeCard: React.FC<{
         className={cn(
           'relative flex items-center gap-3 p-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer',
           level === 0 &&
-            'border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20'
+            'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20'
         )}
         onClick={() => onNodeClick?.(node)}
       >

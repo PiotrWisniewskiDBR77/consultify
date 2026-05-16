@@ -90,7 +90,7 @@ export const ApiManagementPanel: React.FC = () => {
                       {key.key_prefix}...
                     </span>
                     {key.revoked_at ? (
-                      <span className="px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded">
+                      <span className="px-2 py-1 text-xs bg-rose-500/20 text-rose-400 rounded">
                         Revoked
                       </span>
                     ) : (
@@ -113,7 +113,7 @@ export const ApiManagementPanel: React.FC = () => {
                 {!key.revoked_at && (
                   <button
                     onClick={() => handleRevoke(key.id)}
-                    className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                     title="Revoke"
                   >
                     <Trash2 size={16} />

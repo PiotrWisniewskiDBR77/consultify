@@ -2,62 +2,62 @@
 -- Adds columns for severity, enriched data, snooze, checklist, and related objects
 -- Uses IF NOT EXISTS pattern for safety (columns may already exist from seed scripts)
 
--- Severity column (INFO, WARNING, CRITICAL)
--- SQLite doesn't support IF NOT EXISTS for ALTER TABLE, so we use a pragma check approach
--- These will fail silently if columns already exist in the DB
-BEGIN TRANSACTION;
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    icon TEXT,
+    priority TEXT DEFAULT 'normal',
+    entity_type TEXT,
+    entity_id TEXT,
+    action_url TEXT,
+    actor_id TEXT,
+    actor_name TEXT,
+    metadata TEXT DEFAULT '{}',
+    is_read INTEGER DEFAULT 0,
+    read INTEGER DEFAULT 0,
+    read_at TIMESTAMP,
+    is_dismissed INTEGER DEFAULT 0,
+    dismissed_at TIMESTAMP,
+    channels_sent TEXT DEFAULT '[]',
+    email_sent INTEGER DEFAULT 0,
+    email_sent_at TIMESTAMP,
+    email_message_id TEXT,
+    email_delivered INTEGER DEFAULT 0,
+    email_opened INTEGER DEFAULT 0,
+    email_opened_at TIMESTAMP,
+    slack_sent INTEGER DEFAULT 0,
+    slack_sent_at TIMESTAMP,
+    slack_message_ts TEXT,
+    group_key TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP
+);
 
--- Create a temporary table to track which columns we need
--- This migration is idempotent — safe to re-run
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_org ON notifications(organization_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_group ON notifications(group_key);
 
--- Add new columns (SQLite will error on duplicate columns, wrapped in savepoints)
-SAVEPOINT add_severity;
-ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'INFO';
-RELEASE add_severity;
-
-SAVEPOINT add_message;
-ALTER TABLE notifications ADD COLUMN message TEXT;
-RELEASE add_message;
-
-SAVEPOINT add_related_object_type;
-ALTER TABLE notifications ADD COLUMN related_object_type TEXT;
-RELEASE add_related_object_type;
-
-SAVEPOINT add_related_object_id;
-ALTER TABLE notifications ADD COLUMN related_object_id TEXT;
-RELEASE add_related_object_id;
-
-SAVEPOINT add_project_id;
-ALTER TABLE notifications ADD COLUMN project_id TEXT;
-RELEASE add_project_id;
-
-SAVEPOINT add_is_actionable;
-ALTER TABLE notifications ADD COLUMN is_actionable INTEGER DEFAULT 0;
-RELEASE add_is_actionable;
-
-SAVEPOINT add_is_read;
-ALTER TABLE notifications ADD COLUMN is_read INTEGER DEFAULT 0;
-RELEASE add_is_read;
-
-SAVEPOINT add_data;
-ALTER TABLE notifications ADD COLUMN data TEXT;
-RELEASE add_data;
-
-SAVEPOINT add_snoozed_until;
-ALTER TABLE notifications ADD COLUMN snoozed_until TEXT;
-RELEASE add_snoozed_until;
-
-SAVEPOINT add_checklist;
-ALTER TABLE notifications ADD COLUMN checklist TEXT;
-RELEASE add_checklist;
-
-SAVEPOINT add_initiative_id;
-ALTER TABLE notifications ADD COLUMN initiative_id TEXT;
-RELEASE add_initiative_id;
-
-SAVEPOINT add_task_id;
-ALTER TABLE notifications ADD COLUMN task_id TEXT;
-RELEASE add_task_id;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS severity TEXT DEFAULT 'INFO';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS related_object_type TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS related_object_id TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_actionable INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_read INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS read INTEGER DEFAULT 0;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS data TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS snoozed_until TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS checklist TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS initiative_id TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS task_id TEXT;
 
 -- Update existing notifications: sync is_read with read column
 DO $$
@@ -101,5 +101,3 @@ BEGIN
       AND body IS NOT NULL AND body != '';
   END IF;
 END $$;
-
-COMMIT;

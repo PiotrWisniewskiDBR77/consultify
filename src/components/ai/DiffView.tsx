@@ -103,7 +103,7 @@ export function DiffView({
             line.type === 'added'
               ? 'bg-green-100 dark:bg-green-900/30'
               : line.type === 'removed'
-                ? 'bg-red-100 dark:bg-red-900/30'
+                ? 'bg-rose-100 dark:bg-rose-900/30'
                 : line.type === 'modified'
                   ? 'bg-yellow-100 dark:bg-yellow-900/30'
                   : ''
@@ -116,17 +116,17 @@ export function DiffView({
           )}
           <span className="w-6 flex-shrink-0">
             {line.type === 'added' && <Plus className="w-4 h-4 text-green-600" />}
-            {line.type === 'removed' && <Minus className="w-4 h-4 text-red-600" />}
+            {line.type === 'removed' && <Minus className="w-4 h-4 text-rose-600" />}
             {line.type === 'modified' && <ArrowRight className="w-4 h-4 text-yellow-600" />}
           </span>
           <div className="flex-1 min-w-0">
             {line.type === 'modified' ? (
               <>
-                <div className="line-through text-red-600">{line.originalLine}</div>
+                <div className="line-through text-rose-600">{line.originalLine}</div>
                 <div className="text-green-600">{line.suggestedLine}</div>
               </>
             ) : line.type === 'removed' ? (
-              <span className="text-red-600 line-through">{line.originalLine}</span>
+              <span className="text-rose-600 line-through">{line.originalLine}</span>
             ) : line.type === 'added' ? (
               <span className="text-green-600">{line.suggestedLine}</span>
             ) : (
@@ -142,7 +142,7 @@ export function DiffView({
     <div className="grid grid-cols-2 gap-2 font-mono text-sm">
       {/* Original Column */}
       <div className="border rounded-lg overflow-hidden">
-        <div className="bg-red-50 dark:bg-red-900/30 px-3 py-2 border-b text-sm font-medium text-red-700 dark:text-red-300">
+        <div className="bg-rose-50 dark:bg-rose-900/30 px-3 py-2 border-b text-sm font-medium text-rose-700 dark:text-rose-300">
           Oryginał
         </div>
         <div className="max-h-96 overflow-auto">
@@ -151,7 +151,7 @@ export function DiffView({
               key={idx}
               className={`flex items-start px-2 py-0.5 ${
                 line.type === 'removed' || line.type === 'modified'
-                  ? 'bg-red-50 dark:bg-red-900/20'
+                  ? 'bg-rose-50 dark:bg-rose-900/20'
                   : ''
               }`}
             >
@@ -163,9 +163,9 @@ export function DiffView({
               <span
                 className={`flex-1 ${
                   line.type === 'removed'
-                    ? 'text-red-600 line-through'
+                    ? 'text-rose-600 line-through'
                     : line.type === 'modified'
-                      ? 'text-red-600'
+                      ? 'text-rose-600'
                       : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -222,7 +222,7 @@ export function DiffView({
           <Plus className="w-4 h-4" />
           <span>{stats.added} dodane</span>
         </div>
-        <div className="flex items-center gap-1 text-red-600">
+        <div className="flex items-center gap-1 text-rose-600">
           <Minus className="w-4 h-4" />
           <span>{stats.removed} usunięte</span>
         </div>

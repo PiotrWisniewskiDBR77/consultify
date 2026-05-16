@@ -4,13 +4,11 @@ import {
   ArrowUpRight,
   BarChart3,
   Building2,
-  Check,
   Coins,
   CreditCard,
   Database,
   DollarSign,
   Edit2,
-  HelpCircle,
   Package,
   PieChart,
   Plus,
@@ -18,7 +16,6 @@ import {
   RefreshCw,
   Save,
   Server,
-  Star,
   Trash2,
   TrendingUp,
   Users,
@@ -28,9 +25,11 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { SubscriptionAnalytics } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+import { EMPTY_VALUE, safeDate, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
@@ -56,10 +55,131 @@ interface RevenueStats {
 }
 
 interface UsageStats {
-  totalTokensThisMonth: number;
-  totalStorageGB: number;
-  activeOrganizations: number;
+  totalTokensThisMonth?: number | null;
+  totalStorageGB?: number | null;
+  activeOrganizations?: number | null;
 }
+
+const normalizeRevenueStats = (payload: any): RevenueStats | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  const planDistribution = Array.isArray(source.planDistribution)
+    ? source.planDistribution.map((plan: any) => ({
+        name: plan.name ?? plan.plan ?? plan.plan_name ?? EMPTY_VALUE,
+        price_monthly: safeNumber(plan.price_monthly ?? plan.price ?? plan.monthlyPrice, 0),
+        count: safeNumber(plan.count ?? plan.subscribers ?? plan.subscriber_count, 0),
+      }))
+    : [];
+  return {
+    mrr: safeNumber(source.mrr, Number.NaN),
+    arr: safeNumber(source.arr, Number.NaN),
+    activeSubscriptions: safeNumber(source.activeSubscriptions, Number.NaN),
+    planDistribution,
+  };
+};
+
+const normalizeUsageStats = (payload: any): UsageStats | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  return {
+    totalTokensThisMonth: safeNumber(source.totalTokensThisMonth, Number.NaN),
+    totalStorageGB:
+      source.totalStorageGB === null ? null : safeNumber(source.totalStorageGB, Number.NaN),
+    activeOrganizations: safeNumber(source.activeOrganizations, Number.NaN),
+  };
+};
+
+const normalizeOperationalCosts = (payload: any): { items: any[]; totalCost: number } | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  const items = Array.isArray(source.items)
+    ? source.items
+    : Array.isArray(source.costs)
+      ? source.costs
+      : [];
+  return {
+    items,
+    totalCost: safeNumber(source.totalCost, Number.NaN),
+  };
+};
+
+const normalizePlansPayload = (payload: any) => {
+  const source = payload?.data ?? payload;
+  const plans = Array.isArray(source) ? source : Array.isArray(source?.plans) ? source.plans : [];
+  return {
+    plans: plans.map((plan: any) => ({
+      ...plan,
+      price_monthly: safeNumber(plan.price_monthly ?? plan.priceMonthly, 0),
+      token_limit: safeNumber(
+        plan.token_limit ?? plan.limits?.token_limit ?? plan.limits?.maxTotalTokens,
+        Number.NaN
+      ),
+      storage_limit_gb: safeNumber(
+        plan.storage_limit_gb ?? plan.limits?.storage_limit_gb ?? plan.limits?.maxStorageGb,
+        Number.NaN
+      ),
+      token_overage_rate: safeNumber(
+        plan.token_overage_rate ?? plan.limits?.token_overage_rate,
+        Number.NaN
+      ),
+      storage_overage_rate: safeNumber(
+        plan.storage_overage_rate ?? plan.limits?.storage_overage_rate,
+        Number.NaN
+      ),
+      is_active:
+        plan.is_active === undefined
+          ? plan.isActive === false
+            ? 0
+            : 1
+          : safeNumber(plan.is_active, 0),
+    })),
+    notConfigured: source?.type === 'not_configured',
+  };
+};
+
+const parseFeatureList = (features: any): string[] => {
+  if (Array.isArray(features)) return features.map(String).filter(Boolean);
+  if (typeof features !== 'string' || !features.trim()) return [];
+  try {
+    const parsed = JSON.parse(features);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    if (parsed && typeof parsed === 'object') {
+      return Object.entries(parsed)
+        .filter(([, enabled]) => Boolean(enabled))
+        .map(([feature]) => feature);
+    }
+  } catch {
+    return features
+      .split('\n')
+      .map((feature) => feature.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const buildOrganizationPlanPayload = (formData: any) => ({
+  name: String(formData.name || '').trim(),
+  priceMonthly: safeNumber(formData.price_monthly, 0),
+  priceYearly: safeNumber(formData.price_yearly, 0),
+  currency: formData.currency || 'USD',
+  features: parseFeatureList(formData.features),
+  limits: {
+    token_limit: safeNumber(formData.token_limit, 0),
+    maxTotalTokens: safeNumber(formData.token_limit, 0),
+    storage_limit_gb: safeNumber(formData.storage_limit_gb, 0),
+    maxStorageGb: safeNumber(formData.storage_limit_gb, 0),
+    token_overage_rate: safeNumber(formData.token_overage_rate, 0),
+    storage_overage_rate: safeNumber(formData.storage_overage_rate, 0),
+    stripe_price_id: formData.stripe_price_id || null,
+  },
+  isActive: formData.is_active === undefined ? true : Boolean(formData.is_active),
+});
+
+const formatCompactNumber = (value: unknown) => {
+  const parsed = safeNumber(value, Number.NaN);
+  if (!Number.isFinite(parsed)) return EMPTY_VALUE;
+  return parsed.toLocaleString();
+};
 
 const OverviewTab: React.FC = () => {
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
@@ -78,39 +198,48 @@ const OverviewTab: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     setWarning(null);
+    const warnings: string[] = [];
     try {
       const [revenue, usage, costs] = await Promise.all([
-        Api.get('/billing/admin/revenue'),
-        Api.get('/billing/admin/usage'),
+        Api.get('/billing/admin/revenue').catch((error) => {
+          console.warn('[BillingCenterView] Revenue metrics unavailable', error);
+          warnings.push('Revenue metrics are temporarily unavailable.');
+          return null;
+        }),
+        Api.get('/billing/admin/usage').catch((error) => {
+          console.warn('[BillingCenterView] Usage metrics unavailable', error);
+          warnings.push('Usage metrics are temporarily unavailable.');
+          return null;
+        }),
         Api.get('/billing/admin/operational-costs').catch((error) => {
           console.warn('[BillingCenterView] Operational costs unavailable', error);
-          setWarning('Operational cost metrics are temporarily unavailable.');
-          return { items: [], totalCost: 0, degraded: true };
+          warnings.push('Operational cost metrics are temporarily unavailable.');
+          return null;
         }),
       ]);
-      setRevenueStats(revenue);
-      setUsageStats(usage);
-      setOperationalCosts(costs);
+      setRevenueStats(normalizeRevenueStats(revenue));
+      setUsageStats(normalizeUsageStats(usage));
+      setOperationalCosts(normalizeOperationalCosts(costs));
+      setWarning(warnings.length > 0 ? warnings.join(' ') : null);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      setRevenueStats(null);
+      setUsageStats(null);
+      setOperationalCosts(null);
+      setWarning('Billing metrics are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: unknown) => safeMoney(amount, 'USD', { fallback: EMPTY_VALUE });
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+  const formatNumber = (num: unknown) => {
+    const value = safeNumber(num, Number.NaN);
+    if (!Number.isFinite(value)) return EMPTY_VALUE;
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return value.toString();
   };
 
   if (loading) {
@@ -123,257 +252,304 @@ const OverviewTab: React.FC = () => {
 
   const totalPlanSubscriptions =
     revenueStats?.planDistribution.reduce((sum, p) => sum + p.count, 0) || 0;
-  const grossProfit = (revenueStats?.mrr || 0) - (operationalCosts?.totalCost || 0);
+  const grossProfit =
+    Number.isFinite(safeNumber(revenueStats?.mrr, Number.NaN)) &&
+    Number.isFinite(safeNumber(operationalCosts?.totalCost, Number.NaN))
+      ? safeNumber(revenueStats?.mrr) - safeNumber(operationalCosts?.totalCost)
+      : Number.NaN;
+  const overviewUnavailable = Boolean(warning) && !revenueStats && !usageStats && !operationalCosts;
 
   return (
     <div className="space-y-6">
-      {warning && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-          {warning}
-        </div>
+      {overviewUnavailable ? (
+        <DegradedState title="Billing overview unavailable" description={warning} />
+      ) : (
+        warning && <DegradedState title="Billing metrics degraded" description={warning} />
       )}
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <DollarSign className="w-7 h-7 opacity-80" />
-            <span className="flex items-center gap-1 text-xs text-emerald-100">
-              <ArrowUpRight className="w-3 h-3" /> MRR
-            </span>
+      {overviewUnavailable ? null : (
+        <>
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <DollarSign className="w-7 h-7 opacity-80" />
+                <span className="flex items-center gap-1 text-xs text-emerald-100">
+                  <ArrowUpRight className="w-3 h-3" /> MRR
+                </span>
+              </div>
+              <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.mrr)}</p>
+              <p className="text-emerald-100 text-xs mt-1">Monthly Recurring Revenue</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <BarChart3 className="w-7 h-7 opacity-80" />
+                <span className="flex items-center gap-1 text-xs text-blue-100">
+                  <ArrowUpRight className="w-3 h-3" /> ARR
+                </span>
+              </div>
+              <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.arr)}</p>
+              <p className="text-blue-100 text-xs mt-1">Annual Recurring Revenue</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl p-4 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <Users className="w-7 h-7 opacity-80" />
+                <span className="text-xs text-primary-100">Active</span>
+              </div>
+              <p className="text-3xl font-bold mt-3">
+                {formatNumber(revenueStats?.activeSubscriptions)}
+              </p>
+              <p className="text-primary-100 text-xs mt-1">Active Subscriptions</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <Activity className="w-7 h-7 opacity-80" />
+                <span className="text-xs text-amber-100">This Month</span>
+              </div>
+              <p className="text-3xl font-bold mt-3">
+                {formatNumber(usageStats?.totalTokensThisMonth)}
+              </p>
+              <p className="text-amber-100 text-xs mt-1">Tokens Consumed</p>
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.mrr || 0)}</p>
-          <p className="text-emerald-100 text-xs mt-1">Monthly Recurring Revenue</p>
-        </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <BarChart3 className="w-7 h-7 opacity-80" />
-            <span className="flex items-center gap-1 text-xs text-blue-100">
-              <ArrowUpRight className="w-3 h-3" /> ARR
-            </span>
-          </div>
-          <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.arr || 0)}</p>
-          <p className="text-blue-100 text-xs mt-1">Annual Recurring Revenue</p>
-        </div>
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Plan Distribution */}
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
+                <PieChart className="w-5 h-5 text-blue-400" />
+                Plan Distribution
+              </h3>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <Users className="w-7 h-7 opacity-80" />
-            <span className="text-xs text-purple-100">Active</span>
-          </div>
-          <p className="text-3xl font-bold mt-3">{revenueStats?.activeSubscriptions || 0}</p>
-          <p className="text-purple-100 text-xs mt-1">Active Subscriptions</p>
-        </div>
+              <div className="space-y-4">
+                {revenueStats?.planDistribution.map((plan, idx) => {
+                  const percentage =
+                    totalPlanSubscriptions > 0
+                      ? Math.round((plan.count / totalPlanSubscriptions) * 100)
+                      : 0;
+                  const colors = [
+                    'bg-blue-500',
+                    'bg-emerald-500',
+                    'bg-amber-500',
+                    'bg-pink-500',
+                    'bg-blue-500',
+                  ];
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <Activity className="w-7 h-7 opacity-80" />
-            <span className="text-xs text-orange-100">This Month</span>
-          </div>
-          <p className="text-3xl font-bold mt-3">
-            {formatNumber(usageStats?.totalTokensThisMonth || 0)}
-          </p>
-          <p className="text-orange-100 text-xs mt-1">Tokens Consumed</p>
-        </div>
-      </div>
+                  return (
+                    <div key={plan.name} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-900 dark:text-slate-200">{plan.name}</span>
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {formatNumber(plan.count)} (
+                          {safePercent(plan.count, totalPlanSubscriptions)})
+                        </span>
+                      </div>
+                      <div className="h-2 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${colors[idx % colors.length]} transition-all duration-500`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Plan Distribution */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
-            <PieChart className="w-5 h-5 text-blue-400" />
-            Plan Distribution
-          </h3>
+                {(!revenueStats?.planDistribution ||
+                  revenueStats.planDistribution.length === 0) && (
+                  <p className="text-slate-500 dark:text-slate-400 text-center py-8">
+                    No subscriptions yet
+                  </p>
+                )}
+              </div>
+            </div>
 
-          <div className="space-y-4">
-            {revenueStats?.planDistribution.map((plan, idx) => {
-              const percentage =
-                totalPlanSubscriptions > 0
-                  ? Math.round((plan.count / totalPlanSubscriptions) * 100)
-                  : 0;
-              const colors = [
-                'bg-blue-500',
-                'bg-emerald-500',
-                'bg-orange-500',
-                'bg-pink-500',
-                'bg-cyan-500',
-              ];
+            {/* Usage Overview */}
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
+                <Activity className="w-5 h-5 text-blue-400" />
+                Usage Overview
+              </h3>
 
-              return (
-                <div key={plan.name} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-900 dark:text-slate-200">{plan.name}</span>
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {plan.count} ({percentage}%)
-                    </span>
-                  </div>
-                  <div className="h-2 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${colors[idx % colors.length]} transition-all duration-500`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Total Tokens</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {formatNumber(usageStats?.totalTokensThisMonth)}
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">This month</p>
                 </div>
-              );
-            })}
 
-            {(!revenueStats?.planDistribution || revenueStats.planDistribution.length === 0) && (
-              <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-                No subscriptions yet
-              </p>
-            )}
-          </div>
-        </div>
+                <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Storage Used</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {Number.isFinite(safeNumber(usageStats?.totalStorageGB, Number.NaN))
+                      ? `${safeNumber(usageStats?.totalStorageGB).toFixed(2)} GB`
+                      : EMPTY_VALUE}
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">
+                    Across all orgs
+                  </p>
+                </div>
 
-        {/* Usage Overview */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
-            <Activity className="w-5 h-5 text-blue-400" />
-            Usage Overview
-          </h3>
+                <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Active Orgs</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {formatNumber(usageStats?.activeOrganizations)}
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">With usage</p>
+                </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Tokens</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {formatNumber(usageStats?.totalTokensThisMonth || 0)}
-              </p>
-              <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">This month</p>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Storage Used</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {(usageStats?.totalStorageGB || 0).toFixed(2)} GB
-              </p>
-              <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Across all orgs</p>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Active Orgs</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {usageStats?.activeOrganizations || 0}
-              </p>
-              <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">With usage</p>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Gross Profit</p>
-              <p
-                className={`text-2xl font-bold mt-1 ${grossProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
-              >
-                {formatCurrency(grossProfit)}
-              </p>
-              <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">MRR - Costs</p>
+                <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Gross Profit</p>
+                  <p
+                    className={`text-2xl font-bold mt-1 ${
+                      Number.isFinite(grossProfit)
+                        ? grossProfit >= 0
+                          ? 'text-emerald-400'
+                          : 'text-rose-400'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {formatCurrency(grossProfit)}
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">MRR - Costs</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Revenue by Plan Table */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
-          <DollarSign className="w-5 h-5 text-blue-400" />
-          Revenue by Plan
-        </h3>
+          {/* Revenue by Plan Table */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
+              <DollarSign className="w-5 h-5 text-blue-400" />
+              Revenue by Plan
+            </h3>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
-                <th className="pb-3 font-medium">Plan</th>
-                <th className="pb-3 font-medium">Price</th>
-                <th className="pb-3 font-medium">Subscribers</th>
-                <th className="pb-3 font-medium text-right">Monthly Revenue</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {revenueStats?.planDistribution.map((plan) => (
-                <tr key={plan.name} className="text-slate-900 dark:text-white">
-                  <td className="py-3 font-medium">{plan.name}</td>
-                  <td className="py-3 text-slate-400 dark:text-slate-500">
-                    {formatCurrency(plan.price_monthly)}/mo
-                  </td>
-                  <td className="py-3 text-slate-400 dark:text-slate-500">{plan.count}</td>
-                  <td className="py-3 text-right font-semibold text-emerald-400">
-                    {formatCurrency(plan.price_monthly * plan.count)}
-                  </td>
-                </tr>
-              ))}
-              {(!revenueStats?.planDistribution || revenueStats.planDistribution.length === 0) && (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    No revenue data available
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                    <th className="pb-3 font-medium">Plan</th>
+                    <th className="pb-3 font-medium">Price</th>
+                    <th className="pb-3 font-medium">Subscribers</th>
+                    <th className="pb-3 font-medium text-right">Monthly Revenue</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {revenueStats?.planDistribution.map((plan) => (
+                    <tr key={plan.name} className="text-slate-900 dark:text-white">
+                      <td className="py-3 font-medium">{plan.name}</td>
+                      <td className="py-3 text-slate-400 dark:text-slate-500">
+                        {formatCurrency(plan.price_monthly)}/mo
+                      </td>
+                      <td className="py-3 text-slate-400 dark:text-slate-500">
+                        {formatNumber(plan.count)}
+                      </td>
+                      <td className="py-3 text-right font-semibold text-emerald-400">
+                        {formatCurrency(
+                          safeNumber(plan.price_monthly, Number.NaN) *
+                            safeNumber(plan.count, Number.NaN)
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!revenueStats?.planDistribution ||
+                    revenueStats.planDistribution.length === 0) && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-8 text-center text-slate-500 dark:text-slate-400"
+                      >
+                        No revenue data available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      {/* Operational Costs */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
-          <Server className="w-5 h-5 text-blue-400" />
-          Operational Costs (Backend)
-        </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          Estimated costs based on current provider pricing.
-        </p>
+          {/* Operational Costs */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
+              <Server className="w-5 h-5 text-blue-400" />
+              Operational Costs (Backend)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              Estimated costs based on current provider pricing.
+            </p>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
-                <th className="pb-3 font-medium">Provider</th>
-                <th className="pb-3 font-medium">Model</th>
-                <th className="pb-3 font-medium text-right">Tokens</th>
-                <th className="pb-3 font-medium text-right">Est. Cost</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {operationalCosts?.items.map((item: any, idx: number) => (
-                <tr key={idx} className="text-slate-900 dark:text-white">
-                  <td className="py-3 font-medium capitalize text-slate-900 dark:text-white">
-                    {item.provider}
-                  </td>
-                  <td className="py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
-                    {item.model}
-                  </td>
-                  <td className="py-3 text-right text-slate-400 dark:text-slate-500">
-                    {formatNumber(item.totalTokens)}
-                  </td>
-                  <td className="py-3 text-right font-semibold text-red-400">
-                    ${item.cost.toFixed(4)}
-                  </td>
-                </tr>
-              ))}
-              {(!operationalCosts?.items || operationalCosts.items.length === 0) && (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    No operational cost data
-                  </td>
-                </tr>
-              )}
-            </tbody>
-            {operationalCosts && operationalCosts.items.length > 0 && (
-              <tfoot>
-                <tr className="border-t-2 border-slate-200 dark:border-white/10">
-                  <td colSpan={3} className="py-3 font-bold text-slate-900 dark:text-white">
-                    Total Operational Cost
-                  </td>
-                  <td className="py-3 text-right font-bold text-lg text-red-400">
-                    ${operationalCosts.totalCost.toFixed(2)}
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                    <th className="pb-3 font-medium">Provider</th>
+                    <th className="pb-3 font-medium">Model</th>
+                    <th className="pb-3 font-medium text-right">Tokens</th>
+                    <th className="pb-3 font-medium text-right">Est. Cost</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                  {operationalCosts?.items.map((item: any, idx: number) => (
+                    <tr key={idx} className="text-slate-900 dark:text-white">
+                      <td className="py-3 font-medium capitalize text-slate-900 dark:text-white">
+                        {item.provider}
+                      </td>
+                      <td className="py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
+                        {item.model}
+                      </td>
+                      <td className="py-3 text-right text-slate-400 dark:text-slate-500">
+                        {formatNumber(item.totalTokens)}
+                      </td>
+                      <td className="py-3 text-right font-semibold text-rose-400">
+                        {safeMoney(item.cost, 'USD')}
+                      </td>
+                    </tr>
+                  ))}
+                  {!operationalCosts && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-8 text-center text-slate-500 dark:text-slate-400"
+                      >
+                        Operational cost metrics unavailable
+                      </td>
+                    </tr>
+                  )}
+                  {operationalCosts && operationalCosts.items.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-8 text-center text-slate-500 dark:text-slate-400"
+                      >
+                        No operational cost records yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {operationalCosts &&
+                  operationalCosts.items.length > 0 &&
+                  Number.isFinite(safeNumber(operationalCosts.totalCost, Number.NaN)) && (
+                    <tfoot>
+                      <tr className="border-t-2 border-slate-200 dark:border-white/10">
+                        <td colSpan={3} className="py-3 font-bold text-slate-900 dark:text-white">
+                          Total Operational Cost
+                        </td>
+                        <td className="py-3 text-right font-bold text-lg text-rose-400">
+                          {safeMoney(operationalCosts.totalCost, 'USD')}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -407,6 +583,10 @@ const PlansTab: React.FC = () => {
   const [orgPlans, setOrgPlans] = useState<SubscriptionPlan[]>([]);
   const [userPlans, setUserPlans] = useState<UserLicensePlan[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [planLoadErrors, setPlanLoadErrors] = useState<{
+    organization: string | null;
+    user: string | null;
+  }>({ organization: null, user: null });
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -421,47 +601,75 @@ const PlansTab: React.FC = () => {
   const fetchPlans = async () => {
     setLoading(true);
     setNotice(null);
+    setPlanLoadErrors({ organization: null, user: null });
+    const notices: string[] = [];
+    const nextErrors = { organization: null as string | null, user: null as string | null };
     try {
       const [orgData, userData] = await Promise.all([
-        Api.get('/billing/admin/plans'),
-        Api.get('/billing/admin/user-plans'),
+        Api.get('/billing/admin/plans').catch((error) => {
+          console.warn('[BillingCenterView] Organization plans unavailable', error);
+          nextErrors.organization = 'Organization plans are temporarily unavailable.';
+          notices.push(nextErrors.organization);
+          return null;
+        }),
+        Api.get('/billing/admin/user-plans').catch((error) => {
+          console.warn('[BillingCenterView] User plans unavailable', error);
+          nextErrors.user = 'User license plans are temporarily unavailable.';
+          notices.push(nextErrors.user);
+          return null;
+        }),
       ]);
-      const orgPayload = orgData?.data ?? orgData;
-      const userPayload = userData?.data ?? userData;
-      setOrgPlans(Array.isArray(orgPayload?.plans) ? orgPayload.plans : []);
-      setUserPlans(Array.isArray(userPayload?.plans) ? userPayload.plans : []);
-      if (orgPayload?.type === 'not_configured' || userPayload?.type === 'not_configured') {
-        setNotice(
+      const orgPayload = normalizePlansPayload(orgData);
+      const userPayload = normalizePlansPayload(userData);
+      setOrgPlans(orgPayload.plans);
+      setUserPlans(userPayload.plans);
+      if (orgPayload.notConfigured || userPayload.notConfigured) {
+        notices.push(
           'Some billing plan surfaces are not configured yet and are shown in degraded mode.'
         );
       }
+      setNotice(notices.length > 0 ? notices.join(' ') : null);
+      setPlanLoadErrors(nextErrors);
     } catch (error) {
       console.error('Failed to fetch plans:', error);
       setOrgPlans([]);
       setUserPlans([]);
       setNotice('Billing plans are temporarily unavailable.');
+      setPlanLoadErrors({
+        organization: 'Organization plans are temporarily unavailable.',
+        user: 'User license plans are temporarily unavailable.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleSave = async () => {
+    const activeForm = planType === 'organization' ? orgFormData : userFormData;
+    if (!String(activeForm.name || '').trim()) {
+      toast.error('Plan name is required');
+      return;
+    }
+    if (
+      !Number.isFinite(safeNumber(activeForm.price_monthly, Number.NaN)) ||
+      safeNumber(activeForm.price_monthly) < 0
+    ) {
+      toast.error('Plan price must be a non-negative number');
+      return;
+    }
     setSaving(true);
     try {
       if (planType === 'organization') {
         const endpoint = '/billing/admin/plans';
+        const payload = buildOrganizationPlanPayload(orgFormData);
         if (editingId) {
-          await Api.put(`${endpoint}/${editingId}`, orgFormData);
+          await Api.put(`${endpoint}/${editingId}`, payload);
         } else {
-          await Api.post(endpoint, orgFormData);
+          await Api.post(endpoint, payload);
         }
       } else {
-        const endpoint = '/billing/admin/user-plans';
-        if (editingId) {
-          await Api.put(`${endpoint}/${editingId}`, userFormData);
-        } else {
-          await Api.post(endpoint, userFormData);
-        }
+        toast.error('User license plans are not configured for this environment');
+        return;
       }
       await fetchPlans();
       resetForm();
@@ -475,6 +683,10 @@ const PlansTab: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (planType === 'user') {
+      toast.error('User license plans are not configured for this environment');
+      return;
+    }
     if (!confirm('Are you sure you want to deactivate this plan?')) return;
     try {
       const endpoint =
@@ -530,6 +742,8 @@ const PlansTab: React.FC = () => {
   };
 
   const plans = planType === 'organization' ? orgPlans : userPlans;
+  const activePlanLoadError =
+    planType === 'organization' ? planLoadErrors.organization : planLoadErrors.user;
 
   return (
     <div className="space-y-6">
@@ -573,6 +787,13 @@ const PlansTab: React.FC = () => {
         </div>
         <button
           onClick={handleNewPlan}
+          disabled={Boolean(activePlanLoadError) || planType === 'user'}
+          title={
+            activePlanLoadError ||
+            (planType === 'user'
+              ? 'User license plan creation is not configured for this environment'
+              : undefined)
+          }
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} />
@@ -582,56 +803,71 @@ const PlansTab: React.FC = () => {
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* New Form Card */}
-        {showNewForm && (
-          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border-2 border-dashed border-blue-500/50">
-            <PlanForm
-              type={planType}
-              formData={planType === 'organization' ? orgFormData : userFormData}
-              setFormData={planType === 'organization' ? setOrgFormData : setUserFormData}
-              onSave={handleSave}
-              onCancel={resetForm}
-              saving={saving}
-              isNew
+        {activePlanLoadError ? (
+          <div className="col-span-full">
+            <DegradedState
+              title={
+                planType === 'organization'
+                  ? 'Organization plans unavailable'
+                  : 'User license plans unavailable'
+              }
+              description={activePlanLoadError}
             />
           </div>
-        )}
-
-        {/* Existing Plans */}
-        {plans.map((plan: any) => (
-          <div
-            key={plan.id}
-            className={`relative bg-white dark:bg-navy-900 rounded-xl p-6 border transition-all ${
-              plan.is_active
-                ? 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                : 'border-slate-100 dark:border-white/5 opacity-60'
-            }`}
-          >
-            {editingId === plan.id ? (
-              <PlanForm
-                type={planType}
-                formData={planType === 'organization' ? orgFormData : userFormData}
-                setFormData={planType === 'organization' ? setOrgFormData : setUserFormData}
-                onSave={handleSave}
-                onCancel={resetForm}
-                saving={saving}
-              />
-            ) : (
-              <PlanCard
-                plan={plan}
-                type={planType}
-                onEdit={() => handleEdit(plan)}
-                onDelete={() => handleDelete(plan.id)}
-              />
+        ) : (
+          <>
+            {/* New Form Card */}
+            {showNewForm && (
+              <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border-2 border-dashed border-blue-500/50">
+                <PlanForm
+                  type={planType}
+                  formData={planType === 'organization' ? orgFormData : userFormData}
+                  setFormData={planType === 'organization' ? setOrgFormData : setUserFormData}
+                  onSave={handleSave}
+                  onCancel={resetForm}
+                  saving={saving}
+                  isNew
+                />
+              </div>
             )}
-          </div>
-        ))}
 
-        {plans.length === 0 && !showNewForm && !loading && (
-          <div className="col-span-full text-center py-12 text-slate-500 dark:text-slate-400">
-            No {planType === 'organization' ? 'organization plans' : 'user licenses'} found. Create
-            one to get started.
-          </div>
+            {/* Existing Plans */}
+            {plans.map((plan: any) => (
+              <div
+                key={plan.id}
+                className={`relative bg-white dark:bg-navy-900 rounded-xl p-6 border transition-all ${
+                  plan.is_active
+                    ? 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                    : 'border-slate-100 dark:border-white/5 opacity-60'
+                }`}
+              >
+                {editingId === plan.id ? (
+                  <PlanForm
+                    type={planType}
+                    formData={planType === 'organization' ? orgFormData : userFormData}
+                    setFormData={planType === 'organization' ? setOrgFormData : setUserFormData}
+                    onSave={handleSave}
+                    onCancel={resetForm}
+                    saving={saving}
+                  />
+                ) : (
+                  <PlanCard
+                    plan={plan}
+                    type={planType}
+                    onEdit={() => handleEdit(plan)}
+                    onDelete={() => handleDelete(plan.id)}
+                  />
+                )}
+              </div>
+            ))}
+
+            {plans.length === 0 && !showNewForm && !loading && (
+              <div className="col-span-full text-center py-12 text-slate-500 dark:text-slate-400">
+                No {planType === 'organization' ? 'organization plans' : 'user licenses'} found.
+                Create one to get started.
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -670,8 +906,17 @@ const PlanForm: React.FC<{
       </label>
       <input
         type="number"
-        value={formData.price_monthly || 0}
-        onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) })}
+        value={
+          Number.isFinite(safeNumber(formData.price_monthly, Number.NaN))
+            ? formData.price_monthly
+            : ''
+        }
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            price_monthly: e.target.value === '' ? '' : Number(e.target.value),
+          })
+        }
         className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
       />
     </div>
@@ -685,8 +930,17 @@ const PlanForm: React.FC<{
             </label>
             <input
               type="number"
-              value={formData.token_limit || 0}
-              onChange={(e) => setFormData({ ...formData, token_limit: parseInt(e.target.value) })}
+              value={
+                Number.isFinite(safeNumber(formData.token_limit, Number.NaN))
+                  ? formData.token_limit
+                  : ''
+              }
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  token_limit: e.target.value === '' ? '' : Number(e.target.value),
+                })
+              }
               className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
           </div>
@@ -696,9 +950,16 @@ const PlanForm: React.FC<{
             </label>
             <input
               type="number"
-              value={formData.storage_limit_gb || 0}
+              value={
+                Number.isFinite(safeNumber(formData.storage_limit_gb, Number.NaN))
+                  ? formData.storage_limit_gb
+                  : ''
+              }
               onChange={(e) =>
-                setFormData({ ...formData, storage_limit_gb: parseFloat(e.target.value) })
+                setFormData({
+                  ...formData,
+                  storage_limit_gb: e.target.value === '' ? '' : Number(e.target.value),
+                })
               }
               className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
@@ -779,7 +1040,9 @@ const PlanCard: React.FC<{
 
     <h3 className="text-xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
     <div className="mt-2 flex items-baseline gap-1">
-      <span className="text-3xl font-bold text-blue-400">${plan.price_monthly}</span>
+      <span className="text-3xl font-bold text-blue-400">
+        {safeMoney(plan.price_monthly, 'USD')}
+      </span>
       <span className="text-slate-500 dark:text-slate-400">/mo</span>
     </div>
 
@@ -787,11 +1050,13 @@ const PlanCard: React.FC<{
       <div className="mt-4 space-y-2 text-sm text-slate-400 dark:text-slate-500">
         <div className="flex items-center gap-2">
           <Database className="w-4 h-4" />
-          {(plan.token_limit || 0).toLocaleString()} tokens
+          {formatCompactNumber(plan.token_limit)} tokens
         </div>
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4" />
-          {plan.storage_limit_gb || 0} GB storage
+          {Number.isFinite(safeNumber(plan.storage_limit_gb, Number.NaN))
+            ? `${safeNumber(plan.storage_limit_gb)} GB storage`
+            : `${EMPTY_VALUE} storage`}
         </div>
       </div>
     )}
@@ -813,7 +1078,7 @@ const PlanCard: React.FC<{
       </button>
       <button
         onClick={onDelete}
-        className="px-3 py-2 text-sm text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+        className="px-3 py-2 text-sm text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
       >
         <Trash2 className="w-4 h-4" />
       </button>
@@ -830,6 +1095,7 @@ const TokenEconomyTab: React.FC = () => {
     balance: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -837,24 +1103,46 @@ const TokenEconomyTab: React.FC = () => {
 
   const loadStats = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
+      const errors: string[] = [];
       const [providers, packages, margins, balance] = await Promise.all([
-        Api.getLLMProviders().catch(() => []),
-        Api.getTokenPackages().catch(() => []),
-        Api.getBillingMargins().catch(() => []),
-        Api.getTokenBalance().catch(() => 0),
+        Api.getLLMProviders().catch(() => {
+          errors.push('LLM providers are unavailable.');
+          return null;
+        }),
+        Api.getTokenPackages().catch(() => {
+          errors.push('Token packages are unavailable.');
+          return null;
+        }),
+        Api.getBillingMargins().catch(() => {
+          errors.push('Billing margins are unavailable.');
+          return null;
+        }),
+        Api.getTokenBalance().catch(() => {
+          errors.push('Token balance is unavailable.');
+          return null;
+        }),
       ]);
 
-      const platformMargin = margins.find((m: any) => m.source_type === 'platform');
+      if (errors.length > 0) {
+        setLoadError(errors.join(' '));
+      }
+
+      const providerList = Array.isArray(providers) ? providers : [];
+      const packageList = Array.isArray(packages) ? packages : [];
+      const marginList = Array.isArray(margins) ? margins : [];
+      const platformMargin = marginList.find((m: any) => m.source_type === 'platform');
 
       setStats({
-        activeModels: providers.filter((p: any) => p.is_active).length,
-        activePackages: packages.filter((p: any) => p.is_active).length,
+        activeModels: providerList.filter((p: any) => p.is_active).length,
+        activePackages: packageList.filter((p: any) => p.is_active).length,
         platformMargin: platformMargin ? platformMargin.margin_percent : 0,
-        balance: balance,
+        balance: Number.isFinite(safeNumber(balance, Number.NaN)) ? safeNumber(balance) : 0,
       });
     } catch (error) {
       console.error('Failed to load billing stats', error);
+      setLoadError('Token economy metrics are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
@@ -862,51 +1150,61 @@ const TokenEconomyTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
-              Active AI Models
-            </span>
-            <Zap size={18} className="text-yellow-400" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {stats.activeModels}
-          </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="w-6 h-6 animate-spin text-slate-400 dark:text-slate-500" />
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
-              Active Packages
-            </span>
-            <Package size={18} className="text-blue-400" />
+      ) : loadError ? (
+        <DegradedState title="Token economy metrics unavailable" description={loadError} />
+      ) : (
+        <>
+          {/* KPI Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                  Active AI Models
+                </span>
+                <Zap size={18} className="text-yellow-400" />
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {stats.activeModels}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                  Active Packages
+                </span>
+                <Package size={18} className="text-blue-400" />
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {stats.activePackages}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                  Platform Margin
+                </span>
+                <TrendingUp size={18} className="text-emerald-400" />
+              </div>
+              <div className="text-2xl font-bold text-emerald-400">{stats.platformMargin}%</div>
+            </div>
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                  System Balance
+                </span>
+                <DollarSign size={18} className="text-primary-400" />
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {(stats.balance / 1000).toFixed(1)}k
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {stats.activePackages}
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
-              Platform Margin
-            </span>
-            <TrendingUp size={18} className="text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400">{stats.platformMargin}%</div>
-        </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
-              System Balance
-            </span>
-            <DollarSign size={18} className="text-purple-400" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {(stats.balance / 1000).toFixed(1)}k
-          </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Pricing & Margins Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -928,6 +1226,7 @@ const TokenEconomyTab: React.FC = () => {
 const TransactionsTab: React.FC = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'purchase' | 'usage' | 'refund'>('all');
 
@@ -938,6 +1237,7 @@ const TransactionsTab: React.FC = () => {
   const loadTransactions = async () => {
     setLoading(true);
     setNotice(null);
+    setLoadError(null);
     try {
       const data = await Api.get('/billing/admin/transactions?limit=100');
       const payload = data?.data ?? data;
@@ -948,7 +1248,7 @@ const TransactionsTab: React.FC = () => {
     } catch (error) {
       console.error('Failed to load transactions:', error);
       setTransactions([]);
-      setNotice('Billing transactions are temporarily unavailable.');
+      setLoadError('Billing transactions are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
@@ -964,7 +1264,7 @@ const TransactionsTab: React.FC = () => {
       case 'usage':
         return 'bg-blue-500/20 text-blue-400';
       case 'refund':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-rose-500/20 text-rose-400';
       case 'bonus':
         return 'bg-yellow-500/20 text-yellow-400';
       default:
@@ -987,6 +1287,7 @@ const TransactionsTab: React.FC = () => {
             <button
               key={f}
               onClick={() => setFilter(f)}
+              disabled={!!loadError}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 filter === f
                   ? 'bg-blue-600 text-white'
@@ -1028,6 +1329,12 @@ const TransactionsTab: React.FC = () => {
                   Loading transactions...
                 </td>
               </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={6} className="p-6">
+                  <DegradedState title="Billing transactions unavailable" description={loadError} />
+                </td>
+              </tr>
             ) : filteredTransactions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
@@ -1041,10 +1348,10 @@ const TransactionsTab: React.FC = () => {
                   className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                 >
                   <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-sm">
-                    {tx.created_at ? new Date(tx.created_at).toLocaleString() : '-'}
+                    {safeDate(tx.created_at)}
                   </td>
                   <td className="py-4 px-6 text-slate-900 dark:text-white font-medium text-sm">
-                    {tx.organization_name || tx.organization_id?.slice(0, 8) || '-'}
+                    {tx.organization_name || tx.organization_id?.slice(0, 8) || EMPTY_VALUE}
                   </td>
                   <td className="py-4 px-6">
                     <span
@@ -1054,21 +1361,28 @@ const TransactionsTab: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-6 text-slate-400 dark:text-slate-500 text-sm max-w-xs truncate">
-                    {tx.description || '-'}
+                    {tx.description || EMPTY_VALUE}
                   </td>
                   <td className="py-4 px-6 text-right">
-                    {tx.amount_usd ? (
-                      <span className={tx.amount_usd > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                        {tx.amount_usd > 0 ? '+' : ''}${tx.amount_usd.toFixed(2)}
+                    {Number.isFinite(safeNumber(tx.amount_usd, Number.NaN)) ? (
+                      <span
+                        className={
+                          safeNumber(tx.amount_usd) > 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }
+                      >
+                        {safeNumber(tx.amount_usd) > 0 ? '+' : ''}
+                        {safeMoney(tx.amount_usd, 'USD')}
                       </span>
                     ) : (
-                      <span className="text-slate-600 dark:text-slate-400">-</span>
+                      <span className="text-slate-600 dark:text-slate-400">{EMPTY_VALUE}</span>
                     )}
                   </td>
                   <td className="py-4 px-6 text-right font-mono text-sm">
-                    <span className={tx.tokens > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                      {tx.tokens > 0 ? '+' : ''}
-                      {(tx.tokens || 0).toLocaleString()}
+                    <span
+                      className={safeNumber(tx.tokens) > 0 ? 'text-emerald-400' : 'text-rose-400'}
+                    >
+                      {safeNumber(tx.tokens) > 0 ? '+' : ''}
+                      {formatNumber(tx.tokens)}
                     </span>
                   </td>
                 </tr>
@@ -1084,6 +1398,7 @@ const TransactionsTab: React.FC = () => {
 const ContractsTab: React.FC = () => {
   const [contracts, setContracts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     organizationId: '',
@@ -1107,10 +1422,13 @@ const ContractsTab: React.FC = () => {
 
   const loadContracts = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.getManagedContracts();
       setContracts(Array.isArray(data) ? data : []);
     } catch (error: any) {
+      setContracts([]);
+      setLoadError(error?.message || 'Managed contracts are temporarily unavailable.');
       toast.error(error?.message || 'Failed to load managed contracts');
     } finally {
       setLoading(false);
@@ -1185,18 +1503,21 @@ const ContractsTab: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             value={form.organizationId}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, organizationId: e.target.value }))}
             placeholder="Organization ID"
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
           <input
             value={form.subscriptionPlanId}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, subscriptionPlanId: e.target.value }))}
             placeholder="Plan ID"
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
           <select
             value={form.billingRail}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, billingRail: e.target.value }))}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           >
@@ -1205,6 +1526,7 @@ const ContractsTab: React.FC = () => {
           </select>
           <select
             value={form.contractStatus}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, contractStatus: e.target.value }))}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           >
@@ -1216,29 +1538,34 @@ const ContractsTab: React.FC = () => {
           <input
             type="date"
             value={form.renewalAt}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, renewalAt: e.target.value }))}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
           <input
             type="date"
             value={form.accessExpiresAt}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, accessExpiresAt: e.target.value }))}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
           <input
             value={form.externalInvoiceRef}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, externalInvoiceRef: e.target.value }))}
             placeholder="External invoice reference"
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
           <input
             value={form.reason}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))}
             placeholder="Reason / change summary"
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
           <textarea
             value={form.notes}
+            disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
             placeholder="Internal notes"
             className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent min-h-[88px]"
@@ -1269,6 +1596,7 @@ const ContractsTab: React.FC = () => {
                 type="number"
                 min="0"
                 value={(form.limitsOverride as any)[key]}
+                disabled={!!loadError}
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
@@ -1288,7 +1616,7 @@ const ContractsTab: React.FC = () => {
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || !!loadError}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
@@ -1307,6 +1635,10 @@ const ContractsTab: React.FC = () => {
         {loading ? (
           <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
             Loading contracts...
+          </div>
+        ) : loadError ? (
+          <div className="p-6">
+            <DegradedState title="Managed contracts unavailable" description={loadError} />
           </div>
         ) : contracts.length === 0 ? (
           <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
@@ -1341,7 +1673,7 @@ const ContractsTab: React.FC = () => {
                 </div>
                 <div className="text-right text-xs text-slate-500 dark:text-slate-400">
                   <p>{contract.external_invoice_ref || 'No invoice ref'}</p>
-                  <p className="mt-1">{contract.updated_at || ''}</p>
+                  <p className="mt-1">{safeDate(contract.updated_at)}</p>
                 </div>
               </div>
             ))}

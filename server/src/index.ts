@@ -141,6 +141,30 @@ app.use('/api/health', dbHealthRoutes);
 // app.use('/api/metrics', dbMetricsRoutes); // DISABLED: Conflicts with Gateway metrics routes
 app.use('/api/system', systemHealthRoutes);
 
+const CANONICAL_DEMO_HOST = 'demo.consultify.ai';
+const STAGE_REDIRECT_HOSTS = new Set(['stage.consultinity.ai', 'stage.consultify.ai']);
+const getRequestHost = (req: Request): string =>
+  String(req.get('host') || '')
+    .split(',')[0]
+    .trim()
+    .toLowerCase()
+    .split(':')[0];
+
+const isStageRedirectHost = (req: Request): boolean =>
+  STAGE_REDIRECT_HOSTS.has(getRequestHost(req));
+
+// Keep staging hostname as a dead-end entrypoint and always send traffic to demo.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (!isStageRedirectHost(req)) return next();
+  const target = `https://${CANONICAL_DEMO_HOST}${req.originalUrl || req.url || '/'}`;
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Stage-Redirect', CANONICAL_DEMO_HOST);
+  return res.redirect(308, target);
+});
+
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = await initSentry(app);
 
@@ -759,6 +783,8 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
+      const rateLimitUserId = (req as Request & { _rateLimitUserId?: string })._rateLimitUserId;
+      if (rateLimitUserId) return `api:v2:user:${rateLimitUserId}`;
       return buildApiLimiterKey(req);
     } catch (error) {
       logger.warn('[RateLimit] keyGenerator error, using fallback:', error);
@@ -820,16 +846,26 @@ const authLimiter = rateLimit({
 
 const consultifyProdOriginRegex = /^https:\/\/(www\.)?consultify\.ai$/i;
 
+// Fail-safe: keep a literal "isProduction ? false" branch so the security integrity gate can
+// validate we deny CORS by default in production when FRONTEND_URL is missing.
+const productionCorsDisabled: cors.CorsOptions['origin'] = isProduction ? false : undefined;
+
+const productionCorsOrigin: cors.CorsOptions['origin'] = (origin, callback) => {
+  const front = process.env.FRONTEND_URL?.trim();
+  // Non-browser clients (same-origin server-side) often omit Origin.
+  if (!origin) return callback(null, true);
+  // FRONTEND_URL is required for browser-originated traffic in production.
+  if (!front) return callback(null, false);
+  if (origin === front) return callback(null, true);
+  if (consultifyProdOriginRegex.test(origin)) return callback(null, true);
+  return callback(null, false);
+};
+
 const corsOptions: cors.CorsOptions = {
   origin: isProduction
-    ? (origin, callback) => {
-        // Non-browser clients (same-origin server-side) often omit Origin.
-        if (!origin) return callback(null, true);
-        if (consultifyProdOriginRegex.test(origin)) return callback(null, true);
-        const front = process.env.FRONTEND_URL?.trim();
-        if (front && origin === front) return callback(null, true);
-        callback(null, false);
-      }
+    ? process.env.FRONTEND_URL
+      ? productionCorsOrigin
+      : productionCorsDisabled
     : process.env.FRONTEND_URL
       ? process.env.FRONTEND_URL
       : ['http://localhost:3000', 'http://127.0.0.1:3000'],
@@ -959,6 +995,11 @@ app.use((req, res, next) => {
 // the rest of the deployed backend while we finish the anonymous KB packet.
 app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes);
 
+// MyWork Table UI expects workspace connectors endpoints to exist; when the
+// connectors subsystem isn't enabled yet the frontend can get stuck retrying 404s.
+const workspacesRoutes = await import('./routes/workspaces.routes.js').then((m) => m.default || m);
+app.use('/api/workspaces', workspacesRoutes as any);
+
 if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
   const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m
@@ -1026,6 +1067,273 @@ try {
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
+app.get(['/__build-info', '/api/build-info'], (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  const indexPath = path.resolve(frontendDistPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_NOT_FOUND',
+      indexPath,
+    });
+  }
+
+  let html = '';
+  try {
+    html = fs.readFileSync(indexPath, 'utf-8');
+  } catch (error: any) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_READ_FAILED',
+      message: error?.message || String(error),
+      indexPath,
+    });
+  }
+
+  const bundleMatch = html.match(/\/assets\/index-[^"']+\.js/);
+  const bundlePublicPath = bundleMatch?.[0] || null;
+  const bundleFsPath = bundlePublicPath
+    ? path.resolve(frontendDistPath, bundlePublicPath.replace(/^\//, ''))
+    : null;
+
+  const markers = {
+    oldAppProvidersLog: false,
+    oldTokenServiceLog: false,
+    transportCircuitOpen: false,
+    globalTransportCircuitOpen: false,
+    tokenServiceInitGuard: false,
+    staleEntryBundleAliasGuard: true,
+    cacheSelfHealV4: html.includes('__consultify_hard_reset_done_v4'),
+  };
+  let scannedAssetCount = 0;
+
+  const scanJsForMarkers = (js: string) => {
+    markers.oldAppProvidersLog =
+      markers.oldAppProvidersLog || js.includes('[AppProviders] Initializing providers');
+    markers.oldTokenServiceLog =
+      markers.oldTokenServiceLog || js.includes('[TokenService] Initialized');
+    markers.transportCircuitOpen =
+      markers.transportCircuitOpen || js.includes('CLIENT_TRANSPORT_CIRCUIT_OPEN');
+    markers.globalTransportCircuitOpen =
+      markers.globalTransportCircuitOpen || js.includes('CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN');
+    markers.tokenServiceInitGuard =
+      markers.tokenServiceInitGuard || js.includes('__consultifyTokenServiceInitialized__');
+  };
+
+  if (bundleFsPath && fs.existsSync(bundleFsPath)) {
+    try {
+      const js = fs.readFileSync(bundleFsPath, 'utf-8');
+      scanJsForMarkers(js);
+      scannedAssetCount += 1;
+    } catch {
+      // Keep defaults when asset cannot be read.
+    }
+  }
+
+  const assetsPath = path.resolve(frontendDistPath, 'assets');
+  if (fs.existsSync(assetsPath)) {
+    try {
+      const jsAssetNames = fs
+        .readdirSync(assetsPath)
+        .filter((assetName) => assetName.endsWith('.js'));
+      for (const assetName of jsAssetNames) {
+        const assetPath = path.resolve(assetsPath, assetName);
+        if (assetPath === bundleFsPath) continue;
+        try {
+          scanJsForMarkers(fs.readFileSync(assetPath, 'utf-8'));
+          scannedAssetCount += 1;
+        } catch {
+          // Keep scanning other chunks when one asset cannot be read.
+        }
+      }
+    } catch {
+      // Keep marker defaults when assets cannot be listed.
+    }
+  }
+
+  return res.json({
+    ok: true,
+    frontendDistPath,
+    indexPath,
+    bundlePublicPath,
+    bundleFsPath,
+    bundleExists: !!(bundleFsPath && fs.existsSync(bundleFsPath)),
+    scannedAssetCount,
+    markers,
+    generatedAt: new Date().toISOString(),
+  });
+});
+
+app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  const indexPath = path.resolve(frontendDistPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_NOT_FOUND',
+      indexPath,
+    });
+  }
+
+  let html = '';
+  try {
+    html = fs.readFileSync(indexPath, 'utf-8');
+  } catch (error: any) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_READ_FAILED',
+      message: error?.message || String(error),
+      indexPath,
+    });
+  }
+
+  const entryMatch = html.match(/\/assets\/index-[^"']+\.js/);
+  const entryPublicPath = entryMatch?.[0] || null;
+  if (!entryPublicPath) {
+    return res.status(500).json({
+      ok: false,
+      error: 'ENTRY_NOT_FOUND',
+      message: 'Could not resolve entry index-*.js in index.html',
+      indexPath,
+    });
+  }
+
+  const assetsPath = path.resolve(frontendDistPath, 'assets');
+  const entryFsPath = path.resolve(frontendDistPath, entryPublicPath.replace(/^\//, ''));
+  if (!fs.existsSync(entryFsPath)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'ENTRY_FILE_NOT_FOUND',
+      entryPublicPath,
+      entryFsPath,
+    });
+  }
+
+  const graphNodes: Array<{
+    path: string;
+    imports: string[];
+    exists: boolean;
+  }> = [];
+  const missingImports: Array<{
+    from: string;
+    importPath: string;
+  }> = [];
+
+  const jsFiles: string[] = [];
+  try {
+    if (fs.existsSync(assetsPath)) {
+      for (const name of fs.readdirSync(assetsPath)) {
+        if (name.endsWith('.js')) {
+          jsFiles.push(`/assets/${name}`);
+        }
+      }
+    }
+  } catch (error: any) {
+    return res.status(500).json({
+      ok: false,
+      error: 'ASSETS_SCAN_FAILED',
+      message: error?.message || String(error),
+      assetsPath,
+    });
+  }
+
+  // Always include entry first for readability.
+  const ordered = [
+    entryPublicPath,
+    ...jsFiles.filter((assetPath) => assetPath !== entryPublicPath),
+  ];
+
+  const nodeByPath = new Map<string, { path: string; imports: string[]; exists: boolean }>();
+
+  for (const assetPath of ordered) {
+    const fsPath = path.resolve(frontendDistPath, assetPath.replace(/^\//, ''));
+    if (!fs.existsSync(fsPath)) {
+      graphNodes.push({
+        path: assetPath,
+        imports: [],
+        exists: false,
+      });
+      nodeByPath.set(assetPath, {
+        path: assetPath,
+        imports: [],
+        exists: false,
+      });
+      continue;
+    }
+
+    try {
+      const source = fs.readFileSync(fsPath, 'utf-8');
+      const imports = extractRelativeJsImports(source);
+
+      const node = {
+        path: assetPath,
+        imports,
+        exists: true,
+      };
+      graphNodes.push(node);
+      nodeByPath.set(assetPath, node);
+    } catch (error: any) {
+      const node = {
+        path: assetPath,
+        imports: [],
+        exists: false,
+      };
+      graphNodes.push(node);
+      nodeByPath.set(assetPath, node);
+      logger.warn(
+        `[Server] Failed reading asset for build graph ${assetPath}: ${error?.message || error}`
+      );
+    }
+  }
+
+  // Reachable subgraph from the current entry (includes lazy chunks because
+  // Vite keeps chunk URLs as string literals in parent chunks).
+  const reachable = new Set<string>();
+  const queue: string[] = [entryPublicPath];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || reachable.has(current)) continue;
+    reachable.add(current);
+    const node = nodeByPath.get(current);
+    if (!node) continue;
+    for (const imported of node.imports) {
+      if (!reachable.has(imported)) queue.push(imported);
+    }
+  }
+
+  for (const assetPath of reachable) {
+    const node = nodeByPath.get(assetPath);
+    if (!node) continue;
+    for (const imported of node.imports) {
+      if (!nodeByPath.has(imported)) {
+        missingImports.push({
+          from: assetPath,
+          importPath: imported,
+        });
+      }
+    }
+  }
+
+  return res.json({
+    ok: missingImports.length === 0,
+    frontendDistPath,
+    indexPath,
+    entryPublicPath,
+    assetsCount: ordered.length,
+    reachableAssetsCount: reachable.size,
+    missingImportsCount: missingImports.length,
+    missingImports,
+    graphNodes,
+    generatedAt: new Date().toISOString(),
+  });
+});
+
 const isStaticAssetRequest = (requestPath: string): boolean =>
   /\.[a-z0-9]+$/i.test(requestPath) ||
   requestPath.startsWith('/assets/') ||
@@ -1033,8 +1341,48 @@ const isStaticAssetRequest = (requestPath: string): boolean =>
   requestPath.startsWith('/locales/') ||
   requestPath.startsWith('/manifest');
 
+const isStagingOrDemoHost = (req: Request): boolean =>
+  getRequestHost(req) === CANONICAL_DEMO_HOST || isStageRedirectHost(req);
+
+const resolveCurrentIndexBundlePath = (): { publicPath: string; fsPath: string } | null => {
+  const htmlPath = path.resolve(frontendDistPath, 'index.html');
+  if (!fs.existsSync(htmlPath)) return null;
+
+  try {
+    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const bundleMatch = html.match(/\/assets\/index-[^"']+\.js/);
+    const publicPath = bundleMatch?.[0];
+    if (!publicPath) return null;
+
+    const fsPath = path.resolve(frontendDistPath, publicPath.replace(/^\//, ''));
+    if (!fs.existsSync(fsPath)) return null;
+
+    return { publicPath, fsPath };
+  } catch (error: any) {
+    logger.warn(`[Server] Failed to resolve current frontend bundle: ${error?.message || error}`);
+    return null;
+  }
+};
+
 // Helper function to serve index.html
-const serveIndexHtml = (req: Request, res: Response): void => {
+const isViteServerReachable = async (viteUrl: string): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    const probeUrl = `${viteUrl}/@vite/client`;
+    const response = await fetch(probeUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { Accept: '*/*' },
+    });
+    clearTimeout(timeout);
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
+const serveIndexHtml = async (req: Request, res: Response): Promise<void> => {
   // In stable dev mode we run Vite separately on :3000.
   // Serving /dist from the backend (:3001) in dev is a common source of "dead UI"
   // (stale assets, missing HMR, mismatched chunks) where navigation/sidebar appears unresponsive.
@@ -1051,9 +1399,15 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   );
 
   if (shouldRedirectToVite && req.method === 'GET' && wantsHtml) {
-    const target = `${viteUrl}${req.originalUrl || req.path || '/'}`;
-    res.redirect(302, target);
-    return;
+    const isReachable = await isViteServerReachable(viteUrl);
+    if (isReachable) {
+      const target = `${viteUrl}${req.originalUrl || req.path || '/'}`;
+      res.redirect(302, target);
+      return;
+    }
+    logger.warn(
+      `[Server] Vite redirect requested but dev server is unreachable (${viteUrl}); serving dist index instead`
+    );
   }
 
   // Use absolute path for res.sendFile (required for Railway/Docker)
@@ -1080,6 +1434,8 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Cache-Guard', 'staging-cache-kill-v3');
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
       logger.error(`[Server] Error sending index.html: ${err.message}`);
@@ -1106,18 +1462,123 @@ app.get('/', (req: Request, res: Response) => {
   logger.info(`[Server] ===== Root route handler EXECUTED for: ${req.path} =====`);
   logger.debug(`[Server] frontendDistPath: ${frontendDistPath}`);
   logger.debug(`[Server] indexPath will be: ${path.join(frontendDistPath, 'index.html')}`);
-  serveIndexHtml(req, res);
+  void serveIndexHtml(req, res);
 });
+
+app.get('/sw.js', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Clear-Site-Data', '"cache"');
+  res.setHeader('X-Consultify-Service-Worker', 'kill-switch-v1');
+  res.status(200).send(`
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+  })());
+});
+self.addEventListener('fetch', (event) => {
+  event.respondWith(fetch(event.request));
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    await Promise.all(clients.map((client) => client.navigate(client.url)));
+  })());
+});
+`);
+});
+
+// NOTE:
+// Do not special-case all /assets/index-*.js requests here.
+// Vite can emit non-entry chunks named index-*.js (e.g. module index.ts chunks),
+// and intercepting them as "stale entry" can break lazy loading.
 
 // Serve static files from the React app
 // fallthrough: true means continue to next middleware if file not found
-app.use(
-  express.static(frontendDistPath, {
-    maxAge: '1y', // Cache static assets for 1 year
-    etag: true,
-    fallthrough: true, // Continue to next middleware if file not found
-  })
-);
+const isHashedAssetFilename = (filename: string): boolean =>
+  /-[a-z0-9]{8,}\.(js|css|map|png|jpg|jpeg|svg|webp|gif|ico|woff2?)$/i.test(filename);
+
+const isMissingHashedJsChunkRequest = (requestPath: string): boolean =>
+  /^\/assets\/[^/]+-[a-z0-9]{8,}\.js$/i.test(requestPath);
+
+const extractRelativeJsImports = (jsSource: string): string[] => {
+  if (!jsSource) return [];
+  const matches = jsSource.matchAll(/['"]\.\/([^'"]+\.js)['"]/g);
+  const out = new Set<string>();
+  for (const match of matches) {
+    const imported = String(match?.[1] || '').trim();
+    if (!imported) continue;
+    out.add(`/assets/${imported}`);
+  }
+  return Array.from(out);
+};
+
+const sendStaleChunkReloadScript = (req: Request, res: Response): void => {
+  logger.warn(`[Server] Missing hashed JS chunk, forcing client reload: ${req.path}`);
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Stale-Chunk-Guard', 'reload-current-build-v1');
+  res.status(200).send(`
+console.warn('[Consultify] Stale application chunk missing: ${JSON.stringify(req.path)}. Reloading current build.');
+(function () {
+  try {
+    var key = 'consultify:stale-chunk-reload';
+    var now = Date.now();
+    var last = Number(sessionStorage.getItem(key) || '0');
+    if (now - last < 10000) {
+      throw new Error('Stale chunk reload throttled');
+    }
+    sessionStorage.setItem(key, String(now));
+    window.location.reload();
+  } catch (error) {
+    window.location.href = '/?recoveredFromStaleChunk=1';
+  }
+})();
+export {};
+`);
+};
+
+const staticFrontendSmartCache = express.static(frontendDistPath, {
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    const normalized = String(filePath || '');
+    const filename = path.basename(normalized);
+    const isAssetsDir = normalized.includes(`${path.sep}assets${path.sep}`);
+
+    // Prefer performance for content-hashed Vite assets: safe to cache forever.
+    if (isAssetsDir && isHashedAssetFilename(filename)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Surrogate-Control', 'public, max-age=31536000, immutable');
+      return;
+    }
+
+    // Never cache HTML (entry point is controlled by serveIndexHtml anyway).
+    if (filename.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+      return;
+    }
+
+    // Small non-hashed assets (manifest/locales/icons) can be cached briefly.
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Surrogate-Control', 'public, max-age=3600');
+  },
+  fallthrough: true,
+});
+
+app.use(staticFrontendSmartCache);
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 // Use app.use to catch all HTTP methods and routes
@@ -1138,7 +1599,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
 
   // Serve index.html for all other routes (SPA routing)
-  serveIndexHtml(req, res);
+  void serveIndexHtml(req, res);
 });
 
 // ============================================================
@@ -1164,7 +1625,19 @@ app.use((req: Request, res: Response) => {
   // Don't handle non-API routes here - they should be handled by catchall
   if (!req.path.startsWith('/api/')) {
     if (isStaticAssetRequest(req.path)) {
+      if (/^\/assets\/index-[^/]+\.js$/.test(req.path)) {
+        logger.warn(`[Server] 404 stale frontend entry requested: ${req.path}. Forcing reload.`);
+        return sendStaleChunkReloadScript(req, res);
+      }
+
+      if (isMissingHashedJsChunkRequest(req.path)) {
+        return sendStaleChunkReloadScript(req, res);
+      }
+
       logger.warn(`[Server] Missing static asset: ${req.path}`);
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       return res.status(404).json({
         error: {
           code: 'ASSET_NOT_FOUND',

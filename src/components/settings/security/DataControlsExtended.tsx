@@ -282,7 +282,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -392,7 +392,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       {/* Export Format Selection */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Download size={20} className="text-purple-500" />
+          <Download size={20} className="text-primary-500" />
           Export Format
         </h3>
 
@@ -419,15 +419,15 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 onClick={() => setExportFormat(format.value as any)}
                 className={`flex-1 p-4 rounded-lg border-2 transition-all ${
                   exportFormat === format.value
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                 }`}
               >
                 <Icon
                   size={24}
                   className={
                     exportFormat === format.value
-                      ? 'text-purple-600'
+                      ? 'text-primary-600'
                       : 'text-slate-400 dark:text-slate-500'
                   }
                 />
@@ -441,7 +441,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         <button
           onClick={handleExportAll}
           disabled={exporting === 'all'}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {exporting === 'all' ? (
             <Loader2 size={18} className="animate-spin" />
@@ -469,7 +469,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 key={category.id}
                 className={`p-4 rounded-lg border transition-all ${
                   isConfirming
-                    ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
+                    ? 'border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/5'
                     : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950'
                 }`}
               >
@@ -493,7 +493,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                       <button
                         onClick={() => handleExport(category.id)}
                         disabled={exporting === category.id}
-                        className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-purple-600 disabled:opacity-50"
+                        className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-primary-600 disabled:opacity-50"
                         title="Export"
                       >
                         {exporting === category.id ? (
@@ -509,8 +509,8 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                         disabled={deleting === category.id}
                         className={`p-2 rounded-lg transition-colors ${
                           isConfirming
-                            ? 'bg-red-600 text-white'
-                            : 'hover:bg-white dark:hover:bg-white/10 text-red-600'
+                            ? 'bg-rose-600 text-white'
+                            : 'hover:bg-white dark:hover:bg-white/10 text-rose-600'
                         }`}
                         title={isConfirming ? 'Click again to confirm' : 'Delete'}
                       >
@@ -524,15 +524,15 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                   </div>
                 </div>
                 {isConfirming && (
-                  <div className="mt-3 p-3 bg-red-100 dark:bg-red-500/20 rounded-lg">
-                    <p className="text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
+                  <div className="mt-3 p-3 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
+                    <p className="text-sm text-rose-700 dark:text-rose-300 flex items-center gap-2">
                       <AlertTriangle size={16} />
                       Click delete again to permanently remove all {category.name.toLowerCase()}.
                       This cannot be undone.
                     </p>
                     <button
                       onClick={() => setConfirmDelete(null)}
-                      className="mt-2 text-sm text-red-600 hover:underline"
+                      className="mt-2 text-sm text-rose-600 hover:underline"
                     >
                       Cancel
                     </button>

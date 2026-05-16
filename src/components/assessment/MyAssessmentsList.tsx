@@ -75,7 +75,7 @@ const STATUS_CONFIG: Record<
   },
   AWAITING_APPROVAL: {
     label: 'Awaiting Approval',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
     icon: <FileCheck className="w-3.5 h-3.5" />,
   },
   APPROVED: {
@@ -85,7 +85,7 @@ const STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
     icon: <AlertCircle className="w-3.5 h-3.5" />,
   },
   ARCHIVED: {
@@ -253,7 +253,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -263,8 +263,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-            <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+          <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+            <FileText className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-navy-900 dark:text-white">My Assessments</h1>
@@ -284,7 +284,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           {onCreateNew && (
             <button
               onClick={onCreateNew}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
               New Assessment
@@ -303,7 +303,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search assessments..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
 
@@ -312,7 +312,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${
             showFilters || statusFilter !== 'ALL' || typeFilter !== 'ALL'
-              ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-400'
+              ? 'bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-400'
               : 'bg-white border-slate-200 text-slate-700 dark:bg-navy-900 dark:border-navy-700 dark:text-slate-300'
           }`}
         >
@@ -336,7 +336,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as WorkflowState | 'ALL')}
-                className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="ALL">All</option>
                 <option value="DRAFT">Draft</option>
@@ -356,7 +356,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="ALL">All</option>
                 <option value="DRD">DRD</option>
@@ -374,7 +374,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                   setStatusFilter('ALL');
                   setTypeFilter('ALL');
                 }}
-                className="self-end px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
+                className="self-end px-4 py-2 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
               >
                 Clear filters
               </button>
@@ -385,7 +385,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg text-red-700 dark:text-red-300">
+        <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
         </div>
@@ -403,7 +403,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           {onCreateNew && !searchQuery && statusFilter === 'ALL' && typeFilter === 'ALL' && (
             <button
               onClick={onCreateNew}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
               Create first assessment
@@ -476,7 +476,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-purple-500 rounded-full"
+                          className="h-full bg-primary-500 rounded-full"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -503,7 +503,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                   <div className="col-span-2 flex items-center justify-end gap-2">
                     <button
                       onClick={() => onViewAssessment?.(assessment.id, assessment.projectId)}
-                      className="p-2 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                      className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                       title="Preview"
                     >
                       <Eye className="w-4 h-4" />
@@ -512,7 +512,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                     {assessment.status === 'DRAFT' && (
                       <button
                         onClick={() => onEditAssessment?.(assessment.id, assessment.projectId)}
-                        className="p-2 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                        className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
@@ -568,7 +568,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                               setDeleteConfirmId(assessment.id);
                               setOpenMenuId(null);
                             }}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                            className="w-full px-4 py-2 text-left text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete
@@ -589,8 +589,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
               </div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white">Confirm Deletion</h3>
             </div>
@@ -606,7 +606,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors"
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-lg transition-colors"
               >
                 Delete
               </button>

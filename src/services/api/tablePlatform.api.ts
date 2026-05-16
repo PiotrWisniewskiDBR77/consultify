@@ -294,16 +294,36 @@ export async function generateSchemaProposal(
 }
 
 /** Chat-to-Schema: execute proposal */
+export interface ExecutionResult {
+  proposalId?: string;
+  executed?: boolean;
+  appliedOperationIds?: string[];
+  auditId?: string;
+  createdIds?: {
+    baseId?: string;
+    tableIds?: string[];
+    fieldIds?: string[];
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export async function executeSchemaProposal(
   proposalId: string,
-  approvedOperationIds?: string[]
-): Promise<any> {
+  options?: string[] | { approvedOperationIds?: string[]; executedBy?: string }
+): Promise<ExecutionResult> {
+  const body = Array.isArray(options)
+    ? { approvedOperationIds: options }
+    : {
+        approvedOperationIds: options?.approvedOperationIds,
+        executedBy: options?.executedBy,
+      };
   const res = await fetchWithRetry(`${BASE_PATH}/schema/proposals/${proposalId}/execute`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({ approvedOperationIds }),
+    body: JSON.stringify(body),
   });
-  return handleResponse(res, 'Failed to execute schema proposal');
+  return handleResponse<ExecutionResult>(res, 'Failed to execute schema proposal');
 }
 
 /** Chat-to-Schema: reject proposal */
@@ -353,6 +373,137 @@ export async function getSchemaProposal(proposalId: string): Promise<any> {
     headers: getHeaders(),
   });
   return handleResponse(res, 'Failed to fetch schema proposal');
+}
+
+// ============================================================================
+// SCHEMA-GOVERNANCE PROPOSALS — Table Studio Foundation block (Wave 1)
+// ----------------------------------------------------------------------------
+// These typed clients are added/refined by Sprint 2 / EPIC-1 US-1.7. The
+// existing execute/reject call sites remain source-compatible.
+// Backend routes are owned by Agent A (Sprint 1 / EPIC-3) — see
+// DRD/consultify/docs/product/work-packets/table-studio-foundation/epics/EPIC-3_BACKEND_RELATION_EXPLAINABILITY.md
+// for the agreed response shapes.
+// ============================================================================
+
+/**
+ * Schema-Governance Proposal lifecycle.
+ *
+ * Backed by `POST /api/table-platform/schema/proposals` and the proposal
+ * queue endpoints. All field shapes are intentionally permissive (extra
+ * server-added fields preserved via `[key: string]: unknown`) so additive
+ * backend changes do not break the frontend.
+ */
+export interface SchemaProposal {
+  id: string;
+  workspaceId: string;
+  intent: string;
+  actor?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'executed';
+  /** Optional target hints surfaced by Sprint 3 schema preview (US-2.2). */
+  targetTableId?: string;
+  targetFieldId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Relation-explain response shape — agreed with Agent A in EPIC-3.
+ *
+ * The route transport may wrap this object in `{ data }`; the client unwraps
+ * that envelope so callers receive the inner shape directly.
+ */
+export interface RelationExplainResponse {
+  relations: Array<{
+    targetTableId: string;
+    targetRecordId: string;
+    targetDisplayName: string;
+    fieldId: string;
+    fieldName: string;
+    reason: string;
+    confidence: number;
+    evidence: Array<{ kind: 'field_match' | 'temporal' | 'semantic'; ref: string }>;
+  }>;
+  cacheHit: boolean;
+  computedInMs: number;
+}
+
+/**
+ * Propose a chat-to-schema change. The backend persists a `SchemaProposal`
+ * in `pending` status awaiting governance review.
+ */
+export async function proposeSchemaChange(
+  workspaceId: string,
+  intent: string,
+  options?: { actor?: string; tableId?: string; context?: Record<string, unknown> }
+): Promise<SchemaProposal> {
+  const res = await fetchWithRetry(`${BASE_PATH}/schema/propose`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      workspaceId,
+      message: intent,
+      actor: options?.actor,
+      tableId: options?.tableId,
+      context: options?.context,
+    }),
+  });
+  return handleResponse<SchemaProposal>(res, 'Failed to propose schema change');
+}
+
+/**
+ * List Schema-Governance proposals for a workspace, optionally filtered by
+ * lifecycle status. Returns an empty array when the workspace has none.
+ */
+export async function listSchemaProposals(
+  workspaceId: string,
+  status?: 'pending' | 'approved' | 'rejected' | 'executed'
+): Promise<SchemaProposal[]> {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  const query = params.toString();
+  const url = query
+    ? `${BASE_PATH}/workspaces/${workspaceId}/schema/proposals?${query}`
+    : `${BASE_PATH}/workspaces/${workspaceId}/schema/proposals`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  const data = await handleResponse<{ proposals?: SchemaProposal[] } | SchemaProposal[]>(
+    res,
+    'Failed to list schema proposals'
+  );
+  if (Array.isArray(data)) return data;
+  return Array.isArray(data?.proposals) ? data.proposals : [];
+}
+
+function unwrapDataEnvelope<T>(value: T | { data?: T }): T {
+  if (value && typeof value === 'object' && 'data' in value) {
+    const wrapped = value as { data?: T };
+    if (wrapped.data !== undefined) return wrapped.data;
+  }
+  return value as T;
+}
+
+/**
+ * Explain why a record is related to others. Used by Sprint 3 preview to
+ * render rationale chips. Failures must be handled by the caller; the
+ * Tabele preview pipeline intentionally treats this call as best-effort.
+ */
+export async function explainRelation(
+  tableId: string,
+  recordId: string,
+  opts?: { max?: number }
+): Promise<RelationExplainResponse> {
+  const params = new URLSearchParams();
+  if (opts?.max) params.set('max', String(opts.max));
+  const query = params.toString();
+  const url = query
+    ? `${BASE_PATH}/tables/${tableId}/records/${recordId}/relations/explain?${query}`
+    : `${BASE_PATH}/tables/${tableId}/records/${recordId}/relations/explain`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  const data = await handleResponse<RelationExplainResponse | { data?: RelationExplainResponse }>(
+    res,
+    'Failed to explain relations'
+  );
+  return unwrapDataEnvelope<RelationExplainResponse>(data);
 }
 
 /** Delete view */
@@ -1497,4 +1648,560 @@ export async function updateBaseShareSettings(
     body: JSON.stringify(settings),
   });
   return handleResponse(res, 'Failed to update share settings');
+}
+
+// ============================================================================
+// AI EDITOR API (Block C · EPIC-T10 · Sprint C-S5 frontend client)
+// ============================================================================
+
+export type AiEditorLevel =
+  | 'cell'
+  | 'record'
+  | 'column'
+  | 'structure'
+  | 'view'
+  | 'relational'
+  | 'methodological'
+  | 'source';
+
+export interface AiEditorProposeInput {
+  level: AiEditorLevel;
+  prompt: string;
+  context?: Record<string, unknown>;
+  estimatedTokensInput?: number;
+  estimatedTokensOutput?: number;
+  model?: string;
+}
+
+export interface AiEditorProposeResponse {
+  proposalId: string;
+  level: AiEditorLevel;
+  softWarn: boolean;
+  handlerStatus: 'stub' | 'live';
+}
+
+export interface AiBudgetSnapshot {
+  workspaceId: string;
+  budget: number;
+  tokensUsedToday: number;
+  lastResetAt: string;
+  remaining: number;
+  softWarnThreshold: number;
+  softWarnTripped: boolean;
+}
+
+export async function proposeAiEdit(
+  tableId: string,
+  payload: AiEditorProposeInput
+): Promise<AiEditorProposeResponse> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/ai-editor/propose`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
+  const data = await handleResponse<
+    AiEditorProposeResponse | { data: AiEditorProposeResponse }
+  >(res, 'Failed to propose AI edit');
+  return unwrapDataEnvelope<AiEditorProposeResponse>(data);
+}
+
+export async function applyAiProposal(
+  proposalId: string,
+  workspaceId: string,
+  options?: { idempotent?: boolean }
+): Promise<{ proposalId: string; applied: boolean; reason?: string }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/ai-editor/proposals/${encodeURIComponent(proposalId)}/apply`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ workspaceId, idempotent: options?.idempotent ?? false }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to apply proposal');
+  return unwrapDataEnvelope(data);
+}
+
+export async function rejectAiProposal(
+  proposalId: string,
+  workspaceId: string,
+  note?: string
+): Promise<{ proposalId: string; rejected: true }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/ai-editor/proposals/${encodeURIComponent(proposalId)}/reject`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ workspaceId, note }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to reject proposal');
+  return unwrapDataEnvelope(data);
+}
+
+export async function getAiBudget(workspaceId: string): Promise<AiBudgetSnapshot> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/ai-editor/budget?workspaceId=${encodeURIComponent(workspaceId)}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to fetch AI budget');
+  return unwrapDataEnvelope<AiBudgetSnapshot>(data);
+}
+
+// ============================================================================
+// QA ENGINE API (Block C · EPIC-T11 · Sprint C-S5 frontend client)
+// ============================================================================
+
+export type QaTriggerKind = 'on_demand' | 'scheduled' | 'record_write';
+
+export type QaAxisName =
+  | 'completeness'
+  | 'freshness'
+  | 'sourceCoverage'
+  | 'methodology'
+  | 'formulaConsistency';
+
+export type QaBand = 'red' | 'amber' | 'green';
+
+export interface QaAxisDetail {
+  score: number;
+  band: QaBand;
+  details: Array<{ metric: string; value: unknown }>;
+}
+
+export interface QaSuggestion {
+  id: string;
+  fingerprint: string;
+  axis: QaAxisName;
+  description: string;
+  recommendedAction: {
+    kind: 'open_ai_editor';
+    level: AiEditorLevel;
+    payload: Record<string, unknown>;
+  };
+  severity: 'low' | 'medium' | 'high';
+}
+
+export interface QaReport {
+  id: string;
+  tableId: string;
+  organizationId: string;
+  workspaceId: string;
+  computedAt: string;
+  computedBy: string;
+  triggerKind: QaTriggerKind | 'migration';
+  overallScore: number;
+  axes: Record<QaAxisName, QaAxisDetail>;
+  suggestions: QaSuggestion[];
+  computationMs?: number;
+}
+
+export async function recomputeQaReport(
+  tableId: string,
+  triggerKind: QaTriggerKind = 'on_demand'
+): Promise<QaReport> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/recompute`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ triggerKind }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to recompute QA report');
+  return unwrapDataEnvelope<QaReport>(data);
+}
+
+export async function getLatestQaReport(tableId: string): Promise<QaReport | null> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/latest`,
+    { headers: getHeaders() }
+  );
+  if (res.status === 204) return null;
+  const data = await handleResponse<any>(res, 'Failed to fetch QA report');
+  return unwrapDataEnvelope<QaReport>(data);
+}
+
+export async function dismissQaSuggestion(
+  tableId: string,
+  suggestionId: string,
+  fingerprint: string,
+  reason?: string
+): Promise<{ tableId: string; fingerprint: string; dismissed: true }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/suggestions/${encodeURIComponent(suggestionId)}/inapplicable`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ fingerprint, reason }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to dismiss QA suggestion');
+  return unwrapDataEnvelope(data);
+}
+
+// ============================================================================
+// SOURCE PACK API (Block C · EPIC-T12 · Sprint C-S6 frontend client)
+// ============================================================================
+
+export interface SourcePackCandidate {
+  recordId: string;
+  tableId: string;
+  title: string;
+  preview: string;
+  updatedAt: string;
+  confidenceScore: number | null;
+  hasVerifiedSource: boolean;
+  validationStatus: string;
+  rankScore: number;
+  rankSignals: {
+    lexical: number;
+    recency: number;
+    confidence: number;
+    verifiedSource: number;
+  };
+}
+
+export interface SourcePackSnapshot {
+  records: Array<{
+    id: string;
+    data: Record<string, unknown>;
+    confidenceScore: number | null;
+    validationStatus: string;
+    updatedAt: string;
+  }>;
+  fields: Array<{ id: string; name: string; fieldType: string }>;
+  capturedAt: string;
+  captureSource: 'source_pack_create';
+}
+
+export interface SourcePack {
+  id: string;
+  organizationId: string;
+  workspaceId: string;
+  ownerUserId: string;
+  tableId: string | null;
+  name: string;
+  description: string | null;
+  candidateRecordIds: string[];
+  v8Snapshot: SourcePackSnapshot;
+  createdAt: string;
+  updatedAt: string;
+  usedCount: number;
+  archivedAt: string | null;
+}
+
+export interface FindCandidatesOptions {
+  query?: string;
+  verifiedOnly?: boolean;
+  recencyDays?: number | null;
+  limit?: number;
+}
+
+export async function findSourcePackCandidates(
+  tableId: string,
+  options: FindCandidatesOptions = {}
+): Promise<SourcePackCandidate[]> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/source-pack/find-candidates`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(options),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to find source pack candidates');
+  return unwrapDataEnvelope<SourcePackCandidate[]>(data) ?? [];
+}
+
+export async function createSourcePack(input: {
+  tableId: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  candidateRecordIds: string[];
+}): Promise<SourcePack> {
+  const { tableId, ...body } = input;
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/source-pack/create`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to create source pack');
+  return unwrapDataEnvelope<SourcePack>(data);
+}
+
+export async function getSourcePack(packId: string): Promise<SourcePack | null> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/source-packs/${encodeURIComponent(packId)}`,
+    { headers: getHeaders() }
+  );
+  if (res.status === 404) return null;
+  const data = await handleResponse<any>(res, 'Failed to fetch source pack');
+  return unwrapDataEnvelope<SourcePack>(data);
+}
+
+export async function listSourcePacksForTable(
+  tableId: string,
+  options: { includeArchived?: boolean; limit?: number } = {}
+): Promise<SourcePack[]> {
+  const params = new URLSearchParams();
+  if (options.includeArchived) params.set('includeArchived', 'true');
+  if (options.limit) params.set('limit', String(options.limit));
+  const qs = params.toString();
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/source-packs${qs ? `?${qs}` : ''}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to list source packs');
+  return unwrapDataEnvelope<SourcePack[]>(data) ?? [];
+}
+
+export async function listSourcePacksForWorkspace(
+  workspaceId: string,
+  options: { includeArchived?: boolean; limit?: number } = {}
+): Promise<SourcePack[]> {
+  const params = new URLSearchParams();
+  if (options.includeArchived) params.set('includeArchived', 'true');
+  if (options.limit) params.set('limit', String(options.limit));
+  const qs = params.toString();
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/workspaces/${encodeURIComponent(workspaceId)}/source-packs${qs ? `?${qs}` : ''}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to list source packs');
+  return unwrapDataEnvelope<SourcePack[]>(data) ?? [];
+}
+
+export async function markSourcePackUsed(
+  packId: string
+): Promise<{ packId: string; usedCount: number }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/source-packs/${encodeURIComponent(packId)}/used`,
+    { method: 'POST', headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to mark source pack used');
+  return unwrapDataEnvelope(data);
+}
+
+// ============================================================================
+// TABLE ARTIFACT CONVERSION API (Block D · Sprint D-S1)
+// ============================================================================
+
+export type TableConversionTarget = 'document' | 'presentation';
+
+export type TableConversionStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'cancelled';
+
+export interface TableConversionOutlineHint {
+  heading: string;
+  bodyHint?: string;
+}
+
+export interface TableConvertInput {
+  workspaceId: string;
+  target: TableConversionTarget;
+  sourcePackId?: string;
+  title?: string;
+  outline?: TableConversionOutlineHint[];
+  liveRecordCap?: number;
+}
+
+export interface TableConvertResult {
+  conversionId: string;
+  status: TableConversionStatus;
+  artifactRunId: string | null;
+  artifactDeepLink: string | null;
+  sourcePackId: string | null;
+}
+
+export interface TableConversionRecord {
+  id: string;
+  organizationId: string;
+  workspaceId: string;
+  tableId: string;
+  sourcePackId: string | null;
+  target: TableConversionTarget;
+  title: string | null;
+  outline: TableConversionOutlineHint[] | null;
+  status: TableConversionStatus;
+  artifactRunId: string | null;
+  artifactDeepLink: string | null;
+  initiatedBy: string;
+  initiatedAt: string;
+  completedAt: string | null;
+  failureReason: string | null;
+  failureStage: string | null;
+}
+
+export async function convertTable(
+  tableId: string,
+  input: TableConvertInput
+): Promise<TableConvertResult> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/convert`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to convert table');
+  return unwrapDataEnvelope(data);
+}
+
+export async function getTableConversion(
+  conversionId: string
+): Promise<TableConversionRecord> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/table-conversions/${encodeURIComponent(conversionId)}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to fetch conversion');
+  return unwrapDataEnvelope(data);
+}
+
+export async function listTableConversions(
+  tableId: string,
+  options?: { status?: TableConversionStatus; limit?: number }
+): Promise<TableConversionRecord[]> {
+  const params = new URLSearchParams();
+  if (options?.status) params.set('status', options.status);
+  if (options?.limit != null) params.set('limit', String(options.limit));
+  const url = `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/conversions${
+    params.toString() ? `?${params.toString()}` : ''
+  }`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  const data = await handleResponse<any>(res, 'Failed to list conversions');
+  return unwrapDataEnvelope<TableConversionRecord[]>(data) ?? [];
+}
+
+// ============================================================================
+// FORM INTAKE (JWT) API (Block D · Sprint D-S2 / D-S4)
+// ============================================================================
+
+export type FormIntakeKind = 'slug' | 'jwt';
+
+export interface FormIntakeContext {
+  formId: string;
+  formSlug: string;
+  /** Either embed_target_table_id (when set) or the form's own table_id. */
+  targetTableId: string;
+  /** When NULL, the configured form fields are accepted as-is. */
+  fieldAllowList: string[] | null;
+  publicLinkExpiresAt: string | null;
+  isPublished: boolean;
+}
+
+export interface IssueFormIntakeJwtInput {
+  subject: string;
+  expiresInSeconds?: number;
+  hardExpiresAt?: string;
+}
+
+export interface IssuedFormIntakeJwt {
+  token: string;
+  expiresAt: string;
+}
+
+/** Admin: fetch the JWT-intake context for a form (target table + allow-list). */
+export async function getFormIntakeContext(formId: string): Promise<FormIntakeContext> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to fetch form intake context');
+  return unwrapDataEnvelope(data);
+}
+
+/** Admin: issue a JWT link for a recipient. */
+export async function issueFormIntakeJwt(
+  formId: string,
+  input: IssueFormIntakeJwtInput
+): Promise<IssuedFormIntakeJwt> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake/jwt`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to issue intake JWT');
+  return unwrapDataEnvelope(data);
+}
+
+/** Admin: replace the field allow-list. Pass `null` to fall back to the form's
+ *  configured fields (no filter applied). */
+export async function setFormIntakeAllowList(
+  formId: string,
+  allowList: string[] | null
+): Promise<FormIntakeContext> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake/allow-list`,
+    {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ allowList }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to update allow list');
+  return unwrapDataEnvelope(data);
+}
+
+/** Public (no auth): resolve the JWT and return the form context.
+ *  Mirrors `getPublicForm(slug)` but verifies a JWT instead. */
+export async function getPublicFormByJwt(token: string): Promise<{
+  formId: string;
+  formSlug: string;
+  targetTableId: string;
+  fieldAllowList: string[] | null;
+  publicLinkExpiresAt: string | null;
+  /** Form metadata returned via the slug-based endpoint to render fields.
+   *  Fetched lazily by the caller via `getPublicForm(formSlug)`. */
+}> {
+  const res = await fetch(`${BASE_PATH}/public/forms/jwt/${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as any).error || 'Form not found');
+  }
+  const json = await res.json();
+  return json.data ?? json;
+}
+
+/** Public (no auth): submit a form via JWT path. */
+export async function submitPublicFormByJwt(
+  token: string,
+  data: Record<string, unknown>
+): Promise<{ recordId: string }> {
+  const res = await fetch(
+    `${BASE_PATH}/public/forms/jwt/${encodeURIComponent(token)}/submit`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data }),
+    }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const code = (body as any)?.code;
+    const message =
+      (body as any).error ||
+      (code === 'RATE_LIMITED'
+        ? 'Submission rate limit exceeded'
+        : 'Submission failed');
+    throw new Error(message);
+  }
+  const json = await res.json();
+  return json.data ?? json;
 }

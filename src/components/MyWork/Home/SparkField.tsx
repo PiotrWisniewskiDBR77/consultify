@@ -11,7 +11,7 @@ interface SparkFieldProps {
 }
 
 const STAGE_STYLE: Record<string, string> = {
-  shaping: 'bg-violet-500/15 text-violet-200',
+  shaping: 'bg-primary-500/15 text-primary-200',
   growing: 'bg-emerald-500/15 text-emerald-200',
   spark: 'bg-amber-500/15 text-amber-100',
 };
@@ -30,10 +30,10 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
             <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">
               {t('myWork.radar.ideasWithTasks', { count: runtimeSummary.ideasWithTasks })}
             </div>
-            <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-cyan-100">
+            <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-blue-100">
               {t('myWork.radar.recentNotes', { count: runtimeSummary.recentNotes })}
             </div>
-            <div className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-violet-100">
+            <div className="rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-primary-100">
               {t('myWork.radar.recentOutputs', { count: runtimeSummary.recentOutputs })}
             </div>
             <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-emerald-100">

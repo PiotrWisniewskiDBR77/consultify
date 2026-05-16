@@ -139,7 +139,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
             disabled={generating || tasks.length > 0}
             className={`
                             px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2
-                            ${generating ? 'bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-purple-600 hover:bg-purple-500 text-white'}
+                            ${generating ? 'bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-primary-600 hover:bg-primary-500 text-white'}
                         `}
           >
             {generating ? 'Generating...' : '✨ Generate Plan'}

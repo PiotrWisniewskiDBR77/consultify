@@ -23,8 +23,8 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
 interface SuperAdminStats {
@@ -128,7 +128,9 @@ const ActionChip: React.FC<{
 
 function formatTimeAgo(dateStr?: string): string {
   if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const timestamp = new Date(dateStr).getTime();
+  if (Number.isNaN(timestamp)) return 'Unknown time';
+  const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
@@ -140,7 +142,7 @@ function formatTimeAgo(dateStr?: string): string {
 
 function severityDot(severity?: string | null): string {
   const s = String(severity || '').toUpperCase();
-  if (s === 'CRITICAL') return 'bg-red-500';
+  if (s === 'CRITICAL') return 'bg-rose-500';
   if (s === 'HIGH') return 'bg-amber-500';
   if (s === 'WARNING') return 'bg-yellow-500';
   return 'bg-slate-400 dark:bg-slate-500';
@@ -149,7 +151,7 @@ function severityDot(severity?: string | null): string {
 const ActivityRow: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
   const actionColors: Record<string, string> = {
     created: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
-    deleted: 'text-red-600 dark:text-red-400 bg-red-500/10',
+    deleted: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
     updated: 'text-blue-600 dark:text-blue-400 bg-blue-500/10',
     login: 'text-slate-600 dark:text-slate-400 bg-slate-500/10',
   };
@@ -188,13 +190,20 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 }) => {
   const [signals, setSignals] = useState<SignalItem[]>([]);
   const [signalsLoading, setSignalsLoading] = useState(true);
+  const [signalsError, setSignalsError] = useState<string | null>(null);
 
   const fetchSignals = useCallback(async () => {
+    setSignalsLoading(true);
+    setSignalsError(null);
     try {
       const data = (await Api.getSuperAdminSignals()) as SignalItem[];
-      setSignals(Array.isArray(data) ? data : []);
-    } catch {
-      /* signals are non-critical for dashboard */
+      if (!Array.isArray(data)) {
+        throw new Error('Signals response was not a list');
+      }
+      setSignals(data);
+    } catch (error) {
+      setSignals([]);
+      setSignalsError(error instanceof Error ? error.message : 'Failed to load signals');
     } finally {
       setSignalsLoading(false);
     }
@@ -281,7 +290,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <div className="flex items-center gap-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
               {signalCounts.system.length > 0 && (
                 <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                   {signalCounts.system.length} alerts
                 </span>
               )}
@@ -304,6 +313,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             {signalsLoading ? (
               <div className="py-6 flex items-center justify-center text-slate-400">
                 <Loader2 size={14} className="animate-spin" />
+              </div>
+            ) : signalsError ? (
+              <div className="p-4">
+                <DegradedState
+                  title="Signals unavailable"
+                  description={signalsError}
+                  compact
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => void fetchSignals()}
+                      className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+                    >
+                      Retry
+                    </button>
+                  }
+                />
               </div>
             ) : topSignals.length === 0 ? (
               <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">

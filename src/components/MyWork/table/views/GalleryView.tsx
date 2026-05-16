@@ -48,7 +48,7 @@ const GalleryCard = React.memo<{
 
   return (
     <div
-      className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-800 overflow-hidden cursor-pointer hover:shadow-lg hover:border-violet-300/60 dark:hover:border-violet-500/30 hover:-translate-y-0.5 transition-all group"
+      className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-800 overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary-300/60 dark:hover:border-primary-500/30 hover:-translate-y-0.5 transition-all group"
       onClick={() => onClick(record.id)}
     >
       {/* Cover area */}
@@ -82,7 +82,7 @@ const GalleryCard = React.memo<{
       {/* Content */}
       <div className={cardSize === 'small' ? 'p-2' : 'p-3'}>
         <div
-          className={`font-bold text-slate-800 dark:text-slate-200 truncate mb-1.5 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors ${
+          className={`font-bold text-slate-800 dark:text-slate-200 truncate mb-1.5 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${
             cardSize === 'small' ? 'text-[10px]' : 'text-xs'
           }`}
         >
@@ -126,7 +126,7 @@ const GalleryCard = React.memo<{
                 <div key={col.key} className="flex items-center gap-1">
                   <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400'}`}
+                      className={`h-full rounded-full ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-400'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

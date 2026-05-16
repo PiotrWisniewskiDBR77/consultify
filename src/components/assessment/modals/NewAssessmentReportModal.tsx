@@ -55,7 +55,7 @@ export function NewAssessmentReportModal(props: {
       <div className="relative w-full max-w-xl rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
+            <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -186,7 +186,7 @@ export function NewAssessmentReportModal(props: {
                   setBusy(false);
                 }
               }}
-              className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold"
+              className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
             >
               {busy ? (
                 <span className="inline-flex items-center gap-2">

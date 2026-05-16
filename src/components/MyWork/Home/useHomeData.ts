@@ -114,6 +114,19 @@ const DEFAULT_LAYOUT: HomeLayoutConfig = {
   ],
 };
 
+const HOME_INITIAL_LOAD_TIMEOUT_MS = 12_000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 const MOCK_SCREEN: HomeScreenData = {
   timeMode: 'liveDay',
   updatedAt: new Date().toISOString(),
@@ -434,7 +447,6 @@ function createEmptyScreen(): HomeScreenData {
   return {
     ...cloneMockScreen(),
     updatedAt: new Date().toISOString(),
-    blocks: [],
   };
 }
 
@@ -1120,26 +1132,31 @@ export function useHomeData(refreshTrigger?: number): HomeData {
       setError(null);
     }
     const [screenRes, prefsRes] = await Promise.allSettled([
-      apiGetCached('/my-work/home/v2', 15_000, 'Failed to fetch Home V2'),
-      apiGetCached('/preferences', 15_000, 'Failed to fetch preferences').catch(() => null),
+      withTimeout(
+        apiGetCached('/my-work/home/v2', 15_000, 'Failed to fetch Home V2'),
+        HOME_INITIAL_LOAD_TIMEOUT_MS,
+        'Home V2 request timed out'
+      ),
+      withTimeout(
+        apiGetCached('/preferences', 15_000, 'Failed to fetch preferences').catch(() => null),
+        HOME_INITIAL_LOAD_TIMEOUT_MS,
+        'Preferences request timed out'
+      ).catch(() => null),
     ]);
 
-    const screenData =
+    const screenValue =
       screenRes.status === 'fulfilled'
-        ? normalizeHomeScreenData(
-            ((screenRes.value as { data?: unknown } | null | undefined)?.data ??
-              screenRes.value) as any
-          )
-        : createEmptyScreen();
-    const savedLayout =
-      prefsRes.status === 'fulfilled' &&
-      (((prefsRes.value as { data?: { home_layout?: unknown } } | null | undefined)?.data
-        ?.home_layout ?? (prefsRes.value as any)?.home_layout) as unknown)
-        ? sanitizeLayout(
-            ((prefsRes.value as { data?: { home_layout?: unknown } } | null | undefined)?.data
-              ?.home_layout ?? (prefsRes.value as any)?.home_layout) as any
-          )
-        : getDefaultLayout();
+        ? (screenRes.value as { data?: unknown } | null | undefined)
+        : null;
+    const prefsValue =
+      prefsRes.status === 'fulfilled'
+        ? (prefsRes.value as { data?: { home_layout?: unknown }; home_layout?: unknown } | null)
+        : null;
+    const screenData = screenValue
+      ? normalizeHomeScreenData(screenValue.data ?? screenValue)
+      : createEmptyScreen();
+    const rawSavedLayout = prefsValue?.data?.home_layout ?? prefsValue?.home_layout;
+    const savedLayout = rawSavedLayout ? sanitizeLayout(rawSavedLayout) : getDefaultLayout();
 
     if (screenRes.status === 'fulfilled') {
       setScreen(screenData);

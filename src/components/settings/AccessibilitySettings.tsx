@@ -7,14 +7,16 @@
  * @version 3.0
  */
 
-import { Accessibility, ALargeSmall, Eye, Keyboard, Loader2, Volume2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { ALargeSmall, Eye, Keyboard, Volume2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { SettingsButtonGroup, SettingsDivider, SettingsSection, SettingsToggle } from './shared';
 
 interface AccessibilitySettingsProps {
@@ -65,107 +67,159 @@ const DEFAULT_PREFERENCES: AccessibilityPreferences = {
 };
 
 const FONT_FAMILY_OPTIONS = [
-  { value: 'system', label: 'System Default' },
-  { value: 'inter', label: 'Inter' },
-  { value: 'roboto', label: 'Roboto' },
-  { value: 'open-sans', label: 'Open Sans' },
-  { value: 'lato', label: 'Lato' },
-  { value: 'dyslexic', label: 'OpenDyslexic' },
-  { value: 'mono', label: 'Monospace' },
+  {
+    value: 'system',
+    labelKey: 'settings.accessibility.fontFamily.system',
+    label: 'System Default',
+  },
+  { value: 'inter', labelKey: 'settings.accessibility.fontFamily.inter', label: 'Inter' },
+  { value: 'roboto', labelKey: 'settings.accessibility.fontFamily.roboto', label: 'Roboto' },
+  {
+    value: 'open-sans',
+    labelKey: 'settings.accessibility.fontFamily.openSans',
+    label: 'Open Sans',
+  },
+  { value: 'lato', labelKey: 'settings.accessibility.fontFamily.lato', label: 'Lato' },
+  {
+    value: 'dyslexic',
+    labelKey: 'settings.accessibility.fontFamily.dyslexic',
+    label: 'OpenDyslexic',
+  },
+  { value: 'mono', labelKey: 'settings.accessibility.fontFamily.mono', label: 'Monospace' },
 ];
 
 const COLOR_BLIND_OPTIONS = [
-  { value: 'none', label: 'None', description: 'No color adjustments' },
-  { value: 'protanopia', label: 'Protanopia', description: 'Red-blind (1% of males)' },
-  { value: 'deuteranopia', label: 'Deuteranopia', description: 'Green-blind (6% of males)' },
-  { value: 'tritanopia', label: 'Tritanopia', description: 'Blue-blind (rare)' },
+  {
+    value: 'none',
+    labelKey: 'settings.accessibility.colorVision.none',
+    label: 'None',
+    descriptionKey: 'settings.accessibility.colorVision.noneDesc',
+    description: 'No color adjustments',
+  },
+  {
+    value: 'protanopia',
+    labelKey: 'settings.accessibility.colorVision.protanopia',
+    label: 'Protanopia',
+    descriptionKey: 'settings.accessibility.colorVision.protanopiaDesc',
+    description: 'Red-blind (1% of males)',
+  },
+  {
+    value: 'deuteranopia',
+    labelKey: 'settings.accessibility.colorVision.deuteranopia',
+    label: 'Deuteranopia',
+    descriptionKey: 'settings.accessibility.colorVision.deuteranopiaDesc',
+    description: 'Green-blind (6% of males)',
+  },
+  {
+    value: 'tritanopia',
+    labelKey: 'settings.accessibility.colorVision.tritanopia',
+    label: 'Tritanopia',
+    descriptionKey: 'settings.accessibility.colorVision.tritanopiaDesc',
+    description: 'Blue-blind (rare)',
+  },
 ];
 
-export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
-  currentUser,
-  onUpdateUser,
-}) => {
+const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
+  const root = document.documentElement;
+
+  const fontSizeMap = { small: '14px', medium: '16px', large: '18px', 'extra-large': '20px' };
+  root.style.setProperty('--base-font-size', fontSizeMap[prefs.fontSize]);
+
+  root.classList.toggle('high-contrast', prefs.highContrastMode);
+  root.classList.toggle('reduce-motion', prefs.reduceMotion);
+  root.classList.toggle('underline-links', prefs.underlineLinks);
+
+  root.classList.remove(
+    'colorblind-protanopia',
+    'colorblind-deuteranopia',
+    'colorblind-tritanopia'
+  );
+  if (prefs.colorBlindMode !== 'none') {
+    root.classList.add(`colorblind-${prefs.colorBlindMode}`);
+  }
+
+  const lineHeightMap = { default: '1.5', relaxed: '1.75', loose: '2' };
+  root.style.setProperty('--line-height-base', lineHeightMap[prefs.lineHeight]);
+
+  const letterSpacingMap = { default: '0', wide: '0.025em', wider: '0.05em' };
+  root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
+
+  const fontFamilyMap: Record<string, string> = {
+    system: 'system-ui, -apple-system, sans-serif',
+    inter: 'Inter, sans-serif',
+    roboto: 'Roboto, sans-serif',
+    'open-sans': '"Open Sans", sans-serif',
+    lato: 'Lato, sans-serif',
+    dyslexic: 'OpenDyslexic, sans-serif',
+    mono: 'ui-monospace, monospace',
+  };
+  root.style.setProperty(
+    '--font-family-base',
+    fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
+  );
+};
+
+export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ currentUser }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<AccessibilityPreferences>(DEFAULT_PREFERENCES);
   const [original, setOriginal] = useState<AccessibilityPreferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(original);
 
-  useEffect(() => {
-    loadPreferences();
-  }, [currentUser.id]);
-
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     try {
+      setLoading(true);
+      setLoadError(null);
       const data = await Api.getAccessibilitySettings();
-      if (data.preferences) {
-        const merged = { ...DEFAULT_PREFERENCES, ...data.preferences };
-        setPreferences(merged);
-        setOriginal(merged);
-        applyAccessibilityPreferences(merged);
+      if (!data?.preferences) {
+        throw new Error('Accessibility settings response was missing preferences');
       }
-    } catch (error) {
-      console.error('Failed to load accessibility preferences:', error);
+      const merged = { ...DEFAULT_PREFERENCES, ...data.preferences };
+      setPreferences(merged);
+      setOriginal(merged);
+      applyAccessibilityPreferences(merged);
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load accessibility preferences'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadPreferences();
+  }, [currentUser.id, loadPreferences]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.updateAccessibilitySettings(preferences);
-      setOriginal(preferences);
-      applyAccessibilityPreferences(preferences);
+      const data = await Api.getAccessibilitySettings();
+      if (!data?.preferences) {
+        throw new Error('Accessibility preferences save was not confirmed by the server');
+      }
+      const next = { ...DEFAULT_PREFERENCES, ...data.preferences };
+      if (JSON.stringify(next) !== JSON.stringify(preferences)) {
+        throw new Error('Accessibility preferences save was not confirmed by the server');
+      }
+      setPreferences(next);
+      setOriginal(next);
+      applyAccessibilityPreferences(next);
       toast.success(t('settings.accessibility.saved', 'Accessibility preferences saved'));
-    } catch (error) {
-      console.error('Failed to save accessibility preferences:', error);
-      toast.error(t('settings.accessibility.error', 'Failed to save preferences'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.accessibility.error', 'Failed to save preferences')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
-  };
-
-  const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
-    const root = document.documentElement;
-
-    const fontSizeMap = { small: '14px', medium: '16px', large: '18px', 'extra-large': '20px' };
-    root.style.setProperty('--base-font-size', fontSizeMap[prefs.fontSize]);
-
-    root.classList.toggle('high-contrast', prefs.highContrastMode);
-    root.classList.toggle('reduce-motion', prefs.reduceMotion);
-    root.classList.toggle('underline-links', prefs.underlineLinks);
-
-    root.classList.remove(
-      'colorblind-protanopia',
-      'colorblind-deuteranopia',
-      'colorblind-tritanopia'
-    );
-    if (prefs.colorBlindMode !== 'none') {
-      root.classList.add(`colorblind-${prefs.colorBlindMode}`);
-    }
-
-    const lineHeightMap = { default: '1.5', relaxed: '1.75', loose: '2' };
-    root.style.setProperty('--line-height-base', lineHeightMap[prefs.lineHeight]);
-
-    const letterSpacingMap = { default: '0', wide: '0.025em', wider: '0.05em' };
-    root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
-
-    const fontFamilyMap: Record<string, string> = {
-      system: 'system-ui, -apple-system, sans-serif',
-      inter: 'Inter, sans-serif',
-      roboto: 'Roboto, sans-serif',
-      'open-sans': '"Open Sans", sans-serif',
-      lato: 'Lato, sans-serif',
-      dyslexic: 'OpenDyslexic, sans-serif',
-      mono: 'ui-monospace, monospace',
-    };
-    root.style.setProperty(
-      '--font-family-base',
-      fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
-    );
   };
 
   const update = <K extends keyof AccessibilityPreferences>(
@@ -186,8 +240,25 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
     },
   ];
 
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <DegradedState title="Accessibility preferences unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* ── Section 1: Typography ── */}
       <SettingsSection
         icon={ALargeSmall}
@@ -221,14 +292,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20 bg-navy-800/50'
                     )}
                   >
                     <div
                       className={cn(
                         'font-semibold transition-colors',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                       style={{ fontSize: opt.size }}
                     >
@@ -237,7 +308,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                     <div
                       className={cn(
                         'text-xs mt-2 transition-colors',
-                        isSelected ? 'text-violet-400' : 'text-slate-500'
+                        isSelected ? 'text-primary-400' : 'text-slate-500'
                       )}
                     >
                       {opt.label}
@@ -265,14 +336,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                     className={cn(
                       'p-3 rounded-lg border-2 transition-all duration-200 text-left',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                     >
                       {opt.label}
@@ -289,7 +360,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <span className="block text-sm font-medium text-white">
-                {t('settings.accessibility.lineHeight', 'Line Height')}
+                {t('settings.accessibility.lineHeightTitle', 'Line Height')}
               </span>
               <span className="text-xs text-slate-500">
                 {t('settings.accessibility.lineHeightDescription', 'Space between lines of text')}
@@ -319,7 +390,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <span className="block text-sm font-medium text-white">
-                {t('settings.accessibility.letterSpacing', 'Letter Spacing')}
+                {t('settings.accessibility.letterSpacingTitle', 'Letter Spacing')}
               </span>
               <span className="text-xs text-slate-500">
                 {t('settings.accessibility.letterSpacingDescription', 'Space between characters')}
@@ -348,7 +419,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <span className="block text-sm font-medium text-white">
-                {t('settings.accessibility.caretWidth', 'Text Cursor Width')}
+                {t('settings.accessibility.caretWidthTitle', 'Text Cursor Width')}
               </span>
               <span className="text-xs text-slate-500">
                 {t(
@@ -480,19 +551,21 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                     className={cn(
                       'p-3 rounded-xl border-2 transition-all duration-200 text-left',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
                     <div
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                     >
-                      {opt.label}
+                      {t(opt.labelKey, opt.label)}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">{opt.description}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {t(opt.descriptionKey, opt.description)}
+                    </div>
                   </button>
                 );
               })}
@@ -530,14 +603,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
                     className={cn(
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                     >
                       {labels[style]}

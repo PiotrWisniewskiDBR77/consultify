@@ -106,7 +106,7 @@ export const BrandKitSettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export const BrandKitSettings: React.FC = () => {
     <div className="space-y-8 max-w-2xl">
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Palette className="w-5 h-5 text-purple-500" />
+          <Palette className="w-5 h-5 text-primary-500" />
           {t('presentations.brandKit.title', 'Brand Kit')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -269,7 +269,7 @@ export const BrandKitSettings: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-500 disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-500 disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {t('common.save', 'Save')}
@@ -328,7 +328,7 @@ const ToggleField: React.FC<{
   <label className="flex items-center gap-2 cursor-pointer">
     <div
       onClick={() => onChange(!checked)}
-      className={`w-9 h-5 rounded-full transition-colors relative ${checked ? 'bg-purple-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+      className={`w-9 h-5 rounded-full transition-colors relative ${checked ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'}`}
     >
       <div
         className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.5'}`}

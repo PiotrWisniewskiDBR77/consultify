@@ -98,7 +98,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
       {
         labelEn: 'Thankless Tasks',
         labelPl: 'Niewdzięczne zadania',
-        color: 'bg-red-500/10 border-red-500/20',
+        color: 'bg-rose-500/10 border-rose-500/20',
         xRange: [minX, midX],
         yRange: [midY, maxY],
       },
@@ -234,7 +234,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 quadrantRefs.current[idx] = r;
               }}
               className={`rounded-2xl border p-3 ${q.color} flex flex-col overflow-hidden relative ${
-                dropQuadrant === idx ? 'ring-2 ring-violet-400 dark:ring-violet-500' : ''
+                dropQuadrant === idx ? 'ring-2 ring-primary-400 dark:ring-primary-500' : ''
               }`}
               onDragOver={handleDragOver}
               onDragEnter={() => dragNodeId && setDropQuadrant(idx)}
@@ -259,7 +259,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                     }}
                     onClick={() => onNodeClick?.(node.id)}
                     className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-white/80 dark:bg-navy-950/80 border border-slate-200/40 dark:border-navy-700/40 hover:shadow-md transition-shadow ${
-                      dragNodeId === node.id ? 'opacity-40 scale-95 border-violet-400' : ''
+                      dragNodeId === node.id ? 'opacity-40 scale-95 border-primary-400' : ''
                     }`}
                     style={{
                       left: `${positionsByNode[node.id]?.left ?? 5}%`,

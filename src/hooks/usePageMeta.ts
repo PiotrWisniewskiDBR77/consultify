@@ -60,6 +60,26 @@ const ROUTE_META: Record<string, PageMeta> = {
     title: `Demo — ${BRAND}`,
     description: 'Experience Consultify with realistic demo data. No signup required.',
   },
+  '/chat': {
+    title: `AI Chat — ${BRAND}`,
+    description: 'Teresa AI workspace for guided execution and decisions.',
+  },
+  '/my-work': {
+    title: `My Work — ${BRAND}`,
+    description: 'Your active tasks, inbox, and execution workspace.',
+  },
+  '/interview': {
+    title: `Interview — ${BRAND}`,
+    description: 'Interview workflows, assignments, and insights.',
+  },
+  '/discovery-tools': {
+    title: `Discovery Tools — ${BRAND}`,
+    description: 'Methods, templates, and discovery accelerators.',
+  },
+  '/settings': {
+    title: `Settings — ${BRAND}`,
+    description: 'Manage profile, security, integrations, and preferences.',
+  },
 };
 
 function getMetaForPath(path: string): PageMeta {
@@ -82,6 +102,36 @@ function getMetaForPath(path: string): PageMeta {
       title: `Knowledge Base — ${BRAND}`,
       description:
         'Expert guides on transformation management, AI consulting, governance, and execution for enterprise leaders.',
+    };
+  }
+  if (path.startsWith('/chat/')) {
+    return {
+      title: `AI Chat — ${BRAND}`,
+      description: 'Teresa AI workspace for guided execution and decisions.',
+    };
+  }
+  if (path.startsWith('/my-work/')) {
+    return {
+      title: `My Work — ${BRAND}`,
+      description: 'Your active tasks, inbox, and execution workspace.',
+    };
+  }
+  if (path.startsWith('/interview/')) {
+    return {
+      title: `Interview — ${BRAND}`,
+      description: 'Interview workflows, assignments, and insights.',
+    };
+  }
+  if (path.startsWith('/discovery-tools/')) {
+    return {
+      title: `Discovery Tools — ${BRAND}`,
+      description: 'Methods, templates, and discovery accelerators.',
+    };
+  }
+  if (path.startsWith('/settings/')) {
+    return {
+      title: `Settings — ${BRAND}`,
+      description: 'Manage profile, security, integrations, and preferences.',
     };
   }
 

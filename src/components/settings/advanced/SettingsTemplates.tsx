@@ -2,25 +2,15 @@
  * SettingsTemplates - Predefined settings configurations
  */
 
-import {
-  Check,
-  Copy,
-  Eye,
-  Layout,
-  Loader2,
-  Plus,
-  Save,
-  Shield,
-  Star,
-  Trash2,
-  Zap,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Check, Layout, Loader2, Plus, Star, Trash2, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsTemplatesProps {
@@ -39,19 +29,36 @@ interface Template {
   createdAt?: string;
 }
 
-interface SettingsTemplatesResponse {
-  templates?: Template[];
+interface SettingsTemplatesSnapshot {
+  systemTemplates: Template[];
+  customTemplates: Template[];
 }
 
-interface ExportSettingsResponse {
-  data?: {
-    settings?: Record<string, unknown>;
+const normalizeTemplates = (response: unknown): SettingsTemplatesSnapshot => {
+  const templates = (response as { templates?: unknown })?.templates;
+  if (!Array.isArray(templates)) {
+    throw new Error('Settings templates response was invalid');
+  }
+
+  const normalizedTemplates = (templates as Template[]).map((template) => ({
+    ...template,
+    categories: Array.isArray(template.categories) ? template.categories : ['All'],
+  }));
+
+  return {
+    systemTemplates: normalizedTemplates.filter((template) => template.type === 'system'),
+    customTemplates: normalizedTemplates.filter((template) => template.type === 'custom'),
   };
-}
+};
 
-interface CreateTemplateResponse {
-  template?: Template;
-}
+const templateMatchesCreate = (templates: Template[], expected: Template) =>
+  templates.some((template) => template.id === expected.id || template.name === expected.name);
+
+const normalizeTemplateKey = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
 
 export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUser }) => {
   const { t } = useTranslation();
@@ -62,40 +69,39 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateDesc, setNewTemplateDesc] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const loadData = useCallback(async (showLoader = true) => {
+    try {
+      if (showLoader) setLoading(true);
+      setLoadError(null);
+      const response = await Api.getSettingsTemplates();
+      const snapshot = normalizeTemplates(response);
+      setTemplates(snapshot.systemTemplates);
+      setCustomTemplates(snapshot.customTemplates);
+      return snapshot;
+    } catch (error: unknown) {
+      setTemplates([]);
+      setCustomTemplates([]);
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load settings templates'));
+      return null;
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, [currentUser.id]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = (await Api.getSettingsTemplates()) as
-        | SettingsTemplatesResponse
-        | null
-        | undefined;
-
-      if (response?.templates) {
-        const normalizedTemplates = response.templates.map((template: Template) => ({
-          ...template,
-          categories: Array.isArray(template.categories) ? template.categories : ['All'],
-        }));
-        const systemTemplates = normalizedTemplates.filter((t: Template) => t.type === 'system');
-        const customTpls = normalizedTemplates.filter((t: Template) => t.type === 'custom');
-        setTemplates(systemTemplates);
-        setCustomTemplates(customTpls);
-      }
-    } catch (error) {
-      console.error('Error loading templates:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [currentUser.id, loadData]);
 
   const handleApplyTemplate = async (template: Template) => {
     if (
       !window.confirm(
-        `Apply "${template.name}" template? This will overwrite your current settings.`
+        t('settings.templates.applyConfirm', {
+          defaultValue: 'Apply "{{name}}" template? This will overwrite your current settings.',
+          name: getTemplateLabel(template, 'name'),
+        })
       )
     )
       return;
@@ -103,9 +109,19 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
     try {
       setApplying(template.id);
       await Api.applySettingsTemplate(template.id);
-      toast.success(`Applied "${template.name}" template`);
-    } catch (error) {
-      toast.error('Failed to apply template');
+      toast.success(
+        t('settings.templates.applied', {
+          defaultValue: 'Applied "{{name}}" template',
+          name: getTemplateLabel(template, 'name'),
+        })
+      );
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.templates.applyError', 'Failed to apply template')
+        )
+      );
     } finally {
       setApplying(null);
     }
@@ -115,53 +131,71 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
     if (!newTemplateName.trim()) return;
 
     try {
+      setActionError(null);
       // Get current settings to save as template
-      const exportResponse = (await Api.exportSettings()) as
-        | ExportSettingsResponse
-        | null
-        | undefined;
+      const exportResponse = await Api.exportSettings();
       const settingsData = exportResponse?.data?.settings || {};
 
-      const response = (await Api.createSettingsTemplate({
+      const response = await Api.createSettingsTemplate({
         name: newTemplateName,
-        description: newTemplateDesc || 'Custom settings template',
+        description:
+          newTemplateDesc ||
+          t('settings.templates.customDescriptionFallback', 'Custom settings template'),
         icon: '📋',
         settingsData,
-      })) as unknown as CreateTemplateResponse | null | undefined;
+      });
 
-      if (response?.template) {
-        setCustomTemplates([
-          ...customTemplates,
-          {
-            ...response.template,
-            type: 'custom',
-            categories: Array.isArray(response.template.categories)
-              ? response.template.categories
-              : ['All'],
-          },
-        ]);
+      if (!response?.template) {
+        throw new Error('Template creation response was invalid');
+      }
+      const template = response.template as unknown as Template;
+      const snapshot = await loadData(false);
+      if (!snapshot || !templateMatchesCreate(snapshot.customTemplates, template)) {
+        throw new Error('Settings template creation was not confirmed by the server');
       }
 
       setShowCreateModal(false);
       setNewTemplateName('');
       setNewTemplateDesc('');
-      toast.success('Template created from current settings');
-    } catch (error) {
-      toast.error('Failed to create template');
+      toast.success(t('settings.templates.created', 'Template created from current settings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.templates.createError', 'Failed to create template')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!window.confirm('Delete this template?')) return;
+    if (!window.confirm(t('settings.templates.deleteConfirm', 'Delete this template?'))) return;
 
     try {
       await Api.deleteSettingsTemplate(id);
-      setCustomTemplates(customTemplates.filter((t) => t.id !== id));
-      toast.success('Template deleted');
-    } catch (error) {
-      toast.error('Failed to delete template');
+      const snapshot = await loadData(false);
+      if (!snapshot || snapshot.customTemplates.some((template) => template.id === id)) {
+        throw new Error('Settings template deletion was not confirmed by the server');
+      }
+      toast.success(t('settings.templates.deleted', 'Template deleted'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.templates.deleteError', 'Failed to delete template')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
+
+  const getTemplateLabel = (template: Template, field: 'name' | 'description') => {
+    if (template.type !== 'system') return template[field];
+    const key = normalizeTemplateKey(template.id || template.name);
+    return t(`settings.templates.system.${key}.${field}`, template[field]);
+  };
+
+  const getCategoryLabel = (category: string) =>
+    t(`settings.templates.categories.${normalizeTemplateKey(category)}`, category);
 
   if (loading) {
     return (
@@ -179,168 +213,204 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <Layout size={28} className="text-indigo-500" />
-            Settings Templates
+            {t('settings.templates.title', 'Settings Templates')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Apply predefined configurations or save your own
+            {t('settings.templates.subtitle', 'Apply predefined configurations or save your own')}
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
+          disabled={!!loadError}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg"
         >
           <Plus size={16} />
-          Save Current as Template
+          {t('settings.templates.saveCurrent', 'Save Current as Template')}
         </button>
       </div>
 
-      {/* System Templates */}
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Zap size={18} className="text-amber-500" />
-          System Templates
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className={`bg-white dark:bg-navy-900 border rounded-xl p-4 hover:shadow-md transition-shadow ${template.isRecommended ? 'border-indigo-300 dark:border-indigo-500/50' : 'border-slate-200 dark:border-navy-700'}`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{template.icon}</span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-slate-900 dark:text-white">
-                        {template.name}
-                      </h4>
-                      {template.isRecommended && (
-                        <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-medium">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      {template.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
+      {loadError && (
+        <DegradedState title="Settings templates unavailable" description={loadError} />
+      )}
 
-              <div className="flex flex-wrap gap-1 mt-3">
-                {template.categories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
-                  >
-                    {cat}
-                  </span>
-                ))}
-              </div>
-
-              <button
-                onClick={() => handleApplyTemplate(template)}
-                disabled={applying === template.id}
-                className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg disabled:opacity-50"
-              >
-                {applying === template.id ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" /> Applying...
-                  </>
-                ) : (
-                  <>
-                    <Check size={16} /> Apply Template
-                  </>
-                )}
-              </button>
-            </div>
-          ))}
+      {actionError && (
+        <div
+          role="alert"
+          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+        >
+          {actionError}
         </div>
-      </div>
+      )}
 
-      {/* Custom Templates */}
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Star size={18} className="text-amber-500" />
-          My Templates
-        </h3>
-        {customTemplates.length === 0 ? (
-          <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center">
-            <Layout size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-            <p className="text-slate-500 dark:text-slate-400">No custom templates yet</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-              Save your current settings as a template to use later
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {customTemplates.map((template) => (
+      {/* System Templates */}
+      {!loadError && (
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Zap size={18} className="text-amber-500" />
+            {t('settings.templates.systemTemplates', 'System Templates')}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {templates.map((template) => (
               <div
                 key={template.id}
-                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center justify-between"
+                className={`bg-white dark:bg-navy-900 border rounded-xl p-4 hover:shadow-md transition-shadow ${template.isRecommended ? 'border-indigo-300 dark:border-indigo-500/50' : 'border-slate-200 dark:border-navy-700'}`}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{template.icon}</span>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 dark:text-white">
-                      {template.name}
-                    </h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {template.description}
-                    </p>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{template.icon}</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-slate-900 dark:text-white">
+                          {getTemplateLabel(template, 'name')}
+                        </h4>
+                        {template.isRecommended && (
+                          <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-medium">
+                            {t('settings.templates.recommended', 'Recommended')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        {getTemplateLabel(template, 'description')}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleApplyTemplate(template)}
-                    disabled={applying === template.id}
-                    className="px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg text-sm"
-                  >
-                    Apply
-                  </button>
-                  <button
-                    onClick={() => handleDeleteTemplate(template.id)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+
+                <div className="flex flex-wrap gap-1 mt-3">
+                  {template.categories.map((cat) => (
+                    <span
+                      key={cat}
+                      className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
+                    >
+                      {getCategoryLabel(cat)}
+                    </span>
+                  ))}
                 </div>
+
+                <button
+                  onClick={() => handleApplyTemplate(template)}
+                  disabled={applying === template.id}
+                  className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg disabled:opacity-50"
+                >
+                  {applying === template.id ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />{' '}
+                      {t('settings.templates.applying', 'Applying...')}
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} /> {t('settings.templates.applyTemplate', 'Apply Template')}
+                    </>
+                  )}
+                </button>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Custom Templates */}
+      {!loadError && (
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Star size={18} className="text-amber-500" />
+            {t('settings.templates.myTemplates', 'My Templates')}
+          </h3>
+          {customTemplates.length === 0 ? (
+            <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center">
+              <Layout size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+              <p className="text-slate-500 dark:text-slate-400">
+                {t('settings.templates.noCustomTemplates', 'No custom templates yet')}
+              </p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                {t(
+                  'settings.templates.noCustomTemplatesHint',
+                  'Save your current settings as a template to use later'
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {customTemplates.map((template) => (
+                <div
+                  key={template.id}
+                  className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{template.icon}</span>
+                    <div>
+                      <h4 className="font-semibold text-slate-900 dark:text-white">
+                        {template.name}
+                      </h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {template.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleApplyTemplate(template)}
+                      disabled={applying === template.id}
+                      className="px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg text-sm"
+                    >
+                      {t('settings.templates.apply', 'Apply')}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Create Template Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-900 rounded-xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Save as Template
+              {t('settings.templates.saveAsTemplate', 'Save as Template')}
             </h3>
 
             <div className="space-y-4">
+              {actionError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
+                >
+                  {actionError}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Template Name
+                  {t('settings.templates.templateName', 'Template Name')}
                 </label>
                 <input
                   type="text"
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder="My Settings Template"
+                  placeholder={t('settings.templates.namePlaceholder', 'My Settings Template')}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Description (optional)
+                  {t('settings.templates.descriptionOptional', 'Description (optional)')}
                 </label>
                 <textarea
                   value={newTemplateDesc}
                   onChange={(e) => setNewTemplateDesc(e.target.value)}
-                  placeholder="Describe this template..."
+                  placeholder={t(
+                    'settings.templates.descriptionPlaceholder',
+                    'Describe this template...'
+                  )}
                   rows={3}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -352,14 +422,14 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                 onClick={() => setShowCreateModal(false)}
                 className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleCreateTemplate}
                 disabled={!newTemplateName.trim()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg disabled:opacity-50"
               >
-                Save Template
+                {t('settings.templates.saveTemplate', 'Save Template')}
               </button>
             </div>
           </div>

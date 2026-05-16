@@ -57,7 +57,7 @@ export const ActionProposalList: React.FC<ActionProposalListProps> = ({
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'HIGH':
-        return 'text-red-500 bg-red-500/10 border-red-500/20';
+        return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
       case 'MEDIUM':
         return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
       case 'LOW':

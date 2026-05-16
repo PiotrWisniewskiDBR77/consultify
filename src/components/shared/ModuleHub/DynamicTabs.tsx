@@ -12,6 +12,14 @@
 import { ChevronDown, List as ListIcon, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import {
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
+  MENU_3_RIGHT_CLASS,
+  MENU_3_ROW_CLASS,
+} from '@/components/shared/ModuleMenu3';
+
 import { ItemStatus, OpenDocument } from './types';
 
 interface DynamicTabsProps {
@@ -20,6 +28,8 @@ interface DynamicTabsProps {
   onSelectDocument: (id: string) => void;
   onCloseDocument: (id: string) => void;
   onShowList: () => void;
+  /** Right-side actions in Menu 3. Used for contextual AI/actions; never add a second row. */
+  rightContent?: React.ReactNode;
 }
 
 // Max visible tabs before overflow
@@ -28,16 +38,16 @@ const MAX_VISIBLE_TABS = 6;
 // Status dot colors - uses canonical 11-status initiative lifecycle
 const STATUS_COLORS: Record<ItemStatus, string> = {
   DRAFT: 'bg-slate-400',
-  PENDING_REVIEW: 'bg-orange-400',
+  PENDING_REVIEW: 'bg-amber-400',
   REVIEW: 'bg-amber-400',
   PROMOTED: 'bg-blue-400',
   PLANNING: 'bg-indigo-400',
   APPROVED: 'bg-emerald-400',
-  SCHEDULED: 'bg-purple-400',
-  EXECUTING: 'bg-cyan-400',
-  BLOCKED: 'bg-red-400',
+  SCHEDULED: 'bg-primary-400',
+  EXECUTING: 'bg-blue-400',
+  BLOCKED: 'bg-rose-400',
   DONE: 'bg-green-400',
-  TRACKING: 'bg-teal-400',
+  TRACKING: 'bg-blue-400',
   CANCELLED: 'bg-gray-400',
   ARCHIVED: 'bg-slate-500',
 };
@@ -45,10 +55,10 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
 // Type colors for left border accent
 const TYPE_BORDER_COLORS: Record<string, string> = {
   // Assessment frameworks
-  DRD: 'border-l-purple-500',
+  DRD: 'border-l-primary-500',
   SIRI: 'border-l-blue-500',
-  ADMA: 'border-l-teal-500',
-  CMMI: 'border-l-orange-500',
+  ADMA: 'border-l-blue-500',
+  CMMI: 'border-l-amber-500',
   LEAN: 'border-l-green-500',
   // Discovery Tools - Strategic
   SWT: 'border-l-emerald-500',
@@ -73,42 +83,28 @@ const TYPE_BORDER_COLORS: Record<string, string> = {
   CTW: 'border-l-blue-500',
   INV: 'border-l-blue-500',
   // Discovery Tools - Digital
-  ROB: 'border-l-purple-500',
-  LOG: 'border-l-purple-500',
-  RPA: 'border-l-purple-500',
-  AID: 'border-l-purple-500',
-  INT: 'border-l-purple-500',
-  DVP: 'border-l-purple-500',
-  LEG: 'border-l-purple-500',
-  DAT: 'border-l-purple-500',
-  P2S: 'border-l-purple-500',
-  SPE: 'border-l-purple-500',
+  ROB: 'border-l-primary-500',
+  LOG: 'border-l-primary-500',
+  RPA: 'border-l-primary-500',
+  AID: 'border-l-primary-500',
+  INT: 'border-l-primary-500',
+  DVP: 'border-l-primary-500',
+  LEG: 'border-l-primary-500',
+  DAT: 'border-l-primary-500',
+  P2S: 'border-l-primary-500',
+  SPE: 'border-l-primary-500',
   // Discovery Tools - Automation
   PAI: 'border-l-amber-500',
   // V3-J02 — Presentations Hub (source types)
   tool: 'border-l-emerald-500',
-  assessment: 'border-l-purple-500',
+  assessment: 'border-l-primary-500',
   finance: 'border-l-blue-500',
   upload: 'border-l-slate-500',
 };
 
-// Shared tab styles
-const TAB_BASE = `
-  flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-medium
-  border border-l-2 transition-all duration-200 cursor-pointer
-`;
-
-const TAB_INACTIVE = `
-  ${TAB_BASE}
-  bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400
-  hover:bg-slate-100 dark:hover:bg-navy-700 hover:border-slate-500 hover:text-slate-900 dark:hover:text-white
-`;
-
-const TAB_ACTIVE = `
-  ${TAB_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400
-  shadow-sm shadow-primary-500/10
-`;
+// Dynamic document tabs are Menu 3 chips with an optional left accent.
+const TAB_INACTIVE = MENU_3_CHIP_INACTIVE;
+const TAB_ACTIVE = MENU_3_CHIP_ACTIVE;
 
 export const DynamicTabs: React.FC<DynamicTabsProps> = ({
   documents,
@@ -116,6 +112,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
   onSelectDocument,
   onCloseDocument,
   onShowList,
+  rightContent,
 }) => {
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
 
@@ -142,113 +139,99 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
   const isListActive = activeDocumentId === null;
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-      {/* List button - same style as tabs */}
-      <button
-        onClick={onShowList}
-        className={
-          isListActive
-            ? TAB_ACTIVE.replace('border-l-2', '')
-            : TAB_INACTIVE.replace('border-l-2', '')
-        }
-      >
-        <ListIcon size={14} />
-        <span>List</span>
-      </button>
+    <div className={MENU_3_ROW_CLASS}>
+      <div className={MENU_3_INNER_CLASS}>
+        <div className="flex min-w-0 items-center gap-2">
+          {/* List button - same style as tabs */}
+          <button onClick={onShowList} className={isListActive ? TAB_ACTIVE : TAB_INACTIVE}>
+            <ListIcon size={14} />
+            <span>List</span>
+          </button>
 
-      {/* Separator */}
-      {documents.length > 0 && <div className="w-px h-6 bg-slate-300 dark:bg-navy-600" />}
+          {/* Separator */}
+          {documents.length > 0 && (
+            <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06]" />
+          )}
 
-      {/* Visible Document Tabs */}
-      {visibleDocs.map((doc) => {
-        const isActive = doc.id === activeDocumentId;
-        const leftBorderColor = TYPE_BORDER_COLORS[doc.subType] || 'border-l-slate-500';
-        const statusColor = STATUS_COLORS[doc.status];
+          {/* Visible Document Tabs */}
+          {visibleDocs.map((doc) => {
+            const isActive = doc.id === activeDocumentId;
+            const leftBorderColor = TYPE_BORDER_COLORS[doc.subType] || 'border-l-slate-500';
+            const statusColor = STATUS_COLORS[doc.status];
 
-        return (
-          <div
-            key={doc.id}
-            className={`
-              group ${isActive ? TAB_ACTIVE : TAB_INACTIVE}
-              ${leftBorderColor}
-            `}
-            onClick={() => onSelectDocument(doc.id)}
-          >
-            {/* Type Badge */}
-            <span
-              className={`font-mono text-xs ${isActive ? 'text-primary-600 dark:text-primary-300' : 'text-slate-500'}`}
-            >
-              {doc.subType}
-            </span>
+            return (
+              <div
+                key={doc.id}
+                className={`group ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
+                onClick={() => onSelectDocument(doc.id)}
+              >
+                {/* Type Badge */}
+                <span
+                  className={`font-mono text-xs ${isActive ? 'text-primary-600 dark:text-primary-300' : 'text-slate-500'}`}
+                >
+                  {doc.subType}
+                </span>
 
-            {/* Name (truncated) */}
-            <span className="max-w-[120px] truncate">{doc.name}</span>
+                {/* Name (truncated) */}
+                <span className="max-w-[120px] truncate">{doc.name}</span>
 
-            {/* Status Dot */}
-            <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+                {/* Status Dot */}
+                <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
 
-            {/* Unsaved indicator */}
-            {doc.hasUnsavedChanges && (
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"
-                title="Unsaved changes"
-              />
-            )}
+                {/* Unsaved indicator */}
+                {doc.hasUnsavedChanges && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"
+                    title="Unsaved changes"
+                  />
+                )}
 
-            {/* Close Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCloseDocument(doc.id);
-              }}
-              className="
+                {/* Close Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseDocument(doc.id);
+                  }}
+                  className="
                 p-0.5 rounded opacity-0 group-hover:opacity-100
                 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600
                 transition-all
               "
-            >
-              <X size={14} />
-            </button>
-          </div>
-        );
-      })}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          })}
 
-      {/* Overflow Menu */}
-      {overflowDocs.length > 0 && (
-        <div className="relative">
-          <button
-            onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-            className={`
-              flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium
-              border transition-all duration-200
-              ${
-                activeInOverflow
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-500'
-              }
-            `}
-          >
-            <span>+{overflowDocs.length}</span>
-            <ChevronDown size={14} className={showOverflowMenu ? 'rotate-180' : ''} />
-          </button>
+          {/* Overflow Menu */}
+          {overflowDocs.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowOverflowMenu(!showOverflowMenu)}
+                className={activeInOverflow ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+              >
+                <span>+{overflowDocs.length}</span>
+                <ChevronDown size={14} className={showOverflowMenu ? 'rotate-180' : ''} />
+              </button>
 
-          {/* Dropdown Menu */}
-          {showOverflowMenu && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowOverflowMenu(false)} />
-              <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                {overflowDocs.map((doc) => {
-                  const isActive = doc.id === activeDocumentId;
-                  const statusColor = STATUS_COLORS[doc.status];
+              {/* Dropdown Menu */}
+              {showOverflowMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowOverflowMenu(false)} />
+                  <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/10 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/30">
+                    {overflowDocs.map((doc) => {
+                      const isActive = doc.id === activeDocumentId;
+                      const statusColor = STATUS_COLORS[doc.status];
 
-                  return (
-                    <div
-                      key={doc.id}
-                      onClick={() => {
-                        onSelectDocument(doc.id);
-                        setShowOverflowMenu(false);
-                      }}
-                      className={`
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => {
+                            onSelectDocument(doc.id);
+                            setShowOverflowMenu(false);
+                          }}
+                          className={`
                         flex items-center gap-2 px-3 py-2 cursor-pointer
                         ${
                           isActive
@@ -256,29 +239,35 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                         }
                       `}
-                    >
-                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
-                        {doc.subType}
-                      </span>
-                      <span className="flex-1 truncate">{doc.name}</span>
-                      <span className={`w-2 h-2 rounded-full ${statusColor}`} />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCloseDocument(doc.id);
-                        }}
-                        className="p-0.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
+                        >
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                            {doc.subType}
+                          </span>
+                          <span className="flex-1 truncate">{doc.name}</span>
+                          <span className={`w-2 h-2 rounded-full ${statusColor}`} />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCloseDocument(doc.id);
+                            }}
+                            className="p-0.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
+
+        <div id="module-command-row-right-actions" className={MENU_3_RIGHT_CLASS}>
+          {rightContent}
+        </div>
+      </div>
     </div>
   );
 };

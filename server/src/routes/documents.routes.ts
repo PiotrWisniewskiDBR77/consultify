@@ -11,63 +11,70 @@ import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import contextDocumentService from '../services/organizationContext/ContextDocumentService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
 
-// Dynamic import for DocumentService (may not be migrated yet)
-const DocumentService: any = null;
-
-try {
-  // const documentModule = await import('../services/documentService.js');
-  // DocumentService = documentModule.default || documentModule;
-} catch {
-  logger.warn('[Documents] DocumentService not available');
+function getRequestUserRole(req: AuthRequest): string | null {
+  return (
+    req.userRole ||
+    (req.user as any)?.userRole ||
+    (req.user as any)?.role ||
+    (req.user as any)?.platformRole ||
+    null
+  );
 }
+
+const MAX_UPLOAD_BYTES = Math.max(
+  1024 * 1024,
+  Math.min(Number(process.env.ORG_CONTEXT_MAX_UPLOAD_BYTES || 100 * 1024 * 1024), 500 * 1024 * 1024)
+);
 
 const upload = multer({
   // Avoid runtime filesystem writes when the feature is unavailable.
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
+  limits: { fileSize: MAX_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
       'application/pdf',
       'text/plain',
       'text/markdown',
+      'text/csv',
       'application/json',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'image/png',
       'image/jpeg',
       'image/gif',
+      'image/webp',
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/m4a',
+      'audio/x-m4a',
+      'audio/webm',
+      'audio/ogg',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+    if (
+      allowedTypes.includes(file.mimetype) ||
+      file.mimetype.startsWith('text/') ||
+      file.mimetype.startsWith('audio/') ||
+      file.mimetype.startsWith('image/')
+    ) {
       cb(null, true);
     } else {
       cb(new Error(`Unsupported file type: ${file.mimetype}`));
     }
   },
 });
-
-const featureReadFallback = (res: Response, _data: unknown = []) =>
-  res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
-  });
-
-const featureWriteBlocked = (res: Response) =>
-  res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
-  });
 
 /**
  * GET /api/documents/project/:projectId
@@ -77,13 +84,19 @@ router.get(
   '/project/:projectId',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.getProjectDocuments) {
-      return featureReadFallback(res, []);
-    }
-
     try {
+      const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
       const { projectId } = req.params;
-      const documents = await DocumentService.getProjectDocuments(projectId);
+      const documents = await contextDocumentService.listAccessibleDocuments({
+        organizationId,
+        userId,
+        scope: 'project',
+        projectId,
+      });
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching project documents:', error);
@@ -100,10 +113,6 @@ router.get(
   '/user',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.getUserDocuments) {
-      return featureReadFallback(res, []);
-    }
-
     try {
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
@@ -111,7 +120,11 @@ router.get(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const documents = await DocumentService.getUserDocuments(userId, organizationId);
+      const documents = await contextDocumentService.listAccessibleDocuments({
+        organizationId,
+        userId,
+        scope: 'user',
+      });
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching user documents:', error);
@@ -128,10 +141,6 @@ router.get(
   '/all',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.getAccessibleDocuments) {
-      return featureReadFallback(res, []);
-    }
-
     try {
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
@@ -140,11 +149,12 @@ router.get(
       }
 
       const { projectId } = req.query;
-      const documents = await DocumentService.getAccessibleDocuments(
-        userId,
+      const documents = await contextDocumentService.listAccessibleDocuments({
         organizationId,
-        projectId as string | undefined
-      );
+        userId,
+        scope: 'all',
+        projectId: (projectId as string | undefined) || undefined,
+      });
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching documents:', error);
@@ -161,11 +171,6 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    // Return empty array if service not available (for tests)
-    if (!DocumentService?.getAccessibleDocuments) {
-      return res.json([]);
-    }
-
     try {
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
@@ -174,11 +179,12 @@ router.get(
       }
 
       const { projectId } = req.query;
-      const documents = await DocumentService.getAccessibleDocuments(
-        userId,
+      const documents = await contextDocumentService.listAccessibleDocuments({
         organizationId,
-        projectId as string | undefined
-      );
+        userId,
+        scope: 'all',
+        projectId: (projectId as string | undefined) || undefined,
+      });
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching documents:', error);
@@ -195,12 +201,17 @@ router.get(
   '/:id',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.getDocumentById) {
-      return featureReadFallback(res, null);
-    }
-
     try {
-      const document = await DocumentService.getDocumentById(req.params.id);
+      const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const document = await contextDocumentService.getDocumentForAccess({
+        documentId: req.params.id,
+        organizationId,
+        userId,
+      });
       if (!document) {
         return res.status(404).json({ error: 'Document not found' });
       }
@@ -220,22 +231,22 @@ router.get(
   '/:id/download',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({
-        statusCode: 503,
-        status: false,
-        type: 'not_configured',
-        message: 'Service temporarily unavailable due to missing configuration',
-      });
-    }
-
     try {
-      const document = await DocumentService.getDocumentById(req.params.id);
+      const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const document = await contextDocumentService.getDocumentForAccess({
+        documentId: req.params.id,
+        organizationId,
+        userId,
+      });
       if (!document) {
         return res.status(404).json({ error: 'Document not found' });
       }
 
-      const filePath = document.filepath;
+      const filePath = (document as any).filepath || (document as any).filePath;
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'File not found on server' });
       }
@@ -257,14 +268,6 @@ router.post(
   verifyToken,
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.uploadDocument) {
-      // Return 400 for missing file (tests expect this, not 503)
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-      return featureWriteBlocked(res);
-    }
-
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -276,24 +279,39 @@ router.post(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { scope = 'user', projectId, description, tags } = req.body;
+      const { scope = 'user', projectId } = req.body;
 
       // Validate scope
       if (scope === 'project' && !projectId) {
         return res.status(400).json({ error: 'Project ID required for project scope' });
+      }
+      if (scope === 'project') {
+        const canAccessProject = await contextDocumentService.canAccessProject({
+          organizationId,
+          userId: ownerId,
+          projectId: String(projectId),
+          userRole: getRequestUserRole(req),
+          isSuperAdmin: Boolean((req.user as any)?.isSuperAdmin),
+        });
+        if (!canAccessProject) {
+          return res.status(403).json({
+            error: 'Project not found or access denied',
+            code: 'PROJECT_CONTEXT_ACCESS_DENIED',
+          });
+        }
       }
 
       logger.info(
         `[Documents] Upload: ${req.file.originalname}, scope: ${scope}, owner: ${ownerId}`
       );
 
-      const document = await DocumentService.uploadDocument(req.file, {
+      const document = await contextDocumentService.uploadAndIngest({
+        file: req.file,
         organizationId,
-        projectId: scope === 'project' ? projectId : null,
+        projectId: scope === 'project' ? String(projectId) : null,
         ownerId,
-        scope,
-        description,
-        tags: tags ? JSON.parse(tags) : [],
+        scope: scope === 'project' ? 'project' : 'user',
+        sourceUpload: 'documents.library',
       });
 
       return res.status(201).json({
@@ -302,7 +320,60 @@ router.post(
       });
     } catch (error: any) {
       logger.error('[Documents] Upload error:', error);
+      if (
+        error?.code === 'CONTEXT_STORAGE_QUOTA_EXCEEDED' ||
+        error?.code === 'PROJECT_STORAGE_QUOTA_EXCEEDED'
+      ) {
+        return res.status(429).json({
+          error: error.message || 'Storage quota exceeded',
+          code: error.code,
+          document: error.document || null,
+          quota: error.quota || null,
+        });
+      }
       return res.status(500).json({ error: error.message || 'Upload failed' });
+    }
+  })
+);
+
+/**
+ * POST /api/documents/:id/processing-attention/ack
+ * Explicitly acknowledge a visible processing attention state.
+ */
+router.post(
+  '/:id/processing-attention/ack',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const result = await contextDocumentService.acknowledgeProcessingAttention({
+        documentId: req.params.id,
+        organizationId,
+        userId,
+      });
+
+      if (result.reason === 'document_not_found') {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      if (result.reason === 'attention_not_required') {
+        return res.status(409).json({
+          code: 'PROCESSING_ATTENTION_NOT_REQUIRED',
+          data: result,
+        });
+      }
+
+      return res.json({
+        message: 'Processing attention acknowledged',
+        data: result,
+      });
+    } catch (error: any) {
+      logger.error('[Documents] Processing attention acknowledgement error:', error);
+      return res.status(500).json({ error: error.message || 'Acknowledgement failed' });
     }
   })
 );
@@ -315,23 +386,44 @@ router.put(
   '/:id/move-to-project',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.moveToProject) {
-      return featureWriteBlocked(res);
-    }
-
     try {
       const { id: documentId } = req.params;
       const { projectId } = req.body;
       const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      if (!organizationId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
       if (!projectId) {
         return res.status(400).json({ error: 'Project ID required' });
       }
+      const canAccessProject = await contextDocumentService.canAccessProject({
+        organizationId,
+        userId,
+        projectId: String(projectId),
+        userRole: getRequestUserRole(req),
+        isSuperAdmin: Boolean((req.user as any)?.isSuperAdmin),
+      });
+      if (!canAccessProject) {
+        return res.status(403).json({
+          error: 'Project not found or access denied',
+          code: 'PROJECT_CONTEXT_ACCESS_DENIED',
+        });
+      }
 
-      const document = await DocumentService.moveToProject(documentId, projectId, userId);
+      const document = await contextDocumentService.moveToProject({
+        documentId,
+        organizationId,
+        userId,
+        projectId: String(projectId),
+      });
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found or access denied' });
+      }
       return res.json({
         message: 'Document moved to project',
         document,
@@ -351,19 +443,23 @@ router.delete(
   '/:id',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!DocumentService?.deleteDocument) {
-      return featureWriteBlocked(res);
-    }
-
     try {
       const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-      const result = await DocumentService.deleteDocument(req.params.id, userId);
+      const result = await contextDocumentService.softDelete({
+        documentId: req.params.id,
+        organizationId,
+        userId,
+      });
 
-      if (!result.success) {
+      if (!result) {
         return res.status(404).json({ error: 'Document not found or access denied' });
       }
 

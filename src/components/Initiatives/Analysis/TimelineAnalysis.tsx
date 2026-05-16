@@ -89,7 +89,7 @@ interface TimelineAnalysisProps {
 
 const BAR_COLORS = {
   'on-schedule': 'bg-blue-500',
-  delayed: 'bg-red-500',
+  delayed: 'bg-rose-500',
   'at-risk': 'bg-amber-500',
   'no-dates': 'bg-slate-400 dark:bg-slate-500',
 } as const;
@@ -523,11 +523,11 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-            <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+          <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+            <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-                <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+                <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
                   AI Auto-Schedule proposals
                 </h3>
               </div>
@@ -536,7 +536,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   <button
                     onClick={handleApplyAllSchedule}
                     disabled={scheduleRunning}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
                   >
                     {scheduleRunning ? (
                       <Loader2 size={12} className="animate-spin" />
@@ -548,25 +548,25 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 )}
                 <button
                   onClick={closeWorkspacePanels}
-                  className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+                  className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
                 >
                   <X size={14} />
                 </button>
               </div>
             </div>
-            <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
               {scheduleProposals.map((p, idx) => (
                 <div
                   key={`${p.initiativeId}-${idx}`}
                   className="flex items-center gap-3 px-4 py-3 text-sm"
                 >
-                  <Clock size={14} className="text-purple-400 shrink-0" />
+                  <Clock size={14} className="text-primary-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {p.initiativeName}
                       </span>
-                      <span className="text-xs text-purple-500 dark:text-purple-400">
+                      <span className="text-xs text-primary-500 dark:text-primary-400">
                         {new Date(p.suggestedStart).toLocaleDateString()} {'->'}{' '}
                         {new Date(p.suggestedEnd).toLocaleDateString()}
                       </span>
@@ -596,22 +596,22 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     ) : null;
 
   const conflictsPanel = showConflicts ? (
-    <div className="m-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/50 flex items-center justify-between">
+    <div className="m-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-200 dark:border-rose-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={16} className="text-red-600 dark:text-red-400" />
-          <h3 className="text-sm font-semibold text-red-700 dark:text-red-300">
+          <AlertTriangle size={16} className="text-rose-600 dark:text-rose-400" />
+          <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-300">
             Conflicts ({conflicts.length})
           </h3>
         </div>
         <button
           onClick={closeWorkspacePanels}
-          className="p-1 rounded text-red-500 hover:bg-red-200/30"
+          className="p-1 rounded text-rose-500 hover:bg-rose-200/30"
         >
           <X size={14} />
         </button>
       </div>
-      <div className="divide-y divide-red-200/40 dark:divide-red-900/20">
+      <div className="divide-y divide-rose-200/40 dark:divide-rose-900/20">
         {conflicts.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
             No owner overlaps detected
@@ -626,7 +626,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 >
                   {c.nameA}
                 </button>
-                <span className="text-xs text-red-500">↔</span>
+                <span className="text-xs text-rose-500">↔</span>
                 <button
                   onClick={() => onOpenInitiative(c.initiativeB)}
                   className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]"
@@ -704,7 +704,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           delayImpacts.map((d) => (
             <div key={d.delayedId} className="px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle size={14} className="text-red-500" />
+                <AlertTriangle size={14} className="text-rose-500" />
                 <button
                   onClick={() => onOpenInitiative(d.delayedId)}
                   className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
@@ -888,8 +888,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 label: 'Delayed',
                 count: counts.delayed,
                 color: 'red',
-                border: 'border-red-200 dark:border-red-900/50',
-                bg: 'bg-red-500/5 dark:bg-red-500/10',
+                border: 'border-rose-200 dark:border-rose-900/50',
+                bg: 'bg-rose-500/5 dark:bg-rose-500/10',
               },
               {
                 key: 'no-dates' as StatusFilter,
@@ -950,14 +950,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
       {/* AI Auto-Schedule proposals */}
       {!onRegisterWorkspacePanel && scheduleProposals !== null && (
-        <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
                 AI Auto-Schedule proposals
               </h3>
-              <span className="text-xs text-purple-500">({scheduleProposals.length})</span>
+              <span className="text-xs text-primary-500">({scheduleProposals.length})</span>
             </div>
             <div className="flex items-center gap-2">
               {scheduleProposals.length > 1 && onQuickUpdate && (
@@ -965,7 +965,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   onClick={handleApplyAllSchedule}
                   disabled={scheduleRunning}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                    bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
                 >
                   {scheduleRunning ? (
                     <Loader2 size={12} className="animate-spin" />
@@ -977,7 +977,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               )}
               <button
                 onClick={() => setScheduleProposals(null)}
-                className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+                className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
               >
                 <X size={14} />
               </button>
@@ -991,19 +991,19 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
               {scheduleProposals.map((p, idx) => (
                 <div
                   key={`${p.initiativeId}-${idx}`}
                   className="flex items-center gap-3 px-4 py-3 text-sm"
                 >
-                  <Clock size={14} className="text-purple-400 shrink-0" />
+                  <Clock size={14} className="text-primary-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {p.initiativeName}
                       </span>
-                      <span className="text-xs text-purple-500 dark:text-purple-400">
+                      <span className="text-xs text-primary-500 dark:text-primary-400">
                         {new Date(p.suggestedStart).toLocaleDateString()} →{' '}
                         {new Date(p.suggestedEnd).toLocaleDateString()}
                         <span className="ml-1 text-slate-400">({p.durationDays}d)</span>
@@ -1039,14 +1039,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         <div
           className={`rounded-xl border overflow-hidden ${
             conflicts.length > 0
-              ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
+              ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
               : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
           }`}
         >
           <div
             className={`px-4 py-3 border-b flex items-center justify-between ${
               conflicts.length > 0
-                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
+                ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/50'
                 : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
             }`}
           >
@@ -1055,12 +1055,12 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 size={16}
                 className={
                   conflicts.length > 0
-                    ? 'text-red-600 dark:text-red-400'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-emerald-600 dark:text-emerald-400'
                 }
               />
               <h3
-                className={`text-sm font-semibold ${conflicts.length > 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+                className={`text-sm font-semibold ${conflicts.length > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
               >
                 {conflicts.length > 0
                   ? `${conflicts.length} owner overlap conflict(s)`
@@ -1074,7 +1074,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               <X size={14} />
             </button>
           </div>
-          <div className="divide-y divide-red-200/40 dark:divide-red-900/20">
+          <div className="divide-y divide-rose-200/40 dark:divide-rose-900/20">
             {conflicts.map((c, idx) => (
               <div key={idx} className="px-4 py-3 text-sm">
                 <div className="flex items-center gap-2 mb-1">
@@ -1084,14 +1084,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   >
                     {c.nameA}
                   </button>
-                  <span className="text-xs text-red-500">↔</span>
+                  <span className="text-xs text-rose-500">↔</span>
                   <button
                     onClick={() => onOpenInitiative(c.initiativeB)}
                     className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]"
                   >
                     {c.nameB}
                   </button>
-                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 font-medium">
+                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 font-medium">
                     {c.overlapDays}d overlap
                   </span>
                 </div>
@@ -1139,7 +1139,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : tip.type === 'parallelize'
                             ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                            : 'bg-purple-500/15 text-purple-600 dark:text-purple-400'
+                            : 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
                       }`}
                     >
                       {tip.type}
@@ -1175,14 +1175,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             {delayImpacts.map((d) => (
               <div key={d.delayedId} className="px-4 py-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={14} className="text-red-500" />
+                  <AlertTriangle size={14} className="text-rose-500" />
                   <button
                     onClick={() => onOpenInitiative(d.delayedId)}
                     className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
                   >
                     {d.delayedName}
                   </button>
-                  <span className="text-xs text-red-500 font-medium">DELAYED</span>
+                  <span className="text-xs text-rose-500 font-medium">DELAYED</span>
                 </div>
                 <div className="ml-6 space-y-1">
                   {d.affected.map((a) => (
@@ -1297,7 +1297,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           <span
                             className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded ${
                               bar.status === 'delayed'
-                                ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                                 : bar.status === 'at-risk'
                                   ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                   : bar.status === 'no-dates'

@@ -69,7 +69,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
           {subValue && <span className="text-slate-500 dark:text-slate-400">{subValue}</span>}
           {trend && (
             <span
-              className={`flex items-center gap-0.5 ${trendUp ? 'text-green-400' : 'text-red-400'}`}
+              className={`flex items-center gap-0.5 ${trendUp ? 'text-green-400' : 'text-rose-400'}`}
             >
               {trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
               {trend}
@@ -155,7 +155,7 @@ export const LeadershipDashboardView: React.FC = () => {
                 value={`$${(economicsData?.actualSpend || 0) / 1000}k`}
                 subValue={`${Math.round(((economicsData?.actualSpend || 0) / (economicsData?.total_cost || 1)) * 100)}% of Budget`}
                 icon={<Activity size={16} />}
-                color="text-purple-400"
+                color="text-primary-400"
               />
               <MetricCard
                 title="Net Value"
@@ -196,7 +196,7 @@ export const LeadershipDashboardView: React.FC = () => {
                 )}
                 <div className="w-px h-16 bg-white/10"></div>
                 <div className="flex flex-col gap-2">
-                  <div className="text-3xl font-bold text-red-400">
+                  <div className="text-3xl font-bold text-rose-400">
                     {healthData?.overdueTasks || 0}
                   </div>
                   <div className="text-xs uppercase text-slate-500 dark:text-slate-400 font-bold tracking-wider">
@@ -209,7 +209,7 @@ export const LeadershipDashboardView: React.FC = () => {
           {/* Section 3: People & Teams (The "CHRO View") */}
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-              <Users className="text-purple-400" /> Team Performance
+              <Users className="text-primary-400" /> Team Performance
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {performanceData.map((user: PerformanceUser) => (
@@ -231,7 +231,7 @@ export const LeadershipDashboardView: React.FC = () => {
                     </div>
                     <div className="w-full h-1.5 bg-navy-900 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        className="h-full bg-gradient-to-r from-blue-500 to-primary-500"
                         style={{
                           width: `${Math.min(100, Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100))}%`,
                         }}
@@ -239,7 +239,7 @@ export const LeadershipDashboardView: React.FC = () => {
                     </div>
                   </div>
                   {user.overdue_tasks > 0 && (
-                    <div className="text-red-400 text-xs font-bold bg-red-500/10 px-2 py-1 rounded border border-red-500/20">
+                    <div className="text-rose-400 text-xs font-bold bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
                       {user.overdue_tasks} Overdue
                     </div>
                   )}

@@ -3,7 +3,11 @@ import { useCallback, useRef, useState } from 'react';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { parseArtifactsFromResponse, useArtifactsStore } from '@/store/useArtifactsStore';
+import {
+  parseArtifactsFromResponse,
+  stripArtifactsFromResponse,
+  useArtifactsStore,
+} from '@/store/useArtifactsStore';
 import type { Artifact, TeresaChatProposal, ThinkingStep } from '@/types';
 import { readPreferredChatLanguage } from '@/utils/chatLanguagePreference';
 
@@ -58,23 +62,32 @@ function buildDefaultThinkingSteps(
 ): ThinkingStep[] {
   // AI thinking steps are always displayed in English regardless of UI language
   const labelVariants = {
-    analyzing: ['Thinking…', 'Preparing a response…', 'Working on your answer…'],
+    analyzing: [
+      'Analyzing your question and finding the best way to respond…',
+      'Processing your request and evaluating the relevant context…',
+      'Understanding what you need and preparing my approach…',
+    ],
     context: [
-      'Checking the most relevant context…',
-      'Pulling in the details that matter most…',
-      'Reviewing the available context before answering…',
+      'Gathering context from project data and related documents…',
+      'Searching conversation history and organization data for connections…',
+      'Reviewing initiatives, tasks, and progress to build a complete picture…',
+      'Collecting insights from available sources for a more thorough answer…',
     ],
     planning: [
-      'Structuring the response…',
-      'Choosing the clearest way to answer…',
-      'Organizing the key points…',
+      'Planning the response — selecting the most important points to cover…',
+      'Organizing the gathered information and prioritizing key findings…',
+      'Choosing an approach that best addresses your specific question…',
     ],
     validating: [
-      'Checking the details…',
-      'Verifying the final answer…',
-      'Making sure everything is consistent…',
+      'Checking my analysis for consistency and verifying the details…',
+      'Cross-referencing information to make sure there are no contradictions…',
+      'Finalizing the details — making sure everything checks out…',
     ],
-    composing: ['Finalizing the answer…', 'Putting it all together…', 'Wrapping up the response…'],
+    composing: [
+      'Composing the answer — weaving conclusions into a clear response…',
+      'Putting it all together with concrete recommendations…',
+      'Finishing up and polishing the response to be as helpful as possible…',
+    ],
   };
 
   const variants = labelVariants;
@@ -222,52 +235,6 @@ export function getCurrentThinkingLabel(steps: ThinkingStep[]): string {
   );
 }
 
-function shouldShowBackendThoughtStep(
-  stepId: string,
-  options: { isDeepThinking: boolean; showReasoning: boolean }
-): boolean {
-  if (options.isDeepThinking) return true;
-  const baseVisibleSteps = new Set(['knowledge', 'web_search_check', 'attachments']);
-  const reasoningVisibleSteps = new Set(['policy', 'memory', 'generating']);
-  return (
-    baseVisibleSteps.has(stepId) || (options.showReasoning && reasoningVisibleSteps.has(stepId))
-  );
-}
-
-function mapResearchProgressToThinkingStep(
-  evt: ResearchProgressEvent,
-  options: { isDeepThinking: boolean; showReasoning: boolean }
-): ThinkingStep[] | null {
-  if (options.isDeepThinking) return null;
-  if (!options.showReasoning && !evt.queries?.length && !evt.sources?.length && !evt.error) {
-    return null;
-  }
-
-  const labels: Record<ResearchProgressEvent['stage'], string> = {
-    generating_queries: 'Preparing live search queries…',
-    queries_ready: 'Search queries are ready…',
-    searching: 'Checking live sources…',
-    deepening: 'Following up on the best sources…',
-    aggregating: 'Reviewing and filtering sources…',
-    synthesizing: 'Summarizing the gathered sources…',
-    complete: evt.error ? evt.error : 'Live source check complete.',
-  };
-
-  const status: ThinkingStep['status'] =
-    evt.stage === 'complete' ? (evt.error ? 'failed' : 'completed') : 'in_progress';
-
-  return [
-    {
-      id: 'backend-research-progress',
-      label: labels[evt.stage],
-      content: '',
-      status,
-      timestamp: new Date(),
-      category: 'research',
-    },
-  ];
-}
-
 type StreamOptions = {
   onStreamDone?: (
     fullText: string,
@@ -279,13 +246,24 @@ type StreamOptions = {
       policyDecision?: any;
       policyNotices?: any[];
       sourceLedger?: any;
-      trustBundle?: unknown;
+      trustBundle?: any;
       proposal?: TeresaChatProposal | null;
     }
   ) => void;
   onStreamError?: (error: Error) => void;
   onThinkingUpdate?: (steps: ThinkingStep[]) => void;
-  onArtifactDetected?: (artifact: Artifact) => void;
+  onArtifactDetected?: (
+    artifact: Artifact,
+    meta?: {
+      citations?: any[];
+      sessionId?: string;
+      policyDecision?: any;
+      policyNotices?: any[];
+      sourceLedger?: any;
+      trustBundle?: any;
+      proposal?: TeresaChatProposal | null;
+    }
+  ) => void;
 };
 
 export type UseAIStreamReturn = {
@@ -323,6 +301,8 @@ export type UseAIStreamReturn = {
   policyDecision: any | null;
   policyNotices: any[];
   sourceLedger: any | null;
+  memoryCandidate: any | null;
+  trustBundle: any | null;
   teresaProposal: TeresaChatProposal | null;
   deepThinkingState: any | null;
   researchProgress: any | null;
@@ -435,6 +415,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [policyDecision, setPolicyDecision] = useState<any | null>(null);
   const [policyNotices, setPolicyNotices] = useState<any[]>([]);
   const [sourceLedger, setSourceLedger] = useState<any | null>(null);
+  const [memoryCandidate, setMemoryCandidate] = useState<any | null>(null);
+  const [trustBundle, setTrustBundle] = useState<any | null>(null);
   const [teresaProposal, setTeresaProposal] = useState<TeresaChatProposal | null>(null);
   const [retryInfo, setRetryInfo] = useState<{
     attempt: number;
@@ -467,6 +449,12 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [progress, setProgress] = useState(0);
   const abortRef = useRef({ aborted: false });
   const abortControllerRef = useRef<AbortController | null>(null);
+  const citationsRef = useRef<any[]>([]);
+  const policyDecisionRef = useRef<any | null>(null);
+  const policyNoticesRef = useRef<any[]>([]);
+  const sourceLedgerRef = useRef<any | null>(null);
+  const memoryCandidateRef = useRef<any | null>(null);
+  const trustBundleRef = useRef<any | null>(null);
   const teresaProposalRef = useRef<TeresaChatProposal | null>(null);
   const lastRequestRef = useRef<{
     message: string;
@@ -488,9 +476,17 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setThinkingSteps([]);
     setDeepThinkingState(null);
     setCitations([]);
+    citationsRef.current = [];
     setPolicyDecision(null);
+    policyDecisionRef.current = null;
     setPolicyNotices([]);
+    policyNoticesRef.current = [];
     setSourceLedger(null);
+    sourceLedgerRef.current = null;
+    setMemoryCandidate(null);
+    memoryCandidateRef.current = null;
+    setTrustBundle(null);
+    trustBundleRef.current = null;
     setTeresaProposal(null);
     teresaProposalRef.current = null;
     setResearchProgress(null);
@@ -555,11 +551,9 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
 
       let fullText = '';
       const isDeepThinking = aiConfig?.deepResearch === true;
-      const shouldUseSyntheticThinking = isDeepThinking;
-      const shouldShowExtendedReasoningProgress = Boolean(aiConfig?.showReasoning);
       // Adaptive complexity: start light for casual queries, escalate if response takes long
       const initialComplexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'light';
-      let currentThinking: ThinkingStep[] = shouldUseSyntheticThinking
+      let currentThinking: ThinkingStep[] = isDeepThinking
         ? buildDefaultThinkingSteps(language || '', initialComplexity)
         : [];
       let hasEscalatedComplexity = isDeepThinking; // deep starts fully expanded
@@ -568,9 +562,15 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       let hasReceivedBackendThought = false; // switches to real steps once backend sends thoughts
       const streamStartTime = Date.now();
 
-      // Make "LLM is working" visible immediately (Cursor-like)
-      setThinkingSteps([...currentThinking]);
-      options.onThinkingUpdate?.([...currentThinking]);
+      // Deep Thinking gets visible process steps. Regular chat stays clean until
+      // the backend emits real thought/retrieval/file events.
+      if (isDeepThinking) {
+        setThinkingSteps([...currentThinking]);
+        options.onThinkingUpdate?.([...currentThinking]);
+      } else {
+        setThinkingSteps([]);
+        options.onThinkingUpdate?.([]);
+      }
 
       // Keep the UI "alive" even before first chunk arrives.
       // Uses logarithmic progress curve — never freezes, always micro-moves.
@@ -588,6 +588,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         const elapsed = Date.now() - streamStartTime;
         const pct = logarithmicProgress(elapsed);
         setProgress(Math.floor(pct));
+
+        if (!isDeepThinking) return;
 
         if (hasReceivedBackendThought) {
           // Backend is driving thinking steps — do NOT override with simulated steps.
@@ -614,18 +616,13 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           return;
         }
 
-        if (!shouldUseSyntheticThinking) {
-          return;
-        }
-
         // Simulated mode: use client-side steps when backend doesn't send thoughts
         currentThinking = advanceThinkingSteps(currentThinking, pct);
         setThinkingSteps([...currentThinking]);
         options.onThinkingUpdate?.([...currentThinking]);
 
-        // Escalate from 'light' (1 step) to 'medium' (3 steps) only after a
-        // meaningfully long wait, so normal chat doesn't look like Deep Thinking.
-        if (!hasEscalatedComplexity && elapsed > 12000) {
+        // Escalate from 'light' (1 step) to 'medium' (3 steps) if response takes > 5s
+        if (!hasEscalatedComplexity && elapsed > 5000) {
           hasEscalatedComplexity = true;
           currentThinking = buildDefaultThinkingSteps(language || '', 'medium');
           // Mark first step as completed to show progress
@@ -645,10 +642,11 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
-        } else if (elapsed > 18000 && !isDeepThinking) {
+        } else if (elapsed > 10000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
           if (escalationStep && !escalationStep.label.includes('moment')) {
-            escalationStep.label = 'This is taking a bit longer than usual…';
+            escalationStep.label =
+              'This is taking a moment — analyzing more complex aspects of your question…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
@@ -748,23 +746,39 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           options.onThinkingUpdate?.([]);
         }
 
-        // Parse any artifacts from the response
+        // Parse any artifacts from the response, but never persist/show raw
+        // artifact envelopes in the chat bubble.
         const parsedArtifacts = parseArtifactsFromResponse(fullText);
+        const visibleText =
+          parsedArtifacts.length > 0 ? stripArtifactsFromResponse(fullText) : fullText;
         if (parsedArtifacts.length) {
+          const artifactMeta = {
+            citations: citationsRef.current,
+            sessionId: streamSessionIdRef.current || undefined,
+            policyDecision: policyDecisionRef.current,
+            policyNotices: policyNoticesRef.current,
+            sourceLedger: sourceLedgerRef.current,
+            trustBundle: trustBundleRef.current,
+            proposal: teresaProposalRef.current,
+          };
           parsedArtifacts.forEach((artifact) => {
-            addArtifact(artifact);
-            options.onArtifactDetected?.(artifact);
+            if (options.onArtifactDetected) {
+              options.onArtifactDetected(artifact, artifactMeta);
+            } else {
+              addArtifact(artifact);
+            }
           });
           setArtifacts(parsedArtifacts);
         }
 
-        updateLastChatMessage?.(fullText);
-        options.onStreamDone?.(fullText, currentThinking, parsedArtifacts, {
-          citations,
+        updateLastChatMessage?.(visibleText);
+        options.onStreamDone?.(visibleText, currentThinking, parsedArtifacts, {
+          citations: citationsRef.current,
           sessionId: streamSessionIdRef.current || undefined,
-          policyDecision,
-          policyNotices,
-          sourceLedger,
+          policyDecision: policyDecisionRef.current,
+          policyNotices: policyNoticesRef.current,
+          sourceLedger: sourceLedgerRef.current,
+          trustBundle: trustBundleRef.current,
           proposal: teresaProposalRef.current,
         });
       };
@@ -777,14 +791,32 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'policy_decision') {
           const d = (evt as any)?.decision ?? evt;
           setPolicyDecision(d);
+          policyDecisionRef.current = d;
           return;
         }
         if (evt.type === 'policy_notice') {
-          setPolicyNotices((prev) => [...(Array.isArray(prev) ? prev : []), evt]);
+          const next = [
+            ...(Array.isArray(policyNoticesRef.current) ? policyNoticesRef.current : []),
+            evt,
+          ];
+          policyNoticesRef.current = next;
+          setPolicyNotices(next);
           return;
         }
         if (evt.type === 'source_ledger') {
           setSourceLedger(evt);
+          sourceLedgerRef.current = evt;
+          return;
+        }
+        if (evt.type === 'memory_candidate') {
+          setMemoryCandidate(evt);
+          memoryCandidateRef.current = evt;
+          return;
+        }
+        if (evt.type === 'trust_bundle') {
+          const bundle = (evt as any)?.bundle ?? evt;
+          setTrustBundle(bundle);
+          trustBundleRef.current = bundle;
           return;
         }
 
@@ -798,7 +830,9 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'citations') {
           const e = evt as CitationsEvent;
           const incoming = Array.isArray(e.citations) ? e.citations : [];
-          setCitations((prev) => mergeCitations(prev, incoming));
+          const next = mergeCitations(citationsRef.current, incoming);
+          citationsRef.current = next;
+          setCitations(next);
           return;
         }
 
@@ -888,15 +922,6 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'research_progress') {
           const e = evt as ResearchProgressEvent;
           setResearchProgress(e);
-          const researchSteps = mapResearchProgressToThinkingStep(e, {
-            isDeepThinking,
-            showReasoning: shouldShowExtendedReasoningProgress,
-          });
-          if (researchSteps) {
-            hasReceivedBackendThought = true;
-            setThinkingSteps(researchSteps);
-            options.onThinkingUpdate?.(researchSteps);
-          }
           return;
         }
 
@@ -956,14 +981,6 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           const stepId = e.step || 'unknown';
           const label = e.label || stepId;
           const now = new Date();
-          const shouldShowStep = shouldShowBackendThoughtStep(stepId, {
-            isDeepThinking,
-            showReasoning: shouldShowExtendedReasoningProgress,
-          });
-
-          if (!shouldShowStep) {
-            return;
-          }
 
           // Switch from simulated steps to real backend-driven steps
           hasReceivedBackendThought = true;
@@ -978,10 +995,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               updated[existingIdx] = {
                 ...updated[existingIdx],
                 label,
-                status:
-                  e.status === 'done' || e.status === 'completed'
-                    ? ('done' as const)
-                    : ('in_progress' as const),
+                status: e.status === 'done' ? ('done' as const) : ('in_progress' as const),
                 timestamp: now,
               };
               // Mark all previous steps as done
@@ -1111,7 +1125,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const resolvedKnowledgeSources = {
         pmoDocuments: aiConfig?.knowledgeSources?.pmoDocuments ?? true,
         projectData: aiConfig?.knowledgeSources?.projectData ?? true,
-        organizationData: aiConfig?.knowledgeSources?.organizationData ?? false,
+        organizationData: aiConfig?.knowledgeSources?.organizationData ?? true,
       };
 
       try {
@@ -1133,6 +1147,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
             marketResearch: (aiConfig as any)?.marketResearch,
             coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
             privateMode: (aiConfig as any)?.privateMode ?? false,
+            assistantScope: (aiConfig as any)?.assistantScope,
+            memoryScope: (aiConfig as any)?.memoryScope,
             knowledgeSources: resolvedKnowledgeSources,
             responseStyle: aiConfig?.responseStyle,
             selectedTier: (aiConfig as any)?.selectedTier,
@@ -1184,6 +1200,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
                   marketResearch: (aiConfig as any)?.marketResearch,
                   coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
                   privateMode: (aiConfig as any)?.privateMode ?? false,
+                  assistantScope: (aiConfig as any)?.assistantScope,
+                  memoryScope: (aiConfig as any)?.memoryScope,
                   knowledgeSources: resolvedKnowledgeSources,
                   responseStyle: aiConfig?.responseStyle,
                   selectedTier: (aiConfig as any)?.selectedTier,
@@ -1327,6 +1345,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     policyDecision,
     policyNotices,
     sourceLedger,
+    memoryCandidate,
+    trustBundle,
     teresaProposal,
     deepThinkingState,
     researchProgress,

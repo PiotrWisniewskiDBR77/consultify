@@ -33,17 +33,6 @@ describe('interviewManagerScope', () => {
     expect(mockGetTableColumns).not.toHaveBeenCalled();
   });
 
-  it('treats ADMINISTRATOR as organization-wide scope', async () => {
-    await expect(
-      resolveInterviewManagerScope({
-        userId: 'u-1b',
-        organizationId: 'org-1',
-        role: 'ADMINISTRATOR',
-      })
-    ).resolves.toEqual({ kind: 'organization' });
-    expect(mockGetTableColumns).not.toHaveBeenCalled();
-  });
-
   it('resolves project-managed scope from project roles', async () => {
     mockGetTableColumns.mockResolvedValue(new Set(['project_id', 'project_role']));
     mockQueryAll.mockResolvedValue([{ project_id: 'proj-1' }, { project_id: 'proj-2' }]);

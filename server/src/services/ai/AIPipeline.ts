@@ -26,6 +26,7 @@ import logger from '../../utils/Logger.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
+import { isQaAiMode } from './qaAiRuntime.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -345,6 +346,7 @@ export class AIPipeline {
             const endpoint = (cfg as any)?.endpoint;
 
             const isConfigured =
+              isQaAiMode() ||
               providerId.toLowerCase() === 'ollama' ||
               (typeof apiKey === 'string' && apiKey.trim().length > 0);
             if (!isConfigured) {
@@ -1832,6 +1834,8 @@ export class AIPipeline {
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
       '1.1. Zasada jakości (CHAT): Nie odmawiaj tylko dlatego, że brakuje danych lub źródeł. Jeśli nie masz pewności: (a) podaj 2–5 hipotez, (b) zaznacz założenia, (c) zadaj maks. 3 pytania doprecyzowujące, (d) zaproponuj jak zweryfikować (np. wklejenie linku/fragmentu/plików).',
+      '1.2. Prosty chat: dla zwykłych pytań produktowych odpowiadaj w 4–8 zdaniach, profesjonalnie i rzeczowo. Bez sztucznych sekcji procesu, bez technicznego żargonu i bez ciężkich zastrzeżeń, jeśli evidence policy ich nie wymaga.',
+      '1.3. Product assistant: gdy użytkownik pyta jak coś zrobić w aplikacji, odpowiedz praktycznie: wskaż moduł, orientacyjną ścieżkę w UI, ograniczenia i następny krok. Nie odpowiadaj ogólną wiedzą biznesową, jeśli pytanie dotyczy funkcji produktu.',
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
@@ -1848,26 +1852,9 @@ export class AIPipeline {
     const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
 
     if (aiModes?.deepResearch) {
-      const expectedOutput =
-        (ctx as any)?.deepThinkingExpectedOutput ||
-        (ctx as any)?.deepThinkingConfirm?.understanding?.expectedOutput ||
-        'FullReport';
       instructions.push(
         '8. TRYB: Deep Research — zanim odpowiesz, doprecyzuj brakujące informacje i przedstaw uporządkowaną analizę, założenia oraz rekomendacje.'
       );
-      if (expectedOutput === 'Decision') {
-        instructions.push(
-          '8a. OUTPUT MODE: Decision — deliver a concise decision-ready recommendation first, followed by rationale, trade-offs, risks, and immediate next actions.'
-        );
-      } else if (expectedOutput === 'StructuredAnalysis') {
-        instructions.push(
-          '8a. OUTPUT MODE: StructuredAnalysis — use a structured comparison with explicit criteria, options, evidence, and a concise recommendation.'
-        );
-      } else {
-        instructions.push(
-          '8a. OUTPUT MODE: FullReport — provide a full strategic report with detailed sections, evidence, implications, and next-step guidance.'
-        );
-      }
     }
 
     // Web search instruction — active when user toggle is on OR when auto-detected
@@ -1883,7 +1870,7 @@ export class AIPipeline {
         );
       } else {
         instructions.push(
-          '9. TRYB: Web Search — dla tego żądania nie dostarczono użytecznych wyników web. Nie udawaj, że wykonałeś skuteczne wyszukiwanie ani nie twierdź ogólnie, że system "nie ma internetu". Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy i wyraźnie zaznacz, że ta odpowiedź nie została ugruntowana świeżymi źródłami z web search.'
+          '9. TRYB: Web Search — wyszukiwanie jest włączone, ale w tym przypadku nie dostarczono wyników. Nie udawaj, że wykonałeś wyszukiwanie. Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy, zaznaczając że odpowiedź nie jest oparta na najświeższych danych z internetu.'
         );
       }
     }

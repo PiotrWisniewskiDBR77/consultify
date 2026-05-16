@@ -97,8 +97,8 @@ const AuditEventCard: React.FC<{ event: AuditEvent }> = ({ event }) => {
 
   return (
     <div className="flex items-start gap-3 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-      <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-        <Icon size={14} className="text-purple-600 dark:text-purple-400" />
+      <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+        <Icon size={14} className="text-primary-600 dark:text-primary-400" />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -173,7 +173,7 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
         className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <History size={18} className="text-purple-500" />
+          <History size={18} className="text-primary-500" />
           <div className="text-left">
             <h3 className="font-semibold text-navy-900 dark:text-white">Historia zmian</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -190,7 +190,7 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
         <div className="p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
@@ -229,7 +229,7 @@ export const AuditHistoryCompact: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+      className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
     >
       <History size={12} />
       <span>Ostatnia zmiana: {formattedTime}</span>

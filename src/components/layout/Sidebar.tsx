@@ -134,8 +134,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
   const hoverBg =
     theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-50 dark:hover:bg-navy-800/20';
   const hoverText = theme === 'dark' ? 'hover:text-white' : 'hover:text-navy-900';
-  const activeBg = theme === 'dark' ? 'bg-purple-900/20' : 'bg-purple-50';
-  const activeText = theme === 'dark' ? 'text-purple-300' : 'text-purple-600';
+  const activeBg = theme === 'dark' ? 'bg-primary-900/20' : 'bg-primary-50';
+  const activeText = theme === 'dark' ? 'text-primary-300' : 'text-primary-600';
 
   const hasItems = items && items.length > 0;
 
@@ -696,7 +696,7 @@ export const Sidebar: React.FC = () => {
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${
               isActive || (item.id === 'AI_CHAT' && isChatHistorySidebarOpen)
-                ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-r-2 border-purple-600'
+                ? 'bg-primary-600/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600'
                 : isParentActive
                   ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
                   : 'text-slate-500 dark:text-slate-400 active:text-navy-900 dark:active:text-white active:bg-slate-100 dark:active:bg-white/10 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5'
@@ -709,7 +709,7 @@ export const Sidebar: React.FC = () => {
           >
             {item.icon && (
               <span
-                className={`transition-colors ${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+                className={`transition-colors ${isActive || isParentActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
               >
                 {React.cloneElement(item.icon as React.ReactElement<{ size: number }>, {
                   size: 20,
@@ -814,7 +814,7 @@ export const Sidebar: React.FC = () => {
                 onClick={toggleSidebarCollapse}
                 className={`
                   p-2 rounded-lg transition-colors
-                  text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30 
+                  text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
                   dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
                 `}
                 title={t('sidebar.collapse', 'Collapse')}
@@ -824,14 +824,14 @@ export const Sidebar: React.FC = () => {
             </>
           ) : (
             <>
-              <span className="text-2xl font-bold tracking-tighter text-purple-600 dark:text-purple-400">
+              <span className="text-2xl font-bold tracking-tighter text-primary-600 dark:text-primary-400">
                 77
               </span>
               <button
                 onClick={toggleSidebarCollapse}
                 className={`
                   p-2 rounded-lg transition-colors flex justify-center items-center
-                  text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30 
+                  text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
                   dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
                 `}
                 title={t('sidebar.expand', 'Expand')}
@@ -870,9 +870,9 @@ export const Sidebar: React.FC = () => {
             {renderMenuItem(settingsMenuItem)}
 
             <button
-              onClick={logout}
+              onClick={() => logout()}
               className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium btn-base transition-all duration-200
-                text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
+                text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title={t('sidebar.logOut')}
             >

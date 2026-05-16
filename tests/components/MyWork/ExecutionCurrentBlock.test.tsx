@@ -9,6 +9,16 @@ import { ExecutionCurrentBlock } from '../../../src/components/MyWork/Home/Execu
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    t: (key: string, fallback?: string) =>
+      ({
+        'myWork.radar.visibility.private': 'Private',
+        'myWork.radar.visibility.reviewShared': 'Needs review',
+        'myWork.radar.reviewState.inReview': 'In review',
+        'myWork.radar.artifactType.presentation': 'Presentation',
+        'myWork.radar.artifactType.report': 'Report',
+      })[key] ||
+      fallback ||
+      key,
     i18n: { language: 'en' },
   }),
 }));

@@ -8,7 +8,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import multer from 'multer';
 
 import { featureFlags } from '../config/FeatureFlags.js';
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { automationService } from '../services/tablePlatform/AutomationService.js';
 import { handleRouteError } from '../services/tablePlatform/ErrorHandling.js';
@@ -148,6 +148,105 @@ async function checkOrgQuota(req: Request, res: Response, next: NextFunction) {
   } catch {
     next();
   }
+}
+
+function extractBaseIdFromSchemaProposalOperations(operations: unknown): string | null {
+  const parsed = typeof operations === 'string' ? JSON.parse(operations) : operations;
+  if (!Array.isArray(parsed)) return null;
+  for (const op of parsed) {
+    const target = (op as { target?: Record<string, unknown> } | null)?.target;
+    const baseId = target?.base_id ?? target?.baseId;
+    if (typeof baseId === 'string' && baseId && !baseId.startsWith('@ref:')) return baseId;
+  }
+  return null;
+}
+
+async function resolveSchemaProposalBaseId(proposalId: string): Promise<string | null> {
+  const db = (await import('../database/Database.js')).getDatabase();
+  const proposalResult = await db.query(
+    'SELECT workspace_id, operations FROM tp_schema_proposals WHERE id = $1',
+    [proposalId]
+  );
+  const proposal = proposalResult.rows[0] as
+    | { workspace_id?: string; operations?: string | unknown[] }
+    | undefined;
+  if (!proposal) return null;
+
+  const baseIdFromOperations = extractBaseIdFromSchemaProposalOperations(proposal.operations);
+  if (baseIdFromOperations) return baseIdFromOperations;
+
+  if (!proposal.workspace_id) return null;
+  const baseResult = await db.query(
+    'SELECT id FROM tp_bases WHERE workspace_id = $1 ORDER BY created_at ASC LIMIT 1',
+    [proposal.workspace_id]
+  );
+  return (baseResult.rows[0] as { id?: string } | undefined)?.id ?? null;
+}
+
+async function workspaceBelongsToOrganization(
+  workspaceId: string,
+  organizationId: string
+): Promise<boolean> {
+  const db = (await import('../database/Database.js')).getDatabase();
+  const result = await db.query(
+    'SELECT 1 FROM tp_bases WHERE workspace_id = $1 AND organization_id = $2 LIMIT 1',
+    [workspaceId, organizationId]
+  );
+  return result.rows.length > 0;
+}
+
+function requireWorkspaceTenantAccess(req: Request, res: Response, next: NextFunction): void {
+  const authReq = req as AuthRequest;
+  const workspaceId = authReq.params?.workspaceId ?? authReq.body?.workspaceId;
+  const orgId = authReq.organizationId;
+  if (!orgId) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
+  if (!workspaceId || typeof workspaceId !== 'string') {
+    res.status(400).json({ error: 'workspaceId is required' });
+    return;
+  }
+  workspaceBelongsToOrganization(workspaceId, orgId)
+    .then((allowed) => {
+      if (!allowed) {
+        res.status(403).json({ error: 'Access denied to this workspace' });
+        return;
+      }
+      next();
+    })
+    .catch(next);
+}
+
+function requireSchemaProposalAccess(req: Request, res: Response, next: NextFunction): void {
+  const authReq = req as AuthRequest;
+  const userId = authReq.userId;
+  const orgId = authReq.organizationId;
+  const proposalId = authReq.params?.proposalId;
+  if (!userId || !orgId) {
+    res.status(403).json({ error: 'Authentication and organization context required' });
+    return;
+  }
+  if (!proposalId) {
+    res.status(400).json({ error: 'proposalId is required' });
+    return;
+  }
+
+  resolveSchemaProposalBaseId(proposalId)
+    .then(async (baseId) => {
+      if (!baseId) {
+        res.status(404).json({ error: 'Proposal not found or base cannot be resolved' });
+        return;
+      }
+      (authReq as any).resolvedBaseId = baseId;
+      const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+      if (!allowed) {
+        res.status(403).json({ error: 'Access denied to this schema proposal' });
+        return;
+      }
+      next();
+    })
+    .catch(next);
 }
 
 // ==========================================
@@ -954,6 +1053,81 @@ router.delete(
 );
 
 // ==========================================
+// VALIDATION STATUS (Block B · EPIC-T9)
+// ==========================================
+//
+// Flips a record's validation_status with a state-machine guard. Audit
+// trail is written by the service. Confidence recompute is triggered as a
+// side-effect inside the service (best-effort).
+
+router.post(
+  '/records/:recordId/validation-status',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+
+      const rawStatus = req.body?.status;
+      if (rawStatus !== 'unverified' && rawStatus !== 'verified' && rawStatus !== 'flagged') {
+        return res.status(400).json({
+          error: "status must be one of 'unverified' | 'verified' | 'flagged'",
+        });
+      }
+      const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
+      const validationSvc = (
+        await import('../services/tablePlatform/ValidationStatusService.js')
+      ).default;
+      const result = await validationSvc.setStatus(recordId, rawStatus, {
+        actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
+        isSuperAdmin: Boolean(authReq.user?.isSuperAdmin),
+        note,
+      });
+      return res.status(200).json(result);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      const message = (err as Error).message;
+      if (code === 'INVALID_INPUT') {
+        return res.status(400).json({ error: message, code });
+      }
+      if (code === 'RECORD_NOT_FOUND') {
+        return res.status(404).json({ error: message, code });
+      }
+      if (code === 'INVALID_VALIDATION_TRANSITION') {
+        return res.status(409).json({ error: message, code });
+      }
+      if (code === 'TRANSITION_REQUIRES_SUPER_ADMIN') {
+        return res.status(403).json({ error: message, code });
+      }
+      handleRouteError(err, res, 'setValidationStatus');
+    }
+  }
+);
+
+router.get(
+  '/records/:recordId/validation-status/transitions',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      const validationSvc = (
+        await import('../services/tablePlatform/ValidationStatusService.js')
+      ).default;
+      const current = await validationSvc.getStatus(recordId);
+      if (current === null) return res.status(404).json({ error: 'Record not found' });
+      return res.status(200).json({
+        current,
+        allowed: validationSvc.getAllowedTransitions(current),
+      });
+    } catch (err) {
+      handleRouteError(err, res, 'getValidationStatusTransitions');
+    }
+  }
+);
+
+// ==========================================
 // RECORD COMMENTS
 // ==========================================
 
@@ -1454,76 +1628,80 @@ router.post(
 // CHAT-TO-SCHEMA API
 // ==========================================
 
-router.post('/schema/propose', async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { workspaceId, message, existingSchema, language, baseId, tableId } = req.body ?? {};
-    if (!workspaceId || !message) {
-      return res.status(400).json({ error: 'workspaceId and message required' });
-    }
+router.post(
+  '/schema/propose',
+  requireWorkspaceTenantAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { workspaceId, message, existingSchema, language, baseId, tableId } = req.body ?? {};
+      if (!workspaceId || !message) {
+        return res.status(400).json({ error: 'workspaceId and message required' });
+      }
 
-    const { checkRateLimit, validateProposalLimits } =
-      await import('../services/chatToSchema/safetyGuardrails.js');
+      const { checkRateLimit, validateProposalLimits } =
+        await import('../services/chatToSchema/safetyGuardrails.js');
 
-    const userId = authReq.userId ?? 'anonymous';
-    const orgId = authReq.organizationId ?? workspaceId;
-    const rateCheck = checkRateLimit(userId, orgId);
-    if (!rateCheck.allowed) {
-      return res.status(429).json({
-        error: 'Rate limit exceeded',
-        retryAfterMs: rateCheck.retryAfterMs,
-      });
-    }
-
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposal = await ChatToSchemaService.generateProposal(
-      workspaceId,
-      message,
-      existingSchema,
-      language ?? 'en',
-      authReq.userId,
-      { baseId, tableId }
-    );
-
-    if (
-      proposal.operations &&
-      Array.isArray(proposal.operations) &&
-      proposal.operations.length > 0
-    ) {
-      const pipelineOps = proposal.operations.map((op: any) => ({
-        id: op.id,
-        operation_type: op.operationType ?? op.operation_type ?? '',
-        target: op.target ?? {},
-        payload: op.payload ?? {},
-        dependencies: op.dependsOn ?? op.dependencies,
-        reversible: true,
-      }));
-      const limitsCheck = validateProposalLimits({
-        proposal_id: proposal.id,
-        intent: proposal.intent,
-        confidence: proposal.confidence,
-        summary: proposal.summary,
-        operations: pipelineOps,
-        warnings: [],
-        estimated_impact: {},
-      });
-      if (!limitsCheck.valid) {
-        return res.status(400).json({
-          error: 'Proposal exceeds safety limits',
-          details: limitsCheck.errors,
+      const userId = authReq.userId ?? 'anonymous';
+      const orgId = authReq.organizationId ?? workspaceId;
+      const rateCheck = checkRateLimit(userId, orgId);
+      if (!rateCheck.allowed) {
+        return res.status(429).json({
+          error: 'Rate limit exceeded',
+          retryAfterMs: rateCheck.retryAfterMs,
         });
       }
-    }
 
-    return res.status(201).json(proposal);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/propose failed', { error: (e as Error).message });
-    return res
-      .status(500)
-      .json({ error: 'Proposal generation failed', details: (e as Error).message });
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposal = await ChatToSchemaService.generateProposal(
+        workspaceId,
+        message,
+        existingSchema,
+        language ?? 'en',
+        authReq.userId,
+        { baseId, tableId }
+      );
+
+      if (
+        proposal.operations &&
+        Array.isArray(proposal.operations) &&
+        proposal.operations.length > 0
+      ) {
+        const pipelineOps = proposal.operations.map((op: any) => ({
+          id: op.id,
+          operation_type: op.operationType ?? op.operation_type ?? '',
+          target: op.target ?? {},
+          payload: op.payload ?? {},
+          dependencies: op.dependsOn ?? op.dependencies,
+          reversible: true,
+        }));
+        const limitsCheck = validateProposalLimits({
+          proposal_id: proposal.id,
+          intent: proposal.intent,
+          confidence: proposal.confidence,
+          summary: proposal.summary,
+          operations: pipelineOps,
+          warnings: [],
+          estimated_impact: {},
+        });
+        if (!limitsCheck.valid) {
+          return res.status(400).json({
+            error: 'Proposal exceeds safety limits',
+            details: limitsCheck.errors,
+          });
+        }
+      }
+
+      return res.status(201).json(proposal);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/propose failed', { error: (e as Error).message });
+      return res
+        .status(500)
+        .json({ error: 'Proposal generation failed', details: (e as Error).message });
+    }
   }
-});
+);
 
 router.post(
   '/schema/proposals/:proposalId/execute',
@@ -1549,79 +1727,97 @@ router.post(
   }
 );
 
-router.post('/schema/proposals/:proposalId/reject', async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const { reason } = req.body ?? {};
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    await ChatToSchemaService.rejectProposal(proposalId, authReq.userId, reason);
-    return res.status(204).send();
-  } catch (e) {
-    logger.error('[TablePlatform] schema/reject failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Rejection failed', details: (e as Error).message });
+router.post(
+  '/schema/proposals/:proposalId/reject',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const { reason } = req.body ?? {};
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      await ChatToSchemaService.rejectProposal(proposalId, authReq.userId, reason);
+      return res.status(204).send();
+    } catch (e) {
+      logger.error('[TablePlatform] schema/reject failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Rejection failed', details: (e as Error).message });
+    }
   }
-});
+);
 
-router.post('/schema/proposals/:proposalId/refine', async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const { message, refinementMessage } = req.body ?? {};
-    const msg = message ?? refinementMessage;
-    if (!msg) {
-      return res.status(400).json({ error: 'message is required' });
+router.post(
+  '/schema/proposals/:proposalId/refine',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const { message, refinementMessage } = req.body ?? {};
+      const msg = message ?? refinementMessage;
+      if (!msg) {
+        return res.status(400).json({ error: 'message is required' });
+      }
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposal = await ChatToSchemaService.refineProposal(proposalId, msg, authReq.userId);
+      return res.status(201).json(proposal);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/refine failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Refinement failed', details: (e as Error).message });
     }
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposal = await ChatToSchemaService.refineProposal(proposalId, msg, authReq.userId);
-    return res.status(201).json(proposal);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/refine failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Refinement failed', details: (e as Error).message });
   }
-});
+);
 
-router.post('/schema/proposals/:proposalId/undo', async (req: Request, res: Response) => {
-  try {
-    const { proposalId } = req.params;
-    const { baseId } = req.body ?? {};
-    if (!baseId) {
-      return res.status(400).json({ error: 'baseId is required' });
+router.post(
+  '/schema/proposals/:proposalId/undo',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const baseId = (authReq as any).resolvedBaseId as string | undefined;
+      if (!baseId) {
+        return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
+      }
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const result = await ChatToSchemaService.undoProposal(proposalId, baseId);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      return res.status(200).json({ success: true, message: `Proposal ${proposalId} undone` });
+    } catch (e) {
+      logger.error('[TablePlatform] schema/undo failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Undo failed', details: (e as Error).message });
     }
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const result = await ChatToSchemaService.undoProposal(proposalId, baseId);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-    return res.status(200).json({ success: true, message: `Proposal ${proposalId} undone` });
-  } catch (e) {
-    logger.error('[TablePlatform] schema/undo failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Undo failed', details: (e as Error).message });
   }
-});
+);
 
-router.post('/schema/proposals/:proposalId/redo', async (req: Request, res: Response) => {
-  try {
-    const { proposalId } = req.params;
-    const { baseId } = req.body ?? {};
-    if (!baseId) {
-      return res.status(400).json({ error: 'baseId is required' });
+router.post(
+  '/schema/proposals/:proposalId/redo',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const baseId = (authReq as any).resolvedBaseId as string | undefined;
+      if (!baseId) {
+        return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
+      }
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const result = await ChatToSchemaService.redoProposal(proposalId, baseId);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      return res.status(200).json({ success: true, message: `Proposal ${proposalId} redone` });
+    } catch (e) {
+      logger.error('[TablePlatform] schema/redo failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Redo failed', details: (e as Error).message });
     }
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const result = await ChatToSchemaService.redoProposal(proposalId, baseId);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-    return res.status(200).json({ success: true, message: `Proposal ${proposalId} redone` });
-  } catch (e) {
-    logger.error('[TablePlatform] schema/redo failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Redo failed', details: (e as Error).message });
   }
-});
+);
 
 router.get(
   '/bases/:baseId/schema-history',
@@ -1640,33 +1836,41 @@ router.get(
   }
 );
 
-router.get('/schema/proposals/:proposalId', async (req: Request, res: Response) => {
-  try {
-    const { proposalId } = req.params;
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposal = await ChatToSchemaService.getProposal(proposalId);
-    if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
-    return res.status(200).json(proposal);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/get failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
+router.get(
+  '/schema/proposals/:proposalId',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { proposalId } = req.params;
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposal = await ChatToSchemaService.getProposal(proposalId);
+      if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+      return res.status(200).json(proposal);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/get failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
+    }
   }
-});
+);
 
-router.get('/workspaces/:workspaceId/schema/proposals', async (req: Request, res: Response) => {
-  try {
-    const { workspaceId } = req.params;
-    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposals = await ChatToSchemaService.listProposals(workspaceId, status);
-    return res.status(200).json(proposals);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/proposals list failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'List failed', details: (e as Error).message });
+router.get(
+  '/workspaces/:workspaceId/schema/proposals',
+  requireWorkspaceTenantAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { workspaceId } = req.params;
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposals = await ChatToSchemaService.listProposals(workspaceId, status);
+      return res.status(200).json(proposals);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/proposals list failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'List failed', details: (e as Error).message });
+    }
   }
-});
+);
 
 // ==========================================
 // AUDIT TRAIL
@@ -1839,18 +2043,19 @@ router.get(
   '/tables/:tableId/export/csv',
   requireTableAccess,
   async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
+    const fieldIds =
+      typeof req.query.fields === 'string'
+        ? req.query.fields
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean)
+        : undefined;
+    let exportArtifactId: string | null = null;
     try {
-      const { tableId } = req.params;
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-
-      const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
-      const fieldIds =
-        typeof req.query.fields === 'string'
-          ? req.query.fields
-              .split(',')
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : undefined;
 
       const ExportService = (await import('../services/tablePlatform/ExportService.js')).default;
       const tableName = await ExportService.getTableName(tableId);
@@ -1861,7 +2066,51 @@ router.get(
       res.write('\uFEFF');
 
       await ExportService.streamCsvExport({ tableId, viewId, fieldIds }, res);
+      if (authReq.organizationId && authReq.userId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordCompletedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'csv',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
+      }
     } catch (e) {
+      if (!exportArtifactId && authReq.organizationId && authReq.userId && tableId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordFailedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'csv',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
+      }
       logger.error('[TablePlatform] CSV export failed', { error: (e as Error).message });
       if (!res.headersSent) {
         res.status(500).json({ error: 'CSV export failed', details: (e as Error).message });
@@ -1874,22 +2123,20 @@ router.get(
   '/tables/:tableId/export/xlsx',
   requireTableAccess,
   async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
+    const fieldIds =
+      typeof req.query.fields === 'string'
+        ? req.query.fields
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean)
+        : undefined;
+    const wantRegister = req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
+    let exportArtifactId: string | null = null;
     try {
-      const authReq = req as AuthRequest;
-      const { tableId } = req.params;
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-
-      const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
-      const fieldIds =
-        typeof req.query.fields === 'string'
-          ? req.query.fields
-              .split(',')
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : undefined;
-
-      const wantRegister =
-        req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
 
       let registeredArtifactId: string | null = null;
       if (wantRegister) {
@@ -1924,7 +2171,7 @@ router.get(
       const safeName = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
 
       const buffer = await ExportService.buildXlsxBuffer({ tableId, viewId, fieldIds });
-      let exportArtifactId = registeredArtifactId;
+      exportArtifactId = registeredArtifactId;
       if (!exportArtifactId && authReq.organizationId && authReq.userId) {
         const artifact = await artifactRegistryService
           .getArtifactByOrigin({
@@ -1959,6 +2206,28 @@ router.get(
       }
       res.end(buffer);
     } catch (e) {
+      if (!exportArtifactId && authReq.organizationId && authReq.userId && tableId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordFailedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'xlsx',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
+      }
       logger.error('[TablePlatform] XLSX export failed', { error: (e as Error).message });
       if (!res.headersSent) {
         res.status(500).json({ error: 'XLSX export failed', details: (e as Error).message });
@@ -3414,6 +3683,99 @@ router.get('/templates', async (req: Request, res: Response) => {
     handleRouteError(err, res, 'listTemplates');
   }
 });
+
+// ── Template Lifecycle (Block A · EPIC-T6) ─────────────────────────────────
+//
+// MUST appear BEFORE the `/templates/:templateId` catch-all so Express does
+// not interpret 'lifecycle' as a templateId.
+//
+// Read endpoint is open to any authenticated tenant member (read-only). Write
+// endpoints (approve/deprecate) require super-admin because `tp_base_templates`
+// is a system-owned catalog with no tenant column.
+
+router.get('/templates/lifecycle', async (req: Request, res: Response) => {
+  try {
+    const rawStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const rawCategory = typeof req.query.category === 'string' ? req.query.category : undefined;
+    if (
+      rawStatus !== undefined &&
+      rawStatus !== 'draft' &&
+      rawStatus !== 'approved' &&
+      rawStatus !== 'deprecated'
+    ) {
+      return res.status(400).json({
+        error: "status must be one of 'draft' | 'approved' | 'deprecated' (or omitted)",
+      });
+    }
+    const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+      .default;
+    const items = await lifecycleSvc.listTemplates({
+      status: rawStatus as 'draft' | 'approved' | 'deprecated' | undefined,
+      category: rawCategory,
+    });
+    return res.status(200).json(items);
+  } catch (err) {
+    handleRouteError(err, res, 'listLifecycleTemplates');
+  }
+});
+
+router.post(
+  '/templates/:templateId/approve',
+  requireSuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { templateId } = req.params;
+      if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+      const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
+      const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+        .default;
+      const updated = await lifecycleSvc.approveTemplate(templateId, {
+        actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
+        note,
+      });
+      return res.status(200).json(updated);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === 'INVALID_LIFECYCLE_TRANSITION') {
+        return res.status(409).json({ error: (err as Error).message, code });
+      }
+      if (code === 'TEMPLATE_NOT_FOUND') {
+        return res.status(404).json({ error: (err as Error).message, code });
+      }
+      handleRouteError(err, res, 'approveTemplate');
+    }
+  }
+);
+
+router.post(
+  '/templates/:templateId/deprecate',
+  requireSuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { templateId } = req.params;
+      if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+      const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
+      const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+        .default;
+      const updated = await lifecycleSvc.deprecateTemplate(templateId, {
+        actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
+        note,
+      });
+      return res.status(200).json(updated);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === 'INVALID_LIFECYCLE_TRANSITION') {
+        return res.status(409).json({ error: (err as Error).message, code });
+      }
+      if (code === 'TEMPLATE_NOT_FOUND') {
+        return res.status(404).json({ error: (err as Error).message, code });
+      }
+      handleRouteError(err, res, 'deprecateTemplate');
+    }
+  }
+);
 
 router.get('/templates/:templateId', async (req: Request, res: Response) => {
   try {

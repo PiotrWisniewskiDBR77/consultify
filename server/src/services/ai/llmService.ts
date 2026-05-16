@@ -14,6 +14,14 @@ import { appCache } from '../redis/CacheService.js';
 import circuitBreaker from './circuitBreaker.js';
 import { embeddingService } from './embeddingService.js';
 import { aiLogger } from './logger.js';
+import {
+  buildQaAiStructuredObject,
+  buildQaAiText,
+  buildQaAiUsage,
+  createQaAiStream,
+  getQaAiModeLabel,
+  isQaAiMode,
+} from './qaAiRuntime.js';
 
 // Concurrency and rate limits per provider (process-level guard)
 const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {
@@ -462,6 +470,32 @@ export class LLMService {
   async call(params: CallParams): Promise<Record<string, unknown>> {
     const { type, stream, schema, tools, cache, cacheTtl } = params;
     let { modelConfig } = params;
+
+    if (isQaAiMode()) {
+      const content = buildQaAiText(params);
+      if (stream) {
+        return {
+          stream: createQaAiStream(content),
+          usage: buildQaAiUsage(content),
+          qaMock: true,
+          provider: getQaAiModeLabel(),
+        };
+      }
+      if (type === 'structured' && schema) {
+        return {
+          object: buildQaAiStructuredObject(schema),
+          usage: buildQaAiUsage(content),
+          qaMock: true,
+          provider: getQaAiModeLabel(),
+        };
+      }
+      return {
+        content,
+        usage: buildQaAiUsage(content),
+        qaMock: true,
+        provider: getQaAiModeLabel(),
+      };
+    }
 
     // Intelligent Caching (Skip for streams/tools/reasoning for now)
     // We can cache simple text/structured generation

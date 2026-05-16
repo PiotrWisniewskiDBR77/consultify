@@ -85,7 +85,7 @@ export const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-300',
   in_progress: 'bg-blue-500',
   done: 'bg-green-500',
-  blocked: 'bg-red-500',
+  blocked: 'bg-rose-500',
 };
 
 export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
@@ -116,7 +116,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
   const shapeStyles: Record<FlowShape, string> = {
     start:
       'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
-    end: 'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
+    end: 'rounded-full border-2 border-rose-500 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-400',
     action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
     decision:
       'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
@@ -127,23 +127,23 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     bpmn_gateway:
       'rotate-45 border-2 border-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
     system_service:
-      'rounded-xl border-2 border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
+      'rounded-xl border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     system_db:
-      'rounded-2xl border-2 border-cyan-700 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
+      'rounded-2xl border-2 border-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     system_actor:
       'rounded-xl border-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-400',
     org_role:
-      'rounded-xl border-2 border-violet-600 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
+      'rounded-xl border-2 border-primary-600 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
     org_team:
       'rounded-xl border-2 border-fuchsia-600 bg-fuchsia-50 dark:bg-fuchsia-900/30 dark:border-fuchsia-400',
     org_handoff:
-      'rounded-lg border-2 border-violet-700 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
+      'rounded-lg border-2 border-primary-700 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
     auto_trigger:
-      'rounded-xl border-2 border-dashed border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
+      'rounded-xl border-2 border-dashed border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
     auto_api:
-      'rounded-xl border-2 border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
+      'rounded-xl border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     auto_condition:
-      'rotate-45 border-2 border-dashed border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
+      'rotate-45 border-2 border-dashed border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
     vsm_process:
       'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     vsm_inventory:
@@ -153,15 +153,15 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     vsm_customer:
       'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
     vsm_kaizen:
-      'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
+      'rounded-full border-2 border-rose-500 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-400',
     vsm_push_arrow:
-      'rounded-lg border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
+      'rounded-lg border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
     vsm_pull_arrow:
-      'rounded-lg border-2 border-teal-500 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-400',
+      'rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     vsm_supermarket:
-      'rounded-lg border-2 border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
+      'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     vsm_fifo:
-      'rounded-lg border-2 border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
+      'rounded-lg border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
   };
 
   const innerRotate =
@@ -260,7 +260,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             </span>
           )}
           {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-[8px] font-bold text-violet-700 dark:text-violet-300">
+            <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-[8px] font-bold text-primary-700 dark:text-primary-300">
               {data.fteCount} FTE
             </span>
           )}

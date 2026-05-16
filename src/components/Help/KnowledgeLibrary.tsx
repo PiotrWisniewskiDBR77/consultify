@@ -72,7 +72,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
     <button
       onClick={() => onClick(article.slug)}
       data-testid={`help-article-card-${article.slug}`}
-      className="w-full text-left p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
+      className="w-full text-left p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
     >
       {/* Thumbnail */}
       {article.thumbnail_url && (
@@ -87,7 +87,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
 
       {/* Category Badge */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-semibold rounded-full uppercase">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-[10px] font-semibold rounded-full uppercase">
           <DynamicIcon name={article.category_icon} size={10} />
           {article.category_name}
         </span>
@@ -100,7 +100,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
       </div>
 
       {/* Title */}
-      <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+      <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
         {article.title}
       </h4>
 
@@ -123,7 +123,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
 
       {/* Arrow */}
       <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <ChevronRight size={16} className="text-purple-500" />
+        <ChevronRight size={16} className="text-primary-500" />
       </div>
     </button>
   );
@@ -147,14 +147,14 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
       transition-all whitespace-nowrap
       ${
         isActive
-          ? 'bg-purple-600 text-white shadow-md'
-          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-100 dark:hover:bg-purple-900/30'
+          ? 'bg-primary-600 text-white shadow-md'
+          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-100 dark:hover:bg-primary-900/30'
       }
     `}
   >
     <DynamicIcon name={category.icon} size={12} />
     {category.name}
-    <span className={`text-[10px] ${isActive ? 'text-purple-200' : 'text-slate-400'}`}>
+    <span className={`text-[10px] ${isActive ? 'text-primary-200' : 'text-slate-400'}`}>
       ({category.article_count})
     </span>
   </button>
@@ -172,19 +172,19 @@ interface CollectionCardProps {
 const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onClick }) => (
   <button
     onClick={() => onClick(collection.slug)}
-    className="w-full text-left p-3 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
+    className="w-full text-left p-3 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
   >
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <FolderOpen size={16} className="text-purple-500" />
-        <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+        <FolderOpen size={16} className="text-primary-500" />
+        <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
           {collection.title}
         </span>
         {collection.featured && <Sparkles size={12} className="text-amber-500" />}
       </div>
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-slate-400">{collection.article_count}</span>
-        <ChevronRight size={14} className="text-slate-400 group-hover:text-purple-500" />
+        <ChevronRight size={14} className="text-slate-400 group-hover:text-primary-500" />
       </div>
     </div>
     {collection.description && (
@@ -209,8 +209,8 @@ const TagChip: React.FC<TagChipProps> = ({ tag, isActive, onClick }) => {
   const kindColors: Record<string, string> = {
     domain: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
     tool: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-    concept: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-    stage: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+    concept: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+    stage: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
     audience: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
   };
 
@@ -218,11 +218,11 @@ const TagChip: React.FC<TagChipProps> = ({ tag, isActive, onClick }) => {
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap
-        ${isActive ? 'bg-purple-600 text-white shadow-sm ring-1 ring-purple-400' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+        ${isActive ? 'bg-primary-600 text-white shadow-sm ring-1 ring-primary-400' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
       `}
     >
       {tag.label}
-      <span className={`text-[9px] ${isActive ? 'text-purple-200' : 'opacity-60'}`}>
+      <span className={`text-[9px] ${isActive ? 'text-primary-200' : 'opacity-60'}`}>
         ({tag.article_count})
       </span>
     </button>
@@ -358,7 +358,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('help.knowledge.searchPlaceholder', 'Search articles...')}
             data-testid="help-knowledge-search"
-            className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           {searchQuery && (
             <button
@@ -406,7 +406,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
                   key={f.id}
                   onClick={() => handleCollectionClick(f.slug)}
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all
-                    ${activeCollection === f.slug ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+                    ${activeCollection === f.slug ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
                   `}
                 >
                   <FolderOpen size={10} />
@@ -437,7 +437,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
         <div className="px-1 mb-3 flex items-center gap-2">
           <button
             onClick={() => handleCollectionClick(null)}
-            className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+            className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
           >
             ← {t('help.knowledge.allCollections', 'All Collections')}
           </button>
@@ -457,8 +457,8 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
               transition-all whitespace-nowrap
               ${
                 !activeCategory
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-100'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-100'
               }
             `}
           >
@@ -479,7 +479,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
       <div className="flex-1 overflow-y-auto px-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
           </div>
         ) : (facetedError || (facetedResults as any)?.degraded) &&
           searchQuery.length >= 2 &&
@@ -516,7 +516,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
                   handleCollectionClick(null);
                   handleClearSearch();
                 }}
-                className="mt-2 text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
               >
                 {t('help.knowledge.browseAll', 'Browse all collections')}
               </button>
@@ -531,7 +531,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ← {t('common.previous', 'Previous')}
           </button>
@@ -541,7 +541,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={(page + 1) * limit >= total}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.next', 'Next')} →
           </button>

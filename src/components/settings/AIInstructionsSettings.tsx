@@ -43,21 +43,25 @@ const defaultPreferences: AIInstructionsPreferences = {
 // Template suggestions for quick start
 const PROMPT_TEMPLATES = [
   {
+    id: 'professional',
     name: 'Professional',
     prompt:
       'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.',
   },
   {
+    id: 'creative',
     name: 'Creative',
     prompt:
       'Be creative and think outside the box. Suggest innovative solutions. Use analogies and examples.',
   },
   {
+    id: 'technical',
     name: 'Technical',
     prompt:
       'Provide detailed technical explanations. Include code examples when relevant. Be precise with specifications.',
   },
   {
+    id: 'concise',
     name: 'Concise',
     prompt:
       'Keep responses brief and to the point. Use bullet points. Avoid unnecessary explanations.',
@@ -100,7 +104,10 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
     setSaving(true);
     try {
       await Api.saveAIInstructions(preferences);
-      setOriginalPreferences(preferences);
+      const persisted = await Api.getAIInstructions().catch(() => null);
+      const next = { ...defaultPreferences, ...(persisted?.preferences || preferences) };
+      setPreferences(next);
+      setOriginalPreferences(next);
       toast.success(t('settings.ai.instructionsSaved', 'AI instructions saved'));
     } catch (_error) {
       toast.error(t('settings.ai.instructionsError', 'Failed to save instructions'));
@@ -110,11 +117,18 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
   }, [preferences, t]);
 
   const applyTemplate = (template: (typeof PROMPT_TEMPLATES)[0]) => {
+    const templateName = t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name);
+    const templatePrompt = t(
+      `settings.ai.behaviorTemplates.${template.id}.prompt`,
+      template.prompt
+    );
     setPreferences((prev) => ({
       ...prev,
-      systemPrompt: template.prompt,
+      systemPrompt: templatePrompt,
     }));
-    toast.success(t('settings.ai.templateApplied', `${template.name} template applied`));
+    toast.success(
+      t('settings.ai.templateApplied', '{{name}} template applied', { name: templateName })
+    );
   };
 
   const responseStyleOptions = [
@@ -154,14 +168,14 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
             <div className="flex flex-wrap gap-2">
               {PROMPT_TEMPLATES.map((template) => (
                 <button
-                  key={template.name}
+                  key={template.id}
                   onClick={() => applyTemplate(template)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200/50 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700 
-                                             border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200/50 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700
+                                             border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300
                                              hover:text-slate-900 dark:hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
-                  {template.name}
+                  {t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name)}
                 </button>
               ))}
             </div>
@@ -248,9 +262,9 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                       maxContextLength: parseInt(e.target.value),
                     })
                   }
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg 
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg
                                              text-slate-900 dark:text-white transition-all duration-200
-                                             focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                                             focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   {contextLengthOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -263,11 +277,11 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
           </div>
 
           {/* AI Tips */}
-          <div className="mt-6 p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg">
+          <div className="mt-6 p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
             <div className="flex items-start gap-3">
-              <Sparkles size={18} className="text-violet-400 flex-shrink-0 mt-0.5" />
+              <Sparkles size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-violet-300 mb-1">
+                <h4 className="text-sm font-medium text-primary-300 mb-1">
                   {t('settings.ai.tips', 'Pro Tips')}
                 </h4>
                 <ul className="text-xs text-slate-400 dark:text-slate-500 space-y-1">

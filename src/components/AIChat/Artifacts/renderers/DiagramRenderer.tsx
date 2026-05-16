@@ -182,7 +182,7 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({ content, class
             <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
               {t('diagram.renderError', 'Failed to render diagram')}
             </p>
-            <pre className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg max-w-md overflow-auto">
+            <pre className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 p-3 rounded-lg max-w-md overflow-auto">
               {error}
             </pre>
             <button

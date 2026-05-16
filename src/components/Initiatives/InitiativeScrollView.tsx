@@ -115,7 +115,7 @@ const TableOfContents: React.FC<TOCProps> = ({
               onClick={() => onNavigate(section.key)}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-all duration-150 ${
                 isActive
-                  ? 'bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium border-l-2 border-purple-500'
+                  ? 'bg-primary-500/10 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 font-medium border-l-2 border-primary-500'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/50 hover:text-slate-700 dark:hover:text-slate-300 border-l-2 border-transparent'
               }`}
               title={getSectionLabel(section, isPolish)}
@@ -125,7 +125,7 @@ const TableOfContents: React.FC<TOCProps> = ({
                 <span className="text-xs truncate">{getSectionLabel(section, isPolish)}</span>
               )}
               {!isCompact && isActive && (
-                <ChevronRight size={12} className="ml-auto flex-shrink-0 text-purple-500" />
+                <ChevronRight size={12} className="ml-auto flex-shrink-0 text-primary-500" />
               )}
             </button>
           );
@@ -275,7 +275,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
           </div>
           <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700/60">
             <div className="flex items-center gap-1.5 mb-1">
-              <Users size={12} className="text-purple-500" />
+              <Users size={12} className="text-primary-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 {isPolish ? 'Zespół' : 'Team'}
               </span>
@@ -286,7 +286,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
           </div>
           <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700/60">
             <div className="flex items-center gap-1.5 mb-1">
-              <Calendar size={12} className="text-cyan-500" />
+              <Calendar size={12} className="text-blue-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 {isPolish ? 'Zasoby' : 'Resources'}
               </span>
@@ -317,7 +317,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5">
               {ctx.riskCount > 0 && (
                 <span
-                  className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                  className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}
                 >
                   {ctx.riskCount}R/{ctx.issueCount}I
                 </span>
@@ -331,7 +331,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-300/50 dark:border-amber-500/30"
+            className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20 border border-amber-300/50 dark:border-amber-500/30"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-amber-500/20">

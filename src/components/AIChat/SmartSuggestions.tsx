@@ -70,7 +70,7 @@ const SUGGESTION_COLORS: Record<string, string> = {
   action: 'from-primary-500/10 to-primary-600/5 border-primary-200/50 dark:border-primary-800/50',
   insight: 'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/50',
   followup: 'from-green-500/10 to-green-600/5 border-green-200/50 dark:border-green-800/50',
-  expand: 'from-purple-500/10 to-purple-600/5 border-purple-200/50 dark:border-purple-800/50',
+  expand: 'from-primary-500/10 to-primary-600/5 border-primary-200/50 dark:border-primary-800/50',
 };
 
 export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({

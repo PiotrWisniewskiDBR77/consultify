@@ -39,16 +39,12 @@ import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
-import {
-  type DeepThinkingPendingConfirmBase,
-  shouldOpenDeepThinkingClarification,
-} from './deepThinkingRuntime';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
-import { ResearchClarification } from './ResearchClarification';
 import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
+import { TeresaProposalCard } from './TeresaProposalCard';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
@@ -87,12 +83,29 @@ const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
 //    path where the pipeline never attached citations).
 // ============================================================================
 
-const CITATION_MARKER_RE = /\[(\d{1,3})\]/g;
+const CITATION_MARKER_RE = /\[(A?)(\d{1,3})\]/gi;
 const VERBOSE_CITATION_PREFIX_RE = /\s*Source\s+\d+\s*;\s*[A-Za-z0-9_-]+\s*;\s*(\[\d{1,3}\])/g;
+const INTERNAL_SOURCE_MARKER_RE = /\s*\[(?:MEM|DT|BM|KB|WEB|ASS|FIN)\](?=[\s.,;:!?)]|$)/gi;
+const INTERNAL_RAG_ID_RE = /\b(?:rag|chunk)_\d+\b/gi;
+const INTERNAL_DEBUG_LINE_RE =
+  /^[^\S\r\n]*(?:[-*•]|\d+[.)])?[^\S\r\n]*(?:\*\*)?(?:No sources|No cited sources|Uncertainty\s*\/\s*verification|Source ledger|Blocked scopes|cross_tenant|other_user_private|organization_data|forbidden_by_policy|disabled_by_user|Source\s+\d+)(?:\*\*)?\b.*(?:\r?\n)?/gim;
+const RAW_ARTIFACT_ENVELOPE_RE = /(?:^|\n)artifact:[a-z0-9_-]+:\s*\{[\s\S]*$/i;
 
 function stripVerboseCitationPrefixes(text: string): string {
   if (!text) return text;
   return text.replace(VERBOSE_CITATION_PREFIX_RE, ' $1');
+}
+
+export function sanitizeUserVisibleAiText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(RAW_ARTIFACT_ENVELOPE_RE, '')
+    .replace(INTERNAL_DEBUG_LINE_RE, '')
+    .replace(INTERNAL_SOURCE_MARKER_RE, '')
+    .replace(INTERNAL_RAG_ID_RE, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function renderNodesWithCitations(
@@ -115,7 +128,7 @@ function renderNodesWithCitations(
         if (match.index > lastIndex) {
           parts.push(node.slice(lastIndex, match.index));
         }
-        const num = parseInt(match[1], 10);
+        const num = parseInt(match[2], 10);
         const citation = citations[num - 1];
         if (citation) {
           parts.push(
@@ -196,32 +209,33 @@ export interface MessageRendererProps {
   agentSourcesByAgentId?: Record<string, { kb: any[]; web: any[] }>;
   agentAuditActiveTabByMessageId: Record<string, string>;
   setAgentAuditActiveTabByMessageId: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  runtimeSummaryByRunId?: Record<string, any>;
-  canAcceptAgentAuditRisk?: boolean;
-  canRunDirectedDeepening?: boolean;
 
   // Deep Thinking state
   deepThinkingHint: { reason: string; confidence: 'low' | 'medium' | 'high' } | null;
   dtHintDismissed: boolean;
-  dtPendingConfirm:
-    | (DeepThinkingPendingConfirmBase & {
-        attachments?: any[];
-        agentAudit?: {
-          suggested?: any;
-          orchestratorRunId?: string;
-          selectedAgentIds: string[];
-          userIntent: 'validate' | 'stress_test' | 'approve';
-          maxAgents: 2 | 3 | 4;
-          decisionContext?: {
-            topic: string;
-            industry?: string;
-            horizon?: string;
-            functions?: string[];
-            riskFocus?: string[];
-          };
-        };
-      })
-    | null;
+  dtPendingConfirm: {
+    messageId: string;
+    conversationId: string | null;
+    originalMessage: string;
+    editedMessage: string;
+    confirm: any;
+    context: any;
+    attachments?: any[];
+    agentAudit?: {
+      suggested?: any;
+      orchestratorRunId?: string;
+      selectedAgentIds: string[];
+      userIntent: 'validate' | 'stress_test' | 'approve';
+      maxAgents: 2 | 3 | 4;
+      decisionContext?: {
+        topic: string;
+        industry?: string;
+        horizon?: string;
+        functions?: string[];
+        riskFocus?: string[];
+      };
+    };
+  } | null;
   setDtPendingConfirm: React.Dispatch<
     React.SetStateAction<MessageRendererProps['dtPendingConfirm']>
   >;
@@ -263,7 +277,6 @@ export interface MessageRendererProps {
   handleEnableDeepThinking: () => void;
   handleDeepThinkingProceed: () => void;
   handleDeepThinkingReconfirm: () => void;
-  handleDeepThinkingClarificationComplete: (answers: Record<string, string> | null) => void;
   handleSaveAsDecision: (messageId: string, content: string) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
   handleSaveAsNote: (messageId: string, content: string) => void;
@@ -293,8 +306,9 @@ export interface MessageRendererProps {
   // V8 governed proposal handlers (CHAT_V8_ACTIONS_AND_APPROVALS)
   onProposalApprove?: (proposalId: string, msg: ChatMessage) => void;
   onProposalReject?: (proposalId: string, msg: ChatMessage, reason?: string) => void;
+  onProposalExecute?: (proposalId: string, msg: ChatMessage) => void;
   onProposalInspect?: (proposalId: string, msg: ChatMessage) => void;
-  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean }>;
+  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean; execute?: boolean }>;
 }
 
 // ============================================================================
@@ -321,9 +335,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   agentSourcesByAgentId,
   agentAuditActiveTabByMessageId,
   setAgentAuditActiveTabByMessageId,
-  runtimeSummaryByRunId,
-  canAcceptAgentAuditRisk = false,
-  canRunDirectedDeepening = true,
   deepThinkingHint,
   dtHintDismissed,
   dtPendingConfirm,
@@ -354,7 +365,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleEnableDeepThinking,
   handleDeepThinkingProceed,
   handleDeepThinkingReconfirm,
-  handleDeepThinkingClarificationComplete,
   handleSaveAsDecision,
   handleSaveAsIdea,
   handleSaveAsNote,
@@ -373,6 +383,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   onOptionSelect,
   onProposalApprove,
   onProposalReject,
+  onProposalExecute,
   onProposalInspect,
   proposalBusyById,
 }) => {
@@ -387,12 +398,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isHovered = hoveredMessageId === msg.id;
   const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
-  const hasCitations = msg.citations && msg.citations.length > 0;
+  const hasCitations = Array.isArray(msg.citations) && msg.citations.length > 0;
+  const metadata = (msg as any).metadata || {};
+  const isDeepSearchAnswer = Boolean(metadata?.deepThinking?.kind === 'report');
+  const visibleCitations = Array.isArray(msg.citations) ? msg.citations : [];
+  const hasVisibleCitations = visibleCitations.length > 0;
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
   const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
   const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
+  const userVisibleContent =
+    msg.role === 'ai' ? sanitizeUserVisibleAiText(msg.content || '') : msg.content || '';
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
   const confirmPayload =
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
@@ -402,14 +419,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const policyNotices = Array.isArray((msg as any).metadata?.policyNotices)
     ? ((msg as any).metadata.policyNotices as any[])
     : [];
-  const sourceLedger = (msg as any).metadata?.sourceLedger || null;
+  const visiblePolicyNotices = policyNotices.filter((n: any) => n?.displayToUser === true);
   const policyUncertaintyNotice =
-    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty') ||
-    policyNotices.find((n: any) => n?.kind === 'uncertainty') ||
+    visiblePolicyNotices.find(
+      (n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty'
+    ) ||
+    visiblePolicyNotices.find((n: any) => n?.kind === 'uncertainty') ||
     null;
   const policyNoSourcesNotice =
-    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources') ||
-    policyNotices.find((n: any) => n?.kind === 'no_sources') ||
+    visiblePolicyNotices.find(
+      (n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources'
+    ) ||
+    visiblePolicyNotices.find((n: any) => n?.kind === 'no_sources') ||
     null;
   const isPolicyRefusal = msg.role === 'ai' && policyDecision && policyDecision.allowed === false;
 
@@ -417,7 +438,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   // (CHAT_V8_ACTIONS_AND_APPROVALS, CHAT_V8_RESPONSE_MODEL).
   // Intercepts before the generic bubble so proposals are never rendered as
   // plain chat text and can never silently mutate state.
-  const msgType = (msg as any).type as string | undefined;
+  const msgType = ((msg as any).type ||
+    (msg as any).messageType ||
+    (msg as any).metadata?.messageType) as string | undefined;
   if (msgType && V8_EXECUTION_MESSAGE_TYPES.has(msgType)) {
     const proposalId =
       ((msg as any).metadata?.executionProposal?.proposalId as string | undefined) ||
@@ -431,9 +454,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         isRtl={isRtlChatLanguage}
         onApprove={onProposalApprove}
         onReject={onProposalReject}
+        onExecute={onProposalExecute}
         onInspect={onProposalInspect}
         isApproveBusy={!!busy?.approve}
         isRejectBusy={!!busy?.reject}
+        isExecuteBusy={!!busy?.execute}
       />
     );
   }
@@ -447,28 +472,34 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
     >
       {/* Cursor-like thinking log: plain dim text, no background, no panel */}
       {/* Only show for the LAST streaming AI message to avoid duplicated lines */}
-      {msg.role === 'ai' && msg.isStreaming && isLastMessage && thinkingSteps.length > 0 && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-          <ThinkingStatusLine
-            compact={isCompact}
-            show
-            showSpinner={false}
-            steps={thinkingSteps
-              .filter((s) => String((s as any)?.label || '').trim())
-              .map((s) => ({
-                label: String((s as any)?.label || '').trim(),
-                status:
-                  s.status === 'done' || s.status === 'completed'
-                    ? ('done' as const)
-                    : s.status === 'in_progress'
-                      ? ('in_progress' as const)
-                      : ('pending' as const),
-              }))
-              .slice(-6)}
-            label={t('thinking.processing', 'Processing live steps…') as string}
-          />
-        </div>
-      )}
+      {msg.role === 'ai' &&
+        msg.isStreaming &&
+        isLastMessage &&
+        (thinkingSteps.length > 0 || !msg.content?.trim()) && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
+            <ThinkingStatusLine
+              compact={isCompact}
+              show
+              showSpinner={false}
+              steps={thinkingSteps
+                .filter((s) => String((s as any)?.label || '').trim())
+                .map((s) => ({
+                  label: sanitizeUserVisibleAiText(String((s as any)?.label || '').trim()).replace(
+                    /\bthinking\b/gi,
+                    'working'
+                  ),
+                  status:
+                    s.status === 'done' || s.status === 'completed'
+                      ? ('done' as const)
+                      : s.status === 'in_progress'
+                        ? ('in_progress' as const)
+                        : ('pending' as const),
+                }))
+                .slice(-6)}
+              label={t('thinking.processing', 'Preparing answer…') as string}
+            />
+          </div>
+        )}
 
       <div
         className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
@@ -557,7 +588,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {!isPolicyRefusal && policyNoSourcesNotice && (
+                {!isPolicyRefusal && policyNoSourcesNotice && !hasCitations && (
                   <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30">
                     <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       {t('policy.noSources.title', 'No sources found')}
@@ -574,38 +605,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {!isPolicyRefusal &&
-                  sourceLedger &&
-                  Array.isArray((sourceLedger as any).blocked_sources) &&
-                  (sourceLedger as any).blocked_sources.length > 0 && (
-                    <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/25">
-                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {t('policy.sourceLedger.title', 'Source ledger')}
-                      </div>
-                      <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
-                        {t('policy.sourceLedger.blockedLabel', 'Blocked scopes (high-level):')}
-                      </div>
-                      <ul className="mt-1 list-disc pl-4 space-y-0.5 text-[11px] text-slate-600 dark:text-slate-300">
-                        {(sourceLedger as any).blocked_sources
-                          .slice(0, 8)
-                          .map((b: any, i: number) => (
-                            <li key={i}>
-                              {String(b?.category || 'blocked')}
-                              {b?.reason ? ` (${String(b.reason)})` : ''}
-                            </li>
-                          ))}
-                      </ul>
-                      {sourceLedger?.degraded?.mode ? (
-                        <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                          {t('policy.sourceLedger.degraded', 'Degraded mode:')}{' '}
-                          <span className="font-medium">{String(sourceLedger.degraded.mode)}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
+                {/* Source ledger remains in message metadata for operator telemetry.
+                    It is intentionally not rendered in the normal chat UX. */}
 
                 {/* Deep Thinking: Research progress (SSE events) */}
-                {(msg as any).metadata?.researchVisibility?.items && (
+                {isDeepSearchAnswer && (msg as any).metadata?.researchVisibility?.items && (
                   <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
                     <div className="mb-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
                       Research & Sources (planned)
@@ -655,6 +659,28 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     />
                   </div>
                 )}
+
+                {msg.role === 'ai' &&
+                  (msg as any).metadata?.proposal &&
+                  (msg as any).metadata?.type !== 'table_proposal' && (
+                    <div className="not-prose mb-3">
+                      <TeresaProposalCard
+                        proposal={(msg as any).metadata.proposal}
+                        onNavigate={(proposal) => {
+                          const targetModule = String(proposal?.targetModule || '').toLowerCase();
+                          if (targetModule.includes('canvas')) {
+                            window.location.href = '/ai/work-canvas';
+                            return;
+                          }
+                          if (targetModule.includes('action')) {
+                            window.location.href = '/ai/action-center';
+                            return;
+                          }
+                          window.location.href = '/chat';
+                        }}
+                      />
+                    </div>
+                  )}
 
                 {(msg as any).metadata?.type === 'table_proposal' ? (
                   <div className="not-prose">
@@ -862,10 +888,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             disabled={
                               dtConfirmBusy ||
                               isDisabled ||
-                              shouldOpenDeepThinkingClarification(
-                                dtPendingConfirm.confirm,
-                                dtPendingConfirm.clarificationHandled
-                              ) ||
                               (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents) &&
                                 dtPendingConfirm.agentAudit?.suggested?.agents?.length > 0 &&
                                 (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) === 0)
@@ -894,9 +916,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       while ((match = ideaHintRegex.exec(msg.content)) !== null) {
                         hints.push({ title: match[1].trim(), description: match[2].trim() });
                       }
-                      const cleanContent = stripVerboseCitationPrefixes(
-                        msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
-                      ).trim();
+                      const cleanContent = sanitizeUserVisibleAiText(
+                        stripVerboseCitationPrefixes(
+                          msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
+                        )
+                      );
 
                       const structuredEnvelope = (msg as any)?.metadata?.structuredOutput ?? null;
 
@@ -904,7 +928,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       // to `msg.citations[N-1]` so tappers actually open the
                       // source card. Empty/missing citations fall through to a
                       // muted non-clickable pill (see renderNodesWithCitations).
-                      const inlineCitations = Array.isArray(msg.citations) ? msg.citations : [];
+                      const inlineCitations = visibleCitations;
                       const handleInlineCitationClick = (citation: any) => {
                         if (!citation) return;
                         if (citation.type === 'external' && citation.link) {
@@ -1039,15 +1063,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             const audit = (msg as any).metadata?.agentAudit || {};
                             const verdict = audit?.verdict || {};
                             const reviews = Array.isArray(audit?.reviews) ? audit.reviews : [];
-                            const runtimeRunId =
-                              String(
-                                audit?.runtimeRunId || audit?.orchestratorRunId || ''
-                              ).trim() || null;
-                            const runtimeSummary = runtimeRunId
-                              ? runtimeSummaryByRunId?.[runtimeRunId]?.run ||
-                                runtimeSummaryByRunId?.[runtimeRunId] ||
-                                null
-                              : null;
                             const gates = Array.isArray(verdict?.gatesTriggered)
                               ? verdict.gatesTriggered
                               : [];
@@ -1142,29 +1157,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   </div>
                                 </div>
 
-                                {runtimeSummary ? (
-                                  <div className="mt-3 rounded-md border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-950 px-3 py-2">
-                                    <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                                      Runtime run
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
-                                      Status:{' '}
-                                      <span className="font-medium">
-                                        {String(runtimeSummary?.status || '—')}
-                                      </span>
-                                      {runtimeSummary?.approvalState
-                                        ? ` · Approval: ${String(runtimeSummary.approvalState)}`
-                                        : ''}
-                                      {runtimeSummary?.latestBarrierState
-                                        ? ` · Barrier: ${String(runtimeSummary.latestBarrierState)}`
-                                        : ''}
-                                      {runtimeSummary?.latestInterruptState
-                                        ? ` · Interrupt: ${String(runtimeSummary.latestInterruptState)}`
-                                        : ''}
-                                    </div>
-                                  </div>
-                                ) : null}
-
                                 {gateExplanations.length ? (
                                   <div className="mt-2">
                                     <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
@@ -1190,17 +1182,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   <div className="mt-3 flex flex-wrap items-center gap-2">
                                     <button
                                       onClick={() => handleAgentAuditAccept(audit, msg.id)}
-                                      disabled={
-                                        isDisabled || agentAuditBusy || !canAcceptAgentAuditRisk
-                                      }
+                                      disabled={isDisabled || agentAuditBusy}
                                       className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       Accept risk & proceed
                                     </button>
                                     <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                      {canAcceptAgentAuditRisk
-                                        ? 'This is recorded in the audit trail.'
-                                        : 'Admin approval is required to accept risk.'}
+                                      This is recorded in the audit trail.
                                     </div>
                                   </div>
                                 ) : null}
@@ -1365,7 +1353,20 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <span>{msg.content}</span>
+                  <div className="flex flex-col">
+                    <span>{userVisibleContent}</span>
+                    {msg.role === 'user' && !msg.isStreaming && editingMessageId !== msg.id && (
+                      <div className="flex justify-end mt-3 border-t border-white/10 pt-2">
+                        <button
+                          onClick={() => handleStartEditMessage(msg.id)}
+                          className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium rounded-md border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Pencil size={12} />
+                          {t('chat.actions.editAndResend', 'Edit & Resend')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -1396,7 +1397,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {t('stream.complete', 'Response complete')}
                 </span>
                 {/* Cost-per-analysis estimate badge */}
-                {msg.content && msg.content.length > 50 && (
+                {userVisibleContent && userVisibleContent.length > 50 && (
                   <span
                     className="text-slate-400 dark:text-slate-500"
                     title={t(
@@ -1406,8 +1407,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   >
                     ~$
                     {(
-                      (msg.content.length / 4) * 0.000015 +
-                      (msg.content.length / 4) * 0.00006
+                      (userVisibleContent.length / 4) * 0.000015 +
+                      (userVisibleContent.length / 4) * 0.00006
                     ).toFixed(4)}{' '}
                     est.
                   </span>
@@ -1473,7 +1474,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 isDone
                                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
                                   : isError
-                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                                    ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
                                     : isActive
                                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
                                       : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -1482,7 +1483,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               {isDone ? (
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               ) : isError ? (
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               ) : isActive ? (
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                               ) : (
@@ -1534,7 +1535,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               >
                 {/* Copy */}
                 <button
-                  onClick={() => handleCopyMessage(msg.content, msg.id)}
+                  onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
                   className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
                   title={t('chat.actions.copy', 'Copy')}
                 >
@@ -1554,7 +1555,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                 {canSaveToContext && (
                   <button
-                    onClick={() => handleSaveToContext(msg.id, msg.content, contextSaveRole)}
+                    onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
                     disabled={isContextSaveBusy || isContextSaved}
                     className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
@@ -1591,10 +1592,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       // Replay behavior: always restart reading from the beginning.
                       stopSpeaking();
                       setTimeout(() => {
-                        speak(msg.content);
+                        speak(userVisibleContent);
                       }, 60);
                     }}
-                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                     title={
                       voiceState.isSpeaking
                         ? t('chat.actions.stop', 'Stop')
@@ -1630,17 +1631,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* TRUST T-TR1 — compact always-visible summary chip. Sits above
-          the full `CitationList` so skim-reading the conversation shows
-          "this reply cites N sources" without expanding anything. The
-          chip also renders for replies with ZERO citations (the "No
-          cited sources" tone) so users never silently assume a reply is
-          backed by retrieved material when it isn't. Flag-gated; when
-          off the component returns null and the layout is unchanged. */}
-      {msg.role === 'ai' && !msg.isStreaming && (
+      {/* TRUST T-TR1 — compact summary chip. Render whenever the backend
+          provides real citations; empty/missing citations stay silent. */}
+      {msg.role === 'ai' && !msg.isStreaming && hasVisibleCitations && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
           <TrustBadge
-            citations={msg.citations}
+            citations={visibleCitations}
             modelUsed={
               typeof (msg as { metadata?: { modelUsed?: unknown } }).metadata?.modelUsed ===
               'string'
@@ -1652,13 +1648,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       )}
 
       {/* Citations */}
-      {msg.role === 'ai' && hasCitations && (
+      {msg.role === 'ai' && hasVisibleCitations && (
         <div
           className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}
           data-message-id={msg.id}
           data-citations-list="true"
         >
-          <CitationList citations={msg.citations!} />
+          <CitationList citations={visibleCitations} collapsed />
         </div>
       )}
 
@@ -1669,19 +1665,19 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         unaffected. Skipped while streaming — the bundle is only sealed
         at DONE.
       */}
-      {msg.role === 'ai' && !msg.isStreaming && (msg as any).metadata?.trustBundle && (
+      {msg.role === 'ai' && !msg.isStreaming && metadata?.trustBundle && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
           {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
               the bundle has no meaningful breakdown, so single-class turns
               still read exactly like pre-TS1 (TrustPanel primary pill
               carries the signal). */}
           <SourcesStrip
-            bundle={(msg as any).metadata.trustBundle}
+            bundle={metadata.trustBundle}
             messageId={msg.id || null}
             isCompact={isCompact}
           />
           <TrustPanel
-            bundle={(msg as any).metadata.trustBundle}
+            bundle={metadata.trustBundle}
             isCompact={isCompact}
             isRtl={isRtlChatLanguage}
             showOperatorDetail={showOperatorDetail}
@@ -1698,29 +1694,29 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           <InlineResponseFeedback
             messageId={msg.id}
             conversationId={activeConversationId || undefined}
-            responseLength={msg.content.length}
-            onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
+            responseLength={userVisibleContent.length}
+            onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
             compact={isCompact}
           />
           <div className="flex items-center gap-1 border-l border-slate-200 dark:border-navy-700 pl-3">
             <button
-              onClick={() => handleSaveAsIdea(msg.id, msg.content)}
+              onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
               className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
             >
               <Lightbulb size={14} />
             </button>
             <button
-              onClick={() => handleSaveAsNote(msg.id, msg.content)}
+              onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
               className="p-1.5 rounded-md text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
               title={t('myWork.notebook.saveAsNote', 'Save as note')}
             >
               <Bookmark size={14} />
             </button>
             <button
-              onClick={() => handleSaveToContext(msg.id, msg.content, 'ai')}
+              onClick={() => handleSaveToContext(msg.id, userVisibleContent, 'ai')}
               disabled={isContextSaveBusy || isContextSaved}
-              className="p-1.5 rounded-md text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-md text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title={
                 isContextSaved
                   ? t('chat.actions.savedToContext', 'Saved to Context OS')
@@ -1736,25 +1732,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               )}
             </button>
           </div>
-          {dtPendingConfirm?.clarificationRequested ? (
-            <ResearchClarification
-              message={dtPendingConfirm?.editedMessage || dtPendingConfirm?.originalMessage || ''}
-              onComplete={handleDeepThinkingClarificationComplete}
-              onCancel={() =>
-                setDtPendingConfirm((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        clarificationRequested: false,
-                        clarificationHandled: true,
-                        clarificationAnswers: null,
-                      }
-                    : prev
-                )
-              }
-              className="mt-2"
-            />
-          ) : null}
         </div>
       )}
 
@@ -1811,7 +1788,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </p>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => handleSaveAsDecision(msg.id, msg.content)}
+                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1"
               >
@@ -1821,7 +1798,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   : t('deepThinking.saveDecision', 'Save as Decision')}
               </button>
               <button
-                onClick={() => handleSaveAsDecision(msg.id, msg.content)}
+                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
               >
@@ -1842,7 +1819,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     '---',
                     '',
                   ].join('\n');
-                  const fullContent = header + msg.content;
+                  const fullContent = header + userVisibleContent;
                   const blob = new Blob([fullContent], { type: 'text/markdown' });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement('a');
@@ -1863,7 +1840,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   const reportType = isMarketResearch ? 'Market Research' : 'Deep Thinking';
                   const dateStr = new Date().toISOString().slice(0, 10);
                   const reportTitle = `${reportType} Report — ${dateStr}`;
-                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${msg.content}`);
+                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${userVisibleContent}`);
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
               >
@@ -1873,7 +1850,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {/* Voice Executive Brief */}
               <button
                 onClick={() => {
-                  const brief = formatExecutiveBrief(msg.content, 'en');
+                  const brief = formatExecutiveBrief(userVisibleContent, 'en');
                   speak(brief);
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
@@ -1950,8 +1927,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               disabled={
                 isDisabled ||
                 agentAuditBusy ||
-                Number((msg as any).metadata?.agentAudit?.loopIteration || 1) >= 2 ||
-                !canRunDirectedDeepening
+                Number((msg as any).metadata?.agentAudit?.loopIteration || 1) >= 2
               }
               className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1959,7 +1935,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </button>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 self-center">
               Iterations: {String((msg as any).metadata?.agentAudit?.loopIteration || 1)}/2
-              {!canRunDirectedDeepening ? ' · Requires authenticated operator access' : ''}
             </div>
           </div>
         )}

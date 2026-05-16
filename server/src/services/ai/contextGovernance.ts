@@ -5,6 +5,14 @@
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
+export class ContextGovernancePersistenceError extends Error {
+  code = 'CONTEXT_POLICY_PERSIST_FAILED' as const;
+  constructor(message = 'Context policy could not be saved') {
+    super(message);
+    this.name = 'ContextGovernancePersistenceError';
+  }
+}
+
 export type ContextCategory =
   | 'ORG_PROFILE'
   | 'ORG_TERMINOLOGY'
@@ -41,17 +49,25 @@ export async function getOrgContextPolicy(organizationId: string): Promise<OrgCo
       [organizationId]
     )) as { context_policy_json?: string } | undefined;
     if (row?.context_policy_json) {
-      const parsed =
-        typeof row.context_policy_json === 'string'
-          ? JSON.parse(row.context_policy_json)
-          : row.context_policy_json;
-      return {
-        ...DEFAULT_POLICY,
-        ...parsed,
-        categories: { ...DEFAULT_POLICY.categories, ...parsed?.categories },
-      };
+      try {
+        const parsed =
+          typeof row.context_policy_json === 'string'
+            ? JSON.parse(row.context_policy_json)
+            : row.context_policy_json;
+        return {
+          ...DEFAULT_POLICY,
+          ...parsed,
+          categories: { ...DEFAULT_POLICY.categories, ...parsed?.categories },
+        };
+      } catch (err) {
+        logger.warn('[ContextGov] Invalid context policy JSON in store');
+        throw err;
+      }
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw error;
+    }
     logger.debug('[ContextGov] Failed to load org context policy — using defaults');
   }
   return { ...DEFAULT_POLICY };
@@ -81,6 +97,7 @@ export async function updateOrgContextPolicy(
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(`[ContextGov] Failed to save context policy: ${msg}`);
+      throw new ContextGovernancePersistenceError();
     }
   }
 }

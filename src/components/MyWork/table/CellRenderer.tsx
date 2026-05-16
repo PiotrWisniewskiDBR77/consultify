@@ -45,7 +45,7 @@ const TextCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
     value={String(value ?? '')}
     onChange={(e) => onChange(e.target.value)}
     disabled={locked}
-    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-violet-500/30 rounded"
+    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-primary-500/30 rounded"
     onClick={(e) => e.stopPropagation()}
   />
 );
@@ -58,7 +58,7 @@ const NumberCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
     value={value ?? ''}
     onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
     disabled={locked}
-    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-violet-500/30 rounded text-right tabular-nums"
+    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-primary-500/30 rounded text-right tabular-nums"
     onClick={(e) => e.stopPropagation()}
   />
 );
@@ -189,7 +189,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
               className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
             >
               <span
-                className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-violet-500 border-violet-500' : 'border-slate-300 dark:border-navy-600'}`}
+                className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-primary-500 border-primary-500' : 'border-slate-300 dark:border-navy-600'}`}
               >
                 {selected.includes(opt) && <Check size={8} className="text-white" />}
               </span>
@@ -212,7 +212,7 @@ const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       value={value ? String(value).slice(0, 10) : ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={locked}
-      className="bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-violet-500/30 rounded"
+      className="bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/30 rounded"
     />
   </div>
 );
@@ -226,8 +226,8 @@ const CheckboxCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       disabled={locked}
       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
         value
-          ? 'bg-violet-500 border-violet-500 text-white'
-          : 'border-slate-300 dark:border-navy-600 hover:border-violet-400'
+          ? 'bg-primary-500 border-primary-500 text-white'
+          : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
       }`}
     >
       {value && <Check size={12} />}
@@ -264,7 +264,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 
 const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
       {String(value || '?')
         .charAt(0)
         .toUpperCase()}
@@ -274,7 +274,7 @@ const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="—"
-      className="flex-1 bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-violet-500/30 rounded"
+      className="flex-1 bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/30 rounded"
     />
   </div>
 );
@@ -288,7 +288,7 @@ const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="https://..."
-      className="flex-1 bg-transparent border-0 outline-none text-xs text-blue-600 dark:text-blue-400 underline focus:ring-2 focus:ring-violet-500/30 rounded"
+      className="flex-1 bg-transparent border-0 outline-none text-xs text-blue-600 dark:text-blue-400 underline focus:ring-2 focus:ring-primary-500/30 rounded"
     />
     {value && (
       <a
@@ -311,7 +311,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
     <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
       <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400'}`}
+          className={`h-full rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-400'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -350,7 +350,7 @@ const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) =>
     {!locked && onAIRefresh && (
       <button
         onClick={onAIRefresh}
-        className="p-0.5 rounded text-violet-500 hover:bg-violet-500/10 transition-colors"
+        className="p-0.5 rounded text-primary-500 hover:bg-primary-500/10 transition-colors"
         title="Regenerate"
       >
         <RefreshCw size={10} />

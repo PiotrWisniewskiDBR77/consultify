@@ -261,14 +261,75 @@ Każda zamknięta sekcja pokazuje w nagłówku:
 
 **Układ:**
 
-- **Lewy panel**: nawigacja po blokach (8–10 pozycji, logiczne grupy).
-- **Prawa część**: treść strony (bez “ramkowych”, zwijanych paneli po prawej).
+- **Lewy panel**: kolumna z nazwami zakładek / sekcji artefaktu (8–10 pozycji, logiczne grupy).
+- **Centralna część**: główny ekran roboczy danego narzędzia / artefaktu na całą pozostałą szerokość.
 - **Properties strip** (pod nagłówkiem, full-width lub w treści nad pierwszą sekcją):
   - status / owner / due / priority / tags / relacje
   - inline edit
 - (Opcjonalnie) wąski rail: spis treści / quick links / activity preview.
 
-**Zasada kluczowa:** w N mode NIE prezentujemy “Control / Team / Timeline…” jako osobnych kart w prawej kolumnie. To mają być **properties** + logiczne bloki w treści.
+**Zasada kluczowa:** `N-mode` to układ **left section nav + central work canvas**. W N mode NIE prezentujemy “Control / Team / Timeline…” jako osobnych kart w prawej kolumnie. To mają być **properties** + logiczne bloki w treści.
+
+Lewy panel:
+
+- służy tylko do nawigacji po zakładkach/sekcjach,
+- nie jest miejscem na główne akcje, filtry ani lokalne toolbary,
+- aktywna sekcja jest wyróżniona spokojnym surface/accent state,
+- szerokość raila musi pozwalać na czytelne nazwy bez zawijania.
+
+Centralny canvas:
+
+- jest główną przestrzenią pracy użytkownika,
+- zajmuje całą szerokość pozostającą po odjęciu lewego raila i guttera,
+- nie może być sztucznie zawężany do układu 2/3 + 1/3,
+- sekcje w canvasie mogą mieć własną strukturę domenową, ale nie tworzą osobnego shellu.
+
+#### 1.2.0.1 N-mode cards catalog and visibility
+
+Zakładki/sekcje w lewym panelu są kartami roboczymi `N-mode`.
+
+Pełny SSOT dla kart `N-mode`: `docs/ui-standards/01-shell-layout/n-mode-card-standard.md`.
+
+Każde narzędzie / typ artefaktu MUSI mieć udokumentowany katalog potencjalnych kart:
+
+- stable `cardId`,
+- label PL/EN,
+- krótki opis roli karty,
+- zawartość karty,
+- domyślna widoczność dla danego narzędzia,
+- warunki pokazania/ukrycia,
+- rola AI w tej karcie,
+- relacja do permissions/governance, jeśli karta wykonuje działania.
+
+Domyślna konfiguracja:
+
+- system podpowiada domyślny zestaw kart dla danego typu narzędzia / artefaktu,
+- default cards nie są przypadkowe i wynikają z pracy, jaką użytkownik ma wykonać,
+- kolejność domyślna jest stabilna i nie zmienia się między wejściami do tego samego typu widoku,
+- karta może być ukryta tylko wtedy, gdy nie łamie podstawowego workflow ani governance.
+
+Ustawienia widoku kart:
+
+- `N-mode` potrzebuje kontrolki ustawień widoku kart, analogicznej mentalnie do ustawiania kolumn w tabeli,
+- kontrolka ustawień widoku kart znajduje się w prawym klastrze title/header line, obok `Zapisano` i przełącznika `N/C`,
+- kontrolka pokazuje listę potencjalnie możliwych kart dla danego narzędzia,
+- widoczność jest wybierana checkboxem/checkmarkiem,
+- po odznaczeniu karta znika z lewego raila i z centralnego canvasu,
+- po zaznaczeniu karta pojawia się w ustalonej kanonicznej kolejności, nie na końcu przypadkowo,
+- wymagane/systemowe karty są disabled albo oznaczone jako required, a nie ukrywane,
+- zmiana widoczności nie usuwa danych, tylko zmienia prezentację.
+
+Rola AI w kartach:
+
+- każda karta ma jawnie określone, czy AI może: wyjaśniać, podsumowywać, proponować treść, generować elementy, analizować ryzyko albo wykonywać workflow proposal,
+- AI nie może być obecne jako losowy przycisk bez opisanej roli karty,
+- AI field/local actions są dopuszczalne wewnątrz karty, jeśli pomagają uzupełnić treść,
+- AI workflow actions muszą iść przez właściwy slot Menu 3/top action zgodnie z zasadą approval before execution,
+- karta bez sensownej roli AI nie dostaje przycisku AI tylko dla symetrii.
+
+Funkcjonalne akcje AI typu `Napisz kartę`, `Wygeneruj kartę` albo `Napisz cały artefakt` należą do prawej strony `Menu 3`, nie do canvasu. Szczegółowy standard: `docs/ui-standards/01-shell-layout/n-mode-card-standard.md`.
+
+Jeśli istnieje osobna karta `Related Context` / `Powiązany kontekst`, pełne powiązania i `AI-detected links` nie są dublowane w stopkach innych kart.
 
 ### 1.2.1 Motion & microinteractions (N feel w DBR77) (SHOULD)
 
@@ -295,7 +356,34 @@ Każda zamknięta sekcja pokazuje w nagłówku:
 
 ### 1.3 `C` (C presentation mode: action-first)
 
-**Intencja:** praca operacyjna i szybkie throughput.
+**Status:** PLANNED / W ROZWOJU.
+
+**Intencja:** praca operacyjna, minimalistyczna i szybkie throughput.
+
+`C-mode` jest inspirowany ClickUp:
+
+- więcej powietrza po bokach strony,
+- mniej dokumentowy układ niż `N-mode`,
+- poziomy układ menu / tabs w górnej części,
+- tytuł i najważniejsze controls w górnym obszarze,
+- minimalistyczne surface,
+- mniej widocznych ramek,
+- więcej pracy w jednej, spokojnej, poziomej strukturze.
+
+`C-mode` nie jest jeszcze zatwierdzonym gotowym widokiem produkcyjnym. Będzie rozwijany jako osobny format graficzny i operacyjny po ustabilizowaniu `N-mode`.
+
+#### 1.3.0 Runtime rule until C-mode is ready
+
+Do czasu wdrożenia i zatwierdzenia `C-mode`:
+
+- przełącznik `N/C` jest widoczny, jeśli artefakt używa docelowego shellu,
+- aktywnym trybem domyślnym pozostaje `N`,
+- ikona/stan przełącznika jest ustawiona na `N`,
+- wybór `C` nie może przełączać użytkownika do niedokończonego albo przypadkowego widoku,
+- wybór `C` pokazuje komunikat typu `C-mode wkrótce` / `C-mode coming soon`,
+- komunikat powinien krótko wyjaśniać: `Minimalistyczny widok C-mode jest w przygotowaniu`,
+- system nie może udawać, że `C-mode` działa, jeśli nie ma zatwierdzonego standardu i implementacji,
+- kliknięcie `C` nie może gubić draftu, scrolla, danych ani kontekstu.
 
 **Układ:**
 
@@ -506,6 +594,12 @@ Properties w N mode są odpowiednikiem “Control” z D mode, ale bez ramek i d
 - Edycja inline (tam gdzie to możliwe) + jasny stan “dirty/unsaved”:
   - delikatny marker przy polu,
   - a globalny `Save` nadal w headerze (jak w Golden Standard).
+- Properties strip jest połączony z workflow:
+  - status wpływa na dostępne akcje,
+  - priorytet i termin wpływają na alerty/ryzyko/sortowanie,
+  - owner/assignee/decider wpływa na permissions i odpowiedzialność,
+  - pola wymagane dla przejścia workflow mają walidację inline,
+  - zmiany istotnych pól trafiają do audit/activity log.
 
 **SHOULD:**
 
@@ -721,14 +815,24 @@ Ta sekcja jest pisana tak, aby implementacja była możliwa bez “domysłów”
 
 Oddech między warstwami jest krytyczny dla czytelności. Poniższe reguły są obowiązujące:
 
-- Root container N mode: `space-y-4` — zapewnia 1rem gap między PropertiesStrip → ActionBar → Body (2-Pane).
+- Root container N mode: domyślnie `space-y-3`; `space-y-4` tylko w reading/expanded variant. Celem jest odzyskanie przestrzeni roboczej bez utraty czytelności.
+- Górny obszar header + PropertiesStrip + ActionBar nie może wizualnie zajmować połowy standardowego desktop viewportu.
+- Gap między warstwami sterowania (`Header`, `PropertiesStrip`, `ActionBar`) powinien być mniejszy niż gap między dużymi sekcjami canvasu.
+- PropertiesStrip:
+  - preferuje jeden rząd na desktopie dla 5-6 pól,
+  - używa compact controls,
+  - nie tworzy ciężkiej karty z dużym vertical paddingiem, jeśli obok istnieje ActionBar.
 - ActionBar:
-  - Container: `px-4 py-3 rounded-2xl` z glass background (`bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl`).
+  - Container: `px-3 py-2` albo `px-4 py-2` w compact N-mode; `py-3` tylko w expanded/reading variant.
+  - Surface: subtelny Layer 2/3 lub glass background (`bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl`) bez ciężkiej ramki.
   - **Zakazane** ujemne marginy (`-mt-*`) — niszczą oddech między sekcjami.
   - Przyciski akcji (Approve, Reject, etc.) siedzą bezpośrednio w kontenerze — bez dodatkowych `mt-*`, `pt-*`, `border-t` wrapperów.
   - AI buttons sekcyjne używają `ml-auto` by dociągnąć w prawo.
+  - Workflow buttons na desktopie preferują jedną linię; akcje drugorzędne przechodzą do `More` / overflow zamiast wymuszać wysoki pasek.
+  - Przyciski workflow używają stylu DBR77 Tech Sexy 2027: `h-8` albo zwarte `h-9`, `rounded-hig-full` / `rounded-hig-xl`, neutralny surface, subtelny hover, bez prostokątnych legacy controls.
 - Canvas area: `pl-6 pt-1` — lewy gutter + mały top padding, żeby nagłówki sekcji nie były przyklejone do górnej krawędzi.
-- LeftNav sidebar: sticky container z `pt-1` aby wyrównać się pionowo z początkiem Canvas.
+- LeftNav sidebar: fixed `242px` sticky container z `pt-1` aby wyrównać się pionowo z początkiem Canvas.
+- LeftNav labels: muszą mieścić się w jednej linii bez zawijania; jeśli etykieta nie mieści się w `242px`, popraw copy albo lokalnie poszerz rail.
 - Tab items w LeftNav: `py-2.5 px-3` dla komfortowych klikanych celów.
 
 **Scroll behavior (MUST):**

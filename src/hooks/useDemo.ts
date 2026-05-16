@@ -16,6 +16,11 @@ import Api from '../services/api';
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { useAppStore } from '../store/useAppStore';
 
+const DEMO_STATUS_CACHE_TTL_MS = 60_000;
+
+let demoStatusCache: { response: any; fetchedAt: number } | null = null;
+let demoStatusInflight: Promise<any> | null = null;
+
 const normalizeDemoLocaleClient = (value?: string | null): 'en' | 'pl' | null => {
   const normalized = normalizeLanguageCode(value || '');
   if (normalized === 'pl') return 'pl';
@@ -165,7 +170,20 @@ export const useDemo = () => {
    */
   const fetchDemoStatus = useCallback(async () => {
     try {
-      const response = await Api.getDemoStatus();
+      const now = Date.now();
+      const cached = demoStatusCache;
+      const response =
+        cached && now - cached.fetchedAt < DEMO_STATUS_CACHE_TTL_MS
+          ? cached.response
+          : await (demoStatusInflight ||
+              (demoStatusInflight = Api.getDemoStatus()
+                .then((nextResponse) => {
+                  demoStatusCache = { response: nextResponse, fetchedAt: Date.now() };
+                  return nextResponse;
+                })
+                .finally(() => {
+                  demoStatusInflight = null;
+                })));
 
       if (response.success && response.isDemoMode) {
         setDemoMode(true);
@@ -186,7 +204,9 @@ export const useDemo = () => {
       }
     } catch (error) {
       console.error('[useDemo] Status fetch failed:', error);
-      clearDemoState();
+      // Keep the last known local state on transient throttling/network errors.
+      // Clearing it here causes every mounted demo-aware component to retry and
+      // can amplify a single 429 into an Action Center-wide loading failure.
     }
   }, [
     clearDemoState,

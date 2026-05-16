@@ -239,10 +239,10 @@ export const NotificationDropdown = () => {
   const getIcon = (type: string) => {
     const t = (type || '').toUpperCase();
     if (t === 'TASK_ASSIGNED') return <CheckSquare size={16} className="text-blue-400" />;
-    if (t === 'TASK_OVERDUE') return <Clock size={16} className="text-red-400" />;
-    if (t === 'TASK_BLOCKED') return <AlertCircle size={16} className="text-red-400" />;
-    if (t === 'DECISION_REQUIRED') return <Scale size={16} className="text-purple-400" />;
-    if (t === 'DECISION_OVERDUE') return <Scale size={16} className="text-red-400" />;
+    if (t === 'TASK_OVERDUE') return <Clock size={16} className="text-rose-400" />;
+    if (t === 'TASK_BLOCKED') return <AlertCircle size={16} className="text-rose-400" />;
+    if (t === 'DECISION_REQUIRED') return <Scale size={16} className="text-primary-400" />;
+    if (t === 'DECISION_OVERDUE') return <Scale size={16} className="text-rose-400" />;
     if (t === 'GATE_PENDING_APPROVAL') return <Flag size={16} className="text-amber-400" />;
     if (t.includes('INITIATIVE_STARTED') || t.includes('INITIATIVE_COMPLETED'))
       return <Target size={16} className="text-emerald-400" />;
@@ -250,16 +250,16 @@ export const NotificationDropdown = () => {
     if (t === 'AI_RISK_DETECTED' || t === 'AI_OVERLOAD_DETECTED')
       return <AlertTriangle size={16} className="text-amber-400" />;
     if (t === 'AI_RECOMMENDATION' || t === 'AI_DEPENDENCY_CONFLICT')
-      return <Bot size={16} className="text-purple-400" />;
+      return <Bot size={16} className="text-primary-400" />;
     if (t.includes('AI')) return <Sparkles size={16} className="text-indigo-500" />;
-    if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-red-500" />;
-    if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-red-500" />;
+    if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-rose-500" />;
+    if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-rose-500" />;
     if (t === 'USAGE_ALERT' || t.includes('LIMIT'))
       return <AlertTriangle size={16} className="text-amber-400" />;
     if (t === 'SUBSCRIPTION_CHANGE') return <CreditCard size={16} className="text-indigo-400" />;
     if (t.startsWith('DBR77_')) {
       if (t.includes('KB')) return <BookOpen size={16} className="text-emerald-400" />;
-      return <Megaphone size={16} className="text-purple-400" />;
+      return <Megaphone size={16} className="text-primary-400" />;
     }
     if (t === 'MILESTONE_COMPLETED') return <CheckCircle size={16} className="text-emerald-500" />;
     if (t.includes('TASK')) return <CheckSquare size={16} className="text-blue-400" />;
@@ -281,7 +281,7 @@ export const NotificationDropdown = () => {
       type === 'SYSTEM_ALERT' ||
       type === 'PAYMENT_FAILED'
     )
-      return 'bg-red-500';
+      return 'bg-rose-500';
     if (
       severity === 'WARNING' ||
       type.includes('OVERDUE') ||
@@ -293,7 +293,7 @@ export const NotificationDropdown = () => {
       type.includes('LIMIT')
     )
       return 'bg-amber-500';
-    if (type.startsWith('DBR77_')) return 'bg-purple-500';
+    if (type.startsWith('DBR77_')) return 'bg-primary-500';
     return 'bg-blue-500';
   };
 
@@ -301,7 +301,7 @@ export const NotificationDropdown = () => {
   const getPriorityBadgeStyle = (priority: string): string => {
     switch (priority) {
       case 'CRITICAL':
-        return 'bg-red-500/10 text-red-500 border-red-500/30';
+        return 'bg-rose-500/10 text-rose-500 border-rose-500/30';
       case 'HIGH':
         return 'bg-amber-500/10 text-amber-500 border-amber-500/30';
       case 'MEDIUM':
@@ -329,12 +329,12 @@ export const NotificationDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-purple-500/20"
+        className="relative text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
         title={isPolish ? 'Inbox' : 'Inbox'}
       >
         <Inbox size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm">
+          <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -343,13 +343,13 @@ export const NotificationDropdown = () => {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-[420px] bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
           {/* Header - Purple gradient following standard */}
-          <div className="px-4 py-3 border-b border-purple-200/40 dark:border-purple-500/20 flex items-center justify-between bg-gradient-to-r from-white/80 via-purple-50/30 to-white/80 dark:from-navy-900/80 dark:via-purple-900/20 dark:to-navy-900/80">
+          <div className="px-4 py-3 border-b border-primary-200/40 dark:border-primary-500/20 flex items-center justify-between bg-gradient-to-r from-white/80 via-primary-50/30 to-white/80 dark:from-navy-900/80 dark:via-primary-900/20 dark:to-navy-900/80">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-navy-900 dark:text-white text-sm">
                 {isPolish ? 'Inbox' : 'Inbox'}
               </h3>
               {unreadCount > 0 && (
-                <span className="bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full text-xs font-medium">
+                <span className="bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 px-2 py-0.5 rounded-full text-xs font-medium">
                   {unreadCount} {isPolish ? 'Nowe' : 'New'}
                 </span>
               )}
@@ -361,7 +361,7 @@ export const NotificationDropdown = () => {
                   setCurrentView(AppView.MY_WORK);
                   setIsOpen(false);
                 }}
-                className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
                 title={isPolish ? 'Otwórz skrzynkę' : 'Open Inbox (Action Queue)'}
               >
                 <ArrowRight size={12} /> {isPolish ? 'Skrzynka' : 'Inbox'}
@@ -372,7 +372,7 @@ export const NotificationDropdown = () => {
                   setCurrentView(AppView.MY_WORK);
                   setIsOpen(false);
                 }}
-                className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
                 title={isPolish ? 'Otwórz centrum powiadomień' : 'Open Notification Center'}
               >
                 <ArrowRight size={12} /> {isPolish ? 'Centrum' : 'Center'}
@@ -380,7 +380,7 @@ export const NotificationDropdown = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
                   title={isPolish ? 'Oznacz wszystkie jako przeczytane' : 'Mark all as read'}
                 >
                   <Check size={12} /> {isPolish ? 'Przeczytane' : 'Mark all read'}
@@ -400,7 +400,7 @@ export const NotificationDropdown = () => {
           <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">
             {loading && notifications.length === 0 ? (
               <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
-                <div className="animate-spin w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                 {isPolish ? 'Ładowanie...' : 'Loading...'}
               </div>
             ) : notifications.filter((n) => !isSnoozed(n.id)).length === 0 ? (
@@ -434,7 +434,7 @@ export const NotificationDropdown = () => {
                           className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
                             !notification.isRead
                               ? notification.type.includes('ai')
-                                ? 'bg-purple-50/50 dark:bg-purple-900/20'
+                                ? 'bg-primary-50/50 dark:bg-primary-900/20'
                                 : 'bg-slate-50 dark:bg-navy-800/30'
                               : ''
                           }`}
@@ -474,7 +474,7 @@ export const NotificationDropdown = () => {
                                 >
                                   {contract.priority}
                                 </span>
-                                <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30">
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 bg-primary-50 dark:bg-primary-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-primary-100 dark:hover:bg-primary-900/30">
                                   {primaryLabel} <ArrowRight size={12} />
                                 </span>
                               </div>
@@ -486,7 +486,7 @@ export const NotificationDropdown = () => {
                             {/* Chat button */}
                             <button
                               onClick={(e) => handleOpenChat(notification, e)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/20 rounded-md transition-colors"
                               title={isPolish ? 'Otwórz czat' : 'Open chat'}
                             >
                               <MessageSquare size={14} />
@@ -558,7 +558,7 @@ export const NotificationDropdown = () => {
                             )}
                             <button
                               onClick={(e) => handleDelete(notification.id, e)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-md transition-colors"
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-md transition-colors"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
                               <Trash2 size={14} />
@@ -609,7 +609,7 @@ export const NotificationDropdown = () => {
                 {notifications.length > 1 && (
                   <button
                     onClick={handleDeleteAll}
-                    className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/10"
+                    className="text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-medium transition-colors px-2 py-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10"
                     title={isPolish ? 'Usuń wszystkie' : 'Delete all notifications'}
                   >
                     {isPolish ? 'Usuń wszystkie' : 'Clear all'}

@@ -71,7 +71,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={[]}
         title="Title"
         onClose={() => {}}
-        onNavigate={() => {}}
+        onItemClick={() => {}}
         currentView={AppView.MY_WORK}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
@@ -91,7 +91,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={[]}
         title="Title"
         onClose={() => {}}
-        onNavigate={() => {}}
+        onItemClick={() => {}}
         currentView={AppView.MY_WORK}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
@@ -109,7 +109,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={[]}
         title="NoItems"
         onClose={() => {}}
-        onNavigate={() => {}}
+        onItemClick={() => {}}
         currentView={AppView.MY_WORK}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
@@ -127,7 +127,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={[{ id: 'i1', label: 'Item1', viewId: AppView.AI_CHAT } as any]}
         title="HasItems"
         onClose={() => {}}
-        onNavigate={() => {}}
+        onItemClick={() => {}}
         currentView={AppView.MY_WORK}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
@@ -140,7 +140,7 @@ describe('FloatingSubmenu (L2)', () => {
   });
 
   it('navigates only when item has viewId, and styles active item for light/dark', () => {
-    const onNavigate = vi.fn();
+    const onItemClick = vi.fn();
 
     const IconComp = ({ size }: any) => <span data-testid="icon" data-size={String(size)} />;
 
@@ -156,7 +156,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={items}
         title="Menu"
         onClose={() => {}}
-        onNavigate={onNavigate}
+        onItemClick={onItemClick}
         currentView={AppView.AI_CHAT}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
@@ -168,10 +168,10 @@ describe('FloatingSubmenu (L2)', () => {
     expect(screen.getByText('X')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Active' }));
-    expect(onNavigate).toHaveBeenCalledWith(AppView.AI_CHAT);
+    expect(onItemClick).toHaveBeenCalledWith(items[0]);
 
     fireEvent.click(screen.getByRole('button', { name: 'NoView' }));
-    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onItemClick).toHaveBeenCalledTimes(2);
 
     // active style (light)
     expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-primary-50');
@@ -182,7 +182,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={items}
         title="Menu"
         onClose={() => {}}
-        onNavigate={onNavigate}
+        onItemClick={onItemClick}
         currentView={AppView.AI_CHAT}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
@@ -206,7 +206,7 @@ describe('FloatingSubmenu (L2)', () => {
         items={[]}
         title="Menu"
         onClose={() => {}}
-        onNavigate={() => {}}
+        onItemClick={() => {}}
         currentView={AppView.MY_WORK}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}

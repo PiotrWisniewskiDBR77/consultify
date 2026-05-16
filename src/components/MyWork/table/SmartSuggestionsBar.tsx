@@ -236,20 +236,20 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
   const IconComp = ICON_MAP[current.icon || 'lightbulb'] || Lightbulb;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-violet-500/5 via-indigo-500/5 to-purple-500/5 border-t border-violet-500/10 dark:border-violet-500/20">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-500/5 via-indigo-500/5 to-primary-500/5 border-t border-primary-500/10 dark:border-primary-500/20">
       {/* Sparkle icon */}
-      <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-violet-500/10 flex-shrink-0">
+      <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-primary-500/10 flex-shrink-0">
         {loading ? (
-          <Loader2 size={13} className="text-violet-500 animate-spin" />
+          <Loader2 size={13} className="text-primary-500 animate-spin" />
         ) : (
-          <Sparkles size={13} className="text-violet-500" />
+          <Sparkles size={13} className="text-primary-500" />
         )}
       </div>
 
       {/* Suggestion content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <IconComp size={10} className="text-violet-500" />
+          <IconComp size={10} className="text-primary-500" />
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
             {current.title}
           </span>
@@ -282,7 +282,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       {current.action && onApplySuggestion && (
         <button
           onClick={() => onApplySuggestion(current)}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors whitespace-nowrap flex-shrink-0"
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors whitespace-nowrap flex-shrink-0"
         >
           {current.action.label}
           <ArrowRight size={9} />

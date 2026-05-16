@@ -182,9 +182,9 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.team.mainExtra.multipleTeams', 'Multiple Teams')}
             </span>
-            <Crown size={16} className="text-violet-500" />
+            <Crown size={16} className="text-primary-500" />
           </div>
-          <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
             {stats.multipleTeams}
           </p>
         </div>
@@ -222,8 +222,8 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
 
       {/* Bulk Actions */}
       {selectedUsers.size > 0 && onBulkAssign && (
-        <div className="flex items-center gap-4 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
-          <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
+        <div className="flex items-center gap-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
             {t('admin.team.mainExtra.selected', '{{count}} selected', {
               count: selectedUsers.size,
             })}
@@ -236,7 +236,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                 setSelectedUsers(new Set());
               }
             }}
-            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-violet-300 dark:border-violet-700 rounded-lg"
+            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-primary-300 dark:border-primary-700 rounded-lg"
             defaultValue=""
           >
             <option value="" disabled>
@@ -268,7 +268,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
               className={cn(
                 'bg-white dark:bg-navy-800 rounded-lg border transition-all',
                 selectedUsers.has(user.userId)
-                  ? 'border-violet-400 dark:border-violet-600'
+                  ? 'border-primary-400 dark:border-primary-600'
                   : 'border-slate-200 dark:border-navy-700'
               )}
             >
@@ -299,7 +299,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                 {/* Main Team */}
                 <div className="flex items-center gap-2">
                   {mainTeam ? (
-                    <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg">
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg">
                       <Star size={12} />
                       <span className="text-sm font-medium">{mainTeam.name}</span>
                     </div>
@@ -402,7 +402,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                         onAddExtraTeam && (
                           <button
                             onClick={() => setAddingTeamTo(user.userId)}
-                            className="flex items-center gap-1 px-2 py-1 text-sm text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg"
+                            className="flex items-center gap-1 px-2 py-1 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg"
                           >
                             <Plus size={14} />
                             {t('admin.team.mainExtra.addTeam', 'Add team')}

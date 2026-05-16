@@ -1,6 +1,6 @@
 # Artifact Identity Map (Colors + Icons) — v3
 
-> **Status:** Draft (v3)  
+> **Status:** Canonical artifact identity map, subordinate to Golden Standard  
 > **Cel:** Ustalić stałą tożsamość wizualną artefaktów i narzędzi w całej platformie: *jeden artefakt = jeden kolor akcentu + jedna ikona kanoniczna*.  
 > **Zasada DBR77:** UI chrome pozostaje monochromatyczny. Kolor artefaktu to **akcent danych**, nie dekoracja nawigacji.
 
@@ -118,10 +118,18 @@ Preferowane:
 - tekst semantyczny: `*/700` (lub `slate-900` dla treści)
 - jeśli tło jest bardzo jasne: dodaj subtelny border (`*/20`) albo przyciemnij tekst.
 
-## 6) Kanoniczny przycisk “AI w kontekście” (topbar)
+## 6) Kanoniczne AI w kontekście
 
-W v3 “AI w kontekście” jest **jednym** kanonicznym przyciskiem (ikonka + label), zawsze w topbarze modułu po prawej stronie
-(przed “+ New …” i przed view modes).
+Aktualny Golden Standard rozróżnia dwa typy AI:
+
+1. Globalny/shellowy dostęp do rozmowy AI.
+2. Funkcjonalne akcje AI dla aktualnego ekranu, dokumentu, zaznaczenia albo widoku.
+
+Funkcjonalne akcje AI nie są osobnym globalnym toggle i nie tworzą dodatkowego paska. Trafiają do prawej strony `Menu 3` / Command Row zgodnie z `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` i `module-hub-standard.md`.
+
+Legacy note:
+
+Historycznie v3 opisywał “AI w kontekście” jako jeden przycisk w topbarze modułu. Dla nowych i migrowanych ekranów obowiązuje Golden Standard: AI actions po prawej stronie `Menu 3`, a nie osobny przycisk w prawym klastrze `Menu 2`.
 
 **Funkcja:**
 
@@ -135,5 +143,5 @@ W v3 “AI w kontekście” jest **jednym** kanonicznym przyciskiem (ikonka + la
 - Globalny toggle split chat: `src/layouts/MainLayout.tsx` (przycisk “AI”)
 
 > Uwaga: istnieje też “legacy widget” typu floating (`src/components/AIChat/ChatToggleButton.tsx`) z animacją.
-> W v3 kanon to topbar button; legacy widget jest traktowany jako opcjonalny / deprecated.
+> Dla nowych i migrowanych ekranów funkcjonalne akcje AI należą do `Menu 3`; legacy widget/topbar AI traktować jako migration debt albo globalny shell entry, zależnie od kontekstu.
 

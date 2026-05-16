@@ -28,6 +28,11 @@ import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
+import TaskAssignmentService from '../services/taskAssignmentService.js';
+import {
+  normalizeTaskStatus as normalizeWorkflowTaskStatus,
+  validateTaskStatusTransition,
+} from '../services/taskWorkflowService.js';
 import * as pfService from '../services/v8/processFlowService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -213,10 +218,7 @@ async function applyInboxTriageSideEffects({
   if (action === 'delegate') {
     const delegateUserId = typeof params?.userId === 'string' ? params.userId : undefined;
     if (delegateUserId && kind === 'task') {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET assignee_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [delegateUserId, rawId, orgId]
-      );
+      await TaskAssignmentService.assignTask(rawId, delegateUserId, { assignedById: userId });
       await NotificationService.send({
         userId: delegateUserId,
         organizationId: orgId,
@@ -255,9 +257,17 @@ async function applyInboxTriageSideEffects({
   }
 
   if (action === 'done' && kind === 'task') {
-    await queryHelpers.queryRun(
-      `UPDATE tasks SET status = 'Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+    const task = await queryHelpers.queryOne<{ status?: string }>(
+      `SELECT status FROM tasks WHERE id = ? AND organization_id = ?`,
       [rawId, orgId]
+    );
+    const transition = validateTaskStatusTransition(task?.status, 'done');
+    if (!transition.allowed) {
+      throw new Error(transition.message);
+    }
+    await queryHelpers.queryRun(
+      `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [normalizeWorkflowTaskStatus('done'), rawId, orgId]
     );
   }
 }
@@ -287,6 +297,26 @@ const parseTagsArray = (input: unknown): string[] => {
   }
   return [];
 };
+
+const parseJsonField = <T>(input: unknown, fallback: T): T => {
+  if (input == null) return fallback;
+  if (typeof input !== 'string') return input as T;
+  try {
+    return JSON.parse(input) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const decorateIdeaLineage = (row: any) => ({
+  ...row,
+  actionContract: parseJsonField(row?.action_contract_json, {}),
+  sourcePack: parseJsonField(row?.source_pack_json, {}),
+  evidenceRefs: parseJsonField(row?.evidence_refs_json, []),
+  action_contract_json: undefined,
+  source_pack_json: undefined,
+  evidence_refs_json: undefined,
+});
 
 const normalizeDecisionStatus = (status?: string | null) => String(status || '').toLowerCase();
 const isDecisionPending = (status?: string | null) => {
@@ -602,6 +632,12 @@ const createMyWorkToolSession = async (params: {
   const { userId, orgId, sourceType, sourceId, title, summary } = params;
   const cols = await getTableColumns('tool_sessions');
   if (!cols || cols.size === 0) {
+    const isMockGateway =
+      (process.env.NODE_ENV === 'test' || process.env.E2E_MODE === 'true') &&
+      (process.env.MOCK_DB === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true');
+    if (isMockGateway) {
+      return `mock-tool-session-${sourceType}-${sourceId}`;
+    }
     throw new Error(
       'Database table missing: tool_sessions. Run migrations (npm run db:migrate:*).'
     );
@@ -2240,6 +2276,14 @@ router.get(
     const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : 200;
     const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
     const tag = req.query.tag ? String(req.query.tag).trim().toLowerCase() : '';
+    const ideaColumns = await getTableColumns('my_ideas');
+    const lineageSelect = [
+      ideaColumns.has('action_contract_json')
+        ? 'action_contract_json'
+        : "'{}' as action_contract_json",
+      ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
+      ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+    ].join(',\n          ');
 
     const params: any[] = [userId, orgId];
     let whereExtra = '';
@@ -2271,6 +2315,7 @@ router.get(
           priority,
           branch,
           promoted_to as "promotedTo",
+          ${lineageSelect},
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas
@@ -2282,7 +2327,7 @@ router.get(
         params
       )) || [];
 
-    res.json(rows.map((r: any) => ({ ...r, tags: parseTagsArray(r?.tags) })));
+    res.json(rows.map((r: any) => decorateIdeaLineage({ ...r, tags: parseTagsArray(r?.tags) })));
   })
 );
 
@@ -2350,25 +2395,66 @@ router.post(
       ? String(req.body.sourceConversationId)
       : null;
     const sourceMessageId = req.body?.sourceMessageId ? String(req.body.sourceMessageId) : null;
+    const sourcePack =
+      req.body?.sourcePack &&
+      typeof req.body.sourcePack === 'object' &&
+      !Array.isArray(req.body.sourcePack)
+        ? req.body.sourcePack
+        : {};
+    const actionContract =
+      req.body?.actionContract &&
+      typeof req.body.actionContract === 'object' &&
+      !Array.isArray(req.body.actionContract)
+        ? req.body.actionContract
+        : {};
+    const evidenceRefs = Array.isArray(req.body?.evidenceRefs)
+      ? req.body.evidenceRefs.map((ref: unknown) => String(ref || '').trim()).filter(Boolean)
+      : [];
 
     const id = uuidv4();
+    const ideaColumns = await getTableColumns('my_ideas');
+    const hasIdeaColumn = (column: string) => ideaColumns.has(column);
+    const insertColumns = [
+      'id',
+      'user_id',
+      'organization_id',
+      'title',
+      'body',
+      'tags',
+      'source_type',
+      'source_conversation_id',
+      'source_message_id',
+    ];
+    const insertValues: unknown[] = [
+      id,
+      userId,
+      orgId,
+      title,
+      body,
+      JSON.stringify(tags),
+      sourceType,
+      sourceConversationId,
+      sourceMessageId,
+    ];
+    if (hasIdeaColumn('action_contract_json')) {
+      insertColumns.push('action_contract_json');
+      insertValues.push(JSON.stringify(actionContract));
+    }
+    if (hasIdeaColumn('source_pack_json')) {
+      insertColumns.push('source_pack_json');
+      insertValues.push(JSON.stringify(sourcePack));
+    }
+    if (hasIdeaColumn('evidence_refs_json')) {
+      insertColumns.push('evidence_refs_json');
+      insertValues.push(JSON.stringify(evidenceRefs));
+    }
+
     await queryHelpers.queryRun(
       `
-      INSERT INTO my_ideas (
-        id, user_id, organization_id, title, body, tags, source_type, source_conversation_id, source_message_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO my_ideas (${insertColumns.join(', ')})
+      VALUES (${insertColumns.map(() => '?').join(', ')})
     `,
-      [
-        id,
-        userId,
-        orgId,
-        title,
-        body,
-        JSON.stringify(tags),
-        sourceType,
-        sourceConversationId,
-        sourceMessageId,
-      ]
+      insertValues
     );
 
     const row = await queryHelpers.queryOne<any>(
@@ -2381,6 +2467,9 @@ router.post(
         source_type as "sourceType",
         source_conversation_id as "sourceConversationId",
         source_message_id as "sourceMessageId",
+        ${hasIdeaColumn('action_contract_json') ? 'action_contract_json' : "'{}' as action_contract_json"},
+        ${hasIdeaColumn('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json"},
+        ${hasIdeaColumn('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json"},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2397,7 +2486,7 @@ router.post(
         resourceType: 'idea',
         resourceId: id,
         after: { title, body, tags, sourceType },
-        metadata: { fromAI: Boolean(req.body?.fromAI) },
+        metadata: { fromAI: Boolean(req.body?.fromAI), actionContract, evidenceRefs },
       })
       .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
@@ -2412,10 +2501,13 @@ router.post(
         sourceType,
         sourceConversationId,
         sourceMessageId,
+        sourcePack,
+        actionContract,
+        evidenceRefs,
       },
     });
 
-    res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags) }));
   })
 );
 
@@ -2428,6 +2520,14 @@ router.get(
     if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
+    const ideaColumns = await getTableColumns('my_ideas');
+    const lineageSelect = [
+      ideaColumns.has('action_contract_json')
+        ? 'action_contract_json'
+        : "'{}' as action_contract_json",
+      ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
+      ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+    ].join(',\n        ');
     const row = await queryHelpers.queryOne<any>(
       `
       SELECT
@@ -2451,6 +2551,7 @@ router.get(
         branch,
         promoted_to as "promotedTo",
         promoted_entity_id as "promotedEntityId",
+        ${lineageSelect},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2465,7 +2566,7 @@ router.get(
       return;
     }
 
-    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags) }));
   })
 );
 
@@ -6352,8 +6453,24 @@ router.get(
     const decisionId = String(req.params.id || '').trim();
     if (!decisionId) return res.status(400).json({ error: 'Missing decision id' });
 
+    const decisionCols = await getTableColumns('decisions');
+    const select = [
+      'id',
+      'title',
+      'description',
+      'status',
+      'priority',
+      decisionCols.has('category') ? 'category' : 'NULL as category',
+      decisionCols.has('created_at') ? 'created_at' : 'createdAt as created_at',
+      decisionCols.has('deadline')
+        ? 'deadline'
+        : decisionCols.has('due_date')
+          ? 'due_date as deadline'
+          : 'NULL as deadline',
+    ].join(', ');
+
     const decision = await queryHelpers.queryOne<any>(
-      `SELECT id, title, description, status, priority, category, created_at, deadline
+      `SELECT ${select}
        FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
       [decisionId, orgId]
     );
@@ -6407,8 +6524,8 @@ router.get(
           .slice(0, 3);
         for (const keyword of keywords) {
           const pages = await queryHelpers.queryAll<any>(
-            `SELECT id, title, 'notebook' as type FROM notebook_pages 
-             WHERE owner_user_id = ? AND organization_id = ? AND title LIKE ? 
+            `SELECT id, title, 'notebook' as type FROM notebook_pages
+             WHERE owner_user_id = ? AND organization_id = ? AND title LIKE ?
              AND id != ? LIMIT 3`,
             [userId, orgId, `%${keyword}%`, entityId]
           );
@@ -6433,8 +6550,8 @@ router.get(
         );
         if (dec?.initiative_id) {
           const tasks = await queryHelpers.queryAll<any>(
-            `SELECT id, title, status FROM tasks 
-             WHERE initiative_id = ? AND organization_id = ? AND id != ? 
+            `SELECT id, title, status FROM tasks
+             WHERE initiative_id = ? AND organization_id = ? AND id != ?
              LIMIT 5`,
             [dec.initiative_id, orgId, entityId]
           );
@@ -6453,8 +6570,8 @@ router.get(
             .slice(0, 2);
           for (const keyword of keywords) {
             const decs = await queryHelpers.queryAll<any>(
-              `SELECT id, title, status FROM decisions 
-               WHERE organization_id = ? AND title LIKE ? AND id != ? 
+              `SELECT id, title, status FROM decisions
+               WHERE organization_id = ? AND title LIKE ? AND id != ?
                LIMIT 3`,
               [orgId, `%${keyword}%`, entityId]
             );
@@ -6477,8 +6594,8 @@ router.get(
         const keyword = title.split(/\s+/).filter((w) => w.length > 3)[0];
         if (keyword) {
           const ideas = await queryHelpers.queryAll<any>(
-            `SELECT id, title FROM my_ideas 
-             WHERE user_id = ? AND organization_id = ? AND title LIKE ? 
+            `SELECT id, title FROM my_ideas
+             WHERE user_id = ? AND organization_id = ? AND title LIKE ?
              LIMIT 3`,
             [userId, orgId, `%${keyword}%`]
           );
@@ -6535,7 +6652,7 @@ router.post(
       const taskCols = await getTableColumns('tasks');
       if (taskCols.has('assignee_id')) {
         const completed = await queryHelpers.queryAll<any>(
-          `SELECT id, title, completed_at FROM tasks 
+          `SELECT id, title, completed_at FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
            AND updated_at > ${daysAgoSql(7)}
            ORDER BY updated_at DESC LIMIT 20`,
@@ -6548,8 +6665,8 @@ router.post(
       const decCols = await getTableColumns('decisions');
       if (decCols.has('decision_maker_id')) {
         const decided = await queryHelpers.queryAll<any>(
-          `SELECT id, title, status, updated_at FROM decisions 
-           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
+          `SELECT id, title, status, updated_at FROM decisions
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ?
            AND status IN ('approved', 'rejected') AND updated_at > ${daysAgoSql(7)}
            ORDER BY updated_at DESC LIMIT 10`,
           [userId, userId, orgId]
@@ -6560,7 +6677,7 @@ router.post(
 
       if (taskCols.has('due_date')) {
         const overdue = await queryHelpers.queryAll<any>(
-          `SELECT id, title, due_date FROM tasks 
+          `SELECT id, title, due_date FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
            AND due_date IS NOT NULL AND due_date < ${nowSql()}
            LIMIT 10`,
@@ -6571,7 +6688,7 @@ router.post(
       }
 
       const stuck = await queryHelpers.queryAll<any>(
-        `SELECT id, title, updated_at FROM tasks 
+        `SELECT id, title, updated_at FROM tasks
          WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
          AND updated_at < ${daysAgoSql(5)}
          LIMIT 5`,
@@ -6619,10 +6736,10 @@ router.get(
 
       if (taskCols.has('assignee_id')) {
         const weeklyVelocity = await queryHelpers.queryAll<any>(
-          `SELECT 
+          `SELECT
             ${weekBucketSql('updated_at')} as week,
             COUNT(*) as completed
-           FROM tasks 
+           FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
            AND updated_at > ${daysAgoSql(28)}
            GROUP BY week ORDER BY week`,
@@ -6639,7 +6756,7 @@ router.get(
       if (taskCols.has('created_at')) {
         const avgTime = await queryHelpers.queryOne<any>(
           `SELECT AVG(${dayDiffSql('updated_at', 'created_at')}) as avg_days
-           FROM tasks 
+           FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
            AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
@@ -6653,8 +6770,8 @@ router.get(
       if (decCols.has('decision_maker_id') && decCols.has('created_at')) {
         const avgDecision = await queryHelpers.queryOne<any>(
           `SELECT AVG(${dayDiffSql('updated_at', 'created_at')}) as avg_days
-           FROM decisions 
-           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
+           FROM decisions
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ?
            AND status IN ('approved', 'rejected')
            AND updated_at > ${daysAgoSql(30)}`,
           [userId, userId, orgId]
@@ -6666,13 +6783,13 @@ router.get(
 
       if (taskCols.has('due_date')) {
         const totalWithDue = await queryHelpers.queryOne<any>(
-          `SELECT COUNT(*) as total FROM tasks 
+          `SELECT COUNT(*) as total FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
            AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
         );
         const overdueCompleted = await queryHelpers.queryOne<any>(
-          `SELECT COUNT(*) as total FROM tasks 
+          `SELECT COUNT(*) as total FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
            AND status IN ('done', 'completed') AND updated_at > due_date
            AND updated_at > ${daysAgoSql(30)}`,
@@ -6686,7 +6803,7 @@ router.get(
       }
 
       const openCount = await queryHelpers.queryOne<any>(
-        `SELECT COUNT(*) as total FROM tasks 
+        `SELECT COUNT(*) as total FROM tasks
          WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')`,
         [userId, orgId]
       );

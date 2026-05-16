@@ -32,8 +32,10 @@ export const ROUTES = {
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',
+  // Legacy spreadsheet route kept as a redirect-only alias to canonical Table Studio.
   EXCELE: '/excele',
   PREZENTACJE_GEN: '/prezentacje',
+  TABELE: '/tabele',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
 
@@ -105,6 +107,7 @@ export const ROUTES = {
     MANAGEMENT: '/reports/management',
   },
   PRESENTATIONS: '/presentations',
+  PRESENTATION_STUDIO: '/presentation-studio',
   MEETING: '/meeting',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
@@ -214,6 +217,21 @@ export const ROUTES = {
 
   // AI Actions
   AI_ACTIONS: '/ai-actions',
+  AI_OS: {
+    ROOT: '/ai',
+    ALIAS: '/ai-os',
+    ACTION_CENTER: '/ai/action-center',
+    ACTIONS_ALIAS: '/ai/actions',
+    RESEARCH: '/ai/research-sessions',
+    ARTIFACTS: '/ai/artifacts',
+    WORK_CANVAS: '/ai/work-canvas',
+    CONTEXT: '/ai/context',
+    MEMORY_ALIAS: '/ai/memory',
+    CONNECTORS: '/ai/connectors',
+    AGENTS: '/ai/agents',
+    OUTCOMES: '/ai/outcomes',
+    AIOPS_ALIAS: '/ai/aiops',
+  },
 
   // Vector
   VECTOR: '/vector',
@@ -326,8 +344,9 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PRESENTATIONS]: ROUTES.PRESENTATIONS,
   [AppView.MEETING]: ROUTES.MEETING,
   [AppView.WORDY]: ROUTES.WORDY,
-  [AppView.EXCELE]: ROUTES.EXCELE,
+  [AppView.EXCELE]: ROUTES.TABELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
+  [AppView.TABELE]: ROUTES.TABELE,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
@@ -396,7 +415,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SETTINGS_APPEARANCE]: `${ROUTES.SETTINGS.ROOT}/theme`,
   [AppView.SETTINGS_AI_MEMORY]: `${ROUTES.SETTINGS.ROOT}/ai-memory`,
   [AppView.SETTINGS_AI_RESPONSE_STYLE]: `${ROUTES.SETTINGS.ROOT}/ai-behavior`,
-  [AppView.SETTINGS_AI_CHAT_HISTORY]: `${ROUTES.SETTINGS.ROOT}/ai-memory`,
+  [AppView.SETTINGS_AI_CHAT_HISTORY]: `${ROUTES.SETTINGS.ROOT}/ai-chat-history`,
   [AppView.SETTINGS_AI_VOICE]: `${ROUTES.SETTINGS.ROOT}/ai-voice`,
   [AppView.SETTINGS_SECURITY]: `${ROUTES.SETTINGS.ROOT}/security-dashboard`,
   [AppView.SETTINGS_API_ACCESS]: `${ROUTES.SETTINGS.ROOT}/api-keys`,
@@ -481,6 +500,15 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // AI Actions
   [AppView.AI_ACTION_PROPOSALS]: ROUTES.AI_ACTIONS,
+  [AppView.AI_OS_HOME]: ROUTES.AI_OS.ROOT,
+  [AppView.AI_OS_WORK_CANVAS]: ROUTES.AI_OS.WORK_CANVAS,
+  [AppView.AI_OS_ACTION_CENTER]: ROUTES.AI_OS.ACTION_CENTER,
+  [AppView.AI_OS_RESEARCH]: ROUTES.AI_OS.RESEARCH,
+  [AppView.AI_OS_ARTIFACTS]: ROUTES.AI_OS.ARTIFACTS,
+  [AppView.AI_OS_CONTEXT_MEMORY]: ROUTES.AI_OS.CONTEXT,
+  [AppView.AI_OS_CONNECTORS]: ROUTES.AI_OS.CONNECTORS,
+  [AppView.AI_OS_AGENTS]: ROUTES.AI_OS.AGENTS,
+  [AppView.AI_OS_OUTCOMES]: ROUTES.AI_OS.OUTCOMES,
 
   // Legacy/Fallback
   [AppView.FULL_TRANSFORMATION_CHAT]: ROUTES.AI_CHAT,
@@ -524,6 +552,9 @@ export function getRouteFromAppView(view: AppView): string {
  */
 export function getAppViewFromRoute(path: string): AppView | null {
   const canonicalRouteOrder: AppView[] = [
+    AppView.TABELE,
+    AppView.WORDY,
+    AppView.PREZENTACJE_GEN,
     AppView.SUPERADMIN_OVERVIEW,
     AppView.SUPERADMIN_DASHBOARD,
     AppView.SUPERADMIN_CUSTOMERS,
@@ -568,6 +599,49 @@ export function getAppViewFromRoute(path: string): AppView | null {
  */
 export function getAppViewFromPath(path: string): AppView | null {
   const normalized = path.replace(/\/+$/, '') || '/';
+
+  if (normalized === ROUTES.AI_OS.ROOT || normalized === ROUTES.AI_OS.ALIAS)
+    return AppView.AI_OS_HOME;
+  if (normalized === ROUTES.AI_OS.ACTIONS_ALIAS) return AppView.AI_OS_ACTION_CENTER;
+  if (normalized === ROUTES.AI_OS.MEMORY_ALIAS) return AppView.AI_OS_CONTEXT_MEMORY;
+  if (normalized === ROUTES.AI_OS.AIOPS_ALIAS) return AppView.AI_OS_OUTCOMES;
+  if (normalized === ROUTES.AI_OS.ACTION_CENTER) return AppView.AI_OS_ACTION_CENTER;
+  if (normalized === ROUTES.AI_OS.RESEARCH) return AppView.AI_OS_RESEARCH;
+  if (normalized === ROUTES.AI_OS.ARTIFACTS) return AppView.AI_OS_ARTIFACTS;
+  if (normalized === ROUTES.AI_OS.CONTEXT) return AppView.AI_OS_CONTEXT_MEMORY;
+  if (normalized === ROUTES.AI_OS.CONNECTORS) return AppView.AI_OS_CONNECTORS;
+  if (normalized === ROUTES.AI_OS.AGENTS) return AppView.AI_OS_AGENTS;
+  if (normalized === ROUTES.AI_OS.OUTCOMES) return AppView.AI_OS_OUTCOMES;
+
+  if (normalized === ROUTES.SETTINGS.PROFILE) return AppView.SETTINGS_PROFILE_MODULE;
+  if (
+    [
+      'ai-behavior',
+      'ai-model-params',
+      'ai-autocomplete',
+      'ai-memory',
+      'ai-privacy',
+      'ai-prompt-library',
+      'ai-voice',
+      'ai-usage',
+    ].some((section) => normalized === `${ROUTES.SETTINGS.ROOT}/${section}`)
+  ) {
+    return AppView.SETTINGS_AI_MODULE;
+  }
+  if (
+    [
+      'notifications-overview',
+      'notifications-email-digest',
+      'notifications-desktop-sounds',
+      'notifications-availability',
+    ].some((section) => normalized === `${ROUTES.SETTINGS.ROOT}/${section}`)
+  ) {
+    return AppView.SETTINGS_NOTIFICATIONS_MODULE;
+  }
+  if (normalized === `${ROUTES.SETTINGS.ROOT}/security-dashboard`)
+    return AppView.SETTINGS_SECURITY_MODULE;
+  if (normalized === ROUTES.SETTINGS.INTEGRATIONS) return AppView.SETTINGS_INTEGRATIONS_MODULE;
+  if (normalized === `${ROUTES.SETTINGS.ROOT}/theme`) return AppView.SETTINGS_APPEARANCE_MODULE;
 
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
@@ -657,8 +731,9 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   // KIMI-style workspaces
   if (normalized.startsWith(ROUTES.WORDY)) return AppView.WORDY;
-  if (normalized.startsWith(ROUTES.EXCELE)) return AppView.EXCELE;
+  if (normalized.startsWith(ROUTES.EXCELE)) return AppView.TABELE;
   if (normalized.startsWith(ROUTES.PREZENTACJE_GEN)) return AppView.PREZENTACJE_GEN;
+  if (normalized.startsWith(ROUTES.TABELE)) return AppView.TABELE;
 
   // Meeting & MCP
   if (normalized.startsWith(ROUTES.MEETING)) return AppView.MEETING;

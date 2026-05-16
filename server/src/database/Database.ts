@@ -363,6 +363,15 @@ function createMockDatabase(): MockDatabase {
     if (idx < 0) return true;
 
     let pIdx = 0;
+    const resolvePlaceholder = (token: string) => {
+      const trimmed = String(token || '').trim();
+      if (trimmed === '?') return params?.[pIdx++];
+      if (/^\$\d+$/.test(trimmed)) {
+        const absoluteIndex = Number.parseInt(trimmed.slice(1), 10);
+        return params?.[absoluteIndex - 1];
+      }
+      return undefined;
+    };
     const next = { ...rows[idx] };
     for (const a of assigns) {
       const mm = a.match(/^\s*([a-zA-Z0-9_]+)\s*=\s*(.+)\s*$/);
@@ -370,8 +379,9 @@ function createMockDatabase(): MockDatabase {
       const col = mm[1];
       const rhs = mm[2];
       const rhsLower = rhs.toLowerCase();
-      if (rhs.includes('?')) {
-        next[col] = params?.[pIdx++];
+      const placeholderMatch = rhs.match(/(\?|\$\d+)/);
+      if (placeholderMatch) {
+        next[col] = resolvePlaceholder(placeholderMatch[1]);
       } else if (rhsLower.includes('current_timestamp') || rhsLower.includes('now()')) {
         next[col] = nowIso();
       } else if (rhsLower === 'null') {

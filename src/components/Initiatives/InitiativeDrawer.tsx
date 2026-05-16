@@ -143,7 +143,7 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
               <span
                 className={`text-[9px] font-medium ${
                   item.severity === 'CRITICAL' || item.severity === 'HIGH'
-                    ? 'text-red-400'
+                    ? 'text-rose-400'
                     : 'text-slate-500'
                 }`}
               >
@@ -159,7 +159,7 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+          className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
         >
           {expanded
             ? t('initiatives.drawer.showLess')
@@ -202,7 +202,7 @@ const DrawerDependenciesList: React.FC<{ dependencies: any[]; maxVisible?: numbe
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+          className="mt-2 text-xs text-primary-400 hover:text-primary-300 transition-colors"
         >
           {expanded
             ? t('initiatives.drawer.showLess')
@@ -396,7 +396,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             {requiredGates.length > 0 && (
               <button
                 onClick={() => setActiveTab('decisions')}
-                className="text-xs text-purple-400 hover:text-purple-300"
+                className="text-xs text-primary-400 hover:text-primary-300"
               >
                 {t('initiatives.drawer.viewDecisions')}
               </button>
@@ -452,7 +452,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-500 rounded-full"
+                  className="h-full bg-primary-500 rounded-full"
                   style={{ width: `${initiative.progress || 0}%` }}
                 />
               </div>
@@ -490,9 +490,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             <div
               className={`text-sm font-semibold ${
                 initiative.priority === 'CRITICAL'
-                  ? 'text-red-400'
+                  ? 'text-rose-400'
                   : initiative.priority === 'HIGH'
-                    ? 'text-orange-400'
+                    ? 'text-amber-400'
                     : initiative.priority === 'MEDIUM'
                       ? 'text-amber-400'
                       : 'text-slate-500 dark:text-slate-400'
@@ -565,7 +565,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                 disabled={isLoading}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                   action.variant === 'primary'
-                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                    ? 'bg-primary-600 hover:bg-primary-500 text-white'
                     : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300'
                 } disabled:opacity-50`}
               >
@@ -591,7 +591,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           {milestones.length > 0 && (
             <button
               onClick={() => onOpenWider(initiative)}
-              className="text-xs text-purple-400 hover:text-purple-300"
+              className="text-xs text-primary-400 hover:text-primary-300"
             >
               Manage in full view
             </button>
@@ -622,7 +622,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                       : milestone.status === 'IN_PROGRESS'
                         ? 'bg-blue-500 animate-pulse'
                         : milestone.status === 'DELAYED'
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : 'bg-navy-600'
                   }`}
                 />
@@ -649,7 +649,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                           : milestone.status === 'IN_PROGRESS'
                             ? 'bg-blue-500/20 text-blue-400'
                             : milestone.status === 'DELAYED'
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : 'bg-slate-500/20 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -685,7 +685,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
               {initiative.ownerBusiness ? (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-sm font-medium text-purple-300">
+                  <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-sm font-medium text-primary-300">
                     {initiative.ownerBusiness.avatarUrl ? (
                       <img
                         src={initiative.ownerBusiness.avatarUrl}
@@ -787,7 +787,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             </h4>
             <button
               onClick={() => onOpenWider(initiative)}
-              className="text-xs text-purple-400 hover:text-purple-300"
+              className="text-xs text-primary-400 hover:text-primary-300"
             >
               {t('initiatives.drawer.requestDecision')}
             </button>
@@ -803,7 +803,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               {decisions.map((decision) => (
                 <div
                   key={decision.id}
-                  className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 cursor-pointer transition-colors"
+                  className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-500/30 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <h5 className="text-sm font-medium text-slate-900 dark:text-white">
@@ -814,7 +814,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                         decision.status === 'APPROVED'
                           ? 'bg-green-500/20 text-green-400'
                           : decision.status === 'REJECTED'
-                            ? 'bg-red-500/20 text-red-400'
+                            ? 'bg-rose-500/20 text-rose-400'
                             : 'bg-amber-500/20 text-amber-400'
                       }`}
                     >
@@ -906,7 +906,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                       t('initiatives.drawer.initiative')}
                   </span>
                   {initiative.targetQuarter && (
-                    <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-300 rounded">
+                    <span className="px-2 py-0.5 text-[10px] font-medium bg-primary-500/20 text-primary-300 rounded">
                       {initiative.targetQuarter}
                     </span>
                   )}
@@ -919,7 +919,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onOpenWider(initiative)}
-                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors"
                   title="Open wider"
                 >
                   <Maximize2 size={18} />
@@ -950,7 +950,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     onClick={() => setActiveTab(tabId)}
                     className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeTab === tabId
-                        ? 'bg-purple-500/20 text-purple-400'
+                        ? 'bg-primary-500/20 text-primary-400'
                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >

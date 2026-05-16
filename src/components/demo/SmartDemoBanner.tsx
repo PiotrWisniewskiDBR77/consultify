@@ -188,7 +188,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                   }
                   handleContactSales();
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-900 text-purple-700 text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-900 text-primary-700 text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors"
               >
                 <Calendar size={12} />
                 <span className="hidden sm:inline">

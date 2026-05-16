@@ -109,13 +109,13 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: React.Reac
     icon: <CheckCircle className="w-3 h-3" />,
   },
   voided: {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-600 dark:text-red-400',
+    bg: 'bg-rose-100 dark:bg-rose-900/30',
+    text: 'text-rose-600 dark:text-rose-400',
     icon: <XCircle className="w-3 h-3" />,
   },
   refunded: {
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
-    text: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-primary-100 dark:bg-primary-900/30',
+    text: 'text-primary-600 dark:text-primary-400',
     icon: <RotateCcw className="w-3 h-3" />,
   },
 };
@@ -259,8 +259,8 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
                   {formatCurrency(stats.total_value)}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-3 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                <DollarSign className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -330,7 +330,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
         {isAdmin && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Create Credit Note
@@ -340,9 +340,9 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-red-500" />
-          <p className="text-red-700 dark:text-red-400">{error}</p>
+        <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-rose-500" />
+          <p className="text-rose-700 dark:text-rose-400">{error}</p>
         </div>
       )}
 
@@ -350,7 +350,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin text-purple-600" />
+            <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
           </div>
         ) : filteredNotes.length === 0 ? (
           <div className="text-center py-12">
@@ -463,7 +463,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
                       {isAdmin && note.status === 'issued' && note.amount_remaining > 0 && (
                         <button
                           onClick={() => handleRefund(note.id)}
-                          className="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                          className="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                           title="Refund"
                         >
                           <RotateCcw className="w-4 h-4" />
@@ -474,7 +474,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
                         note.amount_applied === 0 && (
                           <button
                             onClick={() => handleVoid(note.id)}
-                            className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                             title="Void"
                           >
                             <XCircle className="w-4 h-4" />
@@ -622,7 +622,7 @@ const ApplyCreditModal: React.FC<ApplyCreditModalProps> = ({
             <button
               type="submit"
               disabled={!selectedInvoice || loading}
-              className="flex-1 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Apply Credit
             </button>
@@ -707,7 +707,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
         </h3>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 text-sm">
             {error}
           </div>
         )}
@@ -779,7 +779,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
               <button
                 type="button"
                 onClick={addItem}
-                className="text-sm text-purple-600 hover:text-purple-700"
+                className="text-sm text-primary-600 hover:text-primary-700"
               >
                 + Add Item
               </button>
@@ -818,7 +818,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                      className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
                     >
                       <XCircle className="w-4 h-4" />
                     </button>
@@ -845,7 +845,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
             <button
               type="submit"
               disabled={loading || !formData.organizationId || formData.items.length === 0}
-              className="flex-1 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Creating...' : 'Create Credit Note'}
             </button>

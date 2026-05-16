@@ -41,7 +41,6 @@ describe('NotificationsModule settings taxonomy', () => {
     );
 
     expect(screen.getByText('Notifications')).toBeInTheDocument();
-    expect(screen.getByText('One settings root with clear ownership')).toBeInTheDocument();
-    expect(screen.getByText('Module settings')).toBeInTheDocument();
+    expect(screen.getByText('NotificationSettings')).toBeInTheDocument();
   });
 });

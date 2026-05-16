@@ -65,7 +65,7 @@ const QUADRANTS = {
     labelPl: 'Plan awaryjny',
     description: 'High impact, low probability',
     descriptionPl: 'Wysoki wpływ, niskie prawdopodobieństwo',
-    color: '#8b5cf6',
+    color: '#6366f1',
     bgColor: '#ede9fe',
     darkBgColor: 'rgba(139, 92, 246, 0.1)',
     icon: Zap,
@@ -77,7 +77,7 @@ const QUADRANTS = {
     labelPl: 'Unikaj',
     description: 'High impact, high probability',
     descriptionPl: 'Wysoki wpływ, wysokie prawdopodobieństwo',
-    color: '#ef4444',
+    color: '#f43f5e',
     bgColor: '#fee2e2',
     darkBgColor: 'rgba(239, 68, 68, 0.1)',
     icon: AlertTriangle,
@@ -212,9 +212,9 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
         {/* Summary badges */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 dark:bg-red-500/20 rounded-full">
-            <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
-            <span className="text-sm font-medium text-red-700 dark:text-red-300">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 dark:bg-rose-500/20 rounded-full">
+            <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <span className="text-sm font-medium text-rose-700 dark:text-rose-300">
               {stats.critical} {isPolish ? 'krytycznych' : 'critical'}
             </span>
           </div>
@@ -282,7 +282,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                       onDragStart={() => handleDragStart(risk.id)}
                       onClick={() => setSelectedRisk(risk)}
                       className={`
-                                                p-3 bg-white dark:bg-navy-800 rounded-lg shadow-sm 
+                                                p-3 bg-white dark:bg-navy-800 rounded-lg shadow-sm
                                                 cursor-pointer hover:shadow-md transition-shadow
                                                 ${draggedRisk === risk.id ? 'opacity-50' : ''}
                                             `}
@@ -366,7 +366,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                       onDragStart={() => handleDragStart(risk.id)}
                       onClick={() => setSelectedRisk(risk)}
                       className={`
-                                                p-3 bg-white dark:bg-navy-800 rounded-lg shadow-sm 
+                                                p-3 bg-white dark:bg-navy-800 rounded-lg shadow-sm
                                                 cursor-pointer hover:shadow-md transition-shadow
                                                 ${draggedRisk === risk.id ? 'opacity-50' : ''}
                                             `}
@@ -486,7 +486,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                 <div
                   className={`p-3 rounded-lg ${
                     selectedRisk.impact === 'high'
-                      ? 'bg-red-50 dark:bg-red-500/10'
+                      ? 'bg-rose-50 dark:bg-rose-500/10'
                       : 'bg-green-50 dark:bg-green-500/10'
                   }`}
                 >
@@ -496,7 +496,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                   <p
                     className={`font-semibold ${
                       selectedRisk.impact === 'high'
-                        ? 'text-red-600 dark:text-red-400'
+                        ? 'text-rose-600 dark:text-rose-400'
                         : 'text-green-600 dark:text-green-400'
                     }`}
                   >
@@ -543,7 +543,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     onRiskRemove(selectedRisk.id);
                     setSelectedRisk(null);
                   }}
-                  className="w-full mt-4 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="w-full mt-4 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                 >
                   {isPolish ? 'Usuń ryzyko' : 'Remove risk'}
                 </button>

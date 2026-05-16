@@ -19,15 +19,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatV9FlagsIndicator } from '../ChatV9FlagsIndicator';
 
 describe('ChatV9FlagsIndicator', () => {
-  let openListener: ReturnType<typeof vi.fn>;
+  let openListener: EventListener;
 
   beforeEach(() => {
-    openListener = vi.fn();
-    window.addEventListener('chat-v9-flags:open', openListener as EventListener);
+    openListener = vi.fn() as EventListener;
+    window.addEventListener('chat-v9-flags:open', openListener);
   });
 
   afterEach(() => {
-    window.removeEventListener('chat-v9-flags:open', openListener as EventListener);
+    window.removeEventListener('chat-v9-flags:open', openListener);
   });
 
   it('returns null when unauthorised (even with overrides)', () => {

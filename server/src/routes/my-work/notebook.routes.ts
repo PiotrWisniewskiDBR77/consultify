@@ -334,27 +334,75 @@ router.post(
       typeof req.body?.status === 'string' && ['inbox', 'active'].includes(req.body.status)
         ? req.body.status
         : 'active';
+    const sourcePack =
+      req.body?.sourcePack &&
+      typeof req.body.sourcePack === 'object' &&
+      !Array.isArray(req.body.sourcePack)
+        ? req.body.sourcePack
+        : {};
+    const actionContract =
+      req.body?.actionContract &&
+      typeof req.body.actionContract === 'object' &&
+      !Array.isArray(req.body.actionContract)
+        ? req.body.actionContract
+        : {};
+    const evidenceRefs = Array.isArray(req.body?.evidenceRefs)
+      ? req.body.evidenceRefs.map((ref: unknown) => String(ref || '').trim()).filter(Boolean)
+      : [];
+    const captureMetadata = {
+      sourceType: req.body?.sourceType ? String(req.body.sourceType) : null,
+      sourceId: req.body?.sourceId ? String(req.body.sourceId) : null,
+      sourcePack,
+      actionContract,
+      evidenceRefs,
+    };
+
+    const insertColumns = [
+      'id',
+      'owner_user_id',
+      'organization_id',
+      'project_id',
+      'visibility',
+      'title',
+      'content_json',
+      'content_text',
+      'tags_json',
+      'icon',
+      'maturity',
+      'status',
+      'created_at',
+      'updated_at',
+    ];
+    const insertValues: unknown[] = [
+      id,
+      userId,
+      orgId,
+      projectId,
+      visibility,
+      title,
+      contentJson,
+      contentText,
+      tags,
+      icon,
+      maturity,
+      status,
+      now,
+      now,
+    ];
+    if (nbCols.has('capture_source')) {
+      insertColumns.push('capture_source');
+      insertValues.push('interview_insight');
+    }
+    if (nbCols.has('capture_metadata')) {
+      insertColumns.push('capture_metadata');
+      insertValues.push(JSON.stringify(captureMetadata));
+    }
 
     await queryHelpers.queryRun(
       `INSERT INTO notebook_pages
-        (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, icon, maturity, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        userId,
-        orgId,
-        projectId,
-        visibility,
-        title,
-        contentJson,
-        contentText,
-        tags,
-        icon,
-        maturity,
-        status,
-        now,
-        now,
-      ]
+        (${insertColumns.join(', ')})
+       VALUES (${insertColumns.map(() => '?').join(', ')})`,
+      insertValues
     );
 
     const row = await queryHelpers.queryOne<any>(

@@ -184,7 +184,7 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
                   </select>
                   <button
                     onClick={() => handleRemove(item.id)}
-                    className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500"
+                    className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

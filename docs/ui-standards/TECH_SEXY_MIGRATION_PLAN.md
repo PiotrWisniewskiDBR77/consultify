@@ -224,7 +224,7 @@ Każda faza:
 
 ## Co NIE jest w zakresie tego planu
 
-- Zmiana layoutu (zachowujemy 4-layer shell, N/C mode, 220px sidebar)
+- Zmiana layoutu (zachowujemy 4-layer shell, N/C mode, 242px sidebar)
 - Zmiana komponentów funkcjonalnych
 - Nowe biblioteki/zależności
 - Zmiana routingu, API, logiki biznesowej

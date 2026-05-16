@@ -133,8 +133,8 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       }}
       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
         checked
-          ? 'bg-violet-500 border-violet-500'
-          : 'border-slate-300 dark:border-navy-600 hover:border-violet-400'
+          ? 'bg-primary-500 border-primary-500'
+          : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
       }`}
     >
       {checked && <Check size={10} className="text-white" />}
@@ -142,9 +142,9 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
   );
 
   return (
-    <div className="rounded-2xl border border-violet-500/30 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden max-h-[70vh] flex flex-col">
-      <div className="flex items-center gap-2 px-4 py-3 bg-violet-500/5 border-b border-violet-500/10 flex-shrink-0">
-        <Sparkles size={16} className="text-violet-500" />
+    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden max-h-[70vh] flex flex-col">
+      <div className="flex items-center gap-2 px-4 py-3 bg-primary-500/5 border-b border-primary-500/10 flex-shrink-0">
+        <Sparkles size={16} className="text-primary-500" />
         <div className="flex-1">
           <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
             {proposal.title || (isPl ? 'Propozycja struktury tabeli' : 'Table Structure Proposal')}
@@ -207,7 +207,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={col.key}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedColumns.has(col.key) ? 'bg-violet-500/5' : 'opacity-50'
+                      acceptedColumns.has(col.key) ? 'bg-primary-500/5' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedColumns.has(col.key), () => toggleColumn(col.key))}
@@ -251,7 +251,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={v.id}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedViews.has(v.id) ? 'bg-violet-500/5' : 'opacity-50'
+                      acceptedViews.has(v.id) ? 'bg-primary-500/5' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedViews.has(v.id), () => toggleView(v.id))}
@@ -293,7 +293,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={r.id}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedRows.has(r.id) ? 'bg-violet-500/5' : 'opacity-50'
+                      acceptedRows.has(r.id) ? 'bg-primary-500/5' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedRows.has(r.id), () => toggleRow(r.id))}
@@ -337,7 +337,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
           <button
             onClick={handleApply}
             disabled={totalAccepted === 0}
-            className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-violet-500 text-white hover:bg-violet-600 transition-colors disabled:opacity-40"
+            className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-40"
           >
             {isPl ? 'Zastosuj wybrane' : 'Apply selected'}
           </button>

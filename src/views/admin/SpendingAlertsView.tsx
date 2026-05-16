@@ -12,7 +12,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   Bell,
-  Check,
   DollarSign,
   Edit,
   HardDrive,
@@ -29,6 +28,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -68,7 +68,7 @@ interface SpendingAlertsViewProps {
 
 export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { currentOrganization, currentUser } = useAppStore();
+  const { currentUser } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<SpendingAlert[]>([]);
@@ -76,6 +76,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
   const [editingAlert, setEditingAlert] = useState<SpendingAlert | null>(null);
   const [saving, setSaving] = useState(false);
   const [usageData, setUsageData] = useState<any>(null);
+  const [usageLoadError, setUsageLoadError] = useState<string | null>(null);
+  const [alertsLoadError, setAlertsLoadError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -95,30 +97,32 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
 
   const loadUsageData = async () => {
     try {
+      setUsageLoadError(null);
       const usage = await Api.getUsage();
       setUsageData(usage.structuredUsage || null);
     } catch (error) {
       console.error('Failed to load usage data:', error);
       setUsageData(null);
+      setUsageLoadError(error instanceof Error ? error.message : 'Failed to load usage data');
     }
   };
 
   const loadAlerts = async () => {
     setLoading(true);
     try {
+      setAlertsLoadError(null);
       const res = await fetch(`/api/billing/spending-alerts`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAlerts(data || []);
-      } else {
-        console.error('Failed to load alerts:', res.statusText);
-        setAlerts([]);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data = await res.json();
+      setAlerts(data || []);
     } catch (error) {
       console.error('Failed to load alerts:', error);
       setAlerts([]);
+      setAlertsLoadError(error instanceof Error ? error.message : 'Failed to load spending alerts');
     }
     setLoading(false);
   };
@@ -178,7 +182,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         setShowCreateModal(false);
         loadAlerts();
       } else {
-        toast.error('Failed to save alert');
+        throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
       console.error('Failed to save alert:', error);
@@ -201,6 +205,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
           prev.map((a) => (a.id === alertId ? { ...a, isActive: !a.isActive } : a))
         );
         toast.success(alert.isActive ? 'Alert paused' : 'Alert activated');
+      } else {
+        throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
       console.error('Failed to toggle alert:', error);
@@ -219,6 +225,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
       if (res.ok) {
         setAlerts((prev) => prev.filter((a) => a.id !== alertId));
         toast.success('Alert deleted');
+      } else {
+        throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
       console.error('Failed to delete alert:', error);
@@ -254,7 +262,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -276,7 +284,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+          disabled={!!alertsLoadError}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
         >
           <Plus size={18} />
           Create Alert
@@ -284,71 +293,79 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
       </div>
 
       {/* Current Usage Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {ALERT_TYPES.map((type) => {
-          const Icon = type.icon;
-          const hasAlert = alerts.some((a) => a.type === type.id && a.isActive);
+      {usageLoadError ? (
+        <DegradedState title="Usage data unavailable" description={usageLoadError} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {ALERT_TYPES.map((type) => {
+            const Icon = type.icon;
+            const hasAlert = alerts.some((a) => a.type === type.id && a.isActive);
 
-          // Calculate real usage percentage from usageData
-          let usagePercent = 0;
-          if (usageData) {
-            if (type.id === 'AI_TOKENS') {
-              const used = usageData.tokens?.used || 0;
-              const limit = usageData.tokens?.limit || 1;
-              usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
-            } else if (type.id === 'STORAGE') {
-              const used = usageData.storage?.used_gb || 0;
-              const limit = usageData.storage?.limit_gb || 1;
-              usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
-            } else if (type.id === 'USERS') {
-              const used = usageData.seats?.used || 0;
-              const limit = usageData.seats?.total || 1;
-              usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
-            } else if (type.id === 'TOTAL_SPEND') {
-              const spent = usageData.spend?.current_period || 0;
-              const budget = usageData.spend?.budget || 1;
-              usagePercent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+            // Calculate real usage percentage from usageData
+            let usagePercent = 0;
+            if (usageData) {
+              if (type.id === 'AI_TOKENS') {
+                const used = usageData.tokens?.used || 0;
+                const limit = usageData.tokens?.limit || 1;
+                usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+              } else if (type.id === 'STORAGE') {
+                const used = usageData.storage?.used_gb || 0;
+                const limit = usageData.storage?.limit_gb || 1;
+                usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+              } else if (type.id === 'USERS') {
+                const used = usageData.seats?.used || 0;
+                const limit = usageData.seats?.total || 1;
+                usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+              } else if (type.id === 'TOTAL_SPEND') {
+                const spent = usageData.spend?.current_period || 0;
+                const budget = usageData.spend?.budget || 1;
+                usagePercent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+              }
             }
-          }
 
-          return (
-            <div
-              key={type.id}
-              className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Icon size={16} className="text-slate-500 dark:text-slate-400" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {type.label}
-                  </span>
+            return (
+              <div
+                key={type.id}
+                className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Icon size={16} className="text-slate-500 dark:text-slate-400" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {type.label}
+                    </span>
+                  </div>
+                  {hasAlert && <Bell size={14} className="text-primary-500" />}
                 </div>
-                {hasAlert && <Bell size={14} className="text-violet-500" />}
+                <div className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                  {usageData ? `${usagePercent}%` : '--'}
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
+                  {usageData && (
+                    <div
+                      className={`h-2 rounded-full ${
+                        usagePercent > 80
+                          ? 'bg-rose-500'
+                          : usagePercent > 60
+                            ? 'bg-amber-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                    />
+                  )}
+                </div>
               </div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                {usageData ? `${usagePercent}%` : '--'}
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
-                {usageData && (
-                  <div
-                    className={`h-2 rounded-full ${
-                      usagePercent > 80
-                        ? 'bg-red-500'
-                        : usagePercent > 60
-                          ? 'bg-amber-500'
-                          : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                  />
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Alerts List */}
-      {alerts.length === 0 ? (
+      {alertsLoadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Spending alerts unavailable" description={alertsLoadError} />
+        </div>
+      ) : alerts.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <Bell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
@@ -359,7 +376,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
           </p>
           <button
             onClick={openCreateModal}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+            disabled={!!alertsLoadError}
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
           >
             Create Alert
           </button>
@@ -384,13 +402,13 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     <div
                       className={`p-3 rounded-lg ${
                         alert.isActive
-                          ? 'bg-violet-100 dark:bg-violet-900/30'
+                          ? 'bg-primary-100 dark:bg-primary-900/30'
                           : 'bg-slate-100 dark:bg-navy-700'
                       }`}
                     >
                       <Icon
                         className={
-                          alert.isActive ? 'text-violet-600' : 'text-slate-400 dark:text-slate-500'
+                          alert.isActive ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'
                         }
                         size={20}
                       />
@@ -437,7 +455,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     </button>
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600"
+                      className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -556,7 +574,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         <button
                           type="button"
                           onClick={() => removeEmailField(idx)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -566,7 +584,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                   <button
                     type="button"
                     onClick={addEmailField}
-                    className="text-sm text-violet-600 hover:text-violet-500"
+                    className="text-sm text-primary-600 hover:text-primary-500"
                   >
                     + Add another email
                   </button>
@@ -582,7 +600,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 <button
                   onClick={handleSaveAlert}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {editingAlert ? 'Save Changes' : 'Create Alert'}

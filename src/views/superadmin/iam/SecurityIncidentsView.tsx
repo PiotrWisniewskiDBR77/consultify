@@ -18,11 +18,13 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface SecurityIncident {
   id: string;
@@ -59,6 +61,17 @@ interface IncidentStats {
   };
 }
 
+interface IncidentDataSnapshot {
+  incidents: SecurityIncident[];
+  stats: IncidentStats;
+}
+
+interface IncidentFilters {
+  severity?: string;
+  status?: string;
+  incidentType?: string;
+}
+
 const SEVERITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed'];
 const INCIDENT_TYPES = [
@@ -76,10 +89,167 @@ const INCIDENT_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const asText = (value: unknown, fallback = '') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const parseListValue = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => asText(item).trim()).filter(Boolean);
+  }
+  if (typeof value !== 'string') return [];
+
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => asText(item).trim()).filter(Boolean);
+    }
+  } catch {
+    // Fall back to comma-separated legacy values.
+  }
+
+  return trimmed
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const parseResolvedBy = (value: unknown): SecurityIncident['resolvedBy'] => {
+  let payload = value;
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      return null;
+    }
+  }
+  if (!isRecord(payload)) return null;
+
+  return {
+    id: asText(payload.id),
+    email: asText(payload.email),
+    firstName: asText(payload.firstName ?? payload.first_name),
+    lastName: asText(payload.lastName ?? payload.last_name),
+  };
+};
+
+const normalizeIncident = (value: unknown, index: number): SecurityIncident => {
+  const row = isRecord(value) ? value : {};
+  const detectedAt = asText(row.detectedAt ?? row.detected_at);
+  const createdAt = asText(row.createdAt ?? row.created_at ?? detectedAt);
+  const fallbackId = createdAt || detectedAt || String(index);
+
+  return {
+    id: asText(row.id ?? row.incidentId ?? row.incident_id, `incident-${fallbackId}`),
+    incidentType: asText(row.incidentType ?? row.incident_type, 'other'),
+    severity: asText(row.severity, 'LOW').toUpperCase(),
+    status: asText(row.status, 'open'),
+    description: asText(row.description, 'No description provided'),
+    affectedResources: parseListValue(row.affectedResources ?? row.affected_resources),
+    detectedAt,
+    resolvedAt: asText(row.resolvedAt ?? row.resolved_at) || null,
+    resolutionNotes: asText(row.resolutionNotes ?? row.resolution_notes) || null,
+    createdAt,
+    resolvedBy: parseResolvedBy(row.resolvedBy ?? row.resolved_by),
+  };
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeStats = (value: unknown): IncidentStats => {
+  const payload = getObjectPayload(value);
+  const statsValue = isRecord(payload) ? (payload as Partial<IncidentStats>) : {};
+  return {
+    totalIncidents: safeNumber(statsValue.totalIncidents),
+    byStatus: {
+      open: safeNumber(statsValue.byStatus?.open),
+      inProgress: safeNumber(statsValue.byStatus?.inProgress),
+      resolved: safeNumber(statsValue.byStatus?.resolved),
+      closed: safeNumber(statsValue.byStatus?.closed),
+    },
+    bySeverity: {
+      critical: safeNumber(statsValue.bySeverity?.critical),
+      high: safeNumber(statsValue.bySeverity?.high),
+      medium: safeNumber(statsValue.bySeverity?.medium),
+      low: safeNumber(statsValue.bySeverity?.low),
+    },
+  };
+};
+
+const getCreatedIncidentId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const incident = isRecord(result.incident) ? result.incident : null;
+  return String(
+    result.id ||
+      incident?.id ||
+      data?.id ||
+      (isRecord(data?.incident) ? data.incident.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.incident) ? nestedData.incident.id : '') ||
+      ''
+  );
+};
+
+const formatDateTime = (value: string | null) => {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
 const SecurityIncidentsView: React.FC = () => {
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
   const [stats, setStats] = useState<IncidentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     severity: '',
@@ -99,16 +269,13 @@ const SecurityIncidentsView: React.FC = () => {
     affectedResources: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [filters.severity, filters.status, filters.incidentType]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setError(null);
 
-      const params: any = {};
+      const params: IncidentFilters = {};
       if (filters.severity) params.severity = filters.severity;
       if (filters.status) params.status = filters.status;
       if (filters.incidentType) params.incidentType = filters.incidentType;
@@ -118,20 +285,40 @@ const SecurityIncidentsView: React.FC = () => {
         Api.getSecurityIncidentStats(),
       ]);
 
-      setIncidents(incidentsData);
-      setStats(statsData as any);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load security incidents');
-      toast.error(err.message || 'Failed to load security incidents');
+      if (!hasListShape(incidentsData, ['incidents', 'items'])) {
+        throw new Error('Security incidents response was not a list');
+      }
+      const incidentsSnapshot = getListPayload<unknown>(incidentsData, ['incidents', 'items']).map(
+        normalizeIncident
+      );
+      const statsSnapshot = normalizeStats(statsData);
+      setIncidents(incidentsSnapshot);
+      setStats(statsSnapshot);
+      return {
+        incidents: incidentsSnapshot,
+        stats: statsSnapshot,
+      } satisfies IncidentDataSnapshot;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load security incidents');
+      setLoadError(message);
+      setIncidents([]);
+      setStats(null);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.incidentType, filters.severity, filters.status]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreate = async () => {
     try {
       setSaving(true);
-      await Api.createSecurityIncident({
+      setError(null);
+      const result = await Api.createSecurityIncident({
         incidentType: formData.incidentType,
         severity: formData.severity,
         description: formData.description,
@@ -140,8 +327,15 @@ const SecurityIncidentsView: React.FC = () => {
           .map((r) => r.trim())
           .filter(Boolean),
       });
+      const createdId = getCreatedIncidentId(result);
+      if (!createdId) {
+        throw new Error('Security incident creation response was incomplete');
+      }
+      const refreshed = await loadData();
+      if (!refreshed?.incidents.some((incident) => incident.id === createdId)) {
+        throw new Error('Security incident creation was not confirmed by the server');
+      }
       toast.success('Security incident created successfully');
-      await loadData();
       setShowCreateModal(false);
       setFormData({
         incidentType: 'suspicious_activity',
@@ -149,8 +343,10 @@ const SecurityIncidentsView: React.FC = () => {
         description: '',
         affectedResources: '',
       });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create security incident');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to create security incident');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -159,20 +355,27 @@ const SecurityIncidentsView: React.FC = () => {
   const handleResolve = async (incidentId: string) => {
     try {
       setSaving(true);
+      setError(null);
       await Api.resolveSecurityIncident(incidentId, resolutionNotes);
-      toast.success('Incident resolved successfully');
-      setIncidents((prev) =>
-        prev.map((inc) =>
-          inc.id === incidentId
-            ? { ...inc, status: 'resolved', resolvedAt: new Date().toISOString(), resolutionNotes }
-            : inc
+      const refreshed = await loadData();
+      if (
+        !refreshed ||
+        refreshed.incidents.some(
+          (incident) =>
+            incident.id === incidentId &&
+            incident.status !== 'resolved' &&
+            incident.status !== 'closed'
         )
-      );
+      ) {
+        throw new Error('Security incident resolution was not confirmed by the server');
+      }
+      toast.success('Incident resolved successfully');
       setShowResolveModal(null);
       setResolutionNotes('');
-      loadData(); // Refresh stats
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resolve incident');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to resolve incident');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -181,12 +384,17 @@ const SecurityIncidentsView: React.FC = () => {
   const handleDelete = async (incidentId: string) => {
     if (!confirm('Are you sure you want to delete this incident?')) return;
     try {
+      setError(null);
       await Api.deleteSecurityIncident(incidentId);
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.incidents.some((incident) => incident.id === incidentId)) {
+        throw new Error('Security incident deletion was not confirmed by the server');
+      }
       toast.success('Incident deleted successfully');
-      setIncidents((prev) => prev.filter((inc) => inc.id !== incidentId));
-      loadData(); // Refresh stats
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete incident');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to delete incident');
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -194,14 +402,14 @@ const SecurityIncidentsView: React.FC = () => {
     switch (severity) {
       case 'CRITICAL':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-red-600/20 text-red-400 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-rose-600/20 text-rose-400 rounded text-xs font-medium">
             <AlertCircle className="w-3 h-3" />
             CRITICAL
           </span>
         );
       case 'HIGH':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 text-orange-400 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs font-medium">
             <AlertTriangle className="w-3 h-3" />
             HIGH
           </span>
@@ -226,7 +434,7 @@ const SecurityIncidentsView: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
-        return <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs">Open</span>;
+        return <span className="px-2 py-1 bg-rose-500/10 text-rose-400 rounded text-xs">Open</span>;
       case 'in_progress':
         return (
           <span className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs">
@@ -269,77 +477,81 @@ const SecurityIncidentsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Shield className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Incidents</p>
-              <p className="text-xl font-semibold">{stats?.totalIncidents || 0}</p>
-            </div>
-          </div>
+      {loadError ? (
+        <Card variant="bordered" className="p-6">
+          <DegradedState title="Security incidents unavailable" description={loadError} />
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <Shield className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Total Incidents</p>
+                <p className="text-xl font-semibold">{stats?.totalIncidents || 0}</p>
+              </div>
+            </div>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-500/10 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Open</p>
+                <p className="text-xl font-semibold">{stats?.byStatus.open || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Open</p>
-              <p className="text-xl font-semibold">{stats?.byStatus.open || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-600/10 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-600/10 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
+                <p className="text-xl font-semibold">{stats?.bySeverity.critical || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
-              <p className="text-xl font-semibold">{stats?.bySeverity.critical || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500/10 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
+                <p className="text-xl font-semibold">{stats?.bySeverity.high || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
-              <p className="text-xl font-semibold">{stats?.bySeverity.high || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Resolved</p>
+                <p className="text-xl font-semibold">{stats?.byStatus.resolved || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Resolved</p>
-              <p className="text-xl font-semibold">{stats?.byStatus.resolved || 0}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
+          <div role="alert" className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
               Dismiss
             </button>
           </div>
@@ -352,6 +564,7 @@ const SecurityIncidentsView: React.FC = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
+            disabled={!!loadError}
             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
               showFilters
                 ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
@@ -371,7 +584,8 @@ const SecurityIncidentsView: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+            disabled={!!loadError}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-rose-500 hover:bg-rose-600 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Report Incident
@@ -390,6 +604,7 @@ const SecurityIncidentsView: React.FC = () => {
               <select
                 value={filters.severity}
                 onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Severities</option>
@@ -407,6 +622,7 @@ const SecurityIncidentsView: React.FC = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Statuses</option>
@@ -424,6 +640,7 @@ const SecurityIncidentsView: React.FC = () => {
               <select
                 value={filters.incidentType}
                 onChange={(e) => setFilters({ ...filters, incidentType: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Types</option>
@@ -440,92 +657,101 @@ const SecurityIncidentsView: React.FC = () => {
 
       {/* Incidents Table */}
       <CardWithHeader title="Incidents" subtitle={`${incidents.length} incidents`}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Type
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Severity
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Detected
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {incidents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                    No security incidents found
-                  </td>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Security incident list unavailable" description={loadError} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Type
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Description
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Severity
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Detected
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                incidents.map((incident) => (
-                  <tr
-                    key={incident.id}
-                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
-                        {getIncidentTypeLabel(incident.incidentType)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="text-sm max-w-xs truncate">{incident.description}</p>
-                    </td>
-                    <td className="py-3 px-4">{getSeverityBadge(incident.severity)}</td>
-                    <td className="py-3 px-4">{getStatusBadge(incident.status)}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1 text-sm text-slate-300">
-                        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                        {new Date(incident.detectedAt).toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setShowDetailModal(incident)}
-                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {incident.status !== 'resolved' && incident.status !== 'closed' && (
-                          <button
-                            onClick={() => setShowResolveModal(incident.id)}
-                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                            title="Resolve"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(incident.id)}
-                          className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {incidents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
+                      No security incidents found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  incidents.map((incident) => (
+                    <tr
+                      key={incident.id}
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
+                          {getIncidentTypeLabel(incident.incidentType)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="text-sm max-w-xs truncate">{incident.description}</p>
+                      </td>
+                      <td className="py-3 px-4">{getSeverityBadge(incident.severity)}</td>
+                      <td className="py-3 px-4">{getStatusBadge(incident.status)}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1 text-sm text-slate-300">
+                          <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
+                          {formatDateTime(incident.detectedAt)}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setShowDetailModal(incident)}
+                            aria-label={`View incident ${incident.id}`}
+                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {incident.status !== 'resolved' && incident.status !== 'closed' && (
+                            <button
+                              onClick={() => setShowResolveModal(incident.id)}
+                              aria-label={`Resolve incident ${incident.id}`}
+                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                              title="Resolve"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(incident.id)}
+                            aria-label={`Delete incident ${incident.id}`}
+                            className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardWithHeader>
 
       {/* Create Incident Modal */}
@@ -608,7 +834,7 @@ const SecurityIncidentsView: React.FC = () => {
               <button
                 onClick={handleCreate}
                 disabled={saving || !formData.description}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-red-500 hover:bg-red-600 rounded-lg disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-rose-500 hover:bg-rose-600 rounded-lg disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -691,7 +917,7 @@ const SecurityIncidentsView: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-slate-400 dark:text-slate-500">Detected At</p>
-                  <p>{new Date(showDetailModal.detectedAt).toLocaleString()}</p>
+                  <p>{formatDateTime(showDetailModal.detectedAt)}</p>
                 </div>
               </div>
               <div>
@@ -717,7 +943,7 @@ const SecurityIncidentsView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
                   <div>
                     <p className="text-sm text-slate-400 dark:text-slate-500">Resolved At</p>
-                    <p>{new Date(showDetailModal.resolvedAt).toLocaleString()}</p>
+                    <p>{formatDateTime(showDetailModal.resolvedAt)}</p>
                   </div>
                   {showDetailModal.resolvedBy && (
                     <div>

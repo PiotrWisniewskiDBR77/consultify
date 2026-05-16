@@ -128,8 +128,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/20 rounded-full mb-4">
+              <AlertTriangle className="w-8 h-8 text-rose-600 dark:text-rose-400" />
             </div>
 
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2">
@@ -142,7 +142,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
             {this.state.error && (
               <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm font-mono text-red-600 dark:text-red-400 mb-2">
+                <p className="text-sm font-mono text-rose-600 dark:text-rose-400 mb-2">
                   {this.state.error.toString()}
                 </p>
                 {this.state.errorInfo && (

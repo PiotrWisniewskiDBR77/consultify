@@ -135,7 +135,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           )}
           rows={4}
           maxLength={500}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none resize-none"
         />
         <p className="text-xs text-slate-400 dark:text-slate-500">
           {bio.length}/500 {t('common.characters', 'characters')}
@@ -153,7 +153,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
         <select
           value={pronouns}
           onChange={(e) => setPronouns(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         >
           <option value="">{t('settings.profile.bio.selectPronouns', 'Select pronouns')}</option>
           {PRONOUN_OPTIONS.map((option) => (
@@ -177,7 +177,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           type="date"
           value={birthday}
           onChange={(e) => setBirthday(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
       </div>
 
@@ -195,7 +195,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder={t('settings.profile.bio.locationPlaceholder', 'e.g., Warsaw, Poland')}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
       </div>
 
@@ -220,11 +220,11 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
               }
             }}
             placeholder={t('settings.profile.bio.skillPlaceholder', 'Add a skill...')}
-            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
           />
           <button
             onClick={handleAddSkill}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
           >
             <Plus size={16} />
             {t('common.add', 'Add')}
@@ -235,12 +235,12 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
             {skills.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-full text-sm"
               >
                 {skill}
                 <button
                   onClick={() => handleRemoveSkill(skill)}
-                  className="hover:text-purple-900 dark:hover:text-purple-100"
+                  className="hover:text-primary-900 dark:hover:text-primary-100"
                 >
                   <X size={14} />
                 </button>
@@ -255,7 +255,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -279,7 +279,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.profile.bio.error', 'Failed to update bio')}
         </div>

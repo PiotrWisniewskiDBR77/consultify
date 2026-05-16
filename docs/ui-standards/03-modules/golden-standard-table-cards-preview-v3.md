@@ -16,10 +16,11 @@ Ten ekran jest **kanoniczną** implementacją standardu “Table + Preview (Outl
 ### 0.1 Main topbar row (MUST)
 
 - **Lewa strona**: search toggle + główne tabs modułu.
-- **Prawa strona (kolejność zawsze taka sama)**: **AI → Primary CTA → Tools → View tool → Filters**.
+- **Prawa strona (kolejność wizualnie od prawej)**: **Area → Primary CTA → Tools → View tool → Filters**.
   - Primary CTA i Tools mogą być warunkowe (np. zależne od zakładki), ale kolejność i “rytm” pozostają stałe.
+  - Funkcjonalne AI actions nie należą do tego klastra; trafiają do prawej strony `Menu 3` zgodnie z Golden Standard.
   - **Right anchoring (MUST)**: prawy klaster (CTA/View/Filters) jest **dociśnięty do prawej krawędzi** (brak “pływania” w środku).  
-    Jeśli na prawym klastrze jest kilka elementów, to **View tool** i **Primary CTA (Add/Assign/New)** muszą wizualnie siedzieć “przy prawym rancie” (nie mogą być odsunięte przez AI po lewej).
+    Jeśli na prawym klastrze jest kilka elementów, to **View tool** i **Primary CTA (Add/Assign/New)** muszą wizualnie siedzieć “przy prawym rancie” i nie mogą być odsunięte przez lokalne AI buttons.
 
 ### 0.2 Command Row (MUST)
 
@@ -154,7 +155,8 @@ Ta lista to “procedura kontroli jakości” — przechodzimy ją zawsze, gdy d
 - **Wszystkie przyciski** w UI są “pill”: \(h=9\), `rounded-full`.
 - **Poziom A (Outline + Surface / Primary CTA)**:
   - **ma border** + neutralne tło (`bg-white/70 ... border-slate-200/70 ...`)
-  - dla 1 głównego CTA dopuszczalny kolor pełny/gradient (ale nadal pill)
+  - dla 1 głównego CTA dopuszczalny jest kolor pełny, ale operational chrome nie używa gradientu
+  - w Module Topbar primary CTA nie używa leading `+`
   - hover = tylko przesunięcie tła / brightness (bez “skakania” borderów)
 - **Poziom B (Soft / helper)**:
   - bez mocnej ramki; “soft surface” (delikatne tło), nadal pill

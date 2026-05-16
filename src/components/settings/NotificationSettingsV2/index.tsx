@@ -140,7 +140,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
 
     if (error) {
       return (
-        <div className="flex items-center justify-center py-12 text-red-500">
+        <div className="flex items-center justify-center py-12 text-rose-500">
           <AlertCircle className="w-5 h-5 mr-2" />
           {error}
         </div>
@@ -304,7 +304,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
           className={`p-3 rounded-lg flex items-center gap-2 ${
             saveMessage.type === 'success'
               ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-              : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+              : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
           }`}
         >
           {saveMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}

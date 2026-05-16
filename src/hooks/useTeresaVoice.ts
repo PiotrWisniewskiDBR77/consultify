@@ -21,6 +21,7 @@ export type TeresaVoiceStatus = 'idle' | 'connecting' | 'live' | 'error';
 export interface UseTeresaVoiceOptions {
   apiKey?: string | null;
   voiceName?: string;
+  unavailableReason?: string | null;
   language: string;
   systemInstruction: string;
   enabled: boolean;
@@ -33,6 +34,7 @@ export interface UseTeresaVoiceReturn {
   voiceStatus: TeresaVoiceStatus;
   voiceError: string | null;
   voiceAvailable: boolean;
+  voiceUnavailableReason: string | null;
   isMuted: boolean;
   toggleMute: () => void;
   startVoiceConversation: () => Promise<void>;
@@ -44,6 +46,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const {
     apiKey,
     voiceName = TERESA_VOICE_CONFIG.defaultVoiceName,
+    unavailableReason,
     systemInstruction,
     enabled,
     onTranscriptUpdate,
@@ -51,14 +54,12 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     onStatusChange,
   } = options;
 
+  const effectiveKey = apiKey || null;
+
   const [voiceStatus, setVoiceStatus] = useState<TeresaVoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [resolvedApiKey, setResolvedApiKey] = useState<string | null>(apiKey || null);
-  const [resolvedVoiceName, setResolvedVoiceName] = useState<string>(
-    voiceName || TERESA_VOICE_CONFIG.defaultVoiceName
-  );
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -81,83 +82,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let cancelled = false;
-
-    const applyVoiceConfig = (config: {
-      apiKey: string | null;
-      voiceName?: string | null;
-      enabled?: boolean;
-    }) => {
-      if (cancelled) return;
-
-      const nextApiKey = config.apiKey;
-      const nextVoiceName =
-        String(config.voiceName || '').trim() || voiceName || TERESA_VOICE_CONFIG.defaultVoiceName;
-      const browserWindow = window as BrowserWindow;
-      const hasAudioContext = !!(window.AudioContext || browserWindow.webkitAudioContext);
-      const hasGetUserMedia = !!navigator.mediaDevices?.getUserMedia;
-
-      setResolvedApiKey(nextApiKey);
-      setResolvedVoiceName(nextVoiceName);
-      setVoiceAvailable(
-        Boolean(
-          enabled && nextApiKey && config.enabled !== false && hasAudioContext && hasGetUserMedia
-        )
-      );
-    };
-
-    if (apiKey) {
-      applyVoiceConfig({ apiKey, voiceName, enabled: true });
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    fetch('/api/v10/teresa/voice-config', { credentials: 'include' })
-      .then(async (response) => {
-        if (!response.ok) {
-          return {
-            apiKey: null,
-            voiceName: voiceName || TERESA_VOICE_CONFIG.defaultVoiceName,
-            enabled: false,
-          };
-        }
-
-        const payload = await response.json();
-        const data = payload?.data ?? payload;
-        return {
-          apiKey:
-            typeof data?.apiKey === 'string' && data.apiKey.trim() ? data.apiKey.trim() : null,
-          voiceName:
-            typeof data?.voiceName === 'string' && data.voiceName.trim()
-              ? data.voiceName.trim()
-              : voiceName || TERESA_VOICE_CONFIG.defaultVoiceName,
-          enabled: data?.enabled !== false,
-        };
-      })
-      .then((config) => applyVoiceConfig(config))
-      .catch(() => {
-        applyVoiceConfig({
-          apiKey: null,
-          voiceName: voiceName || TERESA_VOICE_CONFIG.defaultVoiceName,
-          enabled: false,
-        });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiKey, enabled, voiceName]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
     const browserWindow = window as BrowserWindow;
     const hasAudioContext = !!(window.AudioContext || browserWindow.webkitAudioContext);
     const hasGetUserMedia = !!navigator.mediaDevices?.getUserMedia;
-    setVoiceAvailable(Boolean(enabled && hasAudioContext && hasGetUserMedia && resolvedApiKey));
-  }, [enabled, resolvedApiKey]);
+    setVoiceAvailable(Boolean(enabled && hasAudioContext && hasGetUserMedia && effectiveKey));
+  }, [effectiveKey, enabled]);
 
   const teardownVoice = useCallback(async () => {
     processorRef.current?.disconnect();
@@ -208,12 +137,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     const token = attemptRef.current + 1;
     attemptRef.current = token;
 
-    setVoiceError(null);
-
-    if (!voiceAvailable || !resolvedApiKey || typeof window === 'undefined') {
+    if (!voiceAvailable || !effectiveKey || typeof window === 'undefined') {
       updateStatus('error');
       setVoiceError(
-        'Voice unavailable — check microphone permissions, or ensure the server has GEMINI_API_KEY configured.'
+        unavailableReason ||
+          'Voice unavailable — check microphone permissions and server-side voice configuration.'
       );
       return;
     }
@@ -229,7 +157,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     try {
       if (!AudioContextCtor) throw new Error('AudioContext unavailable');
 
-      const ai = new GoogleGenAI({ apiKey: resolvedApiKey });
+      const ai = new GoogleGenAI({ apiKey: effectiveKey });
       const audioContext = new AudioContextCtor({
         sampleRate: TERESA_VOICE_CONFIG.sampleRateInput,
       });
@@ -256,7 +184,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: resolvedVoiceName },
+              prebuiltVoiceConfig: { voiceName },
             },
           },
           systemInstruction,
@@ -387,10 +315,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
       await teardownVoice();
     }
   }, [
-    resolvedApiKey,
-    resolvedVoiceName,
+    effectiveKey,
     voiceAvailable,
+    voiceName,
     systemInstruction,
+    unavailableReason,
     teardownVoice,
     updateStatus,
   ]);
@@ -435,6 +364,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     voiceStatus,
     voiceError,
     voiceAvailable,
+    voiceUnavailableReason: unavailableReason || null,
     isMuted,
     toggleMute,
     startVoiceConversation,

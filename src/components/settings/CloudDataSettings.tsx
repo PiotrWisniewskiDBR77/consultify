@@ -11,6 +11,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 
 interface CloudSource {
   id: string;
@@ -43,13 +45,35 @@ export const CloudDataSettings: React.FC = () => {
   const [newProvider, setNewProvider] = useState('google_drive');
   const [newName, setNewName] = useState('');
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const fetchSources = useCallback(async () => {
+  const normalizeSources = (rows: unknown): CloudSource[] =>
+    Array.isArray(rows)
+      ? rows
+          .map((source) => ({
+            id: String(source?.id || ''),
+            provider: String(source?.provider || ''),
+            name: String(source?.name || ''),
+            status: String(source?.status || 'unknown'),
+            lastSyncAt: source?.lastSyncAt,
+            createdAt: String(source?.createdAt || ''),
+          }))
+          .filter((source) => source.id)
+      : [];
+
+  const fetchSources = useCallback(async (): Promise<CloudSource[] | null> => {
     try {
+      setLoadError(null);
       const data = await Api.get('/api/cloud/sources');
-      setSources(data?.sources || []);
-    } catch {
-      // best-effort
+      const nextSources = normalizeSources(data?.sources);
+      setSources(nextSources);
+      return nextSources;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load cloud sources');
+      setLoadError(message);
+      setSources([]);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -62,24 +86,44 @@ export const CloudDataSettings: React.FC = () => {
   const handleAdd = async () => {
     if (!newName.trim()) return;
     try {
+      setActionError(null);
+      const expected = { provider: newProvider, name: newName.trim() };
       await Api.post('/api/cloud/sources', { provider: newProvider, name: newName.trim() });
+      const refreshed = await fetchSources();
+      if (
+        !refreshed?.some(
+          (source) => source.provider === expected.provider && source.name === expected.name
+        )
+      ) {
+        throw new Error('Cloud source connection was not confirmed by the server');
+      }
       toast.success(t('cloud.sourceConnected', 'Cloud source connected'));
       setShowAddForm(false);
       setNewName('');
-      fetchSources();
-    } catch {
-      toast.error(t('cloud.connectFailed', 'Failed to connect cloud source'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('cloud.connectFailed', 'Failed to connect cloud source')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleSync = async (id: string) => {
     setSyncingId(id);
     try {
+      setActionError(null);
       const data = await Api.post(`/api/cloud/sources/${id}/sync`, {});
+      const refreshed = await fetchSources();
+      if (!refreshed?.some((source) => source.id === id)) {
+        throw new Error('Cloud source sync was not confirmed by the server');
+      }
       toast.success(t('cloud.syncComplete', `Synced ${data?.filesSynced || 0} files`));
-      fetchSources();
-    } catch {
-      toast.error(t('cloud.syncFailed', 'Sync failed'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, t('cloud.syncFailed', 'Sync failed'));
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSyncingId(null);
     }
@@ -95,11 +139,20 @@ export const CloudDataSettings: React.FC = () => {
     if (!confirmed) return;
 
     try {
+      setActionError(null);
       await Api.delete(`/api/cloud/sources/${id}`);
+      const refreshed = await fetchSources();
+      if (!refreshed || refreshed.some((source) => source.id === id)) {
+        throw new Error('Cloud source disconnection was not confirmed by the server');
+      }
       toast.success(t('cloud.sourceDisconnected', 'Cloud source disconnected'));
-      fetchSources();
-    } catch {
-      toast.error(t('cloud.disconnectFailed', 'Failed to disconnect'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('cloud.disconnectFailed', 'Failed to disconnect')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -114,6 +167,9 @@ export const CloudDataSettings: React.FC = () => {
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const getProviderLabel = (provider: string) =>
+    t(`cloud.providers.${provider}`, PROVIDER_LABELS[provider] || provider);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -125,6 +181,7 @@ export const CloudDataSettings: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
+          disabled={!!loadError}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
         >
           <Plus size={14} />
@@ -136,7 +193,18 @@ export const CloudDataSettings: React.FC = () => {
         {t('cloud.description', 'Connect cloud storage to import documents for AI analysis.')}
       </p>
 
-      {showAddForm && (
+      {loadError && <DegradedState title="Cloud sources unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
+      {showAddForm && !loadError && (
         <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 space-y-3">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -147,9 +215,9 @@ export const CloudDataSettings: React.FC = () => {
               onChange={(e) => setNewProvider(e.target.value)}
               className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg"
             >
-              {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
+              {Object.keys(PROVIDER_LABELS).map((key) => (
                 <option key={key} value={key}>
-                  {PROVIDER_ICONS[key]} {label}
+                  {PROVIDER_ICONS[key]} {getProviderLabel(key)}
                 </option>
               ))}
             </select>
@@ -186,7 +254,7 @@ export const CloudDataSettings: React.FC = () => {
 
       {loading ? (
         <div className="text-center py-8 text-slate-400">{t('common.loading', 'Loading...')}</div>
-      ) : sources.length === 0 ? (
+      ) : sources.length === 0 && !loadError ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">
           <Cloud size={32} className="mx-auto mb-2 opacity-50" />
           <p className="text-sm">{t('cloud.noSources', 'No cloud sources connected yet.')}</p>
@@ -205,13 +273,13 @@ export const CloudDataSettings: React.FC = () => {
                     {source.name}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {PROVIDER_LABELS[source.provider] || source.provider} ·{' '}
+                    {getProviderLabel(source.provider)} ·{' '}
                     <span
                       className={
                         source.status === 'active'
                           ? 'text-green-500'
                           : source.status === 'error'
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : 'text-slate-400'
                       }
                     >
@@ -238,7 +306,7 @@ export const CloudDataSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleDelete(source.id)}
-                  className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                   title={t('cloud.disconnect', 'Disconnect')}
                 >
                   <Trash2 size={14} />

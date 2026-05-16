@@ -54,7 +54,7 @@ function TierBadge({ tier, isPl }: { tier?: string; isPl: boolean }) {
 
   if (tier === 'review_required') {
     return (
-      <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-orange-100 px-1 py-0.5 text-[9px] font-semibold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">
+      <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
         <AlertTriangle size={9} />
         {isPl ? 'do weryfikacji' : 'review'}
       </span>
@@ -180,7 +180,7 @@ function SearchableSelect({
                   }}
                   className={`w-full px-3 py-2 text-left text-xs transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
                     opt.id === value
-                      ? 'bg-cyan-50/60 text-cyan-700 font-medium dark:bg-cyan-500/10 dark:text-cyan-300'
+                      ? 'bg-blue-50/60 text-blue-700 font-medium dark:bg-blue-500/10 dark:text-blue-300'
                       : 'text-slate-700 dark:text-slate-200'
                   }`}
                 >
@@ -240,7 +240,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
             </span>
           )}
           {reviewCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               <AlertTriangle size={10} />
               {reviewCount} {isPl ? 'do weryfikacji' : 'to review'}
             </span>
@@ -282,7 +282,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                 key={`${value.originalLabel}-${value.sourceRow || idx}`}
                 className={`group transition-colors hover:bg-slate-50/60 dark:hover:bg-white/[0.03] ${
                   value.mappingTier === 'review_required'
-                    ? 'bg-orange-50/30 dark:bg-orange-500/[0.04]'
+                    ? 'bg-amber-50/30 dark:bg-amber-500/[0.04]'
                     : !value.canonicalLineId
                       ? 'bg-amber-50/20 dark:bg-amber-500/[0.03]'
                       : ''
@@ -314,14 +314,14 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                         if (e.key === 'Escape') setEditingIdx(null);
                       }}
                       autoFocus
-                      className="w-28 rounded-lg border border-cyan-400 bg-white px-2 py-1 text-right font-mono text-xs text-slate-900 shadow-sm outline-none ring-2 ring-cyan-100 dark:border-cyan-500/40 dark:bg-navy-800 dark:text-white dark:ring-cyan-500/10"
+                      className="w-28 rounded-lg border border-blue-400 bg-white px-2 py-1 text-right font-mono text-xs text-slate-900 shadow-sm outline-none ring-2 ring-blue-100 dark:border-blue-500/40 dark:bg-navy-800 dark:text-white dark:ring-blue-500/10"
                       aria-label={`${value.originalLabel} value`}
                     />
                   ) : (
                     <button
                       type="button"
                       onClick={() => setEditingIdx(idx)}
-                      className="cursor-pointer font-mono text-xs tabular-nums text-slate-800 transition-colors hover:text-cyan-600 dark:text-slate-200 dark:hover:text-cyan-400"
+                      className="cursor-pointer font-mono text-xs tabular-nums text-slate-800 transition-colors hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400"
                       aria-label={`Edit ${value.originalLabel} value`}
                     >
                       {fmtNumber.format(value.value)}

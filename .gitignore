@@ -68,6 +68,9 @@ junit.xml
 junit-*.xml
 reports/junit*.xml
 
+# Local one-off migration reports (can include PII)
+server/role-migration-*.json
+
 # Garbage / Backup files
 node_modules_trash
 trash_node_modules_*
@@ -97,6 +100,7 @@ verification_results.txt
 lint_report.txt
 unit-results.json
 component-results.json
+vitest.out
 *_keys.txt
 
 # Auto-fix marker
@@ -187,9 +191,14 @@ coverage/.tmp
 
 # Export artifacts
 server/exports/
+/exports/
 
 # Local backups
 _backup/
+/backups/
+/data/
+/tests/
+# dist/ already ignored above
 
 # Personal tooling
 Piotr_Tools/
@@ -257,3 +266,6 @@ knowledge/**/*.docx
 
 # Duplicate lib artifacts
 /lib/
+
+# Local IDE/sync backup folder (auto-managed, never tracked)
+.drive-sync-backup/

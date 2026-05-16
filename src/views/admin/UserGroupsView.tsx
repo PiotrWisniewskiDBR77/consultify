@@ -22,20 +22,18 @@ import {
   Edit,
   FolderKanban,
   Info,
-  Palette,
   Plus,
   RefreshCw,
   Search,
-  Shield,
   Trash2,
   Users,
   UsersRound,
-  X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -45,9 +43,9 @@ import { GroupPermission, User, UserGroup } from '../../types';
 const GROUP_COLORS = [
   {
     id: 'violet',
-    bg: 'bg-violet-500',
-    text: 'text-violet-500',
-    light: 'bg-violet-100 dark:bg-violet-900/30',
+    bg: 'bg-primary-500',
+    text: 'text-primary-500',
+    light: 'bg-primary-100 dark:bg-primary-900/30',
   },
   {
     id: 'blue',
@@ -75,15 +73,15 @@ const GROUP_COLORS = [
   },
   {
     id: 'cyan',
-    bg: 'bg-cyan-500',
-    text: 'text-cyan-500',
-    light: 'bg-cyan-100 dark:bg-cyan-900/30',
+    bg: 'bg-blue-500',
+    text: 'text-blue-500',
+    light: 'bg-blue-100 dark:bg-blue-900/30',
   },
   {
     id: 'orange',
-    bg: 'bg-orange-500',
-    text: 'text-orange-500',
-    light: 'bg-orange-100 dark:bg-orange-900/30',
+    bg: 'bg-amber-500',
+    text: 'text-amber-500',
+    light: 'bg-amber-100 dark:bg-amber-900/30',
   },
   {
     id: 'indigo',
@@ -119,6 +117,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -145,25 +144,27 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
   const loadData = async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       // Load teams from correct endpoint
       const teamsRes = await fetch('/api/teams', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (teamsRes.ok) {
-        const data = await teamsRes.json();
-        // Transform teams data to groups format
-        const transformedGroups = data.map((team: any) => ({
-          id: team.id,
-          name: team.name,
-          description: team.description,
-          color: team.color || 'violet',
-          leaderId: team.leadId,
-          memberIds: team.members?.map((m: any) => m.userId || m.user?.id) || [],
-          permissions: team.permissions || [],
-          createdAt: team.createdAt,
-        }));
-        setGroups(transformedGroups);
+      if (!teamsRes.ok) {
+        throw new Error(`HTTP ${teamsRes.status}`);
       }
+      const data = await teamsRes.json();
+      // Transform teams data to groups format
+      const transformedGroups = data.map((team: any) => ({
+        id: team.id,
+        name: team.name,
+        description: team.description,
+        color: team.color || 'violet',
+        leaderId: team.leadId,
+        memberIds: team.members?.map((m: any) => m.userId || m.user?.id) || [],
+        permissions: team.permissions || [],
+        createdAt: team.createdAt,
+      }));
+      setGroups(transformedGroups);
 
       // Load users for member selection
       const usersData = await Api.getUsers();
@@ -174,6 +175,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
       // Set empty state instead of mock data
       setGroups([]);
       setUsers([]);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load teams');
     }
     setLoading(false);
   };
@@ -288,13 +290,14 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
     try {
       if (isMember) {
         // Remove member
-        await fetch(`/api/teams/${selectedGroupForMembers.id}/members/${userId}`, {
+        const res = await fetch(`/api/teams/${selectedGroupForMembers.id}/members/${userId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       } else {
         // Add member
-        await fetch(`/api/teams/${selectedGroupForMembers.id}/members`, {
+        const res = await fetch(`/api/teams/${selectedGroupForMembers.id}/members`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -302,10 +305,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           },
           body: JSON.stringify({ userId, role: 'member' }),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
       console.error('Failed to update team member:', error);
-      // Continue with local update
+      toast.error('Failed to update team member');
+      return;
     }
 
     // Update local state
@@ -361,18 +366,6 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
     return GROUP_COLORS.find((c) => c.id === colorId) || GROUP_COLORS[0];
   };
 
-  const getMemberNames = (memberIds: string[]) => {
-    return (
-      memberIds
-        .map((id: string) => {
-          const user = users.find((u) => u.id === id);
-          return user ? `${user.firstName} ${user.lastName}` : 'Unknown';
-        })
-        .slice(0, 3)
-        .join(', ') + (memberIds.length > 3 ? ` +${memberIds.length - 3} more` : '')
-    );
-  };
-
   const filteredGroups = groups.filter(
     (g: any) =>
       g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -382,7 +375,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -404,12 +397,15 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+          disabled={!!loadError}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
         >
           <Plus size={18} />
           Create Team
         </button>
       </div>
+
+      {loadError && <DegradedState title="Teams unavailable" description={loadError} />}
 
       {/* Info Banner - How teams work */}
       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
@@ -438,12 +434,17 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search teams..."
+          disabled={!!loadError}
           className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
         />
       </div>
 
       {/* Teams List */}
-      {filteredGroups.length === 0 ? (
+      {loadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Team list unavailable" description={loadError} />
+        </div>
+      ) : filteredGroups.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <UsersRound className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Teams</h3>
@@ -452,7 +453,8 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           </p>
           <button
             onClick={openCreateModal}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+            disabled={!!loadError}
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
           >
             Create Team
           </button>
@@ -523,7 +525,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       </button>
                       <button
                         onClick={() => handleDeleteGroup(group.id)}
-                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600"
+                        className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
                         title="Delete group"
                       >
                         <Trash2 size={18} />
@@ -596,7 +598,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                               group.permissions?.map((perm, idx: number) => (
                                 <span
                                   key={idx}
-                                  className="px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs rounded"
+                                  className="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded"
                                 >
                                   {perm.resource}: {perm.actions.join(', ')}
                                 </span>
@@ -763,7 +765,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                   onClick={() => togglePermission(resource.id, action)}
                                   className={`w-6 h-6 rounded ${
                                     hasPermission(resource.id, action)
-                                      ? 'bg-violet-600 text-white'
+                                      ? 'bg-primary-600 text-white'
                                       : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
                                   }`}
                                 >
@@ -790,7 +792,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 <button
                   onClick={handleSaveGroup}
                   disabled={saving || !formData.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {editingGroup ? 'Save Changes' : 'Create Team'}
@@ -834,7 +836,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                         onClick={() => toggleMember(user.id)}
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
                           isMember
-                            ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                            ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
                             : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
                         }`}
                       >
@@ -857,7 +859,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                         <div
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                             isMember
-                              ? 'bg-violet-600 border-violet-600'
+                              ? 'bg-primary-600 border-primary-600'
                               : 'border-slate-300 dark:border-navy-600'
                           }`}
                         >
@@ -871,7 +873,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
               <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end">
                 <button
                   onClick={() => setShowMembersModal(false)}
-                  className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
                 >
                   Done
                 </button>

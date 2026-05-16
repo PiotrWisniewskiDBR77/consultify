@@ -731,15 +731,14 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       if (firstStatementId) {
         try {
           const ratiosData = await V8FinanceApi.getStatementRatios(String(firstStatementId));
-          const ratioSummary = ratiosData?.ratios;
-          const coverage = ratioSummary?.coverageSummary;
+          const ratioResult = ratiosData?.ratios;
           setStatementPreviewRatios(
-            ratioSummary
+            ratioResult
               ? {
-                  coveragePct: Number(coverage?.coveragePct ?? 0),
-                  computed: Number(coverage?.computed ?? 0),
-                  total: Number(coverage?.total ?? ratioSummary.ratios.length ?? 0),
-                  topRatios: (ratioSummary.ratios ?? []).slice(0, 5).map((ratio) => ({
+                  coveragePct: ratioResult.coverageSummary?.coveragePct ?? 0,
+                  computed: ratioResult.coverageSummary?.computed ?? ratioResult.ratios.length,
+                  total: ratioResult.coverageSummary?.total ?? ratioResult.ratios.length,
+                  topRatios: ratioResult.ratios.slice(0, 4).map((ratio) => ({
                     code: ratio.code,
                     name: ratio.name,
                     value: ratio.value ?? null,

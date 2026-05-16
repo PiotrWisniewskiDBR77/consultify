@@ -86,7 +86,7 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <Activity className="w-8 h-8 text-purple-500" />
+        <Activity className="w-8 h-8 text-primary-500" />
         External Digital Assessments
       </h2>
 
@@ -137,8 +137,8 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
           {...getRootProps()}
           className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
             isDragActive
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+              : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
           }`}
         >
           <input {...getInputProps()} />
@@ -170,7 +170,7 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-10 h-10 text-purple-500" />
+                    <FileText className="w-10 h-10 text-primary-500" />
                     <div>
                       <h4 className="font-semibold">
                         {assessment.framework_type} {assessment.framework_version}
@@ -200,7 +200,7 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
                       </div>
                     )}
                     {assessment.processing_status === 'error' && (
-                      <AlertTriangle className="w-6 h-6 text-red-500" />
+                      <AlertTriangle className="w-6 h-6 text-rose-500" />
                     )}
                   </div>
                 </div>

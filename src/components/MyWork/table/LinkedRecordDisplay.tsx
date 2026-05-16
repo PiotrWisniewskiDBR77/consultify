@@ -41,9 +41,9 @@ const CHIP_COLORS = [
     hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/40',
   },
   {
-    bg: 'bg-violet-50 dark:bg-violet-900/25',
-    text: 'text-violet-700 dark:text-violet-300',
-    hover: 'hover:bg-violet-100 dark:hover:bg-violet-900/40',
+    bg: 'bg-primary-50 dark:bg-primary-900/25',
+    text: 'text-primary-700 dark:text-primary-300',
+    hover: 'hover:bg-primary-100 dark:hover:bg-primary-900/40',
   },
   {
     bg: 'bg-emerald-50 dark:bg-emerald-900/25',

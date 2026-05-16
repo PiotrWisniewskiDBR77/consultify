@@ -132,5 +132,53 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-function-type': 'warn',
       '@typescript-eslint/no-require-imports': 'warn',
     },
+  },
+  {
+    // Stage 8 (Source Of Truth: ORGANIZATION_CONTEXT_ENGINE_SOURCE_OF_TRUTH.md §11):
+    // Frontend AI surfaces MUST go through the shared organization context engine, not
+    // ad-hoc browser-only ingestion (FileReader, direct DOMParser of uploaded files,
+    // raw pdfjs/mammoth/xlsx imports). The shared backend engine enforces tenant ACL,
+    // honest degraded UI, lineage, quotas and retention. Bypassing it is a P0 hazard.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/components/Document/**', 'src/services/api.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: 'pdfjs-dist',
+              message:
+                'Frontend ingestion of PDFs is forbidden. Upload files via the documents API and let the backend Organization Context Engine extract page locators (tenant-safe, lineage-aware).',
+            },
+            {
+              name: 'mammoth',
+              message:
+                'Frontend ingestion of DOCX is forbidden. Upload via documents API; the backend Organization Context Engine extracts paragraph/table locators with ACL.',
+            },
+            {
+              name: 'xlsx',
+              message:
+                'Frontend ingestion of XLSX is forbidden. Upload via documents API; the backend extracts sheet locators with quotas and lineage.',
+            },
+            {
+              name: 'tesseract.js',
+              message:
+                'Frontend OCR is forbidden. Upload images via documents API; the backend Organization Context Engine handles OCR with confidence scores, prompt-injection treatment and cost metering.',
+            },
+            {
+              name: 'jszip',
+              message:
+                'Frontend zip parsing of context files (PPTX/DOCX) is forbidden. Use the documents API and the shared engine.',
+            },
+            {
+              name: 'pdf-parse',
+              message:
+                'Frontend PDF parsing is forbidden. Use the documents API and the shared backend engine.',
+            },
+          ],
+        },
+      ],
+    },
   }
 );

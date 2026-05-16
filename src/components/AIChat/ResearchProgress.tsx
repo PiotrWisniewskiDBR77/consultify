@@ -98,7 +98,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
     ),
     searching: <Loader2 size={16} className="animate-spin text-primary-500" />,
     done: <CheckCircle2 size={16} className="text-green-500" />,
-    error: <XCircle size={16} className="text-red-500" />,
+    error: <XCircle size={16} className="text-rose-500" />,
   };
 
   const isFollowUp = query.round === 'followup';
@@ -113,7 +113,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
               Q{index + 1}
             </span>
             {isFollowUp && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium">
                 {t('research.followUp', 'Follow-up')}
               </span>
             )}
@@ -160,7 +160,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
           )}
 
           {query.status === 'error' && query.error && (
-            <p className="text-xs text-red-500 mt-1">{query.error}</p>
+            <p className="text-xs text-rose-500 mt-1">{query.error}</p>
           )}
         </div>
       </div>
@@ -325,7 +325,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   // Add deepening activity
   if (stage === 'deepening') {
     activityItems.push({
-      icon: <RefreshCw size={12} className="text-purple-500 animate-spin" />,
+      icon: <RefreshCw size={12} className="text-primary-500 animate-spin" />,
       text: t('research.generatingFollowUp', 'Analyzing gaps and generating follow-up queries...'),
       isActive: true,
     });
@@ -385,9 +385,9 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
           {/* Round indicator */}
           {round && totalRounds && totalRounds > 1 && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-              <Zap size={12} className="text-purple-600 dark:text-purple-400" />
-              <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+            <div className="flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/30 rounded-full">
+              <Zap size={12} className="text-primary-600 dark:text-primary-400" />
+              <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                 {t('research.round', `Round ${round}/${totalRounds}`)}
               </span>
             </div>
@@ -401,7 +401,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
           </div>
           <div className="w-20 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-indigo-500 to-primary-500 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -466,7 +466,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
               {followUpQueries.length > 0 && (
                 <>
-                  <h5 className="text-xs font-medium text-purple-500 dark:text-purple-400 uppercase tracking-wider mb-2 mt-4 flex items-center gap-1">
+                  <h5 className="text-xs font-medium text-primary-500 dark:text-primary-400 uppercase tracking-wider mb-2 mt-4 flex items-center gap-1">
                     <RefreshCw size={12} />
                     {t('research.followUpQueries', 'Follow-up Queries (Iterative Deepening)')} (
                     {followUpQueries.length})
@@ -543,7 +543,7 @@ export const ResearchStatusBadge: React.FC<{
           {sourcesCount}
         </span>
       )}
-      {round && round > 1 && <span className="text-purple-500">R{round}</span>}
+      {round && round > 1 && <span className="text-primary-500">R{round}</span>}
     </button>
   );
 };

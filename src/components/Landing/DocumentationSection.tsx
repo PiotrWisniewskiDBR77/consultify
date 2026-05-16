@@ -11,7 +11,7 @@ const DOC_CARDS = [
     descKey: 'knowledgeBaseDesc',
     icon: BookOpen,
     href: '/knowledge-base',
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-primary-500 to-primary-600',
     glow: 'rgba(139,92,246,0.25)',
   },
   {
@@ -19,7 +19,7 @@ const DOC_CARDS = [
     descKey: 'securityDesc',
     icon: Shield,
     href: '/security',
-    gradient: 'from-emerald-500 to-teal-600',
+    gradient: 'from-emerald-500 to-blue-600',
     glow: 'rgba(16,185,129,0.25)',
   },
   {
@@ -27,7 +27,7 @@ const DOC_CARDS = [
     descKey: 'pricingDesc',
     icon: Wallet,
     href: '/pricing',
-    gradient: 'from-cyan-500 to-blue-600',
+    gradient: 'from-blue-500 to-blue-600',
     glow: 'rgba(6,182,212,0.25)',
   },
   {
@@ -35,7 +35,7 @@ const DOC_CARDS = [
     descKey: 'partnerProgramDesc',
     icon: Users,
     href: '/become-partner',
-    gradient: 'from-amber-500 to-orange-600',
+    gradient: 'from-amber-500 to-amber-600',
     glow: 'rgba(245,158,11,0.25)',
   },
   {
@@ -98,7 +98,7 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
 
       <div className="relative max-w-6xl mx-auto px-6">
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/10 backdrop-blur-sm text-xs font-bold text-violet-300 tracking-wide mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary-500/30 bg-primary-500/10 backdrop-blur-sm text-xs font-bold text-primary-300 tracking-wide mb-8">
             <BookOpen size={14} />
             <span>{tp('badge', 'Help & evaluation')}</span>
           </div>
@@ -126,7 +126,7 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={tp('searchPlaceholder', 'Search knowledge and buyer guidance...')}
-              className="w-full pl-11 pr-4 h-[48px] rounded-xl bg-white/[0.04] border border-white/[0.10] text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/30 transition-all backdrop-blur-sm"
+              className="w-full pl-11 pr-4 h-[48px] rounded-xl bg-white/[0.04] border border-white/[0.10] text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all backdrop-blur-sm"
             />
           </div>
           <button
@@ -171,7 +171,7 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
                   {tp(card.descKey)}
                 </p>
 
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400 group-hover:text-violet-300 group-hover:gap-2.5 transition-all">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-400 group-hover:text-primary-300 group-hover:gap-2.5 transition-all">
                   {tp('explore', 'Explore')}
                   <ArrowRight size={12} />
                 </span>

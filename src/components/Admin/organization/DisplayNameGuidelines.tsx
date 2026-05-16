@@ -133,15 +133,15 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
       </div>
 
       {/* Preview Card */}
-      <div className="p-4 bg-gradient-to-br from-violet-500/10 to-violet-600/5 border border-violet-200 dark:border-violet-800 rounded-xl">
+      <div className="p-4 bg-gradient-to-br from-primary-500/10 to-primary-600/5 border border-primary-200 dark:border-primary-800 rounded-xl">
         <div className="flex items-center gap-2 mb-3">
-          <Eye size={16} className="text-violet-600 dark:text-violet-400" />
-          <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
+          <Eye size={16} className="text-primary-600 dark:text-primary-400" />
+          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
             {t('admin.organization.displayName.preview', 'Preview')}
           </span>
         </div>
         <div className="flex items-center gap-3 p-3 bg-white dark:bg-navy-800 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center text-white font-medium">
+          <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
             {preview.charAt(0)}
           </div>
           <span className="text-lg font-medium text-navy-900 dark:text-white">{preview}</span>
@@ -168,8 +168,8 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
               className={cn(
                 'p-3 rounded-lg border text-left transition-all',
                 guidelines.format === option.value
-                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-violet-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               )}
             >
               <p className="font-medium text-navy-900 dark:text-white">{option.label}</p>
@@ -343,8 +343,8 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
               className={cn(
                 'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all',
                 guidelines.enforcementLevel === option.value
-                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-violet-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               )}
             >
               <input

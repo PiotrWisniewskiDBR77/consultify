@@ -80,7 +80,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
-          <BarChart3 size={16} className="text-purple-500" />
+          <BarChart3 size={16} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {t('presentations.analytics.title', 'Share Analytics')}
           </h3>
@@ -93,9 +93,9 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
       {/* Summary Cards */}
       {data && (
         <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-slate-100 dark:border-navy-800">
-          <div className="p-3 rounded-lg bg-purple-500/5">
+          <div className="p-3 rounded-lg bg-primary-500/5">
             <div className="flex items-center gap-1.5">
-              <Eye size={12} className="text-purple-500" />
+              <Eye size={12} className="text-primary-500" />
               <span className="text-[10px] text-slate-500 uppercase">
                 {t('presentations.analytics.totalViews', 'Total Views')}
               </span>
@@ -122,7 +122,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
           </div>
         )}
 
@@ -145,7 +145,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
                       <span className="text-[10px] text-slate-400 w-5 text-right">{i + 1}</span>
                       <div className="flex-1 h-3 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-purple-500 rounded-full transition-all"
+                          className="h-full bg-primary-500 rounded-full transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

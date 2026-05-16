@@ -17,22 +17,22 @@ exist and describe features with live code behind them.
 
 | Block | Ticket | Feature | Flag | Registered | Docs |
 |---|---|---|---|---|---|
-| Voice | **VM3** | Voice modes legend popover | `voice-mode-legend` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#voice_mode_legend_opened) |
-| Voice | **VM3.1** | Voice legend keyboard shortcut (`Alt+Shift+V`) | `voice-legend-shortcut` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-1), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#voice_mode_legend_shortcut) |
+| Voice | **VM3** | Voice modes legend popover | `voice-mode-legend` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#voice_mode_legend_opened) |
+| Voice | **VM3.1** | Voice legend keyboard shortcut (`Alt+Shift+V`) | `voice-legend-shortcut` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-1), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#voice_mode_legend_shortcut) |
 | Voice | **VM3.2** | Voice legend · "Copy legend" button | `voice-legend-copy-text` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-2) |
 | Voice | **VM1-lite** | "Voice unavailable" fallback row inside VM3 | (uses `voice-mode-legend`) | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm1-lite) |
-| Trust | **T-PM1** | Private Mode details popover | `private-mode-details` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-pm1), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#private_mode_details_opened) |
-| Trust | **T-TR1** | AI response trust badge | `trust-badge` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#trust_badge_opened) |
+| Trust | **T-PM1** | Private Mode details popover | `private-mode-details` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-pm1), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#private_mode_details_opened) |
+| Trust | **T-TR1** | AI response trust badge | `trust-badge` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#trust_badge_opened) |
 | Trust | **T-TR1.2** | Trust badge model label humanizer | `trust-badge-humanize-model` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-2) |
 | Trust | **T-TR1.3** | Trust badge copy citations button | `trust-badge-copy-citations` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-3) |
 | Trust | **T-TR1.4** | Trust badge copy reasoning button | `trust-badge-copy-reasoning` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-4) |
 | Trust | **T-TR3-lite** | Trust badge per-citation clickable link | `trust-badge-citation-links` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr3-lite) |
 | Trust | **T-TR3.4** | Trust badge citation row · domain pill | `trust-badge-citation-domain` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr34) |
 | Trust | **T-TR2** | Trust badge "Why this answer?" reasoning snippet | `trust-badge-reasoning` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr2) |
-| Trust | **T-PM2-lite** | Post-send PII heuristic toast | `pii-heuristic-toast` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-pm2-lite), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#pii_heuristic_warning_shown) |
+| Trust | **T-PM2-lite** | Post-send PII heuristic toast | `pii-heuristic-toast` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-pm2-lite), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#pii_heuristic_warning_shown) |
 | Trust | **T-PM2.1** | PII toast · "Don't show again this session" | `pii-heuristic-session-dismiss` | ✅ | [plan](./TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-pm2-lite-v11) |
-| Voice | **VM4** | Barge-in acknowledgement toast | `barge-in-toast` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm4), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#voice_barge_in_notified) |
-| Voice | **VM10** | Voice funnel telemetry | `voice-funnel-telemetry` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm10), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#voice-funnel-vm10) |
+| Voice | **VM4** | Barge-in acknowledgement toast | `barge-in-toast` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm4), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#voice_barge_in_notified) |
+| Voice | **VM10** | Voice funnel telemetry | `voice-funnel-telemetry` | ✅ | [plan](./VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm10), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#voice-funnel-vm10) |
 | Admin | **AG1 v1** | Feature flag control panel (URL + role-gated) | _(role-gated, URL query)_ | ✅ | [plan](./ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v1) |
 | Admin | **AG1 v1.1** | Override indicator chip | _(role-gated, auto-hides at 0 overrides)_ | ✅ | [plan](./ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v11) |
 | Admin | **AG1 v1.2** | Copy-snapshot button in flags panel | `flags-snapshot-copy` | ✅ | [plan](./ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v12) |
@@ -50,8 +50,8 @@ exist and describe features with live code behind them.
 | Input | **C-IN2** | Input character counter pill | `input-char-counter` | ✅ | [plan](./INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in2) |
 | Input | **C-IN4-lite** | Input keyboard-hint strip | `input-hint-strip` | ✅ | [plan](./INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in4-lite) |
 | Input | **C-IN6-lite** | Input soft-limit inline toast (rose threshold nudge) | `input-soft-limit-toast` | ✅ | [plan](./INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in6-lite) |
-| Navigation | **NAV-M1** | Back-to-chat floating button | `back-to-chat-button` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m1), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_clicked) |
-| Navigation | **NAV-M1.1** | Back-to-chat keyboard shortcut (`Alt+Shift+C`) | `back-to-chat-shortcut` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m1-1), [telemetry](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_shortcut) |
+| Navigation | **NAV-M1** | Back-to-chat floating button | `back-to-chat-button` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m1), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_clicked) |
+| Navigation | **NAV-M1.1** | Back-to-chat keyboard shortcut (`Alt+Shift+C`) | `back-to-chat-shortcut` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m1-1), [telemetry](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_shortcut) |
 | Navigation | **NAV-M2-lite** | Workspace breadcrumb pill | `workspace-breadcrumb` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m2-lite) |
 | Navigation | **NAV-M2.1** | Workspace breadcrumb · conversation title segment | `workspace-breadcrumb-conversation` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m2-lite-plus) |
 | Navigation | **NAV-M3** | Workspace breadcrumb · recent conversations dropdown | `workspace-breadcrumb-recents` | ✅ | [plan](./NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m3-lite) |
@@ -68,21 +68,6 @@ Every flag above:
 - Follows the resolution order `URL query > localStorage > env > default`.
 - Is listed in `src/utils/chatV9FeatureFlags.ts` (`CHAT_V9_FLAGS`) so the
   same metadata is queryable at runtime.
-
-## Design-phase (Chat V10)
-
-The following dev plans are **design-phase** for Chat V10 blocks. They live
-in this folder intentionally so the flag registry and the master plan can
-link to them with stable relative paths:
-
-- [`REASONING_ROUTER_DEVELOPMENT_PLAN_2026-04-18.md`](./REASONING_ROUTER_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`FEEDBACK_SELF_LEARNING_DEVELOPMENT_PLAN_2026-04-18.md`](./FEEDBACK_SELF_LEARNING_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`AGENT_RUNTIME_DEVELOPMENT_PLAN_2026-04-18.md`](./AGENT_RUNTIME_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`ARTIFACT_RUNTIME_DEVELOPMENT_PLAN_2026-04-18.md`](./ARTIFACT_RUNTIME_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`ENTERPRISE_INTEGRATIONS_DEVELOPMENT_PLAN_2026-04-18.md`](./ENTERPRISE_INTEGRATIONS_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`DEEP_RESEARCH_DEVELOPMENT_PLAN_2026-04-18.md`](./DEEP_RESEARCH_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`ROI_LIFECYCLE_DEVELOPMENT_PLAN_2026-04-18.md`](./ROI_LIFECYCLE_DEVELOPMENT_PLAN_2026-04-18.md)
-- [`ONBOARDING_ACTIVATION_DEVELOPMENT_PLAN_2026-04-18.md`](./ONBOARDING_ACTIVATION_DEVELOPMENT_PLAN_2026-04-18.md)
 
 ## Operations runbook
 

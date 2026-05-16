@@ -94,7 +94,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     ];
 
     if (alarm.includes(key))
-      return { bg: 'bg-red-500/20', text: 'text-red-400', dot: 'bg-red-500' };
+      return { bg: 'bg-rose-500/20', text: 'text-rose-400', dot: 'bg-rose-500' };
     if (success.includes(key))
       return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' };
     if (info.includes(key))

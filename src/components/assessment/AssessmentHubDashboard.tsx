@@ -138,7 +138,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         </div>
 
         {/* Overall Readiness Score */}
-        <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl shadow-2xl p-8 mb-8">
+        <div className="bg-gradient-to-br from-blue-500 to-primary-600 text-white rounded-xl shadow-2xl p-8 mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">Overall Digital Readiness</h2>
@@ -261,7 +261,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
           {/* Weakest Areas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-red-600">
+            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-rose-600">
               <AlertCircle className="w-6 h-6" />
               Priority Gaps
             </h3>
@@ -272,7 +272,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     key={index}
                     className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
                   >
-                    <div className="w-2 h-2 bg-red-500 rounded-full" />
+                    <div className="w-2 h-2 bg-rose-500 rounded-full" />
                     {area}
                   </li>
                 ))}
@@ -296,11 +296,11 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
               <PlusCircle className="w-4 h-4" />
               Start RapidLean Assessment
             </button>
-            <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-2">
+            <button className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Upload External Assessment
             </button>
-            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 flex items-center gap-2">
+            <button className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Upload Generic Report
             </button>
@@ -336,8 +336,8 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600',
     green: 'from-green-500 to-green-600',
-    purple: 'from-purple-500 to-purple-600',
-    orange: 'from-orange-500 to-orange-600',
+    purple: 'from-primary-500 to-primary-600',
+    orange: 'from-amber-500 to-amber-600',
   };
 
   return (

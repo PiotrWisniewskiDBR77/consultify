@@ -179,6 +179,35 @@ describe('ExportService', () => {
       expect(writer.end).toHaveBeenCalled();
     });
 
+    it('falls back to field names for legacy name-keyed record data', async () => {
+      const fields = [
+        { id: 'field-name-id', name: 'Name', type: 'single_line_text', options: null },
+        { id: 'field-status-id', name: 'Status', type: 'single_select', options: null },
+      ];
+      mockQuery.mockResolvedValueOnce({ rows: fields });
+
+      mockExecuteQuery.mockResolvedValueOnce({
+        records: [{ data: { Name: 'Initial item', Status: 'New' } }],
+        cursor: undefined,
+        hasMore: false,
+      });
+
+      const chunks: string[] = [];
+      const writer = {
+        write: (chunk: string) => {
+          chunks.push(chunk);
+          return true;
+        },
+        end: vi.fn(),
+      };
+
+      await exportService.streamCsvExport({ tableId: 't-legacy' }, writer);
+
+      expect(chunks[0]).toBe('Name,Status\n');
+      expect(chunks[1]).toBe('Initial item,New\n');
+      expect(writer.end).toHaveBeenCalled();
+    });
+
     it('calls end immediately when no fields', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] });
 

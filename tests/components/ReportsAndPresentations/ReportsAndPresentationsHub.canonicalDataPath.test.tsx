@@ -23,6 +23,18 @@ vi.mock('react-i18next', () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));
+
+vi.mock('@/contexts/HelpContext', () => ({
+  useHelpSidePanel: () => ({
+    setOpen: vi.fn(),
+    setActiveTab: vi.fn(),
+    setKnowledgeModuleIdOverride: vi.fn(),
+  }),
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub', async (importOriginal) => {

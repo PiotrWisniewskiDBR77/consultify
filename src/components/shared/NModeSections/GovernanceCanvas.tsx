@@ -186,7 +186,7 @@ const CHANNEL_CHIP =
 const ADD_BTN =
   'px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 const AI_BTN =
-  'px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1';
+  'px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1';
 const TH =
   'text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50';
 const BADGE =
@@ -408,7 +408,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               onClick={() => onToggle(ch.key, !isSelected)}
               className={`${CHANNEL_CHIP} ${
                 isSelected
-                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
               }`}
               title={ch.scope}
@@ -515,7 +515,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setStakeholders((prev) => prev.filter((item) => item.id !== s.id))
                             }
-                            className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                            className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -624,7 +624,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setReminders((prev) => prev.filter((item) => item.id !== r.id))
                             }
-                            className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                            className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -746,7 +746,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                                 prev.filter((item) => item.id !== rule.id)
                               )
                             }
-                            className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                            className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -943,7 +943,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </button>
               <button
                 onClick={saveStakeholder}
-                className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
               >
                 {isPolish ? 'Zapisz' : 'Save'}
               </button>
@@ -1152,7 +1152,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </button>
               <button
                 onClick={saveReminder}
-                className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
               >
                 {isPolish ? 'Zapisz' : 'Save'}
               </button>
@@ -1400,7 +1400,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               </button>
               <button
                 onClick={saveEscalation}
-                className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
               >
                 {isPolish ? 'Zapisz' : 'Save'}
               </button>

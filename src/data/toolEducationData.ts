@@ -37,28 +37,28 @@ export const EDUCATION_BLOCKS: EducationBlock[] = [
     icon: 'Target',
     color: 'emerald',
     gradientFrom: 'from-emerald-500',
-    gradientTo: 'to-teal-600',
+    gradientTo: 'to-blue-600',
   },
   {
     id: 'operational',
     icon: 'Settings',
     color: 'blue',
     gradientFrom: 'from-blue-500',
-    gradientTo: 'to-cyan-600',
+    gradientTo: 'to-blue-600',
   },
   {
     id: 'digital',
     icon: 'Zap',
     color: 'violet',
-    gradientFrom: 'from-violet-500',
-    gradientTo: 'to-purple-600',
+    gradientFrom: 'from-primary-500',
+    gradientTo: 'to-primary-600',
   },
   {
     id: 'change-management',
     icon: 'Users',
     color: 'amber',
     gradientFrom: 'from-amber-500',
-    gradientTo: 'to-orange-600',
+    gradientTo: 'to-amber-600',
   },
 ];
 

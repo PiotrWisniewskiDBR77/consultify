@@ -10,7 +10,10 @@ import { Router } from 'express';
 import InvitationControllerRaw from '../../controllers/InvitationController.js';
 const InvitationController = InvitationControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
-import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import {
+  apiAuthRateLimiter,
+  invitePublicRateLimiter,
+} from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   AcceptInvitationSchema,
@@ -76,13 +79,18 @@ router.post('/:id/resend', verifyToken, InvitationController.resendInvitation);
  * POST /api/invitations/accept
  * Accept invitation (no auth required - uses token)
  */
-router.post('/accept', validateBody(AcceptInvitationSchema), InvitationController.acceptInvitation);
+router.post(
+  '/accept',
+  invitePublicRateLimiter,
+  validateBody(AcceptInvitationSchema),
+  InvitationController.acceptInvitation
+);
 
 /**
  * GET /api/invitations/validate/:token
  * Validate token
  */
-router.get('/validate/:token', InvitationController.validateToken);
+router.get('/validate/:token', invitePublicRateLimiter, InvitationController.validateToken);
 
 /**
  * DELETE /api/invitations/:id

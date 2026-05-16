@@ -91,8 +91,8 @@ const PRODUCT_FALLBACK_CONTEXTS: Record<string, string> = {
 Consultify is the main public product priority. It is an AI-powered platform for structured digital transformation work: diagnosis, roadmap building, initiatives, execution support, ROI logic, and reporting. Anna should default to explaining Consultify first, especially for value, adoption, demo, trial, workflow, onboarding, and business impact questions.`,
   vector: `Product: DBR77 Vector
 DBR77 Vector is the DBR77 proprietary LLM and industrial reasoning layer. It is positioned as a domain-trained model for factory transformation, industrial operations, digital transformation, deployment flexibility, and enterprise-grade security. In Anna conversations, Vector should be explained mainly as the intelligence layer that can support Consultify and the broader DBR ecosystem.`,
-  dbr77: `Product: DBR77 Ecosystem
-DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, IRIS and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`,
+  dbr77: `Company: DBR77
+DBR77 is the organization behind a portfolio of industrial and transformation products, including Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT and Marketplace. Do not describe DBR77 itself as only a technology ecosystem; separate the company from its individual products and platforms.`,
   iris: `Product: IRIS
 IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`,
   'digital-twin': `Product: Digital Twin
@@ -138,7 +138,7 @@ function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
   return normalizeLanguage(locale) === 'pl' ? 'pl' : 'en';
 }
 
-function detectProducts(query: string): string[] {
+export function detectProducts(query: string): string[] {
   const matched: string[] = [];
   for (const product of PRODUCT_ORDER) {
     if ((PRODUCT_MATCHERS[product] || []).some((pattern) => pattern.test(query)))
@@ -153,7 +153,7 @@ function prioritizeProducts(explicitProducts: string[], baseProducts: string[]):
     : uniq(baseProducts);
 }
 
-function isDbR77PortfolioQuestion(query: string): boolean {
+export function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
   // Do not treat the assistant name "Anna" as narrowing the topic — users often
@@ -505,9 +505,9 @@ export async function buildWorkerKnowledgeContext(opts: {
     };
   }
 
-  const forceFullPortfolio = WORKER_SLUGS_FULL_PORTFOLIO.has(opts.workerSlug);
-  const portfolioMode = forceFullPortfolio || isDbR77PortfolioQuestion(originalQuery);
   const detectedProducts = detectProducts(originalQuery);
+  const forceFullPortfolio = WORKER_SLUGS_FULL_PORTFOLIO.has(opts.workerSlug);
+  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
   const assignedProductSlugs = uniq(
     assignments
       .filter((assignment) => assignment.product_slug)
@@ -689,7 +689,7 @@ export async function buildWorkerKnowledgeContext(opts: {
 
     const contextText = portfolioMode
       ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.${
-          forceFullPortfolio
+          forceFullPortfolio && portfolioMode
             ? '\n- You always have the governed product knowledge above; when a question touches any DBR77 product, use it. Do not claim you lack access to that product line.'
             : ''
         }`

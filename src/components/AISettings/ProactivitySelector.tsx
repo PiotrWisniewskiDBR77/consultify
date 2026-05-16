@@ -56,10 +56,10 @@ const MODE_CONFIG: Record<
     longDescription:
       'The AI provides suggestions when it detects you might benefit, but waits for you to initiate major interactions.',
     icon: Scale,
-    color: 'text-violet-400',
-    bgGradient: 'from-violet-900/50 to-purple-900/50',
-    borderColor: 'border-violet-500',
-    glowColor: 'shadow-violet-500/30',
+    color: 'text-primary-400',
+    bgGradient: 'from-primary-900/50 to-primary-900/50',
+    borderColor: 'border-primary-500',
+    glowColor: 'shadow-primary-500/30',
     characteristics: [
       'Helpful suggestions when relevant',
       'Contextual hints appear naturally',
@@ -80,7 +80,7 @@ const MODE_CONFIG: Record<
       'The AI actively monitors your work and proactively offers assistance, starting conversations about potential issues.',
     icon: Zap,
     color: 'text-emerald-400',
-    bgGradient: 'from-emerald-900/50 to-teal-900/50',
+    bgGradient: 'from-emerald-900/50 to-blue-900/50',
     borderColor: 'border-emerald-500',
     glowColor: 'shadow-emerald-500/30',
     characteristics: [

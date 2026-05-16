@@ -111,14 +111,14 @@ const TYPE_ICONS: Record<string, React.ComponentType<any>> = {
 
 const TYPE_COLORS: Record<string, string> = {
   node_added: 'text-emerald-500',
-  node_deleted: 'text-red-500',
+  node_deleted: 'text-rose-500',
   node_edited: 'text-blue-500',
   node_status: 'text-amber-500',
-  ai_expand: 'text-violet-500',
-  ai_suggestion: 'text-purple-500',
+  ai_expand: 'text-primary-500',
+  ai_suggestion: 'text-primary-500',
   comment: 'text-sky-500',
   vote: 'text-amber-500',
-  convert: 'text-orange-500',
+  convert: 'text-amber-500',
 };
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({

@@ -21,14 +21,14 @@ interface ContentCategoriesManagerProps {
 }
 
 const PRESET_COLORS = [
-  '#EF4444',
+  '#F43F5E',
   '#F59E0B',
   '#10B981',
   '#3B82F6',
   '#6366F1',
-  '#8B5CF6',
+  '#6366F1',
   '#EC4899',
-  '#06B6D4',
+  '#3B82F6',
 ];
 
 const PRESET_ICONS = [
@@ -234,7 +234,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 autoFocus
               />
               <div className="flex gap-1">
@@ -310,7 +310,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                     <div className="border-t border-slate-700 my-1" />
                     <button
                       onClick={() => handleDelete(category.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
                     >
                       <Trash2 size={14} />
                       Delete
@@ -345,7 +345,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FolderOpen className="w-5 h-5 text-violet-400" />
+          <FolderOpen className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Categories</h3>
           <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
             {categories.length}
@@ -362,7 +362,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
               parentId: null,
             });
           }}
-          className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded-lg text-sm hover:bg-violet-500/20"
+          className="flex items-center gap-2 px-3 py-1.5 bg-primary-500/10 text-primary-400 border border-primary-500/30 rounded-lg text-sm hover:bg-primary-500/20"
         >
           <Plus size={14} />
           New Category
@@ -380,7 +380,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Category name..."
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
             <div>
@@ -390,7 +390,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Optional description..."
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
           </div>
@@ -423,7 +423,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
             <button
               onClick={handleCreate}
               disabled={saving || !formData.name.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 disabled:opacity-50"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
               Create

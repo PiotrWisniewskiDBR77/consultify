@@ -16,14 +16,17 @@
 
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { normalizeDeckDocument } from './presentationDeckDocumentService.js';
 
 export type DeckGateSeverity = 'error' | 'warning' | 'info';
 export type DeckGateCategory = 'structure' | 'content' | 'brand' | 'traceability' | 'quality';
+export type DeckGatePriority = 'P0' | 'P1' | 'P2';
 
 export interface DeckQualityGateResult {
   id: string;
   gateType: string;
   severity: DeckGateSeverity;
+  priority: DeckGatePriority;
   message: string;
   cardIndex?: number;
   category: DeckGateCategory;
@@ -35,6 +38,13 @@ export interface DeckQualityReport {
   canShare: boolean;
   gates: DeckQualityGateResult[];
   score: number;
+  result: 'PASS' | 'PASS_WITH_P2' | 'BLOCKED_P1' | 'INCONCLUSIVE';
+  scorecard: {
+    p0: number;
+    p1: number;
+    p2: number;
+    passVocabulary: 'PASS' | 'PASS_WITH_P2' | 'BLOCKED_P1' | 'INCONCLUSIVE';
+  };
   checkedAt: string;
 }
 
@@ -42,6 +52,7 @@ interface DeckCard {
   card_id?: string;
   intent?: string;
   title?: string;
+  key_message?: string;
   blocks?: DeckBlock[];
   source_refs?: any[];
   speaker_notes?: string;
@@ -64,6 +75,31 @@ const MODE_WORD_LIMITS: Record<string, { min: number; max: number }> = {
   workshop: { min: 5, max: 40 },
 };
 
+const DECISION_INTENTS = new Set([
+  'executive_summary',
+  'performance_overview',
+  'single_insight',
+  'comparison',
+  'assessment',
+  'recommendation_portfolio',
+  'recommendation_single',
+  'prioritization_matrix',
+  'roadmap',
+  'risk_management',
+  'next_steps',
+]);
+
+const PLACEHOLDER_TOKENS = [
+  'tbd',
+  'to be populated',
+  'do uzupelnienia',
+  'do uzupełnienia',
+  'placeholder',
+  '[object object]',
+];
+
+const ENCODING_ARTEFACTS = ['&amp;', '&nbsp;', 'â€™', 'â€“', '�'];
+
 function estimateWordCount(card: DeckCard): number {
   let count = 0;
   if (card.title) count += card.title.split(/\s+/).length;
@@ -80,11 +116,37 @@ function estimateWordCount(card: DeckCard): number {
   return count;
 }
 
+function textContainsAny(text: string, needles: string[]): boolean {
+  const normalized = String(text || '').toLowerCase();
+  return needles.some((needle) => normalized.includes(needle));
+}
+
+function inferFreshnessDays(ref: any): number | null {
+  if (!ref || typeof ref !== 'object') return null;
+  if (typeof ref.freshness_days === 'number') return ref.freshness_days;
+  if (typeof ref.freshnessDays === 'number') return ref.freshnessDays;
+  const freshness = ref.freshness;
+  if (typeof freshness === 'number') return freshness;
+  if (freshness && typeof freshness === 'object') {
+    if (typeof freshness.days === 'number') return freshness.days;
+    if (typeof freshness.age_days === 'number') return freshness.age_days;
+  }
+  if (typeof ref.captured_at === 'string') {
+    const capturedAt = new Date(ref.captured_at).getTime();
+    if (!Number.isNaN(capturedAt))
+      return Math.floor((Date.now() - capturedAt) / (24 * 60 * 60 * 1000));
+  }
+  return null;
+}
+
 export async function checkDeckQualityGates(
   organizationId: string,
   deckId: string
 ): Promise<DeckQualityReport> {
   const gates: DeckQualityGateResult[] = [];
+  const pushGate = (gate: DeckQualityGateResult) => {
+    gates.push(gate);
+  };
 
   const deck = (await dbGet(
     `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
@@ -101,31 +163,33 @@ export async function checkDeckQualityGates(
           id: 'qg-no-deck',
           gateType: 'DECK_NOT_FOUND',
           severity: 'error',
+          priority: 'P1',
           message: 'Deck not found',
           category: 'structure',
         },
       ],
       score: 0,
+      result: 'BLOCKED_P1',
+      scorecard: { p0: 0, p1: 1, p2: 0, passVocabulary: 'BLOCKED_P1' },
       checkedAt: new Date().toISOString(),
     };
   }
 
-  let deckData: { cards?: DeckCard[]; theme?: any } = {};
-  try {
-    deckData = JSON.parse(deck.deck_json || '{}');
-  } catch {
-    /* */
-  }
+  const canonicalDeck = normalizeDeckDocument(deck);
+  const deckData: { cards?: DeckCard[]; theme?: any; delivery?: any; traceability?: any } =
+    canonicalDeck || {};
 
   const cards: DeckCard[] = deckData.cards || [];
-  const presentationMode: string = deck.presentation_mode || 'briefing';
+  const presentationMode: string =
+    canonicalDeck?.presentation_mode || deck.presentation_mode || 'briefing';
 
   // Gate 1: Empty deck
   if (cards.length === 0) {
-    gates.push({
+    pushGate({
       id: 'qg-empty-deck',
       gateType: 'EMPTY_DECK',
       severity: 'error',
+      priority: 'P1',
       message: 'Deck has no cards. Add at least one card to proceed.',
       category: 'structure',
     });
@@ -134,10 +198,11 @@ export async function checkDeckQualityGates(
   // Gate 2: Missing cover
   const hasCover = cards.some((c) => c.intent === 'cover');
   if (!hasCover && cards.length > 0) {
-    gates.push({
+    pushGate({
       id: 'qg-no-cover',
       gateType: 'MISSING_COVER',
       severity: 'warning',
+      priority: 'P2',
       message: 'Deck is missing a cover slide. Consider adding one for a professional look.',
       category: 'structure',
     });
@@ -145,27 +210,30 @@ export async function checkDeckQualityGates(
 
   // Gate 3: Card count bounds
   if (cards.length > 0 && cards.length < 2) {
-    gates.push({
+    pushGate({
       id: 'qg-too-few-cards',
       gateType: 'TOO_FEW_CARDS',
       severity: 'error',
+      priority: 'P1',
       message: 'Deck needs at least 2 cards (cover + content).',
       category: 'structure',
     });
   }
   if (cards.length > 30) {
-    gates.push({
+    pushGate({
       id: 'qg-too-many-cards',
       gateType: 'TOO_MANY_CARDS',
       severity: 'warning',
+      priority: 'P2',
       message: `Deck has ${cards.length} cards (recommended max: 30). Consider splitting into two presentations.`,
       category: 'structure',
     });
   } else if (cards.length > 20) {
-    gates.push({
+    pushGate({
       id: 'qg-many-cards',
       gateType: 'MANY_CARDS',
       severity: 'info',
+      priority: 'P2',
       message: `Deck has ${cards.length} cards. Presentations above 20 cards may lose audience attention.`,
       category: 'structure',
     });
@@ -176,10 +244,11 @@ export async function checkDeckQualityGates(
     const card = cards[i];
     const hasContent = (card.blocks || []).some((b) => b.content != null);
     if (!hasContent && card.intent !== 'cover') {
-      gates.push({
+      pushGate({
         id: `qg-empty-card-${i}`,
         gateType: 'EMPTY_CARD',
         severity: 'warning',
+        priority: 'P2',
         message: `Card ${i + 1} "${card.title || card.intent}" has no content blocks.`,
         cardIndex: i,
         category: 'content',
@@ -191,13 +260,31 @@ export async function checkDeckQualityGates(
   const brandKit = await dbGet(`SELECT id FROM brand_kits WHERE organization_id = ?`, [
     organizationId,
   ]);
-  if (!brandKit && cards.length > 0) {
-    gates.push({
+  const hasBrandLayout = Boolean((deckData as any)?.delivery?.brandLayoutSystem);
+  if (!brandKit && !hasBrandLayout && cards.length > 0) {
+    pushGate({
       id: 'qg-no-brand-kit',
       gateType: 'NO_BRAND_KIT',
       severity: 'info',
+      priority: 'P2',
       message:
         'No Brand Kit configured. Set up your brand colors, logo, and fonts for professional consistency.',
+      category: 'brand',
+    });
+  }
+
+  const missingHeaderFooter = cards
+    .slice(1)
+    .filter(
+      (card: any) => !card.header_footer && canonicalDeck?.meta?.confidentiality !== 'public'
+    );
+  if (cards.length > 2 && missingHeaderFooter.length > cards.length * 0.5) {
+    pushGate({
+      id: 'qg-missing-header-footer',
+      gateType: 'MISSING_HEADER_FOOTER',
+      severity: 'warning',
+      priority: 'P2',
+      message: 'Most slides are missing exporter-safe header/footer metadata.',
       category: 'brand',
     });
   }
@@ -212,14 +299,103 @@ export async function checkDeckQualityGates(
     }
     const coverage = tracedCards / cards.length;
     if (coverage < 0.3) {
-      gates.push({
+      pushGate({
         id: 'qg-low-traceability',
         gateType: 'LOW_TRACEABILITY',
-        severity: 'warning',
+        severity: 'error',
+        priority: 'P1',
         message: `Only ${Math.round(coverage * 100)}% of cards have source references. Traceability improves trust.`,
         category: 'traceability',
       });
     }
+  }
+
+  const rawJsonBlocks = cards.flatMap((card, cardIndex) =>
+    (card.blocks || [])
+      .filter((block) => {
+        const content = block.content || {};
+        const text =
+          typeof content === 'string'
+            ? content
+            : typeof content.text === 'string'
+              ? content.text
+              : '';
+        return (
+          text.trim().startsWith('{') ||
+          text.includes('_narrative_enrichment') ||
+          text.includes('_agent_refreshed_at') ||
+          JSON.stringify(content).includes('"__')
+        );
+      })
+      .map(() => cardIndex)
+  );
+  if (rawJsonBlocks.length > 0) {
+    pushGate({
+      id: 'qg-raw-internals',
+      gateType: 'RAW_INTERNALS',
+      severity: 'error',
+      priority: 'P0',
+      message: `Potential raw internals detected on ${rawJsonBlocks.length} block(s). Remove JSON/debug fields before export.`,
+      cardIndex: rawJsonBlocks[0],
+      category: 'content',
+    });
+  }
+
+  // Gate 6b: Placeholder / encoding hard gate (P0)
+  const placeholderCards: number[] = [];
+  const encodingCards: number[] = [];
+  const thesisMissingCards: number[] = [];
+  cards.forEach((card, index) => {
+    const aggregate = [
+      String(card.title || ''),
+      String(card.key_message || ''),
+      ...(card.blocks || []).map((block) => {
+        if (typeof block.content === 'string') return block.content;
+        if (block.content && typeof block.content.text === 'string') return block.content.text;
+        return JSON.stringify(block.content || {});
+      }),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    if (textContainsAny(aggregate, PLACEHOLDER_TOKENS)) placeholderCards.push(index);
+    if (textContainsAny(aggregate, ENCODING_ARTEFACTS)) encodingCards.push(index);
+    if (DECISION_INTENTS.has(String(card.intent || ''))) {
+      const thesis = String(card.key_message || card.title || '').trim();
+      if (thesis.length < 12) thesisMissingCards.push(index);
+    }
+  });
+  if (placeholderCards.length > 0) {
+    pushGate({
+      id: 'qg-placeholder-content',
+      gateType: 'PLACEHOLDER_CONTENT',
+      severity: 'error',
+      priority: 'P0',
+      message: `Placeholder content detected on ${placeholderCards.length} decision-critical slide(s).`,
+      cardIndex: placeholderCards[0],
+      category: 'content',
+    });
+  }
+  if (encodingCards.length > 0) {
+    pushGate({
+      id: 'qg-encoding-artifacts',
+      gateType: 'ENCODING_ARTEFACTS',
+      severity: 'error',
+      priority: 'P0',
+      message: `Encoding artefacts detected on ${encodingCards.length} slide(s).`,
+      cardIndex: encodingCards[0],
+      category: 'content',
+    });
+  }
+  if (thesisMissingCards.length > 0) {
+    pushGate({
+      id: 'qg-missing-thesis',
+      gateType: 'MISSING_SLIDE_THESIS',
+      severity: 'warning',
+      priority: 'P2',
+      message: `${thesisMissingCards.length} slide(s) have weak thesis/key message.`,
+      cardIndex: thesisMissingCards[0],
+      category: 'content',
+    });
   }
 
   // Gate 7: Data freshness
@@ -235,12 +411,66 @@ export async function checkDeckQualityGates(
     }
   }
   if (staleBlockCount > 0) {
-    gates.push({
+    pushGate({
       id: 'qg-stale-data',
       gateType: 'STALE_DATA',
       severity: 'warning',
+      priority: 'P2',
       message: `${staleBlockCount} data block(s) may be outdated (>24h since last refresh).`,
       category: 'quality',
+    });
+  }
+
+  // Gate 7b: Decision-slide evidence discipline (P1)
+  let decisionMissingTraceability = 0;
+  let decisionLowConfidence = 0;
+  let decisionStaleEvidence = 0;
+  cards.forEach((card) => {
+    if (!DECISION_INTENTS.has(String(card.intent || ''))) return;
+    const refs = Array.isArray(card.source_refs) ? card.source_refs : [];
+    if (refs.length === 0) {
+      decisionMissingTraceability++;
+      return;
+    }
+    const hasLowConfidence = refs.some((ref: any) => {
+      const confidence = Number(ref?.confidence);
+      return Number.isFinite(confidence) && confidence < 0.6;
+    });
+    if (hasLowConfidence) decisionLowConfidence++;
+    const hasStaleEvidence = refs.some((ref: any) => {
+      const freshnessDays = inferFreshnessDays(ref);
+      return typeof freshnessDays === 'number' && freshnessDays > 30;
+    });
+    if (hasStaleEvidence) decisionStaleEvidence++;
+  });
+  if (decisionMissingTraceability > 0) {
+    pushGate({
+      id: 'qg-decision-missing-traceability',
+      gateType: 'DECISION_MISSING_TRACEABILITY',
+      severity: 'error',
+      priority: 'P1',
+      message: `${decisionMissingTraceability} decision slide(s) are missing source references.`,
+      category: 'traceability',
+    });
+  }
+  if (decisionLowConfidence > 0) {
+    pushGate({
+      id: 'qg-decision-low-confidence',
+      gateType: 'DECISION_LOW_CONFIDENCE',
+      severity: 'warning',
+      priority: 'P2',
+      message: `${decisionLowConfidence} decision slide(s) have source confidence below 0.6.`,
+      category: 'traceability',
+    });
+  }
+  if (decisionStaleEvidence > 0) {
+    pushGate({
+      id: 'qg-decision-stale-evidence',
+      gateType: 'DECISION_STALE_EVIDENCE',
+      severity: 'warning',
+      priority: 'P2',
+      message: `${decisionStaleEvidence} decision slide(s) rely on stale evidence (>30 days).`,
+      category: 'traceability',
     });
   }
 
@@ -254,10 +484,11 @@ export async function checkDeckQualityGates(
       }
     }
     if (consecutive >= 3) {
-      gates.push({
+      pushGate({
         id: 'qg-low-variety',
         gateType: 'LOW_LAYOUT_VARIETY',
         severity: 'info',
+        priority: 'P2',
         message: `${consecutive} consecutive cards share the same intent. Consider varying layouts for visual interest.`,
         category: 'quality',
       });
@@ -270,10 +501,11 @@ export async function checkDeckQualityGates(
       (c) => c.speaker_notes && c.speaker_notes.trim().length > 10
     ).length;
     if (withNotes < cards.length * 0.5) {
-      gates.push({
+      pushGate({
         id: 'qg-missing-notes',
         gateType: 'MISSING_SPEAKER_NOTES',
         severity: 'info',
+        priority: 'P2',
         message: `Only ${withNotes}/${cards.length} cards have speaker notes. SHOW mode benefits from notes for the presenter.`,
         category: 'content',
       });
@@ -287,10 +519,11 @@ export async function checkDeckQualityGates(
     if (card.intent === 'cover' || card.intent === 'section_divider') continue;
     const wc = estimateWordCount(card);
     if (wc > wordLimits.max * 1.5) {
-      gates.push({
+      pushGate({
         id: `qg-dense-card-${i}`,
         gateType: 'CARD_TOO_DENSE',
         severity: 'warning',
+        priority: 'P2',
         message: `Card ${i + 1} "${card.title || card.intent}" has ~${wc} words. ${presentationMode.toUpperCase()} mode recommends max ${wordLimits.max} per card.`,
         cardIndex: i,
         category: 'content',
@@ -301,10 +534,23 @@ export async function checkDeckQualityGates(
   // Score
   const errors = gates.filter((g) => g.severity === 'error').length;
   const warnings = gates.filter((g) => g.severity === 'warning').length;
+  const p0 = gates.filter((g) => g.priority === 'P0').length;
+  const p1 = gates.filter((g) => g.priority === 'P1').length;
+  const p2 = gates.filter((g) => g.priority === 'P2').length;
   const score = Math.max(0, 100 - errors * 20 - warnings * 5);
 
   const canExport = errors === 0;
   const canShare = errors === 0 && warnings <= 2;
+  const result =
+    p0 > 0 || p1 > 0 || errors > 0
+      ? 'BLOCKED_P1'
+      : warnings > 0
+        ? 'PASS_WITH_P2'
+        : score >= 95
+          ? 'PASS'
+          : cards.length === 0
+            ? 'INCONCLUSIVE'
+            : 'PASS';
 
   logger.info('[DeckQualityGates] Check complete', {
     deckId,
@@ -312,6 +558,9 @@ export async function checkDeckQualityGates(
     errors,
     warnings,
     score,
+    p0,
+    p1,
+    p2,
   });
 
   return {
@@ -320,6 +569,13 @@ export async function checkDeckQualityGates(
     canShare,
     gates,
     score,
+    result,
+    scorecard: {
+      p0,
+      p1,
+      p2,
+      passVocabulary: result,
+    },
     checkedAt: new Date().toISOString(),
   };
 }

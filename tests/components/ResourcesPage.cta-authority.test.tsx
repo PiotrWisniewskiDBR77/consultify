@@ -76,7 +76,7 @@ describe('ResourcesPage CTA authority', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
     expect(screen.getByTestId('demo-mode-modal')).toHaveTextContent('trial');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try demo' }));
     expect(screen.getByTestId('demo-mode-modal')).toHaveTextContent('demo');
   });
 });

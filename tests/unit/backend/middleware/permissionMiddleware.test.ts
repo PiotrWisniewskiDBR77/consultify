@@ -253,6 +253,26 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockNext).toHaveBeenCalled();
       expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
     });
+
+    it('denies and skips checks when requireAny key list exceeds max count', async () => {
+      const keys = Array.from({ length: 33 }, (_, index) => `P_${index}`);
+      const middleware = requireAnyPermission(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Denied: permission key list exceeds max count',
+        expect.objectContaining({ count: 33, max: 32 })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('requireAllPermissions', () => {
@@ -296,6 +316,26 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('denies and skips checks when requireAll key list exceeds max count', async () => {
+      const keys = Array.from({ length: 33 }, (_, index) => `Q_${index}`);
+      const middleware = requireAllPermissions(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Denied: permission key list exceeds max count',
+        expect.objectContaining({ count: 33, max: 32 })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('Role-based scenarios', () => {
@@ -332,18 +372,22 @@ describe('Permission Middleware - Real Production Tests', () => {
 
   describe('role normalization helpers (private)', () => {
     it('normalizes common aliases for DB roles', () => {
-      expect(__private__.normalizeRoleForDb(undefined)).toBe('VIEWER');
+      expect(__private__.normalizeRoleForDb(undefined)).toBe('USER');
       expect(__private__.normalizeRoleForDb('administrator')).toBe('ADMIN');
       expect(__private__.normalizeRoleForDb('SUPER_ADMIN')).toBe('SUPERADMIN');
-      expect(__private__.normalizeRoleForDb('manager')).toBe('PROJECT_MANAGER');
-      expect(__private__.normalizeRoleForDb('member')).toBe('TEAM_MEMBER');
-      expect(__private__.normalizeRoleForDb('client')).toBe('VIEWER');
-      expect(__private__.normalizeRoleForDb('  custom_role  ')).toBe('CUSTOM_ROLE');
+      expect(__private__.normalizeRoleForDb('manager')).toBe('USER');
+      expect(__private__.normalizeRoleForDb('member')).toBe('USER');
+      expect(__private__.normalizeRoleForDb('client')).toBe('GUEST');
+      expect(__private__.normalizeRoleForDb('  custom_role  ')).toBe('USER');
     });
 
     it('bridges legacy USER <-> TEAM_MEMBER role candidates', () => {
-      expect(__private__.getRoleCandidates('USER')).toEqual(['USER', 'TEAM_MEMBER']);
-      expect(__private__.getRoleCandidates('TEAM_MEMBER')).toEqual(['TEAM_MEMBER', 'USER']);
+      expect(__private__.getRoleCandidates('USER')).toEqual(['USER', 'TEAM_MEMBER', 'MEMBER']);
+      expect(__private__.getRoleCandidates('TEAM_MEMBER')).toEqual([
+        'USER',
+        'TEAM_MEMBER',
+        'MEMBER',
+      ]);
       expect(__private__.getRoleCandidates('ADMIN')).toEqual(['ADMIN']);
     });
   });
@@ -436,6 +480,21 @@ describe('Permission Middleware - Real Production Tests', () => {
       const out = await res.json({ ok: true });
       expect(out).toEqual({ ok: true });
       expect(originalJson).toHaveBeenCalled();
+    });
+
+    it('skips audit logging when headers are already sent before wrapped json execution', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson, headersSent: false };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      res.headersSent = true;
+      await res.json({ ok: true });
+
+      expect(mockAuditService.logAudit).not.toHaveBeenCalled();
+      expect(originalJson).toHaveBeenCalledTimes(1);
     });
 
     it('prefers req.correlationId over header', async () => {

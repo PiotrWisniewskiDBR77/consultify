@@ -118,16 +118,16 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
       {/* Starting points (Popular Starts) */}
       {filteredStarts.length > 0 && (
         <div className="px-1 pb-1">
-          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-violet-500/70">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-primary-500/70">
             {isPl ? 'Punkty startowe' : 'Starting points'}
           </div>
           {filteredStarts.map((s) => (
             <button
               key={s.id}
               onClick={() => handleIntentClick(s.id)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-500/[0.06] transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-500/[0.06] transition-colors"
             >
-              <Compass size={12} className="text-violet-400 shrink-0" />
+              <Compass size={12} className="text-primary-400 shrink-0" />
               {isPl ? s.labelPl : s.labelEn}
             </button>
           ))}

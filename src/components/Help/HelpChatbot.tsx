@@ -322,14 +322,14 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
             <Bot size={18} />
           </div>
           <div>
             <h3 className="font-semibold">{t.title[lang]}</h3>
-            <p className="text-xs text-purple-200 flex items-center gap-1">
+            <p className="text-xs text-primary-200 flex items-center gap-1">
               <Sparkles size={12} />
               {t.poweredBy[lang]}
             </p>
@@ -379,7 +379,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                       message.role === 'user'
-                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
+                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600'
                         : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
                     }`}
                   >
@@ -393,7 +393,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     <div
                       className={`px-4 py-2.5 rounded-xl ${
                         message.role === 'user'
-                          ? 'bg-purple-600 text-white rounded-tr-md'
+                          ? 'bg-primary-600 text-white rounded-tr-md'
                           : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-md'
                       }`}
                     >
@@ -449,7 +449,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                           </button>
                           <button
                             onClick={() => handleFeedback(message.id, false)}
-                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
                           >
                             <ThumbsDown size={14} />
                           </button>
@@ -458,7 +458,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     {message.feedback && (
                       <div
                         className={`text-xs mt-1 ${
-                          message.feedback === 'helpful' ? 'text-green-500' : 'text-red-500'
+                          message.feedback === 'helpful' ? 'text-green-500' : 'text-rose-500'
                         }`}
                       >
                         {message.feedback === 'helpful'
@@ -536,7 +536,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
               <button
                 key={i}
                 onClick={() => handleSend(suggestion)}
-                className="px-3 py-1.5 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                className="px-3 py-1.5 text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-full hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
               >
                 {suggestion}
               </button>
@@ -555,7 +555,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             onKeyDown={handleKeyPress}
             placeholder={t.placeholder[lang]}
             rows={1}
-            className="flex-grow px-4 py-2.5 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            className="flex-grow px-4 py-2.5 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 resize-none focus:ring-2 focus:ring-primary-500 focus:outline-none"
             style={{ minHeight: '44px', maxHeight: '120px' }}
           />
           <button
@@ -563,7 +563,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             disabled={!input.trim() || isLoading}
             className={`p-3 rounded-xl transition-all ${
               input.trim() && !isLoading
-                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

@@ -38,7 +38,7 @@ const AXIS_ICONS: Record<string, any> = {
 };
 
 // Default color palette for analyses
-const ANALYSIS_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981'];
+const ANALYSIS_COLORS = ['#3b82f6', '#6366f1', '#f59e0b', '#10b981'];
 
 export const AnalysisCompareView: React.FC = () => {
   const [availableAnalyses, setAvailableAnalyses] = useState<DigitizationAnalysis[]>([]);
@@ -120,7 +120,7 @@ export const AnalysisCompareView: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <GitCompare className="text-purple-500" />
+            <GitCompare className="text-primary-500" />
             Compare Analyses
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -130,7 +130,7 @@ export const AnalysisCompareView: React.FC = () => {
         {selectedAnalyses.length < 4 && (
           <button
             onClick={() => setShowSelector(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500
                             text-white rounded-xl font-medium transition-colors"
           >
             <Plus size={16} />
@@ -142,8 +142,8 @@ export const AnalysisCompareView: React.FC = () => {
       {/* Selected Analyses */}
       {selectedAnalyses.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-center">
-          <div className="w-16 h-16 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4">
-            <GitCompare size={32} className="text-purple-500" />
+          <div className="w-16 h-16 bg-primary-500/10 rounded-xl flex items-center justify-center mb-4">
+            <GitCompare size={32} className="text-primary-500" />
           </div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
             No wybranych analyses
@@ -153,7 +153,7 @@ export const AnalysisCompareView: React.FC = () => {
           </p>
           <button
             onClick={() => setShowSelector(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500
                             text-white rounded-xl font-medium transition-colors"
           >
             <Plus size={16} />
@@ -171,7 +171,7 @@ export const AnalysisCompareView: React.FC = () => {
               >
                 <button
                   onClick={() => removeAnalysis(analysis.id)}
-                  className="absolute top-2 right-2 p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+                  className="absolute top-2 right-2 p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                 >
                   <X size={16} />
                 </button>

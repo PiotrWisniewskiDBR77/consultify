@@ -1,0 +1,678 @@
+import type {
+  SlideIntent,
+  UnifiedReportJSON,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from './report/pptx/types.js';
+
+export type DeckStatus =
+  | 'draft'
+  | 'generated'
+  | 'editing'
+  | 'ready'
+  | 'shared'
+  | 'archived'
+  | 'failed';
+
+export interface DeckSourceRef {
+  artifact_id: string;
+  artifact_type: string;
+  artifact_name: string;
+  confidence?: number | null;
+  readiness?: string | null;
+  freshness_days?: number | null;
+  captured_at?: string | null;
+  lineage?: Record<string, unknown> | null;
+}
+
+export interface DeckCardBlock {
+  block_id: string;
+  card_id: string;
+  type: string;
+  content: Record<string, unknown>;
+  source_ref?: DeckSourceRef;
+  is_refreshable: boolean;
+  position: { area: 'full' | 'left' | 'right' | 'top' | 'bottom' | 'overlay'; order: number };
+  style_overrides?: Record<string, unknown>;
+  ai_editable: boolean;
+}
+
+export interface DeckDocumentCard {
+  card_id: string;
+  deck_id: string;
+  order_index: number;
+  intent: SlideIntent | string;
+  layout_id: string;
+  title: string;
+  key_message?: string;
+  blocks: DeckCardBlock[];
+  source_refs: DeckSourceRef[];
+  speaker_notes?: string;
+  has_refreshable_data: boolean;
+  background: { type: 'theme' | 'color' | 'gradient' | 'image'; value?: string };
+  animations: { entrance: 'fade' | 'slide_up' | 'none'; block_stagger: boolean };
+  is_locked: boolean;
+  /**
+   * Sprint S16 — Layout audit flags carried forward from the
+   * `UnifiedSlide.auditFlags` channel established in S15. Persists into
+   * the deck document so downstream renderers (PDF — closing R-S15-1,
+   * future deck viewers, audit logs) can render an inline review marker
+   * without re-running the audit. Values are the audit's stable
+   * `LayoutAuditFlag` ids — see `report/audit/layoutAuditFlagPriority`
+   * for the canonical set. Backward compatible: legacy decks omit the
+   * field; renderers treat `undefined` / empty arrays as "no marker".
+   */
+  audit_flags?: string[];
+}
+
+export interface DeckDocument {
+  schemaVersion: 1;
+  deck_id: string;
+  deckId: string;
+  organization_id: string;
+  title: string;
+  theme_id: string;
+  presentation_mode: string;
+  communication_register: string;
+  image_style_preset: string;
+  color_set_id: string;
+  status: DeckStatus;
+  card_size: '16:9' | '4:3' | 'fluid';
+  cards: DeckDocumentCard[];
+  source_refs: DeckSourceRef[];
+  generation_settings: {
+    text_mode: 'generate' | 'condense' | 'preserve';
+    content_depth: string;
+    audience: string;
+    tone: string;
+    language: string;
+    image_source: string;
+    additional_instructions?: string;
+  };
+  animations_enabled: boolean;
+  share_settings: {
+    is_shared: boolean;
+    share_url?: string;
+    permissions: 'view' | 'comment' | 'edit';
+  };
+  speaker_notes_generated: boolean;
+  meta: {
+    title: string;
+    description?: string | null;
+    deckType: string;
+    audience?: string | null;
+    goal?: string | null;
+    language?: string | null;
+    confidentiality?: string | null;
+    theme?: string | null;
+    presentationMode?: string | null;
+    communicationRegister?: string | null;
+  };
+  lifecycle: {
+    status: DeckStatus;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    exportedAt?: string | null;
+  };
+  generation: {
+    outline: unknown[];
+    generationSettings: Record<string, unknown>;
+    contextPackSnapshotRef?: string | null;
+    warnings: string[];
+  };
+  delivery: {
+    exportFormat?: string | null;
+    exportPath?: string | null;
+  };
+  traceability: {
+    sourceRefs: DeckSourceRef[];
+    sourceArtifacts: unknown[];
+  };
+  ai: {
+    lastResolvedOperationId?: string | null;
+    reviewState?: 'clean' | 'has_pending_proposals' | 'has_unresolved_conflicts';
+  };
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function safeJsonParse<T>(raw: unknown, fallback: T): T {
+  if (!raw) return fallback;
+  if (typeof raw === 'object') return raw as T;
+  if (typeof raw !== 'string') return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function sourceRefsFromUnknown(input: unknown): DeckSourceRef[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((ref: any) => {
+      const confidence =
+        typeof ref?.confidence === 'number' && Number.isFinite(ref.confidence)
+          ? Math.max(0, Math.min(1, Number(ref.confidence)))
+          : null;
+      const freshnessDays =
+        typeof ref?.freshness_days === 'number'
+          ? Number(ref.freshness_days)
+          : typeof ref?.freshnessDays === 'number'
+            ? Number(ref.freshnessDays)
+            : null;
+      return {
+        artifact_id: String(ref?.artifact_id || ref?.artifactId || ref?.id || '').trim(),
+        artifact_type: String(
+          ref?.artifact_type || ref?.artifactType || ref?.type || 'artifact'
+        ).trim(),
+        artifact_name: String(
+          ref?.artifact_name || ref?.artifactName || ref?.name || ref?.label || 'Source'
+        ).trim(),
+        confidence,
+        readiness: ref?.readiness ? String(ref.readiness) : null,
+        freshness_days: Number.isFinite(freshnessDays as number) ? freshnessDays : null,
+        captured_at: ref?.captured_at ? String(ref.captured_at) : null,
+        lineage:
+          ref?.lineage && typeof ref.lineage === 'object'
+            ? (ref.lineage as Record<string, unknown>)
+            : null,
+      } as DeckSourceRef;
+    })
+    .filter((ref) => ref.artifact_id || ref.artifact_name);
+}
+
+function uniqueSourceRefs(refs: DeckSourceRef[]): DeckSourceRef[] {
+  const seen = new Set<string>();
+  const unique: DeckSourceRef[] = [];
+  for (const ref of refs) {
+    const key = `${ref.artifact_type}:${ref.artifact_id}:${ref.artifact_name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(ref);
+  }
+  return unique;
+}
+
+function makeBlock(params: {
+  deckId: string;
+  cardId: string;
+  slideIndex: number;
+  order: number;
+  type: string;
+  content: Record<string, unknown>;
+  sourceRef?: DeckSourceRef;
+  refreshable?: boolean;
+}): DeckCardBlock {
+  return {
+    block_id: `block-${params.deckId}-${params.slideIndex}-${params.order}`,
+    card_id: params.cardId,
+    type: params.type,
+    content: params.content,
+    source_ref: params.sourceRef,
+    is_refreshable: Boolean(params.refreshable || params.sourceRef),
+    position: { area: 'full', order: params.order },
+    ai_editable: true,
+  };
+}
+
+function titleFromUnifiedSlide(slide: UnifiedSlide): string {
+  const content: any = slide.content || {};
+  return String(
+    content.title ||
+      content.headline ||
+      content.section_title ||
+      content.section_name ||
+      slide.key_message ||
+      slide.intent ||
+      'Slide'
+  );
+}
+
+function blocksFromUnifiedSlide(
+  deckId: string,
+  cardId: string,
+  slide: UnifiedSlide,
+  slideIndex: number,
+  sourceRefs: DeckSourceRef[]
+): DeckCardBlock[] {
+  const content: any = slide.content || {};
+  const blocks: DeckCardBlock[] = [];
+  const sourceRef = sourceRefs[0];
+  const push = (type: string, blockContent: Record<string, unknown>, refreshable = false) => {
+    blocks.push(
+      makeBlock({
+        deckId,
+        cardId,
+        slideIndex,
+        order: blocks.length,
+        type,
+        content: blockContent,
+        sourceRef,
+        refreshable,
+      })
+    );
+  };
+
+  push('heading', { text: titleFromUnifiedSlide(slide), level: 2 });
+
+  switch (content.type) {
+    case 'cover': {
+      push('paragraph', {
+        text: [content.subtitle, content.organization, content.date, content.confidentiality]
+          .filter(Boolean)
+          .join(' · '),
+      });
+      break;
+    }
+    case 'executive_summary': {
+      if (Array.isArray(content.key_findings))
+        push('bullet_list', { items: content.key_findings.map(String) });
+      if (Array.isArray(content.kpis) && content.kpis.length)
+        push('metric_strip', { metrics: content.kpis }, true);
+      if (content.recommendation)
+        push('callout', { text: String(content.recommendation), kind: 'recommendation' });
+      break;
+    }
+    case 'key_messages': {
+      const messages = Array.isArray(content.messages) ? content.messages : [];
+      push('bullet_list', {
+        items: messages.map((message: any) =>
+          message?.description
+            ? `${String(message.title || '')}: ${String(message.description)}`
+            : String(message?.title || message)
+        ),
+      });
+      break;
+    }
+    case 'performance_overview': {
+      push('metric_strip', { metrics: Array.isArray(content.kpis) ? content.kpis : [] }, true);
+      if (content.context) push('paragraph', { text: String(content.context) });
+      break;
+    }
+    case 'initiative_portfolio': {
+      push(
+        'table',
+        {
+          headers: ['Initiative', 'Priority', 'Timeline', 'Owner'],
+          rows: (Array.isArray(content.initiatives) ? content.initiatives : []).map(
+            (initiative: any) => [
+              String(initiative.name || ''),
+              String(initiative.priority || ''),
+              String(initiative.timeline || ''),
+              String(initiative.owner || ''),
+            ]
+          ),
+        },
+        true
+      );
+      break;
+    }
+    case 'roadmap': {
+      push('timeline_block', { items: Array.isArray(content.phases) ? content.phases : [] }, true);
+      break;
+    }
+    case 'risk_management': {
+      push(
+        'table',
+        {
+          headers: ['Risk', 'Likelihood', 'Impact', 'Mitigation'],
+          rows: (Array.isArray(content.risks) ? content.risks : []).map((risk: any) => [
+            String(risk.risk || risk.title || ''),
+            String(risk.likelihood || risk.probability || ''),
+            String(risk.impact || ''),
+            String(risk.mitigation || ''),
+          ]),
+        },
+        true
+      );
+      break;
+    }
+    case 'next_steps': {
+      push('table', {
+        headers: ['Action', 'Owner', 'Deadline'],
+        rows: (Array.isArray(content.actions) ? content.actions : []).map((action: any) => [
+          String(action.action || ''),
+          String(action.owner || ''),
+          String(action.deadline || ''),
+        ]),
+      });
+      if (content.closing_message)
+        push('callout', { text: String(content.closing_message), kind: 'closing' });
+      break;
+    }
+    case 'appendix': {
+      if (content.body) push('paragraph', { text: String(content.body) });
+      if (Array.isArray(content.tables)) {
+        for (const table of content.tables) push('table', table, true);
+      }
+      break;
+    }
+    default: {
+      push('paragraph', { text: slide.key_message || JSON.stringify(content).slice(0, 1200) });
+    }
+  }
+
+  const narrative = (slide as any)._narrative_enrichment;
+  if (
+    narrative?.content &&
+    !blocks.some((block) =>
+      String(block.content?.text || '').includes(String(narrative.content).slice(0, 60))
+    )
+  ) {
+    push('paragraph', {
+      text: String(narrative.content),
+      factsUsed: narrative.facts_used ?? 0,
+      observationsUsed: narrative.observations_used ?? 0,
+    });
+  }
+
+  return blocks.filter((block) => {
+    if (block.type !== 'paragraph') return true;
+    return String(block.content?.text || '').trim().length > 0;
+  });
+}
+
+export function deckDocumentFromUnifiedJson(params: {
+  deckId: string;
+  organizationId: string;
+  title: string;
+  unifiedJson: UnifiedReportJSON;
+  outline?: unknown[];
+  setup?: Record<string, any>;
+  sourceArtifacts?: unknown[];
+  sourceRefs?: DeckSourceRef[];
+  status?: DeckStatus;
+  warnings?: string[];
+  exportPath?: string | null;
+  createdBy?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}): DeckDocument {
+  const nowIso = new Date().toISOString();
+  const setup = params.setup || {};
+  const baseSourceRefs = sourceRefsFromUnknown(params.sourceRefs);
+  const cards = params.unifiedJson.slides.map((slide, index) => {
+    const slideRefs = uniqueSourceRefs([
+      ...baseSourceRefs,
+      ...sourceRefsFromUnknown((slide as any).source_refs),
+    ]);
+    const cardId =
+      (slide as any).slide_id || (slide as any).card_id || `card-${params.deckId}-${index}`;
+    const blocks = blocksFromUnifiedSlide(params.deckId, cardId, slide, index, slideRefs);
+    // Sprint S16 — carry layout audit flags forward into the deck
+    // document so downstream renderers (PDF and future deck viewers)
+    // can render the truncation marker without re-running the audit.
+    // Filter to non-empty string entries to defend against accidental
+    // upstream `null` / object values.
+    const rawFlags = Array.isArray((slide as any).auditFlags)
+      ? ((slide as any).auditFlags as unknown[])
+      : [];
+    const auditFlags = rawFlags.filter((f): f is string => typeof f === 'string' && f.length > 0);
+    return {
+      card_id: cardId,
+      deck_id: params.deckId,
+      order_index: index,
+      intent: slide.intent,
+      layout_id:
+        slide.intent === 'cover'
+          ? 'cover_centered'
+          : slide.intent === 'performance_overview'
+            ? 'data_grid'
+            : slide.intent === 'initiative_portfolio'
+              ? 'table_full'
+              : 'content_full',
+      title: titleFromUnifiedSlide(slide),
+      key_message: slide.key_message,
+      blocks,
+      source_refs: slideRefs,
+      speaker_notes:
+        typeof (slide as any).speaker_notes === 'string' ? (slide as any).speaker_notes : '',
+      has_refreshable_data: blocks.some((block) => block.is_refreshable),
+      background: {
+        type: slide.intent === 'cover' ? 'gradient' : 'theme',
+        value: slide.intent === 'cover' ? 'linear-gradient(135deg, #0B3D91, #1A8A8A)' : undefined,
+      },
+      animations: { entrance: 'fade', block_stagger: false },
+      is_locked: false,
+      ...(auditFlags.length > 0 ? { audit_flags: auditFlags } : {}),
+    } satisfies DeckDocumentCard;
+  });
+  const sourceRefs = uniqueSourceRefs([
+    ...baseSourceRefs,
+    ...cards.flatMap((card) => card.source_refs),
+    ...cards.flatMap(
+      (card) => card.blocks.map((block) => block.source_ref).filter(Boolean) as DeckSourceRef[]
+    ),
+  ]);
+
+  return {
+    schemaVersion: 1,
+    deck_id: params.deckId,
+    deckId: params.deckId,
+    organization_id: params.organizationId,
+    title: params.title,
+    theme_id: setup.theme || params.unifiedJson.meta.template || 'corporate',
+    presentation_mode: setup.presentationMode || 'briefing',
+    communication_register: setup.communicationRegister || 'professional',
+    image_style_preset: setup.imageStylePreset || 'minimal_no_images',
+    color_set_id: setup.colorSetId || 'brand_kit',
+    status: params.status || 'generated',
+    card_size: setup.cardSize || '16:9',
+    cards,
+    source_refs: sourceRefs,
+    generation_settings: {
+      text_mode: setup.textMode || 'generate',
+      content_depth: setup.contentDepth || 'concise',
+      audience: setup.audience || params.unifiedJson.meta.client || 'executive',
+      tone: setup.communicationRegister || 'professional',
+      language: setup.language || params.unifiedJson.meta.language || 'en',
+      image_source: setup.imageSource || 'smart',
+      additional_instructions: setup.additionalInstructions || undefined,
+    },
+    animations_enabled: true,
+    share_settings: { is_shared: false, permissions: 'view' },
+    speaker_notes_generated: cards.some((card) => Boolean(card.speaker_notes)),
+    meta: {
+      title: params.title,
+      deckType: setup.deckType || 'custom',
+      audience: setup.audience || null,
+      goal: setup.goal || null,
+      language: setup.language || params.unifiedJson.meta.language,
+      confidentiality: setup.confidentiality || params.unifiedJson.meta.confidentiality,
+      theme: setup.theme || params.unifiedJson.meta.template || null,
+      presentationMode: setup.presentationMode || null,
+      communicationRegister: setup.communicationRegister || null,
+    },
+    lifecycle: {
+      status: params.status || 'generated',
+      createdAt: params.createdAt || nowIso,
+      updatedAt: params.updatedAt || nowIso,
+      exportedAt: params.exportPath ? nowIso : null,
+    },
+    generation: {
+      outline: Array.isArray(params.outline) ? params.outline : [],
+      generationSettings: setup,
+      warnings: Array.isArray(params.warnings) ? params.warnings : [],
+    },
+    delivery: {
+      exportFormat: params.exportPath ? 'pptx' : null,
+      exportPath: params.exportPath || null,
+    },
+    traceability: {
+      sourceRefs,
+      sourceArtifacts: Array.isArray(params.sourceArtifacts) ? params.sourceArtifacts : [],
+    },
+    ai: { reviewState: 'clean' },
+    created_by: params.createdBy || 'system',
+    created_at: params.createdAt || nowIso,
+    updated_at: params.updatedAt || nowIso,
+  };
+}
+
+export function normalizeDeckDocument(row: any): DeckDocument | null {
+  const deckJson = safeJsonParse<any>(row?.deck_json, null);
+  if (deckJson?.schemaVersion === 1 && Array.isArray(deckJson.cards)) {
+    return {
+      ...deckJson,
+      deck_id: deckJson.deck_id || deckJson.deckId || row?.id,
+      deckId: deckJson.deckId || deckJson.deck_id || row?.id,
+      title: row?.title || deckJson.title || deckJson?.meta?.title || 'Untitled',
+      status: row?.status || deckJson.status || deckJson?.lifecycle?.status || 'draft',
+      cards: deckJson.cards,
+      source_refs: Array.isArray(deckJson.source_refs)
+        ? deckJson.source_refs
+        : sourceRefsFromUnknown(deckJson?.traceability?.sourceRefs),
+    } as DeckDocument;
+  }
+  if (deckJson && Array.isArray(deckJson.cards)) {
+    return deckDocumentFromLegacyDeckJson(row, deckJson);
+  }
+  const unifiedJson = safeJsonParse<UnifiedReportJSON | null>(row?.unified_json, null);
+  if (unifiedJson?.slides && Array.isArray(unifiedJson.slides)) {
+    return deckDocumentFromUnifiedJson({
+      deckId: String(row?.id || ''),
+      organizationId: String(row?.organization_id || ''),
+      title: String(row?.title || unifiedJson.meta?.project || 'Untitled'),
+      unifiedJson,
+      outline: safeJsonParse(row?.outline_json, []),
+      sourceArtifacts: safeJsonParse(row?.source_artifacts, []),
+      sourceRefs: sourceRefsFromUnknown(safeJsonParse(row?.source_refs_json, [])),
+      status: (row?.status || 'generated') as DeckStatus,
+      exportPath: row?.export_path || null,
+      createdBy: row?.generated_by || row?.created_by || 'system',
+      createdAt: row?.created_at || null,
+      updatedAt: row?.updated_at || null,
+    });
+  }
+  return null;
+}
+
+function deckDocumentFromLegacyDeckJson(row: any, deckJson: any): DeckDocument {
+  const title = String(row?.title || deckJson.title || 'Untitled');
+  const sourceRefs = sourceRefsFromUnknown(deckJson.source_refs);
+  return {
+    schemaVersion: 1,
+    deck_id: String(row?.id || deckJson.deck_id || deckJson.deckId || ''),
+    deckId: String(row?.id || deckJson.deck_id || deckJson.deckId || ''),
+    organization_id: String(row?.organization_id || deckJson.organization_id || ''),
+    title,
+    theme_id: deckJson.theme_id || 'default',
+    presentation_mode: deckJson.presentation_mode || 'briefing',
+    communication_register: deckJson.communication_register || 'professional',
+    image_style_preset: deckJson.image_style_preset || 'minimal_no_images',
+    color_set_id: deckJson.color_set_id || 'brand_kit',
+    status: (row?.status || deckJson.status || 'draft') as DeckStatus,
+    card_size: deckJson.card_size || '16:9',
+    cards: Array.isArray(deckJson.cards) ? deckJson.cards : [],
+    source_refs: sourceRefs,
+    generation_settings: deckJson.generation_settings || {
+      text_mode: 'preserve',
+      content_depth: 'concise',
+      audience: 'internal',
+      tone: 'professional',
+      language: 'en',
+      image_source: 'none',
+    },
+    animations_enabled: deckJson.animations_enabled ?? true,
+    share_settings: deckJson.share_settings || { is_shared: false, permissions: 'view' },
+    speaker_notes_generated: deckJson.speaker_notes_generated ?? false,
+    meta: deckJson.meta || { title, deckType: 'legacy' },
+    lifecycle: deckJson.lifecycle || {
+      status: (row?.status || deckJson.status || 'draft') as DeckStatus,
+      createdAt: row?.created_at || deckJson.created_at || null,
+      updatedAt: row?.updated_at || deckJson.updated_at || null,
+      exportedAt: row?.exported_at || null,
+    },
+    generation: deckJson.generation || { outline: [], generationSettings: {}, warnings: [] },
+    delivery: deckJson.delivery || {
+      exportFormat: row?.export_format || null,
+      exportPath: row?.export_path || null,
+    },
+    traceability: deckJson.traceability || { sourceRefs, sourceArtifacts: [] },
+    ai: deckJson.ai || { reviewState: 'clean' },
+    created_by: String(row?.generated_by || row?.created_by || deckJson.created_by || 'system'),
+    created_at: String(row?.created_at || deckJson.created_at || new Date().toISOString()),
+    updated_at: String(row?.updated_at || deckJson.updated_at || new Date().toISOString()),
+  };
+}
+
+function textFromBlock(block: DeckCardBlock): string {
+  const content = block.content || {};
+  if (typeof content.text === 'string') return content.text;
+  if (Array.isArray(content.items)) return content.items.map(String).join(' · ');
+  if (Array.isArray((content as any).metrics)) {
+    return (content as any).metrics
+      .map((metric: any) => `${metric.label || metric.name}: ${metric.value ?? ''}`)
+      .join(' · ');
+  }
+  if (Array.isArray((content as any).rows)) {
+    return (content as any).rows
+      .map((row: any) => (Array.isArray(row) ? row.join(' · ') : String(row)))
+      .join(' | ');
+  }
+  return '';
+}
+
+export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON {
+  const meta: UnifiedReportMeta = {
+    client: String(deck.meta?.audience || deck.organization_id || 'Organization'),
+    project: deck.title,
+    date: new Date().toISOString().slice(0, 10),
+    author: 'Consultify',
+    confidentiality:
+      (deck.meta?.confidentiality as UnifiedReportMeta['confidentiality']) || 'internal',
+    language: (deck.meta?.language as UnifiedReportMeta['language']) || 'en',
+    template: (deck.meta?.theme as UnifiedReportMeta['template']) || 'corporate',
+  };
+
+  const slides: UnifiedSlide[] = [...deck.cards]
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((card) => {
+      const bodyBlocks = (card.blocks || []).filter((block) => block.type !== 'heading');
+      const firstText =
+        bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
+      const sourceRefs = uniqueSourceRefs([
+        ...sourceRefsFromUnknown(card.source_refs),
+        ...sourceRefsFromUnknown(bodyBlocks.map((block) => block.source_ref).filter(Boolean)),
+      ]);
+
+      const slide: UnifiedSlide = {
+        intent: (card.intent || 'key_messages') as SlideIntent,
+        key_message: card.key_message || card.title,
+        content: {
+          type:
+            card.intent === 'cover'
+              ? 'cover'
+              : card.intent === 'appendix'
+                ? 'appendix'
+                : 'key_messages',
+          ...(card.intent === 'cover'
+            ? {
+                title: card.title,
+                subtitle: firstText,
+                organization: meta.client,
+                date: meta.date,
+                confidentiality: meta.confidentiality,
+              }
+            : card.intent === 'appendix'
+              ? { title: card.title, body: firstText }
+              : {
+                  messages: bodyBlocks.length
+                    ? bodyBlocks.map((block) => ({
+                        title: block.type.replace(/_/g, ' '),
+                        description: textFromBlock(block),
+                      }))
+                    : [{ title: card.title, description: firstText }],
+                }),
+        } as any,
+      };
+      (slide as any).slide_id = card.card_id;
+      (slide as any).source_refs = sourceRefs;
+      if (card.speaker_notes) (slide as any).speaker_notes = card.speaker_notes;
+      return slide;
+    });
+
+  return { meta, slides };
+}

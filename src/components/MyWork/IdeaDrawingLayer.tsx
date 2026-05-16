@@ -38,14 +38,14 @@ export interface IdeaDrawingLayerProps {
 
 const COLORS = [
   '#1e293b',
-  '#ef4444',
-  '#f97316',
+  '#f43f5e',
+  '#f59e0b',
   '#eab308',
   '#22c55e',
   '#3b82f6',
-  '#8b5cf6',
+  '#6366f1',
   '#ec4899',
-  '#06b6d4',
+  '#3b82f6',
   '#ffffff',
 ];
 
@@ -353,7 +353,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <button
             onClick={handleClear}
             disabled={paths.length === 0}
-            className="p-1.5 text-slate-400 hover:text-red-500 disabled:opacity-30"
+            className="p-1.5 text-slate-400 hover:text-rose-500 disabled:opacity-30"
           >
             <Trash2 size={14} />
           </button>

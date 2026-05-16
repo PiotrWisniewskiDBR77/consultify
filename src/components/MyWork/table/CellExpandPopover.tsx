@@ -155,7 +155,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 disabled={locked}
                 rows={6}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-700 dark:text-slate-300 outline-none resize-none focus:ring-2 focus:ring-violet-500/30 leading-relaxed"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-700 dark:text-slate-300 outline-none resize-none focus:ring-2 focus:ring-primary-500/30 leading-relaxed"
                 placeholder={isPl ? 'Markdown obsługiwany...' : 'Markdown supported...'}
               />
               <p className="text-[9px] text-slate-400 mt-1.5">
@@ -216,7 +216,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                       {!locked && (
                         <button
                           onClick={() => handleRemoveOption(opt)}
-                          className="p-0.5 rounded text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-0.5 rounded text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -232,12 +232,12 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                     onChange={(e) => setNewOption(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddOption()}
                     placeholder={isPl ? 'Nowa opcja...' : 'New option...'}
-                    className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-violet-500/30"
+                    className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-primary-500/30"
                   />
                   <button
                     onClick={handleAddOption}
                     disabled={!newOption.trim()}
-                    className="p-1.5 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 disabled:opacity-40 transition-colors"
+                    className="p-1.5 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 disabled:opacity-40 transition-colors"
                   >
                     <Plus size={12} />
                   </button>
@@ -249,10 +249,10 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
           {/* AI Generated — prompt editor */}
           {column.type === 'ai_generated' && (
             <div>
-              <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3 mb-3">
+              <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3 mb-3">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Sparkles size={11} className="text-violet-500" />
-                  <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
+                  <Sparkles size={11} className="text-primary-500" />
+                  <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400">
                     {isPl ? 'Prompt AI' : 'AI Prompt'}
                   </span>
                 </div>
@@ -279,7 +279,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 <button
                   onClick={handleAIRegenerate}
                   disabled={aiLoading || !aiPrompt.trim()}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 disabled:opacity-40 transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-40 transition-colors"
                 >
                   {aiLoading ? (
                     <Loader2 size={12} className="animate-spin" />
@@ -306,7 +306,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 value={value ?? ''}
                 onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
                 disabled={locked}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-sm font-mono text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-sm font-mono text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
               {column.type === 'currency' && (
                 <p className="text-[9px] text-slate-400 mt-1.5">{isPl ? 'Waluta' : 'Currency'}</p>
@@ -345,7 +345,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   value={Number(value) || 0}
                   onChange={(e) => !locked && onChange(Number(e.target.value))}
                   disabled={locked}
-                  className="flex-1 accent-violet-500"
+                  className="flex-1 accent-primary-500"
                 />
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-10 text-right">
                   {value || 0}%
@@ -353,7 +353,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               </div>
               <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all"
                   style={{ width: `${Number(value) || 0}%` }}
                 />
               </div>
@@ -367,7 +367,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               value={String(value || '')}
               onChange={(e) => onChange(e.target.value)}
               disabled={locked}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
             />
           )}
 
@@ -380,7 +380,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 disabled={locked}
                 placeholder="https://..."
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-blue-600 dark:text-blue-400 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-blue-600 dark:text-blue-400 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
               {value && (
                 <a
@@ -412,7 +412,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               value={String(value || '')}
               onChange={(e) => onChange(e.target.value)}
               disabled={locked}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
             />
           )}
         </div>

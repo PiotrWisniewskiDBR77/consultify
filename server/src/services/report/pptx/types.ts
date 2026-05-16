@@ -54,6 +54,25 @@ export interface UnifiedSlide {
    * When present and the renderer supports it, visuals are embedded via `addImage`.
    */
   visuals?: SlideVisualSpec[];
+  /**
+   * Sprint S15 — Layout audit flags carried over from
+   * `presentationStudioLayoutAuditService`. When present and non-empty,
+   * the renderer attaches an inline truncation/review marker so the
+   * exported artifact is honest about the warnings the audit raised
+   * (e.g. an overflowing title that the renderer would otherwise
+   * silently truncate). Closes R-S13-4.
+   *
+   * Values are the audit's stable `LayoutAuditFlag` ids (e.g.
+   * `'layout_overflow_title'`, `'missing_source_for_evidence_intent'`,
+   * `'unsupported_intent_for_pptx_export'`). The PPTX module keeps the
+   * field as `string[]` rather than typed against `LayoutAuditFlag` to
+   * avoid a circular import between PPTX types ← generator ← audit.
+   * The marker helper validates the strings before rendering.
+   *
+   * Backward compatible: legacy callers leave the field unset; the
+   * renderer treats `undefined`/empty arrays as "no marker".
+   */
+  auditFlags?: string[];
 }
 
 export interface UnifiedReportJSON {

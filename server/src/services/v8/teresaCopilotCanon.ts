@@ -18,7 +18,7 @@
  */
 
 // ────────────────────────────────────────────────────────────────
-// §2.3.1 — P0 handoff targets (frozen, 4) + required context payload
+// §2.3.1 — Handoff targets + required context payload
 // ────────────────────────────────────────────────────────────────
 
 export const P08_COPILOT_CONTRACT = 'teresa_copilot_v1';
@@ -177,6 +177,13 @@ export const P08_HANDOFF_TARGETS = {
     description: 'Interview insights — generate, review, export, evidence map',
     required_common_payload: true,
     required_extra_fields: ['interview_handoff_context', 'evidence_pointers'] as const,
+  },
+  excele: {
+    module: 'Excele' as const,
+    contract_ref: 'P12',
+    description: 'Workbook generation and spreadsheet workflows',
+    required_common_payload: true,
+    required_extra_fields: ['prompt'] as const,
   },
 } as const;
 

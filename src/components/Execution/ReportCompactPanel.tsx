@@ -209,7 +209,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                 {report.degradedFlags.map((flag) => (
                   <span
                     key={flag}
-                    className="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400"
+                    className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-400"
                   >
                     {flag}
                   </span>

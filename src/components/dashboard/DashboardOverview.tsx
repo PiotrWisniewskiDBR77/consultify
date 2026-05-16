@@ -153,15 +153,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
       {/* Welcome/Start Section */}
       {!hasStarted && (
-        <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Welcome to Your Transformation Dashboard</h2>
-          <p className="text-purple-100 mb-6">
+          <p className="text-primary-100 mb-6">
             Start your digital transformation journey by completing the initial assessment and
             planning.
           </p>
           <button
             onClick={onStartModule1}
-            className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2"
+            className="bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-primary-50 transition-colors flex items-center gap-2"
           >
             <Rocket size={20} />
             Start Transformation
@@ -187,7 +187,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-700 h-3 rounded-full overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-500 to-purple-600 h-full rounded-full transition-all duration-1000"
+              className="bg-gradient-to-r from-blue-500 to-primary-600 h-full rounded-full transition-all duration-1000"
               style={{ width: `${progressStats}%` }}
             ></div>
           </div>
@@ -198,7 +198,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">
             Current Phase
           </h3>
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+          <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-1">
             {currentPhase}
           </div>
           <p className="text-xs text-slate-400">
@@ -210,27 +210,27 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Priority Alerts */}
-        <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-6 border border-red-100 dark:border-red-500/20 shadow-sm">
-          <h3 className="text-red-600 dark:text-red-400 font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+        <div className="bg-rose-50 dark:bg-rose-900/10 rounded-2xl p-6 border border-rose-100 dark:border-rose-500/20 shadow-sm">
+          <h3 className="text-rose-600 dark:text-rose-400 font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
             <AlertOctagon size={16} />
             Priority Alerts
           </h3>
           <ul className="space-y-2">
             {!safeSession.step2Completed && (
-              <li className="text-sm text-red-800 dark:text-red-200 flex items-start gap-2">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+              <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                 Assessment incomplete: Missing key data points.
               </li>
             )}
             {initiativeStats.delayed > 0 && (
-              <li className="text-sm text-red-800 dark:text-red-200 flex items-start gap-2">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+              <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                 {initiativeStats.delayed} initiatives are currently delayed.
               </li>
             )}
             {initiativeStats.atRisk > 0 && (
-              <li className="text-sm text-red-800 dark:text-red-200 flex items-start gap-2">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+              <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                 {initiativeStats.atRisk} high-priority initiatives at risk.
               </li>
             )}
@@ -311,7 +311,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span> Delayed
+                    <span className="w-2 h-2 rounded-full bg-rose-500"></span> Delayed
                   </span>
                   <span className="font-mono font-bold">{initiativeStats.delayed}</span>
                 </div>
@@ -340,7 +340,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                       {kpi.trend === 'good' ? (
                         <TrendingUp size={14} className="text-green-500" />
                       ) : (
-                        <TrendingDown size={14} className="text-red-500" />
+                        <TrendingDown size={14} className="text-rose-500" />
                       )}
                     </div>
                     <div className="text-[10px] text-slate-400">Baseline: {kpi.baseline}</div>
@@ -354,7 +354,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         {/* AI Insights */}
         <div className="lg:col-span-2 space-y-6">
           {dashPrefs.widgets.aiInsights && (
-            <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
+            <div className="bg-gradient-to-br from-indigo-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
               <div className="absolute top-0 right-0 p-8 opacity-20">
                 <BrainCircuit size={180} />
               </div>
@@ -393,10 +393,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
                   {/* Predictive Risk */}
                   {initiativeStats.atRisk > 0 && (
-                    <div className="bg-red-500/20 backdrop-blur-md rounded-xl p-5 border border-red-500/20 flex items-start gap-4">
-                      <AlertTriangle size={24} className="text-red-300 shrink-0" />
+                    <div className="bg-rose-500/20 backdrop-blur-md rounded-xl p-5 border border-rose-500/20 flex items-start gap-4">
+                      <AlertTriangle size={24} className="text-rose-300 shrink-0" />
                       <div>
-                        <h4 className="text-sm font-semibold text-red-200 uppercase tracking-wider mb-1">
+                        <h4 className="text-sm font-semibold text-rose-200 uppercase tracking-wider mb-1">
                           Early Predictive Risk
                         </h4>
                         <p className="text-sm text-white/90">{aiInsights.risk}</p>
@@ -415,11 +415,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 onClick={onCreateTask}
                 className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group"
               >
-                <Plus className="mx-auto mb-2 text-purple-600 group-hover:scale-110 transition-transform" />
+                <Plus className="mx-auto mb-2 text-primary-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">New Task</span>
               </button>
               <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group">
-                <LayoutDashboard className="mx-auto mb-2 text-purple-600 group-hover:scale-110 transition-transform" />
+                <LayoutDashboard className="mx-auto mb-2 text-primary-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">Assessment</span>
               </button>
               <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group">
@@ -427,7 +427,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <span className="text-xs font-semibold">Roadmap</span>
               </button>
               <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group">
-                <Rocket className="mx-auto mb-2 text-orange-600 group-hover:scale-110 transition-transform" />
+                <Rocket className="mx-auto mb-2 text-amber-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">Pilot</span>
               </button>
             </div>

@@ -103,7 +103,7 @@ export const ForgotPasswordView: React.FC = () => {
             </div>
 
             {status === 'error' && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errorMsg}</p>
+              <p className="text-sm text-rose-600 dark:text-rose-400">{errorMsg}</p>
             )}
 
             <button

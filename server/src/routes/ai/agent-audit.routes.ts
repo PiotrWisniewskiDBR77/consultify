@@ -13,10 +13,8 @@ import { requireRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   acceptAgentAuditRun,
-  AgentAuditPersistenceError,
   createAgentAuditRun,
   getAgentAuditRun,
-  listAgentAuditRuns,
 } from '../../services/ai/agentAudit/agentAuditStore.js';
 import { AGENTS } from '../../services/ai/agentAudit/agentRegistry.js';
 import { runAgentAudit, suggestAgents } from '../../services/ai/agentAudit/orchestratorService.js';
@@ -216,57 +214,30 @@ router.post(
       loopIteration: body.loopIteration,
     });
 
-    const persistedRun = await createAgentAuditRun({
-      id: result.orchestratorRunId,
-      organizationId: req.organizationId!,
-      userId: req.userId!,
-      conversationId: body?.conversationId || null,
-      dtSessionId: body?.dtSessionId || null,
-      userIntent: String(body?.userIntent || 'validate'),
-      loopIteration: Number(body?.loopIteration || 1),
-      decisionContext: body?.decisionContext || null,
-      selectedAgentIds: body?.agentIds || [],
-      verdict: result.verdict || null,
-      reviews: (result.reviews || []).map((r: any) => ({
-        agentId: String(r.agentId || ''),
-        overreach: r.overreach || null,
-        review: r,
-      })),
-    }).then(() =>
-      getAgentAuditRun({
-        runId: result.orchestratorRunId,
+    // Persist run for transparency/history
+    try {
+      await createAgentAuditRun({
+        id: result.orchestratorRunId,
         organizationId: req.organizationId!,
-      })
-    );
-
-    if (!persistedRun) {
-      throw new AgentAuditPersistenceError(
-        `Agent audit run ${result.orchestratorRunId} could not be reloaded after review`
-      );
+        userId: req.userId!,
+        conversationId: body?.conversationId || null,
+        dtSessionId: body?.dtSessionId || null,
+        userIntent: String(body?.userIntent || 'validate'),
+        loopIteration: Number(body?.loopIteration || 1),
+        decisionContext: body?.decisionContext || null,
+        selectedAgentIds: body?.agentIds || [],
+        verdict: result.verdict || null,
+        reviews: (result.reviews || []).map((r: any) => ({
+          agentId: String(r.agentId || ''),
+          overreach: r.overreach || null,
+          review: r,
+        })),
+      });
+    } catch {
+      // best-effort; do not fail the request
     }
 
-    return res.json({ success: true, ...result, run: persistedRun });
-  })
-);
-
-router.get(
-  '/runs',
-  asyncHandler(async (req: any, res) => {
-    const conversationId = String(req.query?.conversationId || '').trim() || null;
-    const dtSessionId = String(req.query?.dtSessionId || '').trim() || null;
-    const acceptedOnly =
-      String(req.query?.acceptedOnly || '')
-        .trim()
-        .toLowerCase() === 'true';
-    const limitRaw = Number(req.query?.limit || 20);
-    const runs = await listAgentAuditRuns({
-      organizationId: req.organizationId!,
-      conversationId,
-      dtSessionId,
-      acceptedOnly,
-      limit: Number.isFinite(limitRaw) ? limitRaw : 20,
-    });
-    return res.json({ success: true, runs });
+    return res.json({ success: true, ...result });
   })
 );
 
@@ -283,7 +254,6 @@ router.get(
 
 router.post(
   '/runs/:runId/accept',
-  requireRole('admin', 'superadmin'),
   validateBody(AgentAuditAcceptRunRequestSchema),
   asyncHandler(async (req: any, res) => {
     const runId = String(req.params?.runId || '').trim();

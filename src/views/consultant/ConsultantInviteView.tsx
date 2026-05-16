@@ -97,7 +97,7 @@ export const ConsultantInviteView = () => {
           {/* Access Generation Form */}
           <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Send size={18} className="text-purple-500" />
+              <Send size={18} className="text-primary-500" />
               {t('consultant.invites.newInvitation')}
             </h2>
 
@@ -109,7 +109,7 @@ export const ConsultantInviteView = () => {
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                 >
                   <option value="TRIAL_ORG">{t('consultant.invites.typeTrialOrg')}</option>
                   <option value="TRIAL_USER">{t('consultant.invites.typeTrialUser')}</option>
@@ -126,7 +126,7 @@ export const ConsultantInviteView = () => {
                   value={targetCompany}
                   onChange={(e) => setTargetCompany(e.target.value)}
                   placeholder={t('consultant.invites.companyPlaceholder')}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                 />
               </div>
 
@@ -139,7 +139,7 @@ export const ConsultantInviteView = () => {
                   value={targetEmail}
                   onChange={(e) => setTargetEmail(e.target.value)}
                   placeholder={t('consultant.invites.emailPlaceholder')}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                 />
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {t('consultant.invites.emailHint')}
@@ -149,7 +149,7 @@ export const ConsultantInviteView = () => {
               <button
                 type="submit"
                 disabled={isCreating}
-                className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium shadow-md transition-colors disabled:opacity-50"
+                className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium shadow-md transition-colors disabled:opacity-50"
               >
                 {isCreating
                   ? t('consultant.invites.generating')
@@ -181,7 +181,7 @@ export const ConsultantInviteView = () => {
                       className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-mono font-bold text-lg tracking-wider text-purple-600 dark:text-purple-400">
+                        <div className="font-mono font-bold text-lg tracking-wider text-primary-600 dark:text-primary-400">
                           {invite.invite_code}
                         </div>
                         <button

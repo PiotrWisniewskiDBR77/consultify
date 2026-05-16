@@ -85,8 +85,8 @@ const R_TYPE_META: Record<
   R2: {
     label: 'Steering Committee',
     labelPl: 'Komitet sterujący',
-    color: 'text-purple-400',
-    dotColor: 'bg-purple-400',
+    color: 'text-primary-400',
+    dotColor: 'bg-primary-400',
   },
   R3: {
     label: 'Benefits Tracking',
@@ -110,7 +110,7 @@ const STATUS_COLORS: Record<string, string> = {
   archived: 'bg-slate-600',
   in_progress: 'bg-amber-500',
   completed: 'bg-emerald-500',
-  error: 'bg-red-500',
+  error: 'bg-rose-500',
 };
 
 // ---------------------------------------------------------------------------
@@ -423,7 +423,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           {onCreateReport && (
             <button
               onClick={onCreateReport}
-              className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               {t('rbHub.newReport', 'Nowy raport')}
@@ -563,13 +563,13 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                     {statusBadge(latest.status)}
                     <button
                       onClick={() => onOpenReport?.(latest.id)}
-                      className="px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
                     >
                       {t('common.open', 'Otwórz')}
                     </button>
                     <button
                       onClick={() => onCreateReport?.()}
-                      className="px-3 py-1.5 text-xs font-medium border border-violet-500/30 text-violet-400 hover:bg-violet-500/10 rounded-lg transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium border border-primary-500/30 text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors"
                     >
                       <Plus size={12} className="inline mr-1" />
                       {t('rbHub.generateNew', 'Generuj nowy')}
@@ -628,7 +628,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         {filteredTemplates.map((tpl) => (
           <div
             key={tpl.id}
-            className="border border-slate-200 dark:border-white/5 rounded-xl bg-white dark:bg-navy-900/60 p-4 flex flex-col gap-3 hover:border-violet-500/30 transition-colors"
+            className="border border-slate-200 dark:border-white/5 rounded-xl bg-white dark:bg-navy-900/60 p-4 flex flex-col gap-3 hover:border-primary-500/30 transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -651,7 +651,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
             <div className="flex items-center gap-2 mt-auto">
               <button
                 onClick={() => onCreateReport?.()}
-                className="flex-1 px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors text-center"
+                className="flex-1 px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-center"
               >
                 {t('rbHub.useTemplate', 'Użyj szablonu')}
               </button>
@@ -773,7 +773,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }

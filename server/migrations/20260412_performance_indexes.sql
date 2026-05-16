@@ -6,13 +6,23 @@ CREATE INDEX IF NOT EXISTS idx_revoked_tokens_jti ON revoked_tokens (jti);
 CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user_reason_expires ON revoked_tokens (user_id, reason, expires_at);
 
 -- user_sessions: used by trackSessionActivity on every authenticated request
-CREATE INDEX IF NOT EXISTS idx_user_sessions_user_active ON user_sessions (user_id, is_active);
+DO $$
+BEGIN
+  IF to_regclass('user_sessions') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_active ON user_sessions (user_id, is_active);
+  END IF;
+END $$;
 
 -- users/org lookups: hot path for login and organization bootstrap
 CREATE INDEX IF NOT EXISTS idx_users_email_login ON users (email);
 CREATE INDEX IF NOT EXISTS idx_organization_profiles_org_id ON organization_profiles (organization_id);
-CREATE INDEX IF NOT EXISTS idx_org_context_snapshots_org_rebuilt
-  ON organization_context_snapshots (organization_id, rebuilt_at DESC);
+DO $$
+BEGIN
+  IF to_regclass('organization_context_snapshots') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_org_context_snapshots_org_rebuilt
+      ON organization_context_snapshots (organization_id, rebuilt_at DESC);
+  END IF;
+END $$;
 
 -- refresh token lookups/rotation: hot path for login and session refresh
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash_active

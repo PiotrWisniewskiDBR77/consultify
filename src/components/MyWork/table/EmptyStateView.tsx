@@ -76,10 +76,10 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
   return (
     <div className="flex flex-col items-center justify-center text-center px-6 py-14 max-w-md mx-auto">
       <div
-        className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 via-indigo-500/15 to-slate-200/40 dark:from-violet-500/25 dark:via-indigo-500/20 dark:to-navy-800/80 ring-1 ring-slate-200/80 dark:ring-navy-600/50 shadow-inner"
+        className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 via-indigo-500/15 to-slate-200/40 dark:from-primary-500/25 dark:via-indigo-500/20 dark:to-navy-800/80 ring-1 ring-slate-200/80 dark:ring-navy-600/50 shadow-inner"
         aria-hidden
       >
-        <Table2 className="h-9 w-9 text-violet-600 dark:text-violet-300" strokeWidth={1.5} />
+        <Table2 className="h-9 w-9 text-primary-600 dark:text-primary-300" strokeWidth={1.5} />
       </div>
       <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
         {headline}
@@ -107,7 +107,7 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
         <button
           type="button"
           onClick={onUseAI}
-          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2.5 text-xs font-semibold text-violet-800 shadow-sm hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/20 transition-colors"
+          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50/80 px-3 py-2.5 text-xs font-semibold text-primary-800 shadow-sm hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-200 dark:hover:bg-primary-500/20 transition-colors"
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" />
           {isPl ? 'Użyj AI' : 'Use AI'}

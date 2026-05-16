@@ -7,6 +7,8 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { Artifact } from '../types';
+import type { ArtifactContentEnvelope, CanonicalFormat } from '../types/artifactContent';
+import { projectToMarkdown } from '../utils/artifacts/projectToMarkdown';
 
 // ==================== TYPES ====================
 
@@ -34,6 +36,58 @@ interface ArtifactsState {
   getArtifactsByType: (type: Artifact['type']) => Artifact[];
 }
 
+const JSON_NATIVE_TYPES = new Set(['diagram', 'table', 'comparison-matrix', 'decision-timeline']);
+
+function tryParseJson(value: string): unknown | undefined {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function buildArtifactEnvelope(artifact: Artifact): ArtifactContentEnvelope {
+  const existing = (artifact as any).contentEnvelope as ArtifactContentEnvelope | undefined;
+  if (existing?.contentMd) return existing;
+
+  const type = String((artifact as any).type || 'markdown');
+  const diagramData = (artifact as any).diagramData;
+  const parsedContent =
+    typeof artifact.content === 'string' && artifact.content.trim().startsWith('{')
+      ? tryParseJson(artifact.content)
+      : undefined;
+  const isJsonNative = JSON_NATIVE_TYPES.has(type) || diagramData || parsedContent !== undefined;
+  const canonicalFormat: CanonicalFormat = isJsonNative ? 'json' : 'markdown';
+  const contentJson = diagramData || parsedContent;
+  const contentMd =
+    canonicalFormat === 'markdown'
+      ? artifact.content
+      : projectToMarkdown(type, contentJson || artifact.content);
+
+  return {
+    canonicalFormat,
+    artifactType: type,
+    contentMd,
+    contentJson,
+    markdownProjectionStatus: contentMd.trim() ? 'synced' : 'missing',
+    markdownProjectedAt: new Date().toISOString(),
+  };
+}
+
+function normalizeArtifactContentContract(artifact: Artifact): Artifact {
+  const contentEnvelope = buildArtifactEnvelope(artifact);
+  return {
+    ...artifact,
+    content: contentEnvelope.contentMd || artifact.content,
+    metadata: {
+      ...((artifact as any).metadata || {}),
+      contentEnvelope,
+    },
+    ...(contentEnvelope as any),
+    contentEnvelope,
+  } as Artifact;
+}
+
 // ==================== STORE ====================
 
 export const useArtifactsStore = create<ArtifactsState>()(
@@ -49,7 +103,8 @@ export const useArtifactsStore = create<ArtifactsState>()(
       // Actions
       addArtifact: (artifact, conversationId) =>
         set((state) => {
-          const newArtifacts = [...state.artifacts, artifact];
+          const normalizedArtifact = normalizeArtifactContentContract(artifact);
+          const newArtifacts = [...state.artifacts, normalizedArtifact];
 
           // Also store in conversation artifacts if conversationId provided
           let newConversationArtifacts = state.conversationArtifacts;
@@ -57,14 +112,14 @@ export const useArtifactsStore = create<ArtifactsState>()(
             const existing = state.conversationArtifacts[conversationId] || [];
             newConversationArtifacts = {
               ...state.conversationArtifacts,
-              [conversationId]: [...existing, artifact],
+              [conversationId]: [...existing, normalizedArtifact],
             };
           }
 
           return {
             artifacts: newArtifacts,
             conversationArtifacts: newConversationArtifacts,
-            activeArtifactId: artifact.id,
+            activeArtifactId: normalizedArtifact.id,
             isPanelOpen: true, // Auto-open panel when artifact is added
           };
         }),
@@ -74,7 +129,21 @@ export const useArtifactsStore = create<ArtifactsState>()(
           const updateInArray = (artifacts: Artifact[]) =>
             artifacts.map((a) =>
               a.id === id
-                ? { ...a, content, version: (a.version ?? 0) + 1, updatedAt: new Date() }
+                ? ({
+                    ...a,
+                    content,
+                    updatedAt: new Date(),
+                    metadata: {
+                      ...((a as any).metadata || {}),
+                      wave5Governance: {
+                        ...(((a as any).metadata || {}).wave5Governance || {}),
+                        localDraftOnly: true,
+                        requiresMutationProposal: true,
+                        lastLocalEditAt: new Date().toISOString(),
+                        note: 'Local artifact edits are draft-only. Workspace commit requires a Wave 5 mutation proposal.',
+                      },
+                    },
+                  } as Artifact)
                 : a
             );
 
@@ -218,16 +287,19 @@ export const createArtifact = (
   title: string,
   content: string,
   options: Partial<Artifact> = {}
-): Artifact => ({
-  id: `artifact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  type,
-  title,
-  content,
-  editable: true,
-  version: 1,
-  createdAt: new Date(),
-  ...options,
-});
+): Artifact => {
+  const artifact = {
+    id: `artifact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    type,
+    title,
+    content,
+    editable: true,
+    version: 1,
+    createdAt: new Date(),
+    ...options,
+  } as Artifact;
+  return normalizeArtifactContentContract(artifact);
+};
 
 /**
  * Parse AI response for artifacts
@@ -238,31 +310,36 @@ export const parseArtifactsFromResponse = (response: string): Artifact[] => {
   const artifacts: Artifact[] = [];
   const processedPositions = new Set<number>(); // Track positions to avoid duplicates
 
+  const normalizeArtifactType = (type: string): Artifact['type'] | null => {
+    const normalized = type === 'comparison' ? 'comparison-matrix' : type;
+    return isValidArtifactType(normalized) ? (normalized as Artifact['type']) : null;
+  };
+
   // Pattern for artifact blocks with language: ```artifact:type:language:title\ncontent\n```
-  const artifactPatternWithLang = /```artifact:(\w+):(\w+):([^\n]+)\n([\s\S]*?)```/g;
+  const artifactPatternWithLang = /```artifact:([\w-]+):(\w+):([^\n]+)\n([\s\S]*?)```/g;
   let match;
 
   while ((match = artifactPatternWithLang.exec(response)) !== null) {
     const [, type, language, title, content] = match;
-    if (isValidArtifactType(type)) {
+    const artifactType = normalizeArtifactType(type);
+    if (artifactType) {
       processedPositions.add(match.index);
-      artifacts.push(
-        createArtifact(type as Artifact['type'], title.trim(), content.trim(), { language })
-      );
+      artifacts.push(createArtifact(artifactType, title.trim(), content.trim(), { language }));
     }
   }
 
   // Pattern for artifact blocks without language: ```artifact:type:title\ncontent\n```
-  const artifactPattern = /```artifact:(\w+):([^\n]+)\n([\s\S]*?)```/g;
+  const artifactPattern = /```artifact:([\w-]+):([^\n]+)\n([\s\S]*?)```/g;
 
   while ((match = artifactPattern.exec(response)) !== null) {
     // Skip if already processed by language pattern
     if (processedPositions.has(match.index)) continue;
 
     const [, type, title, content] = match;
-    if (isValidArtifactType(type)) {
+    const artifactType = normalizeArtifactType(type);
+    if (artifactType) {
       processedPositions.add(match.index);
-      artifacts.push(createArtifact(type as Artifact['type'], title.trim(), content.trim()));
+      artifacts.push(createArtifact(artifactType, title.trim(), content.trim()));
     }
   }
 
@@ -317,6 +394,13 @@ export const parseArtifactsFromResponse = (response: string): Artifact[] => {
 
   return artifacts;
 };
+
+export const stripArtifactsFromResponse = (response: string): string =>
+  String(response || '')
+    .replace(/```artifact:[\w-]+(?::\w+)?:[^\n]+\n[\s\S]*?```/g, '')
+    .replace(/```json:artifact\n[\s\S]*?```/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
 const isValidArtifactType = (type: string): type is Artifact['type'] => {
   return [

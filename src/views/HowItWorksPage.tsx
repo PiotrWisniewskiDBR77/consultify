@@ -17,14 +17,14 @@ import { MarketingLayout } from '../components/Landing/MarketingLayout';
 const STEP_VISUALS = [
   { number: '01', icon: FileText, color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
   { number: '02', icon: Brain, color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
-  { number: '03', icon: CheckCircle2, color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
+  { number: '03', icon: CheckCircle2, color: '#3b82f6', glow: 'rgba(6,182,212,0.25)' },
   { number: '04', icon: Zap, color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
   { number: '05', icon: TrendingUp, color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
 ];
 
 const TECH_VISUALS = [
   { color: '#7c3aed', icon: Brain },
-  { color: '#06b6d4', icon: Zap },
+  { color: '#3b82f6', icon: Zap },
   { color: '#a855f7', icon: Cpu },
   { color: '#10b981', icon: CheckCircle2 },
 ];

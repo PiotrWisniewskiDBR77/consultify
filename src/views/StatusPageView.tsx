@@ -85,14 +85,14 @@ const STATUS_CONFIG = {
   },
   partial_outage: {
     icon: AlertTriangle,
-    color: 'text-orange-500',
-    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-amber-500',
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
     label: { en: 'Partial Outage', pl: 'Częściowa awaria' },
   },
   major_outage: {
     icon: XCircle,
-    color: 'text-red-500',
-    bg: 'bg-red-100 dark:bg-red-900/30',
+    color: 'text-rose-500',
+    bg: 'bg-rose-100 dark:bg-rose-900/30',
     label: { en: 'Major Outage', pl: 'Poważna awaria' },
   },
   maintenance: {
@@ -200,7 +200,7 @@ export const StatusPageView: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <RefreshCw size={32} className="animate-spin text-purple-500" />
+        <RefreshCw size={32} className="animate-spin text-primary-500" />
       </div>
     );
   }
@@ -421,7 +421,7 @@ export const StatusPageView: React.FC = () => {
         {/* Subscribe */}
         <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Bell size={20} className="text-purple-500" />
+            <Bell size={20} className="text-primary-500" />
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t.subscribe[lang]}
             </h3>
@@ -438,7 +438,7 @@ export const StatusPageView: React.FC = () => {
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium"
             >
               {subscribeSuccess ? t.subscribed[lang] : lang === 'pl' ? 'Subskrybuj' : 'Subscribe'}
             </button>

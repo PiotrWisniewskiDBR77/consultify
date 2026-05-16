@@ -186,7 +186,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               type="time"
               value={workHoursStart}
               onChange={(e) => setWorkHoursStart(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
           </div>
           <div className="space-y-1.5">
@@ -197,7 +197,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               type="time"
               value={workHoursEnd}
               onChange={(e) => setWorkHoursEnd(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
           </div>
         </div>
@@ -219,8 +219,8 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
                                     px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium
                                     ${
                                       isSelected
-                                        ? 'border-purple-500 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                                        : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                                        ? 'border-primary-500 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
+                                        : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
                                     }
                                 `}
               >
@@ -244,7 +244,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
             id="outOfOffice"
             checked={outOfOffice}
             onChange={(e) => setOutOfOffice(e.target.checked)}
-            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+            className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
           />
           <label htmlFor="outOfOffice" className="text-sm text-slate-700 dark:text-slate-300">
             {t('settings.profile.workHours.markAsOutOfOffice', 'Mark as out of office')}
@@ -260,7 +260,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               type="date"
               value={vacationStart}
               onChange={(e) => setVacationStart(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
           </div>
           <div className="space-y-1.5">
@@ -272,7 +272,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               value={vacationEnd}
               onChange={(e) => setVacationEnd(e.target.value)}
               min={vacationStart}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
           </div>
         </div>
@@ -283,7 +283,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -307,7 +307,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.profile.workHours.error', 'Failed to update work hours')}
         </div>

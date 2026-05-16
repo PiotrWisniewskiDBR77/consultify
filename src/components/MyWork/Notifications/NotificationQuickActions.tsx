@@ -148,7 +148,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             e.stopPropagation();
             onOpenDecision(notification.relatedObjectId!);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-medium rounded-lg transition-colors"
         >
           <Scale size={12} />
           {isPolish ? 'Otwórz dokument' : 'Open document'}
@@ -196,7 +196,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                 e.stopPropagation();
                 onReject();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-medium rounded-lg transition-colors"
             >
               <ThumbsDown size={12} />
               {t('notifications.actions.reject', 'Reject')}
@@ -215,7 +215,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
               e.stopPropagation();
               onApplyRecommendation();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-medium rounded-lg transition-colors"
           >
             <Sparkles size={12} />
             {t('notifications.actions.apply', 'Apply')}
@@ -267,7 +267,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
               e.stopPropagation();
               onOpenChat();
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-xs font-medium rounded-lg transition-colors border border-purple-200 dark:border-purple-800"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-xs font-medium rounded-lg transition-colors border border-primary-200 dark:border-primary-800"
           >
             <MessageSquare size={12} />
             {isPolish ? 'Czat' : 'Chat'}
@@ -368,7 +368,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors"
           title={t('notifications.actions.delete', 'Delete')}
         >
           <Trash2 size={14} />

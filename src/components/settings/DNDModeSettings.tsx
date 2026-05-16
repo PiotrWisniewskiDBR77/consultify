@@ -122,21 +122,21 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
 
       {/* Current Status */}
       {dndEnabled && dndUntil && (
-        <div className="p-4 bg-purple-50 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 rounded-lg">
+        <div className="p-4 bg-primary-50 dark:bg-primary-500/20 border border-primary-200 dark:border-primary-500/30 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+              <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
                 {t('settings.notifications.dnd.active', 'DND is active')}
               </p>
-              <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+              <p className="text-xs text-primary-700 dark:text-primary-300 mt-1">
                 {t('settings.notifications.dnd.until', 'Until')}: {formatUntil(dndUntil)}
               </p>
             </div>
             <button
               onClick={handleDisable}
-              className="p-2 hover:bg-purple-100 dark:hover:bg-purple-500/30 rounded-lg transition-colors"
+              className="p-2 hover:bg-primary-100 dark:hover:bg-primary-500/30 rounded-lg transition-colors"
             >
-              <X size={16} className="text-purple-600 dark:text-purple-400" />
+              <X size={16} className="text-primary-600 dark:text-primary-400" />
             </button>
           </div>
         </div>
@@ -153,7 +153,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
               <button
                 key={preset.label}
                 onClick={() => handlePreset(preset)}
-                className="px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-purple-300 transition-colors text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 transition-colors text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 {preset.label}
               </button>
@@ -178,7 +178,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
             }
           }}
           min={new Date().toISOString().slice(0, 16)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
       </div>
 
@@ -187,7 +187,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -211,7 +211,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.notifications.dnd.error', 'Failed to update DND mode')}
         </div>

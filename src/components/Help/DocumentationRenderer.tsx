@@ -106,7 +106,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
     return (
       <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-8 py-6 text-white">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <DynamicIcon name={module.icon} size={24} />
@@ -122,7 +122,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           {module.content && (
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                <Book size={20} className="text-purple-600 dark:text-purple-400" />
+                <Book size={20} className="text-primary-600 dark:text-primary-400" />
                 {lang === 'pl' ? 'Przegląd' : 'Overview'}
               </h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
@@ -164,11 +164,11 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                     key={i}
                     className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
                       <DynamicIcon
                         name={feature.icon}
                         size={16}
-                        className="text-purple-600 dark:text-purple-400"
+                        className="text-primary-600 dark:text-primary-400"
                       />
                     </div>
                     <div>
@@ -200,7 +200,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                   {module.workflowSteps.map((step: any, i: number) => (
                     <div key={i} className="relative flex items-start gap-4 pl-10">
                       {/* Step number */}
-                      <div className="absolute left-0 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold">
+                      <div className="absolute left-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold">
                         {i + 1}
                       </div>
                       <div>
@@ -294,7 +294,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
       <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
         <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 text-sm mb-2">
+          <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 text-sm mb-2">
             <FileText size={16} />
             <span>{lang === 'pl' ? 'Dokumentacja' : 'Documentation'}</span>
           </div>
@@ -330,7 +330,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <ol className="space-y-3">
               {card.howToUse.map((step: string, i: number) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-sm font-semibold flex-shrink-0">
                     {i + 1}
                   </span>
                   <span className="text-slate-600 dark:text-slate-300">{step}</span>
@@ -438,7 +438,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
 
         {/* Info */}
         <div className="p-6">
-          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 text-sm mb-2">
+          <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 text-sm mb-2">
             <Video size={16} />
             <span>{lang === 'pl' ? 'Wideo' : 'Video'}</span>
             <span className="text-slate-400 dark:text-slate-500">•</span>

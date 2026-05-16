@@ -7,7 +7,6 @@ import {
   V8_INTERVIEW_INSIGHT_READ_CONTRACT,
   V8_INTERVIEW_READ_CONTRACT,
 } from '../interview.routes.js';
-import teresaRouter from '../teresa.routes.js';
 
 const mockListSessions = vi.fn();
 const mockListAcceptedSessions = vi.fn();
@@ -20,11 +19,8 @@ const mockResolveInterviewManagerScope = vi.fn();
 const mockStartAssignment = vi.fn();
 const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
-const mockManageAssignment = vi.fn();
-const mockArchiveAssignment = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
-const mockRevokeApproval = vi.fn();
 const mockEvaluateSessionAnswers = vi.fn();
 
 const mockInsightList = vi.fn();
@@ -32,17 +28,23 @@ const mockInsightGetById = vi.fn();
 const mockInsightCreate = vi.fn();
 const mockInsightRegenerate = vi.fn();
 const mockInsightDelete = vi.fn();
+const mockBuildReportPackExportManifest = vi.fn();
+const mockBuildReportPackMarkdownExport = vi.fn();
+const mockCreateReportPackDraft = vi.fn();
+const mockCreateReportPackRevision = vi.fn();
+const mockEvaluateReportPackReadiness = vi.fn();
+const mockGetReportPackReadiness = vi.fn();
+const mockPublishReportPack = vi.fn();
+const mockSubmitReportPackForReview = vi.fn();
+const mockUpdateReportWorksheet = vi.fn();
 
 vi.mock('../../../controllers/InterviewController.js', () => ({
   InterviewController: {
     startAssignment: (...args: unknown[]) => mockStartAssignment(...args),
     submitAssignment: (...args: unknown[]) => mockSubmitAssignment(...args),
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
-    manageAssignment: (...args: unknown[]) => mockManageAssignment(...args),
-    archiveAssignment: (...args: unknown[]) => mockArchiveAssignment(...args),
     sendBackAssignment: (...args: unknown[]) => mockSendBackAssignment(...args),
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
-    revokeApproval: (...args: unknown[]) => mockRevokeApproval(...args),
     evaluateSessionAnswers: (...args: unknown[]) => mockEvaluateSessionAnswers(...args),
   },
   loadInterviewSessionsForOrganization: (...args: unknown[]) => mockListSessions(...args),
@@ -70,6 +72,22 @@ vi.mock('../../../services/InterviewInsightService.js', () => ({
   deleteInsight: (...args: unknown[]) => mockInsightDelete(...args),
 }));
 
+vi.mock('../../../services/interviewInsightReportPackService.js', () => ({
+  buildInterviewReportPackExportManifest: (...args: unknown[]) =>
+    mockBuildReportPackExportManifest(...args),
+  buildInterviewReportPackMarkdownExport: (...args: unknown[]) =>
+    mockBuildReportPackMarkdownExport(...args),
+  createInterviewReportPackDraft: (...args: unknown[]) => mockCreateReportPackDraft(...args),
+  createInterviewReportPackRevision: (...args: unknown[]) => mockCreateReportPackRevision(...args),
+  evaluateInterviewReportPackReadiness: (...args: unknown[]) =>
+    mockEvaluateReportPackReadiness(...args),
+  getInterviewReportPackReadiness: (...args: unknown[]) => mockGetReportPackReadiness(...args),
+  publishInterviewReportPack: (...args: unknown[]) => mockPublishReportPack(...args),
+  submitInterviewReportPackForReview: (...args: unknown[]) =>
+    mockSubmitReportPackForReview(...args),
+  updateInterviewReportWorksheet: (...args: unknown[]) => mockUpdateReportWorksheet(...args),
+}));
+
 const mockQueryOne = vi.fn();
 const mockQueryAll = vi.fn();
 const mockQueryRun = vi.fn();
@@ -86,11 +104,6 @@ vi.mock('../../../utils/dbSchema.js', () => ({
 
 vi.mock('../../../services/organizationContext/OrganizationContextService.js', () => ({
   default: { buildResolvedContext: vi.fn().mockResolvedValue({}) },
-}));
-
-const mockGetWorkerWithProfile = vi.fn();
-vi.mock('../../../services/ai/virtualWorkerService.js', () => ({
-  getWorkerWithProfile: (...args: unknown[]) => mockGetWorkerWithProfile(...args),
 }));
 
 vi.mock('../../../utils/Logger.js', () => ({
@@ -200,21 +213,172 @@ function createApp(): Express {
   return app;
 }
 
-function createTeresaApp(): Express {
-  const app = express();
-  app.use(express.json());
-  app.use('/api/v8/teresa', teresaRouter);
-  return app;
-}
-
 const ORG = 'org-interview-v8';
 const UID = 'user-interview-v8';
+type ReportPackWorksheetMock = {
+  key: string;
+  title: string;
+  status: string;
+  completenessScore?: number;
+};
 
 describe('V8 Interview read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockResolveInterviewManagerScope.mockResolvedValue({ kind: 'organization' });
+    mockCreateReportPackDraft.mockImplementation(({ insight }) => ({
+      id: `irp_${insight.id}`,
+      insightId: insight.id,
+      title: `Report Pack: ${insight.title}`,
+      status: 'draft',
+      worksheets: [
+        { key: 'executive_summary', title: 'Executive Summary', status: 'generated' },
+        { key: 'evidence_register', title: 'Evidence Register', status: 'generated' },
+        { key: 'appendix_provenance', title: 'Appendix: Provenance', status: 'generated' },
+      ],
+      completenessScore: 80,
+      degraded: false,
+      degradedReasons: [],
+    }));
+    mockGetReportPackReadiness.mockResolvedValue(null);
+    mockEvaluateReportPackReadiness.mockImplementation((reportPack) => ({
+      reportPackId: reportPack.id,
+      insightId: reportPack.insightId,
+      status: 'ready_for_review',
+      completenessScore: reportPack.completenessScore,
+      blockers: [],
+      warnings: [],
+      worksheetBreakdown: reportPack.worksheets.map((worksheet: ReportPackWorksheetMock) => ({
+        key: worksheet.key,
+        title: worksheet.title,
+        status: worksheet.status,
+        completenessScore: worksheet.completenessScore || 100,
+        ready: worksheet.status === 'generated',
+      })),
+    }));
+    mockSubmitReportPackForReview.mockResolvedValue({
+      reportPack: {
+        id: 'irp_ins-1',
+        insightId: 'ins-1',
+        title: 'Report Pack: Test',
+        status: 'in_review',
+        worksheets: [],
+        completenessScore: 100,
+        degraded: false,
+        degradedReasons: [],
+      },
+      readiness: {
+        reportPackId: 'irp_ins-1',
+        insightId: 'ins-1',
+        status: 'ready_for_review',
+        completenessScore: 100,
+        blockers: [],
+        warnings: [],
+        worksheetBreakdown: [],
+      },
+      submitted: true,
+      blocked: false,
+      alreadyInReview: false,
+    });
+    mockPublishReportPack.mockResolvedValue({
+      reportPack: {
+        id: 'irp_ins-1',
+        insightId: 'ins-1',
+        title: 'Report Pack: Test',
+        status: 'published',
+        worksheets: [],
+        completenessScore: 100,
+        degraded: false,
+        degradedReasons: [],
+      },
+      readiness: {
+        reportPackId: 'irp_ins-1',
+        insightId: 'ins-1',
+        status: 'ready_for_review',
+        completenessScore: 100,
+        blockers: [],
+        warnings: [],
+        worksheetBreakdown: [],
+      },
+      published: true,
+      blocked: false,
+      alreadyPublished: false,
+    });
+    mockBuildReportPackExportManifest.mockResolvedValue({
+      reportPackId: 'irp_ins-1',
+      insightId: 'ins-1',
+      title: 'Report Pack: Test',
+      status: 'published',
+      exportedAt: '2026-05-03T17:00:00.000Z',
+      manifestHash: 'abcdef1234567890',
+      completenessScore: 100,
+      degraded: false,
+      degradedReasons: [],
+      readiness: {
+        reportPackId: 'irp_ins-1',
+        insightId: 'ins-1',
+        status: 'ready_for_review',
+        completenessScore: 100,
+        blockers: [],
+        warnings: [],
+        worksheetBreakdown: [],
+      },
+      worksheetCount: 1,
+      worksheets: [{ key: 'executive_summary', title: 'Executive Summary', status: 'generated' }],
+    });
+    mockBuildReportPackMarkdownExport.mockResolvedValue({
+      reportPackId: 'irp_ins-1',
+      insightId: 'ins-1',
+      title: 'Report Pack: Test',
+      status: 'published',
+      exportedAt: '2026-05-03T17:05:00.000Z',
+      format: 'markdown',
+      filename: 'irp_ins-1-client-report.md',
+      markdown: '# Report Pack: Test',
+      sourceManifestHash: 'abcdef1234567890',
+      exportHash: 'fedcba0987654321',
+      worksheetCount: 1,
+    });
+    mockCreateReportPackRevision.mockResolvedValue({
+      reportPack: {
+        id: 'irp_ins-1',
+        insightId: 'ins-1',
+        title: 'Report Pack: Test',
+        status: 'draft',
+        worksheets: [],
+        completenessScore: 100,
+        degraded: false,
+        degradedReasons: [],
+      },
+      revision: {
+        id: 'rev-1',
+        reportPackId: 'irp_ins-1',
+        insightId: 'ins-1',
+        version: 1,
+        manifestHash: 'abcdef1234567890',
+        createdAt: '2026-05-03T17:00:00.000Z',
+      },
+    });
+    mockUpdateReportWorksheet.mockResolvedValue({
+      id: 'irp_ins-1',
+      insightId: 'ins-1',
+      title: 'Report Pack: Test',
+      status: 'draft',
+      worksheets: [
+        {
+          key: 'executive_summary',
+          title: 'Executive Summary',
+          status: 'partial',
+          completenessScore: 70,
+          warnings: ['Edited by operator'],
+          rows: [],
+        },
+      ],
+      completenessScore: 70,
+      degraded: false,
+      degradedReasons: [],
+    });
   });
 
   it('GET /api/v8/interview/sessions returns V8 envelope and forwards org + status to loader', async () => {
@@ -436,44 +600,6 @@ describe('V8 Interview read-only routes', () => {
     expect(mockSendAssignmentReminder).toHaveBeenCalled();
   });
 
-  it('PATCH /api/v8/interview/assignments/:id/manage wraps response in V8 envelope', async () => {
-    mockManageAssignment.mockImplementation(async (req: any, res: any) => {
-      res.json({
-        assignment: { id: req.params.id, status: 'assigned' },
-        action: 'updated',
-        createdFreshAssignment: false,
-      });
-    });
-
-    const res = await request(createApp())
-      .patch('/api/v8/interview/assignments/asg-manage/manage')
-      .set('Authorization', 'Bearer x')
-      .send({ priority: 'high', mode: 'update' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.data?.assignment?.id).toBe('asg-manage');
-    expect(res.body.data?.action).toBe('updated');
-    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
-    expect(mockManageAssignment).toHaveBeenCalled();
-  });
-
-  it('POST /api/v8/interview/assignments/:id/archive wraps response in V8 envelope', async () => {
-    mockArchiveAssignment.mockImplementation(async (req: any, res: any) => {
-      res.json({ success: true, archived: true, assignmentId: req.params.id });
-    });
-
-    const res = await request(createApp())
-      .post('/api/v8/interview/assignments/asg-archive/archive')
-      .set('Authorization', 'Bearer x')
-      .send({});
-
-    expect(res.status).toBe(200);
-    expect(res.body.data?.assignmentId).toBe('asg-archive');
-    expect(res.body.data?.archived).toBe(true);
-    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
-    expect(mockArchiveAssignment).toHaveBeenCalled();
-  });
-
   it('POST /api/v8/interview/assignments/:id/send-back wraps response in V8 envelope', async () => {
     mockSendBackAssignment.mockImplementation(async (req: any, res: any) => {
       res.json({ id: req.params.id, status: 'sent_back' });
@@ -508,23 +634,6 @@ describe('V8 Interview read-only routes', () => {
     expect(mockApproveAssignment).toHaveBeenCalled();
   });
 
-  it('POST /api/v8/interview/assignments/:id/revoke-approval wraps response in V8 envelope', async () => {
-    mockRevokeApproval.mockImplementation(async (req: any, res: any) => {
-      res.json({ assignment: { id: req.params.id, status: 'in_progress' }, entersContext: false });
-    });
-
-    const res = await request(createApp())
-      .post('/api/v8/interview/assignments/asg-5/revoke-approval')
-      .set('Authorization', 'Bearer x')
-      .send({ reason: 'Approved by mistake' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.data?.assignment?.id).toBe('asg-5');
-    expect(res.body.data?.assignment?.status).toBe('in_progress');
-    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
-    expect(mockRevokeApproval).toHaveBeenCalled();
-  });
-
   it('POST /api/v8/interview/sessions/:id/evaluate-answers wraps AI evaluation in V8 envelope', async () => {
     mockEvaluateSessionAnswers.mockImplementation(async (_req: any, res: any) => {
       res.json({
@@ -553,6 +662,7 @@ describe('V8 Interview insight routes', () => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockQueryRun.mockResolvedValue(undefined);
+    mockQueryAll.mockResolvedValue([{ id: 'sess-1' }]);
   });
 
   it('GET /api/v8/interview/insights returns list in V8 envelope', async () => {
@@ -576,6 +686,7 @@ describe('V8 Interview insight routes', () => {
     expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_CREATE');
     expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_REVIEW');
     expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_HANDOFF');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_PUBLISH');
   });
 
   it('GET /api/v8/interview/insights/:id returns insight in V8 envelope', async () => {
@@ -593,6 +704,464 @@ describe('V8 Interview insight routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
     expect(res.body.data?.insight?.id).toBe('ins-1');
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack returns draft report pack worksheets', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+      executiveSummary: 'Summary',
+      sourceSessionIds: ['sess-1'],
+      analysisScope: { source_session_ids: ['sess-1'] },
+      materialQuality: { overall_material_score: 80 },
+      themes: [{ title: 'Theme', description: 'Desc', evidence_refs: ['a1'], strength: 'strong' }],
+      evidenceMap: [{ answer_id: 'a1', answer_snippet: 'Snippet' }],
+      generationContext: { sourceMaterial: { includedSessionIds: ['sess-1'] } },
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.reportPack?.insightId).toBe('ins-1');
+    expect(mockCreateReportPackDraft).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insight: expect.objectContaining({ id: 'ins-1' }),
+      createdBy: UID,
+    });
+    expect(res.body.data?.reportPack?.worksheets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'executive_summary' }),
+        expect.objectContaining({ key: 'evidence_register' }),
+        expect.objectContaining({ key: 'appendix_provenance' }),
+      ])
+    );
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack forbids cross-org insight access', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-foreign',
+      organizationId: 'other-org',
+      title: 'Foreign',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-foreign/report-pack')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_FORBIDDEN');
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack/readiness returns persisted readiness when available', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+    mockGetReportPackReadiness.mockResolvedValue({
+      reportPackId: 'irp_ins-1',
+      insightId: 'ins-1',
+      status: 'blocked',
+      completenessScore: 72,
+      blockers: [
+        { severity: 'blocker', message: 'Required worksheet evidence_register is empty.' },
+      ],
+      warnings: [],
+      worksheetBreakdown: [],
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack/readiness')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.readiness?.status).toBe('blocked');
+    expect(mockGetReportPackReadiness).toHaveBeenCalledWith(ORG, 'ins-1');
+    expect(mockCreateReportPackDraft).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack/readiness creates a draft before evaluating when missing', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+    mockGetReportPackReadiness.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack/readiness')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.readiness?.status).toBe('ready_for_review');
+    expect(mockCreateReportPackDraft).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insight: expect.objectContaining({ id: 'ins-1' }),
+      createdBy: UID,
+    });
+    expect(mockEvaluateReportPackReadiness).toHaveBeenCalledWith(
+      expect.objectContaining({ insightId: 'ins-1' })
+    );
+  });
+
+  it('POST /api/v8/interview/insights/:id/report-pack/submit-review submits a ready pack through the gate', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/report-pack/submit-review')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.result?.submitted).toBe(true);
+    expect(res.body.data?.result?.reportPack?.status).toBe('in_review');
+    expect(mockCreateReportPackDraft).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insight: expect.objectContaining({ id: 'ins-1' }),
+      createdBy: UID,
+    });
+    expect(mockSubmitReportPackForReview).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+      actorUserId: UID,
+    });
+  });
+
+  it('POST /api/v8/interview/insights/:id/report-pack/submit-review returns blocked result without fake success', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+    mockSubmitReportPackForReview.mockResolvedValue({
+      reportPack: {
+        id: 'irp_ins-1',
+        insightId: 'ins-1',
+        title: 'Report Pack: Test',
+        status: 'draft',
+        worksheets: [],
+        completenessScore: 72,
+        degraded: true,
+        degradedReasons: ['Missing evidence'],
+      },
+      readiness: {
+        reportPackId: 'irp_ins-1',
+        insightId: 'ins-1',
+        status: 'blocked',
+        completenessScore: 72,
+        blockers: [
+          { severity: 'blocker', message: 'Required worksheet evidence_register is empty.' },
+        ],
+        warnings: [],
+        worksheetBreakdown: [],
+      },
+      submitted: false,
+      blocked: true,
+      alreadyInReview: false,
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/report-pack/submit-review')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.result?.blocked).toBe(true);
+    expect(res.body.data?.result?.submitted).toBe(false);
+    expect(res.body.data?.result?.readiness?.status).toBe('blocked');
+  });
+
+  it('POST /api/v8/interview/insights/:id/report-pack/publish publishes an in-review ready pack', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/report-pack/publish')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.result?.published).toBe(true);
+    expect(res.body.data?.result?.reportPack?.status).toBe('published');
+    expect(mockPublishReportPack).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+      actorUserId: UID,
+    });
+  });
+
+  it('POST /api/v8/interview/insights/:id/report-pack/publish returns blocked result without fake success', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+    mockPublishReportPack.mockResolvedValue({
+      reportPack: {
+        id: 'irp_ins-1',
+        insightId: 'ins-1',
+        title: 'Report Pack: Test',
+        status: 'draft',
+        worksheets: [],
+        completenessScore: 100,
+        degraded: false,
+        degradedReasons: [],
+      },
+      readiness: {
+        reportPackId: 'irp_ins-1',
+        insightId: 'ins-1',
+        status: 'blocked',
+        completenessScore: 100,
+        blockers: [
+          {
+            severity: 'blocker',
+            message: 'Report pack must be submitted for review before publish.',
+          },
+        ],
+        warnings: [],
+        worksheetBreakdown: [],
+      },
+      published: false,
+      blocked: true,
+      alreadyPublished: false,
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/report-pack/publish')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.result?.blocked).toBe(true);
+    expect(res.body.data?.result?.published).toBe(false);
+    expect(res.body.data?.result?.readiness?.status).toBe('blocked');
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack/export-manifest returns published worksheet manifest', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack/export-manifest')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.exportManifest?.status).toBe('published');
+    expect(res.body.data?.exportManifest?.manifestHash).toBe('abcdef1234567890');
+    expect(res.body.data?.exportManifest?.worksheetCount).toBe(1);
+    expect(mockBuildReportPackExportManifest).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+    });
+    expect(
+      mockQueryRun.mock.calls.some(([sql, params]) => {
+        const values = params as unknown[];
+        return (
+          String(sql).includes('INSERT INTO interview_insight_audit_log') &&
+          values.includes('report_pack_exported') &&
+          values.includes('irp_ins-1') &&
+          values.includes(UID)
+        );
+      })
+    ).toBe(true);
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack/export-manifest blocks unpublished packs', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+    mockBuildReportPackExportManifest.mockRejectedValueOnce({
+      code: 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED',
+      statusCode: 409,
+      message: 'Only published report packs can be exported as client-ready material.',
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack/export-manifest')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INTERVIEW_REPORT_PACK_EXPORT_BLOCKED');
+    expect(res.body.error).toBe(
+      'Only published report packs can be exported as client-ready material.'
+    );
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack/export-markdown returns client-ready Markdown report', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack/export-markdown')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.markdownExport?.status).toBe('published');
+    expect(res.body.data?.markdownExport?.format).toBe('markdown');
+    expect(res.body.data?.markdownExport?.exportHash).toBe('fedcba0987654321');
+    expect(mockBuildReportPackMarkdownExport).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+    });
+    expect(
+      mockQueryRun.mock.calls.some(([sql, params]) => {
+        const values = params as unknown[];
+        return (
+          String(sql).includes('INSERT INTO interview_insight_audit_log') &&
+          values.includes('report_pack_client_markdown_exported') &&
+          values.includes('irp_ins-1') &&
+          values.includes(UID)
+        );
+      })
+    ).toBe(true);
+  });
+
+  it('POST /api/v8/interview/insights/:id/report-pack/revisions creates editable draft from published pack', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/report-pack/revisions')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.result?.reportPack?.status).toBe('draft');
+    expect(res.body.data?.result?.revision?.manifestHash).toBe('abcdef1234567890');
+    expect(mockCreateReportPackRevision).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+      actorUserId: UID,
+    });
+  });
+
+  it('POST /api/v8/interview/insights/:id/report-pack/revisions blocks non-published packs', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+    mockCreateReportPackRevision.mockRejectedValueOnce({
+      code: 'INTERVIEW_REPORT_PACK_REVISION_BLOCKED',
+      statusCode: 409,
+      message: 'Only published report packs can create a new editable revision.',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/report-pack/revisions')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INTERVIEW_REPORT_PACK_REVISION_BLOCKED');
+    expect(res.body.error).toBe('Only published report packs can create a new editable revision.');
+  });
+
+  it('PATCH /api/v8/interview/insights/:id/report-pack/worksheets/:worksheetKey updates one worksheet', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1/report-pack/worksheets/executive_summary')
+      .set('Authorization', 'Bearer x')
+      .send({
+        status: 'partial',
+        completenessScore: 70,
+        warnings: ['Edited by operator'],
+        rows: [{ section: 'summary' }],
+        markdown: 'Edited summary',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(mockUpdateReportWorksheet).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+      worksheetKey: 'executive_summary',
+      actorUserId: UID,
+      updates: {
+        status: 'partial',
+        completenessScore: 70,
+        warnings: ['Edited by operator'],
+        rows: [{ section: 'summary' }],
+        markdown: 'Edited summary',
+      },
+    });
+    expect(res.body.data?.reportPack?.worksheets?.[0]?.status).toBe('partial');
+  });
+
+  it('PATCH /api/v8/interview/insights/:id/report-pack/worksheets/:worksheetKey blocks published report pack edits', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockUpdateReportWorksheet.mockRejectedValueOnce({
+      code: 'INTERVIEW_REPORT_PACK_IMMUTABLE',
+      statusCode: 409,
+      message: 'Published report packs cannot be edited.',
+    });
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1/report-pack/worksheets/executive_summary')
+      .set('Authorization', 'Bearer x')
+      .send({
+        status: 'partial',
+        completenessScore: 70,
+      });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INTERVIEW_REPORT_PACK_IMMUTABLE');
+    expect(res.body.error).toBe('Published report packs cannot be edited.');
+  });
+
+  it('PATCH /api/v8/interview/insights/:id/report-pack/worksheets/:worksheetKey rejects empty payload', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1/report-pack/worksheets/executive_summary')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INTERVIEW_REPORT_WORKSHEET_PATCH_EMPTY');
+    expect(mockUpdateReportWorksheet).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/interview/insights/:id returns 404 when not found', async () => {
@@ -623,6 +1192,86 @@ describe('V8 Interview insight routes', () => {
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
     expect(res.body.data?.insight?.id).toBe('ins-new');
     expect(mockInsightCreate).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/interview/insights forwards full scope builder payload', async () => {
+    mockInsightCreate.mockResolvedValue({
+      id: 'ins-scoped',
+      organizationId: ORG,
+      title: 'Scoped insight',
+      status: 'generating',
+    });
+
+    const scopePayload = {
+      source_session_ids: ['sess-1'],
+      source_scope_status: 'approved_only',
+      respondent_filters: ['user-respondent'],
+      role_filters: ['Operations Lead'],
+      department_filters: ['Operations'],
+      template_filters: ['tpl-1'],
+      date_range: { from: '2026-05-01', to: '2026-05-03' },
+      topic_focus: ['handoffs'],
+      analysis_mode: 'focused_topic_synthesis',
+      context_mode: 'selected_material_plus_approved_org_knowledge',
+      consultant_note: 'Look for cross-functional blockers.',
+      leading_question: 'Where do handoffs fail?',
+    };
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x')
+      .send({
+        title: 'Scoped insight',
+        sessionIds: ['sess-1'],
+        promptType: 'summary',
+        filters: {
+          templateId: 'tpl-1',
+          respondentId: 'user-respondent',
+          roles: ['Operations Lead'],
+          departments: ['Operations'],
+          dateFrom: '2026-05-01',
+          dateTo: '2026-05-03',
+          topicFocus: ['handoffs'],
+        },
+        analysisScope: scopePayload,
+        analysisMode: 'focused_topic_synthesis',
+        contextMode: 'selected_material_plus_approved_org_knowledge',
+        topicFocus: ['handoffs'],
+        consultantNote: 'Look for cross-functional blockers.',
+        leadingQuestion: 'Where do handoffs fail?',
+        customPrompt: 'Stay within the selected material.',
+      });
+
+    expect(res.status).toBe(201);
+    expect(mockInsightCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        title: 'Scoped insight',
+        sessionIds: ['sess-1'],
+        analysisScope: scopePayload,
+        analysisMode: 'focused_topic_synthesis',
+        contextMode: 'selected_material_plus_approved_org_knowledge',
+        topicFocus: ['handoffs'],
+        consultantNote: 'Look for cross-functional blockers.',
+        leadingQuestion: 'Where do handoffs fail?',
+        customPrompt: 'Stay within the selected material.',
+        createdBy: UID,
+      })
+    );
+  });
+
+  it('POST /api/v8/interview/insights blocks unapproved or incomplete source sessions', async () => {
+    mockQueryAll.mockResolvedValueOnce([{ id: 'sess-1' }]);
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x')
+      .send({ sessionIds: ['sess-1', 'sess-draft'], promptType: 'summary' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_SOURCE_NOT_APPROVED');
+    expect(res.body.rejectedSessionIds).toEqual(['sess-draft']);
+    expect(mockInsightCreate).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/interview/insights returns 400 without sessionIds', async () => {
@@ -688,10 +1337,44 @@ describe('V8 Interview insight routes', () => {
       .mockResolvedValueOnce([
         {
           id: 'audit-1',
-          type: 'publish',
+          type: 'worksheet_updated',
+          entity_type: 'interview_report_worksheet',
+          entity_id: 'irp_ins-1:executive_summary',
+          detail_json: JSON.stringify({
+            worksheetKey: 'executive_summary',
+            updates: { status: 'partial' },
+            nextPack: { completenessScore: 76 },
+          }),
           created_at: '2026-01-02',
           first_name: 'Anna',
           last_name: 'Nowak',
+        },
+        {
+          id: 'audit-2',
+          type: 'report_pack_exported',
+          entity_type: 'interview_report_pack',
+          entity_id: 'irp_ins-1',
+          detail_json: JSON.stringify({
+            readinessStatus: 'ready_for_review',
+            worksheetCount: 15,
+            manifestHash: 'abcdef1234567890',
+          }),
+          created_at: '2026-01-03',
+          first_name: 'Ewa',
+          last_name: 'Export',
+        },
+        {
+          id: 'audit-3',
+          type: 'report_pack_revision_created',
+          entity_type: 'interview_report_pack',
+          entity_id: 'irp_ins-1',
+          detail_json: JSON.stringify({
+            version: 2,
+            manifestHash: 'feedface12345678',
+          }),
+          created_at: '2026-01-04',
+          first_name: 'Rafał',
+          last_name: 'Revision',
         },
       ]);
 
@@ -701,10 +1384,20 @@ describe('V8 Interview insight routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
-    expect(res.body.data?.activity).toHaveLength(2);
-    expect(res.body.data?.activity?.[0]?.description).toBe('P10: publish');
-    expect(res.body.data?.activity?.[0]?.userName).toBe('Anna Nowak');
-    expect(res.body.data?.activity?.[1]?.userName).toBe('Jan Kowalski');
+    expect(res.body.data?.activity).toHaveLength(4);
+    expect(res.body.data?.activity?.[0]?.description).toBe(
+      'Report pack revision v2 created from published pack, base hash feedface1234'
+    );
+    expect(res.body.data?.activity?.[0]?.userName).toBe('Rafał Revision');
+    expect(res.body.data?.activity?.[1]?.description).toBe(
+      'Report pack export manifest downloaded (ready_for_review, 15 worksheets, hash abcdef123456)'
+    );
+    expect(res.body.data?.activity?.[1]?.userName).toBe('Ewa Export');
+    expect(res.body.data?.activity?.[2]?.description).toBe(
+      'Report worksheet executive_summary marked partial, pack completeness 76%'
+    );
+    expect(res.body.data?.activity?.[2]?.userName).toBe('Anna Nowak');
+    expect(res.body.data?.activity?.[3]?.userName).toBe('Jan Kowalski');
   });
 
   it('GET /api/v8/interview/insights/:id/comments returns comments in V8 envelope', async () => {
@@ -826,61 +1519,5 @@ describe('V8 Interview insight routes', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('INTERVIEW_INSIGHT_NOT_FOUND');
-  });
-});
-
-describe('V8 Teresa voice config route', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
-    mockGetWorkerWithProfile.mockReset();
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  });
-
-  it('returns the worker-configured Teresa voice for in-platform runtime', async () => {
-    process.env.GEMINI_API_KEY = 'test-teresa-key';
-    mockGetWorkerWithProfile.mockResolvedValue({
-      worker: {
-        status: 'active',
-        surface: 'in_platform',
-        voice_enabled: true,
-        voice_name: 'Aoede',
-      },
-    });
-
-    const res = await request(createTeresaApp())
-      .get('/api/v8/teresa/voice-config')
-      .set('Authorization', 'Bearer x');
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({
-      enabled: true,
-      apiKey: 'test-teresa-key',
-      voiceName: 'Aoede',
-    });
-  });
-
-  it('disables Teresa voice when the worker is not available on the in-platform surface', async () => {
-    process.env.GEMINI_API_KEY = 'test-teresa-key';
-    mockGetWorkerWithProfile.mockResolvedValue({
-      worker: {
-        status: 'active',
-        surface: 'landing_page',
-        voice_enabled: true,
-        voice_name: 'Aoede',
-      },
-    });
-
-    const res = await request(createTeresaApp())
-      .get('/api/v8/teresa/voice-config')
-      .set('Authorization', 'Bearer x');
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({
-      enabled: false,
-      apiKey: 'test-teresa-key',
-      voiceName: 'Aoede',
-    });
   });
 });

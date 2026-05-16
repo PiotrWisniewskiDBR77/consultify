@@ -59,7 +59,7 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
     {
       label: isPolish ? 'Sesja' : 'Session',
       className:
-        'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-300/30 dark:border-purple-500/20',
+        'bg-primary-500/10 text-primary-700 dark:text-primary-200 border-primary-300/30 dark:border-primary-500/20',
     },
     {
       label: isPolish ? statusConfig.label.pl : statusConfig.label.en,

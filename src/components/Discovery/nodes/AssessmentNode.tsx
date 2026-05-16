@@ -14,9 +14,9 @@ import { AssessmentNodeData } from '@/types/discovery';
 // Framework colors mapping
 const frameworkColors: Record<string, { bg: string; text: string; border: string }> = {
   DRD: {
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
-    text: 'text-purple-600 dark:text-purple-400',
-    border: 'border-purple-300 dark:border-purple-700',
+    bg: 'bg-primary-100 dark:bg-primary-900/30',
+    text: 'text-primary-600 dark:text-primary-400',
+    border: 'border-primary-300 dark:border-primary-700',
   },
   SIRI: {
     bg: 'bg-blue-100 dark:bg-blue-900/30',
@@ -29,14 +29,14 @@ const frameworkColors: Record<string, { bg: string; text: string; border: string
     border: 'border-green-300 dark:border-green-700',
   },
   CMMI: {
-    bg: 'bg-orange-100 dark:bg-orange-900/30',
-    text: 'text-orange-600 dark:text-orange-400',
-    border: 'border-orange-300 dark:border-orange-700',
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    text: 'text-amber-600 dark:text-amber-400',
+    border: 'border-amber-300 dark:border-amber-700',
   },
   LEAN: {
-    bg: 'bg-cyan-100 dark:bg-cyan-900/30',
-    text: 'text-cyan-600 dark:text-cyan-400',
-    border: 'border-cyan-300 dark:border-cyan-700',
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-300 dark:border-blue-700',
   },
 };
 
@@ -52,7 +52,7 @@ export const AssessmentNode: React.FC<NodeProps<AssessmentNodeData>> = memo(
         className={`
                 group relative
                 ${colors.bg}
-                border-2 ${selected ? `${colors.border} ring-2 ring-cyan-500/30` : colors.border}
+                border-2 ${selected ? `${colors.border} ring-2 ring-blue-500/30` : colors.border}
                 rounded-xl p-3
                 min-w-[170px] max-w-[210px]
                 shadow-md hover:shadow-lg
@@ -64,7 +64,7 @@ export const AssessmentNode: React.FC<NodeProps<AssessmentNodeData>> = memo(
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-2.5 !h-2.5 !bg-cyan-400 !border-2 !border-white dark:!border-navy-900"
+          className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-white dark:!border-navy-900"
         />
 
         {/* Header */}
@@ -94,7 +94,7 @@ export const AssessmentNode: React.FC<NodeProps<AssessmentNodeData>> = memo(
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-2.5 !h-2.5 !bg-cyan-400 !border-2 !border-white dark:!border-navy-900"
+          className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-white dark:!border-navy-900"
         />
       </div>
     );

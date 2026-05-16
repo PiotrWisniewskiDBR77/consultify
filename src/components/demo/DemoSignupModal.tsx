@@ -96,7 +96,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
             className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-md w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="h-1 bg-gradient-to-r from-purple-500 to-indigo-500" />
+            <div className="h-1 bg-gradient-to-r from-primary-500 to-indigo-500" />
 
             <div className="p-6 relative">
               <button
@@ -127,7 +127,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                       >
                         <BenefitIcon
                           size={16}
-                          className="text-purple-500 dark:text-purple-400 mb-1"
+                          className="text-primary-500 dark:text-primary-400 mb-1"
                         />
                         <span className="text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
                           {t(labelKey, fallback)}
@@ -146,7 +146,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                         placeholder="Jane Doe"
                       />
                     </div>
@@ -160,7 +160,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                         placeholder="jane@company.com"
                       />
                     </div>
@@ -175,16 +175,16 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                         minLength={6}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                         placeholder="Min. 6 characters"
                       />
                     </div>
 
-                    {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+                    {error && <p className="text-xs text-rose-500 dark:text-rose-400">{error}</p>}
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 text-sm"
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 text-sm"
                     >
                       {t('demo.signup.submit', 'Create Account & Start Trial')}
                       <ArrowRight size={16} />
@@ -195,7 +195,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
 
               {step === 'submitting' && (
                 <div className="py-12 flex flex-col items-center">
-                  <Loader2 size={40} className="text-purple-500 animate-spin mb-4" />
+                  <Loader2 size={40} className="text-primary-500 animate-spin mb-4" />
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     {t('demo.signup.creating', 'Creating your workspace...')}
                   </p>

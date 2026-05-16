@@ -64,7 +64,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
       onClick={onClick}
       className={`bg-navy-800 p-3 rounded-lg mb-2 border hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group relative ${
         initiative.priority === 'High'
-          ? 'border-red-500/20'
+          ? 'border-rose-500/20'
           : initiative.priority === 'Medium'
             ? 'border-yellow-500/20'
             : 'border-green-500/20'
@@ -99,7 +99,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
             <span
               className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
                 initiative.priority === 'High'
-                  ? 'text-red-400 bg-red-500/10'
+                  ? 'text-rose-400 bg-rose-500/10'
                   : initiative.priority === 'Medium'
                     ? 'text-yellow-400 bg-yellow-500/10'
                     : 'text-green-400 bg-green-500/10'

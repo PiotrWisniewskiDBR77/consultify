@@ -91,7 +91,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
       {/* Header */}
       <div className="shrink-0 px-4 py-3 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
             <Sparkles size={16} className="text-white" />
           </div>
           <div>
@@ -114,7 +114,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-primary-600/20 flex items-center justify-center">
               <Bot size={28} className="text-blue-400" />
             </div>
             <h4 className="text-white font-medium mb-2">Start Creating</h4>
@@ -133,7 +133,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             <div
               className={`
                             shrink-0 w-7 h-7 rounded-full flex items-center justify-center
-                            ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}
+                            ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-400' : 'bg-primary-500/20 text-primary-400'}
                         `}
             >
               {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
@@ -174,8 +174,8 @@ export const StudioChat: React.FC<StudioChatProps> = ({
         {/* Processing indicator */}
         {isProcessing && (
           <div className="flex gap-3">
-            <div className="shrink-0 w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center">
-              <Loader2 size={14} className="text-purple-400 animate-spin" />
+            <div className="shrink-0 w-7 h-7 rounded-full bg-primary-500/20 flex items-center justify-center">
+              <Loader2 size={14} className="text-primary-400 animate-spin" />
             </div>
             <div className="bg-white/5 px-3 py-2 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">

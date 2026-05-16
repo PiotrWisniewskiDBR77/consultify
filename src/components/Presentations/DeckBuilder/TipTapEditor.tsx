@@ -56,7 +56,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
       Highlight.configure({ multicolor: false }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: 'text-purple-500 underline' },
+        HTMLAttributes: { class: 'text-primary-500 underline' },
       }),
       Placeholder.configure({ placeholder }),
     ],
@@ -215,7 +215,7 @@ const ToolbarBtn: React.FC<{
     title={title}
     className={`p-1.5 rounded transition-colors ${
       active
-        ? 'bg-purple-500/20 text-purple-600'
+        ? 'bg-primary-500/20 text-primary-600'
         : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-700'
     }`}
   >

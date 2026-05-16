@@ -15,6 +15,7 @@ vi.mock('../../server/src/middleware/auth.middleware.js', () => ({
 
 vi.mock('../../server/src/middleware/rateLimiting.middleware.js', () => ({
   authRateLimiter: (_req: any, _res: any, next: any) => next(),
+  apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
 
 const dbAll = vi.fn(async () => [

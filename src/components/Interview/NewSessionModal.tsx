@@ -56,7 +56,7 @@ const PRIORITY_CONFIG: Record<Priority, { label: string; labelPl: string; color:
   low: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-300' },
   medium: { label: 'Medium', labelPl: 'Sredni', color: 'bg-blue-500/20 text-blue-300' },
   high: { label: 'High', labelPl: 'Wysoki', color: 'bg-amber-500/20 text-amber-300' },
-  urgent: { label: 'Urgent', labelPl: 'Pilny', color: 'bg-red-500/20 text-red-300' },
+  urgent: { label: 'Urgent', labelPl: 'Pilny', color: 'bg-rose-500/20 text-rose-300' },
 };
 
 export const NewSessionModal: React.FC<NewSessionModalProps> = ({

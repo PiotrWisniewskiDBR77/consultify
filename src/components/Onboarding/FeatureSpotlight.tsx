@@ -235,7 +235,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
         className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden pointer-events-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-500 to-indigo-500 text-white">
           <div className="flex items-center gap-2">
             <Lightbulb size={18} />
             <span className="font-semibold">{title[lang]}</span>
@@ -268,7 +268,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
             {ctaText && ctaAction && (
               <button
                 onClick={handleCtaClick}
-                className="flex items-center gap-1 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                className="flex items-center gap-1 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
               >
                 {ctaText[lang]}
                 <ChevronRight size={16} />

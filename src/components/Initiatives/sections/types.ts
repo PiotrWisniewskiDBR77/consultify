@@ -490,7 +490,7 @@ export const TIMELINE_MODE_META: Record<
   TRACKING: {
     label: 'Tracking',
     labelPl: 'Śledzenie',
-    color: 'text-purple-500 bg-purple-500/10',
+    color: 'text-primary-500 bg-primary-500/10',
     icon: 'Activity',
   },
   COMPLETED: {
@@ -637,9 +637,9 @@ export const MODULE_CONFIG = {
   INITIATIVES: {
     label: 'Initiatives',
     labelPl: 'Inicjatywy',
-    color: 'bg-purple-500',
-    textColor: 'text-purple-600 dark:text-purple-400',
-    bgLight: 'bg-purple-500/10',
+    color: 'bg-primary-500',
+    textColor: 'text-primary-600 dark:text-primary-400',
+    bgLight: 'bg-primary-500/10',
     icon: 'Lightbulb',
     route: '/initiatives',
     description: 'Planning & approval phase',
@@ -673,10 +673,10 @@ export const PRIORITY_CONFIG = {
   critical: {
     label: 'Critical',
     labelPl: 'Krytyczny',
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500/10',
   },
-  high: { label: 'High', labelPl: 'Wysoki', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  high: { label: 'High', labelPl: 'Wysoki', color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
   medium: {
     label: 'Medium',
     labelPl: 'Średni',
@@ -700,20 +700,20 @@ export const RAID_TYPE_CONFIG = {
   issue: {
     label: 'Issue',
     labelPl: 'Problem',
-    color: 'bg-red-500/20 text-red-400',
+    color: 'bg-rose-500/20 text-rose-400',
   },
   dependency: {
     label: 'Dependency',
     labelPl: 'Zależność',
-    color: 'bg-purple-500/20 text-purple-400',
+    color: 'bg-primary-500/20 text-primary-400',
   },
 };
 
 export const SEVERITY_CONFIG = {
   LOW: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-400' },
   MEDIUM: { label: 'Medium', labelPl: 'Średni', color: 'bg-amber-500/20 text-amber-400' },
-  HIGH: { label: 'High', labelPl: 'Wysoki', color: 'bg-orange-500/20 text-orange-400' },
-  CRITICAL: { label: 'Critical', labelPl: 'Krytyczny', color: 'bg-red-500/20 text-red-400' },
+  HIGH: { label: 'High', labelPl: 'Wysoki', color: 'bg-amber-500/20 text-amber-400' },
+  CRITICAL: { label: 'Critical', labelPl: 'Krytyczny', color: 'bg-rose-500/20 text-rose-400' },
 };
 
 // ==========================================

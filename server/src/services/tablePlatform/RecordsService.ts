@@ -10,6 +10,7 @@ import logger from '../../utils/Logger.js';
 import attachmentService from './AttachmentService.js';
 import auditService from './AuditService.js';
 import { automationService } from './AutomationService.js';
+import confidenceScoringService from './ConfidenceScoringService.js';
 import { ConflictError, PermissionError, ValidationError } from './ErrorHandling.js';
 import { fieldPermissionService } from './FieldPermissionService.js';
 import { recomputeAffectedFields } from './formulaEngine.js';
@@ -355,6 +356,22 @@ const recordsService = {
         });
       }
 
+      // Block B · EPIC-T9: confidence recompute. The service no-ops when the
+      // ENABLE_RECORD_PROVENANCE flag is OFF; we only re-read the row when
+      // the score actually changed so we keep DB I/O parity with the
+      // pre-Block-B path until provenance is rolled out.
+      try {
+        const outcome = await confidenceScoringService.recompute(id);
+        if (outcome.applied) {
+          row = (await db.query('SELECT * FROM tp_records WHERE id = $1', [id])).rows[0];
+        }
+      } catch (provenanceErr) {
+        logger.warn('[RecordsService] confidence recompute after create failed', {
+          recordId: id,
+          error: (provenanceErr as Error).message,
+        });
+      }
+
       try {
         tablePlatformRealtime.notifyRecordCreated(tableId, row);
       } catch {
@@ -574,6 +591,21 @@ const recordsService = {
         logger.warn('[RecordsService] formula recompute after update failed', {
           recordId,
           error: (recomputeErr as Error).message,
+        });
+      }
+
+      // Block B · EPIC-T9: confidence recompute. Same contract as the create
+      // path — feature-flag gated inside the service, only re-reads the row
+      // when the score actually changed.
+      try {
+        const outcome = await confidenceScoringService.recompute(recordId);
+        if (outcome.applied) {
+          after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
+        }
+      } catch (provenanceErr) {
+        logger.warn('[RecordsService] confidence recompute after update failed', {
+          recordId,
+          error: (provenanceErr as Error).message,
         });
       }
 

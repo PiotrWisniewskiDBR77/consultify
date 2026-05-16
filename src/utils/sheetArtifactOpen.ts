@@ -5,6 +5,7 @@
  * to XLSX export.
  */
 
+import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { getV8SheetArtifactXlsxExportPath } from './artifactLinks';
@@ -18,7 +19,32 @@ export async function resolveTablePlatformWorkspaceIdForTable(
   tableId: string
 ): Promise<string | null> {
   try {
-    const table = (await TablePlatformApi.getTable(tableId)) as Record<string, unknown>;
+    let resolvedTableId = tableId;
+    let table: Record<string, unknown> | null = null;
+    try {
+      table = (await TablePlatformApi.getTable(resolvedTableId)) as Record<string, unknown>;
+    } catch {
+      let fromArtifact: string | null = null;
+      try {
+        const actionTargetRaw = await Api.get(
+          `/artifacts/${encodeURIComponent(tableId)}/action-target`
+        );
+        const actionTarget = (actionTargetRaw as { data?: any })?.data ?? actionTargetRaw;
+        const originRuntime = String(actionTarget?.originRuntime || '')
+          .trim()
+          .toLowerCase();
+        const originRecordId = String(actionTarget?.originRecordId || '').trim();
+        if (originRuntime === 'sheet' && originRecordId) {
+          fromArtifact = originRecordId;
+        }
+      } catch {
+        fromArtifact = null;
+      }
+      if (!fromArtifact) return null;
+      resolvedTableId = fromArtifact;
+      table = (await TablePlatformApi.getTable(resolvedTableId)) as Record<string, unknown>;
+    }
+    if (!table) return null;
     const baseId = String(table.base_id ?? table.baseId ?? '');
     if (!baseId) return null;
     const base = (await TablePlatformApi.getBase(baseId)) as Record<string, unknown>;

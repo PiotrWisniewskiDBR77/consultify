@@ -66,10 +66,10 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
       process_flow: 'text-blue-400 bg-blue-500/20',
-      org_chart: 'text-purple-400 bg-purple-500/20',
+      org_chart: 'text-primary-400 bg-primary-500/20',
       mindmap: 'text-pink-400 bg-pink-500/20',
       raci: 'text-amber-400 bg-amber-500/20',
-      swimlane: 'text-cyan-400 bg-cyan-500/20',
+      swimlane: 'text-blue-400 bg-blue-500/20',
     };
     return colors[type] || 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/20';
   };

@@ -8,6 +8,15 @@ import {
   type FinanceModelRow,
 } from './financeTypes';
 
+type ServerOutputLine = {
+  lineCode: string;
+  lineName?: string;
+  value?: number;
+  level?: number;
+  isTotal?: boolean;
+  isSubtotal?: boolean;
+};
+
 type Props = {
   row: FinanceModelRow;
   detail: FinanceModelPreviewDetail | null;
@@ -68,10 +77,12 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
     return uniqueLines.map((code) => {
       const firstLine = periods
         .map((p) => periodGroups[p].find((l) => l.lineCode === code))
-        .find(Boolean);
+        .find(Boolean) as ServerOutputLine | undefined;
       const values: Record<string, number> = {};
       for (const p of periods) {
-        const found = periodGroups[p].find((l) => l.lineCode === code);
+        const found = periodGroups[p].find((l) => l.lineCode === code) as
+          | ServerOutputLine
+          | undefined;
         values[p] = found?.value ?? 0;
       }
       return {
@@ -178,7 +189,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               onClick={() => setSelectedVariant(variant)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 activeVariant === variant
-                  ? 'bg-cyan-500 text-slate-950'
+                  ? 'bg-blue-500 text-slate-950'
                   : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
               }`}
             >

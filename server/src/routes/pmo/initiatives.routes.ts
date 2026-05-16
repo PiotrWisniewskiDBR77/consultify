@@ -19,6 +19,17 @@ import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import blueprintService from '../../services/blueprintService.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
+import {
+  createWizardSession,
+  evaluateShortlistGateForSession,
+  generateCandidates as generateWizardCandidates,
+  getWizardSession,
+  listCandidates as listWizardCandidates,
+  listWizardAuditEvents,
+  recordShortlistDraftsCreated,
+  recordShortlistGateBlocked,
+  triageCandidate as triageWizardCandidate,
+} from '../../services/initiative/initiativeWizardService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
@@ -56,6 +67,203 @@ router.use(demoContextMiddleware);
 // ==========================================
 // INITIATIVE CRUD
 // ==========================================
+
+const WizardSessionSchema = z.object({
+  projectId: z.string().optional().nullable(),
+  mode: z
+    .enum([
+      'create_first_portfolio',
+      'generate_from_evidence',
+      'prioritize_by_goal',
+      'match_existing',
+      'refresh_portfolio',
+      'build_waves',
+      'improve_portfolio',
+    ])
+    .optional(),
+  businessPriorities: z.array(z.string()).optional(),
+  targetCount: z.number().int().min(1).max(10).optional().nullable(),
+  timeHorizon: z.string().max(50).optional().nullable(),
+  riskAppetite: z.string().max(50).optional().nullable(),
+  sourceBasket: z.array(z.unknown()).optional(),
+  manualNotes: z.string().max(20000).optional().nullable(),
+});
+
+const WizardCandidateTriageSchema = z.object({
+  triageStatus: z.enum([
+    'new_candidate',
+    'accepted_for_shortlist',
+    'rejected',
+    'needs_evidence',
+    'needs_split',
+    'needs_merge',
+    'needs_rewrite',
+    'already_covered',
+    'ready_for_charter',
+  ]),
+  triageReason: z.string().max(2000).optional().nullable(),
+  linkedInitiativeId: z.string().max(255).optional().nullable(),
+});
+
+// ==========================================
+// INITIATIVE WIZARD (interactive consultant workbench)
+// All wizard endpoints require at minimum 'user' org role.
+// Reads (GET) are gated to prevent leaking session/audit data to viewers
+// without an active workspace seat. Writes (POST/PATCH) are gated to enforce
+// `proposal -> approval -> execution -> audit` per INITIATIVE_CANONICAL_STANDARD.
+// ==========================================
+
+router.post(
+  '/wizard/sessions',
+  requireOrgRole('user'),
+  validateBody(WizardSessionSchema),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const session = await createWizardSession({
+      organizationId: String(orgId),
+      userId: req.user?.id || null,
+      input: req.body,
+    });
+    return res.status(201).json({ session });
+  }
+);
+
+router.get('/wizard/sessions/:sessionId', requireOrgRole('user'), async (req: any, res: any) => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+  if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+  return res.json({ session });
+});
+
+router.post(
+  '/wizard/sessions/:sessionId/candidates/generate',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+    if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+    const candidates = await generateWizardCandidates({
+      organizationId: String(orgId),
+      sessionId: String(req.params.sessionId),
+      userId: req.user?.id || null,
+    });
+    return res.status(201).json({ candidates });
+  }
+);
+
+router.get(
+  '/wizard/sessions/:sessionId/candidates',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+    if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+    const candidates = await listWizardCandidates(String(orgId), String(req.params.sessionId));
+    return res.json({ candidates });
+  }
+);
+
+router.get(
+  '/wizard/sessions/:sessionId/audit-events',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+    if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+    const events = await listWizardAuditEvents(String(orgId), String(req.params.sessionId));
+    return res.json({ events });
+  }
+);
+
+router.patch(
+  '/wizard/candidates/:candidateId/triage',
+  requireOrgRole('user'),
+  validateBody(WizardCandidateTriageSchema),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const candidate = await triageWizardCandidate({
+      organizationId: String(orgId),
+      candidateId: String(req.params.candidateId),
+      userId: req.user?.id || null,
+      triageStatus: req.body.triageStatus,
+      triageReason: req.body.triageReason || null,
+      linkedInitiativeId: req.body.linkedInitiativeId || null,
+    });
+    if (!candidate) return res.status(404).json({ error: 'Candidate not found' });
+    return res.json({ candidate });
+  }
+);
+
+// Shortlist gate (P0 #7): non-mutating evaluation that frontend calls before
+// `Utworz drafty`. Backend remains the source of truth so any UI bypass still
+// produces an audit event when contradicted/missing-evidence candidates leak in.
+router.get(
+  '/wizard/sessions/:sessionId/shortlist-gate',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+    if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+    const result = await evaluateShortlistGateForSession(
+      String(orgId),
+      String(req.params.sessionId)
+    );
+    return res.json({ gate: result });
+  }
+);
+
+const WizardDraftsCreatedSchema = z.object({
+  draftCount: z.number().int().min(0).max(50),
+  candidateIds: z.array(z.string().min(1)).max(50),
+  blockedReasons: z
+    .array(
+      z.object({
+        candidateId: z.string().min(1),
+        reason: z.string().max(120),
+      })
+    )
+    .max(50)
+    .optional(),
+});
+
+router.post(
+  '/wizard/sessions/:sessionId/drafts-created',
+  requireOrgRole('user'),
+  validateBody(WizardDraftsCreatedSchema),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+    if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+    const result = await evaluateShortlistGateForSession(
+      String(orgId),
+      String(req.params.sessionId)
+    );
+    if (!result.ok) {
+      await recordShortlistGateBlocked({
+        organizationId: String(orgId),
+        sessionId: String(req.params.sessionId),
+        userId: req.user?.id || null,
+        result,
+      });
+    }
+    await recordShortlistDraftsCreated({
+      organizationId: String(orgId),
+      sessionId: String(req.params.sessionId),
+      userId: req.user?.id || null,
+      draftCount: Number(req.body.draftCount || 0),
+      candidateIds: Array.isArray(req.body.candidateIds) ? req.body.candidateIds : [],
+    });
+    return res.json({ ok: true, gate: result });
+  }
+);
 
 /**
  * GET /api/initiatives/portfolio

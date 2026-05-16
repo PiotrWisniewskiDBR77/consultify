@@ -130,9 +130,9 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.PENDING_REVIEW]: {
     label: 'Pending Review',
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
-    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     icon: Clock,
   },
   [InitiativeStatus.REVIEW]: {
@@ -151,9 +151,9 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.PLANNING]: {
     label: 'Planning',
-    color: 'text-cyan-600 dark:text-cyan-400',
-    bgColor: 'bg-cyan-50 dark:bg-cyan-500/10',
-    borderColor: 'border-cyan-200 dark:border-cyan-500/30',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
     icon: Calendar,
   },
   [InitiativeStatus.APPROVED]: {
@@ -165,9 +165,9 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.SCHEDULED]: {
     label: 'Scheduled',
-    color: 'text-teal-600 dark:text-teal-400',
-    bgColor: 'bg-teal-50 dark:bg-teal-500/10',
-    borderColor: 'border-teal-200 dark:border-teal-500/30',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
     icon: Calendar,
   },
   [InitiativeStatus.EXECUTING]: {
@@ -200,9 +200,9 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.CANCELLED]: {
     label: 'Cancelled',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-500/10',
-    borderColor: 'border-red-200 dark:border-red-500/30',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-500/10',
+    borderColor: 'border-rose-200 dark:border-rose-500/30',
     icon: X,
   },
   [InitiativeStatus.ARCHIVED]: {
@@ -239,8 +239,8 @@ const PRIORITY_CONFIG: Record<
   },
   critical: {
     label: 'Critical',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-500/20',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
   },
 };
 
@@ -309,10 +309,10 @@ const GenerateInitiativesModal: FC<{
         className="relative w-full max-w-md mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-purple-500/10 to-amber-500/10">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-500/10 to-amber-500/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500 text-white rounded-lg">
+              <div className="p-2 bg-primary-500 text-white rounded-lg">
                 <Sparkles size={18} />
               </div>
               <div>
@@ -374,7 +374,7 @@ const GenerateInitiativesModal: FC<{
               type="checkbox"
               checked={includeChatContext}
               onChange={(e) => setIncludeChatContext(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+              className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
             />
             <div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">
@@ -398,7 +398,7 @@ const GenerateInitiativesModal: FC<{
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -500,7 +500,7 @@ const InitiativeRow: FC<{
           <div className="min-w-0">
             <button
               onClick={() => onOpen(initiative.id)}
-              className="text-sm font-medium text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left truncate block max-w-[200px]"
+              className="text-sm font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left truncate block max-w-[200px]"
             >
               {initiative.title}
             </button>
@@ -551,9 +551,9 @@ const InitiativeRow: FC<{
                       onClick={() => handleStatusChange(action.targetStatus)}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${
                         action.variant === 'danger'
-                          ? 'text-red-600 dark:text-red-400'
+                          ? 'text-rose-600 dark:text-rose-400'
                           : action.variant === 'primary'
-                            ? 'text-purple-700 dark:text-purple-300'
+                            ? 'text-primary-700 dark:text-primary-300'
                             : 'text-slate-700 dark:text-slate-200'
                       }`}
                     >
@@ -591,7 +591,7 @@ const InitiativeRow: FC<{
       <td className="px-4 py-3">
         {initiative.ownerName || initiative.owner ? (
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
               {(initiative.ownerName || initiative.owner || '?').charAt(0).toUpperCase()}
             </div>
             <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
@@ -615,7 +615,7 @@ const InitiativeRow: FC<{
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onOpen(initiative.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
           >
             <Eye size={12} />
             View
@@ -684,7 +684,7 @@ const InitiativeRow: FC<{
                           handleDelete();
                           setShowActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10"
                       >
                         <Trash2 size={14} />
                         Delete
@@ -992,7 +992,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-lg">
                 <Lightbulb size={18} />
               </div>
               <div>
@@ -1016,7 +1016,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               {canManage && (
                 <button
                   onClick={() => setShowManualModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-purple-500 hover:bg-purple-600 text-white transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white transition-colors"
                 >
                   <Plus size={16} />
                   New
@@ -1047,7 +1047,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       disabled={!isApproved}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                         isApproved
-                          ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                          ? 'bg-primary-500 hover:bg-primary-600 text-white'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                       }`}
                       title={
@@ -1095,12 +1095,12 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   'h-10 inline-flex items-center gap-2 px-3 rounded-lg border text-sm font-medium transition-colors',
                   'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700',
                   statusFilter.length > 0 &&
-                    'border-purple-200 dark:border-purple-500/30 bg-purple-50/60 dark:bg-purple-500/10'
+                    'border-primary-200 dark:border-primary-500/30 bg-primary-50/60 dark:bg-primary-500/10'
                 )}
               >
                 <Filter
                   size={14}
-                  className={statusFilter.length > 0 ? 'text-purple-600' : 'text-slate-500'}
+                  className={statusFilter.length > 0 ? 'text-primary-600' : 'text-slate-500'}
                 />
                 <span className="text-slate-700 dark:text-slate-200">Status</span>
                 <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
@@ -1162,7 +1162,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                                 type="checkbox"
                                 checked={checked}
                                 readOnly
-                                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                               />
                               <Icon
                                 size={14}
@@ -1216,7 +1216,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search initiatives..."
-              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
             />
           </div>
         </div>
@@ -1225,7 +1225,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : filteredInitiatives.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -1243,7 +1243,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               {isApproved && canManage && canGenerateInitiatives && (
                 <button
                   onClick={() => setShowGenerateModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
                 >
                   <Sparkles size={16} />
                   Generate Initiatives
@@ -1309,7 +1309,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   key={batch.id}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs"
                 >
-                  <Zap size={12} className="text-purple-500" />
+                  <Zap size={12} className="text-primary-500" />
                   <div className="flex flex-col">
                     <span className="text-slate-700 dark:text-slate-300">
                       {batch.methodologyId} • {batch.initiativesCount} items
@@ -1348,7 +1348,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               <span>Completed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Flag size={12} className="text-red-500" />
+              <Flag size={12} className="text-rose-500" />
               <span>Critical Priority</span>
             </div>
           </div>
@@ -1513,7 +1513,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       toast.error(e?.message || t('initiatives.form.createFailed'));
                     }
                   }}
-                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold"
                 >
                   {t('initiatives.form.create')}
                 </button>
@@ -1623,7 +1623,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold"
                 >
                   Save
                 </button>

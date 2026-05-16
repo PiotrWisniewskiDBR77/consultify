@@ -13,7 +13,7 @@
  *   │  NModeActionBar (Approve, Reject, ...)   │
  *   ├──────────┬───────────────────────────────┤
  *   │ LeftNav  │  Canvas (selected section)    │
- *   │ (220px)  │                               │
+ *   │ (242px)  │                               │
  *   │          │                               │
  *   └──────────┴───────────────────────────────┘
  *
@@ -122,13 +122,17 @@ export interface NModeHeaderConfig {
   onSave: () => void;
   /** Whether save is in progress */
   saving?: boolean;
+  /** Explicit persistence state. This is separate from lifecycle/governance status. */
+  saveState?: 'saved' | 'saving' | 'dirty' | 'error';
+  /** Optional label shown for the latest successful persistence read-back. */
+  lastSavedLabel?: string;
   /** Whether there are unsaved changes */
   isDirty?: boolean;
   /** Chat button handler (omit to hide) */
   onChat?: () => void;
   /** Back/close handler */
   onClose: () => void;
-  /** Draft saved label text */
+  /** Deprecated: lifecycle/governance label. Do not use for persistence state. */
   draftSavedLabel?: string;
   /** Status dot color CSS class (e.g. 'bg-emerald-400') */
   statusDotColor?: string;

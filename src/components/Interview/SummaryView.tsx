@@ -94,13 +94,13 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-              <Sparkles size={20} className="text-purple-500" />
+              <Sparkles size={20} className="text-primary-500" />
               Interview Summary
             </h2>
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-400 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-400 text-white text-sm font-medium rounded-lg transition-colors"
             >
               {isGenerating ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -126,7 +126,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     ? 'bg-emerald-500'
                     : progress >= 50
                       ? 'bg-amber-500'
-                      : 'bg-purple-500'
+                      : 'bg-primary-500'
                 }`}
                 style={{ width: `${progress}%` }}
               />
@@ -245,7 +245,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             {/* Pain Points */}
             <section>
               <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                <XCircle size={16} className="text-red-500" />
+                <XCircle size={16} className="text-rose-500" />
                 Current Pain Points
               </h3>
               {session.summaryPainPoints.length === 0 ? (
@@ -257,7 +257,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryPainPoints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/30 rounded-lg"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">

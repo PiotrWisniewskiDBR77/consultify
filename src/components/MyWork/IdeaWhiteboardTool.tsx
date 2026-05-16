@@ -382,7 +382,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
                       ? '#fbbf24'
                       : '#94a3b8';
               }
-              if (n.type === 'scoreNode') return '#8b5cf6';
+              if (n.type === 'scoreNode') return '#6366f1';
               if (n.type === 'progressNode') return '#60a5fa';
               if (n.type === 'summaryCard') return '#a78bfa';
               if (n.type === 'frameNode') return isDarkCanvas ? '#0f172a' : '#f1f5f9';
@@ -785,7 +785,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       });
       return changed ? next : nds;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameCollapseKey, setNodes]);
 
   const didPersistRef = useRef(false);
@@ -2646,7 +2645,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         canUndo={undoStackRef.current.length > 0}
         canRedo={redoStackRef.current.length > 0}
         whiteboardModeCopy={whiteboardModeCopy}
-        onAddElement={addElement}
+        onAddElement={(kind, extraData) => addElement(kind as WbNodeKind, extraData)}
         onSetBoardMode={setBoardMode}
         onClearDrawings={() => {
           setDrawingPaths([]);

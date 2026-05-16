@@ -354,7 +354,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
                 key={i}
                 className={`flex-shrink-0 flex items-center justify-center border-r border-slate-100/60 dark:border-navy-800/40 text-[9px] font-medium ${
                   slot.isToday
-                    ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-500/5'
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
                 style={{ width: colWidth }}
@@ -387,7 +387,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {/* Today marker */}
             {todayPx >= 0 && todayPx <= totalWidth && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-red-400/60 z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-primary-400/60 z-20"
                 style={{ left: todayPx }}
               />
             )}

@@ -6,8 +6,15 @@ import './i18n';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
-import App from './App';
+import { RuntimeDiagnosticPanel } from './components/RuntimeDiagnosticPanel';
 import { installFeedbackCollector } from './services/feedbackCollector';
+import { getRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from './utils/runtimeDiagnostics';
+
+declare global {
+  interface Window {
+    __consultifyBlockAppBoot?: boolean;
+  }
+}
 
 try {
   installFeedbackCollector({
@@ -53,23 +60,91 @@ if (!rootElement) {
   throw new Error('Root element #root not found');
 }
 
-const root = createRoot(rootElement);
-
-try {
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} catch (error) {
-  console.error('[index.tsx] Failed to render app:', error);
+const diagnosticMode = getRuntimeDiagnosticMode();
+if (window.__consultifyBlockAppBoot) {
+  logRuntimeDiagnosticMarker('app_boot_blocked_by_cache_reset', {
+    pathname: window.location.pathname,
+    search: window.location.search,
+  });
   rootElement.innerHTML = `
-    <div style="padding: 20px; font-family: sans-serif; color: white; background: #1a1a2e;">
-      <h1 style="color: #ff6b6b;">Application Error</h1>
-      <p>Failed to start the application. Please check the console for details.</p>
-      <pre style="background: #0d1117; padding: 10px; border-radius: 4px; overflow: auto; color: #ff6b6b;">${
-        error instanceof Error ? error.stack : String(error)
-      }</pre>
-    </div>
-  `;
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;color:#e2e8f0;font-family:Inter,system-ui,sans-serif;padding:24px;">
+        <main style="max-width:720px;border:1px solid rgba(148,163,184,.28);border-radius:24px;padding:24px;background:rgba(15,23,42,.86);box-shadow:0 24px 80px rgba(15,23,42,.48);">
+          <p style="margin:0 0 8px;color:#38bdf8;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">Consultify Runtime Diagnostic</p>
+          <h1 style="margin:0 0 12px;font-size:24px;line-height:1.25;">App boot paused for cache reset</h1>
+          <p style="margin:0;color:#cbd5e1;line-height:1.6;">The browser is clearing stale service worker and cache state before React providers mount.</p>
+        </main>
+      </div>
+    `;
+} else if (diagnosticMode === 'boot') {
+  logRuntimeDiagnosticMarker('boot_screen_only', {
+    pathname: window.location.pathname,
+    search: window.location.search,
+  });
+  rootElement.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;color:#e2e8f0;font-family:Inter,system-ui,sans-serif;padding:24px;">
+        <main style="max-width:720px;border:1px solid rgba(148,163,184,.28);border-radius:24px;padding:24px;background:rgba(15,23,42,.86);box-shadow:0 24px 80px rgba(15,23,42,.48);">
+          <p style="margin:0 0 8px;color:#38bdf8;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">Consultify Runtime Diagnostic</p>
+          <h1 style="margin:0 0 12px;font-size:24px;line-height:1.25;">Boot screen loaded before React providers</h1>
+          <p style="margin:0 0 16px;color:#cbd5e1;line-height:1.6;">The application bundle executed, but React was intentionally not mounted. Use this mode to confirm whether renderer crashes happen before or after AppProviders.</p>
+          <code style="display:block;border-radius:12px;background:#0f172a;padding:12px;color:#bae6fd;">?diag=boot</code>
+        </main>
+      </div>
+    `;
+} else {
+  const root = createRoot(rootElement);
+
+  const bootReactApp = async () => {
+    if (diagnosticMode === 'min-react') {
+      logRuntimeDiagnosticMarker('min_react_mount', {
+        pathname: window.location.pathname,
+        search: window.location.search,
+      });
+      root.render(
+        <React.StrictMode>
+          <RuntimeDiagnosticPanel
+            mode="min-react"
+            title="Minimal React root mounted"
+            description="React createRoot and render completed without AppProviders, RouterSync, auth verification, or app shell."
+          />
+        </React.StrictMode>
+      );
+    } else if (diagnosticMode === 'providers-only') {
+      const { AppProviders } = await import('./providers/AppProviders');
+      logRuntimeDiagnosticMarker('providers_only_mount', {
+        pathname: window.location.pathname,
+        search: window.location.search,
+      });
+      root.render(
+        <React.StrictMode>
+          <AppProviders>
+            <RuntimeDiagnosticPanel
+              mode="providers-only"
+              title="AppProviders mounted without AppContent"
+              description="Provider tree mounted without RouterSync, auth verification, route rendering, or Canvas components."
+            />
+          </AppProviders>
+        </React.StrictMode>
+      );
+    } else {
+      const { default: App } = await import('./App');
+      root.render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>
+      );
+    }
+  };
+
+  bootReactApp().catch((error) => {
+    console.error('[index.tsx] Failed to render app:', error);
+    rootElement.innerHTML = `
+      <div style="padding: 20px; font-family: sans-serif; color: white; background: #1a1a2e;">
+        <h1 style="color: #ff6b6b;">Application Error</h1>
+        <p>Failed to start the application. Please check the console for details.</p>
+        <pre style="background: #0d1117; padding: 10px; border-radius: 4px; overflow: auto; color: #ff6b6b;">${
+          error instanceof Error ? error.stack : String(error)
+        }</pre>
+      </div>
+    `;
+  });
 }

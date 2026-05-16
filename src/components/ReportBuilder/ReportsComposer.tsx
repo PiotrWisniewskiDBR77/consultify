@@ -91,7 +91,7 @@ const ProfilesList: React.FC = () => {
             className="p-5 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-slate-700"
           >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center flex-shrink-0">
                 <Layers className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
@@ -117,7 +117,7 @@ const ProfilesList: React.FC = () => {
                 {/* Features */}
                 <div className="flex flex-wrap gap-2 mt-3">
                   {profile.features.allowMatrixVisualization && (
-                    <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
+                    <span className="text-xs px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
                       {isPl ? 'Macierz' : 'Matrix'}
                     </span>
                   )}

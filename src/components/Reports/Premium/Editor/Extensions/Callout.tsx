@@ -38,17 +38,17 @@ const CALLOUT_STYLES = {
     defaultTitle: 'Sukces',
   },
   danger: {
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-l-red-500',
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    border: 'border-l-rose-500',
     icon: XCircle,
-    iconColor: 'text-red-500',
+    iconColor: 'text-rose-500',
     defaultTitle: 'Ważne',
   },
   tip: {
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    border: 'border-l-purple-500',
+    bg: 'bg-primary-50 dark:bg-primary-900/20',
+    border: 'border-l-primary-500',
     icon: Lightbulb,
-    iconColor: 'text-purple-500',
+    iconColor: 'text-primary-500',
     defaultTitle: 'Pro Tip',
   },
 };

@@ -91,7 +91,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
       onDoubleClick={handleDoubleClick}
       className={`relative group rounded-lg transition-all ${
         isSelected
-          ? 'ring-2 ring-purple-400 bg-purple-500/5'
+          ? 'ring-2 ring-primary-400 bg-primary-500/5'
           : 'hover:ring-1 hover:ring-slate-300 dark:hover:ring-navy-600'
       }`}
     >
@@ -132,7 +132,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1 text-red-400 hover:text-red-600"
+            className="p-1 text-rose-400 hover:text-rose-600"
             title="Delete"
           >
             <Trash2 size={12} />

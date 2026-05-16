@@ -98,7 +98,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       case 'task':
         return <CheckSquare size={size} className="text-blue-400" />;
       case 'decision':
-        return <Scale size={size} className="text-purple-400" />;
+        return <Scale size={size} className="text-primary-400" />;
       case 'risk':
         return <AlertTriangle size={size} className="text-amber-400" />;
       case 'initiative':
@@ -106,13 +106,13 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       case 'project':
         return <Flag size={size} className="text-indigo-400" />;
       case 'assessment':
-        return <FileText size={size} className="text-cyan-400" />;
+        return <FileText size={size} className="text-blue-400" />;
       case 'report':
-        return <FileText size={size} className="text-violet-400" />;
+        return <FileText size={size} className="text-primary-400" />;
       case 'tool':
         return <Flag size={size} className="text-fuchsia-400" />;
       case 'insight':
-        return <AlertTriangle size={size} className="text-teal-400" />;
+        return <AlertTriangle size={size} className="text-blue-400" />;
       case 'external':
         return <ExternalLink size={size} className="text-slate-500 dark:text-slate-400" />;
       default:
@@ -147,7 +147,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       return 'bg-blue-500/20 text-blue-400';
     }
     if (['blocked', 'rejected', 'critical'].includes(statusLower)) {
-      return 'bg-red-500/20 text-red-400';
+      return 'bg-rose-500/20 text-rose-400';
     }
     if (['pending', 'review', 'deferred'].includes(statusLower)) {
       return 'bg-amber-500/20 text-amber-400';
@@ -269,8 +269,8 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-          <div className="p-2 rounded-xl bg-purple-500/10 dark:bg-purple-500/20">
-            <LinkIcon size={18} className="text-purple-500 dark:text-purple-400" />
+          <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
+            <LinkIcon size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
           <span className="text-sm font-semibold">{isPolish ? 'Powiązania' : 'Linked Items'}</span>
         </div>
@@ -526,12 +526,12 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                               {!readOnly && (
                                 <button
                                   onClick={() => handleRemoveItem(item.id)}
-                                  className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
+                                  className="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors"
                                   title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
                                 >
                                   <Trash2
                                     size={14}
-                                    className="text-slate-500 dark:text-slate-400 hover:text-red-500"
+                                    className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
                                   />
                                 </button>
                               )}

@@ -67,7 +67,7 @@ const AIActionButton: React.FC<AIActionButtonProps> = ({
     'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all';
   const variantClasses =
     variant === 'primary'
-      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20'
+      ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-900/20'
       : 'bg-slate-100 dark:bg-navy-950/50 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700';
 
   return (
@@ -443,7 +443,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
               {!readOnly && effectiveProjectId && (
                 <button
                   onClick={() => setShowAiMenu(!showAiMenu)}
-                  className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                  className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
                 >
                   <Sparkles size={18} />
                 </button>
@@ -455,7 +455,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 disabled={!data.actual || !data.target}
                 className={`touch-target flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
                   data.actual && data.target
-                    ? 'bg-purple-600 text-white shadow-lg'
+                    ? 'bg-primary-600 text-white shadow-lg'
                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -584,7 +584,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                         <button
                           key={key}
                           onClick={() => setCurrentAreaKey(key)}
-                          className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-purple-50 dark:bg-purple-600/10 text-purple-600 dark:text-purple-300' : 'text-slate-500 dark:text-slate-400'}`}
+                          className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${key === currentAreaKey ? 'bg-primary-50 dark:bg-primary-600/10 text-primary-600 dark:text-primary-300' : 'text-slate-500 dark:text-slate-400'}`}
                         >
                           <span className="text-sm font-medium">{area.title}</span>
                           {isCompleted && <CheckCircle2 size={14} className="text-green-500" />}
@@ -642,7 +642,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                   <MessageSquare size={16} />
                   <span className="text-sm font-medium">Komentarze</span>
                   {commentCount > 0 && (
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary-600 text-white text-xs font-bold">
                       {commentCount}
                     </span>
                   )}
@@ -668,7 +668,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     <span className="text-xs text-slate-500 dark:text-slate-400 block">
                       {workspaceT.remaining || 'Remaining'}
                     </span>
-                    <span className="font-bold text-purple-400">{progressStats.remaining}</span>
+                    <span className="font-bold text-primary-400">{progressStats.remaining}</span>
                   </div>
                 </div>
               </div>
@@ -678,7 +678,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 disabled={!data.actual || !data.target}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${
                   data.actual && data.target
-                    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
+                    ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-primary-900/30'
                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -718,11 +718,11 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                       setCurrentAreaKey(key);
                       setShowAreaSelector(false);
                     }}
-                    className={`w-full text-left px-4 py-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-700 touch-target ${key === currentAreaKey ? 'bg-purple-50 dark:bg-purple-600/10' : ''}`}
+                    className={`w-full text-left px-4 py-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-700 touch-target ${key === currentAreaKey ? 'bg-primary-50 dark:bg-primary-600/10' : ''}`}
                   >
                     <div>
                       <span
-                        className={`text-sm font-medium ${key === currentAreaKey ? 'text-purple-600 dark:text-purple-300' : 'text-navy-900 dark:text-white'}`}
+                        className={`text-sm font-medium ${key === currentAreaKey ? 'text-primary-600 dark:text-primary-300' : 'text-navy-900 dark:text-white'}`}
                       >
                         {area.title}
                       </span>
@@ -961,27 +961,27 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
             {/* AI Suggestion Panel */}
             {showAiPanel && (aiSuggestion || aiEvidence) && (
-              <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-xl">
+              <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-500/30 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-800/50 rounded-lg">
-                    <Sparkles size={18} className="text-purple-600 dark:text-purple-400" />
+                  <div className="p-2 bg-primary-100 dark:bg-primary-800/50 rounded-lg">
+                    <Sparkles size={18} className="text-primary-600 dark:text-primary-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-2">
+                    <h4 className="font-semibold text-primary-900 dark:text-primary-200 mb-2">
                       {aiSuggestion ? 'Sugestia AI' : 'Sugerowane dowody'}
                     </h4>
 
                     {aiSuggestion && (
-                      <p className="text-sm text-purple-800 dark:text-purple-300 mb-3">
+                      <p className="text-sm text-primary-800 dark:text-primary-300 mb-3">
                         {aiSuggestion}
                       </p>
                     )}
 
                     {aiEvidence && (
-                      <ul className="text-sm text-purple-800 dark:text-purple-300 space-y-1 mb-3">
+                      <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1 mb-3">
                         {aiEvidence.map((e, i) => (
                           <li key={i} className="flex items-start gap-2">
-                            <span className="text-purple-400">•</span>
+                            <span className="text-primary-400">•</span>
                             {e}
                           </li>
                         ))}
@@ -991,7 +991,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     <div className="flex gap-2">
                       <button
                         onClick={aiSuggestion ? handleApplySuggestion : handleApplyEvidence}
-                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-colors"
+                        className="px-3 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium rounded-lg transition-colors"
                       >
                         Zastosuj
                       </button>
@@ -1001,7 +1001,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                           setAiEvidence(null);
                           setShowAiPanel(false);
                         }}
-                        className="px-3 py-1.5 bg-purple-100 dark:bg-purple-800/50 hover:bg-purple-200 dark:hover:bg-purple-700/50 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-lg transition-colors"
+                        className="px-3 py-1.5 bg-primary-100 dark:bg-primary-800/50 hover:bg-primary-200 dark:hover:bg-primary-700/50 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-lg transition-colors"
                       >
                         Odrzuć
                       </button>
@@ -1013,8 +1013,8 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
             {/* AI Error Display */}
             {ai.error && (
-              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg">
-                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 text-sm">
+              <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg">
+                <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 text-sm">
                   <AlertTriangle size={14} />
                   <span>AI Error: {ai.error}</span>
                   <button onClick={ai.clearError} className="ml-auto text-xs underline">

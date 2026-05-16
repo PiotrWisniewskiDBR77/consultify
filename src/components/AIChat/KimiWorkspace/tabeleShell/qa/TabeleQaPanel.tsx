@@ -1,0 +1,174 @@
+/**
+ * TabeleQaPanel — orchestrator panel rendered in the right rail when
+ * the user clicks the QA Report icon in `<TabeleRightRail>`.
+ *
+ * Composes:
+ *   - `<QaHealthBar>` (top, overall + 5-axis stacked bar)
+ *   - `<QaAxisCard>` × 5 ("Why this score?" expansions)
+ *   - `<QaSuggestionList>` (bottom, actionable)
+ *
+ * Wires:
+ *   - "Recompute" button → `recomputeQaReport(tableId)`.
+ *   - "Open in AI Editor" → forwarded via `onOpenInAiEditor` callback so
+ *     the parent shell can swap the right-rail tool to ai-editor and
+ *     prefill the level/payload (handled in `<TabeleAiEditorPanel>`).
+ *   - "Mark not applicable" → `dismissQaSuggestion(...)` then optimistic
+ *     local filter, followed by a recompute to refresh.
+ *
+ * Block C · EPIC-T11 · Sprint C-S5.
+ */
+
+import { Loader2, RefreshCw } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import {
+  type QaReport,
+  type QaSuggestion,
+  dismissQaSuggestion,
+  getLatestQaReport,
+  recomputeQaReport,
+} from '@/services/api/tablePlatform.api';
+
+import { QaAxisCard } from './QaAxisCard';
+import { QaHealthBar } from './QaHealthBar';
+import { QaSuggestionList } from './QaSuggestionList';
+
+export interface TabeleQaPanelProps {
+  tableId: string;
+  /** Forwarded by the parent shell to swap to the AI Editor panel and
+   *  prefill it with the suggestion's recommended action. */
+  onOpenInAiEditor?: (suggestion: QaSuggestion) => void;
+  /** Test seam: when set, the component skips network calls and uses
+   *  the supplied report. */
+  testInitialReport?: QaReport | null;
+}
+
+export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
+  tableId,
+  onOpenInAiEditor,
+  testInitialReport,
+}) => {
+  const [report, setReport] = useState<QaReport | null>(testInitialReport ?? null);
+  const [loading, setLoading] = useState(testInitialReport === undefined);
+  const [computing, setComputing] = useState(false);
+  const [optimisticDismissed, setOptimisticDismissed] = useState<Set<string>>(new Set());
+
+  const loadLatest = useCallback(async () => {
+    if (!tableId) return;
+    setLoading(true);
+    try {
+      const latest = await getLatestQaReport(tableId);
+      setReport(latest);
+    } catch (e) {
+      toast.error(`Failed to load QA report: ${(e as Error)?.message ?? 'unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [tableId]);
+
+  useEffect(() => {
+    if (testInitialReport !== undefined) return;
+    void loadLatest();
+  }, [loadLatest, testInitialReport]);
+
+  const handleRecompute = useCallback(async () => {
+    if (!tableId) return;
+    setComputing(true);
+    try {
+      const fresh = await recomputeQaReport(tableId, 'on_demand');
+      setReport(fresh);
+      setOptimisticDismissed(new Set());
+      toast.success('QA report refreshed');
+    } catch (e) {
+      toast.error(`Failed to recompute: ${(e as Error)?.message ?? 'unknown error'}`);
+    } finally {
+      setComputing(false);
+    }
+  }, [tableId]);
+
+  const handleDismiss = useCallback(
+    async (s: QaSuggestion) => {
+      try {
+        // Optimistic UI: remove now, refresh in the background.
+        setOptimisticDismissed((prev) => {
+          const next = new Set(prev);
+          next.add(s.fingerprint);
+          return next;
+        });
+        await dismissQaSuggestion(tableId, s.id, s.fingerprint);
+        toast.success('Suggestion marked not applicable');
+      } catch (e) {
+        // Rollback on error.
+        setOptimisticDismissed((prev) => {
+          const next = new Set(prev);
+          next.delete(s.fingerprint);
+          return next;
+        });
+        toast.error(`Failed to dismiss: ${(e as Error)?.message ?? 'unknown error'}`);
+      }
+    },
+    [tableId]
+  );
+
+  const visibleSuggestions = (report?.suggestions ?? []).filter(
+    (s) => !optimisticDismissed.has(s.fingerprint)
+  );
+
+  return (
+    <section
+      className="flex h-full flex-col gap-3 p-3"
+      data-testid="tabele-qa-panel"
+      aria-label="Tabele QA report"
+    >
+      <header className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          QA Report
+        </h3>
+        <button
+          type="button"
+          onClick={handleRecompute}
+          disabled={computing || !tableId}
+          className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+          data-testid="qa-recompute-button"
+          aria-label="Recompute QA report"
+        >
+          {computing ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
+          Recompute
+        </button>
+      </header>
+
+      <QaHealthBar report={report} computing={loading || computing} />
+
+      {report && (
+        <div className="space-y-1.5" data-testid="qa-axes">
+          <QaAxisCard axisName="completeness" detail={report.axes.completeness} />
+          <QaAxisCard axisName="sourceCoverage" detail={report.axes.sourceCoverage} />
+          <QaAxisCard axisName="methodology" detail={report.axes.methodology} />
+          <QaAxisCard axisName="freshness" detail={report.axes.freshness} />
+          <QaAxisCard
+            axisName="formulaConsistency"
+            detail={report.axes.formulaConsistency}
+          />
+        </div>
+      )}
+
+      <div>
+        <h4 className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Suggestions
+        </h4>
+        <QaSuggestionList
+          suggestions={visibleSuggestions}
+          onOpenInAiEditor={onOpenInAiEditor}
+          onDismiss={handleDismiss}
+        />
+      </div>
+    </section>
+  );
+};
+
+export default TabeleQaPanel;

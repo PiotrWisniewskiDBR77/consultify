@@ -86,30 +86,30 @@ const KeyTakeawaysBox: React.FC<{
                     padding: 16px 20px;
                     margin: 24px 0;
                 }
-                
+
                 .takeaways-header {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     margin-bottom: 12px;
                 }
-                
+
                 .takeaways-header .icon {
                     font-size: 24px;
                 }
-                
+
                 .takeaways-header h4 {
                     margin: 0;
                     font-size: 15px;
                     font-weight: 600;
                     color: #854d0e;
                 }
-                
+
                 .key-takeaways ul {
                     margin: 0;
                     padding-left: 20px;
                 }
-                
+
                 .key-takeaways li {
                     margin-bottom: 8px;
                     color: #713f12;
@@ -138,7 +138,7 @@ const BenchmarkComparison: React.FC<{
   }[benchmark.position];
 
   const positionColor = {
-    below: '#ef4444',
+    below: '#f43f5e',
     average: '#eab308',
     above: '#22c55e',
   }[benchmark.position];
@@ -206,19 +206,19 @@ const BenchmarkComparison: React.FC<{
                     padding: 20px;
                     margin: 24px 0;
                 }
-                
+
                 .benchmark-comparison h4 {
                     margin: 0 0 20px 0;
                     font-size: 15px;
                     font-weight: 600;
                     color: #1e1b4b;
                 }
-                
+
                 .benchmark-bar-container {
                     position: relative;
                     margin: 40px 0 30px;
                 }
-                
+
                 .benchmark-bar {
                     position: relative;
                     height: 32px;
@@ -226,7 +226,7 @@ const BenchmarkComparison: React.FC<{
                     border-radius: 16px;
                     overflow: visible;
                 }
-                
+
                 .current-position {
                     position: absolute;
                     left: 0;
@@ -240,49 +240,49 @@ const BenchmarkComparison: React.FC<{
                     padding-right: 12px;
                     transition: width 0.5s ease;
                 }
-                
+
                 .position-value {
                     font-weight: 700;
                     color: white;
                     font-size: 14px;
                 }
-                
+
                 .marker {
                     position: absolute;
                     top: -25px;
                     transform: translateX(-50%);
                     z-index: 2;
                 }
-                
+
                 .marker-line {
                     width: 2px;
                     height: 55px;
                     margin: 0 auto;
                 }
-                
+
                 .marker-label {
                     font-size: 11px;
                     white-space: nowrap;
                     text-align: center;
                     margin-top: 4px;
                 }
-                
+
                 .marker.industry-avg .marker-line {
                     background: #64748b;
                 }
-                
+
                 .marker.industry-avg .marker-label {
                     color: #64748b;
                 }
-                
+
                 .marker.top-performers .marker-line {
                     background: #22c55e;
                 }
-                
+
                 .marker.top-performers .marker-label {
                     color: #22c55e;
                 }
-                
+
                 .target-marker {
                     position: absolute;
                     top: 4px;
@@ -290,14 +290,14 @@ const BenchmarkComparison: React.FC<{
                     transform: translateX(-50%);
                     z-index: 1;
                 }
-                
+
                 .target-line {
                     width: 4px;
                     height: 100%;
                     background: #10b981;
                     border-radius: 2px;
                 }
-                
+
                 .target-label {
                     position: absolute;
                     bottom: -22px;
@@ -307,7 +307,7 @@ const BenchmarkComparison: React.FC<{
                     color: #10b981;
                     white-space: nowrap;
                 }
-                
+
                 .scale-labels {
                     display: flex;
                     justify-content: space-between;
@@ -316,7 +316,7 @@ const BenchmarkComparison: React.FC<{
                     font-size: 11px;
                     color: #94a3b8;
                 }
-                
+
                 .position-badge {
                     display: inline-block;
                     padding: 6px 16px;
@@ -491,7 +491,7 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
                     margin: 32px 0;
                     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
                 }
-                
+
                 .section-header {
                     display: flex;
                     justify-content: space-between;
@@ -500,37 +500,37 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
                     padding-bottom: 24px;
                     border-bottom: 2px solid #e5e7eb;
                 }
-                
+
                 .header-content {
                     display: flex;
                     align-items: flex-start;
                     gap: 16px;
                 }
-                
+
                 .axis-icon {
                     font-size: 48px;
                 }
-                
+
                 .header-titles h2 {
                     margin: 0 0 8px 0;
                     font-size: 24px;
                     font-weight: 700;
                     color: #1e1b4b;
                 }
-                
+
                 .axis-description {
                     margin: 0;
                     color: #64748b;
                     font-size: 14px;
                     max-width: 500px;
                 }
-                
+
                 .level-summary {
                     display: flex;
                     align-items: center;
                     gap: 12px;
                 }
-                
+
                 .level-card {
                     display: flex;
                     flex-direction: column;
@@ -539,83 +539,83 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
                     border-radius: 12px;
                     min-width: 80px;
                 }
-                
+
                 .level-card.current {
                     background: #3b82f610;
                     border: 2px solid #3b82f6;
                 }
-                
+
                 .level-card.target {
                     background: #10b98110;
                     border: 2px solid #10b981;
                 }
-                
+
                 .level-card.gap {
                     background: #f59e0b10;
                     border: 2px solid #f59e0b;
                 }
-                
+
                 .level-card .value {
                     font-size: 28px;
                     font-weight: 700;
                 }
-                
+
                 .level-card.current .value { color: #3b82f6; }
                 .level-card.target .value { color: #10b981; }
                 .level-card.gap .value { color: #f59e0b; }
-                
+
                 .level-card .label {
                     font-size: 12px;
                     color: #64748b;
                     margin-top: 4px;
                 }
-                
+
                 .arrow {
                     color: #94a3b8;
                     font-size: 20px;
                     font-weight: bold;
                 }
-                
+
                 .axis-summary {
                     background: #f8fafc;
                     border-radius: 12px;
                     padding: 20px;
                     margin: 24px 0;
                 }
-                
+
                 .axis-summary h4 {
                     margin: 0 0 12px 0;
                     font-size: 15px;
                     font-weight: 600;
                     color: #1e1b4b;
                 }
-                
+
                 .axis-summary p {
                     margin: 0;
                     font-size: 14px;
                     line-height: 1.6;
                     color: #475569;
                 }
-                
+
                 .area-details-section {
                     margin-top: 40px;
                     padding-top: 24px;
                     border-top: 2px solid #e5e7eb;
                 }
-                
+
                 .area-details-section h3 {
                     margin: 0 0 12px 0;
                     font-size: 18px;
                     font-weight: 600;
                     color: #1e1b4b;
                 }
-                
+
                 .section-intro {
                     margin: 0 0 16px 0;
                     color: #64748b;
                     font-size: 14px;
                 }
-                
+
                 .priority-order-note {
                     display: inline-flex;
                     align-items: center;
@@ -627,28 +627,28 @@ export const AxisReportSection: React.FC<AxisReportSectionProps> = ({
                     color: #3b82f6;
                     margin-bottom: 20px;
                 }
-                
+
                 @media (max-width: 768px) {
                     .section-header {
                         flex-direction: column;
                         gap: 20px;
                     }
-                    
+
                     .level-summary {
                         width: 100%;
                         justify-content: center;
                     }
-                    
+
                     .level-card {
                         padding: 10px 16px;
                         min-width: 70px;
                     }
-                    
+
                     .level-card .value {
                         font-size: 22px;
                     }
                 }
-                
+
                 @media print {
                     .axis-report-section {
                         break-before: page;

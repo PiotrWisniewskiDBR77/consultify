@@ -107,7 +107,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     renderWidget({ onDemoClick, onTrialClick, onContactClick });
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try demo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
@@ -131,7 +131,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     renderWidget();
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try demo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ask Anna first' }));
@@ -668,7 +668,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     });
 
     expect(
-      screen.queryByText('Anna is listening live. Start typing anytime to switch back to text.'),
+      screen.queryByText('Anna is listening live.'),
     ).not.toBeInTheDocument();
     expect(screen.getByText('Tap the microphone to start a live voice conversation.')).toBeInTheDocument();
     expect(lateSessionClose).toHaveBeenCalled();
@@ -923,15 +923,14 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Anna is listening live. Start typing anytime to switch back to text.'),
+        screen.getByText('Anna is listening live.'),
       ).toBeInTheDocument();
     });
 
     expect(mockLiveConnect).toHaveBeenCalledWith(
       expect.objectContaining({
         config: expect.objectContaining({
-          inputAudioTranscription: {},
-          outputAudioTranscription: {},
+          responseModalities: ['audio'],
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName: 'Aoede' },
@@ -955,10 +954,8 @@ describe('AnnaAssistantWidget CTA authority', () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('I need help with onboarding.')).toBeInTheDocument();
-      expect(screen.getByText('We can start with a guided demo.')).toBeInTheDocument();
-    });
+    expect(screen.queryByText('I need help with onboarding.')).not.toBeInTheDocument();
+    expect(screen.queryByText('We can start with a guided demo.')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('Ask Anna about the product...'), {
       target: { value: 'And what about pricing?' },
@@ -971,10 +968,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     expect(chatRequestBody).toMatchObject({
       message: 'And what about pricing?',
-      history: [
-        { role: 'user', content: 'I need help with onboarding.' },
-        { role: 'assistant', content: 'We can start with a guided demo.' },
-      ],
+      history: [],
     });
   });
 
@@ -1093,7 +1087,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start voice conversation' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Anna is listening live. Start typing anytime to switch back to text.')).toBeInTheDocument();
+      expect(screen.getByText('Anna is listening live.')).toBeInTheDocument();
     });
 
     expect(sendClientContent).toHaveBeenCalledWith({
@@ -1288,7 +1282,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Anna is listening live. Start typing anytime to switch back to text.'),
+        screen.getByText('Anna is listening live.'),
       ).toBeInTheDocument();
     });
 

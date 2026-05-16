@@ -16,11 +16,11 @@ import {
   AlertOctagon,
   AlertTriangle,
   Bell,
-  Calendar,
   CheckCircle,
   Clock,
   Download,
   Info,
+  type LucideIcon,
   RefreshCw,
   Shield,
   Target,
@@ -30,9 +30,9 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
-import api from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from './AdminState';
 
 interface SLAMetrics {
   uptimePercentage: number;
@@ -72,8 +72,63 @@ interface UptimeDataPoint {
 
 type TimeRange = '24h' | '7d' | '30d' | '90d';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const toNumber = (value: unknown, fallback = 0) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const normalizeAnalyticsPayload = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  if (
+    !isRecord(payload) ||
+    !('totalCalls' in payload) ||
+    !('errorRate' in payload) ||
+    !('avgLatency' in payload)
+  ) {
+    throw new Error('SLA analytics response was incomplete');
+  }
+
+  return {
+    totalCalls: toNumber(payload.totalCalls, 0),
+    errorRate: toNumber(payload.errorRate, 0),
+    avgLatency: toNumber(payload.avgLatency, 0),
+    byDay: Array.isArray(payload.byDay)
+      ? payload.byDay.filter(isRecord).map((day) => ({
+          date: asText(day.date, ''),
+        }))
+      : [],
+  };
+};
+
+const normalizeLogsPayload = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload) || !Array.isArray(payload.logs)) {
+    throw new Error('SLA logs response was not a list');
+  }
+
+  return payload.logs
+    .filter(isRecord)
+    .map((log) => ({
+      latency: toNumber(log.latency, 0),
+    }))
+    .filter((log) => log.latency > 0);
+};
+
 export function SLADashboard() {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [metrics, setMetrics] = useState<SLAMetrics>({
@@ -96,9 +151,11 @@ export function SLADashboard() {
   const [breaches, setBreaches] = useState<SLABreach[]>([]);
   const [uptimeHistory, setUptimeHistory] = useState<UptimeDataPoint[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadSLAData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const daysBack =
         timeRange === '24h' ? 1 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
@@ -111,12 +168,12 @@ export function SLADashboard() {
       ]);
 
       if (!analyticsRes.ok) throw new Error('Failed to load SLA analytics');
-      const analytics = await analyticsRes.json();
-      const logsPayload = logsRes.ok ? await logsRes.json() : { logs: [] };
+      if (!logsRes.ok) throw new Error('Failed to load SLA logs');
+      const analytics = normalizeAnalyticsPayload(await analyticsRes.json());
+      const logs = normalizeLogsPayload(await logsRes.json());
 
-      const latenciesMs: number[] = (Array.isArray(logsPayload?.logs) ? logsPayload.logs : [])
-        .map((l: any) => Number(l.latency || 0))
-        .filter((n: number) => Number.isFinite(n) && n > 0)
+      const latenciesMs: number[] = logs
+        .map((log) => log.latency)
         .sort((a: number, b: number) => a - b);
 
       const pct = (p: number) => {
@@ -128,8 +185,8 @@ export function SLADashboard() {
         return latenciesMs[idx];
       };
 
-      const totalRequests = Number(analytics.totalCalls || 0);
-      const errorRate = Number(analytics.errorRate || 0); // percent
+      const totalRequests = analytics.totalCalls;
+      const errorRate = analytics.errorRate; // percent
       const successRate = Math.max(0, Math.min(100, 100 - errorRate));
 
       const p50 = pct(0.5) / 1000;
@@ -149,7 +206,7 @@ export function SLADashboard() {
         totalRequests,
         successfulRequests: Math.round((successRate / 100) * totalRequests),
         failedRequests: Math.round((errorRate / 100) * totalRequests),
-        averageLatency: Number(analytics.avgLatency || 0) / 1000,
+        averageLatency: analytics.avgLatency / 1000,
         slaCompliant: successRate >= 99.9 && errorRate <= 1.0 && p95 <= 3.0 && p99 <= 5.0,
         lastCalculated: new Date().toISOString(),
       };
@@ -198,17 +255,16 @@ export function SLADashboard() {
       }
       setBreaches(b);
 
-      const history: UptimeDataPoint[] = (
-        Array.isArray(analytics.byDay) ? analytics.byDay : []
-      ).map((d: any) => ({
+      const history: UptimeDataPoint[] = analytics.byDay.map((d) => ({
         date: d.date,
         uptime: Math.round(successRate * 100) / 100,
         incidents: 0,
       }));
       setUptimeHistory(history);
-    } catch (err) {
-      console.error('Failed to load SLA metrics:', err);
-      // Set empty state on error
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load SLA metrics');
+      setLoadError(message);
+      toast.error(message);
       setMetrics({
         uptimePercentage: 0,
         uptimeTarget: 99.9,
@@ -245,6 +301,10 @@ export function SLADashboard() {
   }, [autoRefresh, loadSLAData]);
 
   const handleExport = () => {
+    if (loadError) {
+      toast.error('SLA metrics are unavailable');
+      return;
+    }
     const data = {
       exportDate: new Date().toISOString(),
       timeRange,
@@ -264,9 +324,16 @@ export function SLADashboard() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'Unknown date';
     return timeRange === '24h'
       ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'Unknown date';
+    return date.toLocaleString();
   };
 
   const getComplianceStatus = (actual: number, target: number, isLowerBetter: boolean = true) => {
@@ -277,7 +344,6 @@ export function SLADashboard() {
   };
 
   const activeBreaches = breaches.filter((b) => !b.resolved);
-  const resolvedBreaches = breaches.filter((b) => b.resolved);
 
   return (
     <div className="space-y-6">
@@ -339,294 +405,306 @@ export function SLADashboard() {
         </div>
       </div>
 
-      {/* Overall SLA Status */}
-      <div
-        className={`rounded-xl p-6 border ${
-          metrics.slaCompliant
-            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30'
-            : 'bg-rose-50 dark:bg-red-900/20 border-rose-200 dark:border-red-500/30'
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {metrics.slaCompliant ? (
-              <div className="p-3 bg-emerald-500/20 rounded-full">
-                <CheckCircle size={32} className="text-emerald-400" />
+      {loadError ? (
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <DegradedState title="SLA metrics unavailable" description={loadError} />
+        </div>
+      ) : (
+        <>
+          {/* Overall SLA Status */}
+          <div
+            className={`rounded-xl p-6 border ${
+              metrics.slaCompliant
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30'
+                : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-500/30'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {metrics.slaCompliant ? (
+                  <div className="p-3 bg-emerald-500/20 rounded-full">
+                    <CheckCircle size={32} className="text-emerald-400" />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-rose-500/20 rounded-full">
+                    <AlertOctagon size={32} className="text-rose-400" />
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {metrics.slaCompliant ? 'SLA Compliant' : 'SLA Breach Detected'}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {metrics.slaCompliant
+                      ? 'All service level objectives are being met'
+                      : `${activeBreaches.length} active breach(es) require attention`}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                  {metrics.uptimePercentage.toFixed(3)}%
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  Current Uptime (Target: {metrics.uptimeTarget}%)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Uptime */}
+            <SLAMetricCard
+              icon={Activity}
+              label="Uptime"
+              value={`${metrics.uptimePercentage.toFixed(3)}%`}
+              target={`Target: ${metrics.uptimeTarget}%`}
+              status={getComplianceStatus(metrics.uptimePercentage, metrics.uptimeTarget, false)}
+              color="emerald"
+            />
+
+            {/* Response Time P95 */}
+            <SLAMetricCard
+              icon={Clock}
+              label="Response Time P95"
+              value={`${metrics.responseTimeP95.toFixed(2)}s`}
+              target={`Target: <${metrics.responseTimeTargetP95}s`}
+              status={getComplianceStatus(metrics.responseTimeP95, metrics.responseTimeTargetP95)}
+              color="cyan"
+            />
+
+            {/* Response Time P99 */}
+            <SLAMetricCard
+              icon={Clock}
+              label="Response Time P99"
+              value={`${metrics.responseTimeP99.toFixed(2)}s`}
+              target={`Target: <${metrics.responseTimeTargetP99}s`}
+              status={getComplianceStatus(metrics.responseTimeP99, metrics.responseTimeTargetP99)}
+              color="purple"
+            />
+
+            {/* Error Rate */}
+            <SLAMetricCard
+              icon={AlertTriangle}
+              label="Error Rate"
+              value={`${metrics.errorRate.toFixed(2)}%`}
+              target={`Target: <${metrics.errorRateTarget}%`}
+              status={getComplianceStatus(metrics.errorRate, metrics.errorRateTarget)}
+              color="amber"
+            />
+          </div>
+
+          {/* Detailed Stats and Uptime Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Request Statistics */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <Target size={18} className="text-blue-400" />
+                Request Statistics
+              </h3>
+              <div className="space-y-4">
+                <StatRow label="Total Requests" value={metrics.totalRequests.toLocaleString()} />
+                <StatRow
+                  label="Successful"
+                  value={metrics.successfulRequests.toLocaleString()}
+                  color="text-emerald-400"
+                />
+                <StatRow
+                  label="Failed"
+                  value={metrics.failedRequests.toLocaleString()}
+                  color="text-rose-400"
+                />
+                <StatRow
+                  label="Avg Latency"
+                  value={`${metrics.averageLatency.toFixed(2)}s`}
+                  color="text-blue-400"
+                />
+                <div className="pt-3 border-t border-slate-200 dark:border-white/10">
+                  <StatRow
+                    label="Success Rate"
+                    value={`${
+                      metrics.totalRequests > 0
+                        ? ((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2)
+                        : '0.00'
+                    }%`}
+                    color="text-emerald-400"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Uptime History Chart */}
+            <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <TrendingUp size={18} className="text-emerald-400" />
+                Uptime History
+              </h3>
+              {loading ? (
+                <div className="h-40 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                  Loading chart...
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="h-40 flex items-end gap-1">
+                    {uptimeHistory.map((point, idx) => {
+                      const height = ((point.uptime - 95) / 5) * 100; // Scale 95-100% to 0-100%
+                      const isGood = point.uptime >= 99.9;
+                      return (
+                        <div
+                          key={idx}
+                          className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
+                          title={`${formatDate(point.date)}: ${point.uptime.toFixed(2)}% uptime${point.incidents > 0 ? `, ${point.incidents} incident(s)` : ''}`}
+                        >
+                          <div
+                            className={`w-full rounded-t transition-all ${
+                              isGood
+                                ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 group-hover:from-emerald-500'
+                                : 'bg-gradient-to-t from-amber-600 to-amber-400 group-hover:from-amber-500'
+                            }`}
+                            style={{ height: `${Math.max(height, 5)}%` }}
+                          />
+                          {point.incidents > 0 && (
+                            <div className="absolute -top-1 w-2 h-2 bg-rose-500 rounded-full" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+                    <span>{formatDate(uptimeHistory[0]?.date || '')}</span>
+                    <span>99.9% SLA Target</span>
+                    <span>{formatDate(uptimeHistory[uptimeHistory.length - 1]?.date || '')}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SLA Breach Alerts */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Bell size={18} className="text-amber-400" />
+              SLA Breach History
+              {activeBreaches.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-rose-500/20 text-rose-400 text-xs rounded-full">
+                  {activeBreaches.length} Active
+                </span>
+              )}
+            </h3>
+
+            {breaches.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-slate-500 dark:text-slate-400">
+                <Info size={18} className="mr-2" />
+                No SLA breaches recorded in this period
               </div>
             ) : (
-              <div className="p-3 bg-red-500/20 rounded-full">
-                <AlertOctagon size={32} className="text-red-400" />
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {breaches.map((breach) => (
+                  <div
+                    key={breach.id}
+                    className={`flex items-center gap-4 p-4 rounded-lg ${
+                      breach.resolved
+                        ? 'bg-slate-100 dark:bg-navy-950/50'
+                        : breach.severity === 'critical'
+                          ? 'bg-rose-900/20 border border-rose-500/30'
+                          : 'bg-amber-900/20 border border-amber-500/30'
+                    }`}
+                  >
+                    <div
+                      className={`p-2 rounded-full ${
+                        breach.resolved
+                          ? 'bg-slate-300 dark:bg-slate-700'
+                          : breach.severity === 'critical'
+                            ? 'bg-rose-500/20'
+                            : 'bg-amber-500/20'
+                      }`}
+                    >
+                      {breach.resolved ? (
+                        <CheckCircle size={16} className="text-slate-400 dark:text-slate-500" />
+                      ) : breach.severity === 'critical' ? (
+                        <XCircle size={16} className="text-rose-400" />
+                      ) : (
+                        <AlertTriangle size={16} className="text-amber-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {breach.metric}
+                        </span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded ${
+                            breach.severity === 'critical'
+                              ? 'bg-rose-500/20 text-rose-400'
+                              : 'bg-amber-500/20 text-amber-400'
+                          }`}
+                        >
+                          {breach.severity}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        Threshold: {breach.threshold} | Actual: {breach.actual}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-slate-400 dark:text-slate-500">
+                        {formatDateTime(breach.timestamp)}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Duration: {breach.duration} min
+                      </div>
+                    </div>
+                    {breach.resolved && <span className="text-xs text-emerald-400">Resolved</span>}
+                  </div>
+                ))}
               </div>
             )}
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {metrics.slaCompliant ? 'SLA Compliant' : 'SLA Breach Detected'}
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                {metrics.slaCompliant
-                  ? 'All service level objectives are being met'
-                  : `${activeBreaches.length} active breach(es) require attention`}
-              </p>
-            </div>
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-slate-900 dark:text-white">
-              {metrics.uptimePercentage.toFixed(3)}%
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              Current Uptime (Target: {metrics.uptimeTarget}%)
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Main Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Uptime */}
-        <SLAMetricCard
-          icon={Activity}
-          label="Uptime"
-          value={`${metrics.uptimePercentage.toFixed(3)}%`}
-          target={`Target: ${metrics.uptimeTarget}%`}
-          status={getComplianceStatus(metrics.uptimeTarget, metrics.uptimePercentage, false)}
-          color="emerald"
-        />
-
-        {/* Response Time P95 */}
-        <SLAMetricCard
-          icon={Clock}
-          label="Response Time P95"
-          value={`${metrics.responseTimeP95.toFixed(2)}s`}
-          target={`Target: <${metrics.responseTimeTargetP95}s`}
-          status={getComplianceStatus(metrics.responseTimeP95, metrics.responseTimeTargetP95)}
-          color="cyan"
-        />
-
-        {/* Response Time P99 */}
-        <SLAMetricCard
-          icon={Clock}
-          label="Response Time P99"
-          value={`${metrics.responseTimeP99.toFixed(2)}s`}
-          target={`Target: <${metrics.responseTimeTargetP99}s`}
-          status={getComplianceStatus(metrics.responseTimeP99, metrics.responseTimeTargetP99)}
-          color="purple"
-        />
-
-        {/* Error Rate */}
-        <SLAMetricCard
-          icon={AlertTriangle}
-          label="Error Rate"
-          value={`${metrics.errorRate.toFixed(2)}%`}
-          target={`Target: <${metrics.errorRateTarget}%`}
-          status={getComplianceStatus(metrics.errorRate, metrics.errorRateTarget)}
-          color="amber"
-        />
-      </div>
-
-      {/* Detailed Stats and Uptime Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Request Statistics */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <Target size={18} className="text-blue-400" />
-            Request Statistics
-          </h3>
-          <div className="space-y-4">
-            <StatRow label="Total Requests" value={metrics.totalRequests.toLocaleString()} />
-            <StatRow
-              label="Successful"
-              value={metrics.successfulRequests.toLocaleString()}
-              color="text-emerald-400"
-            />
-            <StatRow
-              label="Failed"
-              value={metrics.failedRequests.toLocaleString()}
-              color="text-red-400"
-            />
-            <StatRow
-              label="Avg Latency"
-              value={`${metrics.averageLatency.toFixed(2)}s`}
-              color="text-cyan-400"
-            />
-            <div className="pt-3 border-t border-slate-200 dark:border-white/10">
-              <StatRow
-                label="Success Rate"
-                value={`${((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2)}%`}
-                color="text-emerald-400"
+          {/* SLA Targets Reference */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Target size={18} className="text-primary-400" />
+              SLA Targets Reference
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <SLATargetCard
+                metric="Uptime"
+                target="≥ 99.9%"
+                description="Monthly service availability"
+              />
+              <SLATargetCard
+                metric="Response Time P95"
+                target="< 3.0s"
+                description="95th percentile latency"
+              />
+              <SLATargetCard
+                metric="Response Time P99"
+                target="< 5.0s"
+                description="99th percentile latency"
+              />
+              <SLATargetCard
+                metric="Error Rate"
+                target="< 1.0%"
+                description="Failed requests percentage"
               />
             </div>
           </div>
-        </div>
 
-        {/* Uptime History Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <TrendingUp size={18} className="text-emerald-400" />
-            Uptime History
-          </h3>
-          {loading ? (
-            <div className="h-40 flex items-center justify-center text-slate-500 dark:text-slate-400">
-              Loading chart...
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="h-40 flex items-end gap-1">
-                {uptimeHistory.map((point, idx) => {
-                  const height = ((point.uptime - 95) / 5) * 100; // Scale 95-100% to 0-100%
-                  const isGood = point.uptime >= 99.9;
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
-                      title={`${formatDate(point.date)}: ${point.uptime.toFixed(2)}% uptime${point.incidents > 0 ? `, ${point.incidents} incident(s)` : ''}`}
-                    >
-                      <div
-                        className={`w-full rounded-t transition-all ${
-                          isGood
-                            ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 group-hover:from-emerald-500'
-                            : 'bg-gradient-to-t from-amber-600 to-amber-400 group-hover:from-amber-500'
-                        }`}
-                        style={{ height: `${Math.max(height, 5)}%` }}
-                      />
-                      {point.incidents > 0 && (
-                        <div className="absolute -top-1 w-2 h-2 bg-red-500 rounded-full" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
-                <span>{formatDate(uptimeHistory[0]?.date || '')}</span>
-                <span>99.9% SLA Target</span>
-                <span>{formatDate(uptimeHistory[uptimeHistory.length - 1]?.date || '')}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SLA Breach Alerts */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Bell size={18} className="text-amber-400" />
-          SLA Breach History
-          {activeBreaches.length > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">
-              {activeBreaches.length} Active
-            </span>
-          )}
-        </h3>
-
-        {breaches.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-slate-500 dark:text-slate-400">
-            <Info size={18} className="mr-2" />
-            No SLA breaches recorded in this period
+          {/* Last Updated */}
+          <div className="text-center text-xs text-slate-500 dark:text-slate-400">
+            Last calculated: {formatDateTime(metrics.lastCalculated)}
           </div>
-        ) : (
-          <div className="space-y-3 max-h-64 overflow-y-auto">
-            {breaches.map((breach) => (
-              <div
-                key={breach.id}
-                className={`flex items-center gap-4 p-4 rounded-lg ${
-                  breach.resolved
-                    ? 'bg-slate-100 dark:bg-navy-950/50'
-                    : breach.severity === 'critical'
-                      ? 'bg-red-900/20 border border-red-500/30'
-                      : 'bg-amber-900/20 border border-amber-500/30'
-                }`}
-              >
-                <div
-                  className={`p-2 rounded-full ${
-                    breach.resolved
-                      ? 'bg-slate-300 dark:bg-slate-700'
-                      : breach.severity === 'critical'
-                        ? 'bg-red-500/20'
-                        : 'bg-amber-500/20'
-                  }`}
-                >
-                  {breach.resolved ? (
-                    <CheckCircle size={16} className="text-slate-400 dark:text-slate-500" />
-                  ) : breach.severity === 'critical' ? (
-                    <XCircle size={16} className="text-red-400" />
-                  ) : (
-                    <AlertTriangle size={16} className="text-amber-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">
-                      {breach.metric}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded ${
-                        breach.severity === 'critical'
-                          ? 'bg-red-500/20 text-red-400'
-                          : 'bg-amber-500/20 text-amber-400'
-                      }`}
-                    >
-                      {breach.severity}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                    Threshold: {breach.threshold} | Actual: {breach.actual}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
-                    {new Date(breach.timestamp).toLocaleString()}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Duration: {breach.duration} min
-                  </div>
-                </div>
-                {breach.resolved && <span className="text-xs text-emerald-400">Resolved</span>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* SLA Targets Reference */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Target size={18} className="text-purple-400" />
-          SLA Targets Reference
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SLATargetCard
-            metric="Uptime"
-            target="≥ 99.9%"
-            description="Monthly service availability"
-          />
-          <SLATargetCard
-            metric="Response Time P95"
-            target="< 3.0s"
-            description="95th percentile latency"
-          />
-          <SLATargetCard
-            metric="Response Time P99"
-            target="< 5.0s"
-            description="99th percentile latency"
-          />
-          <SLATargetCard
-            metric="Error Rate"
-            target="< 1.0%"
-            description="Failed requests percentage"
-          />
-        </div>
-      </div>
-
-      {/* Last Updated */}
-      <div className="text-center text-xs text-slate-500 dark:text-slate-400">
-        Last calculated: {new Date(metrics.lastCalculated).toLocaleString()}
-      </div>
+        </>
+      )}
     </div>
   );
 }
 
 // Helper Components
 const SLAMetricCard: React.FC<{
-  icon: any;
+  icon: LucideIcon;
   label: string;
   value: string;
   target: string;
@@ -635,7 +713,7 @@ const SLAMetricCard: React.FC<{
 }> = ({ icon: Icon, label, value, target, status, color }) => (
   <div
     className={`bg-white dark:bg-navy-900 border rounded-xl p-4 ${
-      status === 'compliant' ? 'border-slate-200 dark:border-white/10' : 'border-red-500/30'
+      status === 'compliant' ? 'border-slate-200 dark:border-white/10' : 'border-rose-500/30'
     }`}
   >
     <div className="flex items-center justify-between mb-3">
@@ -645,14 +723,16 @@ const SLAMetricCard: React.FC<{
       {status === 'compliant' ? (
         <CheckCircle size={16} className="text-emerald-400" />
       ) : (
-        <XCircle size={16} className="text-red-400" />
+        <XCircle size={16} className="text-rose-400" />
       )}
     </div>
     <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{value}</div>
     <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
       {label}
     </div>
-    <div className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-red-400'}`}>
+    <div
+      className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-rose-400'}`}
+    >
       {target}
     </div>
   </div>
@@ -676,7 +756,7 @@ const SLATargetCard: React.FC<{
 }> = ({ metric, target, description }) => (
   <div className="p-4 bg-slate-100 dark:bg-navy-950/50 rounded-lg">
     <div className="text-sm font-medium text-slate-900 dark:text-white">{metric}</div>
-    <div className="text-lg font-bold text-purple-400 mt-1">{target}</div>
+    <div className="text-lg font-bold text-primary-400 mt-1">{target}</div>
     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{description}</div>
   </div>
 );

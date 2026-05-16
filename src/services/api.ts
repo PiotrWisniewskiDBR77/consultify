@@ -14,6 +14,8 @@ import i18n from '@/i18n';
 
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import { normalizeApiErrorMessage } from '../utils/apiError';
+import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
@@ -40,6 +42,15 @@ const _normalizedEnvApiUrl =
     : null;
 export const API_URL = (_normalizedEnvApiUrl || '/api') as string;
 
+const buildApiUrl = (url: string): string => {
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/api')) {
+    const withoutApiPrefix = url.slice('/api'.length) || '';
+    return `${API_URL}${withoutApiPrefix}`;
+  }
+  return `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 let correlationId = sessionStorage.getItem('correlationId');
 if (!correlationId) {
   correlationId =
@@ -48,6 +59,420 @@ if (!correlationId) {
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+type TransportCircuitEntry = {
+  failures: number;
+  blockedUntil: number;
+  status: number;
+};
+
+type GlobalTransportCircuit = {
+  failures: number;
+  windowStartedAt: number;
+  blockedUntil: number;
+  lastStatus: number;
+  lastPath: string;
+};
+
+const TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:transportCircuit:v1';
+const TRANSPORT_CIRCUIT_BASE_MS = 5000;
+const TRANSPORT_CIRCUIT_MAX_MS = 120000;
+const GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:globalTransportCircuit:v1';
+const GLOBAL_TRANSPORT_FAILURE_WINDOW_MS = 8000;
+const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 2;
+const GLOBAL_TRANSPORT_BLOCK_MS = 300000;
+const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
+const AUTH_LOOP_GUARD_WINDOW_MS = 10000;
+const AUTH_LOOP_GUARD_THRESHOLD = 3;
+const AUTH_LOOP_GUARD_BLOCK_MS = 600000;
+
+let transportCircuitState: Record<string, TransportCircuitEntry> = (() => {
+  try {
+    const raw = sessionStorage.getItem(TRANSPORT_CIRCUIT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+})();
+
+let globalTransportCircuitState: GlobalTransportCircuit = (() => {
+  try {
+    const raw = sessionStorage.getItem(GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY);
+    if (!raw) {
+      return {
+        failures: 0,
+        windowStartedAt: 0,
+        blockedUntil: 0,
+        lastStatus: 0,
+        lastPath: '',
+      };
+    }
+    const parsed = JSON.parse(raw || '{}');
+    return {
+      failures: Number(parsed.failures || 0),
+      windowStartedAt: Number(parsed.windowStartedAt || 0),
+      blockedUntil: Number(parsed.blockedUntil || 0),
+      lastStatus: Number(parsed.lastStatus || 0),
+      lastPath: String(parsed.lastPath || ''),
+    };
+  } catch {
+    return {
+      failures: 0,
+      windowStartedAt: 0,
+      blockedUntil: 0,
+      lastStatus: 0,
+      lastPath: '',
+    };
+  }
+})();
+
+type AuthLoopGuardState = {
+  failures: number;
+  windowStartedAt: number;
+  blockedUntil: number;
+  lastStatus: number;
+  lastPath: string;
+};
+
+let authLoopGuardState: AuthLoopGuardState = (() => {
+  try {
+    const raw = sessionStorage.getItem(AUTH_LOOP_GUARD_STORAGE_KEY);
+    if (!raw) {
+      return { failures: 0, windowStartedAt: 0, blockedUntil: 0, lastStatus: 0, lastPath: '' };
+    }
+    const parsed = JSON.parse(raw || '{}');
+    return {
+      failures: Number(parsed.failures || 0),
+      windowStartedAt: Number(parsed.windowStartedAt || 0),
+      blockedUntil: Number(parsed.blockedUntil || 0),
+      lastStatus: Number(parsed.lastStatus || 0),
+      lastPath: String(parsed.lastPath || ''),
+    };
+  } catch {
+    return { failures: 0, windowStartedAt: 0, blockedUntil: 0, lastStatus: 0, lastPath: '' };
+  }
+})();
+
+const persistTransportCircuit = () => {
+  try {
+    sessionStorage.setItem(TRANSPORT_CIRCUIT_STORAGE_KEY, JSON.stringify(transportCircuitState));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const persistGlobalTransportCircuit = () => {
+  try {
+    sessionStorage.setItem(
+      GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY,
+      JSON.stringify(globalTransportCircuitState)
+    );
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const persistAuthLoopGuard = () => {
+  try {
+    sessionStorage.setItem(AUTH_LOOP_GUARD_STORAGE_KEY, JSON.stringify(authLoopGuardState));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const getTransportPath = (url: string): string => {
+  try {
+    return new URL(url, window.location.origin).pathname;
+  } catch {
+    return String(url || '');
+  }
+};
+
+export const normalizeTransportPath = (rawPath: string): string => {
+  const input = String(rawPath || '').trim();
+  if (!input) return '';
+  try {
+    return new URL(input, window.location.origin).pathname;
+  } catch {
+    const withoutHash = input.split('#')[0] || '';
+    const withoutQuery = withoutHash.split('?')[0] || '';
+    return withoutQuery || input;
+  }
+};
+
+const getTransportCircuitKey = (path: string): string | null => {
+  const conversationMatch = path.match(/\/api\/conversations\/([^/?#]+)/);
+  if (conversationMatch?.[1]) {
+    return `/api/conversations/${decodeURIComponent(conversationMatch[1])}`;
+  }
+  if (path === '/api/demo/status') return path;
+  if (path === '/api/notifications/unread-count') return path;
+  if (path === '/api/v10/teresa/voice-config') return path;
+  if (path === '/api/v10/teresa/voice-event') return path;
+  return null;
+};
+
+const buildBlockedResponse = (status: number, path: string): Response =>
+  new Response(
+    JSON.stringify({
+      error: 'Request blocked by local transport circuit breaker',
+      code: 'CLIENT_TRANSPORT_CIRCUIT_OPEN',
+      path,
+    }),
+    { status, headers: { 'Content-Type': 'application/json' } }
+  );
+
+const buildGlobalBlockedResponse = (path: string): Response =>
+  new Response(
+    JSON.stringify({
+      error: 'Requests blocked by global transport safeguard',
+      code: 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN',
+      path,
+      blockedUntil: globalTransportCircuitState.blockedUntil,
+      lastStatus: globalTransportCircuitState.lastStatus,
+      lastPath: globalTransportCircuitState.lastPath,
+    }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } }
+  );
+
+const logTransportStabilityMarker = (marker: string, details: Record<string, unknown> = {}) => {
+  if (typeof console === 'undefined') return;
+  console.info('[stability:transport]', { marker, ...details });
+};
+
+const maybeGetBlockedTransportResponse = (path: string): Response | null => {
+  const key = getTransportCircuitKey(path);
+  if (!key) return null;
+  const entry = transportCircuitState[key];
+  if (entry && Date.now() < entry.blockedUntil) {
+    logTransportStabilityMarker('transport_circuit_open', {
+      key,
+      path,
+      status: entry.status,
+      blockedForMs: entry.blockedUntil - Date.now(),
+    });
+    return buildBlockedResponse(entry.status || 429, path);
+  }
+  return null;
+};
+
+export const shouldBypassGlobalCircuit = (path: string): boolean => {
+  const normalizedPath = normalizeTransportPath(path);
+  return (
+    normalizedPath === '/api/ready' ||
+    normalizedPath.startsWith('/api/health') ||
+    normalizedPath.startsWith('/api/auth/login') ||
+    normalizedPath.startsWith('/api/auth/refresh') ||
+    normalizedPath.startsWith('/api/auth/logout') ||
+    normalizedPath.startsWith('/api/interview') ||
+    normalizedPath.startsWith('/api/v8/interview') ||
+    normalizedPath.startsWith('/api/education') ||
+    normalizedPath.startsWith('/api/audits') ||
+    normalizedPath.startsWith('/api/tools') ||
+    normalizedPath.startsWith('/api/discovery-tools')
+  );
+};
+
+export const maybeGetGlobalBlockedTransportResponse = (path: string): Response | null => {
+  const normalizedPath = normalizeTransportPath(path);
+  if (shouldBypassGlobalCircuit(normalizedPath)) return null;
+  if (Date.now() < globalTransportCircuitState.blockedUntil) {
+    logTransportStabilityMarker('global_transport_circuit_open', {
+      path: normalizedPath,
+      blockedForMs: globalTransportCircuitState.blockedUntil - Date.now(),
+      failures: globalTransportCircuitState.failures,
+      lastStatus: globalTransportCircuitState.lastStatus,
+      lastPath: globalTransportCircuitState.lastPath,
+    });
+    return buildGlobalBlockedResponse(normalizedPath);
+  }
+  return null;
+};
+
+const buildAuthLoopGuardResponse = (path: string): Response =>
+  new Response(
+    JSON.stringify({
+      error: 'Requests blocked by auth loop guard',
+      code: 'CLIENT_AUTH_LOOP_GUARD_OPEN',
+      path,
+      blockedUntil: authLoopGuardState.blockedUntil,
+      lastStatus: authLoopGuardState.lastStatus,
+      lastPath: authLoopGuardState.lastPath,
+    }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } }
+  );
+
+const shouldBypassAuthLoopGuard = (path: string): boolean =>
+  path === '/api/ready' ||
+  path.startsWith('/api/health') ||
+  path.startsWith('/api/auth/login') ||
+  path.startsWith('/api/auth/refresh') ||
+  path.startsWith('/api/auth/logout') ||
+  path.startsWith('/api/build-info');
+
+const maybeGetAuthLoopGuardResponse = (path: string): Response | null => {
+  if (shouldBypassAuthLoopGuard(path)) return null;
+  if (Date.now() < authLoopGuardState.blockedUntil) {
+    logTransportStabilityMarker('auth_loop_guard_open', {
+      path,
+      blockedForMs: authLoopGuardState.blockedUntil - Date.now(),
+      failures: authLoopGuardState.failures,
+      lastStatus: authLoopGuardState.lastStatus,
+      lastPath: authLoopGuardState.lastPath,
+    });
+    return buildAuthLoopGuardResponse(path);
+  }
+  return null;
+};
+
+const recordTransportFailure = (path: string, status: number) => {
+  const key = getTransportCircuitKey(path);
+  if (!key || ![401, 403, 404, 429].includes(status)) return;
+  const failures = (transportCircuitState[key]?.failures || 0) + 1;
+  const blockedFor = Math.min(
+    TRANSPORT_CIRCUIT_BASE_MS * 2 ** Math.max(0, failures - 1),
+    TRANSPORT_CIRCUIT_MAX_MS
+  );
+  transportCircuitState = {
+    ...transportCircuitState,
+    [key]: { failures, blockedUntil: Date.now() + blockedFor, status },
+  };
+  persistTransportCircuit();
+  logTransportStabilityMarker('transport_circuit_failure', {
+    key,
+    path,
+    status,
+    failures,
+    blockedForMs: blockedFor,
+  });
+};
+
+export const recordGlobalTransportFailure = (path: string, status: number) => {
+  const normalizedPath = normalizeTransportPath(path);
+  if (!normalizedPath.startsWith('/api/')) return;
+  if (shouldBypassGlobalCircuit(normalizedPath)) return;
+  // IMPACT-TR-001: transient client errors should not block the entire platform.
+  if (status && [400, 401, 403, 404, 422].includes(status)) return;
+
+  const now = Date.now();
+  const withinWindow =
+    globalTransportCircuitState.windowStartedAt > 0 &&
+    now - globalTransportCircuitState.windowStartedAt <= GLOBAL_TRANSPORT_FAILURE_WINDOW_MS;
+
+  const failures = withinWindow ? globalTransportCircuitState.failures + 1 : 1;
+  globalTransportCircuitState = {
+    failures,
+    windowStartedAt: withinWindow ? globalTransportCircuitState.windowStartedAt : now,
+    blockedUntil:
+      failures >= GLOBAL_TRANSPORT_FAILURE_THRESHOLD
+        ? Math.max(globalTransportCircuitState.blockedUntil, now + GLOBAL_TRANSPORT_BLOCK_MS)
+        : globalTransportCircuitState.blockedUntil,
+    lastStatus: status,
+    lastPath: normalizedPath,
+  };
+  persistGlobalTransportCircuit();
+
+  if (failures >= GLOBAL_TRANSPORT_FAILURE_THRESHOLD) {
+    logTransportStabilityMarker('global_transport_circuit_failure', {
+      path: normalizedPath,
+      status,
+      failures,
+      blockedForMs: globalTransportCircuitState.blockedUntil - now,
+    });
+  }
+};
+
+export const clearGlobalTransportFailure = (path: string = '/api/') => {
+  const normalizedPath = normalizeTransportPath(path);
+  if (!normalizedPath.startsWith('/api/')) return;
+
+  if (
+    globalTransportCircuitState.failures === 0 &&
+    globalTransportCircuitState.windowStartedAt === 0 &&
+    globalTransportCircuitState.blockedUntil === 0
+  ) {
+    return;
+  }
+
+  // IMPACT-TR-001: Reset/recovery of global circuit after a successful request.
+  globalTransportCircuitState = {
+    failures: 0,
+    windowStartedAt: 0,
+    blockedUntil: 0,
+    lastStatus: 0,
+    lastPath: '',
+  };
+  persistGlobalTransportCircuit();
+  logTransportStabilityMarker('global_circuit_cleared_on_success', { path: normalizedPath });
+};
+
+const clearTransportFailure = (path: string) => {
+  const key = getTransportCircuitKey(path);
+  if (!key || !transportCircuitState[key]) return;
+  const next = { ...transportCircuitState };
+  delete next[key];
+  transportCircuitState = next;
+  persistTransportCircuit();
+  logTransportStabilityMarker('transport_circuit_close', { key, path });
+};
+
+const recordAuthLoopSignal = (path: string, status: number) => {
+  if (!path.startsWith('/api/')) return;
+  if (shouldBypassAuthLoopGuard(path)) return;
+  if (![401, 429].includes(status)) return;
+
+  const now = Date.now();
+  const withinWindow =
+    authLoopGuardState.windowStartedAt > 0 &&
+    now - authLoopGuardState.windowStartedAt <= AUTH_LOOP_GUARD_WINDOW_MS;
+
+  const failures = withinWindow ? authLoopGuardState.failures + 1 : 1;
+  const nextBlockedUntil =
+    failures >= AUTH_LOOP_GUARD_THRESHOLD
+      ? Math.max(authLoopGuardState.blockedUntil, now + AUTH_LOOP_GUARD_BLOCK_MS)
+      : authLoopGuardState.blockedUntil;
+
+  authLoopGuardState = {
+    failures,
+    windowStartedAt: withinWindow ? authLoopGuardState.windowStartedAt : now,
+    blockedUntil: nextBlockedUntil,
+    lastStatus: status,
+    lastPath: path,
+  };
+  persistAuthLoopGuard();
+
+  if (failures >= AUTH_LOOP_GUARD_THRESHOLD) {
+    logTransportStabilityMarker('auth_loop_guard_trip', {
+      path,
+      status,
+      failures,
+      blockedForMs: nextBlockedUntil - now,
+    });
+  }
+};
+
+const clearAuthLoopSignal = (path: string) => {
+  if (!path.startsWith('/api/')) return;
+  if (Date.now() < authLoopGuardState.blockedUntil) return;
+  if (authLoopGuardState.failures === 0 && authLoopGuardState.windowStartedAt === 0) return;
+  authLoopGuardState = {
+    failures: 0,
+    windowStartedAt: 0,
+    blockedUntil: 0,
+    lastStatus: 0,
+    lastPath: '',
+  };
+  persistAuthLoopGuard();
+};
+
+const shouldSuppressAuthRetry = (path: string): boolean =>
+  path === '/api/demo/status' ||
+  path === '/api/notifications' ||
+  path.startsWith('/api/notifications/') ||
+  path === '/api/notifications/unread-count' ||
+  path.startsWith('/api/llm/providers/health') ||
+  path === '/api/v10/teresa/voice-config' ||
+  path === '/api/v10/teresa/voice-event';
 
 async function isServerStartingResponse(res: Response): Promise<boolean> {
   if (res.status !== 503) return false;
@@ -248,6 +673,14 @@ const fetchWithRetry = async (
   url: string,
   options: FetchWithRetryOptions = {}
 ): Promise<Response> => {
+  const transportPath = getTransportPath(url);
+  const authLoopBlockedResponse = maybeGetAuthLoopGuardResponse(transportPath);
+  if (authLoopBlockedResponse) return authLoopBlockedResponse;
+  const globalBlockedResponse = maybeGetGlobalBlockedTransportResponse(transportPath);
+  if (globalBlockedResponse) return globalBlockedResponse;
+  const blockedResponse = maybeGetBlockedTransportResponse(transportPath);
+  if (blockedResponse) return blockedResponse;
+
   const { skipDefaultHeaders, ...fetchOptions } = options;
   const baseHeaders = skipDefaultHeaders ? {} : getHeaders();
   const headers = {
@@ -278,6 +711,15 @@ const fetchWithRetry = async (
       credentials: fetchOptions.credentials ?? 'include',
       signal: fetchOptions.signal || controller?.signal,
     });
+    if (res.ok) {
+      clearTransportFailure(transportPath);
+      clearGlobalTransportFailure(transportPath);
+      clearAuthLoopSignal(transportPath);
+    } else {
+      recordTransportFailure(transportPath, res.status);
+      recordGlobalTransportFailure(transportPath, res.status);
+      recordAuthLoopSignal(transportPath, res.status);
+    }
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
       const e: any = new Error('AI request timed out');
@@ -292,8 +734,12 @@ const fetchWithRetry = async (
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
-  if (res.status === 401 && hasStoredAuth) {
-    console.log('[Api] Got 401, attempting token refresh...');
+  if (
+    res.status === 401 &&
+    hasStoredAuth &&
+    !shouldSuppressAuthRetry(transportPath) &&
+    !maybeGetAuthLoopGuardResponse(transportPath)
+  ) {
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
@@ -304,7 +750,17 @@ const fetchWithRetry = async (
         credentials: fetchOptions.credentials ?? 'include',
         signal: fetchOptions.signal || controller?.signal,
       });
+      if (res.ok) {
+        clearTransportFailure(transportPath);
+        clearGlobalTransportFailure(transportPath);
+        clearAuthLoopSignal(transportPath);
+      } else {
+        recordTransportFailure(transportPath, res.status);
+        recordGlobalTransportFailure(transportPath, res.status);
+        recordAuthLoopSignal(transportPath, res.status);
+      }
     } else {
+      recordAuthLoopSignal(transportPath, 401);
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
     }
@@ -346,33 +802,41 @@ const handleResponse = async (res: Response, defaultError: string) => {
   })();
 
   const data = parsed.kind === 'json' ? parsed.json : {};
+  const errorInput = parsed.kind === 'json' ? data : parsed.kind === 'text' ? parsed.text : {};
 
   // Normalize error payloads to a readable string.
   // Some endpoints return { error: {...} } which would otherwise surface as "[object Object]".
-  const toErrorMessage = (payload: any, fallback: string): string => {
-    const msg = payload?.message;
-    const err = payload?.error;
-    if (typeof msg === 'string' && msg.trim()) return msg;
-    if (typeof err === 'string' && err.trim()) return err;
-    if (err != null) {
-      try {
-        return typeof err === 'string' ? err : JSON.stringify(err);
-      } catch {
-        // ignore
-      }
-    }
-    if (msg != null) {
-      try {
-        return typeof msg === 'string' ? msg : JSON.stringify(msg);
-      } catch {
-        // ignore
-      }
-    }
-    return fallback;
-  };
   // If payload isn't helpful, include HTTP status (avoids generic "Request failed").
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const normalizedMessage = toErrorMessage(data, '') || fallbackHttp || defaultError;
+  const normalizedMessage = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
+  const errorCode = String((data as any)?.code || (data as any)?.errorCode || '').toUpperCase();
+  const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
+  const authMessage = String(
+    (data as any)?.error || (data as any)?.message || normalizedMessage || ''
+  ).toLowerCase();
+  const authRevocationCodes = new Set([
+    'TOKEN_REVOKED',
+    'AUTH_TOKEN_REVOKED',
+    'SESSION_REVOKED',
+    'AUTH_SESSION_REVOKED',
+  ]);
+
+  // Keep auth state honest: when backend confirms revocation, force a clean logout flow.
+  if (
+    hasStoredAuth &&
+    (res.status === 401 || res.status === 403) &&
+    (authRevocationCodes.has(errorCode) ||
+      authMessage.includes('token has been revoked') ||
+      authMessage.includes('all sessions have been revoked') ||
+      authMessage.includes('session revoked'))
+  ) {
+    try {
+      tokenService.clearTokens();
+      window.dispatchEvent(new CustomEvent('auth:token-expired'));
+    } catch {
+      // no-op
+    }
+  }
 
   // Check for Demo Block
   if (
@@ -388,7 +852,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       })
     );
     // We still throw to stop execution, but the UI will handle the modal
-    throw new Error(toErrorMessage(data, 'Action blocked in Demo Mode'));
+    throw new Error(normalizeApiErrorMessage(data, 'Action blocked in Demo Mode'));
   }
 
   // Check for AI Budget Freeze (Phase 8: Prestige)
@@ -400,7 +864,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       reason: data.error,
       scope: data.budgetStatus?.scope || 'Global',
     });
-    throw new Error(toErrorMessage(data, 'AI Budget Exhausted'));
+    throw new Error(normalizeApiErrorMessage(data, 'AI Budget Exhausted'));
   }
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
@@ -439,21 +903,6 @@ const handleResponse = async (res: Response, defaultError: string) => {
   throw err;
 };
 
-const handleDataResponse = async <T = unknown>(res: Response, defaultError: string): Promise<T> => {
-  const payload = await handleResponse(res, defaultError);
-  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
-    const err: any = new Error(`${defaultError}: invalid response envelope`);
-    err.data = payload;
-    throw err;
-  }
-  if (typeof (payload as any).data === 'undefined') {
-    const err: any = new Error(`${defaultError}: missing response data`);
-    err.data = payload;
-    throw err;
-  }
-  return (payload as any).data as T;
-};
-
 type CachedApiEntry = {
   expiresAt: number;
   value?: unknown;
@@ -461,6 +910,132 @@ type CachedApiEntry = {
 };
 
 const cachedApiGets = new Map<string, CachedApiEntry>();
+const endpointBackoffState = new Map<string, { backoffMs: number; blockedUntil: number }>();
+const ENDPOINT_BACKOFF_STORAGE_KEY = 'consultify-endpoint-backoff';
+const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
+
+const BACKOFF_BASE_MS = 1000;
+const BACKOFF_MAX_MS = 60_000;
+
+const readBackoffStorage = (): Record<string, { backoffMs: number; blockedUntil: number }> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = sessionStorage.getItem(ENDPOINT_BACKOFF_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeBackoffStorage = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload: Record<string, { backoffMs: number; blockedUntil: number }> = {};
+    for (const [key, value] of endpointBackoffState.entries()) {
+      payload[key] = value;
+    }
+    sessionStorage.setItem(ENDPOINT_BACKOFF_STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // no-op
+  }
+};
+
+const hydrateBackoffState = (): void => {
+  if (endpointBackoffState.size > 0) return;
+  const stored = readBackoffStorage();
+  const now = Date.now();
+  for (const [key, value] of Object.entries(stored)) {
+    if (!value || typeof value.blockedUntil !== 'number' || value.blockedUntil <= now) continue;
+    endpointBackoffState.set(key, {
+      backoffMs: Number(value.backoffMs || BACKOFF_BASE_MS),
+      blockedUntil: value.blockedUntil,
+    });
+  }
+};
+
+const readMissingConversationIds = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(MISSING_CONVERSATIONS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.map((value) => String(value || '').trim()).filter(Boolean));
+  } catch {
+    return new Set();
+  }
+};
+
+const writeMissingConversationIds = (ids: Set<string>): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MISSING_CONVERSATIONS_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // no-op
+  }
+};
+
+const markConversationMissing = (conversationId: string): void => {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  ids.add(normalized);
+  writeMissingConversationIds(ids);
+};
+
+const clearConversationMissingMark = (conversationId: string): void => {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  if (!ids.delete(normalized)) return;
+  writeMissingConversationIds(ids);
+};
+
+const isConversationMarkedMissing = (conversationId: string): boolean => {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return false;
+  return readMissingConversationIds().has(normalized);
+};
+
+const isEndpointBackedOff = (key: string): boolean => {
+  hydrateBackoffState();
+  const state = endpointBackoffState.get(key);
+  if (!state) return false;
+  if (state.blockedUntil <= Date.now()) {
+    endpointBackoffState.delete(key);
+    writeBackoffStorage();
+    return false;
+  }
+  return true;
+};
+
+const bumpEndpointBackoff = (key: string): void => {
+  const current = endpointBackoffState.get(key);
+  const nextBackoff =
+    current && current.backoffMs > 0
+      ? Math.min(current.backoffMs * 2, BACKOFF_MAX_MS)
+      : BACKOFF_BASE_MS;
+  endpointBackoffState.set(key, {
+    backoffMs: nextBackoff,
+    blockedUntil: Date.now() + nextBackoff,
+  });
+  writeBackoffStorage();
+  logTransportStabilityMarker('endpoint_backoff_open', {
+    key,
+    blockedForMs: nextBackoff,
+  });
+};
+
+const resetEndpointBackoff = (key: string): void => {
+  const hadBackoff = endpointBackoffState.has(key);
+  endpointBackoffState.delete(key);
+  writeBackoffStorage();
+  if (hadBackoff) {
+    logTransportStabilityMarker('endpoint_backoff_close', { key });
+  }
+};
 
 const invalidateCachedApiByPrefix = (prefix: string): void => {
   for (const key of cachedApiGets.keys()) {
@@ -877,12 +1452,12 @@ export const Api = {
   },
 
   updateUser: async (id: string, updates: any): Promise<void> => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    await handleResponse(res, 'Failed to update user');
   },
 
   deleteUser: async (id: string): Promise<void> => {
@@ -1292,51 +1867,6 @@ export const Api = {
     return data;
   },
 
-  agentAuditListRuns: async (args?: {
-    conversationId?: string;
-    dtSessionId?: string;
-    acceptedOnly?: boolean;
-    limit?: number;
-  }) => {
-    const params = new URLSearchParams();
-    if (args?.conversationId) params.set('conversationId', args.conversationId);
-    if (args?.dtSessionId) params.set('dtSessionId', args.dtSessionId);
-    if (typeof args?.acceptedOnly === 'boolean')
-      params.set('acceptedOnly', String(args.acceptedOnly));
-    if (typeof args?.limit === 'number') params.set('limit', String(args.limit));
-    const suffix = params.toString() ? `?${params.toString()}` : '';
-    const response = await fetch(`${API_URL}/ai/agent-audit/runs${suffix}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
-      const err: any = new Error(msg);
-      err.code = data?.code;
-      throw err;
-    }
-    return data;
-  },
-
-  agentRuntimeQueryRunLedger: async (query: Record<string, unknown>) => {
-    const response = await fetch(`${API_URL}/v10/agent-runtime/run-ledger/query`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ query }),
-    });
-    return handleDataResponse(response, 'Failed to query agent runtime ledger');
-  },
-
-  agentRuntimeSummarizeRunLedger: async (args: { tenantId: string; runId: string }) => {
-    const response = await fetch(`${API_URL}/v10/agent-runtime/run-ledger/summarize`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(args),
-    });
-    return handleDataResponse(response, 'Failed to summarize agent runtime ledger');
-  },
-
   // Chat Traces (Admin)
   listChatTraces: async (args?: { limit?: number; offset?: number }) => {
     const limit = typeof args?.limit === 'number' ? args!.limit : 50;
@@ -1394,6 +1924,8 @@ export const Api = {
       marketResearch?: boolean;
       coThinkerMode?: string | null;
       privateMode?: boolean;
+      assistantScope?: 'anna_public' | 'teresa_tenant';
+      memoryScope?: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
@@ -1431,7 +1963,7 @@ export const Api = {
     const knowledgeSources = {
       pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
       projectData: options?.knowledgeSources?.projectData ?? true,
-      organizationData: options?.knowledgeSources?.organizationData ?? false,
+      organizationData: options?.knowledgeSources?.organizationData ?? true,
     };
 
     const responseStyle = options?.responseStyle ?? 'normal';
@@ -1561,6 +2093,8 @@ export const Api = {
         | 'friendly';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
+      assistantScope?: 'anna_public' | 'teresa_tenant';
+      memoryScope?: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
     },
     abortSignal?: AbortSignal
   ) => {
@@ -1610,7 +2144,9 @@ export const Api = {
       const knowledgeSources = {
         pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
         projectData: options?.knowledgeSources?.projectData ?? true,
-        organizationData: options?.knowledgeSources?.organizationData ?? false,
+        // Default ON: without org knowledge the assistant falls back to generic/web-shaped answers,
+        // which is not acceptable for DBR77-focused tenants.
+        organizationData: options?.knowledgeSources?.organizationData ?? true,
       };
 
       const responseStyle = options?.responseStyle ?? 'normal';
@@ -1643,6 +2179,8 @@ export const Api = {
           knowledgeSources,
           responseStyle,
           privateMode: Boolean((options as any)?.privateMode),
+          assistantScope: options?.assistantScope ?? context?.assistantScope,
+          memoryScope: options?.memoryScope ?? context?.memoryScope,
           // Model routing
           selectedTier: options?.selectedTier,
           selectedModelId: nonEmptyStringOrNull(
@@ -2038,12 +2576,13 @@ export const Api = {
     id: string,
     updates: { plan?: string; status?: string; discount_percent?: number }
   ): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update organization');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to update organization');
   },
 
   deleteOrganization: async (id: string): Promise<void> => {
@@ -2218,6 +2757,9 @@ export const Api = {
       firstName?: string;
       lastName?: string;
       licensePlanId?: string | null;
+      department?: string;
+      jobTitle?: string;
+      projectRole?: string;
     }
   ): Promise<void> => {
     // Feedback #1e3d749a / #682d4134 / #76ef6831 — surface the specific backend
@@ -3031,16 +3573,18 @@ export const Api = {
     startDate?: string,
     endDate?: string
   ): Promise<{ items: any[]; totalCost: number }> => {
-    let url = `${API_URL}/billing/admin/costs`;
+    let url = `${API_URL}/billing/admin/operational-costs`;
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    if (params.toString()) url += `? ${params.toString()}`;
+    if (params.toString()) url += `?${params.toString()}`;
 
-    const res = await fetch(url, { headers: getHeaders() });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch costs');
-    return data.costs;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch costs');
+    return {
+      items: Array.isArray(data?.items) ? data.items : Array.isArray(data?.costs) ? data.costs : [],
+      totalCost: Number.isFinite(Number(data?.totalCost)) ? Number(data.totalCost) : 0,
+    };
   },
 
   deleteLLMProvider: async (id: string): Promise<void> => {
@@ -4233,6 +4777,319 @@ export const Api = {
     return handleResponse(res, 'Failed to create idea from chat');
   },
 
+  workCanvasSaveToWorkspace: async (
+    draftId: string,
+    payload: { target: 'idea' | 'note' | 'initiative' }
+  ): Promise<{
+    success: boolean;
+    data: {
+      draft: any;
+      linkedResource: {
+        type: 'idea' | 'note' | 'initiative';
+        id: string;
+        title: string;
+        url?: string;
+      };
+      readBack: Record<string, unknown>;
+      version?: any;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/save-to-workspace`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to save Canvas to workspace');
+  },
+
+  workCanvasCreateOutput: async (
+    draftId: string,
+    payload: { outputType: 'presentation' | 'table' | 'report' }
+  ): Promise<{
+    success: boolean;
+    data: {
+      draft: any;
+      outputResource: {
+        type: 'presentation' | 'table' | 'report';
+        id: string;
+        title: string;
+        url?: string;
+        metadata?: Record<string, unknown>;
+      };
+      readBack: Record<string, unknown>;
+      version?: any;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/create-output`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to create Canvas output');
+  },
+
+  workCanvasFinalizeResearchReport: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      draft: any;
+      reportResource: {
+        type: 'report';
+        id: string;
+        title: string;
+        url?: string;
+        metadata?: Record<string, unknown>;
+      };
+      readBack: Record<string, unknown>;
+      version?: any;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/research/finalize-report`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to finalize Canvas research report');
+  },
+
+  workCanvasExportDraft: async (
+    draftId: string,
+    format: 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx'
+  ): Promise<{ blob: Blob; filename: string }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/export?format=${encodeURIComponent(format)}`,
+      { headers: getHeaders() }
+    );
+    if (!res.ok) {
+      await handleResponse(res, 'Failed to export Canvas draft');
+    }
+    const disposition = res.headers.get('content-disposition') || '';
+    const filenameMatch = disposition.match(/filename="([^"]+)"/);
+    const blob = await res.blob();
+    return {
+      blob,
+      filename: filenameMatch?.[1] || `work-canvas.${format === 'json' ? 'metadata.json' : format}`,
+    };
+  },
+
+  workCanvasGetVersions: async (draftId: string): Promise<any[]> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/versions`,
+      { headers: getHeaders() }
+    );
+    const result = await handleResponse(res, 'Failed to fetch Canvas versions');
+    return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+  },
+
+  workCanvasGetWorkflows: async (draftId: string): Promise<any[]> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows`,
+      { headers: getHeaders() }
+    );
+    const result = await handleResponse(res, 'Failed to fetch Canvas workflows');
+    return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+  },
+
+  workCanvasCreateWorkflow: async (
+    draftId: string,
+    payload: {
+      baseUpdatedAt?: string | null;
+      template:
+        | 'market_research_to_report'
+        | 'meeting_note_to_initiatives'
+        | 'kpi_review_to_dashboard'
+        | 'client_proposal_to_deck'
+        | 'decision_memo_to_execution_plan';
+    }
+  ): Promise<{ success: boolean; data: { draft: any; workflowRun: any; readBack: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to create Canvas workflow');
+  },
+
+  workCanvasResumeWorkflow: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: { baseUpdatedAt?: string | null; note?: string } = {}
+  ): Promise<{ success: boolean; data: { draft: any; workflowRun: any; readBack: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/resume`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to resume Canvas workflow');
+  },
+
+  workCanvasRunWorkflowStep: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: { baseUpdatedAt?: string | null; approved?: boolean } = {}
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; workflowRun: any; outputResource?: any; version?: any; readBack: any };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/run-next`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to run Canvas workflow step');
+  },
+
+  workCanvasUpdateWorkflowCollaboration: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: {
+      baseUpdatedAt?: string | null;
+      ownerId?: string | null;
+      reviewerId?: string | null;
+      lifecycle?: string;
+    }
+  ): Promise<{ success: boolean; data: { draft: any; workflowRun: any; readBack: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/collaboration`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to update Canvas workflow collaboration');
+  },
+
+  workCanvasAddWorkflowComment: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: { baseUpdatedAt?: string | null; body: string }
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; workflowRun: any; comment: any; readBack: any };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/comments`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to add Canvas workflow comment');
+  },
+
+  workCanvasApplyOperation: async (
+    draftId: string,
+    payload: {
+      baseUpdatedAt?: string | null;
+      operation:
+        | {
+            type: 'replace_selection';
+            selectedText: string;
+            replacementMd: string;
+            reason?: string;
+          }
+        | { type: 'append_section'; heading: string; contentMd: string; reason?: string }
+        | { type: 'update_document'; contentMd: string; reason?: string }
+        | {
+            type: 'generate_block_from_selection';
+            kind: 'table' | 'chart' | 'diagram' | 'decision' | 'research' | 'dashboard';
+            selectedText: string;
+            title?: string;
+            approved?: boolean;
+            reason?: string;
+          }
+        | {
+            type: 'generate_artifact_from_dataset';
+            artifactKind: 'table' | 'chart' | 'dashboard' | 'research';
+            dataset: { filename?: string; format: 'csv' | 'json' | 'xlsx'; content: string };
+            analysis?: { kind: 'profile_summary' | 'aggregate_numeric' | 'filtered_table' };
+            title?: string;
+            approved?: boolean;
+            reason?: string;
+          }
+        | { type: 'insert_block'; block: any; approved?: boolean; reason?: string }
+        | {
+            type: 'update_block';
+            blockId: string;
+            patch: Record<string, unknown>;
+            approved?: boolean;
+            reason?: string;
+          }
+        | { type: 'delete_block'; blockId: string; approved?: boolean; reason?: string }
+        | {
+            type: 'convert_block';
+            blockId: string;
+            targetKind: 'chart' | 'diagram';
+            approved?: boolean;
+            reason?: string;
+          }
+        | { type: 'regenerate_projection'; blockId: string; approved?: boolean; reason?: string };
+      previewOnly?: boolean;
+    }
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; version?: any; diff?: any; preview?: any };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/operations`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to apply Canvas operation');
+  },
+
+  workCanvasShare: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; share: { token: string; url: string; title: string; expiresAt?: string } };
+  }> => {
+    const res = await fetch(`${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/share`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to share Canvas draft');
+  },
+
+  workCanvasRestoreVersion: async (
+    draftId: string,
+    versionId: string,
+    payload: { baseUpdatedAt?: string | null } = {}
+  ): Promise<{ success: boolean; data: { draft: any; restoredVersion: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/versions/${encodeURIComponent(versionId)}/restore`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to restore Canvas version');
+  },
+
   getTaskComments: async (taskId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch comments');
@@ -4337,12 +5194,24 @@ export const Api = {
   },
 
   getUnreadNotificationCount: async (): Promise<number> => {
-    const data = await getCachedJson<{ count: number }>(
-      `${API_URL}/notifications/unread-count`,
-      10_000,
-      'Failed to fetch unread notification count'
-    ).catch(() => ({ count: 0 }));
-    return data.count;
+    const endpointKey = 'notifications-unread-count';
+    if (isEndpointBackedOff(endpointKey)) return 0;
+
+    try {
+      const data = await getCachedJson<{ count: number }>(
+        `${API_URL}/notifications/unread-count`,
+        10_000,
+        'Failed to fetch unread notification count'
+      );
+      resetEndpointBackoff(endpointKey);
+      return Number(data?.count || 0);
+    } catch (error: any) {
+      const status = Number(error?.status || error?.response?.status);
+      if (status === 401 || status === 403 || status === 429) {
+        bumpEndpointBackoff(endpointKey);
+      }
+      return 0;
+    }
   },
 
   // Note: markNotificationRead, markAllNotificationsRead, deleteNotification
@@ -6049,6 +6918,7 @@ export const Api = {
     docId: string;
     filename: string;
     mimeType?: string;
+    extractionStatus?: 'extracted' | string;
     totalChunks?: number;
     embeddedChunks?: number;
   }> => {
@@ -6244,12 +7114,13 @@ export const Api = {
   },
 
   updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/feedback/${id}/status`, {
+    const res = await fetchWithRetry(`${API_URL}/feedback/${id}/status`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify({ status }),
     });
-    if (!res.ok) throw new Error('Failed to update feedback status');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to update feedback status');
   },
 
   updateFeedbackWorkflow: async (
@@ -6278,7 +7149,7 @@ export const Api = {
       note?: string | null;
     }
   ): Promise<any> => {
-    const res = await fetch(`${API_URL}/feedback/${id}/workflow`, {
+    const res = await fetchWithRetry(`${API_URL}/feedback/${id}/workflow`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(payload),
@@ -6292,10 +7163,21 @@ export const Api = {
 
   getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
     const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch feedback backlog tasks');
-    const data = await res.json();
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch feedback backlog tasks');
     return data || [];
+  },
+
+  updateFeedbackBacklogTask: async (
+    id: string,
+    payload: { status?: string; assigneeId?: string | null; comment?: string }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/backlog/tasks/${id}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update feedback backlog task');
   },
 
   getFeedbackAnalyticsOverview: async (): Promise<{
@@ -6312,9 +7194,10 @@ export const Api = {
     last30d: { created: number; reopened: number; reopenRatePct: number };
     generatedAt: string;
   }> => {
-    const res = await fetch(`${API_URL}/feedback/analytics/overview`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch feedback analytics overview');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/feedback/analytics/overview`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch feedback analytics overview');
   },
 
   getFeedbackCursorBrief: async (id: string): Promise<string> => {
@@ -6330,6 +7213,17 @@ export const Api = {
 
   getFeedbackScreenshotUrl: (id: string): string =>
     `${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`,
+
+  getFeedbackScreenshotBlob: async (id: string): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data as any)?.error || 'Failed to fetch feedback screenshot');
+    }
+    return res.blob();
+  },
 
   // ==========================================
   // ACCESS CONTROL
@@ -6390,33 +7284,37 @@ export const Api = {
 
   // --- ACCESS CONTROL (Super Admin) ---
   getAccessRequests: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch access requests');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-requests`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch access requests');
   },
 
   approveAccessRequest: async (id: string, password?: string, role?: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-requests/${id}/approve`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ password, role }),
     });
-    if (!res.ok) throw new Error('Failed to approve access request');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to approve access request');
   },
 
   rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-requests/${id}/reject`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ reason }),
     });
-    if (!res.ok) throw new Error('Failed to reject access request');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to reject access request');
   },
 
   getAccessCodes: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch access codes');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-codes`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch access codes');
   },
 
   acceptAccessCode: async (code: string): Promise<any> => {
@@ -6436,12 +7334,13 @@ export const Api = {
     maxUses?: number;
     expiresAt?: string;
   }): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/access-codes`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-codes`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to generate access code');
+    const json = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to generate access code');
   },
 
   deactivateAccessCode: async (codeId: string): Promise<void> => {
@@ -6519,7 +7418,7 @@ export const Api = {
 
   // Get user license plans
   getUserPlans: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/billing/user-plans`, {
+    const res = await fetch(`${API_URL}/billing/admin/user-plans`, {
       headers: getHeaders(),
     });
     const json = await res.json();
@@ -7090,6 +7989,56 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch admin audit logs');
   },
 
+  getOrganizationContextLineageAudit: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.targetType) params.set('targetType', String(filters.targetType));
+    if (filters?.targetId) params.set('targetId', String(filters.targetId));
+    if (filters?.workflow) params.set('workflow', String(filters.workflow));
+    if (filters?.eventType) params.set('eventType', String(filters.eventType));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/lineage?${params.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch organization context lineage');
+  },
+
+  getOrganizationContextStorageAudit: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.documentId) params.set('documentId', String(filters.documentId));
+    if (filters?.projectId) params.set('projectId', String(filters.projectId));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/storage-events?${params.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch organization context storage audit');
+  },
+
+  getOrganizationContextProcessingJobsAudit: async (filters?: any): Promise<any> => {
+    return OrganizationContextWorkerApi.getProcessingJobs(filters);
+  },
+
+  getOrganizationContextProcessingQueueSummary: async (): Promise<any> => {
+    return OrganizationContextWorkerApi.getProcessingQueueSummary();
+  },
+
+  requeueOrganizationContextProcessingJob: async (jobId: string): Promise<any> => {
+    return OrganizationContextWorkerApi.requeueProcessingJob(jobId);
+  },
+
+  recoverOrganizationContextStaleLocks: async (payload?: any): Promise<any> => {
+    return OrganizationContextWorkerApi.recoverStaleLocks(payload);
+  },
+
+  runOrganizationContextWorkerOnce: async (payload?: any): Promise<any> => {
+    return OrganizationContextWorkerApi.runWorkerOnce(payload);
+  },
+
   getAdminOverview: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/overview`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch admin overview');
@@ -7288,7 +8237,15 @@ export const Api = {
     const res = await fetch(`${API_URL}/admin/audit-logs/export`, { headers: getHeaders() });
     if (!res.ok) {
       const out = await res.json().catch(() => ({}));
-      throw new Error((out as any)?.error || 'Failed to export admin audit logs');
+      const message =
+        typeof (out as any)?.message === 'string'
+          ? (out as any).message
+          : typeof (out as any)?.error === 'string'
+            ? (out as any).error
+            : typeof (out as any)?.code === 'string'
+              ? (out as any).code
+              : 'Failed to export admin audit logs';
+      throw new Error(message);
     }
     return res.blob();
   },
@@ -8179,6 +9136,14 @@ export const Api = {
     await handleResponse(res, 'Failed to delete document');
   },
 
+  acknowledgeDocumentProcessingAttention: async (docId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/documents/${docId}/processing-attention/ack`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to acknowledge processing attention');
+  },
+
   downloadDocument: async (docId: string): Promise<Blob> => {
     const res = await fetchWithRetry(`${API_URL}/documents/${docId}/download`, {
       headers: getHeaders(),
@@ -8462,10 +9427,25 @@ export const Api = {
    * Get a conversation with all its messages
    */
   getConversation: async (id: string): Promise<any> => {
+    if (isConversationMarkedMissing(id)) {
+      const error: any = new Error('Conversation not found');
+      error.status = 404;
+      throw error;
+    }
+
     const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
       headers: getHeaders(),
     });
-    return handleResponse(res, 'Failed to fetch conversation');
+    if (res.status === 404) {
+      markConversationMissing(id);
+      const error: any = new Error('Conversation not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const payload = await handleResponse(res, 'Failed to fetch conversation');
+    clearConversationMissingMark(id);
+    return payload;
   },
 
   /**
@@ -8935,14 +9915,14 @@ export const Api = {
 
   // Generic helper methods for Studio hooks
   get: async (url: string) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, { headers: getHeaders() });
     const payload = await handleResponse(res, 'Request failed');
     return toAxiosLikeResponse(payload);
   },
 
   post: async (url: string, data: any) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'POST',
       headers: getHeaders(),
@@ -8953,7 +9933,7 @@ export const Api = {
   },
 
   postMultipart: async (url: string, formData: FormData) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const headers = getHeaders();
     // Browser must set multipart boundary; do not send Content-Type.
     delete headers['Content-Type'];
@@ -8969,7 +9949,7 @@ export const Api = {
   },
 
   put: async (url: string, data: any) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'PUT',
       headers: getHeaders(),
@@ -8980,7 +9960,7 @@ export const Api = {
   },
 
   delete: async (url: string) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'DELETE',
       headers: getHeaders(),
@@ -8990,7 +9970,7 @@ export const Api = {
   },
 
   patch: async (url: string, data: any) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'PATCH',
       headers: getHeaders(),
@@ -9023,12 +10003,12 @@ export const Api = {
     return res.json();
   },
   triggerBackup: async (): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/superadmin/system/backup`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/system/backup`, {
       method: 'POST',
       headers: getHeaders(),
+      body: JSON.stringify({ type: 'full', reason: 'manual' }),
     });
-    if (!res.ok) throw new Error('Failed to trigger backup');
-    return res.json();
+    return handleResponse(res, 'Failed to trigger backup');
   },
   getBackups: async (): Promise<any[]> => {
     const res = await fetchWithRetry(`${API_URL}/admin/backups`, { headers: getHeaders() });
@@ -9223,28 +10203,40 @@ export const Api = {
     return;
   },
   // API Access
-  createUserApiKey: async (name: string): Promise<any> => {
-    return { id: '', name, key: '', createdAt: new Date().toISOString() };
+  createUserApiKey: async (name: string, scopes: string[] = []): Promise<any> => {
+    return SettingsApi.createUserApiKey(name, scopes);
   },
   rotateApiKey: async (keyId: string): Promise<any> => {
-    return { id: keyId, key: '', rotatedAt: new Date().toISOString() };
+    return SettingsApi.rotateApiKey(keyId);
   },
   updateApiKey: async (keyId: string, data: any): Promise<any> => {
-    return { id: keyId, ...data };
+    return SettingsApi.updateApiKey(keyId, data);
   },
   // Calendar Sync — wired to settings integration OAuth engine
   getCalendars: async (): Promise<any[]> => {
     try {
-      const res = await fetch(`${API_URL}/settings/integrations`, {
-        headers: getHeaders(),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
+      const [integrationsRes, providersRes] = await Promise.all([
+        fetch(`${API_URL}/settings/integrations`, { headers: getHeaders() }),
+        fetch(`${API_URL}/settings/calendar/providers`, { headers: getHeaders() }),
+      ]);
+      const data = integrationsRes.ok ? await integrationsRes.json() : {};
+      const providerData = providersRes.ok ? await providersRes.json() : {};
       const integrations = data?.data?.integrations || data?.integrations || [];
       const calendarIds = ['google_calendar', 'outlook_calendar', 'apple_calendar'];
       const calendarProviders = (data?.data?.providers || data?.providers || []).filter((p: any) =>
         calendarIds.includes(p.id)
       );
+      const persistedProviders = (providerData?.providers || []).map((provider: any) => ({
+        ...provider,
+        id:
+          provider.id === 'google'
+            ? 'google_calendar'
+            : provider.id === 'outlook'
+              ? 'outlook_calendar'
+              : provider.id === 'apple'
+                ? 'apple_calendar'
+                : provider.id,
+      }));
 
       const ICONS: Record<string, string> = {
         google_calendar: '📅',
@@ -9260,20 +10252,30 @@ export const Api = {
       const result = calendarIds.map((cid) => {
         const provider = calendarProviders.find((p: any) => p.id === cid);
         const integration = integrations.find((i: any) => i.provider === cid);
+        const persisted = persistedProviders.find((p: any) => p.id === cid);
         return {
           id: cid,
           name: NAMES[cid] || cid,
           icon: ICONS[cid] || '📅',
-          connected: provider?.isConnected || integration?.status === 'active',
-          connection: integration
+          connected:
+            !!persisted?.connected || !!provider?.isConnected || integration?.status === 'active',
+          connection: persisted?.connection
             ? {
-                externalEmail: integration.externalEmail || integration.externalAccountName || '',
-                calendarName: integration.providerName || NAMES[cid] || cid,
-                lastSyncAt: integration.lastSyncAt || null,
-                syncTasks: true,
-                syncMeetings: true,
+                externalEmail: persisted.connection.externalEmail || '',
+                calendarName: persisted.connection.calendarName || NAMES[cid] || cid,
+                lastSyncAt: persisted.connection.lastSyncAt || null,
+                syncTasks: persisted.connection.syncTasks ?? true,
+                syncMeetings: persisted.connection.syncMeetings ?? true,
               }
-            : null,
+            : integration
+              ? {
+                  externalEmail: integration.externalEmail || integration.externalAccountName || '',
+                  calendarName: integration.providerName || NAMES[cid] || cid,
+                  lastSyncAt: integration.lastSyncAt || null,
+                  syncTasks: true,
+                  syncMeetings: true,
+                }
+              : null,
         };
       });
       return result;
@@ -9283,33 +10285,55 @@ export const Api = {
   },
   getCalendarSettings: async (): Promise<any> => {
     try {
-      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
+      const res = await fetch(`${API_URL}/settings/calendar/settings`, {
         headers: getHeaders(),
       });
       if (!res.ok) return { syncTasks: true, syncMeetings: true };
       const data = await res.json();
-      return data?.data || { syncTasks: true, syncMeetings: true };
+      return data?.data || data || { syncTasks: true, syncMeetings: true };
     } catch {
       return { syncTasks: true, syncMeetings: true };
     }
   },
   connectCalendar: async (provider: string, _credentials?: any): Promise<any> => {
+    if (provider === 'apple_calendar') {
+      const res = await fetch(`${API_URL}/settings/calendar/connect`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ provider }),
+      });
+      return handleResponse(res, 'Failed to connect Apple Calendar');
+    }
+
     try {
       const res = await fetch(`${API_URL}/settings/integrations/oauth/start/${provider}`, {
         headers: getHeaders(),
       });
-      if (!res.ok) throw new Error('Failed to start OAuth');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to start OAuth');
+      }
       return { authUrl: data.authUrl };
-    } catch {
-      return {};
+    } catch (error) {
+      if (provider === 'outlook_calendar') {
+        throw error;
+      }
+      throw error;
     }
   },
   disconnectCalendar: async (calendarId: string): Promise<void> => {
-    await fetch(`${API_URL}/settings/integrations/${calendarId}/oauth-disconnect`, {
+    const res = await fetch(`${API_URL}/settings/integrations/${calendarId}/oauth-disconnect`, {
       method: 'POST',
       headers: getHeaders(),
     });
+    if (res.ok) return;
+
+    const fallback = await fetch(`${API_URL}/settings/calendar/disconnect`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ provider: calendarId }),
+    });
+    await handleResponse(fallback, 'Failed to disconnect calendar');
   },
   shouldFallbackToLegacyMyWorkCalendar: (error: any) => {
     const status = Number(error?.status);
@@ -9704,21 +10728,16 @@ export const Api = {
     return data;
   },
   // User API Keys
-  getUserApiKeys: async () => [],
-  deleteUserApiKey: async (keyId: string) => ({ success: true }),
+  getUserApiKeys: async () => SettingsApi.getUserApiKeys(),
+  deleteUserApiKey: async (keyId: string) => SettingsApi.deleteUserApiKey(keyId),
   // Calendar
   updateCalendarSettings: async (settings: any) => {
-    try {
-      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(settings),
-      });
-      if (!res.ok) throw new Error('Failed to save');
-      return { success: true };
-    } catch {
-      return { success: true };
-    }
+    const res = await fetch(`${API_URL}/settings/calendar/settings`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(settings),
+    });
+    return handleResponse(res, 'Failed to save calendar settings');
   },
   // Permission requests
   getPermissionRequests: async () => [],
@@ -9876,6 +10895,19 @@ export const Api = {
     if (!res.ok) throw new Error(out?.error || 'Failed to create approval workflow');
     return out;
   },
+  updateApprovalWorkflow: async (id: string, data: any) => {
+    const res = await fetch(
+      `${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data || {}),
+      }
+    );
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to update approval workflow');
+    return out;
+  },
   deleteApprovalWorkflow: async (id: string) => {
     const res = await fetch(
       `${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`,
@@ -9886,6 +10918,15 @@ export const Api = {
     );
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((out as any)?.error || 'Failed to delete approval workflow');
+    return out;
+  },
+  compareAdminRoles: async (role1: string, role2: string) => {
+    const params = new URLSearchParams({ role1, role2 });
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/roles/compare?${params}`, {
+      headers: getHeaders(),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to compare roles');
     return out;
   },
   approveRequest: async (id: string, notes?: string) => {
@@ -10229,35 +11270,35 @@ export const Api = {
     }
   },
   createLifecycleStage: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/stages`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/stages`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to create lifecycle stage');
   },
   updateLifecycleStage: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to update lifecycle stage');
   },
   deleteLifecycleStage: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to delete lifecycle stage');
   },
   transitionOrganizationLifecycle: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/transitions`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/transitions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to transition organization');
   },
   // Customer Success Playbooks - Connected to Backend
   getSuccessPlaybooks: async () => {
@@ -10297,27 +11338,35 @@ export const Api = {
     }
   },
   createSuccessPlaybook: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/playbooks`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to create playbook');
+  },
+  updateSuccessPlaybook: async (id: string, data: any) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update playbook');
   },
   deleteSuccessPlaybook: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/playbooks/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to delete playbook');
   },
   executeSuccessPlaybook: async (id: string, orgId?: string) => {
-    const res = await fetch(`${API_URL}/superadmin/playbooks/${id}/execute`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks/${id}/execute`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ organizationId: orgId }),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to execute playbook');
   },
   // Admin Audit Logs
   getAdminAuditLogs: async (filters?: any) => {
@@ -10936,19 +11985,27 @@ export const Api = {
     }
   },
   createCustomerContract: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/contracts`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/contracts`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to create contract');
+  },
+  updateCustomerContract: async (id: string, data: any) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/contracts/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update contract');
   },
   deleteCustomerContract: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/contracts/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/contracts/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to delete contract');
   },
   // Security Incidents
   getSecurityIncidents: async (filters?: any) => {
@@ -11286,12 +12343,14 @@ export const Api = {
   },
   createSupportTicket: async (data: any) => {
     try {
-      const res = await fetch(`${API_URL}/superadmin/support/tickets`, {
+      const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(data),
       });
-      return res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((json as any)?.error || 'Failed to create support ticket');
+      return json;
     } catch (err: any) {
       console.error('[Api] createSupportTicket error:', err);
       throw err;
@@ -11313,8 +12372,9 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to add support ticket comment');
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to add support ticket comment');
+    return json;
   },
   // LLM Routing Rules (persisted)
   getLLMRoutingRules: async (params?: { organizationId?: string; includeInactive?: boolean }) => {
@@ -11733,9 +12793,20 @@ export const Api = {
       cta: string;
     }>;
   }> => {
-    const res = await fetch(`${API_URL}/demo/status`, {
+    const endpointKey = 'demo-status';
+    if (isEndpointBackedOff(endpointKey)) {
+      return { success: false, isDemoMode: false };
+    }
+
+    const res = await fetchWithRetry(`${API_URL}/demo/status`, {
       headers: getHeaders(),
+      cache: 'no-store',
     });
+    if (res.status === 401 || res.status === 403 || res.status === 429) {
+      bumpEndpointBackoff(endpointKey);
+    } else if (res.ok) {
+      resetEndpointBackoff(endpointKey);
+    }
     if (!res.ok) {
       return { success: false, isDemoMode: false };
     }
@@ -11946,7 +13017,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getCommunicationStats error:', err);
-      return { total: 0, sent: 0, avg_open_rate: 0 };
+      throw err;
     }
   },
   getStakeholderSegments: async (initiativeId?: string): Promise<any[]> => {
@@ -12332,6 +13403,702 @@ export const Api = {
     }
   },
 
+  getAIActionCenter: async (params?: {
+    projectId?: string;
+    status?: string;
+    scope?: 'mine' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.projectId) qs.set('projectId', params.projectId);
+      if (params?.status) qs.set('status', params.status);
+      if (params?.scope) qs.set('scope', params.scope);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/center${suffix}`);
+      return handleResponse(res, 'Failed to fetch Action Center');
+    } catch (err: any) {
+      console.error('[Api] getAIActionCenter error:', err);
+      return { success: false, actions: [], summary: null, error: err.message };
+    }
+  },
+
+  getAIRunLedger: async (params?: {
+    projectId?: string;
+    status?: string;
+    scope?: 'mine' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.projectId) qs.set('projectId', params.projectId);
+      if (params?.status) qs.set('status', params.status);
+      if (params?.scope) qs.set('scope', params.scope);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/runs${suffix}`);
+      return handleResponse(res, 'Failed to fetch AI run ledger');
+    } catch (err: any) {
+      console.error('[Api] getAIRunLedger error:', err);
+      return { success: false, runs: [], error: err.message };
+    }
+  },
+
+  getAIActionAuditTrail: async (actionId: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/audit`);
+      return handleResponse(res, 'Failed to fetch AI action audit');
+    } catch (err: any) {
+      console.error('[Api] getAIActionAuditTrail error:', err);
+      return { success: false, audit: null, error: err.message };
+    }
+  },
+
+  listLegacyAIResearchSessions: async (params?: {
+    status?: string;
+    scope?: 'mine' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status) qs.set('status', params.status);
+      if (params?.scope) qs.set('scope', params.scope);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await fetchWithRetry(`${API_URL}/research/sessions${suffix}`);
+      return handleResponse(res, 'Failed to fetch research sessions');
+    } catch (err: any) {
+      console.error('[Api] listLegacyAIResearchSessions error:', err);
+      return { success: false, sessions: [], error: err.message };
+    }
+  },
+
+  createResearchSession: async (payload: {
+    mission: string;
+    scope?: string;
+    questions?: string[];
+    allowedSources?: Array<'web' | 'attachment' | 'product' | 'org'>;
+    budget?: Record<string, unknown>;
+    expectedOutput?: string;
+    attachmentDocIds?: string[];
+    projectId?: string;
+    conversationId?: string;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/research/sessions`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res, 'Failed to create research session');
+    } catch (err: any) {
+      console.error('[Api] createResearchSession error:', err);
+      return { success: false, session: null, error: err.message };
+    }
+  },
+
+  getResearchSession: async (sessionId: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}`);
+      return handleResponse(res, 'Failed to fetch research session');
+    } catch (err: any) {
+      console.error('[Api] getResearchSession error:', err);
+      return { success: false, session: null, error: err.message };
+    }
+  },
+
+  approveResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/approve`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to approve research session');
+  },
+
+  startResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/start`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to start research session');
+  },
+
+  cancelResearchSessionV1: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/cancel`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to cancel research session');
+  },
+
+  resumeResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/resume`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to resume research session');
+  },
+
+  retryResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/retry`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to retry research session');
+  },
+
+  getWave5ArtifactSchema: async () => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/schema`);
+    return handleResponse(res, 'Failed to fetch artifact schema');
+  },
+
+  listWave5Artifacts: async (params?: {
+    status?: string;
+    artifactType?: string;
+    limit?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.artifactType) qs.set('artifactType', params.artifactType);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5${suffix}`);
+    return handleResponse(res, 'Failed to fetch Wave 5 artifacts');
+  },
+
+  createWave5Artifact: async (payload: {
+    artifactType: string;
+    title: string;
+    content: string;
+    canonicalFormat?: 'markdown' | 'json';
+    contentMd?: string;
+    contentJson?: unknown;
+    contentSchemaVersion?: string;
+    projectId?: string | null;
+    conversationId?: string | null;
+    researchSessionId?: string | null;
+    aiRunId?: string | null;
+    trustBundleId?: string | null;
+    citations?: unknown[];
+    sourceRefs?: unknown[];
+    metadata?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create Wave 5 artifact');
+  },
+
+  getWave5Artifact: async (artifactId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}`
+    );
+    return handleResponse(res, 'Failed to fetch Wave 5 artifact');
+  },
+
+  proposeWave5ArtifactMutation: async (
+    artifactId: string,
+    payload: {
+      proposedContent: string;
+      summary?: string;
+      mutationType?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/mutations`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to propose Wave 5 mutation');
+  },
+
+  approveWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/approve`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to approve Wave 5 mutation');
+  },
+
+  commitWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/commit`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to commit Wave 5 mutation');
+  },
+
+  approveAndCommitWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/approve-and-commit`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to approve and commit Wave 5 mutation');
+  },
+
+  rejectWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/reject`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to reject Wave 5 mutation');
+  },
+
+  fillWave5DocumentTemplate: async (payload: {
+    artifactId?: string | null;
+    artifactType?: string;
+    title?: string;
+    template: string;
+    fields?: Record<string, unknown>;
+    projectId?: string | null;
+    conversationId?: string | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/fill-template`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to fill Wave 5 document template');
+  },
+
+  generateWave5StructuredArtifact: async (payload: {
+    outputKind: 'executive_report' | 'board_deck' | 'kpi_table';
+    prompt: string;
+    title?: string | null;
+    projectId?: string | null;
+    conversationId?: string | null;
+    researchSessionId?: string | null;
+    aiRunId?: string | null;
+    trustBundleId?: string | null;
+    citations?: unknown[];
+    sourceRefs?: unknown[];
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/generate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to generate Wave 5 structured artifact');
+  },
+
+  getWave5ArtifactExportManifest: async (artifactId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/export-manifest`
+    );
+    return handleResponse(res, 'Failed to fetch Wave 5 export manifest');
+  },
+
+  markWave5ArtifactExported: async (artifactId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/exported`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to mark Wave 5 artifact exported');
+  },
+
+  getWave6ContextPanel: async (projectId?: string | null) => {
+    const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const res = await fetchWithRetry(`${API_URL}/ai-context/panel${query}`);
+    return handleResponse(res, 'Failed to load Wave 6 context panel');
+  },
+
+  captureWave6ContextSnapshot: async (payload: {
+    snapshotType: 'org' | 'project' | 'user';
+    projectId?: string | null;
+    facts: Record<string, unknown>;
+    sourceRefs?: unknown[];
+    permissions?: Record<string, unknown>;
+    freshnessAt?: string | null;
+    privateMode?: boolean;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-context/snapshots`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to capture Wave 6 context snapshot');
+  },
+
+  captureWave6MemoryCandidate: async (payload: {
+    assistantScope: 'anna_public' | 'teresa_tenant';
+    memoryScope: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
+    key: string;
+    value: string;
+    projectId?: string | null;
+    sourceLabel?: string | null;
+    sourceRefs?: unknown[];
+    privateMode?: boolean;
+    retentionDays?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-context/memory/candidates`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to capture Wave 6 memory candidate');
+  },
+
+  decideWave6MemoryCandidate: async (
+    candidateId: string,
+    payload: { decision: 'approve' | 'reject' | 'apply' | 'expire'; reason?: string | null }
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/ai-context/memory/candidates/${encodeURIComponent(candidateId)}/decision`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to decide Wave 6 memory candidate');
+  },
+
+  getWave7ConnectorCatalog: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/catalog`);
+    return handleResponse(res, 'Failed to load Wave 7 connector catalog');
+  },
+
+  listWave7Connectors: async (projectId?: string | null) => {
+    const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors${query}`);
+    return handleResponse(res, 'Failed to load Wave 7 connectors');
+  },
+
+  registerWave7Connector: async (payload: {
+    provider: string;
+    status?: 'connected' | 'disconnected' | 'stale' | 'failed';
+    scopes?: string[];
+    projectIds?: string[];
+    tenantPolicy?: Record<string, unknown>;
+    freshnessTtlMinutes?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to register Wave 7 connector');
+  },
+
+  updateWave7Connector: async (
+    connectorId: string,
+    payload: {
+      status?: 'connected' | 'disconnected' | 'stale' | 'failed';
+      externalConnectorId?: string | null;
+      projectIds?: string[];
+      failureState?: string | null;
+    }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update Wave 7 connector');
+  },
+
+  linkWave7Connector: async (connectorId: string, externalConnectorId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}/link`, {
+      method: 'POST',
+      body: JSON.stringify({ externalConnectorId }),
+    });
+    return handleResponse(res, 'Failed to link Wave 7 connector');
+  },
+
+  disconnectWave7Connector: async (connectorId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}/disconnect`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to disconnect Wave 7 connector');
+  },
+
+  reindexWave7Connector: async (connectorId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}/reindex`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to reindex Wave 7 connector');
+  },
+
+  executeWave7ConnectorTool: async (payload: {
+    connectorId: string;
+    toolName: string;
+    toolKind: 'read' | 'search' | 'write' | 'destructive';
+    query?: string | null;
+    projectId?: string | null;
+    aiRunId?: string | null;
+    payload?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/execute`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to execute Wave 7 connector tool');
+  },
+
+  getWave7ConnectorHealth: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/health`);
+    return handleResponse(res, 'Failed to load Wave 7 connector health');
+  },
+
+  listWave7ConnectorRuns: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/runs`);
+    return handleResponse(res, 'Failed to load Wave 7 connector runs');
+  },
+
+  getWave8AgentCatalog: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/catalog`);
+    return handleResponse(res, 'Failed to load Wave 8 agent catalog');
+  },
+
+  upsertWave8AgentDefinition: async (definition: Record<string, unknown>) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/definitions`, {
+      method: 'POST',
+      body: JSON.stringify({ definition }),
+    });
+    return handleResponse(res, 'Failed to save Wave 8 agent definition');
+  },
+
+  launchWave8Agent: async (payload: {
+    agentId: string;
+    goal: string;
+    projectId?: string | null;
+    requestedTools?: string[];
+    schedule?: {
+      cadence: 'once' | 'daily' | 'weekly';
+      nextRunAt?: string | null;
+      ownerUserId?: string | null;
+    } | null;
+    swarm?: {
+      enabled: boolean;
+      agentIds?: string[];
+      approved?: boolean;
+      budgetApproved?: boolean;
+    } | null;
+    approval?: {
+      aiRunId?: string | null;
+      budgetApproved?: boolean;
+    } | null;
+    evalRun?: {
+      enabled: boolean;
+      evaluatorAgentId?: string | null;
+      criteria?: string[];
+    } | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/launch`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to launch Wave 8 agent');
+  },
+
+  executeWave8AgentTool: async (payload: {
+    agentId: string;
+    toolName: string;
+    toolInput?: Record<string, unknown>;
+    projectId?: string | null;
+    runId?: string | null;
+    aiRunId?: string | null;
+    budgetApproved?: boolean;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/tool`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to execute Wave 8 agent tool');
+  },
+
+  listWave8AgentRuns: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/runs`);
+    return handleResponse(res, 'Failed to load Wave 8 agent runs');
+  },
+
+  listWave8AgentSchedules: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/schedules`);
+    return handleResponse(res, 'Failed to load Wave 8 agent schedules');
+  },
+
+  processDueWave8AgentSchedules: async (now?: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/schedules/process-due`, {
+      method: 'POST',
+      body: JSON.stringify({ now }),
+    });
+    return handleResponse(res, 'Failed to process Wave 8 due schedules');
+  },
+
+  listWave8AgentNotifications: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/notifications`);
+    return handleResponse(res, 'Failed to load Wave 8 agent notifications');
+  },
+
+  listWave9Outcomes: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes`);
+    return handleResponse(res, 'Failed to load Wave 9 outcomes');
+  },
+
+  registerWave9Evidence: async (payload: {
+    evidenceType:
+      | 'initiative'
+      | 'task'
+      | 'kpi'
+      | 'regression_pack'
+      | 'ciso_pack'
+      | 'business_persona_pack'
+      | 'compliance_audit'
+      | 'ai_ops_eval_pack';
+    sourceType: string;
+    sourceId: string;
+    title?: string | null;
+    status: 'pass' | 'fail' | 'pending';
+    verifiedBy?: string | null;
+    verificationMethod?: string | null;
+    payload?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/evidence`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to register Wave 9 evidence');
+  },
+
+  createWave9Outcome: async (payload: {
+    initiativeId: string;
+    taskIds?: string[];
+    kpiName: string;
+    ownerUserId?: string;
+    baseline: number;
+    target: number;
+    current?: number | null;
+    confidence: number;
+    assumptions: string[];
+    sourceRefs: Array<{ sourceType: string; sourceId: string; title?: string | null }>;
+    investment?: number | null;
+    annualBenefit?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create Wave 9 outcome');
+  },
+
+  getWave9FinanceScenarios: async (outcomeId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes/${outcomeId}/scenarios`);
+    return handleResponse(res, 'Failed to build Wave 9 finance scenarios');
+  },
+
+  buildWave9Report: async (payload: {
+    outcomeId: string;
+    reportType: 'client_ready' | 'investor_ready' | 'steering_committee' | 'ciso_security';
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/reports`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to build Wave 9 report');
+  },
+
+  recordWave9ProviderHealth: async (payload: {
+    provider: string;
+    model?: string | null;
+    status: 'healthy' | 'degraded' | 'unavailable';
+    latencyMs?: number | null;
+    errorRate?: number | null;
+    costUsd?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/provider-health`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to record Wave 9 provider health');
+  },
+
+  recordWave9EvalRun: async (payload: {
+    promptKey: string;
+    promptVersion?: string | null;
+    category?: 'golden_prompt' | 'hallucination_check' | 'tool_misuse_check' | 'regression_gate';
+    status: 'pass' | 'fail';
+    score?: number | null;
+    hallucinationCheckPassed?: boolean | null;
+    toolMisuseCheckPassed?: boolean | null;
+    runRef?: string | null;
+    details?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/eval-runs`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to record Wave 9 eval run');
+  },
+
+  listWave9AcceptanceRuns: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/acceptance-runs`);
+    return handleResponse(res, 'Failed to load Wave 9 acceptance runs');
+  },
+
+  registerWave9AcceptanceRun: async (payload: {
+    runType:
+      | 'regression_pack'
+      | 'ciso_pack'
+      | 'business_persona_pack'
+      | 'compliance_audit'
+      | 'ai_ops_eval_pack';
+    status: 'pass' | 'fail';
+    runRef?: string | null;
+    buildId?: string | null;
+    commitSha?: string | null;
+    verifiedBy?: string | null;
+    verificationMethod?: string | null;
+    payload?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/acceptance-runs`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to register Wave 9 acceptance run');
+  },
+
+  recordWave9Incident: async (payload: {
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    title: string;
+    rollbackFlag?: string | null;
+    playbook?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/incidents`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to record Wave 9 incident');
+  },
+
+  getWave9AIOpsDashboard: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/aiops`);
+    return handleResponse(res, 'Failed to load Wave 9 AI Ops dashboard');
+  },
+
+  runWave9FinalAcceptance: async (payload: {
+    regressionPassed: boolean;
+    cisoPackPassed: boolean;
+    businessPersonaPackPassed: boolean;
+    providerHealthOk: boolean;
+    complianceAuditPassed: boolean;
+    openP0: number;
+    openP1: number;
+    evidenceRefs: {
+      regressionRunId?: string | null;
+      cisoPackRunId?: string | null;
+      businessPersonaPackRunId?: string | null;
+      complianceAuditRef?: string | null;
+      aiOpsEvalRunId?: string | null;
+      aiOpsEvalPackRunId?: string | null;
+    };
+    acceptanceRunRefs?: {
+      regressionRunId?: string | null;
+      cisoPackRunId?: string | null;
+      businessPersonaPackRunId?: string | null;
+      complianceAuditRunId?: string | null;
+      aiOpsEvalPackRunId?: string | null;
+    };
+    acceptedLimitations?: string[];
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/acceptance`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to run Wave 9 final acceptance');
+  },
+
   getAIActionHistory: async (conversationId: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/history/${conversationId}`);
@@ -12342,11 +14109,11 @@ export const Api = {
     }
   },
 
-  executeAIAction: async (actionId: string, payload: any) => {
+  executeAIAction: async (actionId: string, payload: any, conversationId?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/execute`, {
         method: 'POST',
-        body: JSON.stringify({ payload }),
+        body: JSON.stringify({ payload, conversationId }),
       });
       return handleResponse(res, 'Failed to execute action');
     } catch (err: any) {
@@ -12629,10 +14396,10 @@ export const Api = {
     try {
       const q = new URLSearchParams();
       if (params?.status?.length) q.set('status', params.status.join(','));
-      if (params?.userScope) q.set('userScope', params.userScope);
+      if (params?.userScope) q.set('scope', params.userScope === 'org' ? 'org' : 'mine');
       if (params?.limit) q.set('limit', String(params.limit));
       const qs = q.toString();
-      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`, {
+      const res = await fetchWithRetry(`${API_URL}/research/sessions${qs ? `?${qs}` : ''}`, {
         method: 'GET',
       });
       if (!res.ok) return { sessions: [] as any[] };
@@ -12643,7 +14410,7 @@ export const Api = {
     }
   },
 
-  getResearchSession: async (id: string) => {
+  getLegacyAIResearchSession: async (id: string) => {
     try {
       const res = await fetchWithRetry(
         `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}`,
@@ -12652,12 +14419,12 @@ export const Api = {
       if (!res.ok) return null;
       return (await res.json()) as { session: any };
     } catch (err: any) {
-      console.error('[Api] getResearchSession error:', err);
+      console.error('[Api] getLegacyAIResearchSession error:', err);
       return null;
     }
   },
 
-  createResearchSession: async (body: {
+  createLegacyAIResearchSession: async (body: {
     topic: string;
     conversationId?: string;
     messageId?: string;
@@ -12673,12 +14440,12 @@ export const Api = {
       if (!res.ok) return null;
       return (await res.json()) as { session: any };
     } catch (err: any) {
-      console.error('[Api] createResearchSession error:', err);
+      console.error('[Api] createLegacyAIResearchSession error:', err);
       return null;
     }
   },
 
-  cancelResearchSession: async (id: string) => {
+  cancelLegacyAIResearchSession: async (id: string) => {
     try {
       const res = await fetchWithRetry(
         `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}/cancel`,
@@ -12687,7 +14454,7 @@ export const Api = {
       if (!res.ok) return null;
       return (await res.json()) as { session: any };
     } catch (err: any) {
-      console.error('[Api] cancelResearchSession error:', err);
+      console.error('[Api] cancelLegacyAIResearchSession error:', err);
       return null;
     }
   },
@@ -12818,25 +14585,15 @@ export const Api = {
   },
 
   getAIMemory: async () => {
-    const userSettings = await Api.getAIUserSettings();
-    return {
-      preferences: {
-        enabled: true,
-        retentionDays: 30,
-        contextRetention: userSettings?.context_retention || 'session',
-      },
-    };
+    return SettingsApi.getAIMemoryPreferences();
   },
 
   saveAIMemory: async (settings: any) => {
-    return Api.updateAIUserSettings({
-      context_retention:
-        settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
-    });
+    return SettingsApi.updateAIMemoryPreferences(settings);
   },
 
   clearAIMemoryData: async () => {
-    return Api.updateAIUserSettings({ context_retention: 'none' });
+    return SettingsApi.clearAIMemoryPreferences();
   },
 
   getAIModelPreferences: async () => {
@@ -12912,7 +14669,32 @@ export const Api = {
         `${API_URL}/ai-settings/user/costs?period=${period || '30d'}`,
         { headers: getHeaders() }
       );
-      return handleResponse(res, 'Failed to fetch AI usage stats');
+      const payload = await handleResponse(res, 'Failed to fetch AI usage stats');
+      const dailyRows = Array.isArray(payload)
+        ? payload
+        : payload?.costs || payload?.dailyUsage || [];
+      const dailyUsage = dailyRows.map((row: any) => ({
+        date: row.date,
+        tokens: Number(row.tokens || 0),
+        requests: Number(row.requests || row.count || 0),
+        cost: Number(row.cost || 0),
+      }));
+      const totalTokens = dailyUsage.reduce((sum: number, row: any) => sum + row.tokens, 0);
+      const totalCost = dailyUsage.reduce((sum: number, row: any) => sum + row.cost, 0);
+      const totalRequests = dailyUsage.reduce((sum: number, row: any) => sum + row.requests, 0);
+      return {
+        stats: {
+          totalTokens,
+          totalCost,
+          totalRequests,
+          avgResponseTime: 0,
+          successRate: 100,
+          limit: 1000000,
+          used: totalTokens,
+        },
+        usageByFeature: payload?.usageByFeature || [],
+        dailyUsage,
+      };
     } catch {
       return {
         stats: {
@@ -13240,7 +15022,7 @@ export const Api = {
   },
 
   createBackup: async (_type?: string, _reason?: string) => {
-    const res = await fetchWithRetry(`${API_URL}/admin/backups/manual`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/system/backup`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ type: _type || 'full', reason: _reason || 'manual' }),

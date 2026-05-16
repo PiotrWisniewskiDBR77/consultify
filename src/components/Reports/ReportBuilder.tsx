@@ -395,7 +395,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                         </button>
                         <button
                           onClick={() => handleDeleteSection(section.id)}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                           title={t('common.delete', 'Delete')}
                         >
                           <Trash2 className="w-4 h-4" />

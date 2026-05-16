@@ -163,14 +163,14 @@ export const VectorPage: React.FC = () => {
       <section className="pt-32 pb-20 px-6 bg-gradient-to-b from-indigo-50 to-white dark:from-navy-900 dark:to-navy-950">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div {...fadeUp}>
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm font-semibold mb-6">
               <BrainCircuit size={16} />
               {t('vector.hero.badge', 'Industrial Reasoning Engine')}
             </span>
 
             <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-black text-navy-950 dark:text-white mb-6 tracking-tight leading-[1.1]">
               {t('vector.hero.title', "The world's first AI that")}{' '}
-              <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-primary-600 bg-clip-text text-transparent">
                 {t('vector.hero.titleHighlight', 'reasons like an industrial engineer.')}
               </span>
             </h1>
@@ -227,7 +227,7 @@ export const VectorPage: React.FC = () => {
             {[
               {
                 icon: Factory,
-                accent: 'from-red-500 to-orange-500',
+                accent: 'from-rose-500 to-amber-500',
                 title: t('vector.beyond.problem.title', 'The Problem'),
                 body: t(
                   'vector.beyond.problem.body',
@@ -245,7 +245,7 @@ export const VectorPage: React.FC = () => {
               },
               {
                 icon: BrainCircuit,
-                accent: 'from-violet-500 to-purple-600',
+                accent: 'from-primary-500 to-primary-600',
                 title: t('vector.beyond.vector.title', 'DBR77 Vector'),
                 body: t(
                   'vector.beyond.vector.body',
@@ -285,7 +285,7 @@ export const VectorPage: React.FC = () => {
       <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/40">
         <div className="max-w-6xl mx-auto">
           <motion.div {...fadeUp} className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-xs font-bold uppercase tracking-widest mb-4">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest mb-4">
               <Cpu size={14} />
               {t('vector.pipeline.badge', 'Decision Architecture')}
             </span>
@@ -313,7 +313,7 @@ export const VectorPage: React.FC = () => {
                   className="relative rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-6"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xs font-black text-violet-500 bg-violet-100 dark:bg-violet-900/30 rounded-lg px-2.5 py-1">
+                    <span className="text-xs font-black text-primary-500 bg-primary-100 dark:bg-primary-900/30 rounded-lg px-2.5 py-1">
                       {step.num}
                     </span>
                     <Icon size={18} className="text-slate-400 dark:text-slate-500" />
@@ -371,7 +371,7 @@ export const VectorPage: React.FC = () => {
                 transition={{ duration: 0.4, delay: idx * 0.08 }}
                 className="text-center rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-8"
               >
-                <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary-600 to-primary-600 bg-clip-text text-transparent mb-2">
                   {stat.value}
                 </p>
                 <p className="text-sm font-bold text-navy-950 dark:text-white">{stat.label}</p>
@@ -407,7 +407,7 @@ export const VectorPage: React.FC = () => {
                   <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">
                     {t('vector.comparison.dimensionHeader', 'Dimension')}
                   </th>
-                  <th className="text-left px-6 py-4 font-bold text-violet-600 dark:text-violet-400">
+                  <th className="text-left px-6 py-4 font-bold text-primary-600 dark:text-primary-400">
                     {t('vector.comparison.vectorHeader', 'DBR77 Vector')}
                   </th>
                   <th className="text-left px-6 py-4 font-bold text-slate-500">
@@ -467,7 +467,7 @@ export const VectorPage: React.FC = () => {
                 transition={{ duration: 0.4, delay: idx * 0.1 }}
                 className={`relative rounded-2xl p-6 border ${
                   stage.status === 'current'
-                    ? 'border-violet-400 dark:border-violet-500/50 bg-violet-50 dark:bg-violet-900/20 ring-1 ring-violet-400/30'
+                    ? 'border-primary-400 dark:border-primary-500/50 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-400/30'
                     : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]'
                 }`}
               >
@@ -476,7 +476,7 @@ export const VectorPage: React.FC = () => {
                     stage.status === 'done'
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                       : stage.status === 'current'
-                        ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400'
+                        ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
                         : 'bg-slate-100 dark:bg-white/[0.04] text-slate-500'
                   }`}
                 >
@@ -524,21 +524,21 @@ export const VectorPage: React.FC = () => {
                   transition={{ duration: 0.4, delay: idx * 0.08 }}
                   className={`flex-1 rounded-2xl p-6 text-center border ${
                     isVector
-                      ? 'border-violet-500/50 bg-violet-600/15 ring-1 ring-violet-500/30'
+                      ? 'border-primary-500/50 bg-primary-600/15 ring-1 ring-primary-500/30'
                       : 'border-white/[0.08] bg-white/[0.03]'
                   }`}
                 >
                   <div
                     className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl mb-4 ${
                       isVector
-                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30'
+                        ? 'bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30'
                         : 'bg-white/[0.06]'
                     }`}
                   >
                     <Icon size={22} className={isVector ? 'text-white' : 'text-white/50'} />
                   </div>
                   <p
-                    className={`text-sm font-black ${isVector ? 'text-violet-300' : 'text-white/70'}`}
+                    className={`text-sm font-black ${isVector ? 'text-primary-300' : 'text-white/70'}`}
                   >
                     {t(`vector.ecosystem.layers.${idx}.label`, layer.label)}
                   </p>
@@ -561,7 +561,7 @@ export const VectorPage: React.FC = () => {
       <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div {...fadeUp}>
-            <Rocket size={32} className="mx-auto text-violet-500 mb-6" />
+            <Rocket size={32} className="mx-auto text-primary-500 mb-6" />
             <h2 className="text-3xl font-black text-navy-950 dark:text-white mb-4">
               {t('vector.cta.title', 'Ready to see industrial reasoning in action?')}
             </h2>

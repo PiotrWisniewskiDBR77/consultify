@@ -45,12 +45,12 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
       <div className="space-y-6 overflow-y-auto pr-2">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold flex items-center gap-2">
-            <BookOpen size={18} className="text-purple-400" /> {t('intelligence.title')}
+            <BookOpen size={18} className="text-primary-400" /> {t('intelligence.title')}
           </h3>
           <Button
             size="sm"
             variant="ghost"
-            className="text-purple-400 hover:text-purple-300"
+            className="text-primary-400 hover:text-primary-300"
             onClick={handleAnalyze}
             disabled={isAnalyzing}
           >
@@ -60,7 +60,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
         </div>
 
         <div className="space-y-4">
-          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-purple-500/50 transition-colors">
+          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-primary-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-green-400 mb-2">
               <Lightbulb size={16} /> {t('intelligence.learnedTitle')}
             </label>
@@ -72,8 +72,8 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
             />
           </div>
 
-          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-orange-500/50 transition-colors">
-            <label className="flex items-center gap-2 text-sm font-bold text-orange-400 mb-2">
+          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-amber-500/50 transition-colors">
+            <label className="flex items-center gap-2 text-sm font-bold text-amber-400 mb-2">
               <AlertOctagon size={16} /> {t('intelligence.surprisedTitle')}
             </label>
             <textarea
@@ -84,8 +84,8 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
             />
           </div>
 
-          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-red-500/50 transition-colors">
-            <label className="flex items-center gap-2 text-sm font-bold text-red-400 mb-2">
+          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-rose-500/50 transition-colors">
+            <label className="flex items-center gap-2 text-sm font-bold text-rose-400 mb-2">
               <GitBranch size={16} /> {t('intelligence.differentlyTitle')}
             </label>
             <textarea

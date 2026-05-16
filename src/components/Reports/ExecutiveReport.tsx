@@ -130,7 +130,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
   const getHealthColor = (health: string) => {
     switch (health) {
       case 'critical':
-        return 'bg-red-500';
+        return 'bg-rose-500';
       case 'warning':
         return 'bg-amber-500';
       default:
@@ -155,7 +155,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       <div className="p-6 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-primary-600 text-white rounded-xl shadow-lg">
               <FileText size={24} />
             </div>
             <div>
@@ -221,11 +221,11 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
               </div>
               <div className="text-xs text-green-500">Tasks Done</div>
             </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                 {report.keyMetrics.decisionsApproved}
               </div>
-              <div className="text-xs text-purple-500">Decisions Made</div>
+              <div className="text-xs text-primary-500">Decisions Made</div>
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
@@ -239,19 +239,19 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
           {report.blockers.length > 0 && (
             <div>
               <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-                <AlertTriangle size={16} className="text-red-500" />
+                <AlertTriangle size={16} className="text-rose-500" />
                 Blocking Issues ({report.blockers.length})
               </h4>
               <div className="space-y-2">
                 {report.blockers.map((blocker, idx) => (
                   <div
                     key={idx}
-                    className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-3 rounded-r-lg"
+                    className="bg-rose-50 dark:bg-rose-900/10 border-l-4 border-rose-500 p-3 rounded-r-lg"
                   >
-                    <div className="text-sm font-medium text-red-800 dark:text-red-300">
+                    <div className="text-sm font-medium text-rose-800 dark:text-rose-300">
                       {blocker.title}
                     </div>
-                    <div className="text-xs text-red-600 dark:text-red-400">
+                    <div className="text-xs text-rose-600 dark:text-rose-400">
                       {blocker.type} • {blocker.daysBlocked || 0} days blocked
                     </div>
                   </div>
@@ -287,7 +287,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
           <div
             className={`rounded-xl p-4 ${
               report.forecast.includes('HIGH')
-                ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30'
+                ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30'
                 : report.forecast.includes('MEDIUM')
                   ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30'
                   : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30'

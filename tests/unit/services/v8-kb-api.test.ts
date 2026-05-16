@@ -30,6 +30,7 @@ describe('V8KnowledgeBaseApi', () => {
       q: 'ai',
       lang: 'en',
       limit: '12',
+      site: 'consultify',
     });
   });
 
@@ -41,6 +42,7 @@ describe('V8KnowledgeBaseApi', () => {
     expect(v8Get).toHaveBeenCalledWith(V8_KB_PUBLIC_PATH, {
       lang: 'pl',
       limit: '3',
+      site: 'consultify',
     });
   });
 
@@ -52,6 +54,7 @@ describe('V8KnowledgeBaseApi', () => {
     expect(v8Get).toHaveBeenCalledWith(V8_KB_FEATURED_PATH, {
       lang: 'en',
       limit: '5',
+      site: 'consultify',
     });
   });
 

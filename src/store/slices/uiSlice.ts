@@ -58,7 +58,7 @@ export interface UISlice {
   myWorkIntent: {
     tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notebook';
     open?: {
-      type: 'notification' | 'task' | 'idea' | 'decision' | 'notebook';
+      type: 'notification' | 'task' | 'idea' | 'decision';
       id: string;
       name?: string;
       data?: unknown;
@@ -108,12 +108,7 @@ export interface UISlice {
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
   currentView: AppView.WELCOME,
-  // Decyzja (light_mode_system plan, Faza 2): domyślny theme pozostaje 'dark'.
-  // Zmiana na 'system' to product decision (nie tylko techniczna) — pierwszy paint
-  // w src/index.tsx już obsługuje 'system' przez prefers-color-scheme dla userów,
-  // którzy ręcznie wybiorą tę opcję. Patrz: docs/ui-standards/LIGHT_MODE_QA_CHECKLIST.md
-  // sekcja "Known gaps / backlog" → "default theme decision".
-  theme: 'dark',
+  theme: 'dark', // Default
 
   isSidebarOpen: false,
   isSidebarCollapsed: true,

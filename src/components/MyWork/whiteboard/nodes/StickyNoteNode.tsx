@@ -31,14 +31,14 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
   const priority = typeof data?.priority === 'number' ? data.priority : 0;
   const priorityBorder =
     priority >= 80
-      ? 'border-2 border-red-400/70'
+      ? 'border-2 border-rose-400/70'
       : priority >= 50
         ? 'border-2 border-amber-400/60'
         : '';
 
   return (
     <div
-      className={`relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-primary-500/60 shadow-xl shadow-primary-500/10' : ''} ${data?.isAI ? 'ring-1 ring-violet-400/30' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
+      className={`relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-primary-500/60 shadow-xl shadow-primary-500/10' : ''} ${data?.isAI ? 'ring-1 ring-primary-400/30' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
       style={{
         width: size.w,
         minHeight: size.h,

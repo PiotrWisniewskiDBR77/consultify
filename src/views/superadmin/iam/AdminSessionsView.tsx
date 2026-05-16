@@ -22,8 +22,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Card, CardWithHeader, Section } from '../../../components/Admin/shared/Card';
+import { DegradedState } from '../../../components/Admin/AdminState';
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface AdminSession {
   id: string;
@@ -54,10 +56,74 @@ interface SessionStats {
   breakGlassActive: number;
 }
 
+interface SessionsSnapshot {
+  sessions: AdminSession[];
+  stats: SessionStats;
+}
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeSessions = (value: unknown): AdminSession[] => {
+  if (Array.isArray(value)) return value as AdminSession[];
+  if (isRecord(value)) {
+    const data = isRecord(value.data) ? value.data : null;
+    const nestedData = data && isRecord(data.data) ? data.data : null;
+    const candidates = [value, data, nestedData].filter(isRecord);
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate.sessions)) return candidate.sessions as AdminSession[];
+      if (Array.isArray(candidate.items)) return candidate.items as AdminSession[];
+      if (Array.isArray(candidate.data)) return candidate.data as AdminSession[];
+    }
+  }
+  throw new Error('Admin sessions response was not a list');
+};
+
+const normalizeStats = (value: unknown): SessionStats => {
+  const payload = getObjectPayload(value);
+  const statsValue = isRecord(payload) ? payload : {};
+  return {
+    totalSessions: safeNumber(statsValue.total ?? statsValue.totalSessions),
+    activeSessions: safeNumber(statsValue.active ?? statsValue.activeSessions),
+    mfaVerifiedSessions: safeNumber(statsValue.mfaVerified ?? statsValue.mfaVerifiedSessions),
+    uniqueAdmins: safeNumber(statsValue.uniqueAdmins),
+    jitActive: safeNumber(statsValue.jitActive),
+    breakGlassActive: safeNumber(statsValue.breakGlassActive),
+  };
+};
+
 const AdminSessionsView: React.FC = () => {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -68,25 +134,25 @@ const AdminSessionsView: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setError(null);
       const [sessionsData, statsData] = await Promise.all([
         Api.getAdminSessions(),
         Api.getAdminSessionStats(),
       ]);
-      const nextSessions = (sessionsData as any)?.sessions;
-      setSessions(Array.isArray(nextSessions) ? nextSessions : []);
-      // Map API response to expected interface
-      const mappedStats = statsData as any;
-      setStats({
-        totalSessions: mappedStats.total || 0,
-        activeSessions: mappedStats.active || 0,
-        mfaVerifiedSessions: mappedStats.mfaVerified || 0,
-        uniqueAdmins: mappedStats.uniqueAdmins || 0,
-        jitActive: mappedStats.jitActive || 0,
-        breakGlassActive: mappedStats.breakGlassActive || 0,
-      });
-    } catch (err: any) {
-      setError(err.message || 'Failed to load sessions');
+      if (!hasListShape(sessionsData, ['sessions', 'items'])) {
+        throw new Error('Admin sessions response was not a list');
+      }
+      const nextSessions = normalizeSessions(sessionsData);
+      const nextStats = normalizeStats(statsData);
+      setSessions(nextSessions);
+      setStats(nextStats);
+      return { sessions: nextSessions, stats: nextStats } satisfies SessionsSnapshot;
+    } catch (err: unknown) {
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to load sessions'));
+      setSessions([]);
+      setStats(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -95,13 +161,14 @@ const AdminSessionsView: React.FC = () => {
   const handleRevokeSession = async (sessionId: string) => {
     try {
       setActionLoading(sessionId);
+      setError(null);
       await Api.revokeAdminSession(sessionId);
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      if (stats) {
-        setStats({ ...stats, activeSessions: stats.activeSessions - 1 });
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.sessions.some((session) => session.id === sessionId)) {
+        throw new Error('Admin session revocation was not confirmed by the server');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to revoke session');
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to revoke session'));
     } finally {
       setActionLoading(null);
     }
@@ -116,17 +183,22 @@ const AdminSessionsView: React.FC = () => {
 
     try {
       setActionLoading('all');
+      setError(null);
       await Api.revokeAllAdminSessions(undefined, 'bulk_revoke');
-      await loadData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to revoke all sessions');
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.sessions.length > 0) {
+        throw new Error('Bulk admin session revocation was not confirmed by the server');
+      }
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to revoke all sessions'));
     } finally {
       setActionLoading(null);
     }
   };
 
   const getDeviceIcon = (userAgent: string) => {
-    const ua = userAgent.toLowerCase();
+    const safeUserAgent = String(userAgent || '');
+    const ua = safeUserAgent.toLowerCase();
     if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
       return <Smartphone className="w-4 h-4" />;
     }
@@ -134,11 +206,14 @@ const AdminSessionsView: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return 'Unknown date';
+    const date = new Date(dateString);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
   };
 
   const isExpired = (expiresAt: string) => {
-    return new Date(expiresAt) < new Date();
+    const date = new Date(expiresAt);
+    return !Number.isNaN(date.getTime()) && date < new Date();
   };
 
   if (loading) {
@@ -152,89 +227,93 @@ const AdminSessionsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Users className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Sessions</p>
-              <p className="text-xl font-semibold">{stats?.totalSessions || 0}</p>
-            </div>
-          </div>
+      {loadError ? (
+        <Card variant="bordered" className="p-6">
+          <DegradedState title="Admin sessions unavailable" description={loadError} />
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <Users className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Total Sessions</p>
+                <p className="text-xl font-semibold">{stats?.totalSessions || 0}</p>
+              </div>
+            </div>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg">
-              <Shield className="w-5 h-5 text-emerald-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <Shield className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Active Sessions</p>
+                <p className="text-xl font-semibold">{stats?.activeSessions || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Active Sessions</p>
-              <p className="text-xl font-semibold">{stats?.activeSessions || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-500/10 rounded-lg">
-              <ShieldCheck className="w-5 h-5 text-violet-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary-500/10 rounded-lg">
+                <ShieldCheck className="w-5 h-5 text-primary-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">MFA Verified</p>
+                <p className="text-xl font-semibold">{stats?.mfaVerifiedSessions || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">MFA Verified</p>
-              <p className="text-xl font-semibold">{stats?.mfaVerifiedSessions || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg">
-              <Users className="w-5 h-5 text-amber-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <Users className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Unique Admins</p>
+                <p className="text-xl font-semibold">{stats?.uniqueAdmins || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Unique Admins</p>
-              <p className="text-xl font-semibold">{stats?.uniqueAdmins || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-sky-500/10 rounded-lg">
-              <Clock className="w-5 h-5 text-sky-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-sky-500/10 rounded-lg">
+                <Clock className="w-5 h-5 text-sky-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">JIT Active</p>
+                <p className="text-xl font-semibold">{stats?.jitActive || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">JIT Active</p>
-              <p className="text-xl font-semibold">{stats?.jitActive || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-500/10 rounded-lg">
-              <ShieldX className="w-5 h-5 text-rose-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-500/10 rounded-lg">
+                <ShieldX className="w-5 h-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Break-glass</p>
+                <p className="text-xl font-semibold">{stats?.breakGlassActive || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Break-glass</p>
-              <p className="text-xl font-semibold">{stats?.breakGlassActive || 0}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
+          <div role="alert" className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
               Dismiss
             </button>
           </div>
@@ -254,8 +333,8 @@ const AdminSessionsView: React.FC = () => {
           </button>
           <button
             onClick={handleRevokeAll}
-            disabled={actionLoading === 'all' || sessions.length === 0}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors disabled:opacity-50"
+            disabled={!!loadError || actionLoading === 'all' || sessions.length === 0}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors disabled:opacity-50"
           >
             {actionLoading === 'all' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -269,116 +348,123 @@ const AdminSessionsView: React.FC = () => {
 
       {/* Sessions Table */}
       <CardWithHeader title="Admin Sessions" subtitle={`${sessions.length} active sessions`}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Admin
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Device
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  IP Address
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  MFA
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Created
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Expires
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                    No active sessions found
-                  </td>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Active admin sessions unavailable" description={loadError} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Admin
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Device
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    IP Address
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    MFA
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Created
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Expires
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                sessions.map((session) => (
-                  <tr
-                    key={session.id}
-                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium">
-                          {session.admin.firstName} {session.admin.lastName}
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {session.admin.email}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {getDeviceIcon(session.userAgent)}
-                        <span className="text-sm text-slate-300 truncate max-w-[200px]">
-                          {session.userAgent.split(' ')[0]}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                        <span className="text-sm">{session.ipAddress || 'Unknown'}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      {session.mfaVerified ? (
-                        <span className="flex items-center gap-1 text-emerald-400">
-                          <ShieldCheck className="w-4 h-4" />
-                          Verified
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-amber-400">
-                          <ShieldX className="w-4 h-4" />
-                          Not Verified
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1 text-sm text-slate-300">
-                        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                        {formatDate(session.createdAt)}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-sm ${isExpired(session.expiresAt) ? 'text-red-400' : 'text-slate-300'}`}
-                      >
-                        {formatDate(session.expiresAt)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleRevokeSession(session.id)}
-                        disabled={actionLoading === session.id}
-                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                        title="Revoke Session"
-                      >
-                        {actionLoading === session.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
+              </thead>
+              <tbody>
+                {sessions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
+                      No active sessions found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  sessions.map((session) => (
+                    <tr
+                      key={session.id}
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">
+                            {session.admin?.firstName || 'Unknown'} {session.admin?.lastName || ''}
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {session.admin?.email || 'Unknown admin'}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          {getDeviceIcon(session.userAgent)}
+                          <span className="text-sm text-slate-300 truncate max-w-[200px]">
+                            {String(session.userAgent || 'Unknown device').split(' ')[0]}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-slate-500 dark:text-slate-500" />
+                          <span className="text-sm">{session.ipAddress || 'Unknown'}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {session.mfaVerified ? (
+                          <span className="flex items-center gap-1 text-emerald-400">
+                            <ShieldCheck className="w-4 h-4" />
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-amber-400">
+                            <ShieldX className="w-4 h-4" />
+                            Not Verified
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1 text-sm text-slate-300">
+                          <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
+                          {formatDate(session.createdAt)}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`text-sm ${isExpired(session.expiresAt) ? 'text-rose-400' : 'text-slate-300'}`}
+                        >
+                          {formatDate(session.expiresAt)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => handleRevokeSession(session.id)}
+                          disabled={actionLoading === session.id}
+                          aria-label={`Revoke admin session ${session.id}`}
+                          className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                          title="Revoke Session"
+                        >
+                          {actionLoading === session.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardWithHeader>
     </div>
   );

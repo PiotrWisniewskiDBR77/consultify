@@ -520,7 +520,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!formData.email || !formData.password) {
+    const form = e.currentTarget instanceof HTMLFormElement ? e.currentTarget : null;
+    const emailInput = form?.elements.namedItem('email');
+    const passwordInput = form?.elements.namedItem('password');
+    const submittedEmail = (
+      emailInput instanceof HTMLInputElement ? emailInput.value : formData.email
+    ).trim();
+    const submittedPassword =
+      passwordInput instanceof HTMLInputElement ? passwordInput.value : formData.password;
+
+    if (!submittedEmail || !submittedPassword) {
       setError('Email and password are required');
       return;
     }
@@ -529,7 +538,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
       setIsDemoLoading(true);
       try {
-        const user = await Api.login(formData.email, formData.password);
+        const user = await Api.login(submittedEmail, submittedPassword);
         await Api.enterDemo();
         onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
@@ -541,7 +550,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
 
     // Check if email is from DBR77 domain
-    if (!isDBR77Domain(formData.email)) {
+    if (!isDBR77Domain(submittedEmail)) {
       // Non-DBR77 users should use demo mode
       setShowDemoRedirect(true);
       return;
@@ -554,7 +563,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     while (retries > 0) {
       try {
         console.log('Calling Api.login... (attempts remaining:', retries, ')');
-        const user = await Api.login(formData.email, formData.password);
+        const user = await Api.login(submittedEmail, submittedPassword);
 
         // Verify token was stored
         const token = localStorage.getItem('token');
@@ -623,7 +632,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setIsPending(false);
           setStep(AuthStep.LOGIN);
         }}
-        className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline text-sm transition-colors"
+        className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline text-sm transition-colors"
       >
         Back to Login
       </button>
@@ -633,8 +642,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Demo redirect for non-DBR77 users
   const renderDemoRedirect = () => (
     <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
-      <div className="w-16 h-16 bg-purple-100 dark:bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-200 dark:border-purple-500/20 shadow-[0_0_15px_-3px_rgba(147,51,234,0.3)]">
-        <Sparkles className="text-purple-600 dark:text-purple-400" size={32} />
+      <div className="w-16 h-16 bg-primary-100 dark:bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary-200 dark:border-primary-500/20 shadow-[0_0_15px_-3px_rgba(147,51,234,0.3)]">
+        <Sparkles className="text-primary-600 dark:text-primary-400" size={32} />
       </div>
       <div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
@@ -651,14 +660,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDemoRedirectToForm}
-          className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
         >
           {t('auth.signUpForDemo', 'Sign up for Demo')}
           <ArrowRight size={16} />
         </button>
         <button
           onClick={handleDemoRedirectToLogin}
-          className="w-full py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-navy-900 dark:text-white font-semibold rounded-lg hover:border-purple-300 dark:hover:border-purple-500/30 transition-all"
+          className="w-full py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-navy-900 dark:text-white font-semibold rounded-lg hover:border-primary-300 dark:hover:border-primary-500/30 transition-all"
         >
           {t('auth.logInForDemo', 'Log in for Demo')}
         </button>
@@ -678,7 +687,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setFromDemoRedirect(false);
           setError(null);
         }}
-        className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline text-sm transition-colors"
+        className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline text-sm transition-colors"
       >
         {t('auth.back', 'Back')}
       </button>
@@ -709,7 +718,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
           placeholder="WPISZ KOD (np. ABCD1234)"
           autoComplete="off"
-          className="w-full px-4 py-3 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-navy-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:bg-slate-50 dark:focus:bg-navy-900 outline-none transition-all shadow-sm dark:shadow-inner"
+          className="w-full px-4 py-3 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-navy-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:bg-slate-50 dark:focus:bg-navy-900 outline-none transition-all shadow-sm dark:shadow-inner"
         />
         {inviteCodeInfo?.code && (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
@@ -727,7 +736,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20">
           <AlertCircle size={16} />
           {error}
         </div>
@@ -793,38 +802,39 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              {t('auth.firstName')} <span className="text-purple-500 dark:text-purple-400">*</span>
+              {t('auth.firstName')}{' '}
+              <span className="text-primary-500 dark:text-primary-400">*</span>
             </label>
             <input
               required
               value={formData.firstName}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
             />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              {t('auth.lastName')} <span className="text-purple-500 dark:text-purple-400">*</span>
+              {t('auth.lastName')} <span className="text-primary-500 dark:text-primary-400">*</span>
             </label>
             <input
               required
               value={formData.lastName}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            {t('auth.email')} <span className="text-purple-500 dark:text-purple-400">*</span>
+            {t('auth.email')} <span className="text-primary-500 dark:text-primary-400">*</span>
           </label>
           <input
             type="email"
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
@@ -836,7 +846,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
@@ -848,7 +858,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <input
               value={formData.companyName}
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
             />
           </div>
         )}
@@ -869,13 +879,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
               setInviteCodeInfo(null);
             }}
             placeholder={t('auth.accessCodePlaceholder')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            {t('auth.password')} <span className="text-purple-500 dark:text-purple-400">*</span>
+            {t('auth.password')} <span className="text-primary-500 dark:text-primary-400">*</span>
           </label>
           <input
             type="password"
@@ -883,12 +893,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             minLength={8}
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
           />
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20 mt-4">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20 mt-4">
             <AlertCircle size={16} />
             {error}
           </div>
@@ -900,20 +910,20 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="checkbox"
               checked={hasAcceptedLegal}
               onChange={(e) => setHasAcceptedLegal(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
             />
             <span>
               {t('auth.legalConsentPrefix', 'I agree to the')}{' '}
               <a
                 href={ROUTES.LEGAL.TERMS}
-                className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+                className="font-medium text-primary-600 hover:underline dark:text-primary-400"
               >
                 {t('auth.termsLink', 'Terms of Service')}
               </a>{' '}
               {t('auth.legalConsentAnd', 'and')}{' '}
               <a
                 href={ROUTES.LEGAL.PRIVACY}
-                className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+                className="font-medium text-primary-600 hover:underline dark:text-primary-400"
               >
                 {t('auth.privacyLink', 'Privacy Policy')}
               </a>
@@ -924,14 +934,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {t('auth.legalReviewNote', 'Review pricing and legal materials in')}{' '}
             <a
               href={ROUTES.LEGAL.SUBSCRIPTION}
-              className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+              className="font-medium text-primary-600 hover:underline dark:text-primary-400"
             >
               {t('auth.subscriptionLink', 'Subscription Terms')}
             </a>{' '}
             {t('auth.legalReviewDivider', 'or visit the')}{' '}
             <a
               href={ROUTES.LEGAL.CENTER}
-              className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+              className="font-medium text-primary-600 hover:underline dark:text-primary-400"
             >
               {t('auth.legalCenterLink', 'Legal Center')}
             </a>
@@ -939,7 +949,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </p>
         </div>
 
-        <button className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group text-sm">
+        <button className="w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 group text-sm">
           {t('auth.createStart')}
           <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </button>
@@ -982,7 +992,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {t('auth.haveAccount')}{' '}
           <button
             onClick={() => setStep(AuthStep.LOGIN)}
-            className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline"
+            className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline"
           >
             {t('auth.logIn')}
           </button>
@@ -1031,11 +1041,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </label>
           <input
             type="email"
+            name="email"
+            autoComplete="email"
             required
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) => setFormData((current) => ({ ...current, email: e.target.value }))}
             data-testid="email-input"
-            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
         </div>
 
@@ -1047,23 +1059,25 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <button
               type="button"
               onClick={() => (window.location.href = '/forgot-password')}
-              className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+              className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
             >
               {t('auth.forgotPassword')}
             </button>
           </div>
           <input
             type="password"
+            name="password"
+            autoComplete="current-password"
             required
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={(e) => setFormData((current) => ({ ...current, password: e.target.value }))}
             data-testid="password-input"
-            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
+            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20">
             <AlertCircle size={16} />
             {error}
           </div>
@@ -1072,7 +1086,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="submit"
           data-testid="login-button"
-          className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 mt-2 text-sm"
+          className="w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 mt-2 text-sm"
         >
           {t('auth.logIn')}
         </button>
@@ -1114,7 +1128,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {t('auth.noAccount')}{' '}
         <button
           onClick={() => setStep(AuthStep.REGISTER)}
-          className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline"
+          className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline"
         >
           {t('auth.createOne')}
         </button>
@@ -1138,21 +1152,21 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="text-center pt-3 border-t border-slate-200 dark:border-navy-700">
         <a
           href={ROUTES.LEGAL.PRIVACY}
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
         <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
         <a
           href={ROUTES.LEGAL.TERMS}
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
         </a>
         <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
         <a
           href={ROUTES.LEGAL.CENTER}
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.legalCenterLink', 'Legal Center')}
         </a>
@@ -1163,7 +1177,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   return (
     <div className="flex flex-col items-center justify-center w-full h-full bg-slate-50 dark:bg-navy-950 p-6 relative overflow-hidden transition-colors duration-300">
       {/* Decorative BG */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-100/50 dark:from-purple-900/20 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary-100/50 dark:from-primary-900/20 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
 
       {/* Card Container */}
       <div className="relative w-full max-w-sm bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700 shadow-2xl rounded-xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300 transition-colors">
@@ -1237,7 +1251,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 placeholder="••••"
                 aria-label={t('auth.quickAccessPinAria', 'Four-digit quick access PIN')}
-                className="w-24 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                className="w-24 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
               />
               <span className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[14rem] text-center leading-tight">
                 {t(
@@ -1259,7 +1273,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         {isDemoLoading && (
           <div className="text-center py-12 space-y-4 animate-in fade-in zoom-in-95 duration-300">
-            <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto shadow-lg shadow-purple-500/20"></div>
+            <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto shadow-lg shadow-primary-500/20"></div>
             <p className="text-slate-600 dark:text-slate-300 font-medium animate-pulse">
               {t('auth.loading', 'Initializing Demo Context...')}
             </p>
@@ -1288,7 +1302,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="mt-8 flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
         <a
           href="/"
-          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 dark:hover:border-purple-500/30 text-sm transition-all group"
+          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-500/30 text-sm transition-all group"
         >
           <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           {t('auth.backToStart')}

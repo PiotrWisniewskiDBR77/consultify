@@ -26,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
@@ -37,19 +38,10 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
-import {
-  buildDeepThinkingConfirmCardContent,
-  buildDeepThinkingConfirmedContext,
-  buildDeepThinkingConfirmMessageMetadata,
-  buildDeepThinkingReportMetadata,
-  type DeepThinkingPendingConfirmBase,
-  shouldOpenDeepThinkingClarification,
-} from '../components/AIChat/deepThinkingRuntime';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
-import { ResearchClarification } from '../components/AIChat/ResearchClarification';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
@@ -137,6 +129,8 @@ function downloadFile(filename: string, content: string, mimeType: string): void
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // App state
   const {
@@ -184,9 +178,14 @@ export const AIChatWelcomeView: React.FC = () => {
 
   // Deep Thinking confirm state
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
-  const [dtPendingConfirm, setDtPendingConfirm] = useState<DeepThinkingPendingConfirmBase | null>(
-    null
-  );
+  const [dtPendingConfirm, setDtPendingConfirm] = useState<{
+    messageId: string;
+    conversationId: string | null;
+    originalMessage: string;
+    editedMessage: string;
+    confirm: any;
+    context: any;
+  } | null>(null);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
@@ -236,19 +235,7 @@ export const AIChatWelcomeView: React.FC = () => {
             artifacts: artifacts as any,
             citations: meta?.citations,
             streamSessionId: meta?.sessionId,
-            extra:
-              aiConfig?.deepResearch || (aiConfig as any)?.marketResearch || meta?.proposal
-                ? {
-                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                      ? buildDeepThinkingReportMetadata({
-                          confirm: dtPendingConfirm?.confirm,
-                          report: safeText,
-                          streamSessionId: meta?.sessionId,
-                        })
-                      : {}),
-                    ...(meta?.proposal ? { proposal: meta.proposal } : {}),
-                  }
-                : {},
+            extra: meta?.proposal ? { proposal: meta.proposal } : {},
           }) as any,
         });
 
@@ -414,12 +401,7 @@ export const AIChatWelcomeView: React.FC = () => {
   });
 
   // Action handler for AI-initiated actions
-  const {
-    executeAction,
-    confirmAction,
-    pendingActions,
-    isExecuting: isActionExecuting,
-  } = useActionHandler();
+  const { executeAction, isExecuting: isActionExecuting } = useActionHandler();
 
   // Local state
   const [citationsCollapsed, setCitationsCollapsed] = useState(false);
@@ -678,26 +660,6 @@ export const AIChatWelcomeView: React.FC = () => {
     [executeAction, addMessage]
   );
 
-  // Handle pending action confirmation
-  const handleConfirmPendingAction = useCallback(
-    async (actionId: string, confirmed: boolean) => {
-      const result = await confirmAction(actionId, confirmed);
-
-      if (result.status === 'success') {
-        const convId = activeConversationIdRef.current;
-        if (convId) {
-          void addMessage({
-            conversationId: convId,
-            role: 'ai',
-            content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
-            messageType: 'text',
-          });
-        }
-      }
-    },
-    [confirmAction, addMessage]
-  );
-
   const handleTeresaProposalUpdated = useCallback(
     async (proposal: TeresaChatProposal) => {
       const convId = activeConversationIdRef.current;
@@ -819,62 +781,36 @@ For example: REMEMBER: preferred_language: Polish`;
   );
 
   // Handle Deep Thinking proceed (after user confirms)
-  const startDeepThinkingRun = useCallback(
-    (pendingConfirm: NonNullable<typeof dtPendingConfirm>) => {
-      const history = activeChatMessagesRef.current
-        .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
-        .map((m) => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.content }],
-        }));
-
-      const systemPrompt = buildSystemPrompt();
-
-      startStream(
-        pendingConfirm.editedMessage || pendingConfirm.originalMessage,
-        history,
-        systemPrompt,
-        buildDeepThinkingConfirmedContext(pendingConfirm),
-        undefined,
-        undefined,
-        chatLanguage
-      );
-
-      setDtPendingConfirm(null);
-    },
-    [buildSystemPrompt, startStream, chatLanguage]
-  );
-
   const handleDeepThinkingProceed = useCallback(async () => {
     if (!dtPendingConfirm) return;
     if (isStreaming) return;
-    if (
-      shouldOpenDeepThinkingClarification(
-        dtPendingConfirm.confirm,
-        dtPendingConfirm.clarificationHandled
-      ) &&
-      !dtPendingConfirm.clarificationRequested
-    ) {
-      setDtPendingConfirm((prev) => (prev ? { ...prev, clarificationRequested: true } : prev));
-      return;
-    }
-    startDeepThinkingRun(dtPendingConfirm);
-  }, [dtPendingConfirm, isStreaming, startDeepThinkingRun]);
 
-  const handleDeepThinkingClarificationComplete = useCallback(
-    async (answers: Record<string, string> | null) => {
-      if (!dtPendingConfirm || isStreaming) return;
-      const nextPendingConfirm = {
-        ...dtPendingConfirm,
-        clarificationRequested: false,
-        clarificationHandled: true,
-        clarificationAnswers: answers,
-      };
-      setDtPendingConfirm(nextPendingConfirm);
-      startDeepThinkingRun(nextPendingConfirm);
-    },
-    [dtPendingConfirm, isStreaming, startDeepThinkingRun]
-  );
+    const history = activeChatMessagesRef.current
+      .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }],
+      }));
+
+    const systemPrompt = buildSystemPrompt();
+
+    // Start stream with Deep Thinking context confirmed
+    startStream(
+      dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
+      history,
+      systemPrompt,
+      {
+        ...(dtPendingConfirm.context || {}),
+        deepThinkingConfirmed: true,
+        deepThinkingConfirm: dtPendingConfirm.confirm,
+      },
+      undefined,
+      undefined,
+      chatLanguage
+    );
+
+    setDtPendingConfirm(null);
+  }, [dtPendingConfirm, isStreaming, buildSystemPrompt, startStream, chatLanguage]);
 
   // Handle sending a message
   const handleSend = useCallback(
@@ -932,6 +868,15 @@ For example: REMEMBER: preferred_language: Polish`;
         filename: string;
         mimeType?: string;
         size?: number;
+        extractionStatus?: string;
+      }> = [];
+      const failedAttachments: Array<{
+        filename: string;
+        mimeType?: string;
+        size?: number;
+        error: string;
+        code?: string;
+        extractionStatus?: string;
       }> = [];
 
       for (const file of files) {
@@ -963,14 +908,32 @@ For example: REMEMBER: preferred_language: Polish`;
             filename: file.name,
             mimeType: file.type || undefined,
             size: file.size,
+            extractionStatus: String((resp as any)?.extractionStatus || 'extracted'),
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('[AIChatWelcomeView] Failed to upload attachment:', err);
+          failedAttachments.push({
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+            error:
+              String(err?.data?.error || err?.message || '').trim() ||
+              t('aiChat.attachmentUploadFailed', 'Nie udało się odczytać pliku.'),
+            code: typeof err?.data?.code === 'string' ? err.data.code : undefined,
+            extractionStatus:
+              typeof err?.data?.extractionStatus === 'string'
+                ? err.data.extractionStatus
+                : 'failed',
+          });
         }
       }
 
       const attachmentDocIds = Array.from(
-        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+        new Set(
+          uploadedAttachments.length > 0
+            ? uploadedAttachments.map((a) => a.docId)
+            : existingAttachmentDocIds
+        )
       );
 
       // Add user message
@@ -989,8 +952,8 @@ For example: REMEMBER: preferred_language: Polish`;
           content: message.trim(),
           messageType: 'text',
           metadata:
-            uploadedAttachments.length > 0
-              ? ({ attachments: uploadedAttachments } as any)
+            uploadedAttachments.length > 0 || failedAttachments.length > 0
+              ? ({ attachments: uploadedAttachments, failedAttachments } as any)
               : undefined,
         });
       } catch (err) {
@@ -1022,6 +985,7 @@ For example: REMEMBER: preferred_language: Polish`;
         conversationLanguage: chatLanguage,
         attachmentDocIds,
         attachments: uploadedAttachments,
+        failedAttachments,
         virtualWorkerSlug: 'teresa',
         proposalMode: 'proposal_first',
       };
@@ -1063,7 +1027,27 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
           const c = (confirmRes as any)?.confirm || {};
           const u = c?.understanding || {};
-          const md = buildDeepThinkingConfirmCardContent(c);
+          const md = [
+            '**My understanding of your task**',
+            `- Goal: ${u.goal || ''}`,
+            u.context ? `- Context: ${u.context}` : '',
+            Array.isArray(u.constraints) && u.constraints.length
+              ? `- Constraints: ${u.constraints.join('; ')}`
+              : '',
+            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+            '',
+            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                  .slice(0, 3)
+                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                  .join('\n')}`
+              : '',
+            '',
+            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+          ]
+            .filter(Boolean)
+            .join('\n');
 
           let confirmMessageId = `dt-confirm-${Date.now()}`;
           try {
@@ -1072,11 +1056,10 @@ When citing knowledge base articles, always reference them by article_id (slug).
               role: 'ai',
               content: md,
               messageType: 'text',
-              metadata: buildDeepThinkingConfirmMessageMetadata({
-                originalMessage: message.trim(),
-                confirm: c,
-                confirmToken: (confirmRes as any)?.confirmToken || null,
-              }) as any,
+              metadata: {
+                deepThinking: { kind: 'confirm', originalMessage: message.trim() },
+                deepThinkingConfirm: c,
+              } as any,
             });
             confirmMessageId = (saved as any)?.id || confirmMessageId;
           } catch (persistErr) {
@@ -1090,7 +1073,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
             editedMessage: message.trim(),
             confirm: c,
             context: fullContext,
-            confirmToken: (confirmRes as any)?.confirmToken || null,
           });
 
           return; // Don't start stream yet - wait for user to confirm
@@ -1146,6 +1128,25 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
   // F1.1: Consume chatKickoffMessage on full-screen chat (mobile/tablet from Help → Ask AI)
   const kickoffSentRef = useRef<string | null>(null);
+  const queryKickoffHandledRef = useRef(false);
+  useEffect(() => {
+    if (queryKickoffHandledRef.current) return;
+
+    const rawPrompt = searchParams.get('prompt');
+    if (!rawPrompt) return;
+    queryKickoffHandledRef.current = true;
+
+    const normalizedPrompt = rawPrompt.trim().slice(0, 8000);
+    if (normalizedPrompt.length > 0) {
+      setChatKickoffMessage(normalizedPrompt);
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('prompt');
+    const nextSearch = nextParams.toString();
+    navigate(nextSearch ? `/chat?${nextSearch}` : '/chat', { replace: true });
+  }, [navigate, searchParams, setChatKickoffMessage]);
+
   useEffect(() => {
     if (!chatKickoffMessage) return;
     if (isStreaming) return;
@@ -1382,7 +1383,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
     // Show visual feedback - "krzyk" (scream)
     const alertDiv = document.createElement('div');
     alertDiv.className =
-      'fixed top-4 right-4 z-50 p-4 bg-red-600 text-white rounded-lg shadow-xl animate-pulse';
+      'fixed top-4 right-4 z-50 p-4 bg-rose-600 text-white rounded-lg shadow-xl animate-pulse';
     alertDiv.innerHTML = `
             <div class="flex items-center gap-2">
                 <span class="text-2xl">⚠️</span>
@@ -1506,7 +1507,27 @@ When citing knowledge base articles, always reference them by article_id (slug).
             );
             const c = (confirmRes as any)?.confirm || {};
             const u = c?.understanding || {};
-            const md = buildDeepThinkingConfirmCardContent(c);
+            const md = [
+              '**My understanding of your task**',
+              `- Goal: ${u.goal || ''}`,
+              u.context ? `- Context: ${u.context}` : '',
+              Array.isArray(u.constraints) && u.constraints.length
+                ? `- Constraints: ${u.constraints.join('; ')}`
+                : '',
+              u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+              u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+              '',
+              Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+                ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                    .slice(0, 3)
+                    .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                    .join('\n')}`
+                : '',
+              '',
+              '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+            ]
+              .filter(Boolean)
+              .join('\n');
 
             let confirmMessageId = `dt-confirm-${Date.now()}`;
             try {
@@ -1515,11 +1536,10 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 role: 'ai',
                 content: md,
                 messageType: 'text',
-                metadata: buildDeepThinkingConfirmMessageMetadata({
-                  originalMessage: newText,
-                  confirm: c,
-                  confirmToken: (confirmRes as any)?.confirmToken || null,
-                }) as any,
+                metadata: {
+                  deepThinking: { kind: 'confirm', originalMessage: newText },
+                  deepThinkingConfirm: c,
+                } as any,
               });
               confirmMessageId = (saved as any)?.id || confirmMessageId;
             } catch (persistErr) {
@@ -1532,7 +1552,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
               editedMessage: newText,
               confirm: c,
               context: fullContext,
-              confirmToken: (confirmRes as any)?.confirmToken || null,
             });
           } finally {
             setDtConfirmBusy(false);
@@ -1613,7 +1632,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
       <div
         className={`h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative ${
           isPrivateMode
-            ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+            ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
             : 'ring-1 ring-transparent'
         }`}
       >
@@ -1640,7 +1659,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               />
               {isPrivateMode && (
                 <div
-                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
+                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300"
                   title={t(
                     'aiChat.menu.modes.privateMode.desc',
                     'Disable memory injection and personalization for this chat'
@@ -1732,19 +1751,19 @@ When citing knowledge base articles, always reference them by article_id (slug).
                       </div>
                     )}
 
-                    {/* Retry status line - only show when the stream is retrying */}
-                    {isAiMessage &&
-                      isStreamingThis &&
-                      !displayContent &&
-                      streamStartedAt &&
-                      retryInfo && (
-                        <div className="mb-2 max-w-[85%]">
-                          <ThinkingStatusLine
-                            label={`Reconnecting to the response stream (${retryInfo.attempt}/${retryInfo.maxRetries})...`}
-                            compact
-                          />
-                        </div>
-                      )}
+                    {/* Thinking Status Line - elapsed time + retry info */}
+                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && (
+                      <div className="mb-2 max-w-[85%]">
+                        <ThinkingStatusLine
+                          label={
+                            retryInfo
+                              ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
+                              : 'Preparing answer...'
+                          }
+                          compact
+                        />
+                      </div>
+                    )}
 
                     <div
                       className={`inline-block max-w-[85%] ${
@@ -1861,7 +1880,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                         !isStreamingThis &&
                         (msg as any).metadata?.deepThinking?.kind === 'confirm' &&
                         dtPendingConfirm?.messageId === msg.id && (
-                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
                             <div className="flex flex-col gap-3">
                               <div className="text-sm font-medium text-primary-700 dark:text-primary-300">
                                 {t(
@@ -1886,14 +1905,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleDeepThinkingProceed}
-                                  disabled={
-                                    dtConfirmBusy ||
-                                    isStreaming ||
-                                    shouldOpenDeepThinkingClarification(
-                                      dtPendingConfirm.confirm,
-                                      dtPendingConfirm.clarificationHandled
-                                    )
-                                  }
+                                  disabled={dtConfirmBusy || isStreaming}
                                   className="px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                   {dtConfirmBusy
@@ -1910,28 +1922,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
                                   {t('common.cancel', 'Cancel')}
                                 </button>
                               </div>
-                              {dtPendingConfirm.clarificationRequested ? (
-                                <ResearchClarification
-                                  message={
-                                    dtPendingConfirm.editedMessage ||
-                                    dtPendingConfirm.originalMessage
-                                  }
-                                  onComplete={handleDeepThinkingClarificationComplete}
-                                  onCancel={() =>
-                                    setDtPendingConfirm((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            clarificationRequested: false,
-                                            clarificationHandled: true,
-                                            clarificationAnswers: null,
-                                          }
-                                        : prev
-                                    )
-                                  }
-                                  className="mt-3"
-                                />
-                              ) : null}
                             </div>
                           </div>
                         )}
@@ -1981,46 +1971,12 @@ When citing knowledge base articles, always reference them by article_id (slug).
             </div>
           </div>
 
-          {/* Pending Actions Banner */}
-          {pendingActions.length > 0 && (
-            <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
-              <div className="max-w-5xl mx-auto">
-                {pendingActions.map((pa) => {
-                  const message =
-                    typeof pa.payload?.message === 'string'
-                      ? pa.payload.message
-                      : t('aiChat.pendingAction', 'Action requires confirmation');
-
-                  return (
-                    <div key={pa.id} className="flex items-center justify-between text-sm">
-                      <span className="text-yellow-800 dark:text-yellow-200">🔔 {message}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleConfirmPendingAction(pa.id, true)}
-                          className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
-                        >
-                          Potwierdź
-                        </button>
-                        <button
-                          onClick={() => handleConfirmPendingAction(pa.id, false)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
-                        >
-                          Anuluj
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Continuous Voice Mode Indicator */}
           {continuousVoiceMode && (
             <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
               <div className="max-w-5xl mx-auto flex items-center justify-center gap-3 text-sm">
                 <span
-                  className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`}
+                  className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'}`}
                 />
                 <span className="text-primary-700 dark:text-primary-300">
                   {voiceState.isListening
@@ -2036,7 +1992,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 )}
                 <button
                   onClick={handleContinuousVoiceToggle}
-                  className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                  className="px-3 py-1 bg-rose-500 text-white rounded-md text-xs hover:bg-rose-600"
                 >
                   Zatrzymaj
                 </button>
@@ -2073,7 +2029,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 onStopGenerating={abortStream}
                 onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
                 teresaVoiceStatus={teresaVoice.voiceStatus}
-                teresaVoiceError={teresaVoice.voiceError}
+                teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
                 teresaVoiceMuted={teresaVoice.isMuted}
                 onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
                 isStreaming={isStreaming}
@@ -2206,7 +2163,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
               onStopGenerating={abortStream}
               onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
               teresaVoiceStatus={teresaVoice.voiceStatus}
-              teresaVoiceError={teresaVoice.voiceError}
+              teresaVoiceAvailable={teresaVoice.voiceAvailable}
+              teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
               teresaVoiceMuted={teresaVoice.isMuted}
               onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
               isStreaming={isStreaming}
@@ -2240,8 +2198,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
                   'aiChat.homeCards.market.desc',
                   'Research a market, competitors, and positioning'
                 ),
-                color: 'text-violet-500',
-                bg: 'bg-violet-50 dark:bg-violet-900/20',
+                color: 'text-primary-500',
+                bg: 'bg-primary-50 dark:bg-primary-900/20',
                 onClick: () => {
                   const kickoff = t(
                     'aiChat.homeCards.market.kickoff',

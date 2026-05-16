@@ -42,9 +42,9 @@ interface Props {
 const EVIDENCE_ICONS: Record<string, React.ReactNode> = {
   direct: <Zap size={12} className="text-emerald-500" />,
   aggregated: <Layers size={12} className="text-blue-500" />,
-  split: <GitMerge size={12} className="text-violet-500" />,
+  split: <GitMerge size={12} className="text-primary-500" />,
   derived: <Sparkles size={12} className="text-amber-500" />,
-  manual_note: <PenLine size={12} className="text-cyan-500" />,
+  manual_note: <PenLine size={12} className="text-blue-500" />,
 };
 
 const EVIDENCE_LABELS: Record<string, { en: string; pl: string }> = {
@@ -63,12 +63,12 @@ const MAPPING_STATUS_CONFIG: Record<
   manual: {
     label: { en: 'Manual', pl: 'Ręczne' },
     icon: <PenLine size={10} />,
-    dotColor: 'bg-cyan-400',
+    dotColor: 'bg-blue-400',
   },
   computed: {
     label: { en: 'Computed', pl: 'Obliczone' },
     icon: <Sparkles size={10} />,
-    dotColor: 'bg-violet-400',
+    dotColor: 'bg-primary-400',
   },
   unmapped: {
     label: { en: 'Unmapped', pl: 'Brak' },
@@ -399,7 +399,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                         {explain.originalLabel}
                       </span>
                       <ArrowRight size={10} className="flex-shrink-0 text-slate-400" />
-                      <span className="truncate rounded bg-cyan-50 px-1.5 py-0.5 font-medium text-cyan-700 shadow-sm dark:bg-cyan-500/10 dark:text-cyan-300">
+                      <span className="truncate rounded bg-blue-50 px-1.5 py-0.5 font-medium text-blue-700 shadow-sm dark:bg-blue-500/10 dark:text-blue-300">
                         {explain.mappedTo || explain.lineCode || '—'}
                       </span>
                     </div>

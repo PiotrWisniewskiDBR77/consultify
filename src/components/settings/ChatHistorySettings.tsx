@@ -13,6 +13,11 @@ interface ChatHistorySettingsProps {
   className?: string;
 }
 
+const extractErrorCode = (error: unknown): string | null => {
+  const maybe = error as { data?: { code?: string } };
+  return typeof maybe?.data?.code === 'string' ? maybe.data.code : null;
+};
+
 export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [retentionDays, setRetentionDays] = useState(90);
@@ -29,8 +34,10 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
     try {
       await Api.clearChatHistory();
       toast.success(t('settings.chat.cleared', 'Chat history cleared'));
-    } catch (_error) {
-      toast.error(t('settings.chat.clearError', 'Failed to clear history'));
+    } catch (error) {
+      const fallback = t('settings.chat.clearError', 'Failed to clear history');
+      const code = extractErrorCode(error);
+      toast.error(code ? `${fallback} (${code})` : fallback);
     }
   };
 
@@ -43,8 +50,10 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
       a.download = 'chat-history.json';
       a.click();
       URL.revokeObjectURL(url);
-    } catch (_error) {
-      toast.error(t('settings.chat.exportError', 'Failed to export history'));
+    } catch (error) {
+      const fallback = t('settings.chat.exportError', 'Failed to export history');
+      const code = extractErrorCode(error);
+      toast.error(code ? `${fallback} (${code})` : fallback);
     }
   };
 
@@ -117,7 +126,7 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
         </button>
         <button
           onClick={handleClearHistory}
-          className="flex items-center gap-2 px-4 py-2 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
         >
           <Trash2 size={16} />
           {t('settings.chat.clear', 'Clear All History')}

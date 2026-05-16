@@ -71,7 +71,7 @@ export const ConsultantPanelView = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setCurrentView(AppView.CONSULTANT_INVITES)}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors font-medium shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/30 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors font-medium shadow-sm"
             >
               <Plus size={18} />
               {t('consultant.panel.createInvite')}
@@ -84,7 +84,7 @@ export const ConsultantPanelView = () => {
           <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
               <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-                <Building size={20} className="text-purple-500" />
+                <Building size={20} className="text-primary-500" />
                 {t('consultant.panel.linkedOrgs')}
               </h2>
               <span className="text-xs font-medium px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 rounded-full">
@@ -109,7 +109,7 @@ export const ConsultantPanelView = () => {
                 </p>
                 <button
                   onClick={() => setCurrentView(AppView.CONSULTANT_INVITES)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-medium"
                 >
                   {t('consultant.panel.inviteClient')}
                 </button>
@@ -127,7 +127,7 @@ export const ConsultantPanelView = () => {
                           {org.name.substring(0, 2)}
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                          <h3 className="text-lg font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {org.name}
                           </h3>
                           <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -144,7 +144,7 @@ export const ConsultantPanelView = () => {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => handleSwitchToOrg(org.id)}
-                          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:border-purple-500 hover:text-purple-500 dark:hover:text-purple-400 transition-all font-medium text-sm"
+                          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:border-primary-500 hover:text-primary-500 dark:hover:text-primary-400 transition-all font-medium text-sm"
                         >
                           {t('consultant.panel.openWorkspace')}
                           <ExternalLink size={16} />

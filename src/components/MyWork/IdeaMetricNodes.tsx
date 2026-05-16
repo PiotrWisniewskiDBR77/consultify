@@ -34,10 +34,10 @@ export const KPIBadgeNode: React.FC<NodeProps> = ({ data, selected }) => {
       text: 'text-amber-700 dark:text-amber-300',
     },
     off_track: {
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      border: 'border-red-300 dark:border-red-700',
-      icon: <TrendingDown size={12} className="text-red-500" />,
-      text: 'text-red-700 dark:text-red-300',
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      border: 'border-rose-300 dark:border-rose-700',
+      icon: <TrendingDown size={12} className="text-rose-500" />,
+      text: 'text-rose-700 dark:text-rose-300',
     },
     neutral: {
       bg: 'bg-slate-50 dark:bg-navy-800',
@@ -99,8 +99,8 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
       : percentage >= 50
         ? 'from-amber-400 to-amber-600'
         : percentage >= 25
-          ? 'from-orange-400 to-orange-600'
-          : 'from-red-400 to-red-600';
+          ? 'from-amber-400 to-amber-600'
+          : 'from-rose-400 to-rose-600';
 
   const textColor =
     percentage >= 75
@@ -108,8 +108,8 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
       : percentage >= 50
         ? 'text-amber-600 dark:text-amber-400'
         : percentage >= 25
-          ? 'text-orange-600 dark:text-orange-400'
-          : 'text-red-600 dark:text-red-400';
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-rose-600 dark:text-rose-400';
 
   return (
     <div
@@ -182,8 +182,8 @@ export const ProgressNode: React.FC<NodeProps> = ({ data, selected }) => {
       : progress >= 50
         ? 'bg-amber-400'
         : progress >= 25
-          ? 'bg-orange-400'
-          : 'bg-red-400';
+          ? 'bg-amber-400'
+          : 'bg-rose-400';
 
   const textColor =
     progress >= 75

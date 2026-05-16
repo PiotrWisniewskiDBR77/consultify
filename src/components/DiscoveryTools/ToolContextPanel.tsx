@@ -35,6 +35,7 @@ interface ToolContextPanelProps {
   generatedInitiatives?: { id: string; title: string; status?: string }[];
   recentInitiatives?: { id: string; title: string; status?: string }[];
   chatSnippets?: { role: string; content: string }[];
+  embedded?: boolean;
 }
 
 const getReadinessTone = (readiness: 'blocked' | 'needs-work' | 'ready') =>
@@ -113,6 +114,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   generatedInitiatives = [],
   recentInitiatives = [],
   chatSnippets = [],
+  embedded = false,
 }) => {
   const [missionComment, setMissionComment] = React.useState('');
   const generationStatus = session.sessionGenerationStatus || 'idle';
@@ -174,23 +176,201 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   const porterData = toolType === 'market-forces' ? (session.inputData as PorterData) : null;
   const isDynamicSwotMission = toolType === 'dynamic-swot' && currentStepId === 'mission';
 
+  if (embedded) {
+    const insightText =
+      aiContent ||
+      coach?.whyNow ||
+      (readiness
+        ? readiness.label
+        : isPolish
+          ? 'AI analizuje bieżącą fazę narzędzia, kompletność danych i gotowość do przejścia w outputy.'
+          : 'AI reviews the current tool phase, data completeness, and readiness to move into outputs.');
+    const recommendations = [
+      coach?.nextQuestion,
+      swotSignals?.missingEvidence?.[0],
+      generatedInitiatives.length > 0
+        ? isPolish
+          ? 'Sprawdź, które wygenerowane inicjatywy powinny przejść do portfela wykonawczego.'
+          : 'Review which generated initiatives should move into the execution portfolio.'
+        : null,
+    ].filter(Boolean) as string[];
+
+    return (
+      <div className="space-y-5">
+        <div className="rounded-3xl border border-primary-200/70 bg-primary-500/5 p-5 dark:border-primary-900/40 dark:bg-primary-950/10">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+                AI Collaboration Panel
+              </div>
+              <h2 className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Centrum pracy AI dla tej sesji' : 'AI workspace for this session'}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                {isPolish
+                  ? 'Tu trafiają wszystkie podpowiedzi, rekomendacje i uzasadnienia AI. Panel nie zabiera już szerokości canvasowi narzędzia.'
+                  : 'All AI hints, recommendations, and rationale live here. The panel no longer takes width away from the tool canvas.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenChat}
+              className="inline-flex items-center gap-2 rounded-full border border-primary-300/50 bg-white/70 px-4 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-white dark:border-primary-800/50 dark:bg-white/[0.04] dark:text-primary-200"
+            >
+              <MessageSquareText className="h-4 w-4" />
+              {isPolish ? 'Otwórz chat' : 'Open chat'}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-3">
+          <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-900/50">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <Sparkles className="h-4 w-4 text-primary-500" />
+              <span>AI insights</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {insightText}
+            </p>
+            {readiness && (
+              <div
+                className={`mt-4 rounded-2xl border px-3 py-2 text-xs ${getReadinessTone(readiness.readiness)}`}
+              >
+                {readiness.label}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-900/50">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <Lightbulb className="h-4 w-4 text-amber-500" />
+              <span>AI recommendations</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {(recommendations.length > 0
+                ? recommendations
+                : [
+                    isPolish
+                      ? 'Doprecyzuj brakujące dane wejściowe, zaakceptuj wartościowe karty AI i przejdź do syntezy outputów.'
+                      : 'Clarify missing inputs, accept useful AI cards, and move into output synthesis.',
+                  ]
+              ).map((item, index) => (
+                <div
+                  key={`${item}-${index}`}
+                  className="rounded-2xl bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:bg-navy-950/50 dark:text-slate-300"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-900/50">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <BookOpen className="h-4 w-4 text-slate-500" />
+              <span>{isPolish ? 'Organization context' : 'Organization context'}</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {orgName || (isPolish ? 'Brak profilu organizacji' : 'No organization profile')}
+            </p>
+            <div className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 text-xs leading-relaxed text-slate-500 dark:border-navy-700/70 dark:bg-navy-950/50 dark:text-slate-400">
+              {isPolish
+                ? 'Uzasadnienie AI: rekomendacje powinny być interpretowane przez pryzmat organizacji, jej aktualnego kontekstu i celu sesji, a nie jako generyczna lista dobrych praktyk.'
+                : 'AI rationale: recommendations should be interpreted through the organization, current context, and session goal, not as a generic best-practice list.'}
+            </div>
+          </div>
+        </div>
+
+        {swotData && (
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-900/50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <span>{isPolish ? 'Kolejka propozycji AI' : 'AI proposal queue'}</span>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  [isPolish ? 'Sygnały' : 'Signals', proposalCounts?.signals || 0],
+                  [isPolish ? 'Karty' : 'Cards', proposalCounts?.items || 0],
+                  [isPolish ? 'Napięcia' : 'Tensions', proposalCounts?.tensions || 0],
+                  [isPolish ? 'Outputy' : 'Outputs', proposalCounts?.outputs || 0],
+                ].map(([label, value]) => (
+                  <div
+                    key={String(label)}
+                    className="rounded-2xl bg-slate-50/80 px-3 py-2 dark:bg-navy-950/50"
+                  >
+                    <div className="text-[11px] text-slate-400">{label}</div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+                      {value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-900/50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <span>{isPolish ? 'Luki jakościowe' : 'Quality gaps'}</span>
+              </div>
+              <div className="mt-3 space-y-2">
+                {(swotSignals?.missingEvidence || []).slice(0, 4).length > 0 ? (
+                  (swotSignals?.missingEvidence || []).slice(0, 4).map((gap, index) => (
+                    <div
+                      key={`${gap}-${index}`}
+                      className="rounded-2xl bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:bg-navy-950/50 dark:text-slate-300"
+                    >
+                      {gap}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak krytycznych luk wejściowych.' : 'No critical input gaps.'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {porterData && (
+          <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-900/50">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <ArrowRight className="h-4 w-4 text-slate-500" />
+              <span>{isPolish ? 'Stan sesji' : 'Session state'}</span>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:bg-navy-950/50 dark:text-slate-300">
+                {porterData.context.industry || (isPolish ? 'Brak branży' : 'Missing industry')}
+              </div>
+              <div className="rounded-2xl bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:bg-navy-950/50 dark:text-slate-300">
+                {porterData.context.geographicScope ||
+                  (isPolish ? 'Brak zakresu geograficznego' : 'Missing geographic scope')}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (isDynamicSwotMission) {
     return (
-      <div className="flex w-[34%] min-w-[360px] max-w-[460px] flex-col border-l border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
+      <div className="space-y-4">
         <div className="border-b border-slate-200 px-5 py-4 dark:border-navy-700">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-medium text-slate-900 dark:text-white">
               {isPolish ? 'Praca z AI' : 'Work with AI'}
             </h3>
-            <span className="inline-flex rounded-full border border-violet-300/40 bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-800/50 dark:text-violet-300">
+            <span className="inline-flex rounded-full border border-primary-300/40 bg-primary-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-800/50 dark:text-primary-300">
               AI
             </span>
           </div>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
-          <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+          <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
               {isPolish ? 'Tryb pracy' : 'Working mode'}
             </div>
             <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -213,13 +393,13 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                   ? 'Np. za mocno akcentujemy marżę; dodaj perspektywę rynku niemieckiego i pokaż to bardziej jak decyzję zarządczą.'
                   : 'E.g. we are over-weighting margin; add the German market perspective and frame this more like a leadership decision.'
               }
-              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             />
             <button
               onClick={onOpenChat}
               className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200"
             >
-              <MessageSquareText className="h-4 w-4 text-violet-500" />
+              <MessageSquareText className="h-4 w-4 text-primary-500" />
               {isPolish ? 'Przenieś to do czatu AI' : 'Take this to AI chat'}
             </button>
           </div>
@@ -263,7 +443,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
             <button
               onClick={onGenerateFullSession}
               disabled={!onGenerateFullSession || generationStatus === 'generating'}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-700 dark:hover:bg-violet-600"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary-700 dark:hover:bg-primary-600"
             >
               {generationStatus === 'generating' ? (
                 <>
@@ -297,7 +477,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   }
 
   return (
-    <div className="flex w-96 flex-col border-l border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
+    <div className="space-y-4">
       <div className="border-b border-slate-200 p-4 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white">
           {isPolish ? 'AI Collaboration Panel' : 'AI Collaboration Panel'}
@@ -306,14 +486,14 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {generationStatus === 'generating' && (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4 dark:border-violet-800/40 dark:bg-violet-950/20">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
+          <div className="rounded-2xl border border-primary-200 bg-primary-50/50 p-4 dark:border-primary-800/40 dark:bg-primary-950/20">
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary-700 dark:text-primary-300">
               <Sparkles className="h-4 w-4 animate-pulse" />
               <span>
                 {isPolish ? 'AI przygotowuje sesję...' : 'AI is preparing your session...'}
               </span>
             </div>
-            <p className="mt-2 text-xs text-violet-600 dark:text-violet-400">
+            <p className="mt-2 text-xs text-primary-600 dark:text-primary-400">
               {isPolish
                 ? 'Konsultant AI generuje pełną propozycję: sygnały, macierz SWOT, napięcia, ruchy strategiczne i propozycje outputów.'
                 : 'AI consultant is generating a full proposal: signals, SWOT matrix, tensions, strategic moves, and output proposals.'}
@@ -322,11 +502,11 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
         )}
 
         {generationStatus === 'ready' && proposalCounts && proposalCounts.total > 0 && (
-          <div className="rounded-2xl border border-violet-200 bg-white p-4 dark:border-violet-800/40 dark:bg-navy-900/40">
+          <div className="rounded-2xl border border-primary-200 bg-white p-4 dark:border-primary-800/40 dark:bg-navy-900/40">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-              <Sparkles className="h-4 w-4 text-violet-500" />
+              <Sparkles className="h-4 w-4 text-primary-500" />
               <span>{isPolish ? 'Propozycje AI' : 'AI Proposals'}</span>
-              <span className="ml-auto rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+              <span className="ml-auto rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
                 {proposalCounts.total} {isPolish ? 'do przeglądu' : 'to review'}
               </span>
             </div>
@@ -438,7 +618,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           <>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                <Sparkles className="h-4 w-4 text-violet-500" />
+                <Sparkles className="h-4 w-4 text-primary-500" />
                 <span>{isPolish ? 'Next question' : 'Next question'}</span>
               </div>
               <p className="text-sm text-slate-700 dark:text-slate-300">{coach?.nextQuestion}</p>

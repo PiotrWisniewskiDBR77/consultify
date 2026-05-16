@@ -55,9 +55,9 @@ const STATUS_CONFIG = {
   },
   rejected: {
     label: { en: 'Rejected', pl: 'Odrzucony' },
-    color: 'bg-red-500',
-    textColor: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-500/20',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
   },
 };
 
@@ -70,7 +70,7 @@ const SOURCE_CONFIG = {
   ai: {
     label: { en: 'AI', pl: 'AI' },
     icon: Sparkles,
-    color: 'text-purple-500',
+    color: 'text-primary-500',
   },
   team: {
     label: { en: 'Team', pl: 'Zespół' },
@@ -120,8 +120,8 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/20">
-            <Zap size={18} className="text-cyan-500 dark:text-cyan-400" />
+          <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20">
+            <Zap size={18} className="text-blue-500 dark:text-blue-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Pomysły realizacji' : 'Implementation Ideas'}
@@ -147,7 +147,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                   onGenerateAI();
                 }}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={isPolish ? 'Generuj AI' : 'Generate AI'}
               >
                 {isGenerating ? (
@@ -209,7 +209,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                           idea.status === 'selected'
                             ? 'border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-500/10'
                             : isEditing
-                              ? 'border-cyan-300 dark:border-cyan-500/50 bg-cyan-50/50 dark:bg-cyan-500/5'
+                              ? 'border-blue-300 dark:border-blue-500/50 bg-blue-50/50 dark:bg-blue-500/5'
                               : 'border-slate-200 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-800/50'
                         }`}
                       >
@@ -228,7 +228,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                               disabled={readOnly}
                               className={`flex flex-col items-center p-1.5 rounded-lg transition-colors ${
                                 idea.votedByMe
-                                  ? 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400'
+                                  ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                                   : 'hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400'
                               }`}
                             >
@@ -290,7 +290,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                   e.stopPropagation();
                                   onRemove(idea.id);
                                 }}
-                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -323,7 +323,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                   }
                                   rows={3}
                                   disabled={readOnly}
-                                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-cyan-400 resize-none"
+                                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 resize-none"
                                   placeholder={
                                     isPolish
                                       ? 'Opisz szczegóły pomysłu...'
@@ -347,7 +347,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onAdd}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-cyan-400 dark:hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   >
                     <Plus size={18} />
                     <span className="text-sm font-medium">

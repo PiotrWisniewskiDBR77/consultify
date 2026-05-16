@@ -69,7 +69,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
   const getFileIcon = (type: string, size: number = 24) => {
     if (type.startsWith('image/')) return <FileImage size={size} className="text-blue-400" />;
-    if (type === 'application/pdf') return <FileText size={size} className="text-red-400" />;
+    if (type === 'application/pdf') return <FileText size={size} className="text-rose-400" />;
     if (type.includes('spreadsheet') || type.includes('excel') || type === 'text/csv')
       return <FileSpreadsheet size={size} className="text-emerald-400" />;
     if (type.includes('document') || type.includes('word'))
@@ -234,7 +234,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                     <motion.div
                       animate={{ y: [0, -5, 0] }}
                       transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                      className="inline-block mb-4 p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20"
+                      className="inline-block mb-4 p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20"
                     >
                       <Upload size={40} className="text-blue-500 dark:text-blue-400" />
                     </motion.div>
@@ -320,10 +320,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                 e.stopPropagation();
                                 handleDeleteClick(attachment);
                               }}
-                              className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-red-50 dark:hover:bg-red-500/20"
+                              className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-rose-50 dark:hover:bg-rose-500/20"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
-                              <Trash2 size={12} className="text-red-500" />
+                              <Trash2 size={12} className="text-rose-500" />
                             </button>
                           )}
                         </div>
@@ -395,10 +395,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         handleDeleteClick(previewAttachment);
                         setPreviewAttachment(null);
                       }}
-                      className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
+                      className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors"
                       title={isPolish ? 'Usuń' : 'Delete'}
                     >
-                      <Trash2 size={18} className="text-red-500" />
+                      <Trash2 size={18} className="text-rose-500" />
                     </button>
                   )}
                   <button

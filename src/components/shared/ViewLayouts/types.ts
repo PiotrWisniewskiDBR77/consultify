@@ -65,7 +65,7 @@ export interface ListSection {
   icon?: ReactNode;
   /** Items in this section */
   items: GenericListItem[];
-  /** Optional accent color class (e.g. "text-cyan-400") */
+  /** Optional accent color class (e.g. "text-blue-400") */
   accentColor?: string;
 }
 

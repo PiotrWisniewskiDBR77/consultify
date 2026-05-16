@@ -36,7 +36,7 @@ export const FinanceVersionTimeline: React.FC<FinanceVersionTimelineProps> = ({ 
               <span
                 className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
                   snap.versionType === 'actual'
-                    ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300'
+                    ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-300'
                     : 'bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300'
                 }`}
               >

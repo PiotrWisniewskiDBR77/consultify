@@ -86,10 +86,10 @@ const MetricCard: React.FC<{
 }> = ({ title, value, subtitle, icon, trend, color, onClick }) => {
   const colorStyles = {
     red: {
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      border: 'border-red-200 dark:border-red-800/50',
-      icon: 'text-red-500',
-      value: 'text-red-700 dark:text-red-300',
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      border: 'border-rose-200 dark:border-rose-800/50',
+      icon: 'text-rose-500',
+      value: 'text-rose-700 dark:text-rose-300',
     },
     amber: {
       bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -104,10 +104,10 @@ const MetricCard: React.FC<{
       value: 'text-green-700 dark:text-green-300',
     },
     purple: {
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-200 dark:border-purple-800/50',
-      icon: 'text-purple-500',
-      value: 'text-purple-700 dark:text-purple-300',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      border: 'border-primary-200 dark:border-primary-800/50',
+      icon: 'text-primary-500',
+      value: 'text-primary-700 dark:text-primary-300',
     },
     blue: {
       bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -134,7 +134,7 @@ const MetricCard: React.FC<{
         {trend && (
           <span
             className={`text-xs flex items-center gap-0.5 ${
-              trend.direction === 'up' ? 'text-red-500' : 'text-green-500'
+              trend.direction === 'up' ? 'text-rose-500' : 'text-green-500'
             }`}
           >
             {trend.direction === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -170,16 +170,16 @@ const AlertSection: React.FC<{
       icon: 'text-amber-500',
     },
     red: {
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      border: 'border-red-200 dark:border-red-800/50',
-      badge: 'bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-300',
-      icon: 'text-red-500',
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      border: 'border-rose-200 dark:border-rose-800/50',
+      badge: 'bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300',
+      icon: 'text-rose-500',
     },
     purple: {
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-200 dark:border-purple-800/50',
-      badge: 'bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300',
-      icon: 'text-purple-500',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      border: 'border-primary-200 dark:border-primary-800/50',
+      badge: 'bg-primary-100 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300',
+      icon: 'text-primary-500',
     },
   };
 
@@ -341,7 +341,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -355,7 +355,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
       <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-lg shadow-sm">
+            <div className="p-2 bg-gradient-to-br from-rose-500 to-amber-600 text-white rounded-lg shadow-sm">
               <AlertTriangle size={20} />
             </div>
             <div>
@@ -440,7 +440,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
         {criticalDecisions.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <Flame size={14} className="text-red-500" />
+              <Flame size={14} className="text-rose-500" />
               {t('decisions.criticalDecisions', 'Critical Decisions')}
             </h3>
             <div className="space-y-2">
@@ -506,13 +506,13 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                 <button
                   key={d.id}
                   onClick={() => onDecisionClick?.(d.id)}
-                  className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-red-100 dark:border-red-800/30 hover:border-red-300 transition-colors"
+                  className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-rose-100 dark:border-rose-800/30 hover:border-rose-300 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
                       {d.title}
                     </span>
-                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-300 font-medium">
+                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 font-medium">
                       {d.blockedCount} blocked
                     </span>
                   </div>
@@ -537,13 +537,13 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                 <button
                   key={owner.userId}
                   onClick={() => onUserClick?.(owner.userId)}
-                  className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-purple-100 dark:border-purple-800/30 hover:border-purple-300 transition-colors"
+                  className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-primary-100 dark:border-primary-800/30 hover:border-primary-300 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
                       {owner.name}
                     </span>
-                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300 font-medium">
+                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300 font-medium">
                       {owner.pendingCount} pending
                     </span>
                   </div>

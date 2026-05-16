@@ -115,7 +115,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       case 'admin':
         return 'text-amber-400 bg-amber-500/10';
       case 'user':
-        return 'text-violet-400 bg-violet-500/10';
+        return 'text-primary-400 bg-primary-500/10';
       default:
         return 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10';
     }
@@ -147,7 +147,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <History className="w-5 h-5 text-violet-400" />
+          <History className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Settings Audit Log</h3>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             ({filteredEntries.length} entries)
@@ -179,7 +179,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                 p-2 rounded transition-colors
                                 ${
                                   showFilterPanel
-                                    ? 'bg-violet-500/20 text-violet-400'
+                                    ? 'bg-primary-500/20 text-primary-400'
                                     : 'text-slate-400 dark:text-slate-500 hover:text-white'
                                 }
                             `}
@@ -212,7 +212,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                         w-full pl-9 pr-4 py-2 rounded-lg
                                         bg-slate-700/50 border border-slate-600/50
                                         text-white placeholder-slate-500
-                                        focus:outline-none focus:border-violet-500/50
+                                        focus:outline-none focus:border-primary-500/50
                                     "
                 />
                 {filterSearch && (
@@ -234,7 +234,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                         px-3 py-2 rounded-lg
                                         bg-slate-700/50 border border-slate-600/50
                                         text-white
-                                        focus:outline-none focus:border-violet-500/50
+                                        focus:outline-none focus:border-primary-500/50
                                     "
                 >
                   <option value="">All levels</option>

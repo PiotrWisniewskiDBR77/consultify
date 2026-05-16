@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -10,6 +11,10 @@ vi.mock('react-i18next', () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 vi.mock('../../../src/services/api', () => ({
@@ -46,6 +51,14 @@ vi.mock('../../../src/services/api/v8/results', () => ({
 import { KPITimeSeriesDrawer } from '../../../src/components/Results/KPITimeSeriesDrawer';
 import { Api } from '../../../src/services/api';
 import { V8ResultsApi } from '../../../src/services/api/v8/results';
+
+function renderDrawer(props: React.ComponentProps<typeof KPITimeSeriesDrawer>) {
+  return render(
+    <MemoryRouter>
+      <KPITimeSeriesDrawer {...props} />
+    </MemoryRouter>
+  );
+}
 
 describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
   beforeEach(() => {
@@ -116,7 +129,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       },
     } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -143,7 +156,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockRejectedValue({ status: 404 });
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(Api.get).toHaveBeenCalledWith('/benefits/kpis/kpi-1/time-series');
@@ -154,7 +167,14 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
   it('records KPI time-series through the governed V8 route before legacy fallback', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
-      kpis: [{ id: 'kpi-1', name: 'KPI Alpha', measurementFrequency: 'MONTHLY', createdAt: '2026-01-01T00:00:00.000Z' }],
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
       mappings: [],
     } as any);
     vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
@@ -172,7 +192,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       periodKey: '2026-03',
     } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -196,13 +216,23 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       });
     });
 
-    expect(Api.post).not.toHaveBeenCalledWith('/benefits/kpis/kpi-1/time-series', expect.anything());
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/benefits/kpis/kpi-1/time-series',
+      expect.anything()
+    );
   });
 
   it('falls back to legacy KPI time-series record only for bounded compatibility errors', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
-      kpis: [{ id: 'kpi-1', name: 'KPI Alpha', measurementFrequency: 'MONTHLY', createdAt: '2026-01-01T00:00:00.000Z' }],
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
       mappings: [],
     } as any);
     vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
@@ -214,7 +244,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.createKpiTimeSeriesValue).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({ success: true, data: { id: 'ts-1' } } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -269,7 +299,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.updateKpi).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -361,7 +391,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       },
     } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('Calculation')).toBeInTheDocument();
@@ -405,7 +435,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.updateKpi).mockRejectedValue({ status: 404 });
     vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -458,7 +488,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       initiativeId: 'init-1',
     } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -505,7 +535,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.createKpiMapping).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({ success: true, data: { id: 'map-1' } } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -556,7 +586,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.deleteKpiMapping).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -604,7 +634,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.deleteKpiMapping).mockRejectedValue({ status: 404 });
     vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -645,9 +675,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.deleteKpi).mockResolvedValue({ success: true } as any);
 
-    render(
-      <KPITimeSeriesDrawer kpiId="kpi-1" onClose={onClose} onValueRecorded={onValueRecorded} />
-    );
+    renderDrawer({ kpiId: 'kpi-1', onClose, onValueRecorded });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -691,9 +719,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.deleteKpi).mockRejectedValue({ status: 404 });
     vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
 
-    render(
-      <KPITimeSeriesDrawer kpiId="kpi-1" onClose={onClose} onValueRecorded={onValueRecorded} />
-    );
+    renderDrawer({ kpiId: 'kpi-1', onClose, onValueRecorded });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -740,7 +766,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.acknowledgeDeviationCase).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -789,7 +815,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.acknowledgeDeviationCase).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -836,7 +862,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.updateDeviationCaseRca).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -857,7 +883,10 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       });
     });
 
-    expect(Api.put).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/rca', expect.anything());
+    expect(Api.put).not.toHaveBeenCalledWith(
+      '/benefits/deviation-cases/case-1/rca',
+      expect.anything()
+    );
   });
 
   it('falls back to legacy deviation RCA save only for bounded compatibility errors', async () => {
@@ -891,7 +920,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.updateDeviationCaseRca).mockRejectedValue({ status: 404 });
     vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -945,7 +974,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       caseId: 'case-1',
     } as any);
 
-    const { container } = render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    const { container } = renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -970,7 +999,10 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       });
     });
 
-    expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/actions', expect.anything());
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/benefits/deviation-cases/case-1/actions',
+      expect.anything()
+    );
   });
 
   it('falls back to legacy deviation action create only for bounded compatibility errors', async () => {
@@ -1003,7 +1035,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.createDeviationAction).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({ success: true, data: { id: 'action-1' } } as any);
 
-    const { container } = render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    const { container } = renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1065,7 +1097,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.updateDeviationAction).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1085,7 +1117,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
 
     expect(Api.put).not.toHaveBeenCalledWith(
       '/benefits/deviation-cases/case-1/actions/action-1',
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -1126,7 +1158,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.updateDeviationAction).mockRejectedValue({ status: 404 });
     vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1174,7 +1206,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.resolveDeviationCase).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1223,7 +1255,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.resolveDeviationCase).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1269,7 +1301,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     } as any);
     vi.mocked(V8ResultsApi.closeDeviationCase).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1281,12 +1313,11 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
     fireEvent.change(
       screen.getByPlaceholderText('Describe the evidence that confirms the deviation is closed.'),
-      { target: { value: 'Verified mitigation in review pack' } },
+      { target: { value: 'Verified mitigation in review pack' } }
     );
-    fireEvent.change(
-      screen.getByPlaceholderText('Resolution notes for audit trail (optional)'),
-      { target: { value: 'Closed after governance review' } },
-    );
+    fireEvent.change(screen.getByPlaceholderText('Resolution notes for audit trail (optional)'), {
+      target: { value: 'Closed after governance review' },
+    });
     fireEvent.click(screen.getByText('Close'));
 
     await waitFor(() => {
@@ -1297,7 +1328,10 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       });
     });
 
-    expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/close', expect.anything());
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/benefits/deviation-cases/case-1/close',
+      expect.anything()
+    );
   });
 
   it('falls back to legacy deviation close only for bounded compatibility errors', async () => {
@@ -1330,7 +1364,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     vi.mocked(V8ResultsApi.closeDeviationCase).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
 
-    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+    renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
@@ -1342,12 +1376,11 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
     fireEvent.change(
       screen.getByPlaceholderText('Describe the evidence that confirms the deviation is closed.'),
-      { target: { value: 'Verified mitigation in review pack' } },
+      { target: { value: 'Verified mitigation in review pack' } }
     );
-    fireEvent.change(
-      screen.getByPlaceholderText('Resolution notes for audit trail (optional)'),
-      { target: { value: 'Closed after governance review' } },
-    );
+    fireEvent.change(screen.getByPlaceholderText('Resolution notes for audit trail (optional)'), {
+      target: { value: 'Closed after governance review' },
+    });
     fireEvent.click(screen.getByText('Close'));
 
     await waitFor(() => {

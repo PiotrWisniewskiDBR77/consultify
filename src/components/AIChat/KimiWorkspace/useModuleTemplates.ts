@@ -14,6 +14,9 @@ const LANE_TO_TEMPLATE_TYPE: Record<KimiLane, TemplateType> = {
   wordy: 'report',
   excele: 'sheet',
   prezentacje: 'presentation',
+  // Tabele uses the existing 'sheet' template family. Sprint 5 may introduce
+  // a dedicated 'table' family — keeping 'sheet' is additive-safe today.
+  tabele: 'sheet',
 };
 
 export function useModuleTemplates(lane: KimiLane) {

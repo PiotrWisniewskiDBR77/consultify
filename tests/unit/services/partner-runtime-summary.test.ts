@@ -10,6 +10,7 @@ vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getReferralAnalytics: vi.fn(),
     getEarningsSummary: vi.fn(),
+    getProgramStatus: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status);
@@ -24,6 +25,7 @@ import { V8PartnerApi } from '@/services/api/v8';
 describe('loadPartnerRuntimeSummary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue(null as any);
   });
 
   it('prefers V8 partner runtime summary seams', async () => {

@@ -68,8 +68,8 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     detail: (id) => `/presentations?deck=${encodeURIComponent(id)}`,
   },
   excele: {
-    list: '/excele',
-    detail: (id) => `/excele?artifactId=${encodeURIComponent(id)}`,
+    list: '/tabele',
+    detail: (id) => `/tabele?artifactId=${encodeURIComponent(id)}`,
   },
   results: {
     list: '/benefits',

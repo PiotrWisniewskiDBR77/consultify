@@ -84,10 +84,10 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
 
       {/* AI Narrative */}
       {report.aiNarrative && (
-        <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-500/20 p-4">
+        <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={16} className="text-violet-500" />
-            <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+            <Sparkles size={16} className="text-primary-500" />
+            <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">
               AI Summary
             </span>
           </div>
@@ -175,7 +175,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
       {content.blockers.length > 0 && (
         <TaskListSection
           title="Blockers & Issues"
-          icon={<AlertTriangle size={16} className="text-red-500" />}
+          icon={<AlertTriangle size={16} className="text-rose-500" />}
           variant="blocked"
           items={content.blockers.map((item: any) => ({
             id: item.id,
@@ -211,7 +211,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
       {/* Next Period Plan */}
       <TaskListSection
         title="Plan for Next Period"
-        icon={<CalendarDays size={16} className="text-violet-500" />}
+        icon={<CalendarDays size={16} className="text-primary-500" />}
         variant="default"
         items={content.nextPeriodPlan.map((item: any) => ({
           id: item.id,
@@ -268,7 +268,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           project.blockers > 0
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                         }`}
                       >

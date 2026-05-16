@@ -13,13 +13,13 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromRoute('/superadmin/overview')).toBe(AppView.SUPERADMIN_OVERVIEW);
     expect(getAppViewFromRoute('/superadmin/customers')).toBe(AppView.SUPERADMIN_CUSTOMERS);
     expect(getAppViewFromRoute('/superadmin/customers/communication')).toBe(
-      AppView.SUPERADMIN_COMMUNICATION,
+      AppView.SUPERADMIN_COMMUNICATION
     );
     expect(getAppViewFromRoute('/superadmin/customers/commercial')).toBe(
-      AppView.SUPERADMIN_REVENUE,
+      AppView.SUPERADMIN_REVENUE
     );
     expect(getAppViewFromRoute('/superadmin/customers/commercial/invoices')).toBe(
-      AppView.SUPERADMIN_INVOICES,
+      AppView.SUPERADMIN_INVOICES
     );
   });
 
@@ -27,11 +27,29 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/chat/abc')).toBe(AppView.AI_CHAT);
   });
 
-  it('keeps the dedicated V10 runtime route internal-only', () => {
-    expect(ROUTES.AI_CHAT_V10_RUNTIME).toBe('/internal/v10-runtime');
-    expect(getAppViewFromPath('/internal/v10-runtime')).toBe(AppView.AI_CHAT_V10_RUNTIME);
-    expect(getAppViewFromPath('/chat/v10-runtime')).toBe(AppView.AI_CHAT);
-    expect(getRouteFromAppView(AppView.AI_CHAT_V10_RUNTIME)).toBe('/internal/v10-runtime');
+  it('does not expose the removed Wnioski route', () => {
+    expect('CONCLUSIONS' in ROUTES).toBe(false);
+    expect(getAppViewFromPath('/wnioski')).toBeNull();
+  });
+
+  it('maps AI OS manual-test modules to mounted runtime panels', () => {
+    expect(getRouteFromAppView(AppView.AI_OS_HOME)).toBe('/ai');
+    expect(getRouteFromAppView(AppView.AI_OS_ACTION_CENTER)).toBe('/ai/action-center');
+    expect(getRouteFromAppView(AppView.AI_OS_CONTEXT_MEMORY)).toBe('/ai/context');
+    expect(getRouteFromAppView(AppView.AI_OS_CONNECTORS)).toBe('/ai/connectors');
+    expect(getRouteFromAppView(AppView.AI_OS_AGENTS)).toBe('/ai/agents');
+    expect(getRouteFromAppView(AppView.AI_OS_OUTCOMES)).toBe('/ai/outcomes');
+
+    expect(getAppViewFromPath('/ai')).toBe(AppView.AI_OS_HOME);
+    expect(getAppViewFromPath('/ai-os')).toBe(AppView.AI_OS_HOME);
+    expect(getAppViewFromPath('/ai/actions')).toBe(AppView.AI_OS_ACTION_CENTER);
+    expect(getAppViewFromPath('/ai/action-center')).toBe(AppView.AI_OS_ACTION_CENTER);
+    expect(getAppViewFromPath('/ai/memory')).toBe(AppView.AI_OS_CONTEXT_MEMORY);
+    expect(getAppViewFromPath('/ai/context')).toBe(AppView.AI_OS_CONTEXT_MEMORY);
+    expect(getAppViewFromPath('/ai/connectors')).toBe(AppView.AI_OS_CONNECTORS);
+    expect(getAppViewFromPath('/ai/agents')).toBe(AppView.AI_OS_AGENTS);
+    expect(getAppViewFromPath('/ai/aiops')).toBe(AppView.AI_OS_OUTCOMES);
+    expect(getAppViewFromPath('/ai/outcomes')).toBe(AppView.AI_OS_OUTCOMES);
   });
 
   it('knowledge routes resolve to the docs-backed knowledge base view', () => {
@@ -77,10 +95,10 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/superadmin/analytics')).toBe(AppView.SUPERADMIN_ANALYTICS);
     expect(getAppViewFromPath('/superadmin/configuration')).toBe(AppView.SUPERADMIN_CONFIGURATION);
     expect(getAppViewFromPath('/superadmin/customers/communication')).toBe(
-      AppView.SUPERADMIN_COMMUNICATION,
+      AppView.SUPERADMIN_COMMUNICATION
     );
     expect(getAppViewFromPath('/superadmin/customers/commercial/billing')).toBe(
-      AppView.SUPERADMIN_BILLING,
+      AppView.SUPERADMIN_BILLING
     );
   });
 
@@ -103,10 +121,29 @@ describe('routeConfig helpers', () => {
   it('getRouteFromAppView: maps settings entrypoints to mounted settings sections', () => {
     expect(getRouteFromAppView(AppView.SETTINGS_AI)).toBe('/settings/ai-behavior');
     expect(getRouteFromAppView(AppView.SETTINGS_NOTIFICATIONS)).toBe(
-      '/settings/notifications-overview',
+      '/settings/notifications-overview'
     );
     expect(getRouteFromAppView(AppView.SETTINGS_SECURITY)).toBe('/settings/security-dashboard');
     expect(getRouteFromAppView(AppView.SETTINGS_API_KEYS)).toBe('/settings/api-keys');
     expect(getRouteFromAppView(AppView.SETTINGS_PRIVACY)).toBe('/settings/privacy');
+    expect(getRouteFromAppView(AppView.SETTINGS_AI_MEMORY)).toBe('/settings/ai-memory');
+    expect(getRouteFromAppView(AppView.SETTINGS_AI_CHAT_HISTORY)).toBe('/settings/ai-chat-history');
+  });
+
+  it('getAppViewFromPath: keeps settings URL sync on module views', () => {
+    expect(getRouteFromAppView(AppView.SETTINGS_PROFILE_MODULE)).toBe('/settings/profile');
+    expect(getAppViewFromPath('/settings/profile')).toBe(AppView.SETTINGS_PROFILE_MODULE);
+    expect(getAppViewFromPath('/settings/ai-behavior')).toBe(AppView.SETTINGS_AI_MODULE);
+    expect(getAppViewFromPath('/settings/ai-prompt-library')).toBe(AppView.SETTINGS_AI_MODULE);
+    expect(getAppViewFromPath('/settings/notifications-overview')).toBe(
+      AppView.SETTINGS_NOTIFICATIONS_MODULE
+    );
+    expect(getAppViewFromPath('/settings/notifications-email-digest')).toBe(
+      AppView.SETTINGS_NOTIFICATIONS_MODULE
+    );
+    expect(getAppViewFromPath('/settings/security-dashboard')).toBe(
+      AppView.SETTINGS_SECURITY_MODULE
+    );
+    expect(getAppViewFromPath('/settings/integrations')).toBe(AppView.SETTINGS_INTEGRATIONS_MODULE);
   });
 });

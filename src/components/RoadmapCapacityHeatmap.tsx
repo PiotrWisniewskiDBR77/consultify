@@ -96,8 +96,8 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
     if (percent <= 50) return 'bg-green-200 dark:bg-green-900/50';
     if (percent <= 75) return 'bg-green-400 dark:bg-green-700';
     if (percent <= 100) return 'bg-amber-400 dark:bg-amber-600';
-    if (percent <= 125) return 'bg-orange-500 dark:bg-orange-600';
-    return 'bg-red-500 dark:bg-red-600';
+    if (percent <= 125) return 'bg-amber-500 dark:bg-amber-600';
+    return 'bg-rose-500 dark:bg-rose-600';
   };
 
   // Calculate summary stats
@@ -138,12 +138,12 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
       <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Users size={18} className="text-purple-500" />
+            <Users size={18} className="text-primary-500" />
             Capacity Overview
           </h3>
           <div className="flex items-center gap-4 text-xs">
             {stats.overloadedMonths > 0 && (
-              <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+              <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
                 <AlertTriangle size={14} />
                 {stats.overloadedMonths} months overloaded
               </div>
@@ -167,7 +167,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
           <p
             className={`text-lg font-bold ${
               stats.avgUtilization > 100
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-rose-600 dark:text-rose-400'
                 : 'text-green-600 dark:text-green-400'
             }`}
           >
@@ -185,7 +185,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
           <p
             className={`text-lg font-bold ${
               stats.overloadedMonths > 0
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-rose-600 dark:text-rose-400'
                 : 'text-green-600 dark:text-green-400'
             }`}
           >
@@ -206,7 +206,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                 <div
                   key={idx}
                   onClick={() => onMonthClick?.(d.month, d.year)}
-                  className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${getUtilizationColor(
+                  className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-primary-500 ${getUtilizationColor(
                     d.utilizationPercent
                   )}`}
                 >
@@ -236,7 +236,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                       <p>
                         {d.totalEffort}h / {d.capacity}h
                       </p>
-                      <p className={d.isOverloaded ? 'text-red-400' : 'text-green-400'}>
+                      <p className={d.isOverloaded ? 'text-rose-400' : 'text-green-400'}>
                         {d.utilizationPercent}% utilized
                       </p>
                     </div>
@@ -269,7 +269,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
             <span>76-100%</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-red-500 dark:bg-red-600" />
+            <div className="w-4 h-4 rounded bg-rose-500 dark:bg-rose-600" />
             <span>&gt;100%</span>
           </div>
         </div>

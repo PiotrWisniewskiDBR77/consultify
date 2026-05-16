@@ -211,7 +211,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             onClick={() => setCalendarMode(mode)}
             className={`px-2 py-1 text-[10px] font-medium rounded-md transition-colors ${
               calendarMode === mode
-                ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
           >
@@ -297,7 +297,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   className={`min-h-[60px] rounded-lg border p-1 transition-colors ${
                     cell.day != null
                       ? isToday
-                        ? 'border-violet-400/60 bg-violet-50/50 dark:bg-violet-500/5'
+                        ? 'border-primary-400/60 bg-primary-50/50 dark:bg-primary-500/5'
                         : 'border-slate-200/60 dark:border-navy-700/40 bg-white dark:bg-navy-900/50'
                       : 'border-transparent'
                   }`}
@@ -313,7 +313,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       <div
                         className={`text-[10px] font-bold mb-0.5 ${
                           isToday
-                            ? 'text-violet-600 dark:text-violet-400'
+                            ? 'text-primary-600 dark:text-primary-400'
                             : 'text-slate-400 dark:text-slate-500'
                         }`}
                       >
@@ -325,7 +325,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           draggable={!locked}
                           onDragStart={() => setDragNodeId(r.id)}
                           onClick={() => onNodeClick?.(r.id)}
-                          className="truncate text-[8px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 px-1 py-0.5 rounded bg-slate-50 dark:bg-navy-800/50 mb-0.5 transition-colors"
+                          className="truncate text-[8px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 px-1 py-0.5 rounded bg-slate-50 dark:bg-navy-800/50 mb-0.5 transition-colors"
                           style={
                             r.data?.color ? { borderLeft: `2px solid ${r.data.color}` } : undefined
                           }
@@ -339,7 +339,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       {canAdd && (
                         <button
                           onClick={(e) => cell.date && handleSlotClick(cell.date, e)}
-                          className="mt-1 flex items-center gap-1 text-[8px] text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium"
+                          className="mt-1 flex items-center gap-1 text-[8px] text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
                         >
                           <Plus size={10} />
                           {isPl ? 'Dodaj zdarzenie' : 'Add event'}
@@ -363,7 +363,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 key={dateStr}
                 className={`text-[9px] font-bold text-center py-1 ${
                   dateStr === todayStr
-                    ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-500/5'
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
@@ -389,9 +389,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       key={slotKey}
                       className={`min-h-[32px] rounded border transition-colors ${
                         isToday
-                          ? 'border-violet-200/40 dark:border-violet-600/30 bg-violet-50/30 dark:bg-violet-500/5'
+                          ? 'border-primary-200/40 dark:border-primary-600/30 bg-primary-50/30 dark:bg-primary-500/5'
                           : 'border-slate-100 dark:border-navy-800/60 bg-white dark:bg-navy-900/30'
-                      } ${canAdd ? 'hover:bg-violet-50/50 dark:hover:bg-violet-500/10' : ''}`}
+                      } ${canAdd ? 'hover:bg-primary-50/50 dark:hover:bg-primary-500/10' : ''}`}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => handleDrop(dateStr)}
                       onMouseEnter={() => setHoverSlot({ date: dateStr, hour })}
@@ -410,7 +410,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                               e.stopPropagation();
                               onNodeClick?.(r.id);
                             }}
-                            className="truncate text-[9px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 px-1.5 py-0.5 rounded bg-slate-50 dark:bg-navy-800/70 mb-0.5 transition-colors border-l-2"
+                            className="truncate text-[9px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 px-1.5 py-0.5 rounded bg-slate-50 dark:bg-navy-800/70 mb-0.5 transition-colors border-l-2"
                             style={
                               r.data?.color
                                 ? { borderLeftColor: r.data.color }
@@ -423,7 +423,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       {canAdd && hour === 8 && dayRows.length === 0 && (
                         <button
                           onClick={(e) => handleSlotClick(dateStr, e)}
-                          className="flex items-center gap-1 text-[8px] text-violet-600 dark:text-violet-400 hover:text-violet-700 font-medium p-1"
+                          className="flex items-center gap-1 text-[8px] text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium p-1"
                         >
                           <Plus size={10} />
                           {isPl ? 'Dodaj zdarzenie' : 'Add event'}
@@ -432,7 +432,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       {canAdd && hour !== 8 && isHovered && (
                         <button
                           onClick={(e) => handleSlotClick(dateStr, e)}
-                          className="flex items-center gap-1 text-[8px] text-violet-600 dark:text-violet-400 hover:text-violet-700 font-medium p-1"
+                          className="flex items-center gap-1 text-[8px] text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium p-1"
                         >
                           <Plus size={10} />
                           {isPl ? 'Dodaj zdarzenie' : 'Add event'}
@@ -455,7 +455,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               className={`text-sm font-bold py-2 ${
                 todayStr ===
                 `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(viewDay).padStart(2, '0')}`
-                  ? 'text-violet-600 dark:text-violet-400'
+                  ? 'text-primary-600 dark:text-primary-400'
                   : 'text-slate-600 dark:text-slate-300'
               }`}
             >
@@ -476,9 +476,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   <div
                     className={`min-h-[40px] rounded border transition-colors ${
                       isToday
-                        ? 'border-violet-200/40 dark:border-violet-600/30 bg-violet-50/30 dark:bg-violet-500/5'
+                        ? 'border-primary-200/40 dark:border-primary-600/30 bg-primary-50/30 dark:bg-primary-500/5'
                         : 'border-slate-100 dark:border-navy-800/60 bg-white dark:bg-navy-900/30'
-                    } ${canAdd ? 'hover:bg-violet-50/50 dark:hover:bg-violet-500/10' : ''}`}
+                    } ${canAdd ? 'hover:bg-primary-50/50 dark:hover:bg-primary-500/10' : ''}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(dateStr)}
                     onMouseEnter={() => setHoverSlot({ date: dateStr, hour })}
@@ -496,7 +496,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           e.stopPropagation();
                           onNodeClick?.(r.id);
                         }}
-                        className="truncate text-[10px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 px-2 py-1 rounded bg-slate-50 dark:bg-navy-800/70 mb-0.5 transition-colors border-l-2"
+                        className="truncate text-[10px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 px-2 py-1 rounded bg-slate-50 dark:bg-navy-800/70 mb-0.5 transition-colors border-l-2"
                         style={
                           r.data?.color
                             ? { borderLeftColor: r.data.color }
@@ -509,7 +509,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     {canAdd && (
                       <button
                         onClick={(e) => handleSlotClick(dateStr, e)}
-                        className="flex items-center gap-1 text-[9px] text-violet-600 dark:text-violet-400 hover:text-violet-700 font-medium p-1.5"
+                        className="flex items-center gap-1 text-[9px] text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium p-1.5"
                       >
                         <Plus size={12} />
                         {isPl ? 'Dodaj zdarzenie' : 'Add event'}

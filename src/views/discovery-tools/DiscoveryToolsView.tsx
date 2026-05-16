@@ -195,14 +195,14 @@ export const DiscoveryToolsView: React.FC = () => {
                 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400',
               blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:border-blue-400',
               purple:
-                'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 hover:border-purple-400',
+                'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 hover:border-primary-400',
               amber:
                 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 hover:border-amber-400',
             };
             const iconColorClasses = {
               emerald: 'text-emerald-600 dark:text-emerald-400',
               blue: 'text-blue-600 dark:text-blue-400',
-              purple: 'text-purple-600 dark:text-purple-400',
+              purple: 'text-primary-600 dark:text-primary-400',
               amber: 'text-amber-600 dark:text-amber-400',
             };
 

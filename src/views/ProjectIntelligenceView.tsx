@@ -380,16 +380,16 @@ export const ProjectIntelligenceView: React.FC = () => {
       <SplitLayout
         title={
           <div className="flex items-center gap-2">
-            <Brain className="text-purple-600 dark:text-purple-400" size={20} />
-            <span className="text-purple-600 dark:text-purple-400">Project Intelligence</span>
+            <Brain className="text-primary-600 dark:text-primary-400" size={20} />
+            <span className="text-primary-600 dark:text-primary-400">Project Intelligence</span>
           </div>
         }
         subtitle="AI-powered knowledge capture"
         chatSystemPrompt={INTERVIEW_SYSTEM_PROMPT}
       >
         <div className="h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
-          <div className="w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-6">
-            <FolderOpen className="w-10 h-10 text-purple-500" />
+          <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-6">
+            <FolderOpen className="w-10 h-10 text-primary-500" />
           </div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Select a Project</h2>
           <p className="text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
@@ -409,8 +409,8 @@ export const ProjectIntelligenceView: React.FC = () => {
     <SplitLayout
       title={
         <div className="flex items-center gap-2">
-          <Brain className="text-purple-600 dark:text-purple-400" size={20} />
-          <span className="text-purple-600 dark:text-purple-400">Project Intelligence</span>
+          <Brain className="text-primary-600 dark:text-primary-400" size={20} />
+          <span className="text-primary-600 dark:text-primary-400">Project Intelligence</span>
         </div>
       }
       subtitle={currentProject?.name || 'AI-powered knowledge capture'}
@@ -422,7 +422,7 @@ export const ProjectIntelligenceView: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
-                <Brain className="text-purple-500" size={28} />
+                <Brain className="text-primary-500" size={28} />
                 Project Intelligence Hub
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -435,7 +435,7 @@ export const ProjectIntelligenceView: React.FC = () => {
                 <button
                   onClick={handleSeedDemoData}
                   disabled={isSeeding}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   {isSeeding ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -478,7 +478,7 @@ export const ProjectIntelligenceView: React.FC = () => {
               <Database size={16} />
               Knowledge Base
               {insights.length > 0 && (
-                <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-full">
+                <span className="px-1.5 py-0.5 text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">
                   {insights.length}
                 </span>
               )}
@@ -506,7 +506,7 @@ export const ProjectIntelligenceView: React.FC = () => {
         <div className="flex-1 overflow-auto p-6">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : activeTab === 'interview' ? (
             <InterviewTabContent projectId={currentProjectId} onInsightCreated={fetchData} />
@@ -546,10 +546,10 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
   return (
     <div className="space-y-6">
       {/* Instructions Card */}
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-purple-200/50 dark:border-purple-800/30">
+      <div className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-primary-200/50 dark:border-primary-800/30">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-xl shrink-0">
-            <MessageSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div className="p-3 bg-primary-100 dark:bg-primary-900/50 rounded-xl shrink-0">
+            <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h3 className="font-semibold text-navy-900 dark:text-white text-lg mb-2">
@@ -671,7 +671,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
             onClick={() => onCategorySelect('all')}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${
               selectedCategory === 'all'
-                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                 : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -750,7 +750,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
     <div
       className={`bg-white dark:bg-navy-900 rounded-xl border ${
         isSelected
-          ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800'
+          ? 'border-primary-300 dark:border-primary-700 ring-1 ring-primary-200 dark:ring-primary-800'
           : 'border-slate-200 dark:border-navy-700'
       } p-4 hover:shadow-md transition-all cursor-pointer`}
       onClick={onSelect}
@@ -819,7 +819,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
             title="Delete insight"
           >
             <Trash2 size={18} />
@@ -874,7 +874,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                 session.status === 'completed'
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                   : session.status === 'active'
-                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
               }`}
             >
@@ -886,7 +886,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
           <div className="mt-4 flex items-center gap-2">
             <div className="flex-1 h-2 bg-slate-100 dark:bg-navy-800/40 dark:bg-slate-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full"
+                className="h-full bg-gradient-to-r from-primary-500 to-emerald-500 rounded-full"
                 style={{
                   width: `${(session.progress.completed.length / 8) * 100}%`,
                 }}

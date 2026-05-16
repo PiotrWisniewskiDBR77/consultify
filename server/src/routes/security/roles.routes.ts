@@ -9,6 +9,10 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import {
+  hasEffectiveCapability,
+  resolveEffectiveAccess,
+} from '../../services/effectiveAccessService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -31,10 +35,38 @@ async function ensureRolesSchema() {
   );
 }
 
+async function requireProjectRolesManage(req: AuthRequest, res: any): Promise<boolean> {
+  const userId = String(req.user?.id || req.userId || '').trim();
+  const orgId = String(req.organizationId || req.user?.organizationId || '').trim();
+  if (!userId || !orgId) {
+    res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    return false;
+  }
+
+  const access = await resolveEffectiveAccess({
+    userId,
+    organizationId: orgId,
+    applicationRole: req.userRole || req.user?.role,
+    isImpersonating: Boolean(req.user?.impersonatorId),
+  });
+
+  if (!hasEffectiveCapability(access, 'admin.project_roles.manage')) {
+    res.status(403).json({
+      error: 'Project role management permission required',
+      code: 'PROJECT_ROLES_MANAGE_REQUIRED',
+      required: 'admin.project_roles.manage',
+    });
+    return false;
+  }
+
+  return true;
+}
+
 router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
@@ -68,6 +100,7 @@ router.post(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
@@ -90,6 +123,7 @@ router.put(
   '/:id',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     const { id } = req.params;
     await ensureRolesSchema();
@@ -136,6 +170,7 @@ router.delete(
   '/:id',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     const { id } = req.params;
     await ensureRolesSchema();

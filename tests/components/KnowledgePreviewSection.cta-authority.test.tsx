@@ -29,7 +29,7 @@ vi.mock('../../src/hooks/useKnowledge', () => ({
         summary: 'Preview summary',
         reading_time_minutes: 4,
         is_featured: true,
-        category_slug: 'ops',
+        category_slug: 'consultify-ops',
         category_name: 'Ops',
         category_icon: 'BookOpen',
         view_count: 1,
@@ -61,7 +61,7 @@ describe('KnowledgePreviewSection CTA authority', () => {
 
     fireEvent.click(screen.getByText('Preview One'));
 
-    expect(navigateMock).toHaveBeenCalledWith('/knowledge-base/ops/preview-one');
+    expect(navigateMock).toHaveBeenCalledWith('/knowledge-base/consultify-ops/preview-one');
   });
 
   it('navigates to the knowledge base listing when clicking Access Full Knowledge Base', () => {

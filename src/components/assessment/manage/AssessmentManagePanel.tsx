@@ -652,7 +652,7 @@ export function AssessmentManagePanel(props: {
               onClick={() => setTab(id)}
               className={`h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
                 tab === id
-                  ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
+                  ? 'border-primary-200/60 dark:border-primary-900/30 bg-primary-50/70 dark:bg-primary-900/10 text-primary-700 dark:text-primary-200'
                   : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
               }`}
             >
@@ -674,7 +674,7 @@ export function AssessmentManagePanel(props: {
         {loading ? (
           <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Loading…</div>
         ) : error ? (
-          <div className="p-6 text-sm text-red-600 dark:text-red-300">{error}</div>
+          <div className="p-6 text-sm text-rose-600 dark:text-rose-300">{error}</div>
         ) : tab === 'team' ? (
           <div className="p-4">
             <TeamManagementPanel
@@ -809,7 +809,7 @@ export function AssessmentManagePanel(props: {
                               setRequestBusyId(null);
                             }
                           }}
-                          className="h-8 px-3 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-[12px] font-semibold transition-colors"
+                          className="h-8 px-3 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-[12px] font-semibold transition-colors"
                         >
                           {requestBusyId === r.id ? 'Working…' : 'Approve'}
                         </button>

@@ -29,63 +29,6 @@ export default {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
-
-        // ========================================
-        // SEMANTIC TOKENS (Light Mode System v3.2)
-        // SSOT: docs/ui-standards/00-foundation/light-mode-readability.md §16
-        // Use these by default; raw palette only in primitives / token file.
-        // ========================================
-        surface: {
-          app: 'rgb(var(--surface-app) / <alpha-value>)',
-          DEFAULT: 'rgb(var(--surface-default) / <alpha-value>)',
-          subtle: 'rgb(var(--surface-subtle) / <alpha-value>)',
-          hover: 'rgb(var(--surface-hover) / <alpha-value>)',
-          selected: 'rgb(var(--surface-selected) / <alpha-value>)',
-          strong: 'rgb(var(--surface-strong) / <alpha-value>)',
-        },
-        content: {
-          primary: 'rgb(var(--text-primary) / <alpha-value>)',
-          secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
-          supportive: 'rgb(var(--text-supportive) / <alpha-value>)',
-          metadata: 'rgb(var(--text-metadata) / <alpha-value>)',
-          inverted: 'rgb(var(--text-inverted) / <alpha-value>)',
-        },
-        edge: {
-          DEFAULT: 'rgb(var(--border-default) / <alpha-value>)',
-          strong: 'rgb(var(--border-strong) / <alpha-value>)',
-          subtle: 'rgb(var(--border-subtle) / <alpha-value>)',
-          selected: 'rgb(var(--border-selected) / <alpha-value>)',
-        },
-        status: {
-          'info-bg': 'rgb(var(--status-info-bg) / <alpha-value>)',
-          'info-border': 'rgb(var(--status-info-border) / <alpha-value>)',
-          'info-text': 'rgb(var(--status-info-text) / <alpha-value>)',
-          'info-icon': 'rgb(var(--status-info-icon) / <alpha-value>)',
-          'success-bg': 'rgb(var(--status-success-bg) / <alpha-value>)',
-          'success-border': 'rgb(var(--status-success-border) / <alpha-value>)',
-          'success-text': 'rgb(var(--status-success-text) / <alpha-value>)',
-          'success-icon': 'rgb(var(--status-success-icon) / <alpha-value>)',
-          'warning-bg': 'rgb(var(--status-warning-bg) / <alpha-value>)',
-          'warning-border': 'rgb(var(--status-warning-border) / <alpha-value>)',
-          'warning-text': 'rgb(var(--status-warning-text) / <alpha-value>)',
-          'warning-icon': 'rgb(var(--status-warning-icon) / <alpha-value>)',
-          'danger-bg': 'rgb(var(--status-danger-bg) / <alpha-value>)',
-          'danger-border': 'rgb(var(--status-danger-border) / <alpha-value>)',
-          'danger-text': 'rgb(var(--status-danger-text) / <alpha-value>)',
-          'danger-icon': 'rgb(var(--status-danger-icon) / <alpha-value>)',
-          'primary-bg': 'rgb(var(--status-primary-bg) / <alpha-value>)',
-          'primary-border': 'rgb(var(--status-primary-border) / <alpha-value>)',
-          'primary-text': 'rgb(var(--status-primary-text) / <alpha-value>)',
-          'primary-icon': 'rgb(var(--status-primary-icon) / <alpha-value>)',
-          'neutral-bg': 'rgb(var(--status-neutral-bg) / <alpha-value>)',
-          'neutral-border': 'rgb(var(--status-neutral-border) / <alpha-value>)',
-          'neutral-text': 'rgb(var(--status-neutral-text) / <alpha-value>)',
-          'neutral-icon': 'rgb(var(--status-neutral-icon) / <alpha-value>)',
-        },
-        focus: {
-          ring: 'rgb(var(--focus-ring) / <alpha-value>)',
-          offset: 'rgb(var(--focus-ring-offset) / <alpha-value>)',
-        },
         // ========================================
         // DBR77 COLOR SYSTEM STANDARD
         // See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md

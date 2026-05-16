@@ -74,7 +74,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           allDay: e.allDay ?? false,
           backgroundColor: e.color || SOURCE_COLORS[e.source] || '#64748b',
           borderColor: isConflict
-            ? '#ef4444'
+            ? '#f43f5e'
             : e.status === 'ai_suggestion'
               ? '#7c3aed'
               : 'transparent',

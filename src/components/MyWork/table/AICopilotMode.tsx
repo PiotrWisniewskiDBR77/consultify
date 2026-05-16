@@ -66,7 +66,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Adwokat diabła',
     prompt:
       'Challenge these ideas. For each, identify: weaknesses, risks, assumptions that might be wrong, and what could go wrong. Be constructive but critical.',
-    color: '#ef4444',
+    color: '#f43f5e',
   },
   expand: {
     icon: <GitBranch size={12} />,
@@ -74,7 +74,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Rozwiń',
     prompt:
       'Take the most promising idea and expand it in 5 different directions. Each direction should be a concrete sub-idea with actionable next steps. Return as JSON: [{ "label": "...", "description": "...", "direction": "..." }]',
-    color: '#8b5cf6',
+    color: '#6366f1',
   },
   summarize: {
     icon: <MessageSquare size={12} />,
@@ -82,7 +82,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Podsumuj',
     prompt:
       'Create an executive summary of all ideas. Group them thematically, highlight the strongest ones, and provide a recommended prioritization.',
-    color: '#06b6d4',
+    color: '#3b82f6',
   },
 };
 
@@ -256,7 +256,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Brain size={16} className="text-violet-500" />
+          <Brain size={16} className="text-primary-500" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">AI Copilot</span>
 
           {/* Mode selector */}
@@ -284,7 +284,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                       setMode(key);
                       setShowModeSelector(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${mode === key ? 'bg-violet-500/10 text-violet-600' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${mode === key ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
                   >
                     <span style={{ color: config.color }}>{config.icon}</span>
                     {isPl ? config.labelPl : config.label}
@@ -340,9 +340,9 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               <div
                 className={`max-w-[85%] rounded-2xl px-3 py-2 ${
                   msg.role === 'user'
-                    ? 'bg-violet-500/10 text-slate-800 dark:text-slate-200'
+                    ? 'bg-primary-500/10 text-slate-800 dark:text-slate-200'
                     : msg.role === 'system'
-                      ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
                       : 'bg-slate-100 dark:bg-navy-800/50 text-slate-700 dark:text-slate-300'
                 }`}
               >
@@ -399,7 +399,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
           {loading && !streamingText && (
             <div className="flex justify-start">
               <div className="rounded-2xl px-3 py-2 bg-slate-100 dark:bg-navy-800/50">
-                <Loader2 size={14} className="animate-spin text-violet-500" />
+                <Loader2 size={14} className="animate-spin text-primary-500" />
               </div>
             </div>
           )}
@@ -422,12 +422,12 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               }}
               placeholder={isPl ? 'Zapytaj AI o pomysły…' : 'Ask AI about ideas…'}
               disabled={loading}
-              className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+              className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
             />
             <button
               onClick={() => handleSend()}
               disabled={loading || !input.trim()}
-              className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+              className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>

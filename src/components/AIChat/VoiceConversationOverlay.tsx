@@ -49,14 +49,14 @@ const STATUS_COLORS: Record<TeresaVoiceStatus, string> = {
   idle: 'bg-slate-500',
   connecting: 'bg-amber-500',
   live: 'bg-emerald-500',
-  error: 'bg-red-500',
+  error: 'bg-rose-500',
 };
 
 const BUBBLE_BG: Record<TeresaVoiceStatus, string> = {
   idle: 'from-slate-600 to-slate-700',
   connecting: 'from-slate-600 to-slate-700',
-  live: 'from-primary-600 to-violet-600',
-  error: 'from-red-600 to-red-700',
+  live: 'from-primary-600 to-primary-600',
+  error: 'from-rose-600 to-rose-700',
 };
 
 export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> = ({
@@ -203,7 +203,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
         {/* End button (small X above bubble) */}
         <button
           onClick={handleEnd}
-          className="w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+          className="w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
           title={t('voice.end', 'End conversation')}
         >
           <X size={12} strokeWidth={2.5} />
@@ -252,7 +252,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
           </button>
           <button
             onClick={handleEnd}
-            className="p-1 rounded-md hover:bg-red-600/80 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded-md hover:bg-rose-600/80 text-slate-400 hover:text-white transition-colors"
             title={t('voice.end', 'End conversation')}
           >
             <PhoneOff size={14} />
@@ -265,7 +265,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
         {transcripts.length === 0 && voiceStatus === 'live' && (
           <div className="flex flex-col items-center justify-center h-full gap-2 py-6">
             <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-violet-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-primary-600 flex items-center justify-center">
                 <Mic size={20} className="text-white/90" />
               </div>
               <span className="absolute inset-0 rounded-full animate-ping bg-primary-500/20" />
@@ -287,7 +287,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
 
         {voiceStatus === 'error' && (
           <div className="flex flex-col items-center justify-center h-full gap-2 py-6">
-            <p className="text-xs text-red-400 text-center">{voiceError}</p>
+            <p className="text-xs text-rose-400 text-center">{voiceError}</p>
             <button
               onClick={handleRetry}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/10 hover:bg-white/20 transition-colors"

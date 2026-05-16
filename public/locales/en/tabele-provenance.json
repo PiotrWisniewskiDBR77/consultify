@@ -1,0 +1,56 @@
+{
+  "confidence": {
+    "aria": "AI confidence",
+    "notScoredAria": "AI confidence: not scored",
+    "notScored": "—",
+    "tooltip": "AI confidence reflects record provenance and validation history — NOT data quality.",
+    "tooltipNotScored": "AI confidence: not yet scored."
+  },
+  "validation": {
+    "label": "Validation status",
+    "unverified": "Unverified",
+    "verified": "Verified",
+    "flagged": "Flagged",
+    "tooltip": "Validation status — set manually by a human reviewer.",
+    "adminOnly": "admin"
+  },
+  "sources": {
+    "title": "Provenance",
+    "subtitleActive": "Active sources influencing AI confidence.",
+    "atCap": "Reached cap of {{max}} active sources.",
+    "raises": "Every source raises AI confidence.",
+    "addedBy": "Added by",
+    "verified": "verified",
+    "freshTag": "✓ fresh",
+    "empty": "No active sources yet — add one to raise AI confidence.",
+    "loading": "Loading…",
+    "verifyAction": "Verify now",
+    "archiveAction": "Archive",
+    "addAction": "Add",
+    "closeAction": "Close",
+    "errorLoad": "Failed to load sources.",
+    "type": {
+      "manual": "Manual",
+      "ai_extraction": "AI extraction",
+      "import": "Import",
+      "integration": "Integration",
+      "system": "System"
+    }
+  },
+  "addDialog": {
+    "title": "Add source",
+    "field": {
+      "type": "Source type",
+      "uri": "URI / link (optional)",
+      "contribution": "Confidence contribution (0–1, optional)",
+      "note": "Note (optional)"
+    },
+    "error": {
+      "uriTooLong": "URI must be ≤ 2048 characters.",
+      "contributionRange": "Confidence contribution must be a number between 0 and 1.",
+      "saveFailed": "Failed to save the source."
+    },
+    "submit": "Save",
+    "cancel": "Cancel"
+  }
+}

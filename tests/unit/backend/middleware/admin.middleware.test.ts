@@ -1,5 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
+const { dbGetMock } = vi.hoisted(() => ({
+  dbGetMock: vi.fn(),
+}));
+
+vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+  get: dbGetMock,
+}));
+
+vi.mock('../../../../server/src/services/organizationService.js', () => ({
+  normalizeOrganizationRole: (role?: string) => String(role || '').trim().toUpperCase(),
+}));
+
 import { isAdminRole, verifyAdmin } from '../../../../server/src/middleware/admin.middleware.ts';
 
 function makeRes() {
@@ -33,30 +45,32 @@ describe('admin.middleware (L1)', () => {
   });
 
   describe('verifyAdmin', () => {
-    it('denies when no admin role present (403)', () => {
-      const req: any = { user: { role: 'user' } };
+    it('denies when no org context and not superadmin (403)', async () => {
+      const req: any = { user: { id: 'u1', role: 'user' } };
       const res = makeRes();
       const next = vi.fn();
-      verifyAdmin(req, res, next);
+      await verifyAdmin(req, res, next);
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith({ error: 'Admin access required' });
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('allows when req.user.role is admin', () => {
-      const req: any = { user: { role: 'admin' } };
+    it('allows when request is superadmin', async () => {
+      const req: any = { user: { id: 'u1', isSuperAdmin: true } };
       const res = makeRes();
       const next = vi.fn();
-      verifyAdmin(req, res, next);
+      await verifyAdmin(req, res, next);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('allows when req.userRole is admin (legacy)', () => {
-      const req: any = { userRole: 'administrator' };
+    it('allows when org membership role is ADMIN', async () => {
+      dbGetMock.mockResolvedValueOnce({ role: 'ADMIN' });
+      const req: any = { user: { id: 'u1', organizationId: 'org-1', role: 'user' } };
       const res = makeRes();
       const next = vi.fn();
-      verifyAdmin(req, res, next);
+      await verifyAdmin(req, res, next);
+      expect(dbGetMock).toHaveBeenCalled();
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
     });

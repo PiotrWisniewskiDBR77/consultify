@@ -315,7 +315,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-          <Search size={28} className="text-cyan-500" />
+          <Search size={28} className="text-blue-500" />
           Settings Search
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Quickly find any setting</p>
@@ -336,7 +336,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="Search settings... (Cmd+K)"
-          className="w-full pl-12 pr-4 py-4 text-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+          className="w-full pl-12 pr-4 py-4 text-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
         {query && (
           <button

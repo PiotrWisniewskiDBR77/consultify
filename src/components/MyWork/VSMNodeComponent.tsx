@@ -400,18 +400,18 @@ export const VSMSupermarketNode: React.FC<NodeProps> = ({ id, data, selected }) 
 
   return (
     <div
-      className={`relative flex flex-col items-center min-w-[80px] rounded-lg border-2 border-teal-500 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/30 px-3 py-2 shadow-sm transition-shadow ${
+      className={`relative flex flex-col items-center min-w-[80px] rounded-lg border-2 border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-2 shadow-sm transition-shadow ${
         selected ? 'ring-2 ring-primary-500/60 shadow-md' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
 
-      <ShoppingCart size={18} className="text-teal-600 dark:text-teal-300 mb-1" />
+      <ShoppingCart size={18} className="text-blue-600 dark:text-blue-300 mb-1" />
       <LabelEditor
         label={label}
         locked={locked}
         onLabelChange={data?.onLabelChange}
-        className="text-[9px] font-semibold text-teal-700 dark:text-teal-200"
+        className="text-[9px] font-semibold text-blue-700 dark:text-blue-200"
       />
 
       {/* Kanban slots */}
@@ -419,13 +419,13 @@ export const VSMSupermarketNode: React.FC<NodeProps> = ({ id, data, selected }) 
         {Array.from({ length: Math.min(qty ?? 3, 6) }).map((_, i) => (
           <div
             key={i}
-            className="w-2.5 h-3 rounded-sm border border-teal-400 dark:border-teal-600 bg-teal-100 dark:bg-teal-800/50"
+            className="w-2.5 h-3 rounded-sm border border-blue-400 dark:border-blue-600 bg-blue-100 dark:bg-blue-800/50"
           />
         ))}
       </div>
 
       {qty != null && (
-        <span className="text-[7px] font-bold text-teal-600 dark:text-teal-400 mt-0.5">
+        <span className="text-[7px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
           {qty} pcs
         </span>
       )}
@@ -440,12 +440,12 @@ export const VSMSupermarketNode: React.FC<NodeProps> = ({ id, data, selected }) 
 export const VSMFifoNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
-      className={`relative flex items-center justify-center min-w-[80px] h-10 rounded border-2 border-dashed border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/20 px-3 transition-shadow ${
+      className={`relative flex items-center justify-center min-w-[80px] h-10 rounded border-2 border-dashed border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 px-3 transition-shadow ${
         selected ? 'ring-2 ring-primary-500/60 shadow-md' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
-      <span className="text-[10px] font-bold text-orange-600 dark:text-orange-300 tracking-widest">
+      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 tracking-widest">
         FIFO
       </span>
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
@@ -471,19 +471,19 @@ export const VSMKaizenNode: React.FC<NodeProps> = ({ data, selected }) => {
       <svg viewBox="0 0 80 80" className="w-16 h-16 absolute inset-0 m-auto" aria-hidden>
         <polygon
           points="40,2 48,26 74,26 54,42 62,68 40,52 18,68 26,42 6,26 32,26"
-          className={`fill-red-100 dark:fill-red-900/40 stroke-red-500 dark:stroke-red-400 ${
+          className={`fill-rose-100 dark:fill-rose-900/40 stroke-rose-500 dark:stroke-rose-400 ${
             selected ? 'stroke-[3]' : 'stroke-[2]'
           }`}
         />
       </svg>
 
       <div className="relative z-10 flex flex-col items-center">
-        <Zap size={14} className="text-red-500 dark:text-red-400 mb-0.5" />
+        <Zap size={14} className="text-rose-500 dark:text-rose-400 mb-0.5" />
         <LabelEditor
           label={label}
           locked={locked}
           onLabelChange={data?.onLabelChange}
-          className="text-[8px] font-bold text-red-700 dark:text-red-300 max-w-[56px]"
+          className="text-[8px] font-bold text-rose-700 dark:text-rose-300 max-w-[56px]"
         />
       </div>
 

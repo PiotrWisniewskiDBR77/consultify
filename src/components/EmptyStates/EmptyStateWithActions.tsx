@@ -47,12 +47,12 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
   const getButtonClasses = (variant: EmptyStateAction['variant']) => {
     switch (variant) {
       case 'primary':
-        return 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20';
+        return 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-900/20';
       case 'secondary':
         return 'bg-slate-100 dark:bg-navy-900 hover:bg-slate-200 dark:hover:bg-navy-800 text-navy-900 dark:text-white';
       case 'ghost':
       default:
-        return 'text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20';
+        return 'text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20';
     }
   };
 
@@ -64,8 +64,8 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
       {illustration ? (
         <img src={illustration} alt="" className="w-48 h-48 object-contain mb-6 opacity-80" />
       ) : Icon ? (
-        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mb-6">
-          <Icon size={40} className="text-purple-500 dark:text-purple-400" />
+        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-100 to-indigo-100 dark:from-primary-900/30 dark:to-indigo-900/30 flex items-center justify-center mb-6">
+          <Icon size={40} className="text-primary-500 dark:text-primary-400" />
         </div>
       ) : (
         <div className="w-20 h-20 rounded-xl bg-slate-100 dark:bg-navy-900 flex items-center justify-center mb-6">
@@ -117,13 +117,13 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                 <button
                   key={template.id}
                   onClick={template.onClick}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-navy-800 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all text-left group"
+                  className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-700 bg-white dark:bg-navy-800 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all text-left group"
                 >
                   {TemplateIcon && (
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-900 flex items-center justify-center group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-900 flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
                       <TemplateIcon
                         size={20}
-                        className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 transition-colors"
+                        className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                       />
                     </div>
                   )}
@@ -137,7 +137,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                   </div>
                   <ArrowRight
                     size={16}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+                    className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
                   />
                 </button>
               );

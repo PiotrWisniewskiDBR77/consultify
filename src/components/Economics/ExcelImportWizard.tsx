@@ -218,9 +218,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {error && (
-            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 mb-4 flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-              <span className="text-red-700 dark:text-red-400 text-sm">{error}</span>
+            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 mb-4 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+              <span className="text-rose-700 dark:text-rose-400 text-sm">{error}</span>
             </div>
           )}
 
@@ -287,7 +287,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                       e.stopPropagation();
                       setFile(null);
                     }}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -358,7 +358,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   value={analysisName}
                   onChange={(e) => setAnalysisName(e.target.value)}
                   placeholder="np. Analiza Q1 2025"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                                         dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                 />
               </div>
@@ -413,8 +413,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           <button
             onClick={goToPrev}
             disabled={currentStep === 'upload' || isImporting}
-            className="flex items-center gap-2 px-4 py-2.5 text-slate-600 dark:text-slate-400 
-                            hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl disabled:opacity-50 
+            className="flex items-center gap-2 px-4 py-2.5 text-slate-600 dark:text-slate-400
+                            hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl disabled:opacity-50
                             disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft size={18} />
@@ -425,7 +425,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             <button
               onClick={handleImport}
               disabled={isImporting}
-              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl 
+              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl
                                 hover:bg-emerald-500 font-medium disabled:opacity-50 transition-colors
                                 shadow-lg shadow-emerald-600/20"
             >
@@ -445,8 +445,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             <button
               onClick={goToNext}
               disabled={!canGoNext()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl 
-                                hover:bg-emerald-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed 
+              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl
+                                hover:bg-emerald-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed
                                 transition-colors shadow-lg shadow-emerald-600/20"
             >
               Dalej

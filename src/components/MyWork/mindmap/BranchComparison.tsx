@@ -96,7 +96,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
     exploring: 'bg-blue-500',
     validated: 'bg-emerald-500',
     ready_to_convert: 'bg-amber-500',
-    converted: 'bg-violet-500',
+    converted: 'bg-primary-500',
   };
 
   const renderColumn = (stats: BranchStats | null) => {

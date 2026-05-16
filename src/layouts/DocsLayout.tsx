@@ -87,7 +87,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               <Link to="/docs" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
                   <Book size={16} className="text-white" />
                 </div>
                 <span className="hidden sm:inline">
@@ -123,7 +123,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
               </Link>
               <Link
                 to="/login"
-                className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors"
+                className="px-4 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
               >
                 {t('docs.layout.signIn', 'Sign In')}
               </Link>
@@ -205,7 +205,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                     location.pathname === '/docs'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5'
                   )}
                 >
@@ -220,7 +220,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                     className={cn(
                       'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                       location.pathname.startsWith(`/docs/${category.slug}`)
-                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5'
                     )}
                   >
@@ -256,7 +256,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                         className={cn(
                           'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                           location.pathname === '/docs'
-                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
                         )}
                       >
@@ -271,7 +271,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                           className={cn(
                             'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                             location.pathname.startsWith(`/docs/${category.slug}`)
-                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
                           )}
                         >

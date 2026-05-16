@@ -94,7 +94,7 @@ export const MissingItemsList: React.FC<MissingItemsListProps> = ({
                         {item.fieldLabel}
                       </span>
                       {item.isCritical && (
-                        <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-600 dark:text-red-400">
+                        <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-600 dark:text-rose-400">
                           {t('nmodeCompleteness.critical')}
                         </span>
                       )}

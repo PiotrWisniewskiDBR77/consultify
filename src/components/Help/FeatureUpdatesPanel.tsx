@@ -41,7 +41,7 @@ const getAuthToken = (): string | null => {
 
 function importanceBadge(importance: string) {
   if (importance === 'high')
-    return 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20';
+    return 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20';
   if (importance === 'low')
     return 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300 border-slate-200 dark:border-navy-700';
   return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20';
@@ -225,7 +225,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <Loader2 className="animate-spin text-purple-500" />
+        <Loader2 className="animate-spin text-primary-500" />
       </div>
     );
   }
@@ -239,7 +239,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
       <div className="space-y-4">
         <button
           onClick={() => setSelected(null)}
-          className="text-xs text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 flex items-center gap-1"
+          className="text-xs text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 flex items-center gap-1"
         >
           <ChevronLeft size={14} />
           {t('help.updates.back', 'Back to updates')}
@@ -268,7 +268,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                 )}
               </div>
             </div>
-            <Bell size={18} className="text-purple-500 flex-shrink-0 mt-1" />
+            <Bell size={18} className="text-primary-500 flex-shrink-0 mt-1" />
           </div>
 
           <div className="prose prose-slate dark:prose-invert max-w-none text-sm">
@@ -278,7 +278,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
           {canAction && (
             <button
               onClick={() => clickTryItNow(selected)}
-              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
             >
               {t('help.updates.tryItNow', 'Try it now')}
               <ExternalLink size={16} />
@@ -294,7 +294,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Bell size={18} className="text-purple-500" />
+            <Bell size={18} className="text-primary-500" />
             {t('help.updates.title', "What's new")}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -302,7 +302,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
           </p>
         </div>
         {unreadCount > 0 && (
-          <span className="px-2 py-1 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-semibold">
+          <span className="px-2 py-1 rounded-full bg-primary-500/10 text-primary-700 dark:text-primary-300 text-xs font-semibold">
             {t('help.updates.unread', '{{count}} unread', { count: unreadCount })}
           </span>
         )}
@@ -315,7 +315,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
           </div>
           <button
             onClick={() => setShowComposer(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition-colors"
           >
             <Plus size={14} />
             {t('help.updates.admin.new', 'New update')}
@@ -336,13 +336,13 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
             <button
               key={u.id}
               onClick={() => openUpdate(u)}
-              className="w-full text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+              className="w-full text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {!u.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0" />
                     )}
                     <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
                       {u.title}
@@ -487,7 +487,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                   <button
                     onClick={publishNow}
                     disabled={publishing}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
                   >
                     {publishing ? (
                       <Loader2 size={14} className="animate-spin" />

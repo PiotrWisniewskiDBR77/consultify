@@ -7,6 +7,7 @@
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -24,7 +25,19 @@ import {
   getMyAssignments,
   getOverdueAssignments,
 } from '../../services/InterviewAssignmentService.js';
+import {
+  buildInterviewReportPackExportManifest,
+  buildInterviewReportPackMarkdownExport,
+  createInterviewReportPackDraft,
+  createInterviewReportPackRevision,
+  evaluateInterviewReportPackReadiness,
+  getInterviewReportPackReadiness,
+  publishInterviewReportPack,
+  submitInterviewReportPackForReview,
+  updateInterviewReportWorksheet,
+} from '../../services/interviewInsightReportPackService.js';
 import { resolveInterviewManagerScope } from '../../services/interviewManagerScope.js';
+import contextDocumentService from '../../services/organizationContext/ContextDocumentService.js';
 import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import { listFindings as listP10Findings } from '../../services/v8/interviewInsightFindingsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -33,6 +46,27 @@ import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
+const contextDocsUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'application/json',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+    if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) return cb(null, true);
+    return cb(new Error(`Unsupported file type: ${file.mimetype}`));
+  },
+});
 
 /** Stable contract id for clients parsing V8 interview read responses. */
 export const V8_INTERVIEW_READ_CONTRACT = 'interview_runtime_read_v1';
@@ -322,16 +356,6 @@ router.post(
   v8Wrap(InterviewController.sendAssignmentReminder, interviewMeta)
 );
 
-router.patch(
-  '/assignments/:id/manage',
-  v8Wrap(InterviewController.manageAssignment, interviewMeta)
-);
-
-router.post(
-  '/assignments/:id/archive',
-  v8Wrap(InterviewController.archiveAssignment, interviewMeta)
-);
-
 router.post(
   '/assignments/:id/send-back',
   v8Wrap(InterviewController.sendBackAssignment, interviewMeta)
@@ -343,11 +367,6 @@ router.post(
 );
 
 router.post(
-  '/assignments/:id/revoke-approval',
-  v8Wrap(InterviewController.revokeApproval, interviewMeta)
-);
-
-router.post(
   '/sessions/:sessionId/evaluate-answers',
   v8Wrap(InterviewController.evaluateSessionAnswers, interviewMeta)
 );
@@ -355,6 +374,108 @@ router.post(
 // ==========================================
 // INSIGHTS — V8 bounded bridge (P10)
 // ==========================================
+
+router.get(
+  '/context-documents',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const scopeRaw = String(firstParam((req.query as any).scope) || 'all').toLowerCase();
+    const scope = scopeRaw === 'project' || scopeRaw === 'user' ? scopeRaw : 'all';
+    const projectId = firstParam((req.query as any).projectId);
+    const statusesRaw = firstParam((req.query as any).statuses);
+    const statuses = statusesRaw
+      ? statusesRaw
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : undefined;
+
+    const documents = await contextDocumentService.listAccessibleDocuments({
+      organizationId,
+      userId,
+      scope,
+      projectId: projectId || undefined,
+      statuses: statuses as any,
+    });
+
+    return res.json({
+      data: { documents },
+      meta: insightReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/context-documents/upload',
+  requirePermission('INTERVIEW_INSIGHTS_CREATE'),
+  contextDocsUpload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole, isSuperAdmin } = getV8Context(req);
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded', code: 'CONTEXT_DOC_FILE_REQUIRED' });
+    }
+
+    const scopeRaw = String((req.body as any)?.scope || 'user').toLowerCase();
+    const scope = scopeRaw === 'project' ? 'project' : 'user';
+    const projectIdRaw = String((req.body as any)?.projectId || '').trim();
+    const projectId = projectIdRaw || null;
+    if (scope === 'project' && !projectId) {
+      return res.status(400).json({
+        error: 'projectId is required for project scope',
+        code: 'CONTEXT_DOC_PROJECT_REQUIRED',
+      });
+    }
+    if (scope === 'project') {
+      const canAccessProject = await contextDocumentService.canAccessProject({
+        organizationId,
+        userId,
+        projectId: String(projectId),
+        userRole,
+        isSuperAdmin,
+      });
+      if (!canAccessProject) {
+        return res.status(403).json({
+          error: 'Project not found or access denied',
+          code: 'CONTEXT_DOC_PROJECT_ACCESS_DENIED',
+        });
+      }
+    }
+
+    let document;
+    try {
+      document = await contextDocumentService.uploadAndIngest({
+        file: req.file,
+        organizationId,
+        ownerId: userId,
+        scope,
+        projectId,
+        sourceUpload: 'interview.insight_creator',
+      });
+    } catch (error: any) {
+      if (
+        error?.code === 'CONTEXT_STORAGE_QUOTA_EXCEEDED' ||
+        error?.code === 'PROJECT_STORAGE_QUOTA_EXCEEDED'
+      ) {
+        return res.status(429).json({
+          error: error.message || 'Storage quota exceeded',
+          code: error.code,
+          data: {
+            document: error.document || null,
+            quota: error.quota || null,
+          },
+          meta: insightMutationMeta(),
+        });
+      }
+      throw error;
+    }
+
+    return res.status(201).json({
+      data: { document },
+      meta: insightMutationMeta(),
+    });
+  })
+);
 
 router.get(
   '/insights',
@@ -393,12 +514,457 @@ router.get(
   })
 );
 
+router.get(
+  '/insights/:id/context-lineage',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const lineage = await interviewInsightService.listContextLineage(organizationId, id);
+    return res.json({ data: { lineage }, meta: insightReadMeta() });
+  })
+);
+
+router.get(
+  '/insights/:id/report-pack',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const reportPack = await createInterviewReportPackDraft({
+      organizationId,
+      insight: insight as any,
+      createdBy: userId,
+    });
+    return res.json({ data: { reportPack }, meta: insightReadMeta() });
+  })
+);
+
+router.get(
+  '/insights/:id/report-pack/readiness',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const persistedReadiness = await getInterviewReportPackReadiness(organizationId, id);
+    if (persistedReadiness) {
+      return res.json({ data: { readiness: persistedReadiness }, meta: insightReadMeta() });
+    }
+
+    const reportPack = await createInterviewReportPackDraft({
+      organizationId,
+      insight: insight as any,
+      createdBy: userId,
+    });
+    return res.json({
+      data: { readiness: evaluateInterviewReportPackReadiness(reportPack) },
+      meta: insightReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/insights/:id/report-pack/submit-review',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    await createInterviewReportPackDraft({
+      organizationId,
+      insight: insight as any,
+      createdBy: userId,
+    });
+
+    const result = await submitInterviewReportPackForReview({
+      organizationId,
+      insightId: id,
+      actorUserId: userId,
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        error: 'Report pack not found',
+        code: 'INTERVIEW_REPORT_PACK_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data: { result }, meta: insightMutationMeta() });
+  })
+);
+
+router.post(
+  '/insights/:id/report-pack/publish',
+  requirePermission('INTERVIEW_INSIGHTS_PUBLISH'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const result = await publishInterviewReportPack({
+      organizationId,
+      insightId: id,
+      actorUserId: userId,
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        error: 'Report pack not found',
+        code: 'INTERVIEW_REPORT_PACK_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data: { result }, meta: insightMutationMeta() });
+  })
+);
+
+router.get(
+  '/insights/:id/report-pack/export-manifest',
+  requirePermission('INTERVIEW_INSIGHTS_PUBLISH'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    let exportManifest;
+    try {
+      exportManifest = await buildInterviewReportPackExportManifest({
+        organizationId,
+        insightId: id,
+      });
+    } catch (error) {
+      const knownError = error as { code?: unknown; message?: unknown; statusCode?: unknown };
+      if (knownError.code === 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED') {
+        return res.status(Number(knownError.statusCode) || 409).json({
+          error:
+            typeof knownError.message === 'string'
+              ? knownError.message
+              : 'Only published report packs can be exported as client-ready material.',
+          code: 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED',
+        });
+      }
+      throw error;
+    }
+
+    if (!exportManifest) {
+      return res.status(404).json({
+        error: 'Report pack not found',
+        code: 'INTERVIEW_REPORT_PACK_NOT_FOUND',
+      });
+    }
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_insight_audit_log
+       (id, organization_id, insight_id, entity_type, entity_id, action, actor_user_id, detail_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        organizationId,
+        id,
+        'interview_report_pack',
+        exportManifest.reportPackId,
+        'report_pack_exported',
+        userId || null,
+        JSON.stringify({
+          reportPackId: exportManifest.reportPackId,
+          worksheetCount: exportManifest.worksheetCount,
+          completenessScore: exportManifest.completenessScore,
+          readinessStatus: exportManifest.readiness.status,
+          exportedAt: exportManifest.exportedAt,
+          manifestHash: exportManifest.manifestHash,
+        }),
+        new Date().toISOString(),
+      ]
+    );
+
+    return res.json({ data: { exportManifest }, meta: insightReadMeta() });
+  })
+);
+
+router.get(
+  '/insights/:id/report-pack/export-markdown',
+  requirePermission('INTERVIEW_INSIGHTS_PUBLISH'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    let markdownExport;
+    try {
+      markdownExport = await buildInterviewReportPackMarkdownExport({
+        organizationId,
+        insightId: id,
+      });
+    } catch (error) {
+      const knownError = error as { code?: unknown; message?: unknown; statusCode?: unknown };
+      if (knownError.code === 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED') {
+        return res.status(Number(knownError.statusCode) || 409).json({
+          error:
+            typeof knownError.message === 'string'
+              ? knownError.message
+              : 'Only published report packs can be exported as client-ready material.',
+          code: 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED',
+        });
+      }
+      throw error;
+    }
+
+    if (!markdownExport) {
+      return res.status(404).json({
+        error: 'Report pack not found',
+        code: 'INTERVIEW_REPORT_PACK_NOT_FOUND',
+      });
+    }
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_insight_audit_log
+       (id, organization_id, insight_id, entity_type, entity_id, action, actor_user_id, detail_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        organizationId,
+        id,
+        'interview_report_pack',
+        markdownExport.reportPackId,
+        'report_pack_client_markdown_exported',
+        userId || null,
+        JSON.stringify({
+          reportPackId: markdownExport.reportPackId,
+          worksheetCount: markdownExport.worksheetCount,
+          exportedAt: markdownExport.exportedAt,
+          sourceManifestHash: markdownExport.sourceManifestHash,
+          exportHash: markdownExport.exportHash,
+          format: markdownExport.format,
+        }),
+        new Date().toISOString(),
+      ]
+    );
+
+    return res.json({ data: { markdownExport }, meta: insightReadMeta() });
+  })
+);
+
+router.post(
+  '/insights/:id/report-pack/revisions',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    let result;
+    try {
+      result = await createInterviewReportPackRevision({
+        organizationId,
+        insightId: id,
+        actorUserId: userId,
+      });
+    } catch (error) {
+      const knownError = error as { code?: unknown; message?: unknown; statusCode?: unknown };
+      if (knownError.code === 'INTERVIEW_REPORT_PACK_REVISION_BLOCKED') {
+        return res.status(Number(knownError.statusCode) || 409).json({
+          error:
+            typeof knownError.message === 'string'
+              ? knownError.message
+              : 'Only published report packs can create a new editable revision.',
+          code: 'INTERVIEW_REPORT_PACK_REVISION_BLOCKED',
+        });
+      }
+      throw error;
+    }
+
+    if (!result) {
+      return res.status(404).json({
+        error: 'Report pack not found',
+        code: 'INTERVIEW_REPORT_PACK_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data: { result }, meta: insightMutationMeta() });
+  })
+);
+
+router.patch(
+  '/insights/:id/report-pack/worksheets/:worksheetKey',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id, worksheetKey } = req.params;
+
+    const row = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
+    if (!row) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String((row as any).organization_id) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const { status, completenessScore, warnings, rows, markdown } = req.body || {};
+    const hasAnyUpdate =
+      status !== undefined ||
+      completenessScore !== undefined ||
+      warnings !== undefined ||
+      rows !== undefined ||
+      markdown !== undefined;
+    if (!hasAnyUpdate) {
+      return res.status(400).json({
+        error: 'At least one worksheet field is required',
+        code: 'INTERVIEW_REPORT_WORKSHEET_PATCH_EMPTY',
+      });
+    }
+
+    let reportPack;
+    try {
+      reportPack = await updateInterviewReportWorksheet({
+        organizationId,
+        insightId: id,
+        worksheetKey,
+        actorUserId: userId,
+        updates: {
+          status,
+          completenessScore,
+          warnings: Array.isArray(warnings) ? warnings.map(String) : undefined,
+          rows: Array.isArray(rows) ? rows : undefined,
+          markdown: markdown === null || typeof markdown === 'string' ? markdown : undefined,
+        },
+      });
+    } catch (error) {
+      const knownError = error as { code?: unknown; message?: unknown; statusCode?: unknown };
+      if (knownError.code === 'INTERVIEW_REPORT_PACK_IMMUTABLE') {
+        return res.status(Number(knownError.statusCode) || 409).json({
+          error:
+            typeof knownError.message === 'string'
+              ? knownError.message
+              : 'Published report packs cannot be edited.',
+          code: 'INTERVIEW_REPORT_PACK_IMMUTABLE',
+        });
+      }
+      throw error;
+    }
+
+    if (!reportPack) {
+      return res.status(404).json({
+        error: 'Report pack worksheet not found',
+        code: 'INTERVIEW_REPORT_WORKSHEET_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data: { reportPack }, meta: insightMutationMeta() });
+  })
+);
+
 router.post(
   '/insights',
   requirePermission('INTERVIEW_INSIGHTS_CREATE'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const { title, sessionIds, sessionId, promptType, filters, customPrompt } = req.body || {};
+    const {
+      title,
+      sessionIds,
+      sessionId,
+      promptType,
+      filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
+      customPrompt,
+      selectedContextDocumentIds,
+    } = req.body || {};
 
     const normalizedSessionIds: string[] = Array.isArray(sessionIds)
       ? sessionIds.map(String).filter(Boolean)
@@ -410,6 +976,31 @@ router.post(
       return res.status(400).json({
         error: 'sessionId or sessionIds is required',
         code: 'INTERVIEW_INSIGHT_SESSION_REQUIRED',
+      });
+    }
+
+    const placeholders = normalizedSessionIds.map(() => '?').join(',');
+    const approvedRows = await queryHelpers.queryAll<{ id: string }>(
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id IN (${placeholders})
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )
+         AND s.status = 'completed'
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
+      [organizationId, ...normalizedSessionIds, organizationId, organizationId]
+    );
+    const approvedIds = new Set((approvedRows || []).map((row) => String(row.id)));
+    const rejectedIds = normalizedSessionIds.filter((id) => !approvedIds.has(id));
+    if (rejectedIds.length > 0) {
+      return res.status(409).json({
+        error: 'Interview Insight can only be generated from approved/completed interview sessions',
+        code: 'INTERVIEW_INSIGHT_SOURCE_NOT_APPROVED',
+        rejectedSessionIds: rejectedIds,
       });
     }
 
@@ -440,7 +1031,16 @@ router.post(
       sessionIds: normalizedSessionIds,
       promptType: normalizedPromptType,
       filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
       customPrompt,
+      selectedContextDocumentIds: Array.isArray(selectedContextDocumentIds)
+        ? selectedContextDocumentIds.map(String).filter(Boolean)
+        : [],
       createdBy: userId,
     });
 
@@ -901,7 +1501,7 @@ router.get(
     );
     const auditEntries = await queryHelpers
       .queryAll(
-        `SELECT a.id, a.action as type, a.created_at, a.detail_json, u.first_name, u.last_name
+        `SELECT a.id, a.action as type, a.entity_type, a.entity_id, a.created_at, a.detail_json, u.first_name, u.last_name
          FROM interview_insight_audit_log a
          LEFT JOIN users u ON u.id = a.actor_user_id
          WHERE a.organization_id = ? AND a.insight_id = ?
@@ -909,6 +1509,71 @@ router.get(
         [organizationId, id]
       )
       .catch(() => []);
+    const describeAuditEntry = (entry: any): string => {
+      let detail: any = {};
+      try {
+        detail = entry.detail_json ? JSON.parse(String(entry.detail_json)) : {};
+      } catch {
+        detail = {};
+      }
+      if (entry.entity_type === 'interview_report_worksheet') {
+        const worksheetKey = String(detail.worksheetKey || entry.entity_id || 'worksheet');
+        if (entry.type === 'worksheet_update_blocked') {
+          return `Report worksheet ${worksheetKey} update blocked because report pack is published`;
+        }
+        const status = String(detail.updates?.status || 'updated');
+        const score =
+          detail.nextPack?.completenessScore !== undefined
+            ? `, pack completeness ${detail.nextPack.completenessScore}%`
+            : '';
+        return `Report worksheet ${worksheetKey} marked ${status}${score}`;
+      }
+      if (entry.entity_type === 'interview_report_pack') {
+        const readinessStatus = String(
+          detail.readiness?.status || detail.readinessStatus || 'unknown'
+        );
+        const blockerCount = Array.isArray(detail.readiness?.blockers)
+          ? detail.readiness.blockers.length
+          : 0;
+        if (entry.type === 'report_pack_review_blocked') {
+          return `Report pack review blocked by readiness gate (${blockerCount} blockers)`;
+        }
+        if (entry.type === 'report_pack_submitted_for_review') {
+          return `Report pack submitted for review (${readinessStatus})`;
+        }
+        if (entry.type === 'report_pack_publish_blocked') {
+          return `Report pack publish blocked by readiness gate (${blockerCount} blockers)`;
+        }
+        if (entry.type === 'report_pack_published') {
+          return `Report pack published (${readinessStatus})`;
+        }
+        if (entry.type === 'report_pack_exported') {
+          const worksheetCount =
+            detail.worksheetCount !== undefined ? `, ${detail.worksheetCount} worksheets` : '';
+          const hash = detail.manifestHash
+            ? `, hash ${String(detail.manifestHash).slice(0, 12)}`
+            : '';
+          return `Report pack export manifest downloaded (${readinessStatus}${worksheetCount}${hash})`;
+        }
+        if (entry.type === 'report_pack_client_markdown_exported') {
+          const worksheetCount =
+            detail.worksheetCount !== undefined ? `, ${detail.worksheetCount} worksheets` : '';
+          const hash = detail.exportHash
+            ? `, export hash ${String(detail.exportHash).slice(0, 12)}`
+            : '';
+          return `Client-ready Markdown report downloaded (${detail.format || 'markdown'}${worksheetCount}${hash})`;
+        }
+        if (entry.type === 'report_pack_revision_created') {
+          const version = detail.version !== undefined ? ` v${detail.version}` : '';
+          const hash = detail.manifestHash
+            ? `, base hash ${String(detail.manifestHash).slice(0, 12)}`
+            : '';
+          return `Report pack revision${version} created from published pack${hash}`;
+        }
+      }
+      return `Audit: ${String(entry.type || 'updated')}`;
+    };
+
     const mergedEntries = [
       ...(entries || []).map((e: any) => ({
         id: e.id,
@@ -921,7 +1586,7 @@ router.get(
       ...(auditEntries || []).map((e: any) => ({
         id: e.id,
         type: e.type,
-        description: `P10: ${String(e.type || 'updated')}`,
+        description: describeAuditEntry(e),
         created_at: e.created_at,
         first_name: e.first_name,
         last_name: e.last_name,

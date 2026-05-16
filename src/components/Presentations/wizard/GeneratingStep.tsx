@@ -8,7 +8,7 @@ export const GeneratingStep: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center h-96 text-center">
       <div className="relative mb-6">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-500 flex items-center justify-center">
           <Loader2 className="w-10 h-10 text-white animate-spin" />
         </div>
       </div>
@@ -23,15 +23,15 @@ export const GeneratingStep: React.FC = () => {
       </p>
       <div className="mt-8 flex items-center gap-3">
         <div
-          className="w-2 h-2 rounded-full bg-purple-500 animate-bounce"
+          className="w-2 h-2 rounded-full bg-primary-500 animate-bounce"
           style={{ animationDelay: '0ms' }}
         />
         <div
-          className="w-2 h-2 rounded-full bg-purple-500 animate-bounce"
+          className="w-2 h-2 rounded-full bg-primary-500 animate-bounce"
           style={{ animationDelay: '150ms' }}
         />
         <div
-          className="w-2 h-2 rounded-full bg-purple-500 animate-bounce"
+          className="w-2 h-2 rounded-full bg-primary-500 animate-bounce"
           style={{ animationDelay: '300ms' }}
         />
       </div>

@@ -126,8 +126,8 @@ const GATE_UI: Record<
   },
   APPROVE_TO_INITIATIVE: {
     icon: FileCheck,
-    color: 'text-purple-700 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/15',
+    color: 'text-primary-700 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/15',
     actionLabel: { en: 'Approve to Initiatives', pl: 'Przekaż do inicjatyw' },
   },
   ACCEPT: {
@@ -150,20 +150,20 @@ const GATE_UI: Record<
   },
   SCHEDULE: {
     icon: Clock,
-    color: 'text-violet-700 dark:text-violet-400',
-    bgColor: 'bg-violet-50 dark:bg-violet-500/15',
+    color: 'text-primary-700 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/15',
     actionLabel: { en: 'Schedule', pl: 'Zaplanuj' },
   },
   START: {
     icon: ArrowRight,
-    color: 'text-cyan-700 dark:text-cyan-400',
-    bgColor: 'bg-cyan-50 dark:bg-cyan-500/15',
+    color: 'text-blue-700 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/15',
     actionLabel: { en: 'Start Execution', pl: 'Rozpocznij realizację' },
   },
   BLOCK: {
     icon: Lock,
-    color: 'text-red-700 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-500/15',
+    color: 'text-rose-700 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-500/15',
     actionLabel: { en: 'Block', pl: 'Zablokuj' },
   },
   UNBLOCK: {
@@ -174,8 +174,8 @@ const GATE_UI: Record<
   },
   COMPLETE: {
     icon: FileText,
-    color: 'text-teal-700 dark:text-teal-400',
-    bgColor: 'bg-teal-50 dark:bg-teal-500/15',
+    color: 'text-blue-700 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/15',
     actionLabel: { en: 'Mark Complete', pl: 'Oznacz jako ukończone' },
   },
   START_TRACKING: {
@@ -224,8 +224,8 @@ const STATUS_UI: Record<
   },
   REJECTED: {
     label: { en: 'Rejected', pl: 'Odrzucone' },
-    color: 'text-red-700 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-500/20',
+    color: 'text-rose-700 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-500/20',
     icon: X,
   },
 };
@@ -907,8 +907,8 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     onClick={() => handleToggleExpand(stage.id)}
                     className={`
                       group cursor-pointer transition-colors duration-150
-                      ${isCurrent ? 'bg-purple-500/[0.04] dark:bg-purple-500/[0.07]' : ''}
-                      ${hasBlocking && isCurrent ? 'bg-red-500/[0.04] dark:bg-red-500/[0.06]' : ''}
+                      ${isCurrent ? 'bg-primary-500/[0.04] dark:bg-primary-500/[0.07]' : ''}
+                      ${hasBlocking && isCurrent ? 'bg-rose-500/[0.04] dark:bg-rose-500/[0.06]' : ''}
                       hover:bg-slate-50/80 dark:hover:bg-white/[0.02]
                     `}
                   >
@@ -922,8 +922,8 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                               : isCurrent
                                 ? hasBlocking
-                                  ? 'bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 ring-1 ring-red-500/30'
-                                  : 'bg-purple-500 text-white'
+                                  ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 ring-1 ring-rose-500/30'
+                                  : 'bg-primary-500 text-white'
                                 : 'bg-slate-200/80 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                           }
                         `}
@@ -946,7 +946,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             <span
                               className={`text-sm font-medium truncate ${
                                 isCurrent
-                                  ? 'text-purple-700 dark:text-purple-300'
+                                  ? 'text-primary-700 dark:text-primary-300'
                                   : isCompleted
                                     ? 'text-slate-600 dark:text-slate-400'
                                     : 'text-slate-800 dark:text-slate-200'
@@ -955,7 +955,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               {stage.label}
                             </span>
                             {isCurrent && (
-                              <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-purple-500 text-white uppercase tracking-wider">
+                              <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-primary-500 text-white uppercase tracking-wider">
                                 {isPolish ? 'teraz' : 'now'}
                               </span>
                             )}
@@ -1001,7 +1001,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                 requestGateDecision(gateKey, stage);
                               }}
                               disabled={requestBusyGate === gateKey || isMutating}
-                              className="flex-shrink-0 px-2 py-1 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[10px] font-semibold transition-colors"
+                              className="flex-shrink-0 px-2 py-1 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:opacity-40 text-white text-[10px] font-semibold transition-colors"
                             >
                               {requestBusyGate === gateKey ? (
                                 <Loader2 size={11} className="animate-spin" />
@@ -1069,7 +1069,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     <td className="px-3 py-2">
                       {requirements.length > 0 ? (
                         hasBlocking ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 dark:text-red-400">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
                             <X size={10} />
                             {
                               requirements.filter((r) => r.severity === 'blocking' && !r.pass)
@@ -1149,7 +1149,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                         req.pass
                                           ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                                           : req.severity === 'blocking'
-                                            ? 'bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400'
+                                            ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400'
                                             : 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400'
                                       }
                                     `}
@@ -1182,7 +1182,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs
                                       ${
                                         assignedUsers.length > 0
-                                          ? 'bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400'
+                                          ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400'
                                           : 'bg-slate-100 dark:bg-slate-500/15 text-slate-500 dark:text-slate-400'
                                       }
                                     `}
@@ -1233,7 +1233,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                   e.stopPropagation();
                                   onOpenDecision?.(String(decision.id));
                                 }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/15 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors font-medium"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/15 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors font-medium"
                               >
                                 {isPolish ? 'Otwórz decyzję' : 'Open decision'} →
                               </button>
@@ -1315,7 +1315,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {editRequiredRoles.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <UserPlus size={14} className="text-purple-500" />
+                          <UserPlus size={14} className="text-primary-500" />
                           <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                             {isPolish ? 'Role bramkowe' : 'Gate Roles'}
                           </label>
@@ -1344,7 +1344,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       [role]: e.target.value,
                                     }))
                                   }
-                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all"
+                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
                                 >
                                   <option value="">
                                     {isPolish ? '— nie przypisano —' : '— not assigned —'}
@@ -1376,7 +1376,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         onChange={(e) =>
                           setDueDateDraft((prev) => ({ ...prev, [editGateKey]: e.target.value }))
                         }
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
                       />
                     </div>
 
@@ -1392,7 +1392,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         }
                         rows={3}
                         placeholder={isPolish ? 'Dodaj kontekst do bramki…' : 'Add gate context…'}
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all resize-none"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all resize-none"
                       />
                     </div>
 
@@ -1412,7 +1412,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                   pass
                                     ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                                     : req.severity === 'blocking'
-                                      ? 'bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400'
+                                      ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400'
                                       : 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400'
                                 }`}
                               >
@@ -1447,7 +1447,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             onOpenDecision?.(String(editDecision.id));
                             setEditingStageId(null);
                           }}
-                          className="px-4 py-2 rounded-xl text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+                          className="px-4 py-2 rounded-xl text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
                         >
                           {isPolish ? 'Otwórz decyzję' : 'Open decision'}
                         </button>
@@ -1492,7 +1492,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           await fetchAll();
                         }}
                         disabled={savingEdit || savingRoles}
-                        className="px-5 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+                        className="px-5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
                       >
                         {savingEdit || savingRoles ? (
                           <Loader2 size={14} className="animate-spin" />

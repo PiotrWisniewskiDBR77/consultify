@@ -112,7 +112,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
               <CreditCard className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -150,7 +150,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
               value={holderName}
               onChange={(e) => setHolderName(e.target.value)}
               placeholder="John Doe"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
             />
           </div>
 
@@ -166,7 +166,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
                 onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
                 placeholder="4242 4242 4242 4242"
                 maxLength={19}
-                className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono"
+                className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all font-mono"
               />
               <CreditCard className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
             </div>
@@ -184,7 +184,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
                 onChange={(e) => setExpiry(formatExpiry(e.target.value))}
                 placeholder="MM/YY"
                 maxLength={5}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all font-mono"
               />
             </div>
             <div>
@@ -197,14 +197,14 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
                 onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder="123"
                 maxLength={4}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all font-mono"
               />
             </div>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 text-sm">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
@@ -222,7 +222,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
           <button
             type="submit"
             disabled={loading || !cardReady}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold hover:from-primary-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

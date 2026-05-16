@@ -14,6 +14,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback ?? key,
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 vi.mock('framer-motion', () => ({
@@ -58,6 +62,7 @@ vi.mock('../../../../src/store/useConversationStore', () => ({
 
 const appState: any = {
   currentView: AppView.MY_WORK,
+  setCurrentView: vi.fn(),
   setCurrentViewState: vi.fn(),
   logout: vi.fn(),
   isSidebarOpen: true,
@@ -103,10 +108,10 @@ vi.mock('../../../../src/components/navigation/Sidebar/SidebarFooter', () => ({
 }));
 
 vi.mock('../../../../src/components/navigation/Sidebar/FloatingSubmenu', () => ({
-  FloatingSubmenu: ({ title, onNavigate, onClose, onMouseEnter, onMouseLeave }: any) => (
+  FloatingSubmenu: ({ title, onItemClick, onClose, onMouseEnter, onMouseLeave }: any) => (
     <div data-testid="floating-submenu" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <div>{title}</div>
-      <button type="button" onClick={() => onNavigate(AppView.MY_WORK)}>
+      <button type="button" onClick={() => onItemClick({ id: 'SUB1', viewId: AppView.MY_WORK })}>
         flyout-nav
       </button>
       <button type="button" onClick={() => onClose()}>
@@ -180,6 +185,7 @@ describe('Sidebar (L2)', () => {
     conversationState.setDisplayMode.mockClear();
     conversationState.setWorkspaceContext.mockClear();
     conversationState.toggleSidebar.mockClear();
+    appState.setCurrentView.mockClear();
     appState.setCurrentViewState.mockClear();
     appState.setIsSidebarOpen.mockClear();
     appState.toggleChatSlidingPanel.mockClear();
@@ -213,6 +219,7 @@ describe('Sidebar (L2)', () => {
   });
 
   it('renders footer items for ADMIN and navigates on click', () => {
+    appState.currentUser = { role: 'SUPERADMIN', journeyState: undefined };
     render(<Sidebar />);
 
     expect(screen.getByTestId('navitem-ORGANIZATION')).toBeInTheDocument();
@@ -222,8 +229,24 @@ describe('Sidebar (L2)', () => {
     fireEvent.click(screen.getByTestId('navitem-ORGANIZATION'));
 
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
-    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.ORGANIZATION_PROFILE)}`);
+    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
+  });
+
+  it('navigates Settings sidebar item to the settings profile module', () => {
+    appState.currentUser = { role: 'SUPERADMIN', journeyState: undefined };
+    render(<Sidebar />);
+
+    fireEvent.click(screen.getByTestId('navitem-SETTINGS'));
+
+    expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
+    expect(getDefaultWorkspaceTypeMock).toHaveBeenCalledWith(AppView.SETTINGS_PROFILE_MODULE);
+    expect(createWorkspaceContextMock).toHaveBeenCalledWith(
+      AppView.SETTINGS_PROFILE_MODULE,
+      'default',
+      { projectId: 'project-1' }
+    );
+    expect(conversationState.setWorkspaceContext).toHaveBeenCalledWith({ mock: true });
+    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.SETTINGS_PROFILE_MODULE);
   });
 
   it('AI_CHAT click navigates to full chat when not already on chat', () => {
@@ -232,8 +255,7 @@ describe('Sidebar (L2)', () => {
     fireEvent.click(screen.getByTestId('navitem-AI_CHAT'));
 
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('full');
-    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.AI_CHAT);
-    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.AI_CHAT)}`);
+    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.AI_CHAT);
     expect(conversationState.toggleSidebar).not.toHaveBeenCalled();
   });
 
@@ -254,7 +276,7 @@ describe('Sidebar (L2)', () => {
     fireEvent.click(screen.getByTestId('navitem-LOCKED'));
 
     expect(navigateMock).not.toHaveBeenCalled();
-    expect(appState.setCurrentViewState).not.toHaveBeenCalled();
+    expect(appState.setCurrentView).not.toHaveBeenCalled();
   });
 
   it('closes sidebar on mobile after navigating to a view', () => {
@@ -326,12 +348,12 @@ describe('Sidebar (L2)', () => {
   });
 
   it('handles navigation errors gracefully', () => {
-    navigateMock.mockImplementationOnce(() => {
+    appState.setCurrentView.mockImplementationOnce(() => {
       throw new Error('boom');
     });
     render(<Sidebar />);
     fireEvent.click(screen.getByTestId('navitem-SETTINGS'));
-    expect(navigateMock).toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalled();
   });
 
   it('logs invalid items (no viewId) instead of navigating', () => {
@@ -355,7 +377,7 @@ describe('Sidebar (L2)', () => {
     render(<Sidebar />);
     fireEvent.click(screen.getByTestId('sidebarfooter-nav'));
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.MY_WORK)}`);
+    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.MY_WORK);
   });
 
   it('auto-closes floating submenu on mouse leave timeout', async () => {

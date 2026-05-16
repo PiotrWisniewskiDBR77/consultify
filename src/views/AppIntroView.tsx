@@ -35,7 +35,7 @@ export const AppIntroView: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6 py-8 md:px-8 md:py-10">
         <section className="rounded-3xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-6 md:p-8">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-3 py-1 text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 px-3 py-1 text-xs font-semibold">
               <BookOpen size={14} />
               {lang === 'pl' ? 'Intro aplikacji' : 'App intro'}
             </div>
@@ -51,7 +51,7 @@ export const AppIntroView: React.FC = () => {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => navigate(ROUTES.INTERVIEW)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 text-sm font-semibold transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-sm font-semibold transition-colors"
               >
                 {lang === 'pl' ? 'Przejdź do Interview' : 'Go to Interview'}
                 <ArrowRight size={15} />
@@ -91,11 +91,11 @@ export const AppIntroView: React.FC = () => {
                 className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-4"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
                     <DynamicIcon
                       name={card.icon}
                       size={18}
-                      className="text-purple-600 dark:text-purple-300"
+                      className="text-primary-600 dark:text-primary-300"
                     />
                   </div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -134,7 +134,7 @@ export const AppIntroView: React.FC = () => {
                   <DynamicIcon
                     name={card.icon}
                     size={18}
-                    className="text-purple-600 dark:text-purple-300"
+                    className="text-primary-600 dark:text-primary-300"
                   />
                 </div>
                 <div className="mt-4 text-sm font-semibold text-slate-900 dark:text-white">
@@ -151,7 +151,7 @@ export const AppIntroView: React.FC = () => {
         <section className="mt-8 grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-              <Sparkles size={16} className="text-purple-500" />
+              <Sparkles size={16} className="text-primary-500" />
               {lang === 'pl' ? 'Jak działa Help' : 'How Help works'}
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">

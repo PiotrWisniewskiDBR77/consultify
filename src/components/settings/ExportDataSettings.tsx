@@ -26,11 +26,13 @@ import {
   Mail,
   Shield,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
@@ -44,7 +46,6 @@ import {
 } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Button } from '../ui/primitives/Button';
-import { Progress } from '../ui/progress';
 import { Select } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { Skeleton } from '../ui/skeleton';
@@ -65,12 +66,26 @@ interface ExportDataSettingsProps {
   currentUser: User;
 }
 
-export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentUser }) => {
+const normalizeExportRequests = (data: unknown): ExportRequest[] => {
+  const requests = Array.isArray((data as { requests?: unknown })?.requests)
+    ? (data as { requests: unknown[] }).requests
+    : data;
+  if (!Array.isArray(requests)) {
+    throw new Error('Export history response was invalid');
+  }
+  return requests as ExportRequest[];
+};
+
+export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
+  currentUser: _currentUser,
+}) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const [exportRequests, setExportRequests] = useState<ExportRequest[]>([]);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json');
   const [includeOptions, setIncludeOptions] = useState({
@@ -81,95 +96,62 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
     messages: false,
   });
 
+  const fetchExports = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true);
+    try {
+      setHistoryLoadError(null);
+      const data = await Api.get('/settings/export-history');
+      const requests = normalizeExportRequests(data);
+      setExportRequests(requests);
+      return requests;
+    } catch (error: unknown) {
+      setExportRequests([]);
+      setHistoryLoadError(normalizeApiErrorMessage(error, 'Failed to load export history'));
+      return null;
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  }, []);
+
   // Fetch export history
   useEffect(() => {
-    const fetchExports = async () => {
-      setLoading(true);
-      try {
-        // In production, this would call the actual API
-        // GET /api/settings/export-history
-
-        // Simulated data
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setExportRequests([
-          // {
-          //     id: '1',
-          //     status: 'ready',
-          //     requestedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-          //     completedAt: new Date(Date.now() - 86400000 * 2 + 3600000).toISOString(),
-          //     expiresAt: new Date(Date.now() + 86400000 * 5).toISOString(),
-          //     downloadUrl: '#',
-          //     format: 'JSON',
-          //     size: '2.4 MB',
-          // },
-        ]);
-      } catch (error) {
-        console.error('Failed to fetch export history:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchExports();
-  }, []);
+  }, [fetchExports]);
 
   // Request data export
   const handleRequestExport = async () => {
     setRequesting(true);
+    setActionError(null);
     try {
-      const response = await fetch('/api/settings/export-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          format: exportFormat,
-          include: includeOptions,
-        }),
+      const response = await Api.post('/settings/export-data', {
+        format: exportFormat,
+        include: includeOptions,
       });
 
-      if (response.ok) {
-        const newRequest: ExportRequest = {
-          id: Date.now().toString(),
-          status: 'pending',
-          requestedAt: new Date().toISOString(),
-          format: exportFormat.toUpperCase(),
-        };
-        setExportRequests((prev) => [newRequest, ...prev]);
-
-        toast({
-          title: t('settings.export.requested', 'Export Requested'),
-          description: t(
-            'settings.export.requestedDesc',
-            'You will receive an email when your data is ready for download'
-          ),
-        });
-      } else {
-        // Demo mode - add pending request anyway
-        const newRequest: ExportRequest = {
-          id: Date.now().toString(),
-          status: 'pending',
-          requestedAt: new Date().toISOString(),
-          format: exportFormat.toUpperCase(),
-        };
-        setExportRequests((prev) => [newRequest, ...prev]);
-
-        toast({
-          title: t('settings.export.requested', 'Export Requested'),
-          description: t(
-            'settings.export.requestedDesc',
-            'You will receive an email when your data is ready for download'
-          ),
-        });
+      const requestId = response?.requestId || response?.id;
+      if (!requestId) {
+        throw new Error('Export request response did not include a request id');
+      }
+      const refreshedRequests = await fetchExports(false);
+      if (!refreshedRequests?.some((request) => request.id === requestId)) {
+        throw new Error('Data export request was not confirmed by the server');
       }
 
+      toast({
+        title: t('settings.export.requested', 'Export Requested'),
+        description: t(
+          'settings.export.requestedDesc',
+          'You will receive an email when your data is ready for download'
+        ),
+      });
+
       setShowExportDialog(false);
-    } catch (error) {
-      console.error('Failed to request export:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to request data export');
+      setActionError(message);
       toast({
         title: t('settings.export.error', 'Error'),
-        description: t('settings.export.requestFailed', 'Failed to request data export'),
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -223,6 +205,16 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
   return (
     <div className="space-y-6">
       {/* Info Alert */}
+      {actionError && (
+        <div
+          role="alert"
+          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+        >
+          {actionError}
+        </div>
+      )}
+
+      {/* Info Alert */}
       <Alert>
         <Shield className="h-4 w-4" />
         <AlertTitle>{t('settings.export.gdprTitle', 'Your Data Rights')}</AlertTitle>
@@ -238,8 +230,8 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-              <FileArchive className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <FileArchive className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <CardTitle>{t('settings.export.title', 'Export Your Data')}</CardTitle>
@@ -276,7 +268,9 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {exportRequests.length === 0 ? (
+          {historyLoadError ? (
+            <DegradedState title="Export history unavailable" description={historyLoadError} />
+          ) : exportRequests.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{t('settings.export.noHistory', 'No export requests yet')}</p>

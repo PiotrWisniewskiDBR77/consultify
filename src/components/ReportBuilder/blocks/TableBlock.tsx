@@ -119,7 +119,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
                 />
                 <button
                   onClick={() => deleteColumn(i)}
-                  className="absolute -top-2 right-0 opacity-0 group-hover:opacity-100 bg-red-100 text-red-500 rounded-full p-0.5 hover:bg-red-200"
+                  className="absolute -top-2 right-0 opacity-0 group-hover:opacity-100 bg-rose-100 text-rose-500 rounded-full p-0.5 hover:bg-rose-200"
                   title="Delete Column"
                 >
                   <Trash2 size={10} />
@@ -154,7 +154,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
               <td className="w-8 text-center">
                 <button
                   onClick={() => deleteRow(rI)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-slate-500 hover:text-red-500"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
                 >
                   <Trash2 size={12} />
                 </button>

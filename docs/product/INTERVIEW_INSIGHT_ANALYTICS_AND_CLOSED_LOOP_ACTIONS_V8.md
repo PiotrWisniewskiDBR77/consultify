@@ -39,7 +39,136 @@ This means:
 
 We do **not** jump straight from transcript text to an org-wide conclusion.
 
+### 2.1 Product decisions for Insight generation
+
+These decisions are canonical for the next build iteration:
+
+- Insights are generated only from approved/completed interview material. Incomplete or unapproved answers are not valid input for insight generation.
+- The user selects source scope through filters: who answered, which approved sessions/templates, topic/theme focus, and timeframe.
+- The user does not select individual questions, answer snippets, or arbitrary sections as the primary runtime model. The insight generator works from approved sessions filtered by people, topic, and time.
+- If no topic/focus is selected, the generator produces a general consulting insight and identifies the highest-value observations itself.
+- A leading question is optional. The tool must support general insight generation without forcing a question.
+- `Material Quality` is generated after insight creation as a visible card, not as a blocking pre-generation gate. If answers are weak, the insight still exists and must honestly state the limitations.
+- The generator must support an explicit context mode:
+  - `selected_interview_material_only`
+  - `selected_material_plus_approved_org_knowledge`
+- Initiative creation from an insight may use all approved and confirmed organizational knowledge available to the workspace, while preserving source lineage.
+- AI may propose draft candidate findings and draft P10 findings, but publishable findings still require operator review.
+
 ---
+
+## 2A. Insight Scope Builder
+
+`Insight Scope Builder` is the consulting brief before generation. It defines what the consultant is asking the system to analyze.
+
+It must capture:
+
+- `title`
+- `analysis_mode`
+- `topic_focus[]`
+- `source_session_ids[]`
+- `respondent_filters[]`
+- `role_filters[]`
+- `department_filters[]`
+- `template_filters[]`
+- `date_range`
+- `context_mode`
+- optional `consultant_note`
+- optional `leading_question`
+
+### 2A.1 Approved-only source rule
+
+The source basket may include only sessions and answers that passed the approved/completed interview workflow.
+
+Rationale:
+
+- Insight is a consulting artifact, not a raw capture tool.
+- Weak answers can still exist inside approved material, but they are surfaced as quality limitations after generation.
+- Approval quality checks for answers remain upstream. Insight does not fix broken capture by silently including unapproved material.
+
+### 2A.2 Source basket selection
+
+The source basket supports:
+
+- all approved sessions,
+- selected approved sessions,
+- filters by respondent,
+- filters by role,
+- filters by department,
+- filters by template/assessment sheet,
+- date range,
+- topic/focus selection.
+
+It does not support primary selection by:
+
+- individual answer snippets,
+- individual question IDs,
+- arbitrary manual transcript fragments.
+
+Those lower-level units remain evidence pointers and audit material inside the generated artifact.
+
+### 2A.3 Analysis modes
+
+The UI may show these modes in simpler language during testing, but the canonical semantics are:
+
+| Mode | Purpose | Output emphasis |
+|---|---|---|
+| `general_consulting_synthesis` | General insight from selected material | best observations, themes, risks, opportunities, contradictions |
+| `focused_topic_synthesis` | Analyze selected topics only | depth on one or more topics, with limits |
+| `contradiction_scan` | Look for disagreement, evasions and narrative tension | contradiction cases, unresolved gaps, next clarification |
+| `initiative_opportunity_scan` | Look for action potential | candidate opportunities, readiness, constraints, draft initiative inputs |
+| `material_quality_scan` | Evaluate the material itself | answer quality, coverage, missing voices, evidence sufficiency |
+| `hypothesis_validation` | Check selected assumptions/hypotheses | supported, contradicted, unresolved, evidence needed |
+| `between_the_lines` | Consultant-style interpretation beyond direct statements | hidden signals, evasions, power/ownership tensions, confidence warnings |
+
+Rules:
+
+- `general_consulting_synthesis` is the default.
+- Topic focus is optional.
+- Modes are not separate truth systems; every claim still resolves to source evidence and P10 where publishable.
+- `between_the_lines` must be clearly labeled as interpretive and must expose confidence and limits.
+
+### 2A.4 Topic focus taxonomy
+
+The generator should offer a curated topic list instead of forcing the user to write prompts from scratch.
+
+Canonical focus groups:
+
+- strategy and goals,
+- process and operations,
+- technology and systems,
+- data and reporting,
+- people and roles,
+- ownership and decision rights,
+- risks and blockers,
+- opportunities and improvements,
+- customer / user impact,
+- compliance / governance,
+- change readiness,
+- hidden signals and contradictions.
+
+The user may select none, one, many, or all.
+
+When none are selected, AI chooses the highest-value consulting observations from the selected material.
+
+### 2A.5 Context mode
+
+`selected_interview_material_only` means:
+
+- use only the selected approved Interview material;
+- use organization context only for labels, names and permissions;
+- do not import claims from other modules.
+
+`selected_material_plus_approved_org_knowledge` means:
+
+- use selected approved Interview material as the anchor;
+- enrich interpretation with approved/confirmed organizational knowledge;
+- include relevant prior insights, approved knowledge, documentation, initiatives and decisions where policy allows;
+- every external context contribution must be attributable.
+
+Rule:
+
+`Interview material is the anchor; organizational knowledge enriches the interpretation, but cannot erase source limits or contradictions.`
 
 ## 3. Canonical analysis dimensions
 
@@ -208,6 +337,50 @@ Defines:
 - active lenses
 - scope validity
 - synthesis posture
+- source basket filters
+- selected topic focus
+- context mode
+- optional consultant note
+- optional leading question
+
+Minimum fields:
+
+- `source_session_ids[]`
+- `source_scope_status`: `approved_only`
+- `respondent_filters[]`
+- `role_filters[]`
+- `department_filters[]`
+- `template_filters[]`
+- `date_range`
+- `topic_focus[]`
+- `analysis_mode`
+- `context_mode`
+- `consultant_note`
+- `leading_question`
+
+### 5.1A `InsightMaterialQuality`
+
+Defines the quality of the selected material after generation.
+
+Minimum fields:
+
+- `overall_material_score`
+- `answer_quality_posture`: `strong | usable | thin | poor`
+- `coverage_posture`: `single_perspective | partial_coverage | good_coverage | strong_cross_function_coverage`
+- `approved_session_count`
+- `respondent_count`
+- `role_coverage[]`
+- `department_coverage[]`
+- `thin_answer_count`
+- `missing_voices[]`
+- `evidence_gap_count`
+- `contradiction_count`
+- `limitations[]`
+- `recommended_followups[]`
+
+Rule:
+
+`Material Quality is not a gate. It is the honest consulting note that tells the user how far the generated insight can safely be trusted.`
 
 ### 5.2 `InsightPersonSlice`
 
@@ -366,13 +539,14 @@ Rule:
 
 Interview findings should be able to produce:
 
-- initiative input
-- task
-- decision candidate
-- risk note
-- knowledge object
-- clarification follow-up
-- targeted re-interview
+- report,
+- presentation,
+- table/workbook,
+- idea,
+- note,
+- initiative draft,
+- clarification follow-up,
+- targeted re-interview.
 
 But the route is governed:
 
@@ -383,6 +557,61 @@ Not:
 `transcript -> automatic action truth`
 
 Important findings should not die as passive transcript content, but they also must not bypass review.
+
+### 9.1 Six primary actions
+
+The `Interview Insight` action model exposes six primary downstream actions:
+
+Documents:
+
+1. `report`
+2. `presentation`
+3. `table`
+
+Application actions:
+
+1. `idea`
+2. `note`
+3. `initiative`
+
+Rules:
+
+- Document actions open the proper generator/builder for that artifact type.
+- The generator receives the insight context and lets the user choose a template or start without a template.
+- If no template is selected, AI creates a new structure from the insight context.
+- If a template is selected, AI fills the selected template with the insight context.
+- Application actions create governed application objects with lineage.
+- An initiative from insight starts as a draft in `Interview > Initiatives`.
+- Initiative drafting may use the full approved organizational knowledge base, not only the selected interview material, but must preserve provenance and confidence.
+- Every action records source artifact lineage.
+
+### 9.2 Action Composer
+
+Before a downstream object is created, the user should understand what will be sent.
+
+`Action Composer` shows:
+
+- source insight,
+- selected finding/candidate if applicable,
+- context pack,
+- confidence and limits,
+- evidence count,
+- selected template, if applicable,
+- target object type,
+- what AI is allowed to draft.
+
+For documents, `Action Composer` lives inside or immediately before the target generator.
+
+For initiative drafts, `Action Composer` should prepare:
+
+- problem/opportunity statement,
+- evidence-backed rationale,
+- suggested scope,
+- expected value hypothesis,
+- risks/limits,
+- owner suggestion,
+- source links,
+- related approved org knowledge.
 
 ---
 
@@ -395,6 +624,7 @@ The canonical analyst workflow should expose four read modes:
 - top patterns
 - contradictions
 - coverage gaps
+- material quality posture
 
 2. **Topics**
 - grouped synthesis by theme/issue/opportunity
@@ -413,6 +643,32 @@ Rule:
 
 `the UI may switch lenses, but must still resolve back to the same findings and evidence pointers`
 
+### 10.1 Material Quality card doctrine
+
+The `Material Quality` card is a required card in the insight detail view.
+
+It should answer:
+
+- did we receive enough approved material to reason from?
+- were answers specific or vague?
+- which roles/departments are missing?
+- is this a local signal or cross-perspective pattern?
+- what evidence gaps remain?
+- what contradictions reduce confidence?
+- what follow-up would a senior consultant request?
+
+Suggested layout:
+
+1. `Material Fitness Score` - compact score and posture.
+2. `Coverage` - sessions, respondents, roles, departments, missing voices.
+3. `Answer Quality` - strong/usable/thin/poor answers, with examples.
+4. `Evidence Sufficiency` - active evidence, missing evidence, weak claims.
+5. `Consultant Caution` - limits and next follow-ups.
+
+Rule:
+
+`The card must be useful even when the material is weak. It should not block work; it should make weak foundations impossible to miss.`
+
 ---
 
 ## 11. Implementation posture
@@ -423,6 +679,11 @@ The practical v1 implementation should:
 - introduce `candidate findings` as a persisted working layer for operator triage, not as a second truth object
 - derive person/topic/matrix analytics from persisted findings plus source sessions
 - support both respondent and stakeholder-lens groupings
+- add `Insight Scope Builder` before generation
+- persist analysis scope and context mode with the insight
+- add `Material Quality` as a generated post-analysis card
+- support AI-drafted candidate/P10 finding proposals with operator review
+- route six downstream actions through an action composer/generator handoff
 - remain lightweight enough for Interview, not become a full research repository
 
 Non-goal:
@@ -485,6 +746,12 @@ Important:
 
 ## 13. Acceptance checklist
 
+- [ ] Insight generation uses approved/completed interview material only.
+- [ ] Scope Builder captures source basket filters, topic focus, analysis mode and context mode.
+- [ ] The user can create a general insight without a leading question.
+- [ ] The user can select none, one, many or all topic focus groups.
+- [ ] Context mode distinguishes selected interview material only vs approved organizational knowledge enrichment.
+- [ ] Material Quality exists as a post-generation card, not a blocking gate.
 - [ ] Analytics has explicit `topic`, `person`, and `scope` dimensions.
 - [ ] The system can show per-person slices without losing the wider topic pattern.
 - [ ] The system can show topic syntheses without hiding minority or local-only views.
@@ -496,10 +763,56 @@ Important:
 - [ ] Follow-up recommendations derive from contradiction, local-only, and coverage-gap posture.
 - [ ] Executive synthesis introduces no unsupported net-new claims.
 - [ ] Downstream actions still originate from governed findings, not freeform summaries.
+- [ ] Six actions exist: report, presentation, table, idea, note, initiative.
+- [ ] Report/presentation/table actions open generators with insight context and optional templates.
+- [ ] Initiative draft uses full approved organizational knowledge where allowed and preserves lineage.
 
 ---
 
-## 14. Related canonical docs
+## 14. Recommended build sequence
+
+Build in this order:
+
+1. `Insight Scope Builder 2.0`
+   - approved-only source basket,
+   - filters by person/role/department/template/date,
+   - topic focus taxonomy,
+   - analysis mode,
+   - context mode,
+   - optional consultant note and leading question.
+
+2. `Scope persistence and prompt contract`
+   - persist scope fields with the insight,
+   - pass scope into the AI prompt,
+   - make `selected_interview_material_only` vs `selected_material_plus_approved_org_knowledge` explicit in generation metadata.
+
+3. `Material Quality card`
+   - generate material fitness score,
+   - show coverage posture,
+   - show answer quality posture,
+   - show missing voices and evidence gaps,
+   - connect limits to P10 confidence and candidate triage.
+
+4. `AI candidate/P10 finding draft flow`
+   - AI seeds candidate findings,
+   - operator promotes to P10,
+   - AI may draft P10 wording but cannot publish without review.
+
+5. `Action Composer`
+   - report/presentation/table open target generators with context and template selection,
+   - idea/note create app objects with lineage,
+   - initiative draft opens in `Interview > Initiatives` and uses approved org knowledge where allowed.
+
+6. `Review and readback hardening`
+   - challenged/partial readback reduces handoff readiness,
+   - contradiction scan produces explicit follow-up,
+   - activity log records all mutations.
+
+This sequence keeps the product consulting-safe: scope first, quality second, truth third, actions last.
+
+---
+
+## 15. Related canonical docs
 
 - `INTERVIEW_DISCOVERY_AND_HYPOTHESIS_OPERATING_MODEL_V8.md`
 - `INTERVIEW_REPORTING_AND_DASHBOARDS_V8.md`
@@ -507,4 +820,5 @@ Important:
 - `INTERVIEW_EVIDENCE_CONFIDENCE_AND_TRIANGULATION_V8.md`
 - `INTERVIEW_CONTRADICTION_AND_CLIENT_READBACK_RUNTIME_V8.md`
 - `INBOX_AND_WORKFLOW_RUNTIME_CONTRACT_V8.md`
+- `docs/product/work-packets/cursor-work/final_master/final-v8-contracts/MDI_INTERVIEW_INSIGHT_SCOPE_BUILDER_FULL_IMPLEMENTATION_PLAN_2026-05-02.md`
 - `docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_10_WNIOSKI_W_INTERVIEW_2026-03-29.md`

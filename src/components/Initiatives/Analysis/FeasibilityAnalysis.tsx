@@ -67,13 +67,13 @@ interface FeasibilityAnalysisProps {
 const DIM_BG: Record<DimColor, string> = {
   green: 'bg-emerald-500',
   amber: 'bg-amber-500',
-  red: 'bg-red-500',
+  red: 'bg-rose-500',
 };
 
 const DIM_RING: Record<DimColor, string> = {
   green: 'ring-emerald-400/60',
   amber: 'ring-amber-400/60',
-  red: 'ring-red-400/60',
+  red: 'ring-rose-400/60',
 };
 
 const DIM_ORDER: Record<DimColor, number> = { red: 0, amber: 1, green: 2 };
@@ -375,20 +375,20 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
   const aiOptimizerPanel =
     aiOptProposals !== null ? (
-      <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
               {t('initiatives.analysis.feasibility.aiProposals', 'AI optimization proposals')}
             </h3>
-            <span className="text-xs text-purple-500 dark:text-purple-400">
+            <span className="text-xs text-primary-500 dark:text-primary-400">
               ({aiOptProposals.length})
             </span>
           </div>
           <button
             onClick={closeWorkspacePanels}
-            className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
           >
             <X size={14} />
           </button>
@@ -404,7 +404,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
             {aiOptProposals.map((p, idx) => (
               <div
                 key={`${p.initiativeId}-${p.dimension}-${idx}`}
@@ -480,7 +480,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                 f.rank <= 3
                   ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                   : f.overallScore < 50
-                    ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                    ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -506,7 +506,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             <span
               className={`text-xs font-semibold tabular-nums w-10 text-right ${
                 f.overallScore < 50
-                  ? 'text-red-600 dark:text-red-400'
+                  ? 'text-rose-600 dark:text-rose-400'
                   : f.overallScore < 75
                     ? 'text-amber-600 dark:text-amber-400'
                     : 'text-emerald-600 dark:text-emerald-400'
@@ -521,17 +521,17 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
   ) : null;
 
   const explainerPanel = explainedInitiative ? (
-    <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+    <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <HelpCircle size={16} className="text-purple-600 dark:text-purple-400" />
-          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+          <HelpCircle size={16} className="text-primary-600 dark:text-primary-400" />
+          <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
             AI Score Explainer
           </h3>
         </div>
         <button
           onClick={closeWorkspacePanels}
-          className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+          className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
         >
           <X size={14} />
         </button>
@@ -545,7 +545,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             Score {explainedInitiative.overallScore}%
           </p>
         </div>
-        <div className="rounded-lg bg-white/70 dark:bg-navy-950/60 border border-purple-200/50 dark:border-purple-900/40 px-3 py-3">
+        <div className="rounded-lg bg-white/70 dark:bg-navy-950/60 border border-primary-200/50 dark:border-primary-900/40 px-3 py-3">
           <p className="text-sm text-slate-700 dark:text-slate-300">
             {getExplanation(explainedInitiative)}
           </p>
@@ -655,8 +655,8 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
               {t('initiatives.analysis.feasibility.total', 'Initiatives')}
             </div>
           </div>
-          <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10 p-3">
-            <div className="text-xl font-semibold text-red-600 dark:text-red-400">
+          <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10 p-3">
+            <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
               {highRiskCount}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -752,7 +752,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                   <tr
                     className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
                       hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
-                      ${f.overallScore < 50 ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
+                      ${f.overallScore < 50 ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                     onClick={() => toggleExpand(f)}
                   >
                     <td className="px-4 py-3 text-slate-400">
@@ -783,7 +783,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                       <span
                         className={`font-semibold tabular-nums ${
                           f.overallScore < 50
-                            ? 'text-red-600 dark:text-red-400'
+                            ? 'text-rose-600 dark:text-rose-400'
                             : f.overallScore < 75
                               ? 'text-amber-600 dark:text-amber-400'
                               : 'text-emerald-600 dark:text-emerald-400'
@@ -804,8 +804,8 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         }}
                         className={`p-1 rounded transition-colors ${
                           isExplaining
-                            ? 'text-purple-600 dark:text-purple-400 bg-purple-500/10'
-                            : 'text-slate-400 hover:text-purple-500 hover:bg-purple-500/10'
+                            ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
+                            : 'text-slate-400 hover:text-primary-500 hover:bg-primary-500/10'
                         }`}
                         title="AI Score Explainer"
                       >
@@ -818,9 +818,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                   {isExplaining && !isExpanded && !onRegisterWorkspacePanel && (
                     <tr>
                       <td colSpan={8} className="px-0 py-0">
-                        <div className="px-12 py-2.5 bg-purple-500/5 dark:bg-purple-500/10 border-b border-purple-200/50 dark:border-purple-900/30">
+                        <div className="px-12 py-2.5 bg-primary-500/5 dark:bg-primary-500/10 border-b border-primary-200/50 dark:border-primary-900/30">
                           <div className="flex items-start gap-2">
-                            <Sparkles size={12} className="text-purple-500 mt-0.5 shrink-0" />
+                            <Sparkles size={12} className="text-primary-500 mt-0.5 shrink-0" />
                             <p className="text-xs text-slate-700 dark:text-slate-300">
                               {getExplanation(f)}
                             </p>
@@ -837,9 +837,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         <div className="bg-slate-50/50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700 px-8 py-4">
                           {/* Explainer inside expanded row */}
                           {!onRegisterWorkspacePanel && (
-                            <div className="mb-3 px-1 py-2 rounded-lg bg-purple-500/5 dark:bg-purple-500/10">
+                            <div className="mb-3 px-1 py-2 rounded-lg bg-primary-500/5 dark:bg-primary-500/10">
                               <div className="flex items-start gap-2 px-2">
-                                <Sparkles size={12} className="text-purple-500 mt-0.5 shrink-0" />
+                                <Sparkles size={12} className="text-primary-500 mt-0.5 shrink-0" />
                                 <p className="text-xs text-slate-700 dark:text-slate-300">
                                   {getExplanation(f)}
                                 </p>

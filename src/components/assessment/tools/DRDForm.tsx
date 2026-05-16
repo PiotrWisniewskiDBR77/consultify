@@ -222,7 +222,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
         key={area.id}
         className={`bg-white dark:bg-navy-900 rounded-xl border transition-all ${
           isExpanded
-            ? 'border-purple-300 dark:border-purple-500/50 shadow-lg'
+            ? 'border-primary-300 dark:border-primary-500/50 shadow-lg'
             : 'border-slate-200 dark:border-navy-700'
         }`}
       >
@@ -232,7 +232,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           onClick={() => setActiveAreaId(isExpanded ? null : area.id)}
         >
           <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm font-bold">
+            <span className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-sm font-bold">
               {area.id}
             </span>
             <span className="font-medium text-navy-900 dark:text-white">{area.name}</span>
@@ -367,7 +367,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           </div>
           <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-purple-500 rounded-full transition-all duration-300"
+              className="h-full bg-primary-500 rounded-full transition-all duration-300"
               style={{ width: `${progress.percent}%` }}
             />
           </div>
@@ -394,7 +394,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                 onClick={() => setActiveAxisId(axis.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : isComplete
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
                       : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700'
@@ -484,7 +484,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
 
         <button
           onClick={handleNextAxis}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
         >
           {activeAxisId === 7
             ? isPolish

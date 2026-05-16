@@ -138,8 +138,8 @@ export const AccessBlockedModal: React.FC = () => {
         <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">{resolved.message}</div>
 
         {(resolved.isTrialBlock || resolved.isLimitBlock) && (
-          <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
-            <p className="text-xs text-purple-700 dark:text-purple-300">
+          <div className="mt-4 p-3 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
+            <p className="text-xs text-primary-700 dark:text-primary-300">
               {t('access.upgrade.instantUnlock')}
             </p>
           </div>

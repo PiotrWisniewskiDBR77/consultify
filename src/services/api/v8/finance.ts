@@ -95,9 +95,6 @@ export interface V8FinanceModelOutputLine {
   lineCode: string;
   lineName: string;
   value: number;
-  level?: number;
-  isTotal?: boolean;
-  isSubtotal?: boolean;
 }
 
 export interface V8FinanceModelOutputsResult {

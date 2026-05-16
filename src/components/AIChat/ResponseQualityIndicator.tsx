@@ -116,9 +116,9 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
         };
       case 'POOR':
         return {
-          bg: 'bg-red-50 dark:bg-red-900/20',
-          border: 'border-red-200 dark:border-red-800',
-          text: 'text-red-700 dark:text-red-400',
+          bg: 'bg-rose-50 dark:bg-rose-900/20',
+          border: 'border-rose-200 dark:border-rose-800',
+          text: 'text-rose-700 dark:text-rose-400',
           icon: AlertCircle,
         };
       default:
@@ -137,7 +137,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
     if (score >= 0.9) return 'text-green-600 dark:text-green-400';
     if (score >= 0.7) return 'text-blue-600 dark:text-blue-400';
     if (score >= 0.5) return 'text-amber-600 dark:text-amber-400';
-    return 'text-red-600 dark:text-red-400';
+    return 'text-rose-600 dark:text-rose-400';
   };
 
   const qualityStyle = getQualityColor(metrics?.qualityLevel || 'FAIR');
@@ -298,7 +298,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
               </span>
               <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                  className="h-full bg-primary-500 rounded-full transition-all duration-500"
                   style={{ width: `${formatScore(metrics.coherence)}%` }}
                 />
               </div>

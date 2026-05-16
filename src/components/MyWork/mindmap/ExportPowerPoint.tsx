@@ -29,7 +29,7 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
   };
 
   const slides = [
-    `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#f59e0b22,#f9731611);">
+    `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#f59e0b22,#f59e0b11);">
       <h1 style="font-size:48px;font-weight:800;color:#1e293b;margin-bottom:16px;text-align:center;">${title}</h1>
       <p style="font-size:18px;color:#64748b;text-align:center;">Mind Map Overview &middot; ${branches.length} branches &middot; ${branches.reduce((s, b) => s + b.nodes.length, 0)} ideas</p>
     </div>`,
@@ -50,7 +50,7 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
         <ul style="list-style:none;padding:0;margin:0;">${nodesList || '<li style="color:#94a3b8;font-size:16px;">No ideas yet</li>'}</ul>
       </div>`;
     }),
-    `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#8b5cf622,#6366f111);">
+    `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#6366f122,#6366f111);">
       <h2 style="font-size:36px;font-weight:700;color:#1e293b;margin-bottom:16px;">Summary</h2>
       <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">
         ${branches.map((b) => `<div style="text-align:center;padding:16px 24px;border-radius:12px;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><div style="font-size:28px;font-weight:800;color:${slideColors[b.branchKey] || '#94a3b8'};">${b.nodes.length}</div><div style="font-size:13px;color:#64748b;">${b.label}</div></div>`).join('')}

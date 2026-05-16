@@ -23,6 +23,7 @@ import organizationMetadataService from '../../services/organizationMetadataServ
 import permissionsMatrixService from '../../services/permissionsMatrixService.js';
 import refreshTokenService from '../../services/RefreshTokenService.js';
 import securityIncidentService from '../../services/securityIncidentService.js';
+import supportTicketService from '../../services/supportTicketService.js';
 import threatIntelligenceService from '../../services/threatIntelligenceService.js';
 import usageService from '../../services/usageService.js';
 import userActivityService from '../../services/userActivityService.js';
@@ -181,10 +182,7 @@ export const deps: {
   DeviceManagementService: { getUserDevices: async () => [] } as any,
   PasswordPolicyService: { getPolicy: async () => ({}) } as any,
   SecurityEventService: { getEvents: async () => [] } as any,
-  SupportTicketService: {
-    getTickets: async () => [],
-    createTicket: async () => ({ ticketNumber: 'T-123' }),
-  } as any,
+  SupportTicketService: supportTicketService,
   CustomerSuccessService: { getNotes: async () => [] } as any,
   FeedbackService: feedbackService as any,
   UserAdoptionService: userAdoptionService as any,

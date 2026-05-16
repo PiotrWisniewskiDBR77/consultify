@@ -1,5 +1,66 @@
 -- Purpose: Expand partner certification to multi-track, multi-level runtime with review states.
 
+CREATE TABLE IF NOT EXISTS partner_certifications (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL,
+    certification_name VARCHAR(255) NOT NULL,
+    certification_type VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'completed', 'expired')),
+    progress_percent INTEGER DEFAULT 0 CHECK (progress_percent >= 0 AND progress_percent <= 100),
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    certificate_id VARCHAR(100),
+    certificate_url VARCHAR(500),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_partner_certifications_partner ON partner_certifications(partner_org_id);
+CREATE INDEX IF NOT EXISTS idx_partner_certifications_user ON partner_certifications(user_id);
+
+CREATE TABLE IF NOT EXISTS partner_learning_modules (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    certification_type VARCHAR(50) NOT NULL,
+    module_order INTEGER DEFAULT 0,
+    duration_minutes INTEGER DEFAULT 60,
+    content_type VARCHAR(50) DEFAULT 'video' CHECK (content_type IN ('video', 'document', 'quiz', 'interactive')),
+    content_url VARCHAR(500),
+    is_active BOOLEAN DEFAULT true,
+    category TEXT,
+    required_for_certification BOOLEAN DEFAULT true,
+    language TEXT DEFAULT 'en',
+    minutes INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS partner_exam_questions (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    certification_type TEXT NOT NULL,
+    question_text TEXT NOT NULL,
+    options_json TEXT DEFAULT '[]',
+    correct_answer TEXT,
+    explanation TEXT,
+    language TEXT DEFAULT 'en',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS partner_certificates (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL,
+    certification_id TEXT NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
+    certificate_type TEXT NOT NULL DEFAULT 'sales',
+    earned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE,
+    certificate_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 ALTER TABLE partner_certifications
   ADD COLUMN IF NOT EXISTS certification_track TEXT,
   ADD COLUMN IF NOT EXISTS certification_level TEXT,
@@ -102,6 +163,7 @@ CREATE INDEX IF NOT EXISTS idx_partner_learning_modules_track_level_lang
 ALTER TABLE partner_exam_questions
   ADD COLUMN IF NOT EXISTS certification_track TEXT,
   ADD COLUMN IF NOT EXISTS certification_level TEXT,
+  ADD COLUMN IF NOT EXISTS correct_option_id TEXT,
   ADD COLUMN IF NOT EXISTS passing_score INTEGER DEFAULT 70;
 
 UPDATE partner_exam_questions

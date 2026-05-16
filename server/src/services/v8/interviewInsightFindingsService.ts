@@ -15,10 +15,12 @@ import {
   canPublishFinding,
   isValidP10ConfidenceLevel,
   isValidP10EvidencePointerType,
+  isValidP10ReadbackStatus,
   type P10ConfidenceLevel,
   type P10EvidencePointer,
   type P10EvidencePointerType,
   type P10HandoffToInitiativesPayload,
+  type P10ReadbackStatus,
 } from './interviewInsightCanon.js';
 
 export const NOTEBOOK_REF_PREFIX = 'notebook://';
@@ -79,6 +81,9 @@ export interface P10Finding {
   source_section_index?: number | null;
   source_key?: string | null;
   review_status?: 'draft' | 'in_review' | 'published';
+  readback_status: P10ReadbackStatus;
+  readback_summary?: string | null;
+  readback_updated_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -132,6 +137,30 @@ export interface HandoffLogEntry {
   createdAt: string;
 }
 
+export interface P10SourcePackEntry {
+  answerId: string;
+  questionText: string;
+  answerSnippet: string;
+  respondentLabel?: string | null;
+  respondentRole?: string | null;
+  department?: string | null;
+  sourceSessionId?: string | null;
+  linkedThemes: string[];
+  linkedIssues: string[];
+  linkedOpportunities: string[];
+  capturedPointers: P10EvidencePointer[];
+  degradedReason?: 'missing_pointer' | 'source_unavailable';
+}
+
+export interface P10SourcePack {
+  insightId: string;
+  sourceSessionIds: string[];
+  entries: P10SourcePackEntry[];
+  degraded: boolean;
+  degradedReasons: string[];
+  activePointerCount: number;
+}
+
 interface FindingRow {
   id: string;
   organization_id: string;
@@ -144,6 +173,9 @@ interface FindingRow {
   limits_text: string;
   next_action_text: string;
   review_status?: 'draft' | 'in_review' | 'published';
+  readback_status?: string | null;
+  readback_summary?: string | null;
+  readback_updated_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -285,6 +317,9 @@ async function ensureTables(): Promise<void> {
           next_action_text TEXT NOT NULL,
           next_action_json TEXT DEFAULT '[]',
           review_status TEXT NOT NULL DEFAULT 'draft',
+          readback_status TEXT NOT NULL DEFAULT 'draft_interpretation',
+          readback_summary TEXT,
+          readback_updated_at TIMESTAMP,
           created_by TEXT,
           updated_by TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -295,6 +330,17 @@ async function ensureTables(): Promise<void> {
         `CREATE UNIQUE INDEX IF NOT EXISTS idx_interview_insight_findings_source_key
          ON interview_insight_findings(insight_id, source_key)`
       );
+      await queryHelpers
+        .queryRun(
+          `ALTER TABLE interview_insight_findings ADD COLUMN readback_status TEXT NOT NULL DEFAULT 'draft_interpretation'`
+        )
+        .catch(() => {});
+      await queryHelpers
+        .queryRun(`ALTER TABLE interview_insight_findings ADD COLUMN readback_summary TEXT`)
+        .catch(() => {});
+      await queryHelpers
+        .queryRun(`ALTER TABLE interview_insight_findings ADD COLUMN readback_updated_at TIMESTAMP`)
+        .catch(() => {});
       await queryHelpers.queryRun(
         `CREATE INDEX IF NOT EXISTS idx_interview_insight_findings_insight
          ON interview_insight_findings(insight_id)`
@@ -398,7 +444,8 @@ async function loadFindingRows(insightId: string): Promise<FindingRow[]> {
   await ensureTables();
   const rows = await queryHelpers.queryAll<FindingRow>(
     `SELECT id, organization_id, insight_id, source_section_type, source_section_index, source_key,
-            finding_statement, confidence_level, limits_text, next_action_text, review_status, created_at, updated_at
+            finding_statement, confidence_level, limits_text, next_action_text, review_status,
+            readback_status, readback_summary, readback_updated_at, created_at, updated_at
      FROM interview_insight_findings
      WHERE insight_id = ?
      ORDER BY created_at ASC, source_section_index ASC, id ASC`,
@@ -459,6 +506,11 @@ async function mapFindingRows(insightId: string): Promise<P10Finding[]> {
         : Number(row.source_section_index),
     source_key: row.source_key ?? null,
     review_status: row.review_status || 'draft',
+    readback_status: isValidP10ReadbackStatus(String(row.readback_status || ''))
+      ? (row.readback_status as P10ReadbackStatus)
+      : 'draft_interpretation',
+    readback_summary: row.readback_summary ?? null,
+    readback_updated_at: row.readback_updated_at ?? null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   }));
@@ -891,6 +943,60 @@ export async function updateFinding(
   return { finding: await getFinding(insightId, findingId) };
 }
 
+export async function updateFindingReadback(
+  insightId: string,
+  findingId: string,
+  input: {
+    readback_status: string;
+    readback_summary?: string | null;
+  },
+  actorUserId?: string | null
+): Promise<{ finding?: P10Finding; error?: string }> {
+  const finding = await getFinding(insightId, findingId);
+  if (!finding) return { error: 'Finding not found' };
+  if (!isValidP10ReadbackStatus(input.readback_status)) {
+    return { error: `Invalid readback status: ${input.readback_status}` };
+  }
+  const summary = String(input.readback_summary || '').trim();
+  if (
+    (input.readback_status === 'confirmed_by_client' ||
+      input.readback_status === 'partially_confirmed' ||
+      input.readback_status === 'challenged_by_client' ||
+      input.readback_status === 'needs_more_evidence') &&
+    !summary
+  ) {
+    return { error: 'readback_summary is required for this readback status' };
+  }
+
+  const now = new Date().toISOString();
+  await queryHelpers.queryRun(
+    `UPDATE interview_insight_findings
+     SET readback_status = ?,
+         readback_summary = ?,
+         readback_updated_at = ?,
+         updated_by = ?,
+         updated_at = ?
+     WHERE id = ? AND insight_id = ?`,
+    [input.readback_status, summary || null, now, actorUserId || null, now, findingId, insightId]
+  );
+
+  await recordAuditEvent({
+    organizationId: finding.organizationId,
+    insightId,
+    findingId,
+    entityType: 'finding',
+    entityId: findingId,
+    action: 'readback_updated',
+    actorUserId: actorUserId || null,
+    detail: {
+      readbackStatus: input.readback_status,
+      hasSummary: Boolean(summary),
+    },
+  });
+
+  return { finding: await getFinding(insightId, findingId) };
+}
+
 export async function addEvidencePointer(
   insightId: string,
   findingId: string,
@@ -1021,11 +1127,15 @@ export async function buildHandoffPayload(
       confidenceLevel: finding.confidence_level,
       evidencePointers: finding.evidence_pointers,
       limits: finding.limits,
+      nextAction: finding.next_action,
     },
     'handoff'
   );
   if (!publishCheck.allowed) {
     return { error: `Cannot handoff: ${publishCheck.reason}` };
+  }
+  if (finding.readback_status !== 'confirmed_by_client') {
+    return { error: 'Client readback confirmation is required before handoff' };
   }
 
   const payload = buildP10HandoffToInitiativesSkeleton({
@@ -1041,6 +1151,116 @@ export async function buildHandoffPayload(
   });
 
   return { payload };
+}
+
+function collectLinkedOpportunities(insight: Insight, answerId: string): string[] {
+  return (insight.opportunities || [])
+    .filter((item) => (item.evidence_refs || []).includes(answerId))
+    .map((item) => String(item.title || '').trim())
+    .filter(Boolean);
+}
+
+async function loadAnswerSourceMetadata(
+  answerIds: string[]
+): Promise<
+  Record<
+    string,
+    { sessionId?: string; respondentLabel?: string; respondentRole?: string; department?: string }
+  >
+> {
+  if (answerIds.length === 0) return {};
+  const placeholders = answerIds.map(() => '?').join(', ');
+  const rows = await queryHelpers.queryAll<any>(
+    `SELECT
+       q.id as answer_id,
+       q.session_id,
+       COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') AS respondent_label,
+       u.job_title,
+       upe.department
+     FROM interview_questions q
+     LEFT JOIN interview_sessions s ON s.id = q.session_id
+     LEFT JOIN users u ON u.id = s.owner_id
+     LEFT JOIN user_profile_extended upe ON upe.user_id = u.id
+     WHERE q.id IN (${placeholders})`,
+    answerIds
+  );
+  return (rows || []).reduce<
+    Record<
+      string,
+      { sessionId?: string; respondentLabel?: string; respondentRole?: string; department?: string }
+    >
+  >((acc, row) => {
+    const answerId = String(row.answer_id || '').trim();
+    if (!answerId) return acc;
+    acc[answerId] = {
+      sessionId: row.session_id ? String(row.session_id) : undefined,
+      respondentLabel: String(row.respondent_label || '').trim() || undefined,
+      respondentRole: row.job_title ? String(row.job_title) : undefined,
+      department: row.department ? String(row.department) : undefined,
+    };
+    return acc;
+  }, {});
+}
+
+export async function buildSourcePack(insightId: string): Promise<P10SourcePack | null> {
+  await ensureTables();
+  const insight = await getInsightById(insightId);
+  if (!insight) return null;
+  const findings = await listFindings(insightId);
+  const pointerByAnswer = new Map<string, P10EvidencePointer[]>();
+  let activePointerCount = 0;
+  findings.forEach((finding) => {
+    finding.evidence_pointers.forEach((pointer) => {
+      if (!pointer.isTombstone) activePointerCount += 1;
+      if (pointer.isTombstone || !pointer.sourceRef.startsWith('answer:')) return;
+      const answerId = pointer.sourceRef.slice('answer:'.length);
+      const existing = pointerByAnswer.get(answerId) || [];
+      existing.push(pointer);
+      pointerByAnswer.set(answerId, existing);
+    });
+  });
+  const answerIds = (insight.evidenceMap || [])
+    .map((entry) => String(entry.answer_id || '').trim())
+    .filter(Boolean);
+  const sourceMeta: Record<
+    string,
+    {
+      sessionId?: string;
+      respondentLabel?: string;
+      respondentRole?: string;
+      department?: string;
+    }
+  > = await loadAnswerSourceMetadata(answerIds).catch(() => ({}));
+  const entries = (insight.evidenceMap || []).map((entry) => {
+    const answerId = String(entry.answer_id || '').trim();
+    const capturedPointers = pointerByAnswer.get(answerId) || [];
+    const meta = sourceMeta[answerId] || {};
+    return {
+      answerId,
+      questionText: String(entry.question_text || ''),
+      answerSnippet: String(entry.answer_snippet || ''),
+      respondentLabel: meta.respondentLabel || null,
+      respondentRole: meta.respondentRole || null,
+      department: meta.department || null,
+      sourceSessionId: meta.sessionId || null,
+      linkedThemes: Array.isArray(entry.linked_themes) ? entry.linked_themes.map(String) : [],
+      linkedIssues: Array.isArray(entry.linked_issues) ? entry.linked_issues.map(String) : [],
+      linkedOpportunities: collectLinkedOpportunities(insight, answerId),
+      capturedPointers,
+      degradedReason: capturedPointers.length === 0 ? 'missing_pointer' : undefined,
+    } satisfies P10SourcePackEntry;
+  });
+  const degradedReasons = Array.from(
+    new Set(entries.map((entry) => entry.degradedReason).filter(Boolean) as string[])
+  );
+  return {
+    insightId,
+    sourceSessionIds: insight.sourceSessionIds || [],
+    entries,
+    degraded: degradedReasons.length > 0,
+    degradedReasons,
+    activePointerCount,
+  };
 }
 
 export async function recordHandoff(

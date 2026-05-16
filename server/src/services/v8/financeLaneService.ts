@@ -836,13 +836,23 @@ export async function checkKpiLinkageCoherence(
 // HELPERS
 // ==========================================
 
-function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
+function safeJsonParse<T>(raw: unknown, fallback: T): T {
+  if (raw == null) return fallback;
+  if (typeof raw === 'string') {
+    if (!raw.trim()) return fallback;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
   }
+
+  // Postgres drivers can return json/jsonb columns as already-parsed objects.
+  if (typeof raw === 'object') {
+    return raw as T;
+  }
+
+  return fallback;
 }
 
 function rowToLaneRun(row: Record<string, unknown>): FinanceLaneRun {

@@ -93,7 +93,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
       case 'UPDATE':
         return <Edit size={14} className="text-blue-400" />;
       case 'PUBLISH':
-        return <Upload size={14} className="text-violet-400" />;
+        return <Upload size={14} className="text-primary-400" />;
       case 'RESTORE':
         return <RotateCcw size={14} className="text-amber-400" />;
       default:
@@ -105,7 +105,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
     const styles: Record<string, string> = {
       CREATE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       UPDATE: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-      PUBLISH: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+      PUBLISH: 'bg-primary-500/10 text-primary-400 border-primary-500/30',
       RESTORE: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
     };
 
@@ -131,7 +131,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <History className="w-5 h-5 text-violet-400" />
+        <History className="w-5 h-5 text-primary-400" />
         <h3 className="font-semibold text-white">Version History</h3>
         <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
           {versions.length} versions
@@ -160,14 +160,14 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                   <div
                     className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
                       isCurrent
-                        ? 'bg-violet-500 border-violet-400'
+                        ? 'bg-primary-500 border-primary-400'
                         : 'bg-slate-800 border-slate-600'
                     }`}
                   />
 
                   <div
                     className={`bg-slate-800/50 border rounded-lg overflow-hidden ${
-                      isCurrent ? 'border-violet-500/30' : 'border-slate-700/50'
+                      isCurrent ? 'border-primary-500/30' : 'border-slate-700/50'
                     }`}
                   >
                     {/* Header */}
@@ -179,13 +179,13 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                         <div className="flex items-center gap-2">
                           <span
                             className={`font-mono font-semibold ${
-                              isCurrent ? 'text-violet-400' : 'text-white'
+                              isCurrent ? 'text-primary-400' : 'text-white'
                             }`}
                           >
                             v{version.version}
                           </span>
                           {isCurrent && (
-                            <span className="px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs rounded-full border border-violet-500/30">
+                            <span className="px-2 py-0.5 bg-primary-500/10 text-primary-400 text-xs rounded-full border border-primary-500/30">
                               Current
                             </span>
                           )}

@@ -43,6 +43,7 @@ const WORKSPACE_ICONS: Record<WorkspaceType, React.ReactNode> = {
   artifact: <FileText size={14} />,
   document: <BookOpen size={14} />,
   decision: <FolderKanban size={14} />,
+  idea: <Lightbulb size={14} />,
   report: <FileText size={14} />,
   dashboard: <LayoutDashboard size={14} />,
   project: <Briefcase size={14} />,
@@ -51,6 +52,7 @@ const WORKSPACE_ICONS: Record<WorkspaceType, React.ReactNode> = {
   insight: <Lightbulb size={14} />,
   interview: <MessageSquare size={14} />,
   presentation: <Presentation size={14} />,
+  canvas: <NotebookPen size={14} />,
   general: <Sparkles size={14} />,
   empty: <Sparkles size={14} />,
 };
@@ -63,6 +65,7 @@ const WORKSPACE_LABELS: Record<WorkspaceType, string> = {
   artifact: 'Artifact',
   document: 'Document',
   decision: 'Decision',
+  idea: 'Idea',
   report: 'Report',
   dashboard: 'Dashboard',
   project: 'Project',
@@ -71,6 +74,7 @@ const WORKSPACE_LABELS: Record<WorkspaceType, string> = {
   insight: 'Insight',
   interview: 'Interview',
   presentation: 'Presentation',
+  canvas: 'Canvas',
   general: 'General',
   empty: 'Chat',
 };

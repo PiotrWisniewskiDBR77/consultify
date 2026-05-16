@@ -11,7 +11,7 @@ describe('persona helpers', () => {
   it('detectLanguage prefers conversation language, then user preference, then default', () => {
     expect(detectLanguage('en-US', 'pl')).toBe('en');
     expect(detectLanguage(undefined, 'de-DE')).toBe('de');
-    expect(detectLanguage(undefined, undefined)).toBe('pl');
+    expect(detectLanguage(undefined, undefined)).toBe('en');
   });
 
   it('detectLanguage maps unsupported common languages to english fallback', () => {
@@ -21,7 +21,7 @@ describe('persona helpers', () => {
   });
 
   it('detectLanguage falls back to polish for unknown language codes', () => {
-    expect(detectLanguage('xx', 'yy')).toBe('pl');
+    expect(detectLanguage('xx', 'yy')).toBe('en');
   });
 
   it('getScreenEmphasis matches exact and partial keys with normalization', () => {
@@ -48,10 +48,10 @@ describe('persona helpers', () => {
     expect(cfg.coreTone).toMatch(/English/i);
   });
 
-  it('buildPersonaPrompt uses polish by default and injects screen emphasis', () => {
+  it('buildPersonaPrompt uses english by default and injects screen emphasis', () => {
     const prompt = buildPersonaPrompt('assessment');
-    expect(prompt).toContain('## ROLA I TOŻSAMOŚĆ');
-    expect(prompt).toContain('### Kontekst ekranu');
+    expect(prompt).toContain('## ROLE & IDENTITY');
+    expect(prompt).toContain('### Screen Context');
     expect(prompt).toContain('Strategic Consultant');
   });
 
@@ -62,8 +62,8 @@ describe('persona helpers', () => {
     expect(prompt).toContain('Program Manager');
   });
 
-  it('buildPersonaPrompt handles unsupported language by falling back to polish', () => {
+  it('buildPersonaPrompt handles unsupported language by falling back to english', () => {
     const prompt = buildPersonaPrompt('roadmap', 'pt');
-    expect(prompt).toContain('## ROLA I TOŻSAMOŚĆ');
+    expect(prompt).toContain('## ROLE & IDENTITY');
   });
 });

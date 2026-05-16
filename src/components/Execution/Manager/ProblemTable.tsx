@@ -43,14 +43,14 @@ function TypeBadge({ type }: { type: string }) {
   const label = type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   const colors: Record<string, string> = {
     critical_risk: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
-    high_risk: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
-    overdue_task: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+    high_risk: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+    overdue_task: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
     blocked_task: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
     blocked_initiative: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
     overdue_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     pending_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-    unassigned_task: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
-    no_owner: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
+    unassigned_task: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
+    no_owner: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
     stale_item: 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400',
   };
   const cls = colors[type] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400';
@@ -127,7 +127,7 @@ function ActionsMenu({
                 a.variant === 'danger'
                   ? 'text-rose-600 dark:text-rose-400'
                   : a.variant === 'primary'
-                    ? 'text-cyan-600 dark:text-cyan-400 font-medium'
+                    ? 'text-primary-600 dark:text-primary-400 font-medium'
                     : 'text-slate-700 dark:text-slate-300'
               }`}
             >
@@ -280,7 +280,7 @@ export function ProblemTable({
       <div className="flex-1 overflow-y-auto">
         {loading && (
           <div className="flex items-center justify-center h-32">
-            <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -307,7 +307,7 @@ export function ProblemTable({
                   SEVERITY_BORDER[row.severity]
                 } ${SEVERITY_HOVER[row.severity]} ${
                   isSelected
-                    ? 'bg-cyan-50/50 dark:bg-cyan-900/10 ring-1 ring-inset ring-cyan-500/30'
+                    ? 'bg-primary-500/10 dark:bg-primary-500/12 ring-1 ring-inset ring-primary-500/30'
                     : 'bg-white dark:bg-navy-900'
                 }`}
                 style={{ minHeight: '44px' }}

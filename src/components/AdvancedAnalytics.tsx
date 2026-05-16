@@ -81,7 +81,7 @@ export const VelocityChart: React.FC<VelocityChartProps> = ({ data }) => {
           />
           <Legend />
           <Bar dataKey="target" fill="#64748b" name="Target" opacity={0.5} />
-          <Bar dataKey="completed" fill="#8b5cf6" name="Completed" />
+          <Bar dataKey="completed" fill="#6366f1" name="Completed" />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -107,14 +107,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     trend === 'up'
       ? 'text-green-500'
       : trend === 'down'
-        ? 'text-red-500'
+        ? 'text-rose-500'
         : 'text-slate-500 dark:text-slate-400';
 
   return (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
       <div className="flex justify-between items-start mb-4">
         <div className="text-sm font-medium text-slate-600 dark:text-slate-400">{title}</div>
-        {icon && <div className="text-purple-500">{icon}</div>}
+        {icon && <div className="text-primary-500">{icon}</div>}
       </div>
 
       <div className="flex items-baseline gap-3">

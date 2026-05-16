@@ -18,11 +18,11 @@ export interface MindmapInspectorProps {
 const BRANCH_STYLES = ['curved', 'straight', 'step'] as const;
 const FONT_SIZES = [10, 11, 12, 14, 16] as const;
 const NODE_COLOR_PALETTE = [
-  '#8b5cf6',
+  '#6366f1',
   '#3b82f6',
   '#10b981',
   '#f59e0b',
-  '#ef4444',
+  '#f43f5e',
   '#ec4899',
   '#6366f1',
   '#64748b',

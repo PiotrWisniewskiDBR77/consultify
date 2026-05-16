@@ -35,7 +35,7 @@ const MODULE_META: Record<string, { label: string; icon: React.ReactNode; color:
   iris: {
     label: 'MCP IRIS',
     icon: <Brain size={16} />,
-    color: 'bg-purple-500/10 text-purple-500',
+    color: 'bg-primary-500/10 text-primary-500',
   },
   marketplace: {
     label: 'MCP Marketplace',

@@ -1,9 +1,10 @@
 import { ChevronRight, Menu, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
+import { ForbiddenAccessBanner } from '../components/access/ForbiddenAccessBanner';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
@@ -64,6 +65,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
   // Views where chat panel should NOT be shown (full-screen chat only, and settings)
@@ -73,6 +75,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     AppView.WORDY, // KIMI workspaces embed their own chat panel
     AppView.EXCELE,
     AppView.PREZENTACJE_GEN,
+    AppView.TABELE,
     AppView.SETTINGS_PROFILE,
     AppView.SETTINGS_PROFILE_MODULE,
     AppView.SETTINGS_AI,
@@ -86,7 +89,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     AppView.SETTINGS_APPEARANCE_MODULE,
   ];
 
-  const shouldShowChatPanel = currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true;
+  const hasEmbeddedModuleChat = React.useMemo(() => {
+    const path = location.pathname.toLowerCase();
+    // KIMI workspaces and Outputs Deck Builder render their own Teresa panel.
+    if (path.startsWith('/wordy')) return true;
+    if (path.startsWith('/excele')) return true;
+    if (path.startsWith('/prezentacje')) return true;
+    if (path.startsWith('/tabele')) return true;
+    if (path.startsWith('/presentations/builder/')) return true;
+    return false;
+  }, [location.pathname]);
+
+  const shouldShowChatPanel =
+    (currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true) &&
+    !hasEmbeddedModuleChat;
 
   // Compute workspace context for AI awareness
   const workspaceContext = useMemo(() => {
@@ -163,11 +179,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const mobileGlobalRailBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
 
   return (
-    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
       <div
         data-testid="global-fab-rail"
-        className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-2' : 'right-0 top-[70%]'}`}
+        className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-4 top-[70%]'}`}
         style={
           mobileGlobalRailBottomOffset ? { bottom: `${mobileGlobalRailBottomOffset}px` } : undefined
         }
@@ -190,6 +206,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Global access/paywall modal */}
       <AccessBlockedModal />
+      <ForbiddenAccessBanner />
 
       {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
       <DemoSessionManager />
@@ -202,7 +219,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (
-        <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
+        <div className="fixed top-0 left-0 right-0 h-10 bg-rose-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-pulse"></span>
             Read-only impersonation mode
@@ -224,6 +241,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     pb-16 md:pb-0
                 `}
       >
+        <a
+          href="#app-main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-white dark:bg-navy-900 text-slate-900 dark:text-white border border-slate-300 dark:border-navy-600 rounded px-3 py-2 text-sm"
+        >
+          {t('layout.skipToContent', 'Skip to main content')}
+        </a>
         {/* Header */}
         <div className="flex flex-col z-30 shrink-0">
           <DemoModeBanner />
@@ -234,25 +257,35 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
           <AIFreezeBanner />
 
-          <div className="h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+          <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setIsSidebarOpen(true)}
                 className="lg:hidden text-navy-700 dark:text-white mr-2"
+                aria-label="Open menu"
               >
                 <Menu />
               </button>
-              <div className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500">
-                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
+              <nav
+                aria-label={t('layout.breadcrumb', 'Breadcrumb')}
+                className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500"
+              >
+                <span
+                  className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
+                  aria-current={!breadcrumbs?.[1] && breadcrumbs?.[0] ? 'page' : undefined}
+                >
                   {breadcrumbs?.[0] || ''}
                 </span>
                 {breadcrumbs?.[1] ? (
                   <>
-                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                    <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
+                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" aria-hidden="true" />
+                    <span className="text-navy-900 dark:text-white" aria-current="page">
+                      {breadcrumbs[1]}
+                    </span>
                   </>
                 ) : null}
-              </div>
+              </nav>
             </div>
 
             <div className="flex items-center gap-4">
@@ -273,8 +306,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     onClick={() => toggleChatCollapse()}
                     className={`hidden lg:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
                       isChatCollapsed
-                        ? 'bg-purple-500 text-white hover:bg-purple-600'
-                        : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-500/25'
+                        ? 'bg-primary-500 text-white hover:bg-primary-600'
+                        : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
                     }`}
                     title={
                       isChatCollapsed
@@ -313,8 +346,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     type="button"
                     onClick={() => toggleChatCollapse()}
                     className="absolute top-2 right-2 z-10 w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-                    title="Close AI panel"
-                    aria-label="Close AI panel"
+                    title={t('layout.aiPanel.close', 'Close AI panel')}
+                    aria-label={t('layout.aiPanel.close', 'Close AI panel')}
                   >
                     <X size={16} />
                   </button>
@@ -339,14 +372,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 </div>
                 {/* Resizer */}
                 <div
-                  className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-purple-500/50 active:bg-purple-500 transition-all ${isResizing ? 'bg-purple-500 w-1.5' : ''}`}
+                  className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-primary-500/50 active:bg-primary-500 transition-all ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
                   onMouseDown={startResizing}
                 />
               </>
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto">{children}</div>
+            <div
+              id="app-main-content"
+              tabIndex={-1}
+              className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto"
+            >
+              {children}
+            </div>
           </div>
         </TrialExpiredGate>
       </main>

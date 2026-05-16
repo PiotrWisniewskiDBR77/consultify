@@ -52,7 +52,7 @@ export const ExecutionScoreCard: React.FC<
     if (value >= 80) return 'text-green-500';
     if (value >= 60) return 'text-blue-500';
     if (value >= 40) return 'text-amber-500';
-    return 'text-red-500';
+    return 'text-rose-500';
   };
 
   // Trend icon
@@ -61,7 +61,7 @@ export const ExecutionScoreCard: React.FC<
     trend === 'up'
       ? 'text-green-500'
       : trend === 'down'
-        ? 'text-red-500'
+        ? 'text-rose-500'
         : 'text-slate-400 dark:text-slate-500';
 
   if (compact) {
@@ -142,7 +142,7 @@ export const ExecutionScoreCard: React.FC<
                 trend === 'up'
                   ? 'bg-green-100 dark:bg-green-900/30'
                   : trend === 'down'
-                    ? 'bg-red-100 dark:bg-red-900/30'
+                    ? 'bg-rose-100 dark:bg-rose-900/30'
                     : 'bg-slate-100 dark:bg-white/5'
               }`}
             >
@@ -163,12 +163,12 @@ export const ExecutionScoreCard: React.FC<
           <div className="flex items-center gap-2">
             <div
               className={`p-1.5 rounded-lg ${
-                streak > 0 ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-slate-100 dark:bg-white/5'
+                streak > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-white/5'
               }`}
             >
               <Flame
                 size={14}
-                className={streak > 0 ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'}
+                className={streak > 0 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}
               />
             </div>
             <div>
@@ -185,8 +185,8 @@ export const ExecutionScoreCard: React.FC<
         {/* Rank */}
         {showRank && score.rank && (
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-              <Award size={14} className="text-purple-500" />
+            <div className="p-1.5 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+              <Award size={14} className="text-primary-500" />
             </div>
             <div>
               <p className="text-sm font-medium text-navy-900 dark:text-white">

@@ -19,7 +19,6 @@ import {
   Database,
   DollarSign,
   FileBarChart,
-  FileCheck,
   FileSearch,
   FileText,
   FlaskConical,
@@ -45,6 +44,7 @@ import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
 import { LLMObservatoryTab } from './Analytics/LLMObservatoryTab';
@@ -61,7 +61,6 @@ import { OrgAIPolicyTab } from './Configuration/OrgAIPolicyTab';
 import { PurposeAssignmentsTab } from './Configuration/PurposeAssignmentsTab';
 import { RoutingRulesTab } from './Configuration/RoutingRulesTab';
 import { ExperimentsTab } from './Development/ExperimentsTab';
-import { ModelRegistryTab } from './Development/ModelRegistryTab';
 import { PromptBuilderTab } from './Development/PromptBuilderTab';
 // Development Tab Components
 import { PromptsLibraryTab } from './Development/PromptsLibraryTab';
@@ -195,6 +194,28 @@ interface AIPlatformModuleProps {
   initialSubTab?: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getObjectPayload = (value: unknown): unknown => {
+  let current = value;
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!isRecord(current) || !('data' in current)) break;
+    current = current.data;
+  }
+
+  return current;
+};
+
+const toBool = (value: unknown): boolean => value === true || value === 'true' || value === 1;
+
+const asText = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   initialTab,
   initialSubTab,
@@ -203,12 +224,14 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<string | null>(initialSubTab || null);
   const [internetSignal, setInternetSignal] = useState<{
     loading: boolean;
+    error: string | null;
     internetEnabled: boolean;
     tavilyConfigured: boolean;
     webSearchAvailable: boolean;
     searchProvider: string | null;
   }>({
     loading: true,
+    error: null,
     internetEnabled: false,
     tavilyConfigured: false,
     webSearchAvailable: false,
@@ -434,24 +457,33 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   useEffect(() => {
     let mounted = true;
     Api.getAIGovernancePolicy()
-      .then((json: any) => {
+      .then((json: unknown) => {
         if (!mounted) return;
-        const summary = json?.data?.summary || null;
-        const runtime = json?.data?.runtime || null;
+        const payload = getObjectPayload(json);
+
+        if (!isRecord(payload) || !isRecord(payload.summary) || !isRecord(payload.runtime)) {
+          throw new Error('Internet policy response was malformed');
+        }
+
+        const summary = payload.summary;
+        const runtime = payload.runtime;
+
         setInternetSignal({
           loading: false,
-          internetEnabled: Boolean(summary?.internetEnabled),
-          tavilyConfigured: Boolean(runtime?.tavilyConfigured),
-          webSearchAvailable: Boolean(runtime?.webSearchAvailable),
-          searchProvider:
-            typeof runtime?.provider === 'string' && runtime.provider.trim().length > 0
-              ? runtime.provider
-              : null,
+          error: null,
+          internetEnabled: toBool(summary.internetEnabled),
+          tavilyConfigured: toBool(runtime.tavilyConfigured),
+          webSearchAvailable: toBool(runtime.webSearchAvailable),
+          searchProvider: asText(runtime.provider),
         });
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!mounted) return;
-        setInternetSignal((prev) => ({ ...prev, loading: false }));
+        setInternetSignal((prev) => ({
+          ...prev,
+          loading: false,
+          error: normalizeApiErrorMessage(error, 'Unable to load internet policy'),
+        }));
       });
     return () => {
       mounted = false;
@@ -460,17 +492,21 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 
   const internetDotClass = internetSignal.loading
     ? 'bg-slate-300 dark:bg-slate-600'
-    : internetSignal.webSearchAvailable
-      ? 'bg-emerald-500'
-      : 'bg-red-500';
+    : internetSignal.error
+      ? 'bg-amber-500'
+      : internetSignal.webSearchAvailable
+        ? 'bg-emerald-500'
+        : 'bg-rose-500';
 
   const internetLabel = internetSignal.loading
     ? 'Internet: checking'
-    : internetSignal.webSearchAvailable
-      ? 'Internet: ON'
-      : internetSignal.internetEnabled && !internetSignal.tavilyConfigured
-        ? 'Internet: KEY MISSING'
-        : 'Internet: OFF';
+    : internetSignal.error
+      ? 'Internet: UNKNOWN'
+      : internetSignal.webSearchAvailable
+        ? 'Internet: ON'
+        : internetSignal.internetEnabled && !internetSignal.tavilyConfigured
+          ? 'Internet: KEY MISSING'
+          : 'Internet: OFF';
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-hidden">
@@ -490,9 +526,11 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               title={
                 internetSignal.loading
                   ? 'Checking internet & web search configuration'
-                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Provider: ${
-                      internetSignal.searchProvider || 'unavailable'
-                    }; Tavily key: ${internetSignal.tavilyConfigured ? 'configured' : 'missing'}`
+                  : internetSignal.error
+                    ? `Internet policy status unavailable: ${internetSignal.error}`
+                    : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Provider: ${
+                        internetSignal.searchProvider || 'unavailable'
+                      }; Tavily key: ${internetSignal.tavilyConfigured ? 'configured' : 'missing'}`
               }
             >
               <span className={`w-2 h-2 rounded-full ${internetDotClass}`} />

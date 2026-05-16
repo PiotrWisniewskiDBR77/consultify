@@ -10,34 +10,52 @@ const OPENING_QUESTIONS: Record<string, Record<string, string>> = {
     outputs: 'Let me prepare the final source summary and downstream outputs.',
   },
   'market-forces': {
-    context: 'What industry and market are you analyzing? Define your competitive position.',
-    rivalry: 'How intense is competition among existing players in your industry?',
-    newEntrants: 'How easy is it for new competitors to enter your market?',
-    substitutes: 'What substitute products or services threaten your offerings?',
-    buyerPower: 'How much bargaining power do your customers have?',
-    supplierPower: 'How much bargaining power do your suppliers have?',
-    summary: 'Let me summarize the competitive landscape and propose initiatives.',
+    mission:
+      'What industry, geographic scope, competitive position, and decision question should this Porter session support?',
+    input:
+      'What interview notes, benchmarks, market observations, or organization context should become evidence for the force assessment?',
+    forces:
+      'Let me turn the accepted market signals into a Five Forces scorecard with drivers, evidence, and confidence.',
+    insights:
+      'I will synthesize the scored forces into margin pressure, defensibility implications, and strategic moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved diagnosis.',
   },
   'growth-paths': {
-    context: 'What growth goal and scope are you analyzing?',
-    'market-penetration': 'What initiatives grow in current markets with current products?',
-    'market-development': 'What initiatives expand into new markets?',
-    'product-development': 'What new products could accelerate growth?',
-    diversification: 'What initiatives combine new products and new markets?',
-    summary: 'Let me summarize growth paths and propose initiatives.',
+    mission:
+      'What growth ambition, scope, success signal, and constraints should this Ansoff session support?',
+    input:
+      'What interview notes, market observations, customer signals, or organization context should shape the growth options?',
+    options:
+      'Let me turn the accepted growth signals into Ansoff options across market penetration, market development, product development, and diversification.',
+    insights:
+      'I will compare the growth options, expose trade-offs, and recommend a sequenced set of growth moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved growth direction.',
   },
   'portfolio-priority': {
-    context: 'What portfolio scope and constraints are you analyzing?',
-    'portfolio-items': 'List initiatives and assess growth and share.',
-    'portfolio-matrix': 'Let me summarize the portfolio matrix.',
-    summary: 'Let me summarize portfolio priorities and initiatives.',
+    mission:
+      'What portfolio decision, scope, success signal, and constraints should this prioritization support?',
+    input:
+      'What interview notes, performance signals, market evidence, or resource constraints should shape the portfolio?',
+    items:
+      'Let me turn the accepted signals into BCG-style portfolio cards with growth, share, investment, and confidence.',
+    insights:
+      'I will synthesize the portfolio into resource trade-offs and recommended allocation moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved portfolio direction.',
   },
   'risk-uncertainty': {
-    context: 'What risk scope and time horizon are you analyzing?',
-    assumptions: 'What key assumptions underpin the strategy?',
-    risks: 'What are the strategic risks and mitigations?',
-    scenarios: 'What scenarios could materially impact outcomes?',
-    summary: 'Let me summarize risks and propose resilience initiatives.',
+    mission:
+      'What decision, risk scope, success signal, and uncertainty constraints should this session support?',
+    input:
+      'What interview notes, weak signals, market changes, or assumptions should shape the risk map?',
+    assumptions:
+      'Let me turn the accepted signals into assumptions, strategic risks, and plausible scenarios.',
+    insights:
+      'I will synthesize the risk map into validation, mitigation, monitoring, and escalation moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved risk posture.',
   },
   'sop-builder': {
     context: 'What operational scope are you standardizing?',

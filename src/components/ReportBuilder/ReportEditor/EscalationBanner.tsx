@@ -63,15 +63,15 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
 
   const isCritical = trigger.severity === 'critical';
   const bannerBg = isCritical
-    ? 'bg-red-500/10 border-red-500/30'
+    ? 'bg-rose-500/10 border-rose-500/30'
     : 'bg-amber-500/10 border-amber-500/30';
-  const bannerText = isCritical ? 'text-red-300' : 'text-amber-300';
-  const iconColor = isCritical ? 'text-red-400' : 'text-amber-400';
+  const bannerText = isCritical ? 'text-rose-300' : 'text-amber-300';
+  const iconColor = isCritical ? 'text-rose-400' : 'text-amber-400';
 
   return (
     <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${bannerBg} mb-4`}>
       {loading ? (
-        <Loader2 size={16} className="animate-spin text-violet-400 shrink-0 mt-0.5" />
+        <Loader2 size={16} className="animate-spin text-primary-400 shrink-0 mt-0.5" />
       ) : (
         <ShieldAlert size={16} className={`${iconColor} shrink-0 mt-0.5`} />
       )}
@@ -121,7 +121,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
         {onCreateR2 && (
           <button
             onClick={onCreateR2}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600/80 hover:bg-violet-600 text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600/80 hover:bg-primary-600 text-white transition-colors"
           >
             {t('reports.escalation.createR2', 'Create R2 Report')}
             <ArrowRight size={12} />

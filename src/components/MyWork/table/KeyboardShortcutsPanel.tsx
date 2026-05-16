@@ -95,7 +95,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Keyboard size={16} className="text-violet-500" />
+          <Keyboard size={16} className="text-primary-500" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {isPl ? 'Skróty klawiszowe' : 'Keyboard Shortcuts'}
           </span>

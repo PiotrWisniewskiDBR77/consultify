@@ -51,7 +51,7 @@ const getBrandIcon = (brand: string): string => {
 const getBrandColor = (brand: string): string => {
   const brandColors: Record<string, string> = {
     visa: 'bg-blue-500',
-    mastercard: 'bg-orange-500',
+    mastercard: 'bg-amber-500',
     amex: 'bg-indigo-500',
     discover: 'bg-amber-500',
     default: 'bg-slate-500',
@@ -135,7 +135,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -146,7 +146,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-purple-500" />
+            <CreditCard className="w-5 h-5 text-primary-500" />
             {t('billing.paymentMethods.title', 'Payment Methods')}
           </h3>
           {!compact && (
@@ -157,7 +157,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
           {t('billing.paymentMethods.add', 'Add Card')}
@@ -186,7 +186,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
           >
             {t('billing.paymentMethods.addFirst', 'Add Your First Card')}
           </button>
@@ -198,8 +198,8 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
               key={pm.id}
               className={`p-4 rounded-xl border transition-all ${
                 pm.is_default
-                  ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/30'
-                  : 'bg-white dark:bg-white/5 border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30'
+                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30'
+                  : 'bg-white dark:bg-white/5 border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -217,7 +217,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                         •••• •••• •••• {pm.last4}
                       </p>
                       {pm.is_default === 1 && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full">
+                        <span className="flex items-center gap-1 px-2 py-0.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-full">
                           <Star className="w-3 h-3" />
                           {t('billing.paymentMethods.default', 'Default')}
                         </span>
@@ -236,7 +236,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                     <button
                       onClick={() => handleSetDefault(pm.id)}
                       disabled={settingDefault === pm.id}
-                      className="px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors disabled:opacity-50"
+                      className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {settingDefault === pm.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -248,7 +248,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                   <button
                     onClick={() => handleRemove(pm.id)}
                     disabled={removing === pm.id}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {removing === pm.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

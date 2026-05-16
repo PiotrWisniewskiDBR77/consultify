@@ -282,11 +282,11 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
                 <button
                   onClick={() => setShowAIMenu(!showAIMenu)}
                   disabled={isAIProcessing}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors disabled:opacity-50"
+                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
                   title={t('reports.aiActions', 'AI Actions')}
                 >
                   {isAIProcessing ? (
-                    <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Wand2 className="w-4 h-4" />
                   )}
@@ -387,7 +387,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={handleCancel}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+            className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
             title={t('common.cancel', 'Cancel')}
           >
             <X className="w-4 h-4" />
@@ -429,7 +429,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
             key={action}
             onClick={() => handleAIAction(action)}
             disabled={isAIProcessing}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
           >
             <Icon className="w-3 h-3" />
             {isPolish ? labelPl : label}

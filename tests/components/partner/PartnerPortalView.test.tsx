@@ -25,7 +25,9 @@ vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
     getReferralAnalytics: vi.fn(),
     getEarningsSummary: vi.fn(),
+    getProgramStatus: vi.fn(),
   },
+  shouldFallbackToLegacyPartner: () => false,
 }));
 
 import { Api } from '../../../src/services/api';
@@ -68,6 +70,19 @@ describe('PartnerPortalView', () => {
         currency: 'EUR',
       },
     });
+    vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue({
+      lifecyclePhase: 'payout',
+      payoutSettingsComplete: true,
+      balances: {
+        grossEarned: 1200,
+        paidOut: 500,
+        heldAmount: 0,
+        availableToPayout: 150,
+        currency: 'EUR',
+      },
+      whatNext: [],
+      hold: null,
+    } as any);
   });
 
   afterEach(() => {
@@ -186,7 +201,7 @@ describe('PartnerPortalView', () => {
       expect(screen.getByText('Referral clicks')).toBeInTheDocument();
       expect(screen.getByText('Ready for payout')).toBeInTheDocument();
       expect(screen.getByText('30 unique')).toBeInTheDocument();
-      expect(screen.getByText('200 pending')).toBeInTheDocument();
+      expect(screen.getByText('payout lifecycle')).toBeInTheDocument();
     });
 
     it('should handle dashboard API error', async () => {

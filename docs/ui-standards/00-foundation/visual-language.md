@@ -1,12 +1,12 @@
 # DBR77 Visual Language Standard (KANON)
 
-> **Wersja:** 2.0 — "Tech Sexy" Edition  
-> **Data:** 2026-02-15  
+> **Wersja:** 2.1 — "DBR77 Tech Sexy 2027" Edition  
+> **Data:** 2026-05-01  
 > **Status:** OBOWIĄZUJĄCY  
 > **Cel:** Jedna, spójna "warstwa wizualna" dla całej aplikacji (kolory, tła, ramki, typografia, spacing, depth, motion) – niezależnie od modułu i niezależnie od trybu prezentacji detail view.  
 > **Lokalizacja:** `docs/ui-standards/00-foundation/visual-language.md`
 >
-> **Changelog v2.0:** Ewolucja standardu na podstawie analizy wzorców UI 2025-2026 (ChatGPT, Notion, ClickUp, Gemini, NotebookLM). Nie rewolucja — refinement w kierunku "quiet luxury UI".
+> **Changelog v2.1:** Konsolidacja kierunku "DBR77 Tech Sexy 2027" z Golden Standard: calm AI SaaS, mocniejsza dyscyplina Menu 2/3, pill controls, no-gradient operational chrome, segmented view controls, compact density for heavy work screens.
 
 ---
 
@@ -15,14 +15,14 @@
 - **Jedna aplikacja, jeden język wizualny.** Moduły i tryby widoku nie wprowadzają własnej palety, ramek, typografii ani "stylu kart".
 - **Minimalizm DBR77.** UI ma być "enterprise clean": mniej ramek, więcej rytmu spacing + hierarchii typograficznej + subtelnych separatorów.
 - **Semantyka kolorów jest święta.** Kolory oznaczają znaczenie (CTA / info / warning / danger / success), nie "ład".
-- **Dark mode jest pierwszoplanowy w chrome, light mode jest pierwszoplanowy w ekranach operacyjnych.** Każdy komponent musi przejść osobny review w obu trybach. Dla light mode obowiązuje [light-mode-readability.md](./light-mode-readability.md) jako SSOT, a "invisible borders" mają wyjątek dla data-dense surfaces (tabele, preview pane, paneli bocznych) — tam widoczny border jest obowiązkowy.
+- **Dark mode jest pierwszoplanowy.** Każdy komponent musi wyglądać równie dobrze w `dark`.
 - **Powściągliwość (restraint).** Na ekranie jest **jeden** kolorowy element (CTA). Reszta jest monochromatyczna. Elegancja przez brak.
 - **Przestrzeń to element designu.** Pusta przestrzeń to nie "brak contentu" — to celowa cisza, która podnosi premium feel.
 - **Separacja przez tło i przestrzeń, nie linie.** Bordery są ostatecznością. Preferuj zmianę tła, cień lub whitespace.
 
-### 0.1) "Tech Sexy" — definicja premium feel (KANON)
+### 0.1) "DBR77 Tech Sexy 2027" — definicja premium feel (KANON)
 
-Współczesne produkty top-tier (ChatGPT, Notion, ClickUp, Gemini, NotebookLM) stosują te same wzorce. Consultify MUSI je adoptować:
+Współczesne produkty top-tier (OpenAI/ChatGPT, Claude, Notion, ClickUp, Linear, Google Material, Apple HIG) stosują te same wzorce. Consultify MUSI je adoptować:
 
 1. **Monochromatyczna hierarchia** — prawie zero koloru w chrome, hierarchia przez jasność/ciemność odcieni szarości
 2. **Invisible borders** — elementy separowane zmianą tła, cieniem lub spacingiem, nie `border`
@@ -30,6 +30,8 @@ Współczesne produkty top-tier (ChatGPT, Notion, ClickUp, Gemini, NotebookLM) s
 4. **Micro-consistency** — identyczne radiusy, stroke-width ikon, spacing tokeny, easing curves wszędzie
 5. **Depth without decoration** — głębia z warstw tła + shadow, zero gradientów/tekstur/dekoracji
 6. **Motion that breathes** — 120-220ms ease-out, zero bounce/spring jako default
+7. **Operational calm** — ciężkie ekrany robocze mają więcej logiki, ale mniej chrome; akcje AI i workflow żyją w ustalonych slotach, nie w nowych paskach
+8. **Visible controls, not hidden surprises** — przełączniki widoków są segmented/icon controls, a dropdown służy filtrom lub overflow, nie ukrywaniu podstawowego trybu pracy
 
 ---
 
@@ -248,6 +250,27 @@ W ekranach typu Executive / analytics łatwo wpaść w anty‑pattern: **dużo p
 
 - **MUST:** Wprowadź **Density** (Compact / Comfortable) dla dashboardów w menu “View” (bez dodatkowych toolbarów na ekranie).
 - Utrzymuj stały grid: równe gutters (12–16px) i wyrównania pionowe/poziome.
+
+### 6.2 Table Chip Readability — ClickUp-style Calm Metadata
+
+Tabele operacyjne są gęste, więc chipy muszą być czytelne z daleka i spokojne wizualnie.
+
+Wzorzec: ClickUp / Linear / Notion — mały pill, jasny kontrast tekstu, kolor jako sygnał w ikonie/dot lub bardzo subtelnym tle. Metadata nie wygląda jak CTA.
+
+MUST:
+
+- `StatusChip`: status/etap może mieć kolor, ale tło jest subtelne, tekst kontrastowy, a ikona/dot wzmacnia znaczenie.
+- `MetaChip`: tagi, typy, źródła i owner shorthand są neutralne.
+- `ToolChip`: narzędzie/artefakt jest prawie neutralne; ikona może mieć delikatny kolor, ale cały pill nie jest brandowym CTA.
+- `PriorityChip`: jeden wzorzec w rodzinie tabel, np. dot/ikona + label.
+- `SlaChip` / `DueChip`: kolor tylko dla ryzyka i przekroczeń; normalne terminy są neutralne.
+- Chipy muszą wyglądać dobrze w dark i light mode, bez pastelowego tekstu na pastelowym tle.
+
+MUST NOT:
+
+- nie używaj fioletowego/primary tła jako stałego koloru metadata,
+- nie twórz lokalnych wariantów chipów w każdej tabeli, jeśli istnieje kanon,
+- nie mieszaj w jednym module dot-only, pill-only i icon+label dla tego samego typu danych.
 
 ---
 

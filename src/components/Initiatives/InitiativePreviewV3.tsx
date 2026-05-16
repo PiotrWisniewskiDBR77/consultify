@@ -15,6 +15,8 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
+import { ROUTES } from '@/routes/routeConfig';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -55,10 +57,21 @@ export const InitiativePreviewV3Body: React.FC<{
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [internalExpanded, setInternalExpanded] = useState(false);
+  const [lineage, setLineage] = useState<ArtifactConversion[]>([]);
 
   // Reset internal state when switching items.
   useEffect(() => {
     setInternalExpanded(false);
+  }, [initiative.id]);
+
+  useEffect(() => {
+    if (!initiative.id) return;
+    ConclusionsApi.listConversions({
+      targetArtifactType: 'initiative',
+      targetArtifactId: initiative.id,
+    })
+      .then((res) => setLineage(res.conversions || []))
+      .catch(() => setLineage([]));
   }, [initiative.id]);
 
   const expanded = detailsExpanded ?? internalExpanded;
@@ -194,6 +207,41 @@ export const InitiativePreviewV3Body: React.FC<{
 
       {/* Financial Analysis Card (V3 position 4, 19.3) */}
       <FinancialAnalysisCard initiativeId={initiative.id} />
+
+      {(['interview_insight', 'insight', 'interview', 'conclusion'].includes(
+        String(initiative.sourceType || '').toLowerCase()
+      ) ||
+        lineage.length > 0) && (
+        <div className="rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/70 dark:bg-primary-500/[0.08] p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Link2 size={14} className="text-primary-500" />
+            <span className="text-[11px] font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
+              {isPolish ? 'Pochodzenie z Interview Insight' : 'Interview Insight lineage'}
+            </span>
+          </div>
+          <div className="space-y-1.5 text-xs text-primary-800 dark:text-primary-200">
+            {initiative.sourceId ? (
+              <button
+                type="button"
+                onClick={() =>
+                  window.location.assign(
+                    `/interview?insightId=${encodeURIComponent(String(initiative.sourceId))}`
+                  )
+                }
+                className="flex items-center gap-2 hover:underline"
+              >
+                <ExternalLink size={12} />
+                {isPolish ? 'Otwórz źródłowy insight' : 'Open source insight'}
+              </button>
+            ) : null}
+            {lineage.map((item) => (
+              <div key={item.id}>
+                {item.sourceArtifactTitle || item.conversionIntent} • {item.conversionStatus}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -216,22 +264,31 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
           onClick={() => navigate(`/economics?tab=analysis&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
-          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Analiza wskaźnikowa' : 'Ratio Analysis'}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=valuation&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
-          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Wycena przedsiębiorstwa' : 'Company Valuation'}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=prediction&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
-          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Budżet i predykcja' : 'Budget & Prediction'}
+        </button>
+        <button
+          onClick={() =>
+            navigate(`${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${initiativeId}`)
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
+          {isPolish ? 'Wyniki i raporty KPI' : 'Results & KPI reports'}
         </button>
       </div>
     </div>

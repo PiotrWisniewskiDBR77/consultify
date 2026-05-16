@@ -244,7 +244,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
       case 'basic':
         return 'text-yellow-600';
       default:
-        return 'text-red-600';
+        return 'text-rose-600';
     }
   };
 
@@ -285,7 +285,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
   if (viewState === 'intro') {
     return (
       <div
-        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
+        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-primary-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
@@ -376,7 +376,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
   if (viewState === 'result' && aiResult) {
     return (
       <div
-        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
+        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-primary-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         <div className="max-w-2xl mx-auto">
@@ -552,7 +552,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
       </header>
       <div className="max-w-3xl mx-auto py-6">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
             {error}
           </div>
         )}

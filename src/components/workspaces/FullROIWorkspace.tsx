@@ -110,7 +110,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
           <div className="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">
             Portfolio ROI
           </div>
-          <div className="text-2xl font-bold text-purple-400">
+          <div className="text-2xl font-bold text-primary-400">
             {economics.overallROI.toFixed(0)}%
           </div>
         </div>
@@ -217,7 +217,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
           <h4 className="text-xs uppercase text-slate-500 dark:text-slate-400 font-bold mb-2">
             IRR
           </h4>
-          <p className="text-3xl font-bold text-purple-600">32.5%</p>
+          <p className="text-3xl font-bold text-primary-600">32.5%</p>
         </div>
       </div>
 

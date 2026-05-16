@@ -105,7 +105,7 @@ export const BackupPanel: React.FC = () => {
                         backup.status === 'completed'
                           ? 'bg-green-500/20 text-green-400'
                           : backup.status === 'failed'
-                            ? 'bg-red-500/20 text-red-400'
+                            ? 'bg-rose-500/20 text-rose-400'
                             : 'bg-yellow-500/20 text-yellow-400'
                       }`}
                     >
@@ -114,7 +114,7 @@ export const BackupPanel: React.FC = () => {
                     {backup.status === 'completed' ? (
                       <CheckCircle size={16} className="text-green-400" />
                     ) : (
-                      <XCircle size={16} className="text-red-400" />
+                      <XCircle size={16} className="text-rose-400" />
                     )}
                   </div>
                   <p className="text-sm text-slate-400 dark:text-slate-500">
@@ -137,7 +137,7 @@ export const BackupPanel: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDelete(backup.id)}
-                    className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

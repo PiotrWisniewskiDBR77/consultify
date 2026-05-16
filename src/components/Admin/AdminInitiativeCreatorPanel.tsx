@@ -230,7 +230,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -253,9 +253,9 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <span className="text-sm text-red-300">{error}</span>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+          <AlertCircle className="w-5 h-5 text-rose-400" />
+          <span className="text-sm text-rose-300">{error}</span>
         </div>
       )}
 
@@ -266,9 +266,9 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
                 step === s
-                  ? 'bg-violet-500 text-white'
+                  ? 'bg-primary-500 text-white'
                   : ['select', 'configure', 'running', 'done'].indexOf(step) > i
-                    ? 'bg-violet-500/20 text-violet-400'
+                    ? 'bg-primary-500/20 text-primary-400'
                     : 'bg-white/5 text-slate-500'
               }`}
             >
@@ -278,7 +278,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
               <div
                 className={`flex-1 h-0.5 ${
                   ['select', 'configure', 'running', 'done'].indexOf(step) > i
-                    ? 'bg-violet-500/50'
+                    ? 'bg-primary-500/50'
                     : 'bg-white/10'
                 }`}
               />
@@ -309,7 +309,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 placeholder={t('admin.initiativeCreator.searchPlaceholder', 'Szukaj oceny...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
               />
             </div>
 
@@ -322,7 +322,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                     setSelectedAssessmentId(assessment.id);
                     setStep('configure');
                   }}
-                  className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/30 text-left transition-all"
+                  className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary-500/30 text-left transition-all"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-white/5">
@@ -372,10 +372,10 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             className="space-y-6"
           >
             {/* Selected Assessment */}
-            <div className="p-4 rounded-lg bg-violet-500/10 border border-violet-500/20">
+            <div className="p-4 rounded-lg bg-primary-500/10 border border-primary-500/20">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 className="w-4 h-4 text-violet-400" />
-                <span className="text-sm font-medium text-violet-300">Wybrana ocena</span>
+                <CheckCircle2 className="w-4 h-4 text-primary-400" />
+                <span className="text-sm font-medium text-primary-300">Wybrana ocena</span>
               </div>
               <p className="text-white font-medium">{selectedAssessment.name}</p>
             </div>
@@ -393,12 +393,12 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                     onClick={() => setMethodologyId(m.id)}
                     className={`w-full p-3 rounded-lg border text-left transition-all ${
                       methodologyId === m.id
-                        ? 'bg-violet-500/10 border-violet-500/50'
+                        ? 'bg-primary-500/10 border-primary-500/50'
                         : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                   >
                     <p
-                      className={`font-medium ${methodologyId === m.id ? 'text-violet-300' : 'text-white'}`}
+                      className={`font-medium ${methodologyId === m.id ? 'text-primary-300' : 'text-white'}`}
                     >
                       {m.name}
                     </p>
@@ -419,7 +419,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 max={100}
                 value={requestedCount}
                 onChange={(e) => setRequestedCount(parseInt(e.target.value) || 20)}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/50"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary-500/50"
               />
             </div>
 
@@ -430,7 +430,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                   type="checkbox"
                   checked={includeChatContext}
                   onChange={(e) => setIncludeChatContext(e.target.checked)}
-                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-violet-500 focus:ring-violet-500"
+                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-sm text-slate-300">
                   {t('admin.initiativeCreator.includeContext', 'Uwzględnij kontekst z czatu')}
@@ -451,7 +451,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                   'admin.initiativeCreator.consultantBriefPlaceholder',
                   'Np. skup się na automatyzacji procesów...'
                 )}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 resize-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 resize-none"
               />
             </div>
 
@@ -466,7 +466,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
               <button
                 onClick={handleStartGeneration}
                 disabled={!canStart || starting}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {starting ? (
                   <>
@@ -493,8 +493,8 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             exit={{ opacity: 0, y: -10 }}
             className="text-center py-12"
           >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-violet-500/20 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-500/20 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">
               {t('admin.initiativeCreator.generating', 'Generowanie inicjatyw...')}
@@ -506,7 +506,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 </p>
                 <div className="w-64 mx-auto h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-violet-500 transition-all"
+                    className="h-full bg-primary-500 transition-all"
                     style={{
                       width: `${(progress.generatedCount / progress.requestedCount) * 100}%`,
                     }}
@@ -539,7 +539,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             </p>
             <button
               onClick={handleReset}
-              className="px-6 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium transition-colors"
+              className="px-6 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors"
             >
               {t('admin.initiativeCreator.generateMore', 'Generuj więcej')}
             </button>

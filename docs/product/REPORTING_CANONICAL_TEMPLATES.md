@@ -1,5 +1,7 @@
 # Consultinity – Reporting, RAG & Escalation Standard (Canonical)
 
+> Note (v1 doctrine update): R1–R4 templates defined in this document live inside the Document Studio Template Registry as the `report` document family. See `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md` for the runtime productization. RAG, escalation rules and required sections defined here remain the source of truth for the report family.
+
 ## 0. Purpose of this document
 This document defines:
 - Canonical report types (must-have)

@@ -94,6 +94,7 @@ const VERSION_HEADER = 'x-api-version';
 const DEPRECATION_HEADER = 'deprecation';
 const SUNSET_HEADER = 'sunset';
 const API_VERSION_RESPONSE_HEADER = 'x-api-version';
+const MAX_VERSION_INPUT_CHARS = 128;
 
 // ==========================================
 // MIDDLEWARE
@@ -178,7 +179,8 @@ export function requireVersion(minVersion: string) {
       return;
     }
 
-    const minInfo = API_VERSIONS[normalizeVersion(minVersion)];
+    const normalizedMinVersionInput = clampVersionInput(String(minVersion ?? ''));
+    const minInfo = API_VERSIONS[normalizeVersion(normalizedMinVersionInput)];
     if (!minInfo) {
       next();
       return;
@@ -187,7 +189,7 @@ export function requireVersion(minVersion: string) {
     if (compareVersions(req.apiVersion, minInfo) < 0) {
       res.status(400).json({
         error: 'API version too old',
-        message: `This endpoint requires API version ${minVersion} or higher.`,
+        message: `This endpoint requires API version ${normalizedMinVersionInput} or higher.`,
         yourVersion: req.apiVersion.full,
         requiredVersion: minInfo.full,
       });
@@ -248,7 +250,8 @@ function extractVersionFromUrl(path: string): string | null {
  */
 function normalizeVersion(version: string): string {
   // Remove 'v' prefix if present
-  const cleaned = version.replace(/^v/i, '');
+  const cleaned = clampVersionInput(version).replace(/^v/i, '');
+  if (!cleaned) return '';
 
   // Return as-is if it's a known format
   if (API_VERSIONS[cleaned]) {
@@ -258,6 +261,10 @@ function normalizeVersion(version: string): string {
   // Try major version only
   const major = cleaned.split('.')[0];
   return major;
+}
+
+function clampVersionInput(version: string): string {
+  return String(version || '').trim().slice(0, MAX_VERSION_INPUT_CHARS);
 }
 
 /**

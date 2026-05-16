@@ -18,6 +18,7 @@ import { randomUUID } from 'node:crypto';
 import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
 import {
   buildProposalOperationContract,
   updateOperationContractLinks,
@@ -158,7 +159,7 @@ const CHAT_ACTION_KEYWORDS: Array<{
     handoffIntent: 'open',
     patterns: [
       /\b(insight|insights|interview|findings|generate.?insight|review.?insight|publish.?insight|evidence.?map|completed.?session)\b/i,
-      /\b(wnioski|wywiad|wywiady|wygeneruj.?wnioski|recenzja|recenzuj|opublikuj.?wnioski|mapa.?dowodów|zakończon.?sesj)\b/i,
+      /\b(wywiad|wywiady|wygeneruj.?wnioski|recenzja|recenzuj|opublikuj.?wnioski|mapa.?dowodów|zakończon.?sesj)\b/i,
     ],
   },
   {
@@ -320,6 +321,257 @@ function rowToAuditEntry(row: AuditRow): AuditEntry {
     to_state: row.to_state as ActionEnvelopeState,
     detail: row.detail_json ? JSON.parse(row.detail_json) : null,
   };
+}
+
+function mapTeresaStateToAIActionStatus(state: ActionEnvelopeState): string {
+  switch (state) {
+    case 'approved':
+      return 'APPROVED';
+    case 'executing':
+      return 'EXECUTING';
+    case 'completed':
+      return 'EXECUTED';
+    case 'rejected':
+      return 'REJECTED';
+    case 'proposal':
+    case 'pending_approval':
+    default:
+      return 'PENDING';
+  }
+}
+
+function mapTeresaStateToAIRunStatus(
+  state: ActionEnvelopeState
+): 'pending_review' | 'approved' | 'executing' | 'audited' | 'rejected' {
+  switch (state) {
+    case 'approved':
+      return 'approved';
+    case 'executing':
+      return 'executing';
+    case 'completed':
+      return 'audited';
+    case 'rejected':
+      return 'rejected';
+    case 'proposal':
+    case 'pending_approval':
+    default:
+      return 'pending_review';
+  }
+}
+
+function teresaActionType(targetModule: HandoffTargetModule): string {
+  return `TERESA_HANDOFF_${String(targetModule || 'unknown').toUpperCase()}`;
+}
+
+async function ensureAIActionMirrorSchema(): Promise<void> {
+  await dbRun(
+    `CREATE TABLE IF NOT EXISTS ai_actions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      organization_id TEXT,
+      project_id TEXT,
+      action_type TEXT,
+      payload TEXT,
+      draft_content TEXT,
+      required_policy_level TEXT,
+      current_policy_level TEXT,
+      requires_approval INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'PENDING',
+      approved_at TIMESTAMP,
+      approved_by TEXT,
+      executed_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    [],
+    { fallback: false }
+  );
+}
+
+function eventTypeForTeresaState(state: ActionEnvelopeState): string {
+  switch (state) {
+    case 'approved':
+      return 'proposal_approved';
+    case 'executing':
+      return 'execution_started';
+    case 'completed':
+      return 'execution_succeeded';
+    case 'rejected':
+      return 'execution_failed';
+    case 'proposal':
+    case 'pending_approval':
+    default:
+      return 'proposal_pending_review';
+  }
+}
+
+async function mirrorTeresaProposalToAIRun(input: {
+  proposalId: string;
+  organizationId: string;
+  userId: string;
+  sessionId: string;
+  state: ActionEnvelopeState;
+  targetModule: HandoffTargetModule;
+  targetPayload: Record<string, unknown>;
+  handoffContext: TeresaHandoffContext;
+  eventType: string;
+  actorUserId?: string | null;
+  details?: Record<string, unknown>;
+  outputRefs?: unknown[];
+  audit?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await ensureAIActionMirrorSchema();
+    const actionType = teresaActionType(input.targetModule);
+    const actionStatus = mapTeresaStateToAIActionStatus(input.state);
+    const payload = {
+      source: 'teresa_proposal',
+      proposalId: input.proposalId,
+      targetModule: input.targetModule,
+      targetPayload: input.targetPayload,
+      trigger: input.handoffContext.user_intent || 'teresa_handoff',
+      conversationId: input.handoffContext.runtime_binding?.conversation_id || input.sessionId,
+      noSilentExecution: true,
+    };
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM ai_actions WHERE id = ?`,
+      [input.proposalId],
+      { fallback: false }
+    );
+
+    if (existing?.id) {
+      await dbRun(
+        `UPDATE ai_actions
+         SET status = ?, payload = ?, draft_content = ?, approved_at = CASE WHEN ? = 'APPROVED' THEN COALESCE(approved_at, CURRENT_TIMESTAMP) ELSE approved_at END,
+             executed_at = CASE WHEN ? = 'EXECUTED' THEN COALESCE(executed_at, CURRENT_TIMESTAMP) ELSE executed_at END
+         WHERE id = ?`,
+        [
+          actionStatus,
+          JSON.stringify(payload),
+          JSON.stringify(input.targetPayload || {}),
+          actionStatus,
+          actionStatus,
+          input.proposalId,
+        ],
+        { fallback: false }
+      );
+    } else {
+      await dbRun(
+        `INSERT INTO ai_actions
+          (id, user_id, organization_id, project_id, action_type, payload, draft_content,
+           required_policy_level, current_policy_level, requires_approval, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          input.proposalId,
+          input.userId,
+          input.organizationId,
+          null,
+          actionType,
+          JSON.stringify(payload),
+          JSON.stringify(input.targetPayload || {}),
+          'TEAM',
+          'TEAM',
+          1,
+          actionStatus,
+        ],
+        { fallback: false }
+      );
+    }
+
+    const actionRow = {
+      id: input.proposalId,
+      user_id: input.userId,
+      organization_id: input.organizationId,
+      project_id: null,
+      action_type: actionType,
+      payload: JSON.stringify(payload),
+      draft_content: JSON.stringify(input.targetPayload || {}),
+      status: actionStatus,
+      current_policy_level: 'TEAM',
+      created_at: null,
+      approved_at: actionStatus === 'APPROVED' ? new Date().toISOString() : null,
+      executed_at: actionStatus === 'EXECUTED' ? new Date().toISOString() : null,
+    };
+
+    await ensureRunForAction(actionRow);
+    await recordAIRunEvent({
+      action: actionRow,
+      eventType: input.eventType,
+      status: mapTeresaStateToAIRunStatus(input.state),
+      actorUserId: input.actorUserId || input.userId,
+      details: {
+        source: 'teresa_proposal',
+        targetModule: input.targetModule,
+        proposalState: input.state,
+        ...(input.details || {}),
+      },
+      outputRefs: input.outputRefs,
+      audit: {
+        approvalRequired: true,
+        noSilentExecution: true,
+        approvalSeparation: true,
+        teresaProposalId: input.proposalId,
+        ...(input.audit || {}),
+      },
+    });
+  } catch (err: any) {
+    logger.warn(`${LOG_PREFIX} AIRun mirror skipped: ${err?.message || String(err)}`);
+  }
+}
+
+export async function repairTeresaAIRunMirrorsForActionCenter(params: {
+  organizationId: string;
+  userId?: string | null;
+  adminView?: boolean;
+  limit?: number;
+}): Promise<{ scanned: number; repaired: number }> {
+  await ensureTeresaTables();
+  const filters = ['organization_id = ?'];
+  const values: unknown[] = [params.organizationId];
+  if (!params.adminView && params.userId) {
+    filters.push('user_id = ?');
+    values.push(params.userId);
+  }
+  values.push(Math.min(Math.max(params.limit || 100, 1), 250));
+
+  const rows = await dbAll<ProposalRow>(
+    `SELECT * FROM teresa_proposals
+     WHERE ${filters.join(' AND ')}
+     ORDER BY updated_at DESC
+     LIMIT ?`,
+    values,
+    { fallback: true }
+  );
+
+  let repaired = 0;
+  for (const row of rows || []) {
+    try {
+      await mirrorTeresaProposalToAIRun({
+        proposalId: row.id,
+        organizationId: row.organization_id,
+        userId: row.user_id,
+        sessionId: row.session_id,
+        state: row.state as ActionEnvelopeState,
+        targetModule: row.target_module as HandoffTargetModule,
+        targetPayload: JSON.parse(row.target_payload_json || '{}'),
+        handoffContext: JSON.parse(row.handoff_context_json || '{}'),
+        eventType: eventTypeForTeresaState(row.state as ActionEnvelopeState),
+        actorUserId: row.user_id,
+        details: { source: 'action_center_repair_backfill' },
+        audit: {
+          repairedForActionCenter: true,
+          repairedAt: new Date().toISOString(),
+        },
+      });
+      repaired += 1;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Action Center mirror backfill skipped`, {
+        proposalId: row.id,
+        error: err?.message || String(err),
+      });
+    }
+  }
+
+  return { scanned: rows?.length || 0, repaired };
 }
 
 function trimPreview(value: unknown, max = 180): string {
@@ -960,6 +1212,19 @@ export async function createProposal(params: {
     toState: 'proposal',
     detail: { target_module: targetModule, user_intent: persistedHandoffContext.user_intent },
   });
+  await mirrorTeresaProposalToAIRun({
+    proposalId,
+    organizationId,
+    userId,
+    sessionId,
+    state: 'proposal',
+    targetModule,
+    targetPayload,
+    handoffContext: persistedHandoffContext,
+    eventType: 'proposal_pending_review',
+    actorUserId: userId,
+    details: { auditEntryId: auditEntry.id },
+  });
 
   logger.info(`${LOG_PREFIX} Proposal created: ${proposalId} → ${targetModule}`);
 
@@ -1049,7 +1314,6 @@ export async function approveProposal(params: {
     toState: 'approved',
     detail: null,
   });
-
   logger.info(`${LOG_PREFIX} Proposal approved: ${proposalId}`);
 
   const updatedRow = await dbGet<ProposalRow>(
@@ -1058,6 +1322,20 @@ export async function approveProposal(params: {
     { fallback: true }
   );
   const auditRows = await loadAuditEntries(proposalId);
+  await mirrorTeresaProposalToAIRun({
+    proposalId,
+    organizationId,
+    userId: row.user_id,
+    sessionId: row.session_id,
+    state: 'approved',
+    targetModule: row.target_module as HandoffTargetModule,
+    targetPayload: JSON.parse(row.target_payload_json || '{}'),
+    handoffContext: JSON.parse(row.handoff_context_json || '{}'),
+    eventType: 'proposal_approved',
+    actorUserId: userId,
+    details: { auditEntryId: auditEntry.id },
+    audit: { approvedBy: userId, approvedAt: new Date().toISOString() },
+  });
   return rowToProposal(updatedRow!, auditRows);
 }
 
@@ -1093,7 +1371,7 @@ export async function rejectProposal(params: {
   }
 
   await transitionState(proposalId, 'rejected');
-  await writeAuditEntry({
+  const auditEntry = await writeAuditEntry({
     proposalId,
     action: 'rejected',
     actor: `user:${userId}`,
@@ -1101,7 +1379,6 @@ export async function rejectProposal(params: {
     toState: 'rejected',
     detail: reason ? { reason } : null,
   });
-
   logger.info(`${LOG_PREFIX} Proposal rejected: ${proposalId}`);
 
   const updatedRow = await dbGet<ProposalRow>(
@@ -1110,6 +1387,20 @@ export async function rejectProposal(params: {
     { fallback: true }
   );
   const auditRows = await loadAuditEntries(proposalId);
+  await mirrorTeresaProposalToAIRun({
+    proposalId,
+    organizationId,
+    userId: row.user_id,
+    sessionId: row.session_id,
+    state: 'rejected',
+    targetModule: row.target_module as HandoffTargetModule,
+    targetPayload: JSON.parse(row.target_payload_json || '{}'),
+    handoffContext: JSON.parse(row.handoff_context_json || '{}'),
+    eventType: 'proposal_rejected',
+    actorUserId: userId,
+    details: { auditEntryId: auditEntry.id, reason: reason || null, sideEffectsApplied: false },
+    audit: { rejectedBy: userId, rejectedAt: new Date().toISOString() },
+  });
   return rowToProposal(updatedRow!, auditRows);
 }
 
@@ -1145,13 +1436,29 @@ export async function executeProposal(params: {
 
   // Transition to executing
   await transitionState(proposalId, 'executing');
-  await writeAuditEntry({
+  const executionStartAudit = await writeAuditEntry({
     proposalId,
     action: 'execution_started',
     actor: `user:${userId}`,
     fromState: 'approved',
     toState: 'executing',
     detail: null,
+  });
+  const handoffContext = JSON.parse(row.handoff_context_json || '{}');
+  const targetPayload = JSON.parse(row.target_payload_json || '{}');
+  await mirrorTeresaProposalToAIRun({
+    proposalId,
+    organizationId,
+    userId: row.user_id,
+    sessionId: row.session_id,
+    state: 'executing',
+    targetModule: row.target_module as HandoffTargetModule,
+    targetPayload,
+    handoffContext,
+    eventType: 'execution_started',
+    actorUserId: userId,
+    details: { auditEntryId: executionStartAudit.id, explicitExecute: true },
+    audit: { executedBy: userId, executionStartedAt: new Date().toISOString() },
   });
 
   const targetModule = row.target_module as HandoffTargetModule;
@@ -1163,8 +1470,8 @@ export async function executeProposal(params: {
       organizationId,
       userId,
       targetModule,
-      handoffContext: JSON.parse(row.handoff_context_json),
-      targetPayload: JSON.parse(row.target_payload_json),
+      handoffContext,
+      targetPayload,
     });
 
     // Transition to completed
@@ -1176,6 +1483,26 @@ export async function executeProposal(params: {
       fromState: 'executing',
       toState: 'completed',
       detail: { handoff_result: handoffResult },
+    });
+    await mirrorTeresaProposalToAIRun({
+      proposalId,
+      organizationId,
+      userId: row.user_id,
+      sessionId: row.session_id,
+      state: 'completed',
+      targetModule,
+      targetPayload,
+      handoffContext,
+      eventType: 'execution_succeeded',
+      actorUserId: userId,
+      details: { auditEntryId: auditEntry.id, handoffResult },
+      outputRefs: [{ type: targetModule, id: auditEntry.id }],
+      audit: {
+        executedBy: userId,
+        executedAt: new Date().toISOString(),
+        result: handoffResult,
+        rollbackStatus: 'rollback_unavailable',
+      },
     });
 
     logger.info(`${LOG_PREFIX} Proposal executed: ${proposalId} → ${targetModule}`);
@@ -1194,13 +1521,27 @@ export async function executeProposal(params: {
     // Check if we can write audit — truth-preserving failure
     try {
       await transitionState(proposalId, 'rejected');
-      await writeAuditEntry({
+      const failureAudit = await writeAuditEntry({
         proposalId,
         action: 'execution_failed',
         actor: 'teresa:system',
         fromState: 'executing',
         toState: 'rejected',
         detail: { error: errorMsg, degraded_scenario: 'D05' },
+      });
+      await mirrorTeresaProposalToAIRun({
+        proposalId,
+        organizationId,
+        userId: row.user_id,
+        sessionId: row.session_id,
+        state: 'rejected',
+        targetModule,
+        targetPayload,
+        handoffContext,
+        eventType: 'execution_failed',
+        actorUserId: userId,
+        details: { auditEntryId: failureAudit.id, error: errorMsg },
+        audit: { failedAt: new Date().toISOString(), error: errorMsg },
       });
     } catch (auditErr) {
       logger.error(

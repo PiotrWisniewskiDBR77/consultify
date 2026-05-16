@@ -39,7 +39,7 @@ export const ResourcesPage: React.FC = () => {
   const [demoModalMode, setDemoModalMode] = useState<'demo' | 'trial'>('trial');
 
   const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
-    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setCurrentUser({ ...user, hasWorkspace: true, isAuthenticated: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
     if (mode === 'demo') setDemoMode(true);
@@ -148,7 +148,7 @@ export const ResourcesPage: React.FC = () => {
                             navigate('/login');
                           }
                         }}
-                        className="w-full px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                        className="w-full px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold transition-colors flex items-center justify-center gap-2"
                       >
                         {currentUser?.isAuthenticated ? (
                           <>

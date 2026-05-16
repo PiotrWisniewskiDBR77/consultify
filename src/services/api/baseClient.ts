@@ -3,6 +3,7 @@
  * Core utilities for making API requests
  */
 
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { tokenService } from '../tokenService';
 
 export const API_URL = '/api';
@@ -124,6 +125,7 @@ export const handleResponse = async <T = unknown>(
   })();
 
   const data = parsed.kind === 'json' ? parsed.json : {};
+  const errorInput = parsed.kind === 'json' ? data : parsed.kind === 'text' ? parsed.text : {};
 
   // Check for Demo Block
   if (
@@ -154,36 +156,25 @@ export const handleResponse = async <T = unknown>(
   }
 
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const message = (data as any)?.error || (data as any)?.message || fallbackHttp || defaultError;
+  const message = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
 
   const err: any = new Error(message);
   err.status = res.status;
   err.url = res.url;
   err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
+  if (res.status === 403 && typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('api:forbidden', {
+        detail: {
+          status: res.status,
+          url: res.url,
+          message,
+        },
+      })
+    );
+  }
   throw err;
-};
-
-export const handleDataResponse = async <T = unknown>(
-  res: Response,
-  defaultError: string
-): Promise<T> => {
-  const payload = await handleResponse<unknown>(res, defaultError);
-
-  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
-    const err: any = new Error(`${defaultError}: invalid response envelope`);
-    err.data = payload;
-    throw err;
-  }
-
-  const data = (payload as { data?: T }).data;
-  if (typeof data === 'undefined') {
-    const err: any = new Error(`${defaultError}: missing response data`);
-    err.data = payload;
-    throw err;
-  }
-
-  return data;
 };
 
 /**

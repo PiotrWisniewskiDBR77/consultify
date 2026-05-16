@@ -182,7 +182,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8">
@@ -201,7 +201,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={selectAll}
-                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                  className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   Zaznacz wszystkich
                 </button>
@@ -236,7 +236,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                                                             flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
                                                             ${
                                                               isSelected
-                                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                                                                 : 'border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5'
                                                             }
                                                         `}
@@ -245,7 +245,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleReviewer(user.id)}
-                              className="w-4 h-4 text-purple-600 rounded border-slate-300 dark:border-navy-700 focus:ring-purple-500"
+                              className="w-4 h-4 text-primary-600 rounded border-slate-300 dark:border-navy-700 focus:ring-primary-500"
                             />
                             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                               <User size={16} className="text-slate-500 dark:text-slate-400" />
@@ -270,7 +270,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 mt-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
+            <div className="flex items-center gap-2 p-3 mt-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
               <AlertCircle size={16} />
               {error}
             </div>
@@ -294,7 +294,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                     ${
                                       selectedReviewers.length > 0 && !submitting
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        ? 'bg-primary-600 hover:bg-primary-500 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}

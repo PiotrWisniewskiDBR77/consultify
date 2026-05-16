@@ -46,7 +46,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
     conditionType === 'yes'
       ? '#22c55e'
       : conditionType === 'no'
-        ? '#ef4444'
+        ? '#f43f5e'
         : conditionType === 'exception'
           ? '#f59e0b'
           : undefined;

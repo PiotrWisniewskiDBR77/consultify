@@ -21,7 +21,9 @@ import type { FieldType, LinkedRecordFieldOptions } from '@/types/tablePlatform'
 import { CellEditor } from './CellEditor';
 import { LinkedRecordDisplay } from './LinkedRecordDisplay';
 import { PlatformCellRenderer } from './PlatformCellRenderer';
+import { RowGutterIndicator } from './provenance/RowGutterIndicator';
 import { TableDataContext, useTableData } from './TableDataProvider';
+import { PROVENANCE_DATA_KEYS } from './tablePlatformMappers';
 import type { ColumnDef, TableNode } from './tableTypes';
 import {
   computeAggregation,
@@ -427,7 +429,7 @@ const DataGrid: React.FC<DataGridProps> = ({
         <div
           role="gridcell"
           tabIndex={0}
-          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-violet-500/40 cursor-text"
+          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 cursor-text"
           onDoubleClick={(e) => {
             e.stopPropagation();
             if (locked || pf?.isComputed) return;
@@ -528,7 +530,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                       <button
                         type="button"
                         aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
-                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-violet-400/50"
+                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-primary-400/50"
                         onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                       />
                     </th>
@@ -553,7 +555,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     <button
                       type="button"
                       aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
-                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-violet-400/50"
+                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-primary-400/50"
                       onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                     />
                   </th>
@@ -583,6 +585,20 @@ const DataGrid: React.FC<DataGridProps> = ({
               }
               const row = item.row;
               const selected = selectedRowIds.has(row.id);
+              const rowConfidenceRaw = row?.data?.[PROVENANCE_DATA_KEYS.confidenceScore];
+              const rowConfidence =
+                typeof rowConfidenceRaw === 'number'
+                  ? rowConfidenceRaw
+                  : rowConfidenceRaw == null
+                    ? null
+                    : Number(rowConfidenceRaw);
+              const rowValidationRaw = row?.data?.[PROVENANCE_DATA_KEYS.validationStatus];
+              const rowValidation =
+                rowValidationRaw === 'verified' ||
+                rowValidationRaw === 'flagged' ||
+                rowValidationRaw === 'unverified'
+                  ? rowValidationRaw
+                  : null;
               return (
                 <tr
                   key={row.id}
@@ -593,9 +609,13 @@ const DataGrid: React.FC<DataGridProps> = ({
                     style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
                     className={`${bodyCell} sticky left-0 z-[8] border-r border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-950 ${
                       selected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
-                    } text-center`}
+                    } text-center relative`}
                     onClick={(e) => e.stopPropagation()}
                   >
+                    <RowGutterIndicator
+                      confidenceScore={Number.isFinite(rowConfidence) ? rowConfidence : null}
+                      validationStatus={rowValidation}
+                    />
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 dark:border-navy-600"

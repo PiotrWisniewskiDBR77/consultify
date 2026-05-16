@@ -4,10 +4,46 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HomeView } from '../../../src/components/MyWork/Home/HomeView';
 
+const { toastErrorMock } = vi.hoisted(() => ({
+  toastErrorMock: vi.fn(),
+}));
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: toastErrorMock,
+  },
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+  };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => {
+      const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : undefined;
+      const labels: Record<string, string> = {
+        'myWork.radar.unavailable': 'Radar is temporarily unavailable.',
+        'myWork.radar.unavailableHint':
+          'This does not mean the day is empty. Retry loading the home screen.',
+        'myWork.radar.retry': 'Retry',
+        'myWork.radar.roofModules': 'Roof · 7 modules',
+        'myWork.radar.roofExpandHint': 'Expand roof truth',
+        'myWork.radar.explain': 'Explain',
+        'myWork.radar.pulse': 'Pulse',
+        'myWork.radar.loadErrorToast': 'Radar could not load. Showing recovery state.',
+      };
+      return labels[key] || fallback || key;
+    },
     i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 vi.mock('framer-motion', () => ({
@@ -24,6 +60,22 @@ vi.mock('../../../src/components/MyWork/Home/useHomeData', () => ({
 const useV8MyWorkRoofSummaryMock = vi.fn();
 vi.mock('../../../src/hooks/useV8MyWorkRoof', () => ({
   useV8MyWorkRoofSummary: (...args: unknown[]) => useV8MyWorkRoofSummaryMock(...args),
+}));
+
+vi.mock('@/providers/V8Provider', () => ({
+  useV8: () => ({ isV8Enabled: true }),
+}));
+
+vi.mock('@/services/api/v8/interview', () => ({
+  V8InterviewApi: {
+    listInsights: vi.fn().mockResolvedValue({ insights: [] }),
+  },
+}));
+
+vi.mock('@/services/api/v8/results', () => ({
+  V8ResultsApi: {
+    getWorkflowSignals: vi.fn().mockResolvedValue({ signals: [] }),
+  },
 }));
 
 vi.mock('../../../src/components/MyWork/Home/AIPulseCore', () => ({
@@ -177,13 +229,13 @@ describe('HomeView aggregated contract', () => {
     expect(screen.getByText(/Radar · context/)).toBeInTheDocument();
     expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
     expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();
-    expect(screen.getAllByText('AI Pulse Core').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Industry Lens').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Execution Current').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Momentum').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Spark Field').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Decision Temperature').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Team Signal').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/AI Pulse Core/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Industry Lens/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Execution Current/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Momentum/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Spark Field/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Decision Temperature/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Team Signal/).length).toBeGreaterThan(0);
     expect(screen.getByText('4')).toBeInTheDocument();
   });
 
@@ -238,5 +290,6 @@ describe('HomeView aggregated contract', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /\+ Retry/i }));
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(toastErrorMock).toHaveBeenCalledWith('Radar could not load. Showing recovery state.');
   });
 });

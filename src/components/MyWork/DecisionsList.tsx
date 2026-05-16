@@ -77,7 +77,7 @@ const getTypeLabel = (type: string | undefined): string => {
 const getRelatedIcon = (type?: string) => {
   switch (type?.toUpperCase()) {
     case 'INITIATIVE':
-      return <Target size={12} className="text-purple-500" />;
+      return <Target size={12} className="text-primary-500" />;
     case 'TASK':
       return <CheckSquare size={12} className="text-blue-500" />;
     case 'PHASE':
@@ -112,9 +112,9 @@ const DecisionCard: React.FC<{
       className={`
                 group p-3 cursor-pointer
                 bg-white dark:bg-navy-900
-                border border-slate-200 dark:border-navy-700 
+                border border-slate-200 dark:border-navy-700
                 rounded-lg
-                hover:border-purple-300 dark:hover:border-purple-500/50
+                hover:border-primary-300 dark:hover:border-primary-500/50
                 transition-all duration-150
                 ${isUrgent ? 'border-l-2 border-l-amber-500' : ''}
             `}
@@ -134,12 +134,12 @@ const DecisionCard: React.FC<{
         </div>
         <ChevronRight
           size={14}
-          className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+          className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
         />
       </div>
 
       {/* Title */}
-      <h4 className="text-[13px] font-medium text-slate-800 dark:text-white mb-1 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+      <h4 className="text-[13px] font-medium text-slate-800 dark:text-white mb-1 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
         {decision.title}
       </h4>
 
@@ -181,7 +181,7 @@ const DecisionCard: React.FC<{
         </div>
 
         {/* Action hint on hover */}
-        <span className="text-[10px] text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[10px] text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity">
           {isMyDecision
             ? t('decisions.clickToReview', 'Click to review')
             : t('decisions.clickToView', 'View details')}{' '}
@@ -255,7 +255,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -284,7 +284,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                   activeGroup === 'my' || activeGroup === 'all'
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'bg-slate-200 dark:bg-white/10'
                 }`}
               >
@@ -306,7 +306,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                   activeGroup === 'awaiting'
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'bg-slate-200 dark:bg-white/10'
                 }`}
               >
@@ -317,7 +317,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
           {onCreateDecision && (
             <button
               onClick={onCreateDecision}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
             >
               <Plus size={12} />
               {t('decisions.create', 'New decision')}
@@ -345,7 +345,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
             {onCreateDecision && (
               <button
                 onClick={onCreateDecision}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
               >
                 <Plus size={14} />
                 {t('decisions.create', 'New decision')}

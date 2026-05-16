@@ -286,9 +286,9 @@ describe('AuthMiddleware', () => {
 
     it.each([
       { raw: 'admin', expected: 'administrator' },
-      { raw: 'super_admin', expected: 'owner' },
+      { raw: 'super_admin', expected: 'superadmin' },
       { raw: 'client', expected: 'guest' },
-      { raw: 'manager', expected: 'project_manager' },
+      { raw: 'manager', expected: 'team_member' },
     ])('maps legacy role "$raw" to "$expected"', async ({ raw, expected }) => {
       mockReq.headers!['authorization'] = `Bearer role-${raw}`;
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
@@ -305,8 +305,8 @@ describe('AuthMiddleware', () => {
     it.each([
       { decodedRole: 'administrator', expectedPermissionRole: 'ADMIN' },
       { decodedRole: 'superadmin', expectedPermissionRole: 'SUPERADMIN' },
-      { decodedRole: 'member', expectedPermissionRole: 'TEAM_MEMBER' },
-      { decodedRole: 'user', expectedPermissionRole: 'TEAM_MEMBER' },
+      { decodedRole: 'member', expectedPermissionRole: 'USER' },
+      { decodedRole: 'user', expectedPermissionRole: 'USER' },
       { decodedRole: 'guest', expectedPermissionRole: 'VIEWER' },
     ])(
       'normalizes permission role for req.can: $decodedRole -> $expectedPermissionRole',
@@ -396,7 +396,7 @@ describe('AuthMiddleware', () => {
       );
     });
 
-    it('uses raw role value when role is unknown and normalizes permission role', async () => {
+    it('maps unknown application and permission role to USER fallback', async () => {
       mockReq.headers!['authorization'] = 'Bearer custom-role';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         callback(null, { id: 'custom-1', role: 'custom_role' });
@@ -405,10 +405,10 @@ describe('AuthMiddleware', () => {
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockReq.user?.role).toBe('custom_role');
+      expect(mockReq.user?.role).toBe('team_member');
       mockReq.can?.('cap');
       expect(mockPermissionService.can).toHaveBeenCalledWith(
-        expect.objectContaining({ role: 'CUSTOM_ROLE' }),
+        expect.objectContaining({ role: 'USER' }),
         'cap',
         expect.any(Object)
       );
@@ -443,7 +443,7 @@ describe('AuthMiddleware', () => {
       expect(mockReq.user?.role).toBe('team_member');
     });
 
-    it('normalizes permission role PROJECT_MANAGER when decoded role is PROJECT_MANAGER', async () => {
+    it('normalizes PROJECT_MANAGER application and permission role through USER fallback', async () => {
       mockReq.headers!['authorization'] = 'Bearer pm-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         callback(null, { id: 'pm-1', role: 'PROJECT_MANAGER' });
@@ -452,9 +452,10 @@ describe('AuthMiddleware', () => {
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
+      expect(mockReq.user?.role).toBe('team_member');
       mockReq.can?.('cap');
       expect(mockPermissionService.can).toHaveBeenCalledWith(
-        expect.objectContaining({ role: 'PROJECT_MANAGER' }),
+        expect.objectContaining({ role: 'USER' }),
         'cap',
         expect.any(Object)
       );

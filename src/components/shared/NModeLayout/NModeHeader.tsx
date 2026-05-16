@@ -8,7 +8,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { ChevronLeft, Loader2, MessageSquare, Save } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronLeft, Clock3, Loader2, Save } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -41,10 +41,10 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   artifactType,
   onSave,
   saving = false,
+  saveState,
+  lastSavedLabel,
   isDirty = false,
-  onChat,
   onClose,
-  draftSavedLabel,
   statusDotColor,
   presentationMode,
   onPresentationModeChange,
@@ -54,13 +54,51 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const effectiveSaveState = saveState || (saving ? 'saving' : isDirty ? 'dirty' : 'saved');
+  const saveCopy = {
+    saved: {
+      label: isPolish ? 'Zapisano' : 'Saved',
+      title: lastSavedLabel || (isPolish ? 'Zmiany zapisane' : 'Changes saved'),
+      className:
+        'bg-slate-100/70 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-transparent',
+      icon: CheckCircle2,
+      disabled: true,
+    },
+    saving: {
+      label: isPolish ? 'Zapisywanie...' : 'Saving...',
+      title: isPolish ? 'Trwa zapis do backendu' : 'Saving to backend',
+      className:
+        'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
+      icon: Loader2,
+      disabled: true,
+    },
+    dirty: {
+      label: isPolish ? 'Zapisz' : 'Save',
+      title: isPolish ? 'Masz niezapisane zmiany' : 'You have unsaved changes',
+      className:
+        'bg-blue-500/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15 dark:hover:bg-blue-500/15 border-blue-500/20',
+      icon: Save,
+      disabled: false,
+    },
+    error: {
+      label: isPolish ? 'Błąd zapisu' : 'Save failed',
+      title: isPolish
+        ? 'Zapis nie powiódł się. Kliknij, aby spróbować ponownie.'
+        : 'Save failed. Click to retry.',
+      className:
+        'bg-rose-500/10 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/15 dark:hover:bg-rose-500/15 border-rose-500/30',
+      icon: AlertTriangle,
+      disabled: false,
+    },
+  }[effectiveSaveState];
+  const SaveIcon = effectiveSaveState === 'saving' ? Loader2 : saveCopy.icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="col-span-full bg-white dark:bg-navy-900/70 backdrop-blur-xl border border-slate-200 dark:border-navy-700 rounded-2xl overflow-hidden"
+      className="col-span-full bg-slate-50/90 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl overflow-hidden"
     >
       <div className="flex items-center gap-4 px-5 py-4">
         {/* Back button */}
@@ -68,7 +106,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClose}
-          className="p-2 -ml-2 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          className="p-2 -ml-2 rounded-xl text-slate-400 hover:bg-slate-200/80 dark:hover:bg-navy-800/60 transition-all duration-150"
         >
           <ChevronLeft size={20} />
         </motion.button>
@@ -82,7 +120,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             value={title}
             onChange={(e) => !titleReadOnly && onTitleChange(e.target.value)}
             readOnly={titleReadOnly}
-            className="flex-1 text-xl font-semibold bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 rounded-md"
+            className="flex-1 text-xl font-semibold bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
             placeholder={
               titlePlaceholder ? (isPolish ? titlePlaceholder.pl : titlePlaceholder.en) : undefined
             }
@@ -90,7 +128,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           />
           {artifactId && (
             <>
-              <span className="hidden sm:inline-flex px-2 py-1 rounded-md bg-slate-100 border border-slate-200 dark:bg-navy-800/60 dark:border-transparent text-[10px] font-mono uppercase text-slate-700 dark:text-slate-400">
+              <span className="hidden sm:inline-flex px-2 py-1 rounded-md bg-slate-200/60 dark:bg-navy-800/60 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
                 {buildArtifactCode ? buildArtifactCode(artifactType, artifactId) : artifactId}
               </span>
               <ArtifactPermalinkButton
@@ -110,56 +148,29 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onSave}
-            disabled={saving || !isDirty}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
-              isDirty
-                ? 'bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200 dark:bg-blue-500/10 dark:border-transparent dark:text-blue-300 dark:hover:bg-blue-500/15'
-                : 'bg-slate-100 border border-slate-200 text-slate-600 dark:bg-navy-800/40 dark:border-transparent dark:text-slate-500'
-            } ${saving ? 'opacity-70' : ''}`}
-            title={
-              isDirty
-                ? isPolish
-                  ? 'Zapisz i opublikuj zmiany'
-                  : 'Save and publish changes'
-                : isPolish
-                  ? 'Brak zmian do zapisu'
-                  : 'No changes to save'
-            }
+            disabled={saveCopy.disabled}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed ${saveCopy.className} ${saving ? 'opacity-70' : ''}`}
+            title={saveCopy.title}
           >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            <span>
-              {isDirty ? (isPolish ? 'Zapisz' : 'Save') : isPolish ? 'Zapisane' : 'Saved'}
-            </span>
+            <SaveIcon size={16} className={effectiveSaveState === 'saving' ? 'animate-spin' : ''} />
+            <span>{saveCopy.label}</span>
           </motion.button>
-
-          {/* Chat */}
-          {onChat && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onChat}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-100 border border-purple-200 text-purple-800 hover:bg-purple-200 dark:bg-purple-500/10 dark:border-transparent dark:text-purple-300 dark:hover:bg-purple-500/15 text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
-              title={isPolish ? 'Otwórz czat' : 'Open chat'}
-            >
-              <MessageSquare size={16} />
-              <span>{isPolish ? 'Czat' : 'Chat'}</span>
-            </motion.button>
-          )}
+          {lastSavedLabel && effectiveSaveState === 'saved' ? (
+            <span className="hidden items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500 2xl:inline-flex">
+              <Clock3 size={12} />
+              {lastSavedLabel}
+            </span>
+          ) : null}
 
           {/* Mode Switcher */}
           {showModeSwitcher && (
             <>
-              <div className="w-px h-6 bg-slate-300 dark:bg-navy-700/30" />
+              <div className="w-px h-6 bg-slate-200/50 dark:bg-navy-700/30" />
               <PresentationModeSwitcher
                 value={presentationMode}
                 onChange={onPresentationModeChange}
               />
             </>
-          )}
-          {draftSavedLabel && (
-            <span className="hidden xl:inline text-xs text-slate-600 dark:text-slate-400">
-              {draftSavedLabel}
-            </span>
           )}
         </div>
       </div>

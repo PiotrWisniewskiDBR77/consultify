@@ -101,9 +101,9 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
       icon: CheckCircle,
     },
     negative: {
-      bg: 'bg-red-50 dark:bg-red-500/10',
-      border: 'border-red-200 dark:border-red-500/30',
-      text: 'text-red-600 dark:text-red-400',
+      bg: 'bg-rose-50 dark:bg-rose-500/10',
+      border: 'border-rose-200 dark:border-rose-500/30',
+      text: 'text-rose-600 dark:text-rose-400',
       icon: AlertCircle,
     },
     neutral: {
@@ -133,7 +133,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${status === 'positive' ? 'bg-emerald-500/20' : status === 'negative' ? 'bg-red-500/20' : 'bg-slate-50 dark:bg-navy-800/300/20'}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${status === 'positive' ? 'bg-emerald-500/20' : status === 'negative' ? 'bg-rose-500/20' : 'bg-slate-50 dark:bg-navy-800/300/20'}`}
           >
             {icon}
           </div>
@@ -143,7 +143,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
         {/* Value */}
         <div className="mb-1">
           <span
-            className={`text-2xl font-bold ${status === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : status === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'}`}
+            className={`text-2xl font-bold ${status === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : status === 'negative' ? 'text-rose-600 dark:text-rose-400' : 'text-navy-900 dark:text-white'}`}
           >
             {isLoading ? (
               <span className="inline-block w-20 h-8 bg-slate-200 dark:bg-white/10 animate-pulse rounded" />
@@ -219,7 +219,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
         <TotalmaryCard
           title="Total costs"
           value={formatCurrency(metrics.totalCosts)}
-          icon={<ArrowDownRight size={18} className="text-red-500" />}
+          icon={<ArrowDownRight size={18} className="text-rose-500" />}
           color="red"
           isLoading={isLoading}
         />
@@ -237,7 +237,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
             metrics.netBenefit >= 0 ? (
               <TrendingUp size={18} className="text-blue-500" />
             ) : (
-              <TrendingDown size={18} className="text-orange-500" />
+              <TrendingDown size={18} className="text-amber-500" />
             )
           }
           color={metrics.netBenefit >= 0 ? 'blue' : 'orange'}
@@ -266,10 +266,10 @@ const TotalmaryCard: React.FC<{
   isLoading?: boolean;
 }> = ({ title, value, icon, color, isLoading }) => {
   const colorMap = {
-    red: 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20',
+    red: 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20',
     green: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20',
     blue: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20',
-    orange: 'bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20',
+    orange: 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20',
   };
 
   return (
@@ -339,19 +339,19 @@ const InvestmentDecisionCard: React.FC<{
   if (percentage >= 75) {
     recommendation = 'strong';
     recommendationText = 'Silna recommendation inwestycyjna';
-    recommendationColor = 'bg-gradient-to-r from-emerald-500 to-teal-500';
+    recommendationColor = 'bg-gradient-to-r from-emerald-500 to-blue-500';
   } else if (percentage >= 50) {
     recommendation = 'moderate';
     recommendationText = 'Umiarkowana recommendation';
-    recommendationColor = 'bg-gradient-to-r from-blue-500 to-cyan-500';
+    recommendationColor = 'bg-gradient-to-r from-blue-500 to-blue-500';
   } else if (percentage >= 25) {
     recommendation = 'weak';
     recommendationText = 'Weak recommendation - wymaga analysis ryzyka';
-    recommendationColor = 'bg-gradient-to-r from-yellow-500 to-orange-500';
+    recommendationColor = 'bg-gradient-to-r from-yellow-500 to-amber-500';
   } else {
     recommendation = 'negative';
     recommendationText = 'Not recommended - negative indicators';
-    recommendationColor = 'bg-gradient-to-r from-red-500 to-rose-500';
+    recommendationColor = 'bg-gradient-to-r from-rose-500 to-rose-500';
   }
 
   if (maxScore === 0) {
@@ -390,17 +390,17 @@ const InvestmentDecisionCard: React.FC<{
               className={`p-3 rounded-lg ${
                 criterion.met
                   ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30'
-                  : 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30'
+                  : 'bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30'
               }`}
             >
               <div className="flex items-center gap-2">
                 {criterion.met ? (
                   <CheckCircle size={16} className="text-emerald-500" />
                 ) : (
-                  <AlertCircle size={16} className="text-red-500" />
+                  <AlertCircle size={16} className="text-rose-500" />
                 )}
                 <span
-                  className={`text-xs font-medium ${criterion.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+                  className={`text-xs font-medium ${criterion.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}
                 >
                   {criterion.label}
                 </span>

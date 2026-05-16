@@ -7,6 +7,8 @@
  */
 import { useCallback, useRef } from 'react';
 
+import { Api } from '@/services/api';
+
 interface UseProcessFlowCRUDOpts {
   processId: string;
   enabled?: boolean;
@@ -28,7 +30,7 @@ export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlo
           signal: abortRef.current.signal,
           body: body ? JSON.stringify(body) : undefined,
         };
-        const res = await fetch(url, opts);
+        const res = await (Api as any).raw(url, opts);
         return res;
       } catch {
         return null;

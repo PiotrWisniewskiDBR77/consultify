@@ -51,7 +51,7 @@ const PRIORITIES = [
     labelPl: 'Krytyczny',
     labelEn: 'Critical',
     description: 'Luka ≥3 poziomów',
-    color: '#ef4444',
+    color: '#f43f5e',
     bgColor: '#fef2f2',
     darkBgColor: 'rgba(239, 68, 68, 0.15)',
     icon: AlertTriangle,

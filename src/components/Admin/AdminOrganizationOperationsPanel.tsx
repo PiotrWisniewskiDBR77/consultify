@@ -28,7 +28,7 @@ export const AdminOrganizationOperationsPanel: React.FC = () => {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-              <Building2 className="h-5 w-5 text-violet-500" />
+              <Building2 className="h-5 w-5 text-primary-500" />
               Organization Operations
             </div>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -54,7 +54,7 @@ export const AdminOrganizationOperationsPanel: React.FC = () => {
             className={cn(
               'rounded-2xl border p-4 text-left transition',
               tab === item.id
-                ? 'border-violet-200 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/10'
+                ? 'border-primary-200 bg-primary-50 dark:border-primary-500/30 dark:bg-primary-500/10'
                 : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'
             )}
           >

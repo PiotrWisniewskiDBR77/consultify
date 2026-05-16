@@ -65,8 +65,8 @@ const TIER_CONFIG = {
     icon: Crown,
     color: 'violet',
     description: 'High-quality output',
-    bgClass: 'bg-violet-500/10',
-    textClass: 'text-violet-400',
+    bgClass: 'bg-primary-500/10',
+    textClass: 'text-primary-400',
   },
   REASONING: {
     icon: Brain,
@@ -171,7 +171,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       case 'degraded':
         return <AlertTriangle size={14} className="text-amber-400" />;
       case 'unhealthy':
-        return <XCircle size={14} className="text-red-400" />;
+        return <XCircle size={14} className="text-rose-400" />;
       default:
         return <Server size={14} className="text-slate-400 dark:text-slate-500" />;
     }
@@ -180,7 +180,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw size={24} className="animate-spin text-violet-400" />
+        <RefreshCw size={24} className="animate-spin text-primary-400" />
       </div>
     );
   }
@@ -248,7 +248,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 <button
                   onClick={() => toggleProvider(provider.id, true)}
                   disabled={savingProvider === provider.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 hover:bg-red-500/20 text-emerald-400 hover:text-red-400 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 hover:bg-rose-500/20 text-emerald-400 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {savingProvider === provider.id ? (
                     <RefreshCw size={16} className="animate-spin" />

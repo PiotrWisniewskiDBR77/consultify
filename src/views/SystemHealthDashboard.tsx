@@ -72,7 +72,7 @@ export default function SystemHealthDashboard() {
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case 'error':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-rose-500" />;
       default:
         return <Activity className="w-5 h-5 text-gray-500 dark:text-gray-400" />;
     }
@@ -85,7 +85,7 @@ export default function SystemHealthDashboard() {
       case 'warning':
         return 'bg-yellow-50 border-yellow-200';
       case 'error':
-        return 'bg-red-50 border-red-200';
+        return 'bg-rose-50 border-rose-200';
       default:
         return 'bg-gray-50 dark:bg-navy-800 border-gray-200';
     }
@@ -98,7 +98,7 @@ export default function SystemHealthDashboard() {
       case 'warning':
         return 'bg-yellow-500';
       case 'error':
-        return 'bg-red-500';
+        return 'bg-rose-500';
       default:
         return 'bg-gray-50 dark:bg-navy-8000';
     }

@@ -492,7 +492,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+      count: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
       new: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       beta: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       warning: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
@@ -563,14 +563,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-violet-600/20 text-violet-300 font-medium'
+                              ? 'bg-primary-600/20 text-primary-300 font-medium'
                               : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-white'
                           )}
                         >
                           <Icon
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
-                              isActive ? 'text-violet-400' : 'text-slate-500 dark:text-slate-400'
+                              isActive ? 'text-primary-400' : 'text-slate-500 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>

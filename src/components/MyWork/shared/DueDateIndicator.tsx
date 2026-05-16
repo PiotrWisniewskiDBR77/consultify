@@ -70,9 +70,9 @@ const getRelativeTime = (dueDate: Date, t: (key: string, fallback: string) => st
  */
 const statusStyles: Record<DueStatus, { bg: string; text: string; icon: string }> = {
   overdue: {
-    bg: 'bg-red-100 dark:bg-red-500/20',
-    text: 'text-red-700 dark:text-red-400',
-    icon: 'text-red-500',
+    bg: 'bg-rose-100 dark:bg-rose-500/20',
+    text: 'text-rose-700 dark:text-rose-400',
+    icon: 'text-rose-500',
   },
   due_today: {
     bg: 'bg-amber-100 dark:bg-amber-500/20',

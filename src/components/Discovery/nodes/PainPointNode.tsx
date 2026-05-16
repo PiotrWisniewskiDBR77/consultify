@@ -20,7 +20,7 @@ const SeverityDots: React.FC<{ level: 1 | 2 | 3 | 4 | 5 }> = ({ level }) => {
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i <= level ? 'bg-red-400 dark:bg-red-400' : 'bg-slate-300 dark:bg-red-800'
+            i <= level ? 'bg-rose-400 dark:bg-rose-400' : 'bg-slate-300 dark:bg-rose-800'
           }`}
         />
       ))}
@@ -38,7 +38,7 @@ const AreaBadge: React.FC<{ area: PainArea }> = ({ area }) => {
       icon: '⚙️',
     },
     technology: {
-      color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+      color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
       icon: '💻',
     },
     people: {
@@ -75,8 +75,8 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
       <div
         className={`
                 group relative
-                bg-red-50 dark:bg-red-900/20
-                border-2 ${selected ? 'border-red-500 ring-2 ring-red-500/30' : 'border-red-300 dark:border-red-700'}
+                bg-rose-50 dark:bg-rose-900/20
+                border-2 ${selected ? 'border-rose-500 ring-2 ring-rose-500/30' : 'border-rose-300 dark:border-rose-700'}
                 rounded-xl p-3
                 min-w-[180px] max-w-[220px]
                 shadow-md hover:shadow-lg
@@ -88,14 +88,14 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-2.5 !h-2.5 !bg-red-400 !border-2 !border-white dark:!border-navy-900"
+          className="!w-2.5 !h-2.5 !bg-rose-400 !border-2 !border-white dark:!border-navy-900"
         />
 
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5">
             <span className="text-base">🔴</span>
-            <span className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">
+            <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
               {t('discovery.nodes.painPoint.title', 'Pain Point')}
             </span>
           </div>
@@ -103,7 +103,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         </div>
 
         {/* Content */}
-        <p className="text-sm font-medium text-red-900 dark:text-red-100 line-clamp-3 mb-2">
+        <p className="text-sm font-medium text-rose-900 dark:text-rose-100 line-clamp-3 mb-2">
           {text}
         </p>
 
@@ -111,7 +111,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         <div className="flex items-center justify-between gap-2">
           <AreaBadge area={area} />
           {source === 'ai' && (
-            <span className="text-[9px] text-red-400 dark:text-red-500 flex items-center gap-0.5">
+            <span className="text-[9px] text-rose-400 dark:text-rose-500 flex items-center gap-0.5">
               <AlertCircle size={10} />
               AI
             </span>
@@ -120,8 +120,8 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
 
         {/* Impact (if provided) */}
         {impact && (
-          <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800">
-            <span className="text-xs text-red-600 dark:text-red-400">
+          <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-800">
+            <span className="text-xs text-rose-600 dark:text-rose-400">
               <strong>{t('discovery.nodes.painPoint.impact', 'Impact')}:</strong> {impact}
             </span>
           </div>
@@ -132,10 +132,10 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
           className="
                     absolute -top-2 -right-2
                     w-5 h-5 rounded-full
-                    bg-red-500 text-white
+                    bg-rose-500 text-white
                     flex items-center justify-center
                     opacity-0 group-hover:opacity-100
-                    hover:bg-red-600
+                    hover:bg-rose-600
                     transition-all duration-200
                     shadow-md
                 "
@@ -152,7 +152,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-2.5 !h-2.5 !bg-red-400 !border-2 !border-white dark:!border-navy-900"
+          className="!w-2.5 !h-2.5 !bg-rose-400 !border-2 !border-white dark:!border-navy-900"
         />
       </div>
     );

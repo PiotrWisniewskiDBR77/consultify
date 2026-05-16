@@ -177,7 +177,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="bg-white dark:bg-navy-900 rounded-xl p-8 flex items-center gap-4">
-          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           <span className="text-navy-900 dark:text-white">Ładowanie porównania...</span>
         </div>
       </div>
@@ -188,7 +188,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="bg-white dark:bg-navy-900 rounded-xl p-8 max-w-md">
-          <div className="flex items-center gap-3 text-red-500 mb-4">
+          <div className="flex items-center gap-3 text-rose-500 mb-4">
             <AlertCircle className="w-6 h-6" />
             <span className="font-semibold">Błąd</span>
           </div>
@@ -210,8 +210,8 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-              <GitCompare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+              <GitCompare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-navy-900 dark:text-white">Porównanie wersji</h2>
@@ -251,12 +251,12 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
           </div>
 
           {/* Newer Version */}
-          <div className="p-4 bg-white dark:bg-navy-900 rounded-xl border border-purple-200 dark:border-purple-500/30">
+          <div className="p-4 bg-white dark:bg-navy-900 rounded-xl border border-primary-200 dark:border-primary-500/30">
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded">
+              <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-medium rounded">
                 Wersja {newerVersion}
               </span>
-              <span className="text-xs text-purple-500">Nowsza</span>
+              <span className="text-xs text-primary-500">Nowsza</span>
             </div>
             <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1">
@@ -287,7 +287,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                   totalActualChange > 0
                     ? 'text-green-600'
                     : totalActualChange < 0
-                      ? 'text-red-600'
+                      ? 'text-rose-600'
                       : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -309,7 +309,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                   totalTargetChange > 0
                     ? 'text-green-600'
                     : totalTargetChange < 0
-                      ? 'text-red-600'
+                      ? 'text-rose-600'
                       : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -366,7 +366,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 diff.actualChange > 0
                                   ? 'text-green-600'
                                   : diff.actualChange < 0
-                                    ? 'text-red-600'
+                                    ? 'text-rose-600'
                                     : 'text-slate-600 dark:text-slate-300'
                               }`}
                             >
@@ -377,7 +377,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 className={`text-xs px-1.5 py-0.5 rounded ${
                                   diff.actualChange > 0
                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                    : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                                 }`}
                               >
                                 {diff.actualChange > 0 ? '+' : ''}
@@ -397,7 +397,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 diff.targetChange > 0
                                   ? 'text-green-600'
                                   : diff.targetChange < 0
-                                    ? 'text-red-600'
+                                    ? 'text-rose-600'
                                     : 'text-slate-600 dark:text-slate-300'
                               }`}
                             >
@@ -434,8 +434,8 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                             </div>
                           </div>
                           <div>
-                            <p className="text-xs text-purple-500 mb-1">Wersja {newerVersion}</p>
-                            <div className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-purple-200 dark:border-purple-500/30 text-sm text-slate-600 dark:text-slate-300 min-h-[80px]">
+                            <p className="text-xs text-primary-500 mb-1">Wersja {newerVersion}</p>
+                            <div className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-primary-200 dark:border-primary-500/30 text-sm text-slate-600 dark:text-slate-300 min-h-[80px]">
                               {diff.v2Justification || (
                                 <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">
                                   Brak uzasadnienia

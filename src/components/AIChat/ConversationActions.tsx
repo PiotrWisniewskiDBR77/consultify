@@ -7,7 +7,6 @@
 import {
   Archive,
   ArchiveRestore,
-  Copy,
   Download,
   Edit2,
   Folder,
@@ -26,11 +25,13 @@ import { MoveToProjectModal } from './MoveToProjectModal';
 interface ConversationActionsProps {
   conversation: Conversation;
   onOpenChange?: (open: boolean) => void;
+  onRenameStart?: () => void;
 }
 
 export const ConversationActions: React.FC<ConversationActionsProps> = ({
   conversation,
   onOpenChange,
+  onRenameStart,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -164,9 +165,13 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setIsRenaming(true);
               setIsOpen(false);
               onOpenChange?.(false);
+              if (onRenameStart) {
+                onRenameStart();
+              } else {
+                setIsRenaming(true);
+              }
             }}
             className="
                             w-full flex items-center gap-2 px-3 py-2 text-sm
@@ -324,8 +329,8 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
             }}
             className="
                             w-full flex items-center gap-2 px-3 py-2 text-sm
-                            text-red-600 dark:text-red-400
-                            hover:bg-red-50 dark:hover:bg-red-900/20
+                            text-rose-600 dark:text-rose-400
+                            hover:bg-rose-50 dark:hover:bg-rose-900/20
                             transition-colors
                         "
           >
@@ -348,8 +353,8 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
               }}
               className="
                               w-full flex items-center gap-2 px-3 py-2 text-sm
-                              text-red-700 dark:text-red-300 font-medium
-                              hover:bg-red-100 dark:hover:bg-red-900/30
+                              text-rose-700 dark:text-rose-300 font-medium
+                              hover:bg-rose-100 dark:hover:bg-rose-900/30
                               transition-colors
                           "
             >

@@ -270,7 +270,7 @@ localStorage cheat-sheet cross-link to it.
 | [`README.md` § Shipped](./README.md#shipped-and-tracked) | Every shipped feature, its ticket, its flag id, and a link to its spec. |
 | [`README.md` § URL kill-switches](./README.md#kill-switches-cheat-sheet) | Every query-string override in one grep-friendly block. |
 | [`README.md` § localStorage cheat sheet](./README.md#killing-from-localstorage-cheat-sheet) | Every storage key in one grep-friendly block. |
-| `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md` | Every event emitted, with ticket, flag, and payload enum. |
+| `CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md` | Every event emitted, with ticket, flag, and payload enum. |
 | Per-block plans (`NAVIGATION_*`, `TRUST_*`, `VOICE_*`, `INPUT_*`, `ADMIN_*`) | Design rationale, delivered files, DoD, and "out of scope" for each ticket. |
 
 If you find a mismatch between this runbook and the registry,

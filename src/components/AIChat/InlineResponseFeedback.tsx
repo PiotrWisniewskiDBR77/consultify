@@ -182,7 +182,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
-            className="p-1 rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
+            className="p-1 rounded transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-slate-500 hover:text-rose-500"
             title={t('aiChat.actions.notHelpful', 'Niepomocne')}
           >
             <ThumbsDown size={12} />

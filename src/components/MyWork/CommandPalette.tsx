@@ -271,7 +271,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           'command.action.reviewNextDecisionDesc',
           'Queue mode with shortcuts (J/K, A/R/S, ?)'
         ),
-        icon: <FileQuestion size={18} className="text-violet-500" />,
+        icon: <FileQuestion size={18} className="text-primary-500" />,
         category: 'action',
         keywords: ['review', 'queue', 'decisions', 'inbox'],
         action: () => {
@@ -284,7 +284,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         id: 'action-mark-done',
         title: t('command.action.markDone', 'Mark Task Done'),
         subtitle: t('command.action.markDoneDesc', 'Complete current task'),
-        icon: <CheckCircle2 size={18} className="text-cyan-500" />,
+        icon: <CheckCircle2 size={18} className="text-blue-500" />,
         category: 'action',
         shortcut: 'D',
         keywords: ['complete', 'finish', 'done'],
@@ -310,7 +310,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         id: 'action-schedule',
         title: t('command.action.schedule', 'Open Calendar'),
         subtitle: t('command.action.scheduleDesc', 'View scheduled items'),
-        icon: <Calendar size={18} className="text-violet-500" />,
+        icon: <Calendar size={18} className="text-primary-500" />,
         category: 'action',
         keywords: ['calendar', 'schedule', 'timeline'],
         action: () => {
@@ -480,7 +480,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                                 transition-colors cursor-pointer text-left
                                 ${
                                   isSelected
-                                    ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-900 dark:text-violet-100'
+                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-900 dark:text-primary-100'
                                     : 'hover:bg-slate-100 dark:hover:bg-white/5 text-navy-900 dark:text-white'
                                 }
                             `}
@@ -488,7 +488,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                   isSelected
-                    ? 'bg-violet-200 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300'
+                    ? 'bg-primary-200 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300'
                     : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -508,7 +508,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                                     hidden sm:flex items-center gap-0.5 px-2 py-1 rounded text-[10px] font-mono font-medium
                                     ${
                                       isSelected
-                                        ? 'bg-violet-200/50 dark:bg-violet-700/50 text-violet-700 dark:text-violet-300'
+                                        ? 'bg-primary-200/50 dark:bg-primary-700/50 text-primary-700 dark:text-primary-300'
                                         : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                                     }
                                 `}
@@ -519,7 +519,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-violet-500' : 'text-slate-300 dark:text-slate-600'
+                  isSelected ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600'
                 }`}
               />
             </motion.button>

@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
   exploring: 'bg-blue-100 border-blue-400',
   validated: 'bg-emerald-100 border-emerald-400',
   ready_to_convert: 'bg-amber-100 border-amber-400',
-  converted: 'bg-purple-100 border-purple-400',
+  converted: 'bg-primary-100 border-primary-400',
 };
 
 export const TimelineView: React.FC<TimelineViewProps> = ({

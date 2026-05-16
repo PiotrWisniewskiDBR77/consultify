@@ -2,6 +2,8 @@
 -- Separates baseline (planned_*) from forecast (forecast_*) so replan/smooth
 -- never overwrite the committed baseline dates.
 
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS planned_start_date TEXT;
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS planned_end_date TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS forecast_start_date TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS forecast_end_date TEXT;
 

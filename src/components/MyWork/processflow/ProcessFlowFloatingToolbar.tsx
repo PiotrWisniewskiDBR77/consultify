@@ -127,7 +127,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
       {onDelete && (
         <button
           type="button"
-          className={`${BTN} hover:text-red-500 dark:hover:text-red-400`}
+          className={`${BTN} hover:text-rose-500 dark:hover:text-rose-400`}
           onClick={onDelete}
           disabled={locked}
           title={isPl ? 'Usuń' : 'Delete'}
@@ -155,10 +155,12 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
                   key={idx}
                   className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400"
                 >
-                  <span className="truncate flex-1">{link.label || link.artifactRef.id}</span>
+                  <span className="truncate flex-1">
+                    {link.label || link.artifactIndex || link.artifactRef.id}
+                  </span>
                   <button
                     type="button"
-                    className="text-red-400 hover:text-red-600 ml-1"
+                    className="text-rose-400 hover:text-rose-600 ml-1"
                     onClick={() => {
                       const next = artifactLinks!.filter((_, i) => i !== idx);
                       onArtifactLinksChange(next);

@@ -110,7 +110,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'R1', label: 'R1 — Weekly', color: 'bg-blue-400' },
-          { value: 'R2', label: 'R2 — Steering', color: 'bg-purple-400' },
+          { value: 'R2', label: 'R2 — Steering', color: 'bg-blue-400' },
           { value: 'R3', label: 'R3 — Benefits', color: 'bg-emerald-400' },
           { value: 'R4', label: 'R4 — Portfolio', color: 'bg-amber-400' },
           { value: 'custom', label: 'Custom', color: 'bg-slate-400' },

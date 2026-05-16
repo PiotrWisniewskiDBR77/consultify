@@ -33,6 +33,7 @@ import {
   listFindings,
   recordHandoff,
   removeEvidencePointer,
+  updateFindingReadback,
 } from '../interviewInsightFindingsService.js';
 
 function resetTables() {
@@ -143,6 +144,7 @@ beforeEach(() => {
         limits_text: params[8],
         next_action_text: params[10],
         review_status: 'draft',
+        readback_status: 'draft_interpretation',
         created_at: params[15],
         updated_at: params[16],
       });
@@ -150,9 +152,8 @@ beforeEach(() => {
     }
 
     if (sql.includes('UPDATE interview_insight_findings')) {
-      const row = findingsTable.find(
-        (item) => item.id === params[params.length - 1] || item.id === params[8]
-      );
+      const lookupId = sql.includes('readback_status = ?') ? params[5] : params[params.length - 1];
+      const row = findingsTable.find((item) => item.id === lookupId || item.id === params[8]);
       if (row) {
         if (sql.includes('finding_statement = ?')) {
           row.finding_statement = params[0];
@@ -160,6 +161,11 @@ beforeEach(() => {
           row.limits_text = params[2];
           row.next_action_text = params[4];
           row.updated_at = params[7];
+        } else if (sql.includes('readback_status = ?')) {
+          row.readback_status = params[0];
+          row.readback_summary = params[1];
+          row.readback_updated_at = params[2];
+          row.updated_at = params[4];
         } else {
           row.updated_at = params[0];
         }
@@ -290,6 +296,76 @@ describe('interviewInsightFindingsService', () => {
 
     const handoff = await buildHandoffPayload('ins-1', created.finding!.id);
     expect(handoff.error).toContain('Contradicted evidence blocks automatic handoff');
+  });
+
+  it('blocks handoff until client readback is confirmed', async () => {
+    const created = await addFinding(
+      'ins-1',
+      {
+        finding_statement: 'Ready but not read back',
+        confidence_level: 'high',
+        limits: 'Scoped to interviewed users',
+        next_action: 'Link to initiative',
+        evidence_pointers: [
+          {
+            type: 'question_answer',
+            sourceRef: 'answer:readback',
+            sourceFingerprint: 'answer:readback',
+          },
+        ],
+      },
+      { organizationId: 'org-1', actorUserId: 'user-1' }
+    );
+
+    await expect(buildHandoffPayload('ins-1', created.finding!.id)).resolves.toMatchObject({
+      error: expect.stringContaining('Client readback confirmation is required'),
+    });
+
+    await updateFindingReadback(
+      'ins-1',
+      created.finding!.id,
+      {
+        readback_status: 'confirmed_by_client',
+        readback_summary: 'Client confirmed the interpretation.',
+      },
+      'reviewer-1'
+    );
+
+    const handoff = await buildHandoffPayload('ins-1', created.finding!.id);
+    expect(handoff.payload?.source_finding_id).toBe(created.finding!.id);
+  });
+
+  it('blocks low-confidence handoff unless the next action is investigatory', async () => {
+    const created = await addFinding(
+      'ins-1',
+      {
+        finding_statement: 'Narrow signal',
+        confidence_level: 'low',
+        limits: 'Single respondent only',
+        next_action: 'Execute operating change',
+        evidence_pointers: [
+          {
+            type: 'question_answer',
+            sourceRef: 'answer:low',
+            sourceFingerprint: 'answer:low',
+          },
+        ],
+      },
+      { organizationId: 'org-1', actorUserId: 'user-1' }
+    );
+    await updateFindingReadback(
+      'ins-1',
+      created.finding!.id,
+      {
+        readback_status: 'confirmed_by_client',
+        readback_summary: 'Client confirmed this as a hypothesis only.',
+      },
+      'reviewer-1'
+    );
+
+    await expect(buildHandoffPayload('ins-1', created.finding!.id)).resolves.toMatchObject({
+      error: expect.stringContaining('Low-confidence findings can only hand off investigation'),
+    });
   });
 
   it('deduplicates linked initiative handoffs', async () => {

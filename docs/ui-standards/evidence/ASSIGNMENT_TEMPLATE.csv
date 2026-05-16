@@ -1,0 +1,11 @@
+card_slug,card_name,owner,target_date,overall_status,notes
+mywork-inbox,My Work > Inbox,UX_QA_A,2026-05-04,QUEUED,Auto-sync 2026-05-03: captured 0/6
+mywork-tasks,My Work > Tasks,UX_QA_B,2026-05-04,QUEUED,Auto-sync 2026-05-03: captured 0/6
+interview-all-tabs,Interview > all tabs,UX_QA_A,2026-05-05,QUEUED,Auto-sync 2026-05-03: captured 0/6
+discovery-tools,Discovery Tools,UX_QA_B,2026-05-05,QUEUED,Auto-sync 2026-05-03: captured 0/6
+assessment,Assessment,UX_QA_A,2026-05-06,QUEUED,Auto-sync 2026-05-03: captured 0/6
+execution,Execution,UX_QA_B,2026-05-06,QUEUED,Auto-sync 2026-05-03: captured 0/6
+results,Results,UX_QA_A,2026-05-07,QUEUED,Auto-sync 2026-05-03: captured 0/6
+economics,Economics,UX_QA_B,2026-05-07,QUEUED,Auto-sync 2026-05-03: captured 0/6
+meeting,Meeting,UX_QA_A,2026-05-08,QUEUED,Auto-sync 2026-05-03: captured 0/6
+reports-presentations,Reports & Presentations,UX_QA_B,2026-05-08,QUEUED,Auto-sync 2026-05-03: captured 0/6
