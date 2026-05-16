@@ -13,6 +13,30 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 router.use(verifyToken);
 
+const isToolSessionLockUnavailableError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('db') ||
+    message.includes('database') ||
+    message.includes('sql') ||
+    message.includes('timeout') ||
+    message.includes('connection')
+  );
+};
+
+const isRealtimeSubstrateUnavailableError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('db') ||
+    message.includes('database') ||
+    message.includes('sql') ||
+    message.includes('timeout') ||
+    message.includes('connection')
+  );
+};
+
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
   const orgId =
@@ -61,24 +85,6 @@ router.get(
   })
 );
 
-router.get(
-  '/channels/:resourceType/:resourceId',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const id = requireUser(req, res);
-    if (!id) return;
-    const ch = await realtimePlatformService.getChannel(
-      id.orgId,
-      req.params.resourceType,
-      req.params.resourceId
-    );
-    if (!ch) {
-      res.status(404).json({ error: 'Channel not found' });
-      return;
-    }
-    res.json(ch);
-  })
-);
-
 router.delete(
   '/channels/:channelId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -101,14 +107,28 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid channel presence payload',
+        code: 'REALTIME_CHANNEL_PRESENCE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.upsertPresence(req.params.channelId, {
-      userId: id.userId,
-      ...p.data,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.upsertPresence(req.params.channelId, {
+        userId: id.userId,
+        ...p.data,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -117,7 +137,36 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({ presence: await realtimePlatformService.listPresence(req.params.channelId) });
+    try {
+      res.json({ presence: await realtimePlatformService.listPresence(req.params.channelId) });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+router.get(
+  '/channels/:resourceType/:resourceId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    const ch = await realtimePlatformService.getChannel(
+      id.orgId,
+      req.params.resourceType,
+      req.params.resourceId
+    );
+    if (!ch) {
+      res.status(404).json({ error: 'Channel not found' });
+      return;
+    }
+    res.json(ch);
   })
 );
 
@@ -473,15 +522,29 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid tool-session presence payload',
+        code: 'REALTIME_TOOL_SESSION_PRESENCE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.upsertToolPresence(id.orgId, {
-      toolSessionId: req.params.toolSessionId,
-      userId: id.userId,
-      ...p.data,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.upsertToolPresence(id.orgId, {
+        toolSessionId: req.params.toolSessionId,
+        userId: id.userId,
+        ...p.data,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -490,9 +553,20 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({
-      presence: await realtimePlatformService.listToolPresence(id.orgId, req.params.toolSessionId),
-    });
+    try {
+      res.json({
+        presence: await realtimePlatformService.listToolPresence(id.orgId, req.params.toolSessionId),
+      });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -502,14 +576,25 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     const cursorState = req.body.cursorState;
-    res.json(
-      await realtimePlatformService.heartbeatToolPresence(
-        id.orgId,
-        req.params.toolSessionId,
-        id.userId,
-        cursorState
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.heartbeatToolPresence(
+          id.orgId,
+          req.params.toolSessionId,
+          id.userId,
+          cursorState
+        )
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -518,13 +603,24 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(
-      await realtimePlatformService.disconnectToolPresence(
-        id.orgId,
-        req.params.toolSessionId,
-        id.userId
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.disconnectToolPresence(
+          id.orgId,
+          req.params.toolSessionId,
+          id.userId
+        )
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -536,16 +632,37 @@ router.post(
     const s = z.object({ blockId: z.string(), ttlMinutes: z.number().optional() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid tool-session lock payload',
+        code: 'REALTIME_TOOL_SESSION_LOCK_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.acquireEditLock(id.orgId, {
-      toolSessionId: req.params.toolSessionId,
-      blockId: p.data.blockId,
-      lockedBy: id.userId,
-      ttlMinutes: p.data.ttlMinutes,
-    });
-    res.status(r.acquired ? 201 : 409).json(r);
+    try {
+      const r = await realtimePlatformService.acquireEditLock(id.orgId, {
+        toolSessionId: req.params.toolSessionId,
+        blockId: p.data.blockId,
+        lockedBy: id.userId,
+        ttlMinutes: p.data.ttlMinutes,
+      });
+      if (r.acquired) {
+        res.status(201).json(r);
+        return;
+      }
+      res.status(409).json({
+        ...r,
+        code: 'REALTIME_TOOL_SESSION_LOCK_HELD',
+      });
+    } catch (error) {
+      if (isToolSessionLockUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session locks are temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_LOCKS_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -554,14 +671,25 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(
-      await realtimePlatformService.releaseEditLock(
-        id.orgId,
-        req.params.toolSessionId,
-        req.params.blockId,
-        id.userId
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.releaseEditLock(
+          id.orgId,
+          req.params.toolSessionId,
+          req.params.blockId,
+          id.userId
+        )
+      );
+    } catch (error) {
+      if (isToolSessionLockUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session locks are temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_LOCKS_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -570,9 +698,20 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({
-      locks: await realtimePlatformService.listEditLocks(id.orgId, req.params.toolSessionId),
-    });
+    try {
+      res.json({
+        locks: await realtimePlatformService.listEditLocks(id.orgId, req.params.toolSessionId),
+      });
+    } catch (error) {
+      if (isToolSessionLockUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session locks are temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_LOCKS_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
