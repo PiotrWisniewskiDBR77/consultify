@@ -265,7 +265,10 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           )}
 
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+            <div
+              role="alert"
+              className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
+            >
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <div className="min-w-0">
                 <div>{error}</div>
