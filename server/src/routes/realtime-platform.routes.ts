@@ -67,11 +67,25 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid channel payload',
+        code: 'REALTIME_CHANNEL_CREATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createChannel(id.orgId, p.data);
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.createChannel(id.orgId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel substrate is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_CREATE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -81,7 +95,18 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     const resourceType = req.query.resourceType as string | undefined;
-    res.json({ channels: await realtimePlatformService.listChannels(id.orgId, resourceType) });
+    try {
+      res.json({ channels: await realtimePlatformService.listChannels(id.orgId, resourceType) });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel list is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_LIST_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -90,7 +115,18 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.deleteChannel(id.orgId, req.params.channelId));
+    try {
+      res.json(await realtimePlatformService.deleteChannel(id.orgId, req.params.channelId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel delete is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_DELETE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -157,16 +193,30 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const ch = await realtimePlatformService.getChannel(
-      id.orgId,
-      req.params.resourceType,
-      req.params.resourceId
-    );
-    if (!ch) {
-      res.status(404).json({ error: 'Channel not found' });
-      return;
+    try {
+      const ch = await realtimePlatformService.getChannel(
+        id.orgId,
+        req.params.resourceType,
+        req.params.resourceId
+      );
+      if (!ch) {
+        res.status(404).json({
+          error: 'Channel not found',
+          code: 'REALTIME_CHANNEL_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(ch);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel read is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
     }
-    res.json(ch);
   })
 );
 
@@ -175,7 +225,18 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.heartbeatPresence(req.params.channelId, id.userId));
+    try {
+      res.json(await realtimePlatformService.heartbeatPresence(req.params.channelId, id.userId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -184,7 +245,18 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.disconnectPresence(req.params.channelId, id.userId));
+    try {
+      res.json(await realtimePlatformService.disconnectPresence(req.params.channelId, id.userId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -194,7 +266,18 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     const staleMinutes = Number(req.query.staleMinutes) || 5;
-    res.json(await realtimePlatformService.cleanStalePresence(staleMinutes));
+    try {
+      res.json(await realtimePlatformService.cleanStalePresence(staleMinutes));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime stale presence cleanup is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_CLEAN_STALE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
