@@ -83,3 +83,10 @@ Promote only when all are true:
 Then update global verdict to:
 
 - `GLOBAL_ALL_MODULES_GO`
+
+## Linked Advanced Artifacts
+
+- Advanced module scenarios:
+  - `docs/testing/reports/ADVANCED_MANUAL_SCENARIOS_BLOCKS_1_15_2026-05-16.md`
+- AntyGravity full-audit master prompt:
+  - `docs/testing/reports/ANTYGRAVITY_MASTER_PROMPT_ALL_MODULES_AUDIT_2026-05-16.md`
