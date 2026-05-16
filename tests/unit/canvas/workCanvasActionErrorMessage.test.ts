@@ -51,8 +51,8 @@ describe('workCanvasActionErrorMessage', () => {
     );
   });
 
-  it('falls back to error message and then fallback text', () => {
-    expect(workCanvasActionErrorMessage(new Error('server says no'), 'FB')).toBe('server says no');
+  it('falls back to deterministic fallback text', () => {
+    expect(workCanvasActionErrorMessage(new Error('server says no'), 'FB')).toBe('FB');
     expect(workCanvasActionErrorMessage({ data: {} }, 'FB')).toBe('FB');
   });
 });
