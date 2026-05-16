@@ -356,6 +356,21 @@ describe('recordFailedExport', () => {
   });
 });
 
+describe('recordFailedExport', () => {
+  it('inserts failed export row', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordFailedExport(ARTIFACT_ID, ORG_ID, 'pdf', USER_ID);
+
+    expect(rec.format).toBe('pdf');
+    expect(rec.status).toBe('failed');
+    expect(rec.completedAt).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledOnce();
+    const params = mockDbRun.mock.calls[0][1] as unknown[];
+    expect(params[5]).toBe('failed');
+  });
+});
+
 describe('getExportHistory', () => {
   it('lists exports newest first', async () => {
     mockDbAll.mockResolvedValueOnce([

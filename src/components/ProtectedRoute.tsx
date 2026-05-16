@@ -61,8 +61,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check authentication
   if (requireAuth && !currentUser?.isAuthenticated) {
-    // Redirect to auth, but save the attempted location
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Redirect to canonical login route and preserve attempted location.
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check role authorization with hierarchy

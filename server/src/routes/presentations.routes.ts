@@ -11,6 +11,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
@@ -799,6 +800,7 @@ router.get(
 );
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // ============================================================
 // TEMPLATES (T059)
@@ -5786,6 +5788,21 @@ router.post(
 
     const deckData: any = normalizeDeckDocument(deck) || {};
     const cards = deckData.cards || deckData.slides || [];
+    const pngLimitCheck = enforceExportLimits(deck, cards);
+    if (!pngLimitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'png',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: pngLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
     const title = deck.title || 'presentation';
 
     const Archiver = (await import('archiver')).default;

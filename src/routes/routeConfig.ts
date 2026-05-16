@@ -657,6 +657,16 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
     return AppView.PORTFOLIO_ROADMAP;
   }
+  if (normalized.startsWith(ROUTES.ROI)) return AppView.FULL_STEP4_ROI;
+  if (normalized.startsWith(ROUTES.PROJECT_INTELLIGENCE)) return AppView.PROJECT_INTELLIGENCE;
+  if (normalized.startsWith(ROUTES.AI_ACTIONS)) return AppView.AI_ACTION_PROPOSALS;
+  if (normalized.startsWith(ROUTES.CONSULTANT.PANEL)) return AppView.CONSULTANT_PANEL;
+  if (normalized.startsWith(ROUTES.CONSULTANT.INVITES)) return AppView.CONSULTANT_INVITES;
+  if (normalized.startsWith(ROUTES.AFFILIATE)) return AppView.AFFILIATE_DASHBOARD;
+  if (normalized.startsWith(ROUTES.ORG_SETUP)) return AppView.ORG_SETUP_WIZARD;
+  if (normalized.startsWith(ROUTES.ONBOARDING)) return AppView.ONBOARDING_WIZARD;
+  if (normalized.startsWith(ROUTES.ONBOARDING_ADMIN)) return AppView.ONBOARDING_WIZARD;
+  if (normalized.startsWith(ROUTES.ONBOARDING_SEED_BASE)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.IMPLEMENTATION;
   if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
@@ -664,6 +674,7 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;
+  if (normalized.startsWith(ROUTES.PARTNER.ONBOARDING)) return AppView.PARTNER_LANDING;
   if (normalized.startsWith(ROUTES.PARTNER.LANDING)) return AppView.PARTNER_LANDING;
   // SuperAdmin: map nested routes to the correct section view
   if (normalized.startsWith(ROUTES.SUPERADMIN.OVERVIEW)) return AppView.SUPERADMIN_OVERVIEW;

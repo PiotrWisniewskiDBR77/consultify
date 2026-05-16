@@ -375,6 +375,7 @@ function logoUploadSingleMiddleware(
 }
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 function getAuthContext(req: AuthRequest): {
   userId: string;

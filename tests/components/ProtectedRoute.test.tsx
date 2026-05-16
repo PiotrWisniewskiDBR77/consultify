@@ -33,7 +33,7 @@ describe('ProtectedRoute triad role hierarchy', () => {
     render(
       <MemoryRouter initialEntries={['/protected']}>
         <Routes>
-          <Route path="/auth" element={<div>Auth Screen</div>} />
+          <Route path="/login" element={<div>Login Screen</div>} />
           <Route path="/chat" element={<div>Chat Screen</div>} />
           <Route
             path="/protected"
@@ -48,7 +48,7 @@ describe('ProtectedRoute triad role hierarchy', () => {
     );
   }
 
-  it('redirects unauthenticated users to auth', () => {
+  it('redirects unauthenticated users to login', () => {
     authState.currentUser = {
       isAuthenticated: false,
       role: 'USER',
@@ -56,7 +56,7 @@ describe('ProtectedRoute triad role hierarchy', () => {
 
     renderProtectedRoute('USER');
 
-    expect(screen.getByText('Auth Screen')).toBeInTheDocument();
+    expect(screen.getByText('Login Screen')).toBeInTheDocument();
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
 
@@ -116,5 +116,27 @@ describe('ProtectedRoute triad role hierarchy', () => {
 
     expect(screen.getByText('Chat Screen')).toBeInTheDocument();
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
+
+  it('allows administrator alias for ADMIN routes', () => {
+    authState.currentUser = {
+      isAuthenticated: true,
+      role: 'administrator',
+    };
+
+    renderProtectedRoute('ADMIN');
+
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('allows member alias for USER routes', () => {
+    authState.currentUser = {
+      isAuthenticated: true,
+      role: 'MEMBER',
+    };
+
+    renderProtectedRoute('USER');
+
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 });

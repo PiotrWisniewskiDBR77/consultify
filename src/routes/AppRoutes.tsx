@@ -2295,9 +2295,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.CONSULTANT.INVITES}
           element={
-            <AnimationWrapper variant="slideUp">
-              <ConsultantInviteView />
-            </AnimationWrapper>
+            <ProtectedRoute requireAuth={true}>
+              <AnimationWrapper variant="slideUp">
+                <ConsultantInviteView />
+              </AnimationWrapper>
+            </ProtectedRoute>
           }
         />
 

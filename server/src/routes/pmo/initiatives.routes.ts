@@ -15,7 +15,7 @@ import { StaffingPlanController } from '../../controllers/StaffingPlanController
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import { requireOrgRole } from '../../middleware/rbac.middleware.js';
+import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import blueprintService from '../../services/blueprintService.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
@@ -60,6 +60,7 @@ router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);
