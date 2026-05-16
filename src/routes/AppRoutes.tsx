@@ -658,6 +658,7 @@ export const AppRoutes: React.FC = () => {
   }> = ({ moduleKey, children }) => {
     const [loading, setLoading] = React.useState(true);
     const [allowed, setAllowed] = React.useState(false);
+    const MODULE_ACCESS_TIMEOUT_MS = 12000;
 
     React.useEffect(() => {
       let cancelled = false;
@@ -670,6 +671,12 @@ export const AppRoutes: React.FC = () => {
           return;
         }
 
+        const timeoutId = window.setTimeout(() => {
+          if (cancelled) return;
+          setAllowed(false);
+          setLoading(false);
+        }, MODULE_ACCESS_TIMEOUT_MS);
+
         try {
           const data = await apiGet<{ modules?: string[] }>('/module-access/my');
           const modules = Array.isArray(data?.modules) ? data.modules : [];
@@ -681,6 +688,7 @@ export const AppRoutes: React.FC = () => {
             setAllowed(false);
           }
         } finally {
+          window.clearTimeout(timeoutId);
           if (!cancelled) {
             setLoading(false);
           }

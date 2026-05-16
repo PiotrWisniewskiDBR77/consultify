@@ -345,6 +345,18 @@ router.get(
       const hasUserProfiles = userProfileCols.size > 0 && userProfileCols.has('user_id');
       const hasUserProfileExtended =
         userProfileExtendedCols.size > 0 && userProfileExtendedCols.has('user_id');
+      let profileFallbackPreferences: Record<string, unknown> = {};
+      try {
+        const fallbackPreference = await dbGet<{ value?: string }>(
+          `SELECT value FROM user_preferences WHERE user_id = ? AND key = ? LIMIT 1`,
+          [req.user!.id, 'settings:profile-fallback']
+        );
+        if (fallbackPreference?.value) {
+          profileFallbackPreferences = JSON.parse(fallbackPreference.value);
+        }
+      } catch {
+        profileFallbackPreferences = {};
+      }
       const ucol = (col: string, fallbackSql: string) =>
         userCols.has(col) ? `u.${col}` : `${fallbackSql} as ${col}`;
 
@@ -582,8 +594,12 @@ router.get(
               ? 'full'
               : 'free',
           // Extended profile fields
-          displayName: user.display_name || null,
-          pronouns: user.pronouns || null,
+          displayName:
+            user.display_name ||
+            (profileFallbackPreferences.displayName as string | undefined) ||
+            null,
+          pronouns:
+            user.pronouns || (profileFallbackPreferences.pronouns as string | undefined) || null,
           department:
             user.department || user.profile_department || user.profile_extended_department || null,
           jobTitle:
@@ -592,17 +608,40 @@ router.get(
             user.profile_extended_job_title ||
             user.profile_extended_title ||
             null,
-          statusMessage: user.status_message || null,
-          isOutOfOffice: user.out_of_office === 1,
-          outOfOfficeUntil: user.vacation_end || null,
-          outOfOfficeMessage: user.out_of_office_message || null,
-          linkedinId: user.linkedin_id || null,
+          statusMessage:
+            user.status_message ||
+            (profileFallbackPreferences.statusMessage as string | undefined) ||
+            null,
+          isOutOfOffice:
+            user.out_of_office === 1 || Boolean(profileFallbackPreferences.isOutOfOffice || false),
+          outOfOfficeUntil:
+            user.vacation_end ||
+            (profileFallbackPreferences.outOfOfficeUntil as string | undefined) ||
+            null,
+          outOfOfficeMessage:
+            user.out_of_office_message ||
+            (profileFallbackPreferences.outOfOfficeMessage as string | undefined) ||
+            null,
+          linkedinId:
+            user.linkedin_id ||
+            (profileFallbackPreferences.linkedinId as string | undefined) ||
+            null,
           phone: user.phone || null,
-          timezone: user.timezone || null,
-          dateFormat: user.date_format || null,
-          timeFormat: user.time_format || null,
+          timezone:
+            user.timezone || (profileFallbackPreferences.timezone as string | undefined) || null,
+          dateFormat:
+            user.date_format ||
+            (profileFallbackPreferences.dateFormat as string | undefined) ||
+            null,
+          timeFormat:
+            user.time_format ||
+            (profileFallbackPreferences.timeFormat as string | undefined) ||
+            null,
           location: user.location || null,
-          companyName: user.company_name || user.organization_name,
+          companyName:
+            user.company_name ||
+            (profileFallbackPreferences.companyName as string | undefined) ||
+            user.organization_name,
           // VTS metrics
           seniorityLevel: user.seniority_level || null,
           siteLocation: user.site_location || null,

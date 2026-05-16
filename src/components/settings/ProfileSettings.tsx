@@ -197,6 +197,25 @@ const areProfileValuesEqual = (left: unknown, right: unknown): boolean => {
   return String(left ?? '') === String(right ?? '');
 };
 
+const normalizeDateOnlyValue = (value: unknown): string => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw.slice(0, 10);
+  return raw;
+};
+
+const areProfileFieldValuesEqual = (
+  field: ProfileConfirmationField,
+  left: unknown,
+  right: unknown
+): boolean => {
+  if (field === 'outOfOfficeUntil') {
+    return normalizeDateOnlyValue(left) === normalizeDateOnlyValue(right);
+  }
+  return areProfileValuesEqual(left, right);
+};
+
 const removeKnownSuffix = (value: string, suffix: string): string => {
   const trimmedValue = value.trim();
   const trimmedSuffix = suffix.trim();
@@ -486,17 +505,19 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         throw new Error('Profile save was not confirmed by the server');
       }
 
-      const mismatchedField = PROFILE_CONFIRMATION_FIELDS.find(
-        (field) =>
-          String((persistedUser as Partial<ExtendedFormState>)[field] ?? '') !==
-          String(formState[field] ?? '')
+      const persistedFormState = toFormStateFromUser(persistedUser);
+      const updatedProfileFields = (Object.keys(updates) as Array<keyof typeof updates>).filter(
+        (field): field is ProfileConfirmationField =>
+          PROFILE_CONFIRMATION_FIELDS.includes(field as ProfileConfirmationField)
+      );
+      const mismatchedField = updatedProfileFields.find(
+        (field) => !areProfileFieldValuesEqual(field, persistedFormState[field], updates[field])
       );
 
       if (mismatchedField) {
         throw new Error('Profile changes were not confirmed by the server');
       }
 
-      const persistedFormState = toFormStateFromUser(persistedUser);
       lastSyncedFormRef.current = persistedFormState;
       hasLocalEditsRef.current = false;
       setFormState(persistedFormState);

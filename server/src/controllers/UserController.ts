@@ -30,6 +30,48 @@ const isProfileSchemaWriteError = (error: unknown): boolean => {
   return PROFILE_SCHEMA_RETRY_ERRORS.some((needle) => message.includes(needle));
 };
 
+const PROFILE_USERS_COLUMNS: Array<{ name: string; sql: string }> = [
+  { name: 'display_name', sql: 'ALTER TABLE users ADD COLUMN display_name TEXT' },
+  { name: 'pronouns', sql: 'ALTER TABLE users ADD COLUMN pronouns TEXT' },
+  { name: 'status_message', sql: 'ALTER TABLE users ADD COLUMN status_message TEXT' },
+  { name: 'out_of_office', sql: 'ALTER TABLE users ADD COLUMN out_of_office INTEGER DEFAULT 0' },
+  { name: 'vacation_end', sql: 'ALTER TABLE users ADD COLUMN vacation_end TEXT' },
+  { name: 'out_of_office_message', sql: 'ALTER TABLE users ADD COLUMN out_of_office_message TEXT' },
+  { name: 'company_name', sql: 'ALTER TABLE users ADD COLUMN company_name TEXT' },
+  { name: 'timezone', sql: 'ALTER TABLE users ADD COLUMN timezone TEXT' },
+  { name: 'date_format', sql: 'ALTER TABLE users ADD COLUMN date_format TEXT' },
+  { name: 'time_format', sql: 'ALTER TABLE users ADD COLUMN time_format TEXT' },
+  { name: 'linkedin_id', sql: 'ALTER TABLE users ADD COLUMN linkedin_id TEXT' },
+];
+
+const ensureUsersProfileColumns = async (): Promise<Set<string>> => {
+  clearSchemaCache();
+  let userColumns = await getTableColumns('users');
+  const missingColumns = PROFILE_USERS_COLUMNS.filter(({ name }) => !userColumns.has(name));
+  if (missingColumns.length === 0) return userColumns;
+
+  for (const migration of missingColumns) {
+    try {
+      await queryHelpers.queryRun(migration.sql);
+    } catch (error: unknown) {
+      const message = String((error as Error)?.message || error || '').toLowerCase();
+      const alreadyExists =
+        message.includes('already exists') ||
+        message.includes('duplicate column') ||
+        message.includes('duplicate');
+      if (!alreadyExists) {
+        // Some environments run with DB users that cannot ALTER TABLE.
+        // Best effort only: profile fields will fall back to user_preferences.
+        continue;
+      }
+    }
+  }
+
+  clearSchemaCache();
+  userColumns = await getTableColumns('users');
+  return userColumns;
+};
+
 // ==========================================
 // CONTROLLER METHODS
 // ==========================================
@@ -187,8 +229,7 @@ export class UserController {
         return;
       }
 
-      clearSchemaCache();
-      const userColumns = await getTableColumns('users');
+      const userColumns = await ensureUsersProfileColumns();
       const userProfileColumns = await getTableColumns('user_profiles');
       const userProfileExtendedColumns = await getTableColumns('user_profile_extended');
       const canPersistToUserProfiles =
@@ -203,6 +244,7 @@ export class UserController {
         jobTitle?: string | null;
         department?: string | null;
       } = {};
+      const profilePreferenceFallback: Record<string, unknown> = {};
 
       // Build dynamic update query
       const updates: string[] = [];
@@ -296,8 +338,20 @@ export class UserController {
         addColumnUpdate('license_plan_id', licensePlanId);
       }
       addColumnUpdate('linkedin_id', linkedinId);
+      if (linkedinId !== undefined && !userColumns.has('linkedin_id')) {
+        profilePreferenceFallback.linkedinId =
+          linkedinId === null ? null : String(linkedinId || '').trim() || null;
+      }
       addColumnUpdate('display_name', displayName);
+      if (displayName !== undefined && !userColumns.has('display_name')) {
+        profilePreferenceFallback.displayName =
+          displayName === null ? null : String(displayName || '').trim() || null;
+      }
       addColumnUpdate('pronouns', pronouns);
+      if (pronouns !== undefined && !userColumns.has('pronouns')) {
+        profilePreferenceFallback.pronouns =
+          pronouns === null ? null : String(pronouns || '').trim() || null;
+      }
       if (userColumns.has('department')) {
         addColumnUpdate('department', department);
       } else if (
@@ -316,13 +370,44 @@ export class UserController {
           department === null ? null : String(department || '').trim() || null;
       }
       addColumnUpdate('status_message', statusMessage);
+      if (statusMessage !== undefined && !userColumns.has('status_message')) {
+        profilePreferenceFallback.statusMessage =
+          statusMessage === null ? null : String(statusMessage || '').trim() || null;
+      }
       addBooleanColumnUpdate('out_of_office', isOutOfOffice);
+      if (isOutOfOffice !== undefined && !userColumns.has('out_of_office')) {
+        profilePreferenceFallback.isOutOfOffice = Boolean(isOutOfOffice);
+      }
       addColumnUpdate('vacation_end', outOfOfficeUntil);
+      if (outOfOfficeUntil !== undefined && !userColumns.has('vacation_end')) {
+        profilePreferenceFallback.outOfOfficeUntil =
+          outOfOfficeUntil === null ? null : String(outOfOfficeUntil || '').trim() || null;
+      }
       addColumnUpdate('out_of_office_message', outOfOfficeMessage);
+      if (outOfOfficeMessage !== undefined && !userColumns.has('out_of_office_message')) {
+        profilePreferenceFallback.outOfOfficeMessage =
+          outOfOfficeMessage === null ? null : String(outOfOfficeMessage || '').trim() || null;
+      }
       addColumnUpdate('company_name', companyName);
+      if (companyName !== undefined && !userColumns.has('company_name')) {
+        profilePreferenceFallback.companyName =
+          companyName === null ? null : String(companyName || '').trim() || null;
+      }
       addColumnUpdate('timezone', timezone);
+      if (timezone !== undefined && !userColumns.has('timezone')) {
+        profilePreferenceFallback.timezone =
+          timezone === null ? null : String(timezone || '').trim() || null;
+      }
       addColumnUpdate('date_format', dateFormat);
+      if (dateFormat !== undefined && !userColumns.has('date_format')) {
+        profilePreferenceFallback.dateFormat =
+          dateFormat === null ? null : String(dateFormat || '').trim() || null;
+      }
       addColumnUpdate('time_format', timeFormat);
+      if (timeFormat !== undefined && !userColumns.has('time_format')) {
+        profilePreferenceFallback.timeFormat =
+          timeFormat === null ? null : String(timeFormat || '').trim() || null;
+      }
       addColumnUpdate('seniority_level', seniorityLevel);
       addColumnUpdate('site_location', siteLocation);
       addColumnUpdate('tenure_years', tenureYears);
@@ -350,8 +435,13 @@ export class UserController {
         (canPersistToUserProfileExtended &&
           (persistToUserProfileExtended.jobTitle !== undefined ||
             persistToUserProfileExtended.department !== undefined));
+      const shouldPersistPreferenceFallback = Object.keys(profilePreferenceFallback).length > 0;
 
-      if (updates.length === 0 && !shouldPersistProfileFallback) {
+      if (
+        updates.length === 0 &&
+        !shouldPersistProfileFallback &&
+        !shouldPersistPreferenceFallback
+      ) {
         res.status(400).json({ error: 'No fields to update' });
         return;
       }
@@ -446,6 +536,41 @@ export class UserController {
             }
           }
         }
+      }
+
+      if (shouldPersistPreferenceFallback) {
+        await queryHelpers.queryRun(
+          `CREATE TABLE IF NOT EXISTS user_preferences (
+             user_id TEXT NOT NULL,
+             key TEXT NOT NULL,
+             value TEXT NOT NULL,
+             updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+             PRIMARY KEY (user_id, key)
+           )`
+        );
+        await queryHelpers.queryRun(
+          `CREATE UNIQUE INDEX IF NOT EXISTS idx_user_prefs_user_key ON user_preferences(user_id, key)`
+        );
+        const existingPreference = (await queryHelpers.queryOne(
+          `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
+          [id, 'settings:profile-fallback']
+        )) as { value?: string } | null;
+        let existingPayload: Record<string, unknown> = {};
+        try {
+          existingPayload = existingPreference?.value
+            ? (JSON.parse(existingPreference.value) as Record<string, unknown>)
+            : {};
+        } catch {
+          existingPayload = {};
+        }
+        const mergedFallback = { ...existingPayload, ...profilePreferenceFallback };
+        await queryHelpers.queryRun(
+          `INSERT INTO user_preferences (user_id, key, value, updated_at)
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+           ON CONFLICT (user_id, key)
+           DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+          [id, 'settings:profile-fallback', JSON.stringify(mergedFallback)]
+        );
       }
 
       if (
