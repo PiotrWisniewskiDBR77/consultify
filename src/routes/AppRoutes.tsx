@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
   Navigate,
@@ -22,9 +23,11 @@ import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
+import { apiGet } from '@/services/api/baseClient';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
@@ -34,6 +37,7 @@ import { ProductEntryPage } from '@/views/ProductEntryPage';
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
 import { ROUTES } from './routeConfig';
+import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 
 // Lazy load views for new routes
 const StudioView = React.lazy(() =>
@@ -130,6 +134,21 @@ const ReportsAndPresentationsHub = React.lazy(() =>
     default: m.ReportsAndPresentationsHub,
   }))
 );
+// Consultify Presentation Studio (Module Delivery Contract S5) — read-only
+// surface that consumes the four /api/presentation-studio/*/preview endpoints.
+const PresentationStudioPage = React.lazy(() =>
+  import('@/components/PresentationStudio/PresentationStudioPage').then((m) => ({
+    default: m.PresentationStudioPage,
+  }))
+);
+// Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
+// above the V8.1 substrate.
+// See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
+const DocumentStudioView = React.lazy(() =>
+  import('@/components/DocumentStudio/DocumentStudioView').then((m) => ({
+    default: m.DocumentStudioView,
+  }))
+);
 const DeckBuilder = React.lazy(() =>
   import('@/components/Presentations/DeckBuilder/DeckBuilder').then((m) => ({
     default: m.DeckBuilder,
@@ -166,27 +185,60 @@ const SuperAdminView = React.lazy(() =>
   import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
 );
 
-// AI Chat (canonical full-screen surface)
-const AIChatWelcomeView = React.lazy(() =>
-  import('@/views/AIChatWelcomeView').then((m) => ({ default: m.AIChatWelcomeView }))
-);
-const UnifiedChatPanelView = React.lazy(() =>
+// AI Chat (Full Screen Chat View) — Wave 1 canonical shell.
+const UnifiedChatPanel = React.lazy(() =>
   import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
 );
-const V10RuntimeWorkspaceView = React.lazy(() =>
-  import('@/views/V10RuntimeWorkspaceView').then((m) => ({ default: m.V10RuntimeWorkspaceView }))
+const AIOSHub = React.lazy(() =>
+  import('@/components/AIChat/AIOSHub').then((m) => ({ default: m.AIOSHub }))
+);
+const ActionCenter = React.lazy(() =>
+  import('@/components/AIChat/ActionCenter').then((m) => ({ default: m.ActionCenter }))
+);
+const ResearchSessionsDock = React.lazy(() =>
+  import('@/components/AIChat/ResearchSessionsDock').then((m) => ({
+    default: m.ResearchSessionsDock,
+  }))
+);
+const Wave5ArtifactRuntimePanel = React.lazy(() =>
+  import('@/components/AIChat/Wave5ArtifactRuntimePanel').then((m) => ({
+    default: m.Wave5ArtifactRuntimePanel,
+  }))
+);
+const Wave6ContextLearningPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave6ContextLearningPanel').then((m) => ({
+    default: m.Wave6ContextLearningPanel,
+  }))
+);
+const Wave7ConnectorAdminPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave7ConnectorAdminPanel').then((m) => ({
+    default: m.Wave7ConnectorAdminPanel,
+  }))
+);
+const Wave8AgentCatalogPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave8AgentCatalogPanel').then((m) => ({
+    default: m.Wave8AgentCatalogPanel,
+  }))
+);
+const Wave9OutcomeAIOpsPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave9OutcomeAIOpsPanel').then((m) => ({
+    default: m.Wave9OutcomeAIOpsPanel,
+  }))
 );
 
 // KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/WordyView').then((m) => ({ default: m.WordyView }))
 );
-const ExceleView = React.lazy(() =>
-  import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({ default: m.ExceleView }))
-);
 const PrezentacjeView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
     default: m.PrezentacjeView,
+  }))
+);
+// KIMI-style Tabele workspace (Table Studio Foundation block — sky accent, D1=visible)
+const TabeleView = React.lazy(() =>
+  import('@/components/AIChat/KimiWorkspace/TabeleView').then((m) => ({
+    default: m.default,
   }))
 );
 
@@ -375,6 +427,13 @@ const PublicFormPage = React.lazy(() =>
   }))
 );
 
+// Public JWT Form Page (Table Platform · Block D · D-S4)
+const PublicJwtFormPage = React.lazy(() =>
+  import('@/components/MyWork/table/forms/PublicJwtFormPage').then((m) => ({
+    default: m.PublicJwtFormPage,
+  }))
+);
+
 // Public Shared View (Table Platform)
 const PublicViewPage = React.lazy(() => import('@/components/MyWork/table/PublicViewPage'));
 
@@ -425,6 +484,19 @@ const RedirectWithTracking: React.FC<{ from: string; to: string; reason: string 
   return <Navigate to={to} replace />;
 };
 
+const RedirectPreservingQuery: React.FC<{ from: string; to: string; reason: string }> = ({
+  from,
+  to,
+  reason,
+}) => {
+  const location = useLocation();
+  const target = `${to}${location.search || ''}`;
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', { from, to: target, reason });
+  }, [from, target, reason]);
+  return <Navigate to={target} replace />;
+};
+
 const ReportsBuilderLegacyRedirect: React.FC = () => {
   const params = useParams<{ reportId?: string }>();
   const reportId = String(params.reportId || '').trim();
@@ -443,6 +515,29 @@ const ReportsBuilderLegacyRedirect: React.FC = () => {
   return <Navigate to={to} replace />;
 };
 
+const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
+  const params = useParams<{ workspaceId?: string; tableId?: string }>();
+  const navigate = useNavigate();
+  const workspaceId = String(params.workspaceId || '').trim();
+  const tableId = String(params.tableId || '').trim();
+  React.useEffect(() => {
+    if (!workspaceId || !tableId) {
+      navigate('/my-work', { replace: true });
+      return;
+    }
+    toast.success('Transitioning to Sheets Builder lane...');
+    navigate(
+      `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table?tpTable=${encodeURIComponent(tableId)}`,
+      { replace: true, state: { transition: 'sheets_deep_link_option_a' } }
+    );
+  }, [navigate, tableId, workspaceId]);
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-sky-500" />
+    </div>
+  );
+};
+
 /** Redirects /auth?action=trial to /trial/start */
 const AuthRouteWithTrialRedirect: React.FC<{
   isAuthenticated: boolean;
@@ -451,10 +546,17 @@ const AuthRouteWithTrialRedirect: React.FC<{
   onBack: () => void;
 }> = ({ isAuthenticated, authInitialStep, onAuthSuccess, onBack }) => {
   const [searchParams] = useSearchParams();
+  const routeLocation = useLocation();
   const action = searchParams.get('action');
 
   if (isAuthenticated) {
-    return <Navigate to={ROUTES.AI_CHAT} replace />;
+    const from = (routeLocation.state as { from?: { pathname?: string; search?: string } } | null)
+      ?.from;
+    const fromPath =
+      from?.pathname && from.pathname !== ROUTES.AUTH && from.pathname !== '/auth'
+        ? `${from.pathname}${from.search || ''}`
+        : null;
+    return <Navigate to={fromPath || ROUTES.AI_CHAT} replace />;
   }
   if (action === 'trial') {
     return <Navigate to="/trial/start" replace />;
@@ -487,6 +589,11 @@ const ProductionModuleGate: React.FC<{
   children: React.ReactNode;
 }> = ({ enabled, moduleName, children }) =>
   enabled ? <>{children}</> : <PublicProductionModuleDisabled moduleName={moduleName} />;
+
+const InternalToolsGate: React.FC<{ enabled: boolean; children: React.ReactNode }> = ({
+  enabled,
+  children,
+}) => (enabled ? <>{children}</> : <Navigate to={ROUTES.AI_CHAT} replace />);
 
 export const AppRoutes: React.FC = () => {
   const { t } = useTranslation();
@@ -524,6 +631,85 @@ export const AppRoutes: React.FC = () => {
     () => shouldHideNonCoreModulesInPublicProduction(),
     []
   );
+  const internalToolsEnabled = canUseInternalTools(currentUser);
+  const directKimiModuleAccess = React.useMemo(() => {
+    if (!currentUser?.isAuthenticated) return false;
+    if (isSuperAdminRole(currentUser?.role)) return true;
+
+    const email = String(currentUser?.email || '')
+      .trim()
+      .toLowerCase();
+    if (!email) return false;
+
+    const defaults = ['piotr.wisniewski@dbr77.com', 'piotrwisniewski@dbr77.com'];
+    const configured = String(
+      import.meta.env.VITE_DIRECT_KIMI_MODULE_ACCESS_EMAILS || 'piotr.wisniewski@dbr77.com'
+    )
+      .split(',')
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    const allowlist = new Set([...defaults, ...configured]);
+    return allowlist.has(email);
+  }, [currentUser?.isAuthenticated, currentUser?.role, currentUser?.email]);
+
+  const KimiModuleGate: React.FC<{
+    moduleKey: 'wordy' | 'excele' | 'prezentacje';
+    children: React.ReactNode;
+  }> = ({ moduleKey, children }) => {
+    const [loading, setLoading] = React.useState(true);
+    const [allowed, setAllowed] = React.useState(false);
+    const MODULE_ACCESS_TIMEOUT_MS = 12000;
+
+    React.useEffect(() => {
+      let cancelled = false;
+      const run = async () => {
+        if (directKimiModuleAccess) {
+          if (!cancelled) {
+            setAllowed(true);
+            setLoading(false);
+          }
+          return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+          if (cancelled) return;
+          setAllowed(false);
+          setLoading(false);
+        }, MODULE_ACCESS_TIMEOUT_MS);
+
+        try {
+          const data = await apiGet<{ modules?: string[] }>('/module-access/my');
+          const modules = Array.isArray(data?.modules) ? data.modules : [];
+          if (!cancelled) {
+            setAllowed(modules.includes(moduleKey));
+          }
+        } catch {
+          if (!cancelled) {
+            setAllowed(false);
+          }
+        } finally {
+          window.clearTimeout(timeoutId);
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      };
+      void run();
+      return () => {
+        cancelled = true;
+      };
+    }, [moduleKey, directKimiModuleAccess]);
+
+    if (loading) {
+      return (
+        <div className="flex h-[40vh] items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
+      );
+    }
+
+    return <>{allowed ? children : <V4ComingSoonView />}</>;
+  };
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -678,6 +864,18 @@ export const AppRoutes: React.FC = () => {
 
   // --- RENDER ---
   // All routing now goes through React Router - removed blocking if/else conditions
+  const renderInternalToolsShell = (
+    routeBreadcrumbs: string[],
+    children: React.ReactNode
+  ): React.ReactNode => (
+    <InternalToolsGate enabled={internalToolsEnabled}>
+      <MainLayout breadcrumbs={breadcrumbs || routeBreadcrumbs}>
+        <RouteErrorBoundary>
+          <AnimationWrapper variant="fade">{children}</AnimationWrapper>
+        </RouteErrorBoundary>
+      </MainLayout>
+    </InternalToolsGate>
+  );
 
   return (
     <Suspense
@@ -771,6 +969,16 @@ export const AppRoutes: React.FC = () => {
           element={
             <Suspense fallback={<LoadingScreen message="Loading form..." />}>
               <PublicFormPage />
+            </Suspense>
+          }
+        />
+
+        {/* Public JWT Form Page (Block D · D-S4) — no auth required, JWT-tokenized */}
+        <Route
+          path="/public/forms/jwt/:token"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading private form..." />}>
+              <PublicJwtFormPage />
             </Suspense>
           }
         />
@@ -1071,6 +1279,11 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route
+          path="/my-work/sheets/:workspaceId/tables/:tableId"
+          element={<MyWorkSheetsDeepLinkRedirect />}
+        />
+        <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
         {/* AI Chat - Full Screen Chat View */}
         <Route
@@ -1080,27 +1293,84 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanel mode="full" />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
         />
 
-        <Route path="/chat/v10-runtime" element={<Navigate to={ROUTES.AI_CHAT} replace />} />
-
+        {/* AI OS - Manual acceptance hub for AI Actions, Memory, Connectors, Agents and Outcomes */}
         <Route
-          path={ROUTES.AI_CHAT_V10_RUNTIME}
+          path={ROUTES.AI_OS.ROOT}
+          element={renderInternalToolsShell(['AI OS'], <AIOSHub />)}
+        />
+        <Route path={ROUTES.AI_OS.ALIAS} element={<Navigate to={ROUTES.AI_OS.ROOT} replace />} />
+        <Route
+          path={ROUTES.AI_OS.ACTIONS_ALIAS}
+          element={<Navigate to={ROUTES.AI_OS.ACTION_CENTER} replace />}
+        />
+        <Route
+          path={ROUTES.AI_OS.MEMORY_ALIAS}
+          element={<Navigate to={ROUTES.AI_OS.CONTEXT} replace />}
+        />
+        <Route
+          path={ROUTES.AI_OS.AIOPS_ALIAS}
+          element={<Navigate to={ROUTES.AI_OS.OUTCOMES} replace />}
+        />
+
+        {/* Wave 3 - AI Action Center / AIRun ledger */}
+        <Route
+          path={ROUTES.AI_OS.ACTION_CENTER}
+          element={renderInternalToolsShell(['AI', 'Action Center'], <ActionCenter />)}
+        />
+
+        {/* Wave 4 - Research Sessions Dock / Evidence reports */}
+        <Route
+          path={ROUTES.AI_OS.RESEARCH}
+          element={renderInternalToolsShell(['AI', 'Research Sessions'], <ResearchSessionsDock />)}
+        />
+
+        {/* Wave 5 - Artifact Runtime / Document Work */}
+        <Route
+          path={ROUTES.AI_OS.ARTIFACTS}
+          element={renderInternalToolsShell(['AI', 'Artifacts'], <Wave5ArtifactRuntimePanel />)}
+        />
+
+        {/* V10 Work Canvas (legacy route) -> canonical /chat split panel */}
+        <Route
+          path={ROUTES.AI_OS.WORK_CANVAS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Internal', 'V10 QA']} noPadding>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <V10RuntimeWorkspaceView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <ProtectedRoute requiredRole="USER">
+              <WorkCanvasRedirect />
+            </ProtectedRoute>
           }
         />
+
+        {/* Wave 6 - Org, Project, User Context and Controlled Learning */}
+        <Route
+          path={ROUTES.AI_OS.CONTEXT}
+          element={renderInternalToolsShell(['AI', 'Context'], <Wave6ContextLearningPanel />)}
+        />
+
+        {/* Wave 7 - Enterprise Connectors, Tooling and AI App Management */}
+        <Route
+          path={ROUTES.AI_OS.CONNECTORS}
+          element={renderInternalToolsShell(['AI', 'Connectors'], <Wave7ConnectorAdminPanel />)}
+        />
+
+        {/* Wave 8 - Agent Catalog, Roles and Scheduled Work */}
+        <Route
+          path={ROUTES.AI_OS.AGENTS}
+          element={renderInternalToolsShell(['AI', 'Agents'], <Wave8AgentCatalogPanel />)}
+        />
+
+        {/* Wave 9 - Outcome, KPI, ROI, AI Ops and Final Acceptance */}
+        <Route
+          path={ROUTES.AI_OS.OUTCOMES}
+          element={renderInternalToolsShell(['AI', 'Outcomes'], <Wave9OutcomeAIOpsPanel />)}
+        />
+        <Route path="/ai/*" element={<Navigate to={ROUTES.AI_OS.ROOT} replace />} />
 
         {/* AI Chat with Conversation ID - deep link to specific conversation */}
         <Route
@@ -1110,7 +1380,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <UnifiedChatPanelView />
+                  <UnifiedChatPanel mode="full" />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1124,24 +1394,24 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]}>
                 <RouteErrorBoundary>
-                  <V4ComingSoonView />
+                  <KimiModuleGate moduleKey="wordy">
+                    <WordyView />
+                  </KimiModuleGate>
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* KIMI Tabele — contact-required blocking page */}
+        {/* Legacy Excele/Tables route -> canonical Table Studio. */}
         <Route
           path={ROUTES.EXCELE}
           element={
-            <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]}>
-                <RouteErrorBoundary>
-                  <V4ComingSoonView />
-                </RouteErrorBoundary>
-              </MainLayout>
-            </ProtectedRoute>
+            <RedirectPreservingQuery
+              from={ROUTES.EXCELE}
+              to={ROUTES.TABELE}
+              reason="excele_merged_into_table_studio"
+            />
           }
         />
 
@@ -1152,7 +1422,23 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
                 <RouteErrorBoundary>
-                  <V4ComingSoonView />
+                  <KimiModuleGate moduleKey="prezentacje">
+                    <PrezentacjeView />
+                  </KimiModuleGate>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* KIMI Tabele Studio — operational tables workspace (D1=visible, sky accent) */}
+        <Route
+          path={ROUTES.TABELE}
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.tabele', 'Tables')]}>
+                <RouteErrorBoundary>
+                  <TabeleView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1719,6 +2005,21 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path={ROUTES.PRESENTATION_STUDIO}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Presentation Studio']} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Presentation Studio"
+              >
+                <RouteErrorBoundary>
+                  <PresentationStudioPage />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
           path={ROUTES.MEETING}
           element={
             <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]}>
@@ -1773,6 +2074,52 @@ export const AppRoutes: React.FC = () => {
                   <AnimationWrapper variant="slideUp">
                     <DeckBuilder />
                   </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/document-studio"
+          element={
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('documentStudio.breadcrumb', 'Document Studio'),
+                ]
+              }
+              noPadding
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <DocumentStudioView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/document-studio/:artifactId"
+          element={
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('documentStudio.breadcrumb', 'Document Studio'),
+                ]
+              }
+              noPadding
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <DocumentStudioView />
                 </RouteErrorBoundary>
               </ProductionModuleGate>
             </MainLayout>
@@ -1967,22 +2314,6 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path={ROUTES.ONBOARDING}
-          element={
-            <AnimationWrapper variant="slideUp">
-              <OnboardingWizard />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.ONBOARDING_ADMIN}
-          element={
-            <AnimationWrapper variant="slideUp">
-              <OnboardingWizard />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.ONBOARDING_SEED}
           element={
             <AnimationWrapper variant="slideUp">
               <OnboardingWizard />
