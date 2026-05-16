@@ -208,8 +208,19 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+        >
           {error}
+          {errorCode ? (
+            <div
+              data-testid="feedback-backlog-error-code"
+              className="mt-1 text-[11px] font-medium text-amber-700/90 dark:text-amber-300/90"
+            >
+              Code: {errorCode}
+            </div>
+          ) : null}
         </div>
       )}
 

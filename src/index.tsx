@@ -28,6 +28,9 @@ try {
   console.warn('[index.tsx] Feedback collector bootstrap failed:', collectorError);
 }
 
+bootstrapClientWebVitals();
+installDocumentLifecycleWebPerf();
+
 function initThemeClass(): void {
   // Initialize theme synchronously before React renders to prevent flicker
   // This reads from localStorage before React hydration

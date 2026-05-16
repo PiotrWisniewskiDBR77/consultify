@@ -11,6 +11,7 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
   didAutoReload: boolean;
+  telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
 }
 
 /**
@@ -27,6 +28,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
@@ -36,6 +38,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       error,
       errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
@@ -58,8 +61,16 @@ export class RouteErrorBoundary extends Component<Props, State> {
             componentStack: errorInfo.componentStack,
             url: window.location.href,
           }),
+          keepalive: true,
         })
-        .catch(() => {});
+        .then((response) => {
+          this.setState({ telemetryDelivery: response?.ok ? 'sent' : 'failed' });
+        })
+        .catch(() => {
+          this.setState({ telemetryDelivery: 'failed' });
+        });
+    } else {
+      this.setState({ telemetryDelivery: 'unavailable' });
     }
 
     // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
@@ -110,6 +121,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      telemetryDelivery: 'idle',
     });
   };
 
@@ -127,7 +139,11 @@ export class RouteErrorBoundary extends Component<Props, State> {
       // Default error UI
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8"
+          >
             <div className="flex items-center justify-center w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/20 rounded-full mb-4">
               <AlertTriangle className="w-8 h-8 text-rose-600 dark:text-rose-400" />
             </div>
@@ -142,18 +158,34 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
             {this.state.error && (
               <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm font-mono text-rose-600 dark:text-rose-400 mb-2">
-                  {this.state.error.toString()}
+                <p className="text-sm text-rose-600 dark:text-rose-400">
+                  Crash details were captured and redacted for safety.
                 </p>
-                {this.state.errorInfo && (
-                  <details className="text-xs text-gray-600 dark:text-gray-400">
-                    <summary className="cursor-pointer">Stack trace</summary>
-                    <pre className="mt-2 overflow-auto max-h-40">
-                      {this.state.errorInfo.componentStack}
-                    </pre>
-                  </details>
-                )}
               </div>
+            )}
+            {this.state.telemetryDelivery === 'sent' && (
+              <p
+                data-testid="route-error-boundary-telemetry-sent"
+                className="mb-4 text-xs text-emerald-700 dark:text-emerald-300"
+              >
+                Crash diagnostics were sent successfully.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'failed' && (
+              <p
+                data-testid="route-error-boundary-telemetry-failed"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics could not be delivered. You can retry or report manually.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'unavailable' && (
+              <p
+                data-testid="route-error-boundary-telemetry-unavailable"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics were not sent in this environment.
+              </p>
             )}
 
             <div className="flex gap-3">

@@ -174,7 +174,12 @@ describe('System health routes integration (L3)', () => {
     const app = await makeAppWithRouter();
     const res = await dispatch(app, { method: 'GET', url: '/api/system-health' });
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'System health service not available' }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        error: 'System health service not available',
+        code: 'SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
@@ -215,8 +220,13 @@ describe('System health routes integration (L3)', () => {
 
     const app = await makeAppWithRouter();
     const res = await dispatch(app, { method: 'GET', url: '/api/system-health' });
-    expect(res.status).toBe(500);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'Health check failed' }));
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        error: 'Health check failed',
+        code: 'SYSTEM_HEALTH_SUMMARY_READ_FAILED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
@@ -325,13 +335,18 @@ describe('System health routes integration (L3)', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'System health service not available' }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        error: 'System health service not available',
+        code: 'SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
   });
 
-  it('GET /services returns 500 when getServiceStatus throws', async () => {
+  it('GET /services returns 503 when getServiceStatus throws', async () => {
     vi.resetModules();
     vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
       defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
@@ -351,8 +366,13 @@ describe('System health routes integration (L3)', () => {
       url: '/api/system-health/services',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(res.status).toBe(500);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'Failed to fetch service status' }));
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        error: 'Failed to fetch service status',
+        code: 'SYSTEM_HEALTH_SERVICES_READ_FAILED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
@@ -420,6 +440,7 @@ describe('System health routes integration (L3)', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(detailed.status).toBe(503);
+    expect(detailed.body.code).toBe('SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED');
 
     const refresh = await dispatch(app, {
       method: 'POST',
@@ -427,6 +448,7 @@ describe('System health routes integration (L3)', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(refresh.status).toBe(503);
+    expect(refresh.body.code).toBe('SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED');
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
@@ -476,7 +498,7 @@ describe('System health routes integration (L3)', () => {
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
   });
 
-  it('GET /metrics and GET /services and POST /refresh return 500 when service methods throw', async () => {
+  it('GET /metrics and GET /services and POST /refresh return 503 when service methods throw', async () => {
     vi.resetModules();
     vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
       defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
@@ -503,24 +525,39 @@ describe('System health routes integration (L3)', () => {
       url: '/api/system-health/metrics',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(metrics.status).toBe(500);
-    expect(metrics.body).toEqual(expect.objectContaining({ error: 'Failed to fetch system metrics' }));
+    expect(metrics.status).toBe(503);
+    expect(metrics.body).toEqual(
+      expect.objectContaining({
+        error: 'Failed to fetch system metrics',
+        code: 'SYSTEM_HEALTH_METRICS_READ_FAILED',
+      })
+    );
 
     const services = await dispatch(app, {
       method: 'GET',
       url: '/api/system-health/services',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(services.status).toBe(500);
-    expect(services.body).toEqual(expect.objectContaining({ error: 'Failed to fetch service status' }));
+    expect(services.status).toBe(503);
+    expect(services.body).toEqual(
+      expect.objectContaining({
+        error: 'Failed to fetch service status',
+        code: 'SYSTEM_HEALTH_SERVICES_READ_FAILED',
+      })
+    );
 
     const refresh = await dispatch(app, {
       method: 'POST',
       url: '/api/system-health/refresh',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(refresh.status).toBe(500);
-    expect(refresh.body).toEqual(expect.objectContaining({ error: 'Failed to refresh health data' }));
+    expect(refresh.status).toBe(503);
+    expect(refresh.body).toEqual(
+      expect.objectContaining({
+        error: 'Failed to refresh health data',
+        code: 'SYSTEM_HEALTH_REFRESH_FAILED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
@@ -553,7 +590,7 @@ describe('System health routes integration (L3)', () => {
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
   });
 
-  it('GET /detailed returns 500 on service throw and GET /services returns 503 when service method missing', async () => {
+  it('GET /detailed returns 503 on service throw and GET /services returns 503 when service method missing', async () => {
     vi.resetModules();
     vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
       defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
@@ -574,8 +611,13 @@ describe('System health routes integration (L3)', () => {
       url: '/api/system-health/detailed',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(detailed.status).toBe(500);
-    expect(detailed.body).toEqual(expect.objectContaining({ error: 'Health check failed' }));
+    expect(detailed.status).toBe(503);
+    expect(detailed.body).toEqual(
+      expect.objectContaining({
+        error: 'Health check failed',
+        code: 'SYSTEM_HEALTH_DETAILED_READ_FAILED',
+      })
+    );
 
     const services = await dispatch(app, {
       method: 'GET',
@@ -583,7 +625,12 @@ describe('System health routes integration (L3)', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(services.status).toBe(503);
-    expect(services.body).toEqual(expect.objectContaining({ error: 'System health service not available' }));
+    expect(services.body).toEqual(
+      expect.objectContaining({
+        error: 'System health service not available',
+        code: 'SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');

@@ -23,6 +23,12 @@ function parseDatabaseName(connectionString: string | undefined): string | null 
   }
 }
 
+function percentageString(part: number, total: number): string {
+  if (!Number.isFinite(total) || total <= 0) return '0.0%';
+  if (!Number.isFinite(part) || part <= 0) return '0.0%';
+  return `${((part / total) * 100).toFixed(1)}%`;
+}
+
 /**
  * GET /api/health/database
  * Database health check
@@ -63,7 +69,7 @@ router.get('/database', async (req: Request, res: Response) => {
     res.status(503).json({
       status: 'error',
       message: 'Health check failed',
-      error: String(error),
+      code: 'HEALTH_DATABASE_PROBE_FAILED',
       timestamp: new Date().toISOString(),
     });
   }
@@ -91,17 +97,17 @@ router.get('/connections', async (req: Request, res: Response) => {
       status: 'ok',
       connections: stats,
       utilization: {
-        active: `${((stats.active / stats.total) * 100).toFixed(1)}%`,
-        idle: `${((stats.idle / stats.total) * 100).toFixed(1)}%`,
+        active: percentageString(stats.active, stats.total),
+        idle: percentageString(stats.idle, stats.total),
       },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     logger.error('[HealthCheck] Connection status check failed:', error);
-    res.status(500).json({
+    res.status(503).json({
       status: 'error',
       message: 'Connection status check failed',
-      error: String(error),
+      code: 'HEALTH_CONNECTION_POOL_STATUS_FAILED',
       timestamp: new Date().toISOString(),
     });
   }
@@ -180,7 +186,7 @@ router.get('/data-context', verifyToken, async (req: Request, res: Response) => 
     res.status(500).json({
       status: 'error',
       message: 'Failed to resolve data context',
-      error: String(error),
+      code: 'HEALTH_DATA_CONTEXT_RESOLVE_FAILED',
       timestamp: new Date().toISOString(),
     });
   }

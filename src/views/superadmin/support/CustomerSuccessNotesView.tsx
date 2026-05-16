@@ -79,11 +79,126 @@ const getCreatedNoteId = (value: unknown) => {
   );
 };
 
+const CUSTOMER_SUCCESS_NOTES_COPY = {
+  organizationsLoadFailed: 'Could not load organizations.',
+  notesLoadFailed: 'Customer success notes unavailable.',
+  createFailed: 'Could not create customer success note.',
+  createNotConfirmed: 'Customer success note creation was not confirmed by the server',
+  notesPayloadInvalid: 'Customer success notes response was not a list',
+};
+
+const LEAKY_TOKENS = ['sqlstate', '/var/', 'internal:', 'secret', 'stack', 'trace'];
+
+function normalizeCsNotesErrorCode(input: unknown): string | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const payload = input as Record<string, unknown>;
+  const candidates = [
+    payload.code,
+    (payload.error as Record<string, unknown> | undefined)?.code,
+    (payload.data as Record<string, unknown> | undefined)?.code,
+    ((payload.data as Record<string, unknown> | undefined)?.error as Record<string, unknown> | undefined)
+      ?.code,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  return null;
+}
+
+function normalizeCsNotesErrorDetail(input: unknown): string | null {
+  const raw = input instanceof Error ? input.message : typeof input === 'string' ? input : '';
+  const detail = raw.trim();
+  if (!detail) return null;
+  const lowered = detail.toLowerCase();
+  if (LEAKY_TOKENS.some((token) => lowered.includes(token))) {
+    return null;
+  }
+  return detail;
+}
+
+function normalizeOrganizationsPayload(input: unknown): any[] {
+  if (Array.isArray(input)) return input;
+  if (!input || typeof input !== 'object') return [];
+
+  const payload = input as Record<string, unknown>;
+  const direct = payload.organizations;
+  if (Array.isArray(direct)) return direct as any[];
+
+  const nestedData = payload.data as Record<string, unknown> | undefined;
+  if (nestedData) {
+    if (Array.isArray(nestedData.organizations)) return nestedData.organizations as any[];
+    const nestedDataData = nestedData.data as Record<string, unknown> | undefined;
+    if (nestedDataData && Array.isArray(nestedDataData.organizations)) {
+      return nestedDataData.organizations as any[];
+    }
+  }
+
+  return [];
+}
+
+function normalizeNotesPayload(input: unknown): any[] | null {
+  if (Array.isArray(input)) return input;
+  if (!input || typeof input !== 'object') return null;
+
+  const payload = input as Record<string, unknown>;
+  const candidates: unknown[] = [
+    payload.notes,
+    payload.items,
+    (payload.data as Record<string, unknown> | undefined)?.notes,
+    (payload.data as Record<string, unknown> | undefined)?.items,
+    ((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
+      ?.notes,
+    ((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
+      ?.items,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate as any[];
+    }
+  }
+
+  return null;
+}
+
+function resolveCreatedNoteId(input: unknown): string | null {
+  if (!input || typeof input !== 'object') return null;
+  const payload = input as Record<string, unknown>;
+  const candidates: unknown[] = [
+    payload.id,
+    (payload.note as Record<string, unknown> | undefined)?.id,
+    (payload.data as Record<string, unknown> | undefined)?.id,
+    ((payload.data as Record<string, unknown> | undefined)?.note as Record<string, unknown> | undefined)
+      ?.id,
+    (((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
+      ?.note as Record<string, unknown> | undefined)?.id,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+  return null;
+}
+
 export const CustomerSuccessNotesView: React.FC = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
   const [notes, setNotes] = useState<CustomerSuccessNoteRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [organizationsLoadError, setOrganizationsLoadError] = useState<string | null>(null);
+  const [notesLoadError, setNotesLoadError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -104,9 +219,10 @@ export const CustomerSuccessNotesView: React.FC = () => {
       setOrganizations(normalizedOrgs);
       setSelectedOrgId((current) => current || normalizedOrgs[0]?.id || '');
     } catch (err: unknown) {
-      const message = normalizeApiErrorMessage(err, 'Failed to fetch organizations');
-      setLoadError(message);
-      toast.error(message);
+      setErrorCode(normalizeCsNotesErrorCode(err));
+      setErrorDetail(normalizeCsNotesErrorDetail(err));
+      setLoadError(CUSTOMER_SUCCESS_NOTES_COPY.organizationsLoadFailed);
+      toast.error(CUSTOMER_SUCCESS_NOTES_COPY.organizationsLoadFailed);
     }
   }, []);
 
@@ -123,10 +239,11 @@ export const CustomerSuccessNotesView: React.FC = () => {
       setNotes(normalized);
       return normalized;
     } catch (err: unknown) {
-      const message = normalizeApiErrorMessage(err, 'Failed to fetch notes');
+      setErrorCode(normalizeCsNotesErrorCode(err));
+      setErrorDetail(normalizeCsNotesErrorDetail(err));
       setNotes([]);
-      setLoadError(message);
-      toast.error(message);
+      setLoadError(CUSTOMER_SUCCESS_NOTES_COPY.notesLoadFailed);
+      toast.error(CUSTOMER_SUCCESS_NOTES_COPY.notesLoadFailed);
       return null;
     } finally {
       setLoading(false);
@@ -150,6 +267,9 @@ export const CustomerSuccessNotesView: React.FC = () => {
       return;
     }
     setCreating(true);
+    setCreateError(null);
+    setErrorCode(null);
+    setErrorDetail(null);
     try {
       setActionError(null);
       const result = await Api.createCustomerSuccessNote(selectedOrgId, {
@@ -173,16 +293,32 @@ export const CustomerSuccessNotesView: React.FC = () => {
       setShowCreateModal(false);
       setNewNote({ title: '', content: '', note_type: 'General' });
     } catch (err: unknown) {
-      const message = normalizeApiErrorMessage(err, 'Failed to create note');
-      setActionError(message);
-      toast.error(message);
+      setErrorCode(normalizeCsNotesErrorCode(err));
+      setErrorDetail(normalizeCsNotesErrorDetail(err));
+      setActionError(CUSTOMER_SUCCESS_NOTES_COPY.createFailed);
+      toast.error(CUSTOMER_SUCCESS_NOTES_COPY.createFailed);
     } finally {
       setCreating(false);
     }
   };
 
+  const activeError = organizationsLoadError || notesLoadError || createError;
+
   return (
     <div className="p-6 space-y-6">
+      {activeError ? (
+        <div>
+          <DegradedState title={activeError} description={errorDetail || undefined} />
+          {errorCode ? (
+            <div
+              data-testid="customer-success-notes-error-code"
+              className="mt-2 text-xs font-medium text-orange-700 dark:text-orange-200"
+            >
+              Code: {errorCode}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">

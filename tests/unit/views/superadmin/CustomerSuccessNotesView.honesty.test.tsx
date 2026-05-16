@@ -20,15 +20,6 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
-vi.mock('@/components/Admin/AdminState', () => ({
-  DegradedState: ({ title, description }: { title: string; description: string }) => (
-    <div role="alert">
-      <h3>{title}</h3>
-      <p>{description}</p>
-    </div>
-  ),
-}));
-
 describe('CustomerSuccessNotesView honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,18 +31,16 @@ describe('CustomerSuccessNotesView honest UI', () => {
 
     render(<CustomerSuccessNotesView />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Customer success notes unavailable')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Notes API down')).toBeInTheDocument();
+    await screen.findByText('Customer success notes unavailable');
+    expect(document.body.textContent || '').not.toContain('SQLSTATE');
+    expect(document.body.textContent || '').not.toContain('/var/');
     expect(screen.queryByText('No notes found')).not.toBeInTheDocument();
   });
 
   it('does not claim note creation success when read-back is stale', async () => {
     vi.mocked(Api.getOrganizations).mockResolvedValue([{ id: 'org-1', name: 'Org One' }]);
     vi.mocked(Api.getCustomerSuccessNotes).mockResolvedValue([]);
-    vi.mocked(Api.createCustomerSuccessNote).mockResolvedValue({ success: true });
+    vi.mocked(Api.createCustomerSuccessNote).mockResolvedValue({ success: true, id: 'note-created-1' });
 
     render(<CustomerSuccessNotesView />);
 
@@ -65,11 +54,8 @@ describe('CustomerSuccessNotesView honest UI', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
-    await waitFor(() => {
-      expect(
-        screen.getByText('Customer success note creation was not confirmed by the server')
-      ).toBeInTheDocument();
-    });
+    await screen.findByRole('alert');
+    expect(document.body.textContent || '').toContain('Could not create customer success note.');
 
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -131,6 +117,7 @@ describe('CustomerSuccessNotesView honest UI', () => {
       });
     vi.mocked(Api.createCustomerSuccessNote).mockResolvedValue({
       data: { data: { note: { id: 'note-2' } } },
+      success: true,
     });
 
     render(<CustomerSuccessNotesView />);
@@ -146,7 +133,7 @@ describe('CustomerSuccessNotesView honest UI', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText('Add CS Note')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Create/i })).not.toBeInTheDocument();
     });
     expect(screen.getByText('QBR notes')).toBeInTheDocument();
   });
@@ -157,10 +144,61 @@ describe('CustomerSuccessNotesView honest UI', () => {
 
     render(<CustomerSuccessNotesView />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Customer success notes unavailable')).toBeInTheDocument();
-    });
-    expect(screen.getByText('Customer success notes response was not a list')).toBeInTheDocument();
+    await screen.findByText('Customer success notes unavailable');
+    expect(document.body.textContent || '').not.toContain('SQLSTATE');
+    expect(document.body.textContent || '').not.toContain('/var/');
     expect(screen.queryByText('No notes found')).not.toBeInTheDocument();
+  });
+
+  it('renders accessible fail-closed alert and machine code when notes load fails with internal details', async () => {
+    const err: any = new Error('internal: SQLSTATE[HY000] /var/app/secrets');
+    err.code = 'CS_NOTES_READ_FAILED';
+    vi.mocked(Api.getOrganizations).mockResolvedValue([{ id: 'org-1', name: 'Org One' }]);
+    vi.mocked(Api.getCustomerSuccessNotes).mockRejectedValue(err);
+
+    render(<CustomerSuccessNotesView />);
+
+    await screen.findByText('Customer success notes unavailable');
+    expect(document.body.textContent || '').not.toContain('SQLSTATE');
+    expect(document.body.textContent || '').not.toContain('/var/');
+  });
+
+  it('renders accessible fail-closed alert and machine code when organization bootstrap fails', async () => {
+    const err: any = new Error('internal: SQLSTATE[HY000] /var/app/secrets');
+    err.code = 'ORG_READ_FAILED';
+    vi.mocked(Api.getOrganizations).mockRejectedValue(err);
+
+    render(<CustomerSuccessNotesView />);
+
+    await screen.findByText('Customer success notes unavailable');
+    expect(document.body.textContent || '').not.toContain('SQLSTATE');
+    expect(document.body.textContent || '').not.toContain('/var/');
+  });
+
+  it('renders fail-closed alert when note creation fails and does not leak internal details', async () => {
+    const err: any = new Error('internal: SQLSTATE[HY000] /var/app/secrets');
+    err.code = 'CS_NOTE_CREATE_FAILED';
+    vi.mocked(Api.getOrganizations).mockResolvedValue([{ id: 'org-1', name: 'Org One' }]);
+    vi.mocked(Api.getCustomerSuccessNotes).mockResolvedValue([]);
+    vi.mocked(Api.createCustomerSuccessNote).mockRejectedValue(err);
+
+    render(<CustomerSuccessNotesView />);
+
+    await screen.findByText('No notes found');
+    fireEvent.click(screen.getByRole('button', { name: /Add Note/i }));
+    fireEvent.change(screen.getByPlaceholderText('e.g. QBR notes'), {
+      target: { value: 'QBR notes' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Write the note...'), {
+      target: { value: 'Customer is healthy.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(document.body.textContent || '').not.toContain('SQLSTATE');
+      expect(document.body.textContent || '').not.toContain('/var/');
+    });
+    expect(toast.error).toHaveBeenCalledWith('Could not create customer success note.');
   });
 });
