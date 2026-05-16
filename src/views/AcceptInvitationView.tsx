@@ -124,7 +124,12 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
       }
 
       setSuccess(true);
-      onAccepted?.(data.user);
+      onAccepted?.(
+        data?.user || {
+          id: data?.userId || '',
+          email: invitation?.email || '',
+        }
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to accept invitation';
       setError(message);

@@ -6,6 +6,7 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
 import { buildTeresaVoiceSystemInstruction } from '../utils/teresaVoiceInstruction';
+import { getTeresaStartFailureMessage } from '../components/AIChat/teresaRuntimeCopy';
 
 interface TeresaVoiceContextValue extends UseTeresaVoiceReturn {
   /** Toggle voice on/off — creates conversation if needed */
@@ -375,6 +376,7 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
         setConversationChatLanguage(newConv.id, chatLanguage as any);
       } catch (err) {
         console.error('[TeresaVoice] Failed to create conversation:', err);
+        toast.error(getTeresaStartFailureMessage(i18n.language));
         return;
       }
     }
