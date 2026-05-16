@@ -286,7 +286,7 @@ router.get(
 router.get(
   '/initiatives/:initiativeId/gate-readiness-check',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const rawId = firstParam((req.params as { initiativeId?: string }).initiativeId);
     const parsed = initiativeIdParamSchema.safeParse(rawId);
     if (!parsed.success) {
@@ -299,8 +299,8 @@ router.get(
     const readiness = await getInitiativeGateReadinessRead(
       parsed.data,
       organizationId,
-      req.user?.id,
-      req.user?.role
+      userId,
+      userRole
     );
     if (!readiness) {
       return res.status(404).json({ error: 'Initiative not found' });
@@ -515,7 +515,7 @@ router.get(
 router.get(
   '/initiatives/:initiativeId/handoff',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const rawId = firstParam((req.params as { initiativeId?: string }).initiativeId);
     const parsed = initiativeIdParamSchema.safeParse(rawId);
     if (!parsed.success) {
@@ -540,7 +540,7 @@ router.get(
     const handoff = buildInitiativeOutboundHandoffPayload({
       initiativeRow: row as Record<string, unknown>,
       organizationId,
-      handoffBy: req.user?.id ?? null,
+      handoffBy: userId,
       kind,
     });
 

@@ -71,16 +71,29 @@ vi.mock('../../../utils/v8MetricsStore.js', () => ({
   getV8MetricsSnapshot: vi.fn().mockReturnValue({}),
 }));
 
-vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
-  v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
-}));
-
-import v8Router from '../index.js';
+import planningRoutes from '../planning.routes.js';
 
 function createApp(): Express {
   const app = express();
   app.use(express.json());
-  app.use('/api/v8', v8Router);
+  app.use((req: any, res, next) => {
+    if (!mockUser) {
+      res.status(401).json({ error: 'No token provided' });
+      return;
+    }
+    req.userId = mockUser.id;
+    req.userRole = mockUser.role;
+    req.organizationId = mockUser.organizationId;
+    req.user = mockUser;
+    req.v8Context = {
+      organizationId: mockUser.organizationId,
+      userId: mockUser.id,
+      userRole: mockUser.role,
+      isSuperAdmin: mockUser.isSuperAdmin,
+    };
+    next();
+  });
+  app.use('/api/v8/planning', planningRoutes);
   return app;
 }
 
@@ -121,6 +134,7 @@ describe('P11 V8 planning handoff route', () => {
     expect(h?.initiativeId).toBe(INIT);
     expect(h?.initiativeTitle).toBe('Handoff initiative');
     expect(h?.initiativeLifecycleState).toBe('planned');
+    expect(h?.handoffBy).toBe(UID);
     expect(h?.kpiIntent).toBeTruthy();
     expect(h?.executionIntent).toBeUndefined();
     expect(Array.isArray(h?.contextPack)).toBe(true);
