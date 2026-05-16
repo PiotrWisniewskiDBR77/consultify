@@ -594,6 +594,7 @@ export function WorkCanvasDocumentPanel({
   const [isTemplatesOpen, setIsTemplatesOpen] = React.useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = React.useState(false);
   const [actionFeedback, setActionFeedback] = React.useState<string | null>(null);
+  const [actionFeedbackTone, setActionFeedbackTone] = React.useState<'status' | 'alert'>('status');
   const [activeActionId, setActiveActionId] = React.useState<CanvasActionId | null>(null);
   const [canvasSelection, setCanvasSelection] = React.useState<CanvasSelection | null>(null);
   const [versions, setVersions] = React.useState<CanvasVersionSummary[]>([]);
@@ -649,6 +650,21 @@ export function WorkCanvasDocumentPanel({
   const selectedWorkflowTemplateOption =
     workflowTemplateOptions.find((template) => template.id === selectedWorkflowTemplate) ||
     workflowTemplateOptions[0];
+
+  const setStatusFeedback = React.useCallback((message: string) => {
+    setActionFeedbackTone('status');
+    setActionFeedback(message);
+  }, []);
+
+  const setAlertFeedback = React.useCallback((message: string) => {
+    setActionFeedbackTone('alert');
+    setActionFeedback(message);
+  }, []);
+
+  const setCanvasErrorFeedback = React.useCallback((error: unknown, fallback: string) => {
+    setActionFeedbackTone('alert');
+    setActionFeedback(workCanvasActionErrorMessage(error, fallback));
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -971,7 +987,7 @@ export function WorkCanvasDocumentPanel({
           saveState: 'failed',
           projectionError: message,
         }));
-        setActionFeedback(message);
+        setAlertFeedback(message);
         return null;
       }
     },
@@ -1000,15 +1016,11 @@ export function WorkCanvasDocumentPanel({
             ? session.id
             : null;
       if (researchSessionId) {
-        setActionFeedback(`ResearchSession linked: ${researchSessionId}.`);
+        setStatusFeedback(`ResearchSession linked: ${researchSessionId}.`);
       }
       return researchSessionId;
     } catch (error) {
-      setActionFeedback(
-        error instanceof Error
-          ? `ResearchSession planning failed: ${error.message}`
-          : 'ResearchSession planning failed.'
-      );
+      setCanvasErrorFeedback(error, 'ResearchSession planning failed.');
       return null;
     }
   };
@@ -1056,7 +1068,7 @@ export function WorkCanvasDocumentPanel({
 
   const copyMarkdown = async () => {
     await navigator.clipboard?.writeText(documentState.contentMd);
-    setActionFeedback('Markdown copied to clipboard.');
+    setStatusFeedback('Markdown copied to clipboard.');
   };
 
   const exportDocument = async (
@@ -1064,7 +1076,7 @@ export function WorkCanvasDocumentPanel({
   ) => {
     const draft = await ensurePersistedDraft();
     if (!draft?.draftId) {
-      setActionFeedback('Export is available after the draft is saved.');
+      setAlertFeedback('Export is available after the draft is saved.');
       return;
     }
 
@@ -1078,16 +1090,16 @@ export function WorkCanvasDocumentPanel({
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      setActionFeedback(`Exported ${filename}.`);
+      setStatusFeedback(`Exported ${filename}.`);
     } catch (error) {
-      setActionFeedback(error instanceof Error ? error.message : 'Failed to export Canvas draft.');
+      setCanvasErrorFeedback(error, 'Failed to export Canvas draft.');
     }
   };
 
   const openDocumentFolder = async () => {
     const draft = await ensurePersistedDraft();
     if (!draft?.draftId) {
-      setActionFeedback('Document location is available after the draft is saved.');
+      setAlertFeedback('Document location is available after the draft is saved.');
       return;
     }
     window.open(
@@ -1095,7 +1107,7 @@ export function WorkCanvasDocumentPanel({
       '_blank',
       'noopener,noreferrer'
     );
-    setActionFeedback('Document location opened.');
+    setStatusFeedback('Document location opened.');
   };
 
   const handleUploadFiles = async (files: FileList | null) => {
@@ -1115,28 +1127,28 @@ export function WorkCanvasDocumentPanel({
             ? arrayBufferToBase64(await datasetFile.arrayBuffer())
             : await datasetFile.text();
         setPendingDataset({ filename: datasetFile.name, format, content });
-        setActionFeedback(
+        setStatusFeedback(
           `${datasetFile.name} ready for Canvas dataset actions: table, chart, dashboard or findings.`
         );
       } catch (error) {
-        setActionFeedback(error instanceof Error ? error.message : 'Failed to read dataset file.');
+        setCanvasErrorFeedback(error, 'Failed to read dataset file.');
       }
       return;
     }
-    setActionFeedback(
+    setStatusFeedback(
       `Uploading ${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} to this workspace...`
     );
     try {
       const uploaded = await Promise.all(
         selectedFiles.map((file) => Api.uploadChatAttachment(file))
       );
-      setActionFeedback(
+      setStatusFeedback(
         `Uploaded ${uploaded.length} file${uploaded.length === 1 ? '' : 's'}: ${uploaded
           .map((file) => file.filename)
           .join(', ')}`
       );
     } catch (error) {
-      setActionFeedback(error instanceof Error ? error.message : 'Failed to upload files.');
+      setCanvasErrorFeedback(error, 'Failed to upload files.');
     }
   };
 
@@ -1146,14 +1158,14 @@ export function WorkCanvasDocumentPanel({
     titlePrefix?: string
   ) => {
     if (!pendingDataset) {
-      setActionFeedback('Upload a CSV, JSON, or XLSX dataset first.');
+      setAlertFeedback('Upload a CSV, JSON, or XLSX dataset first.');
       return;
     }
     const title =
       Boolean(titlePrefix) || artifactKind === 'dashboard'
         ? `${titlePrefix || 'KPI Dashboard'}: ${pendingDataset.filename}`
         : `${artifactKind} from ${pendingDataset.filename}`;
-    setActionFeedback(`Preparing ${title} preview...`);
+    setStatusFeedback(`Preparing ${title} preview...`);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId)
@@ -1183,9 +1195,9 @@ export function WorkCanvasDocumentPanel({
         applyLabel: `Apply ${titlePrefix || artifactKind}`,
         successMessage: `${title} created.`,
       });
-      setActionFeedback(`Preview ready for ${title}.`);
+      setStatusFeedback(`Preview ready for ${title}.`);
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to analyze dataset.'));
+      setCanvasErrorFeedback(error, 'Failed to analyze dataset.');
     }
   };
 
@@ -1203,7 +1215,7 @@ export function WorkCanvasDocumentPanel({
   const createArtifactBlockFromSelection = async (kind: CanvasArtifactBlockKind) => {
     const selectedText = canvasSelection?.selectedText?.trim();
     if (!selectedText) {
-      setActionFeedback('Select Canvas text first, then create a block.');
+      setAlertFeedback('Select Canvas text first, then create a block.');
       return;
     }
     const title =
@@ -1216,7 +1228,7 @@ export function WorkCanvasDocumentPanel({
             : kind === 'research'
               ? 'Research from selection'
               : 'Decision from selection';
-    setActionFeedback(`Preparing ${title.toLowerCase()}...`);
+    setStatusFeedback(`Preparing ${title.toLowerCase()}...`);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId)
@@ -1246,9 +1258,9 @@ export function WorkCanvasDocumentPanel({
         applyLabel: `Apply ${title}`,
         successMessage: `${title} created from selected Canvas text.`,
       });
-      setActionFeedback(`Preview ready: ${title}.`);
+      setStatusFeedback(`Preview ready: ${title}.`);
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, `Failed to create ${kind} block.`));
+      setCanvasErrorFeedback(error, `Failed to create ${kind} block.`);
     }
   };
 
@@ -1256,7 +1268,7 @@ export function WorkCanvasDocumentPanel({
     const selectedText = canvasSelection?.selectedText || '';
     const replacement = shortcutReplacementForSelection(shortcut, selectedText);
     if (!replacement.trim()) {
-      setActionFeedback('Select Canvas text before using a writing shortcut.');
+      setAlertFeedback('Select Canvas text before using a writing shortcut.');
       return;
     }
     setSelectionEditDraft(replacement);
@@ -1266,14 +1278,14 @@ export function WorkCanvasDocumentPanel({
     const selectedText = canvasSelection?.selectedText?.trim();
     const replacementMd = selectionEditDraft.trim();
     if (!selectedText) {
-      setActionFeedback('Select Canvas text first, then draft an edit.');
+      setAlertFeedback('Select Canvas text first, then draft an edit.');
       return;
     }
     if (!replacementMd) {
-      setActionFeedback('Write a replacement before previewing the edit.');
+      setAlertFeedback('Write a replacement before previewing the edit.');
       return;
     }
-    setActionFeedback('Preparing selection edit preview...');
+    setStatusFeedback('Preparing selection edit preview...');
     try {
       const operation: WorkCanvasOperation = {
         type: 'replace_selection',
@@ -1299,7 +1311,7 @@ export function WorkCanvasDocumentPanel({
           applyLabel: 'Apply edit suggestion',
           successMessage: 'Selection edit applied.',
         });
-        setActionFeedback('Selection edit preview ready (local). Save to persist this change.');
+        setStatusFeedback('Selection edit preview ready (local). Save to persist this change.');
         return;
       }
       const draft = await ensurePersistedDraft();
@@ -1317,15 +1329,15 @@ export function WorkCanvasDocumentPanel({
         applyLabel: 'Apply edit suggestion',
         successMessage: 'Selection edit applied.',
       });
-      setActionFeedback('Selection edit preview ready.');
+      setStatusFeedback('Selection edit preview ready.');
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to preview selection edit.'));
+      setCanvasErrorFeedback(error, 'Failed to preview selection edit.');
     }
   };
 
   const applyPendingOperation = async () => {
     if (!pendingOperation) return;
-    setActionFeedback('Applying approved Canvas transformation...');
+    setStatusFeedback('Applying approved Canvas transformation...');
     try {
       if (pendingOperation.draftId === '__local__') {
         if (pendingOperation.operation.type === 'replace_selection') {
@@ -1338,7 +1350,7 @@ export function WorkCanvasDocumentPanel({
             saveState: 'unsaved',
           }));
           setPendingOperation(null);
-          setActionFeedback(pendingOperation.successMessage);
+          setStatusFeedback(pendingOperation.successMessage);
           return;
         }
         throw new Error('Local apply is only available for selection edit preview.');
@@ -1356,21 +1368,21 @@ export function WorkCanvasDocumentPanel({
       );
       if (result.data.diff) setLatestDiff(result.data.diff);
       setPendingOperation(null);
-      setActionFeedback(pendingOperation.successMessage);
+      setStatusFeedback(pendingOperation.successMessage);
       await loadVersions();
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to apply Canvas transformation.'));
+      setCanvasErrorFeedback(error, 'Failed to apply Canvas transformation.');
     }
   };
 
   const rejectPendingOperation = () => {
     setPendingOperation(null);
-    setActionFeedback('Canvas transformation rejected. Draft unchanged.');
+    setStatusFeedback('Canvas transformation rejected. Draft unchanged.');
   };
 
   const revisePendingSelectionEdit = () => {
     setPendingOperation(null);
-    setActionFeedback('Selection edit reopened. Adjust the replacement and preview again.');
+    setStatusFeedback('Selection edit reopened. Adjust the replacement and preview again.');
   };
 
   const updateTitle = (title: string) => {
@@ -1447,7 +1459,7 @@ export function WorkCanvasDocumentPanel({
 
   const retryProjection = async () => {
     if (!documentState.draftId) {
-      setActionFeedback('Projection retry needs a persisted Canvas draft.');
+      setAlertFeedback('Projection retry needs a persisted Canvas draft.');
       return;
     }
     const blockForRetry = (documentState.blocks || []).find(
@@ -1455,7 +1467,7 @@ export function WorkCanvasDocumentPanel({
         block.markdownProjectionStatus === 'failed' || block.markdownProjectionStatus === 'missing'
     );
     if (!blockForRetry) {
-      setActionFeedback('Projection retry is available only for blocks with failed projection.');
+      setAlertFeedback('Projection retry is available only for blocks with failed projection.');
       return;
     }
 
@@ -1481,16 +1493,16 @@ export function WorkCanvasDocumentPanel({
       if (result?.data?.diff) {
         setLatestDiff(result.data.diff as CanvasDiffSummary);
       }
-      setActionFeedback('Projection retried from backend runtime.');
+      setStatusFeedback('Projection retried from backend runtime.');
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Projection retry failed.'));
+      setCanvasErrorFeedback(error, 'Projection retry failed.');
     } finally {
       setIsProjectionRefreshing(false);
     }
   };
 
   const handleUnavailableAction = (availability: CanvasActionAvailability) => {
-    setActionFeedback(availability.reason || `${availability.label} is not available yet.`);
+    setAlertFeedback(availability.reason || `${availability.label} is not available yet.`);
   };
 
   const ensurePersistedDraft = async (): Promise<CanvasDocumentState | null> => {
@@ -1504,7 +1516,7 @@ export function WorkCanvasDocumentPanel({
     target: 'idea' | 'note' | 'initiative'
   ) => {
     setActiveActionId(actionId);
-    setActionFeedback(`Saving Canvas to ${target}...`);
+    setStatusFeedback(`Saving Canvas to ${target}...`);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId) throw new Error('Canvas draft could not be saved before handoff.');
@@ -1516,11 +1528,9 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
-      setActionFeedback(`${linked.title} saved to ${linked.type}. ${linked.id}`);
+      setStatusFeedback(`${linked.title} saved to ${linked.type}. ${linked.id}`);
     } catch (error) {
-      setActionFeedback(
-        error instanceof Error ? error.message : `Failed to save Canvas to ${target}.`
-      );
+      setCanvasErrorFeedback(error, `Failed to save Canvas to ${target}.`);
     } finally {
       setActiveActionId(null);
     }
@@ -1531,7 +1541,7 @@ export function WorkCanvasDocumentPanel({
     outputType: 'presentation' | 'table' | 'report'
   ) => {
     setActiveActionId(actionId);
-    setActionFeedback(`Creating ${outputType} from Canvas...`);
+    setStatusFeedback(`Creating ${outputType} from Canvas...`);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId)
@@ -1544,9 +1554,9 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
-      setActionFeedback(`${output.title} created. ${output.id}`);
+      setStatusFeedback(`${output.title} created. ${output.id}`);
     } catch (error) {
-      setActionFeedback(error instanceof Error ? error.message : `Failed to create ${outputType}.`);
+      setCanvasErrorFeedback(error, `Failed to create ${outputType}.`);
     } finally {
       setActiveActionId(null);
     }
@@ -1554,7 +1564,7 @@ export function WorkCanvasDocumentPanel({
 
   const finalizeResearchReport = async () => {
     if (isFinalizingResearchReport) return;
-    setActionFeedback('Finalizing research report from Canvas evidence...');
+    setStatusFeedback('Finalizing research report from Canvas evidence...');
     setIsFinalizingResearchReport(true);
     try {
       const draft = await ensurePersistedDraft();
@@ -1571,11 +1581,11 @@ export function WorkCanvasDocumentPanel({
       const evidenceCount = Array.isArray((result.data.readBack as any)?.evidenceSummary)
         ? (result.data.readBack as any).evidenceSummary.length
         : 0;
-      setActionFeedback(
+      setStatusFeedback(
         `Research final report recorded (${report.id}) with ${evidenceCount} evidence block${evidenceCount === 1 ? '' : 's'}.`
       );
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to finalize research report.'));
+      setCanvasErrorFeedback(error, 'Failed to finalize research report.');
     } finally {
       setIsFinalizingResearchReport(false);
     }
@@ -1583,7 +1593,7 @@ export function WorkCanvasDocumentPanel({
 
   const runShareAction = async () => {
     setActiveActionId('share');
-    setActionFeedback('Preparing Canvas share link...');
+    setStatusFeedback('Preparing Canvas share link...');
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId) throw new Error('Canvas draft could not be saved before sharing.');
@@ -1596,9 +1606,9 @@ export function WorkCanvasDocumentPanel({
         })
       );
       await navigator.clipboard?.writeText(shareUrl);
-      setActionFeedback(`Share link ready and copied: ${shareUrl}`);
+      setStatusFeedback(`Share link ready and copied: ${shareUrl}`);
     } catch (error) {
-      setActionFeedback(error instanceof Error ? error.message : 'Failed to share Canvas draft.');
+      setCanvasErrorFeedback(error, 'Failed to share Canvas draft.');
     } finally {
       setActiveActionId(null);
     }
@@ -1606,7 +1616,7 @@ export function WorkCanvasDocumentPanel({
 
   const startWorkflow = async () => {
     if (isStartingWorkflow) return;
-    setActionFeedback('Starting governed Canvas workflow...');
+    setStatusFeedback('Starting governed Canvas workflow...');
     setIsStartingWorkflow(true);
     try {
       const draft = await ensurePersistedDraft();
@@ -1622,9 +1632,9 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
-      setActionFeedback(`Workflow started: ${result.data.workflowRun.title}.`);
+      setStatusFeedback(`Workflow started: ${result.data.workflowRun.title}.`);
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to start Canvas workflow.'));
+      setCanvasErrorFeedback(error, 'Failed to start Canvas workflow.');
     } finally {
       setIsStartingWorkflow(false);
     }
@@ -1633,7 +1643,7 @@ export function WorkCanvasDocumentPanel({
   const resumeWorkflow = async (workflowRunId: string) => {
     if (!documentState.draftId) return;
     if (resumingWorkflowById[workflowRunId]) return;
-    setActionFeedback('Resuming Canvas workflow...');
+    setStatusFeedback('Resuming Canvas workflow...');
     setResumingWorkflowById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasResumeWorkflow(documentState.draftId, workflowRunId, {
@@ -1646,9 +1656,9 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
-      setActionFeedback(`Workflow resumed: ${result.data.workflowRun.title}.`);
+      setStatusFeedback(`Workflow resumed: ${result.data.workflowRun.title}.`);
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to resume Canvas workflow.'));
+      setCanvasErrorFeedback(error, 'Failed to resume Canvas workflow.');
     } finally {
       setResumingWorkflowById((current) => ({ ...current, [workflowRunId]: false }));
     }
@@ -1657,7 +1667,7 @@ export function WorkCanvasDocumentPanel({
   const runWorkflowStep = async (workflowRunId: string) => {
     if (!documentState.draftId) return;
     if (runningWorkflowStepById[workflowRunId]) return;
-    setActionFeedback('Running approved Canvas workflow step...');
+    setStatusFeedback('Running approved Canvas workflow step...');
     setRunningWorkflowStepById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasRunWorkflowStep(documentState.draftId, workflowRunId, {
@@ -1671,13 +1681,13 @@ export function WorkCanvasDocumentPanel({
         })
       );
       const output = result.data.outputResource;
-      setActionFeedback(
+      setStatusFeedback(
         output
           ? `Workflow output created: ${output.title}. ${output.id}`
           : `Workflow step completed: ${result.data.workflowRun.title}.`
       );
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to run Canvas workflow step.'));
+      setCanvasErrorFeedback(error, 'Failed to run Canvas workflow step.');
     } finally {
       setRunningWorkflowStepById((current) => ({ ...current, [workflowRunId]: false }));
     }
@@ -1695,7 +1705,7 @@ export function WorkCanvasDocumentPanel({
       reviewerInput === undefined
         ? workflow?.collaboration?.reviewerId || null
         : reviewerInput.trim() || null;
-    setActionFeedback('Updating Canvas workflow review metadata...');
+    setStatusFeedback('Updating Canvas workflow review metadata...');
     setUpdatingWorkflowReviewById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasUpdateWorkflowCollaboration(
@@ -1713,11 +1723,9 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
-      setActionFeedback(`Workflow review metadata updated: ${lifecycle}.`);
+      setStatusFeedback(`Workflow review metadata updated: ${lifecycle}.`);
     } catch (error) {
-      setActionFeedback(
-        canvasActionErrorMessage(error, 'Failed to update workflow review metadata.')
-      );
+      setCanvasErrorFeedback(error, 'Failed to update workflow review metadata.');
     } finally {
       setUpdatingWorkflowReviewById((current) => ({ ...current, [workflowRunId]: false }));
     }
@@ -1728,10 +1736,10 @@ export function WorkCanvasDocumentPanel({
     if (addingWorkflowCommentById[workflowRunId]) return;
     const body = (workflowCommentById[workflowRunId] || '').trim();
     if (!body) {
-      setActionFeedback('Write a workflow comment before adding it.');
+      setAlertFeedback('Write a workflow comment before adding it.');
       return;
     }
-    setActionFeedback('Adding Canvas workflow comment...');
+    setStatusFeedback('Adding Canvas workflow comment...');
     setAddingWorkflowCommentById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasAddWorkflowComment(documentState.draftId, workflowRunId, {
@@ -1745,9 +1753,9 @@ export function WorkCanvasDocumentPanel({
         })
       );
       setWorkflowCommentById((current) => ({ ...current, [workflowRunId]: '' }));
-      setActionFeedback('Workflow comment added.');
+      setStatusFeedback('Workflow comment added.');
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to add workflow comment.'));
+      setCanvasErrorFeedback(error, 'Failed to add workflow comment.');
     } finally {
       setAddingWorkflowCommentById((current) => ({ ...current, [workflowRunId]: false }));
     }
@@ -1762,7 +1770,7 @@ export function WorkCanvasDocumentPanel({
       const result = await Api.workCanvasGetVersions(draft.draftId);
       setVersions(result);
     } catch (error) {
-      setActionFeedback(error instanceof Error ? error.message : 'Failed to load Canvas versions.');
+      setCanvasErrorFeedback(error, 'Failed to load Canvas versions.');
     } finally {
       setIsVersionsLoading(false);
     }
@@ -1781,24 +1789,24 @@ export function WorkCanvasDocumentPanel({
         })
       );
       setLatestDiff(buildLineDiff(documentState.contentMd, version.contentMd));
-      setActionFeedback(
+      setStatusFeedback(
         `Restored Canvas version from ${new Date(version.createdAt).toLocaleString()}.`
       );
       await loadVersions();
     } catch (error) {
-      setActionFeedback(canvasActionErrorMessage(error, 'Failed to restore Canvas version.'));
+      setCanvasErrorFeedback(error, 'Failed to restore Canvas version.');
     }
   };
 
   const showChangesFromLatestVersion = () => {
     const latest = versions[0];
     if (!latest) {
-      setActionFeedback('No Canvas versions available yet.');
+      setAlertFeedback('No Canvas versions available yet.');
       return;
     }
     const diff = buildLineDiff(latest.contentMd, documentState.contentMd);
     setLatestDiff(diff);
-    setActionFeedback(`Show changes: ${diff.summary}.`);
+    setStatusFeedback(`Show changes: ${diff.summary}.`);
   };
 
   const handleCommandAction = (actionId: CanvasActionId) => {
@@ -1839,7 +1847,7 @@ export function WorkCanvasDocumentPanel({
       if (onClose) {
         onClose();
       } else {
-        setActionFeedback('Close is available when Canvas is opened from the split chat shell.');
+        setAlertFeedback('Close is available when Canvas is opened from the split chat shell.');
       }
     }
   };
@@ -2691,7 +2699,7 @@ export function WorkCanvasDocumentPanel({
       {actionFeedback ? (
         <div
           className="shrink-0 border-b border-slate-200/70 bg-white/60 px-4 py-2 text-xs text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300"
-          role="status"
+          role={actionFeedbackTone}
           data-testid="canvas-action-feedback"
         >
           {actionFeedback}
