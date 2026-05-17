@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
+import { Api, shouldAllowDemoData } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
@@ -41,6 +41,7 @@ export function useFinanceData(
   activeFilters: FilterChip[]
 ) {
   const { t } = useTranslation();
+  const allowDemoData = shouldAllowDemoData();
 
   const [models, setModels] = useState<any[]>([]);
   const [statements, setStatements] = useState<any[]>([]);
@@ -66,15 +67,18 @@ export function useFinanceData(
       setLoadError(null);
       setStatements(arr);
     } catch {
+      const demoFallbackHint = allowDemoData
+        ? ' Demo mode is enabled, but this module requires real source data.'
+        : '';
       setLoadError(
         t(
           'finance.errors.statementsRealSourceFailed',
           'Failed to load real finance statements from the active data source.'
-        )
+        ) + demoFallbackHint
       );
       setStatements([]);
     }
-  }, [t]);
+  }, [allowDemoData, t]);
 
   const loadModels = useCallback(async () => {
     try {
