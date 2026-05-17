@@ -27,7 +27,7 @@ const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 const AUTH_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
 const MAX_AUTH_ORG_CONTEXT_ID_CHARS = 128;
 const ALLOWED_AUTH_JWT_ALGORITHM = 'HS256';
-const JWT_CLOCK_TOLERANCE_SEC = 30;
+const JWT_CLOCK_TOLERANCE_SEC = 0;
 const JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
   algorithms: [ALLOWED_AUTH_JWT_ALGORITHM],
   clockTolerance: JWT_CLOCK_TOLERANCE_SEC,
@@ -478,9 +478,8 @@ const normalizePermissionRole = (role?: string): string => {
   switch (r) {
     case 'SUPER_ADMIN':
     case 'SUPERADMIN':
-      return 'SUPERADMIN';
     case 'OWNER':
-      return 'ADMIN';
+      return 'SUPERADMIN';
     case 'ADMINISTRATOR':
     case 'ADMIN':
       return 'ADMIN';

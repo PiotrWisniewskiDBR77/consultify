@@ -141,7 +141,7 @@ describe('AuthMiddleware', () => {
           expect(options).toEqual(
             expect.objectContaining({
               algorithms: ['HS256'],
-              clockTolerance: 30,
+              clockTolerance: 0,
             })
           );
           callback(null, { id: 'user-with-options', role: 'ADMIN' });
