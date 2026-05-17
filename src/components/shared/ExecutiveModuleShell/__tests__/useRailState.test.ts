@@ -15,10 +15,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  RAIL_WIDTH_BOUNDS,
-  useRailState,
-} from '../useRailState';
+import { RAIL_WIDTH_BOUNDS, useRailState } from '../useRailState';
 
 const LS_KEY = (key: string) => `mels.rail.${key}`;
 
@@ -109,9 +106,7 @@ describe('useRailState', () => {
   });
 
   it('ephemeral=true suppresses persistence', () => {
-    const { result } = renderHook(() =>
-      useRailState({ moduleKey: 'tabele', ephemeral: true })
-    );
+    const { result } = renderHook(() => useRailState({ moduleKey: 'tabele', ephemeral: true }));
     act(() => result.current.toggleLeft());
     expect(window.localStorage.getItem(LS_KEY('tabele'))).toBeNull();
   });

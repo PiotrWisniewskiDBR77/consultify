@@ -81,7 +81,10 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
-const conversationStoreState = {
+const conversationStoreState: {
+  activeConversationId: string | null;
+  createConversation: ReturnType<typeof vi.fn>;
+} = {
   activeConversationId: null,
   createConversation: vi.fn().mockResolvedValue({}),
 };

@@ -1,40 +1,41 @@
 ---
 module_id: MODULE_TABLES
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Tabele (Table Studio)
+# Scope — Tabele / Table Studio
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Table Studio: template + data grid + provenance + AI/QA + conversions + intake forms.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: template catalog + specialized field types.
-- MUST: provenance/audit ledger UI + cross-tenant protections.
-- MUST: AI Operator (multi-scope) + QA report + Source Pack builder.
-- MUST: conversions: table → document / presentation (z audit rows).
-- MUST: Form intake (w tym public JWT route + allow-list + rate limits).
+- Table schema, rows/cells, provenance, formulas/typed columns, imports, views and AI proposals.
+- Decision/idea tables, consulting analysis tables and operational data tables.
+- Function set: `TB_EXCELE_PLACEHOLDER`, `TB_TABLE_RUNTIME_TARGET`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: dotykać niepowiązanych modułów poza kontraktowymi integracjami (np. Outputs jako odbiorca konwersji).
+- Spreadsheet replacement without governance.
+- Unapproved AI edits to rows/cells.
+- Duplicate sidebar entry Tabele Studio as separate module.
 
-## Should
+## Inputs
 
-- TBD
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres jest spójny z program closeout (Blocks A–D) i nie “wymyśla” nowych surfaces.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/TABLE_STUDIO_FULL_PRODUCT_CLOSEOUT_2026-05-08.md`
-- `DRD/consultify/docs/product/work-packets/tabele-full-product/`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

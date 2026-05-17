@@ -20,12 +20,12 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { type TopBarChipDescriptor } from './ChipDescriptor';
 import { LeftRail } from './LeftRail';
 import { RightRail, type RightRailToolDescriptor } from './RightRail';
 import { ShortcutHelpModal } from './ShortcutHelpModal';
-import { TopBar } from './TopBar';
-import { type TopBarChipDescriptor } from './ChipDescriptor';
 import { buildMelsShortcuts, useMelsShortcuts } from './shortcuts';
+import { TopBar } from './TopBar';
 import { useRailState } from './useRailState';
 
 export interface ExecutiveModuleShellProps {
@@ -148,13 +148,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         onRunPrimary,
         onToggleAgent,
       }),
-    [
-      rail.toggleLeft,
-      handleOpenHelp,
-      onOpenCommandPalette,
-      onRunPrimary,
-      onToggleAgent,
-    ]
+    [rail.toggleLeft, handleOpenHelp, onOpenCommandPalette, onRunPrimary, onToggleAgent]
   );
 
   useMelsShortcuts(shortcuts);
@@ -226,31 +220,27 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   );
 };
 
-export { LeftRail } from './LeftRail';
-export { RightRail } from './RightRail';
-export type { RightRailToolDescriptor } from './RightRail';
-export { ShortcutHelpModal } from './ShortcutHelpModal';
-export { RailResizeHandle } from './RailResizeHandle';
-export { TopBar } from './TopBar';
 export {
-  type TopBarChipDescriptor,
-  type TopBarChipKind,
-  type TopBarChipDotTone,
-  type MelsChipId,
   MELS_CHIP_ORDER,
+  type MelsChipId,
   sortChipsByMelsOrder,
+  type TopBarChipDescriptor,
+  type TopBarChipDotTone,
+  type TopBarChipKind,
 } from './ChipDescriptor';
-export { useRailState, RAIL_WIDTH_BOUNDS } from './useRailState';
-export type {
-  UseRailStateOptions,
-  UseRailStateResult,
-  RailDimensions,
-} from './useRailState';
+export { LeftRail } from './LeftRail';
+export { RailResizeHandle } from './RailResizeHandle';
+export type { RightRailToolDescriptor } from './RightRail';
+export { RightRail } from './RightRail';
+export { ShortcutHelpModal } from './ShortcutHelpModal';
 export {
   buildMelsShortcuts,
-  useMelsShortcuts,
   type ShortcutDescriptor,
   type ShortcutId,
+  useMelsShortcuts,
 } from './shortcuts';
+export { TopBar } from './TopBar';
+export type { RailDimensions, UseRailStateOptions, UseRailStateResult } from './useRailState';
+export { RAIL_WIDTH_BOUNDS, useRailState } from './useRailState';
 
 export default ExecutiveModuleShell;

@@ -141,12 +141,11 @@ test.describe('Work Canvas research lineage Playwright gate', () => {
     });
     if (!createDraft.ok()) {
       const errorBody = await createDraft.text().catch(() => '<no-body>');
-      if (strictCanvasGate) {
-        throw new Error(
-          `Strict Canvas gate: work-canvas create draft request failed (${createDraft.status()}): ${errorBody}`
-        );
-      }
-      test.skip(true, `work-canvas routes are not reachable with current test auth: ${errorBody}`);
+      throw new Error(
+        `${
+          strictCanvasGate ? 'Strict Canvas gate' : 'Canvas smoke gate'
+        }: work-canvas create draft request failed (${createDraft.status()}): ${errorBody}`
+      );
     }
     expect(createDraft.ok()).toBeTruthy();
     const createPayload = (await createDraft.json()) as { data?: { id?: unknown } };

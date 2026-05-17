@@ -53,8 +53,6 @@ export interface DecorateSlidesResult {
    * they will not be rendered.
    */
   skippedDisabledCount: number;
-  /** True when input outline/slides cardinalities diverged and fallback was applied. */
-  cardinalityMismatch: boolean;
 }
 
 /**
@@ -79,18 +77,6 @@ export function decorateSlidesWithAuditFlags(input: DecorateSlidesInput): Decora
   let slideCursor = 0;
   let decoratedCount = 0;
   let skippedDisabledCount = 0;
-  const enabledCount = outline.filter((item) => item.enabled).length;
-  const cardinalityMismatch = enabledCount !== slides.length;
-
-  if (cardinalityMismatch) {
-    // Hard guard against accidental slide loss when outline and slide counts diverge.
-    return {
-      slides: slides.map((slide) => ({ ...slide })),
-      decoratedCount: 0,
-      skippedDisabledCount: 0,
-      cardinalityMismatch: true,
-    };
-  }
 
   for (let i = 0; i < outline.length; i++) {
     const item = outline[i];
@@ -115,7 +101,6 @@ export function decorateSlidesWithAuditFlags(input: DecorateSlidesInput): Decora
     slides: out,
     decoratedCount,
     skippedDisabledCount,
-    cardinalityMismatch,
   };
 }
 

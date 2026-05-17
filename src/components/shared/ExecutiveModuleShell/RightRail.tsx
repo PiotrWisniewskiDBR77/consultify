@@ -15,8 +15,8 @@
  *   * Collapsible to a 0 px sliver via the chevron at the top.
  */
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 
 import { RailResizeHandle } from './RailResizeHandle';
@@ -123,7 +123,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   onResize,
   testId,
 }) => {
-  const activeTool = activeToolId ? tools.find((t) => t.id === activeToolId) ?? null : null;
+  const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
   const showPanel = !collapsed && Boolean(activeTool) && Boolean(panelContent);
 
   if (collapsed) {
@@ -168,11 +168,7 @@ export const RightRail: React.FC<RightRailProps> = ({
           data-mels-panel-of={activeTool?.id ?? ''}
         >
           {onResize ? (
-            <RailResizeHandle
-              side="right"
-              currentWidth={panelWidth}
-              onResize={onResize}
-            />
+            <RailResizeHandle side="right" currentWidth={panelWidth} onResize={onResize} />
           ) : null}
           {panelContent}
         </div>

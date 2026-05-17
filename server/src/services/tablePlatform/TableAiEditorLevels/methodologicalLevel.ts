@@ -20,7 +20,6 @@
  */
 
 import { getDatabase } from '../../../database/Database.js';
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -30,6 +29,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opMethodologicalFlag } from './operations.js';
 
@@ -84,10 +84,10 @@ export const proposeMethodologicalEdit: LevelHandler = async (input): Promise<Le
   let scannedRecordIds: string[] = askedIds;
   if (scannedRecordIds.length === 0) {
     const db = getDatabase();
-    const { rows } = await db.query(
-      `SELECT id FROM tp_records WHERE table_id = $1 LIMIT $2`,
-      [tableId, MAX_RECORDS_FOR_SCAN]
-    );
+    const { rows } = await db.query(`SELECT id FROM tp_records WHERE table_id = $1 LIMIT $2`, [
+      tableId,
+      MAX_RECORDS_FOR_SCAN,
+    ]);
     scannedRecordIds = rows.map((r: any) => String(r.id));
   } else if (scannedRecordIds.length > MAX_RECORDS_FOR_SCAN) {
     scannedRecordIds = scannedRecordIds.slice(0, MAX_RECORDS_FOR_SCAN);

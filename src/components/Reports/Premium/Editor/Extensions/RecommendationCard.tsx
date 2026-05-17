@@ -364,7 +364,7 @@ export const RecommendationCardExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(RecommendationCardComponent);
+    return ReactNodeViewRenderer(RecommendationCardComponent) as any;
   },
 });
 

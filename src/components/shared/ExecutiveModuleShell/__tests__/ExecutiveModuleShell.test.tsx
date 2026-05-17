@@ -11,9 +11,9 @@
  *   * Canvas content is mounted inside `mels-canvas`.
  */
 
-import { Sparkles, Search, ShieldCheck } from 'lucide-react';
-import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { Search, ShieldCheck, Sparkles } from 'lucide-react';
+import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ExecutiveModuleShell } from '../index';

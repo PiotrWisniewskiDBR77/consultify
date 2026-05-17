@@ -62,37 +62,6 @@ class HomeBlockErrorBoundary extends React.Component<
   }
 }
 
-function kpiSeverityDotClass(severity: string | null | undefined): string {
-  const normalized = String(severity || '')
-    .trim()
-    .toUpperCase();
-  if (
-    normalized === 'RED' ||
-    normalized === 'CRITICAL' ||
-    normalized === 'HIGH' ||
-    normalized === 'SEV1'
-  ) {
-    return 'bg-rose-500';
-  }
-  if (
-    normalized === 'AMBER' ||
-    normalized === 'YELLOW' ||
-    normalized === 'MEDIUM' ||
-    normalized === 'WARNING'
-  ) {
-    return 'bg-amber-500';
-  }
-  if (
-    normalized === 'GREEN' ||
-    normalized === 'OK' ||
-    normalized === 'LOW' ||
-    normalized === 'INFO'
-  ) {
-    return 'bg-emerald-500';
-  }
-  return 'bg-slate-500';
-}
-
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
   const { t, i18n } = useTranslation();
   const { isV8Enabled } = useV8();
@@ -302,33 +271,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
             <h2 className="text-sm font-semibold text-white">{t('myWork.radar.triage.title')}</h2>
             <p className="text-[11px] text-slate-400">{t('myWork.radar.triage.subtitle')}</p>
           </div>
-          {triageData.loading ? (
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-slate-300">
-              {t('common.loading', 'Loading...')}
-            </div>
-          ) : triageData.error ? (
-            <EmptyStateInline
-              message={t('myWork.radar.loadError')}
-              hint={triageData.error}
-              action={{
-                label: t('myWork.radar.retry'),
-                onClick: () => {
-                  void triageData.refresh();
-                },
-              }}
-              className="border border-white/[0.06] bg-white/[0.03]"
-            />
-          ) : triageData.signals.length === 0 ? (
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-slate-300">
-              {t('myWork.radar.triage.empty')}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-              {triageData.signals.map((signal) => (
-                <RadarTriageCard key={signal.signalId} signal={signal} onAction={onAction} />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+            {triageData.signals.map((signal) => (
+              <RadarTriageCard key={signal.signalId} signal={signal} onAction={onAction} />
+            ))}
+          </div>
         </div>
       )}
 
@@ -363,9 +310,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                 <span
                   className={cn(
                     'h-2 w-2 rounded-full shrink-0',
-                    kpiSeverityDotClass(alert.severity)
+                    alert.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500'
                   )}
-                  title={alert.severity}
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-slate-200 truncate">

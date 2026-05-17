@@ -2383,6 +2383,42 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByRole('button', { name: /Upload files/i })).toBeInTheDocument();
   });
 
+  it('renders Canvas action failures as safe alerts without backend details', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        };
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/save-to-workspace') {
+        throw new Error('SQLSTATE 23505 secret=/var/db/internal.trace');
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: /Send to idea/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Failed to save Canvas to idea.');
+    expect(alert).not.toHaveTextContent('SQLSTATE');
+    expect(alert).not.toHaveTextContent('/var/db');
+  });
+
   it('captures Markdown selection without rendering selection chrome', async () => {
     const user = userEvent.setup();
     const onCanvasSelectionChange = vi.fn();

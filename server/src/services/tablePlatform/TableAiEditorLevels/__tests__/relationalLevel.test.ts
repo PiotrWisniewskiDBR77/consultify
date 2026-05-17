@@ -13,8 +13,8 @@ vi.mock('../../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-import { proposeRelationalEdit } from '../relationalLevel.js';
 import type { LlmProvider } from '../llmProvider.js';
+import { proposeRelationalEdit } from '../relationalLevel.js';
 
 const TABLE = 'tbl-A';
 const TARGET = 'tbl-B';
@@ -24,7 +24,11 @@ const ACTOR = 'user-1';
 
 function setupHappy(candidates: Array<{ id: string; name: string }>) {
   mockQuery.mockImplementation(async (sql: string) => {
-    if (sql.includes('JOIN tp_bases') && sql.includes('WHERE t.id = $1') && !sql.includes('JOIN tp_tables t2'))
+    if (
+      sql.includes('JOIN tp_bases') &&
+      sql.includes('WHERE t.id = $1') &&
+      !sql.includes('JOIN tp_tables t2')
+    )
       return { rows: [{ workspace_id: WS, organization_id: ORG }] };
     if (sql.includes('FROM tp_fields'))
       return { rows: [{ id: 'f1', name: 'Name', field_type: 'singleLineText', options: {} }] };
@@ -36,7 +40,13 @@ function setupHappy(candidates: Array<{ id: string; name: string }>) {
 
 function makeProvider(text: string): LlmProvider {
   return {
-    generate: async () => ({ text, tokensInput: 50, tokensOutput: 25, model: 'mock', source: 'live' }),
+    generate: async () => ({
+      text,
+      tokensInput: 50,
+      tokensOutput: 25,
+      model: 'mock',
+      source: 'live',
+    }),
   };
 }
 
@@ -165,7 +175,11 @@ describe('relationalLevel.proposeRelationalEdit', () => {
 
   it('6) caller-supplied candidateTargetTableIds is filtered through tenant', async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes('JOIN tp_bases') && !sql.includes('JOIN tp_tables t2') && !sql.includes('= ANY'))
+      if (
+        sql.includes('JOIN tp_bases') &&
+        !sql.includes('JOIN tp_tables t2') &&
+        !sql.includes('= ANY')
+      )
         return { rows: [{ workspace_id: WS, organization_id: ORG }] };
       if (sql.includes('= ANY'))
         return {

@@ -1,9 +1,9 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: ENTRYPOINT
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
@@ -11,12 +11,30 @@ last_updated: 2026-05-09
 
 ## Purpose
 
-Moduł `Meeting` jest lekką powierzchnią do obsługi spotkań: przechwytywania notatek, decyzji i zadań oraz ich powiązania z resztą systemu (Inicjatywy / My Work / Outputs). Na dziś mamy mało SoT — kontrakt jest minimalny i unika “wymyślania” zachowań.
+Meeting jako event pracy decyzyjnej: agenda, pre-read, notes, decyzje, taski, follow-up i evidence linked back to modules.
 
-## Where is the contract?
+## Contract Layers
 
-- Kontrakt zachowania: `03_BEHAVIOR.md`
-- Kontrakt UI/UX: `04_UI_UX.md`
-- Zakres i granice: `02_SCOPE.md`
-- Źródła prawdy: `SSOT.md`
+- `SSOT.md` — priority and source map.
+- `00_META.md` — identity, route, owner and canonicality.
+- `01_PURPOSE.md` — why this module exists.
+- `02_SCOPE.md` — in-scope and out-of-scope boundaries.
+- `03_BEHAVIOR.md` — required runtime behavior.
+- `04_UI_UX.md` — required user experience and visual/interaction rules.
+- `05_DATA_AND_INTEGRATIONS.md` — objects, integrations and lineage.
+- `06_PERMISSIONS_AND_SECURITY.md` — roles, tenant boundaries and security.
+- `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
+- `RAW_INPUT.md` — raw author notes before normalization.
+- `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `ME_MEETING_PLACEHOLDER`
+- `ME_MEETING_RUNTIME_TARGET`
+
+## Primary Sources
+
+- `DRD/consultify/docs/product/MEETING_TOOL_V3.md`
+- `DRD/consultify/docs/product/REQUIREMENTS_V3_SSOT.md`
+- `DRD/consultify/docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
+- `DRD/consultify/docs/product/V3_MODULE_VERIFICATION_MATRIX.md`

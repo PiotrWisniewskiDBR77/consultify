@@ -51,9 +51,7 @@ describe('ShortcutHelpModal', () => {
     expect(screen.getByTestId('mels-shortcut-row-toggle-left-rail')).toHaveTextContent(
       'Toggle left rail'
     );
-    expect(screen.getByTestId('mels-shortcut-row-open-shortcut-help')).toHaveTextContent(
-      '⌘ /'
-    );
+    expect(screen.getByTestId('mels-shortcut-row-open-shortcut-help')).toHaveTextContent('⌘ /');
   });
 
   it('renders the empty placeholder when shortcuts=[]', () => {

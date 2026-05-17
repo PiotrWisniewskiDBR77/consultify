@@ -165,10 +165,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const isDictatingRef = useRef(false);
   const lastTeresaVoiceToastRef = useRef<string | null>(null);
 
-  const isFrozen = aiFreezeStatus.isFrozen;
-  const isUiDisabled = disabled;
-  const isInputDisabled = isUiDisabled || isFrozen || isStreaming;
-  const isAuxActionsDisabled = isUiDisabled || isStreaming;
+  const isDisabled = disabled || aiFreezeStatus.isFrozen;
+  const isInputDisabled = isDisabled || isStreaming;
   const hasText = value.trim().length > 0;
   const canSend = hasText && !isInputDisabled;
   const { activeConversationId, conversations } = useConversationStore();
@@ -811,7 +809,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     : 'border-slate-200 dark:border-navy-700 shadow-sm'
                 }
                 ${isRecordingAny ? 'ring-2 ring-blue-500/50' : ''}
-                ${isInputDisabled ? 'opacity-60' : ''}
+                ${isDisabled ? 'opacity-60' : ''}
             `}
       >
         {/* Textarea */}
@@ -838,7 +836,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           className={`flex items-center justify-between gap-2 min-w-0 px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
         >
           {/* Left Actions */}
-          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-visible pr-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
             <AddFilesMenu
               onFileSelect={handleFileSelect}
               onUrlAdd={handleUrlAdd}
@@ -846,10 +844,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               onConnectCloud={handleConnectCloud}
               connectedProviders={connectedProviderIds}
               isCloudImplemented={isCloudImplemented}
-              disabled={isAuxActionsDisabled}
+              disabled={isInputDisabled}
             />
-            <ToolsMenu onToolSelect={handleToolSelect} disabled={isAuxActionsDisabled} icon={Pen} />
-            <CoThinkerMenu disabled={isAuxActionsDisabled} />
+            <ToolsMenu onToolSelect={handleToolSelect} disabled={isInputDisabled} icon={Pen} />
+            <CoThinkerMenu disabled={isInputDisabled} />
             {/* C-IN1 — Next-message model hint. Read-only pill showing
                 which model will handle the next send. Self-gates on
                 `isNextModelChipEnabled()` and renders null when the
@@ -924,7 +922,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                       ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
                       : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
-                  ${isUiDisabled ? 'cursor-not-allowed opacity-50' : ''}
+                  ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                 `}
                 title={
                   isDictating
@@ -940,7 +938,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             {isStreaming ? (
               <button
                 onClick={() => onStopGenerating?.()}
-                disabled={isUiDisabled}
+                disabled={isDisabled}
                 className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-500/25"
                 title={t('aiChat.stopGenerating', 'Stop generating')}
               >
@@ -949,7 +947,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             ) : canSend ? (
               <button
                 onClick={handleSend}
-                disabled={isUiDisabled}
+                disabled={isDisabled}
                 className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25"
                 title={t('aiChat.send', 'Send')}
               >
@@ -958,7 +956,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             ) : teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
               <button
                 onClick={() => onTeresaVoiceToggle?.()}
-                disabled={isUiDisabled}
+                disabled={isDisabled}
                 className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
                   teresaVoiceStatus === 'live'
                     ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/25'
@@ -977,37 +975,21 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               </button>
             ) : (
               <button
-                onClick={() => {
-                  if (teresaVoiceAvailable) {
-                    onTeresaVoiceToggle?.();
-                    return;
-                  }
-                  // Fallback when Teresa live voice is unavailable:
-                  // keep CTA useful by starting local dictation.
-                  if (speechSupported && !isInputDisabled) {
-                    handleDictationClick();
-                  }
-                }}
-                disabled={
-                  isUiDisabled || (!teresaVoiceAvailable && (!speechSupported || isInputDisabled))
-                }
+                onClick={() => onTeresaVoiceToggle?.()}
+                disabled={isDisabled || !teresaVoiceAvailable}
                 className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
                   teresaVoiceAvailable
                     ? 'bg-primary-600 hover:bg-primary-500 shadow-primary-500/25'
-                    : speechSupported && !isInputDisabled
-                      ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
-                      : 'bg-amber-600/80 cursor-not-allowed shadow-amber-500/20'
+                    : 'bg-amber-600/80 cursor-not-allowed shadow-amber-500/20'
                 }`}
                 title={
                   teresaVoiceAvailable
                     ? t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')
-                    : speechSupported
-                      ? t('aiChat.startDictation', 'Dictate (fills input, you review & send)')
-                      : teresaVoiceUnavailableReason ||
-                        t(
-                          'aiChat.voiceUnavailable',
-                          'Voice is unavailable. You can continue by text or dictation.'
-                        )
+                    : teresaVoiceUnavailableReason ||
+                      t(
+                        'aiChat.voiceUnavailable',
+                        'Voice is unavailable. You can continue by text or dictation.'
+                      )
                 }
               >
                 <AudioLines size={18} className="group-hover:scale-110 transition-transform" />

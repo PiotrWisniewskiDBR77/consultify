@@ -39,7 +39,11 @@ const WS = 'ws-A';
 const ACTOR = 'user-1';
 
 interface MockState {
-  tenant: { workspace_id: string; organization_id: string; applied_template_id: string | null } | null;
+  tenant: {
+    workspace_id: string;
+    organization_id: string;
+    applied_template_id: string | null;
+  } | null;
   fields: Array<{
     id: string;
     name: string;
@@ -384,9 +388,7 @@ describe('TableQaService.computeReport — axis scoring', () => {
     const ruleIds = report.suggestions
       .filter((s) => s.axis === 'methodology')
       .map((s) => (s.recommendedAction.payload as { ruleId?: string }).ruleId);
-    expect(ruleIds).toEqual(
-      expect.arrayContaining(['required_fields', 'min_records_for_publish'])
-    );
+    expect(ruleIds).toEqual(expect.arrayContaining(['required_fields', 'min_records_for_publish']));
     // approval_required_fields: stage is empty on r1 → also a violation.
     expect(ruleIds).toContain('approval_required_fields');
   });
@@ -435,9 +437,7 @@ describe('TableQaService.computeReport — axis scoring', () => {
     expect(report.axes.formulaConsistency.score).toBeLessThanOrEqual(1);
     // Broken formula: parse may succeed but evaluation throws OR parse fails;
     // either way we want at least one error counted in details.
-    const errs = report.axes.formulaConsistency.details.find(
-      (d) => d.metric === 'errors'
-    );
+    const errs = report.axes.formulaConsistency.details.find((d) => d.metric === 'errors');
     expect(Number(errs?.value ?? 0)).toBeGreaterThanOrEqual(0);
   });
 });
@@ -572,9 +572,7 @@ describe('TableQaService.getLatestReport', () => {
       organization_id: 'org-Z',
       applied_template_id: null,
     };
-    await expect(tableQaService.getLatestReport(TABLE, ORG)).rejects.toBeInstanceOf(
-      TableQaError
-    );
+    await expect(tableQaService.getLatestReport(TABLE, ORG)).rejects.toBeInstanceOf(TableQaError);
   });
 });
 
@@ -593,13 +591,7 @@ describe('TableQaService.markSuggestionInapplicable', () => {
       String(c[0]).includes('INSERT INTO tp_qa_suggestion_dismissals')
     );
     expect(insert).toBeTruthy();
-    expect(insert![1]).toEqual([
-      TABLE,
-      ORG,
-      'qa_abcdef',
-      'rule retired',
-      ACTOR,
-    ]);
+    expect(insert![1]).toEqual([TABLE, ORG, 'qa_abcdef', 'rule retired', ACTOR]);
   });
 
   it('17) cross-tenant: refuses table not in actor org', async () => {

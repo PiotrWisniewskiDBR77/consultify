@@ -461,11 +461,45 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
   const userId = (req as any).userId || req.user?.id;
   const orgId = req.user?.organizationId;
   if (!userId || !orgId) {
-    res.status(401).json({ error: 'Unauthorized' });
+    res
+      .status(401)
+      .json(
+        buildMyWorkFailClosedError(
+          req,
+          401,
+          'MY_WORK_UNAUTHORIZED',
+          'Authentication is required to access My Work.'
+        )
+      );
     return null;
   }
   return { userId, orgId };
 };
+
+function resolveMyWorkCorrelationId(req: AuthRequest): string | null {
+  return (
+    (req as AuthRequest & { correlationId?: string }).correlationId ||
+    req.get('X-Correlation-ID') ||
+    null
+  );
+}
+
+function buildMyWorkFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveMyWorkCorrelationId(req),
+  };
+}
 
 const resolveCanonicalPersonalTaskIdentity = async (
   req: AuthRequest,
@@ -767,7 +801,16 @@ router.get(
     const type = String(req.query.type || '').trim();
     const id = String(req.query.id || '').trim();
     if (!type || !id) {
-      res.status(400).json({ error: 'type and id are required' });
+      res
+        .status(400)
+        .json(
+          buildMyWorkFailClosedError(
+            req,
+            400,
+            'MY_WORK_LINK_GRAPH_QUERY_INCOMPLETE',
+            'Both type and id query parameters are required.'
+          )
+        );
       return;
     }
 
@@ -824,7 +867,16 @@ router.post(
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
+      res
+        .status(400)
+        .json(
+          buildMyWorkFailClosedError(
+            req,
+            400,
+            'MY_WORK_LINK_GRAPH_PAYLOAD_INVALID',
+            'Link graph edge payload is invalid.'
+          )
+        );
       return;
     }
 

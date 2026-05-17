@@ -31,6 +31,43 @@ interface AnalyticsOverview {
   generatedAt: string;
 }
 
+const FEEDBACK_ANALYTICS_UNAVAILABLE_COPY = 'Feedback analytics is temporarily unavailable.';
+
+function isValidCountRecord(value: unknown): value is Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  return Object.values(value).every((entry) => typeof entry === 'number' && Number.isFinite(entry));
+}
+
+function isValidAnalyticsOverview(payload: unknown): payload is AnalyticsOverview {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const value = payload as Partial<AnalyticsOverview>;
+  return (
+    typeof value.sampleSize === 'number' &&
+    Number.isFinite(value.sampleSize) &&
+    typeof value.openCount === 'number' &&
+    Number.isFinite(value.openCount) &&
+    !!value.totals &&
+    isValidCountRecord(value.totals.byStatus) &&
+    isValidCountRecord(value.totals.byType) &&
+    isValidCountRecord(value.totals.bySeverity) &&
+    isValidCountRecord(value.totals.byEnv) &&
+    !!value.aging &&
+    typeof value.aging.under24h === 'number' &&
+    typeof value.aging.h24_48 === 'number' &&
+    typeof value.aging.d2_7 === 'number' &&
+    typeof value.aging.over7d === 'number' &&
+    !!value.mttrLast30d &&
+    (value.mttrLast30d.medianHours == null || typeof value.mttrLast30d.medianHours === 'number') &&
+    (value.mttrLast30d.p90Hours == null || typeof value.mttrLast30d.p90Hours === 'number') &&
+    typeof value.mttrLast30d.sampleSize === 'number' &&
+    !!value.last30d &&
+    typeof value.last30d.created === 'number' &&
+    typeof value.last30d.reopened === 'number' &&
+    typeof value.last30d.reopenRatePct === 'number' &&
+    typeof value.generatedAt === 'string'
+  );
+}
+
 function formatHours(value: number | null): string {
   if (value == null || !Number.isFinite(value)) return '—';
   if (value < 1) return `${Math.round(value * 60)}m`;
@@ -102,10 +139,14 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
     setError(null);
     try {
       const res = await Api.getFeedbackAnalyticsOverview();
+      if (!isValidAnalyticsOverview(res)) {
+        throw new Error('FEEDBACK_ANALYTICS_OVERVIEW_INVALID_PAYLOAD');
+      }
       setData(res);
     } catch (e: unknown) {
       console.error('[FeedbackAnalyticsView] load failed', e);
-      setError(e instanceof Error ? e.message : 'Failed to load analytics');
+      setData(null);
+      setError(FEEDBACK_ANALYTICS_UNAVAILABLE_COPY);
     } finally {
       setLoading(false);
     }
@@ -133,7 +174,10 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
 
   if (error && !data) {
     return (
-      <div className="p-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded">
+      <div
+        role="alert"
+        className="p-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded"
+      >
         {error}
       </div>
     );

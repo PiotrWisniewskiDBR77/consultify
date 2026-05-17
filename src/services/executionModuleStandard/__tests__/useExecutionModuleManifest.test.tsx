@@ -134,7 +134,11 @@ const FIXTURE_STANDARD: ExecutionModuleStandard = {
     persistence: 'per_user_per_module',
   },
   allowedAgentIds: ['teresa'],
-  allowedAiActionSlots: ['commandRowRightContent', 'DynamicTabs.rightContent', 'localCommandRowRight'],
+  allowedAiActionSlots: [
+    'commandRowRightContent',
+    'DynamicTabs.rightContent',
+    'localCommandRowRight',
+  ],
 };
 
 const FIXTURE_VALIDATION: ExecutionModuleValidationResult = {

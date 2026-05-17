@@ -1,49 +1,40 @@
 ---
 module_id: MODULE_ADMIN_PANEL
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Panel Administratora (Admin + SuperAdmin)
+# Scope — Panel Administratora
 
 ## Purpose
 
-Ustalić granice odpowiedzialności modułu `Panel Administratora` i jego relacje z `Organization` (P30), `Settings` (P31) oraz modułami domenowymi.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- **Admin (`/admin/*`) — tenant scope (P32)**:
-  - Members & roles, invites, ownership ops (bounded).
-  - Security & identity: MFA/SSO/session/password policy (tenant), API keys/webhooks (gdy w admin scope).
-  - Billing/limits/FinOps (dla ról uprawnionych).
-  - AI governance & AI operations w kontekście tenant.
-  - Integrations health + remediation w obrębie tenant.
-  - Audit/compliance/risk dla admin‑scoped zdarzeń.
-- **SuperAdmin (`/superadmin/*`) — platform scope (P33)**:
-  - Cross‑tenant operations i platform governance zgodnie z `SUPERADMIN_V8_SSOT.md` (domains + vertical packages).
+- Tenant admin IA, users, roles, settings, integrations, audit and mounted admin sections.
+- Inventory-driven real/partial/stub status.
+- Function set: `ADM_ADMIN_WORKSPACE`, `ADM_SUPERADMIN_BOUNDARY`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- **MUST NOT**: Cross‑tenant działania w Admin (to należy do SuperAdmin).
-- **MUST NOT**: Osobiste preferencje użytkownika i większość user‑scoped settings (to `Settings`).
-- **MUST NOT**: Business profile / strategic workspace organizacji jako “authoring surface” (to `Organization`).
-- **MUST NOT**: Domena‑specyficzne ustawienia jako osobny “admin root” — powinny być embedowane w swoim module.
+- Platform SuperAdmin operations unless explicitly in SuperAdmin contract.
+- Duplicate Organization or Settings truth.
 
-## Should
+## Inputs
 
-- **SHOULD**: Jawna macierz ownership (Admin vs Organization vs Settings vs SuperAdmin) i jednoznaczne deep‑linki do właściwej powierzchni.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] “Admin vs SuperAdmin” jest rozdzielone na poziomie routingu, UI i uprawnień.
-- [ ] Nie ma sprzeczności z inventory mounted surfaces.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_ENTERPRISE_2026-04-11.md`
-- `DRD/consultify/docs/product/SUPERADMIN_V8_SSOT.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
+import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 import { InvitationDataService } from './invitation/InvitationDataService.js';
 import { InvitationSendingService } from './invitation/InvitationSendingService.js';
 import { InvitationTokenService } from './invitation/InvitationTokenService.js';
@@ -25,7 +26,6 @@ import {
   RESEND_COOLDOWN_MINUTES,
 } from './invitation/InvitationTypes.js';
 import { mapToCanonicalProjectRole } from './projectRoleCanon.js';
-import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 
 // Dynamic imports
 let AccessPolicyService: any = null;
@@ -851,5 +851,8 @@ export const cancelInvitation = (id: string, userId: string) =>
   instance.cancelInvitation(id, userId);
 export const getInvitations = (orgId: string) => instance.getInvitations(orgId);
 export const validateInvitationToken = (token: string) => instance.validateInvitationToken(token);
-export const getInvitationAudit = (id: string, organizationId?: string, requestingUserId?: string) =>
-  instance.getInvitationAudit(id, organizationId, requestingUserId);
+export const getInvitationAudit = (
+  id: string,
+  organizationId?: string,
+  requestingUserId?: string
+) => instance.getInvitationAudit(id, organizationId, requestingUserId);

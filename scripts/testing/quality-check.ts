@@ -243,6 +243,22 @@ function importsServerGatewayOrApp(content: string): boolean {
   return sources.some((s) => /server\/src\/(Gateway|app|createApp)\b/.test(s));
 }
 
+function importsServerRuntimeContractHelper(content: string): boolean {
+  const sources = extractImportSources(content);
+  return sources.some((s) =>
+    /server\/src\/utils\/(ErrorHandler|RequestStore|apiContractResponses|apiRouteMethodAllowlist)(\.js|\.ts)?$/.test(
+      s
+    )
+  );
+}
+
+function executesRealGateScript(content: string, filePath: string): boolean {
+  const relPath = path.relative(projectRoot, filePath).replace(/\\/g, '/');
+  if (!relPath.startsWith('tests/unit/scripts/testing/')) return false;
+  if (!/execFileSync\s*\(/.test(content)) return false;
+  return /scripts\/testing\/[A-Za-z0-9_.-]+\.(ts|js)/.test(content);
+}
+
 function definesInlineExpressRoutes(content: string): boolean {
   // Inline route handlers in a test file are a strong signal of "fake integration".
   return /\bapp\.(get|post|put|delete|patch|all)\s*\(/.test(content);
@@ -256,17 +272,29 @@ function classifyTest(content: string, filePath: string): Bucket {
   const serverIndex = importsServerIndex(content);
   const serverRoutes = importsServerRoutes(content);
   const serverGatewayOrApp = importsServerGatewayOrApp(content);
+  const serverRuntimeContractHelper = importsServerRuntimeContractHelper(content);
   const inlineExpressRoutes = definesInlineExpressRoutes(content);
   const playwright = usesPlaywright(content, filePath);
   const fakeUnit = isFakeUnitTest(content, filePath);
   const placeholder = isPlaceholder(content);
   const specFile = readsSourceFiles(content);
   const lowSignal = isLowSignal(content);
+  const realGateScript = executesRealGateScript(content, filePath);
 
   // Integration honesty: supertest + local express() is "real" only if it mounts our real route stack
   // (or imports the real server entry). Inline route handlers in the test are treated as fake.
   if (supertest && expressApp) {
     const hasRuntimeSignal = serverIndex || serverRoutes || serverGatewayOrApp;
+    const relPath = path.relative(projectRoot, filePath).replace(/\\/g, '/');
+
+    // Fail-closed API contract tests use a local Express harness around production middleware/helpers.
+    if (
+      relPath.startsWith('tests/integration/server/') &&
+      /\.contract\.test\.[tj]sx?$/.test(relPath) &&
+      serverRuntimeContractHelper
+    ) {
+      return 'REAL_RUNTIME';
+    }
 
     // Explicit fake: local app with inline handlers and no real route stack imports.
     if (inlineExpressRoutes && !hasRuntimeSignal) return 'FAKE_INTEGRATION';
@@ -283,6 +311,9 @@ function classifyTest(content: string, filePath: string): Bucket {
 
   // REAL: must touch application code, not just testing libs.
   if (realCode) return 'REAL_CODE';
+
+  // Testing gate contract tests execute the actual repository gate script.
+  if (realGateScript) return 'REAL_RUNTIME';
 
   // Real runtime E2E (Playwright) tests. Note: these are executed by Playwright, not Vitest.
   if (playwright) return 'REAL_RUNTIME';

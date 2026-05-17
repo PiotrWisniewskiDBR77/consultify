@@ -1,5 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { getTeresaStartFailureMessage } from '../components/AIChat/teresaRuntimeCopy';
 import { useTeresaVoice, type UseTeresaVoiceReturn } from '../hooks/useTeresaVoice';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
@@ -172,6 +175,7 @@ export function useTeresaVoiceContext(): TeresaVoiceContextValue {
 
 export function TeresaVoiceProvider({ children }: { children: React.ReactNode }) {
   hydrateVoiceBackoff();
+  const { i18n } = useTranslation();
   const currentUser = useAppStore((s) => s.currentUser);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -375,6 +379,7 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
         setConversationChatLanguage(newConv.id, chatLanguage as any);
       } catch (err) {
         console.error('[TeresaVoice] Failed to create conversation:', err);
+        toast.error(getTeresaStartFailureMessage(i18n.language));
         return;
       }
     }

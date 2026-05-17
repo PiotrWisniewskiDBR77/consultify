@@ -689,31 +689,36 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     );
   }, [activePage, headingOutline.length]);
   const deliverableGuardMessage = useMemo(() => getDeliverableGuardMessage(isPolish), [isPolish]);
+  const notebookEditorExtensions = useMemo(
+    () =>
+      [
+        StarterKit,
+        TaskList,
+        TaskItem.configure({ nested: true }),
+        Placeholder.configure({
+          placeholder: isPolish
+            ? 'Zacznij pisać… Wpisz / aby wstawić blok'
+            : 'Start writing… Type / to insert a block',
+        }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        UnderlineExt,
+        Highlight.configure({ multicolor: false }),
+        Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
+        EmbeddedRefNode,
+        CalloutNode,
+        DetailsNode,
+        DetailsSummaryNode,
+        DetailsContentNode,
+        Table.configure({ resizable: false }),
+        TableRow,
+        TableHeader,
+        TableCell,
+      ] as any,
+    [isPolish]
+  );
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Placeholder.configure({
-        placeholder: isPolish
-          ? 'Zacznij pisać… Wpisz / aby wstawić blok'
-          : 'Start writing… Type / to insert a block',
-      }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      UnderlineExt,
-      Highlight.configure({ multicolor: false }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
-      EmbeddedRefNode,
-      CalloutNode,
-      DetailsNode,
-      DetailsSummaryNode,
-      DetailsContentNode,
-      Table.configure({ resizable: false }),
-      TableRow,
-      TableHeader,
-      TableCell,
-    ],
+    extensions: notebookEditorExtensions,
     content: activePage?.contentJson || { type: 'doc', content: [] },
     editorProps: {
       attributes: {

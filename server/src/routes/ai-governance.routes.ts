@@ -31,7 +31,8 @@ router.get(
         AIPolicyEngine.getPolicySummary(orgId),
       ]);
 
-      const { getRuntimeWebSearchStatus } = await import('../services/ai/runtimeWebSearchService.js');
+      const { getRuntimeWebSearchStatus } =
+        await import('../services/ai/runtimeWebSearchService.js');
       const runtimeStatus = getRuntimeWebSearchStatus();
       res.json({
         success: true,
@@ -207,9 +208,10 @@ router.delete(
     try {
       const result = await deleteMemory(userId);
       if (!result.success) {
-        return res
-          .status(500)
-          .json({ error: 'Memory could not be deleted', code: 'AI_GOVERNANCE_MEMORY_DELETE_FAILED' });
+        return res.status(500).json({
+          error: 'Memory could not be deleted',
+          code: 'AI_GOVERNANCE_MEMORY_DELETE_FAILED',
+        });
       }
       res.json({ ...result });
     } catch {

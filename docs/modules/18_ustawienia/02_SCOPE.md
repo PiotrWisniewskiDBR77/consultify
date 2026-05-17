@@ -1,39 +1,42 @@
 ---
 module_id: MODULE_SETTINGS
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Ustawienia (Settings)
+# Scope — Ustawienia
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Settings (P31) wobec Admin (P32), Organization (P30) oraz SuperAdmin (P33).
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- Preferencje użytkownika: profil, avatar, signatures, working hours, dashboard/work preferences, regionalization, wybrane notyfikacje.
-- Ustawienia AI użytkownika: behavior, model params, autocomplete, memory, usage (zgodnie z inventory).
-- Read‑only “ownership panels” dla tenant defaults/branding/security, jeśli ich źródłem prawdy jest resolver (`organization-context`, settings registry) i/lub write surface jest gdzie indziej.
+- User preferences and profile.
+- AI memory controls visible to the user.
+- Honest partial/stub state for settings not implemented.
+- Deep links to Admin/Organization for tenant-owned controls.
+- Function set: `SET_SETTINGS_WORKSPACE`, `SET_POLICY_BOUNDARY_LINKS`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- Tenant‑critical write surfaces (SSO/MFA/policies, membership/roles, integrations remediation, audit) → **Admin**.
-- Business profile / strategic org workspace → **Organization**.
-- Cross‑tenant operations / platform governance → **SuperAdmin**.
+- Second admin root.
+- Silent changes to org-level policies.
 
-## Should
+## Inputs
 
-- Handoff (deep‑link) do właściwej powierzchni, gdy zmiana jest poza zakresem Settings.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Dla każdej sekcji Settings można wskazać: scope (user vs tenant), source of truth i write surface.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

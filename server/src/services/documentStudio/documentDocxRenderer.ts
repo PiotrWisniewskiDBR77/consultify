@@ -35,6 +35,7 @@
 import * as docxModule from 'docx';
 import { imageSize } from 'image-size';
 
+import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
   formatAppendixHeading,
   formatBodyHeading,
@@ -54,7 +55,6 @@ import {
   type DocumentSection,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
-import { renderChartBlockToPng } from './documentChartRasterizer.js';
 
 /**
  * Optional render-time inputs that the orchestrator (export pipeline)
@@ -696,9 +696,7 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   // export pipeline's concern; the renderer just consumes the bytes.
   const includeLogo = coverDetailed?.includeLogo ?? false;
   const logoParagraph =
-    includeLogo && options.coverLogoAsset
-      ? buildCoverLogoParagraph(options.coverLogoAsset)
-      : null;
+    includeLogo && options.coverLogoAsset ? buildCoverLogoParagraph(options.coverLogoAsset) : null;
 
   // Subtitle composition — strip out parts that the override
   // explicitly disables. Status = `<density> · <type-language>` line;
@@ -713,64 +711,55 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
     subtitleParts.push(schema.confidentiality);
   }
   const subtitle = subtitleParts.join(' · ');
-  const audienceRaw = (schema as { audience?: unknown }).audience;
-  const audienceList = Array.isArray(audienceRaw)
-    ? audienceRaw
-        .map((entry) => String(entry || '').trim())
-        .filter((entry) => entry.length > 0)
-    : typeof audienceRaw === 'string'
-      ? audienceRaw
-          .split(',')
-          .map((entry) => entry.trim())
-          .filter((entry) => entry.length > 0)
-      : [];
-  const audience = audienceList.length > 0 ? audienceList.join(', ') : 'Internal';
+  const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
   const out: Paragraph[] = [];
   if (logoParagraph) out.push(logoParagraph);
-  out.push(...[
-    new Paragraph({
-      style: DOCX_STYLE_IDS.TITLE,
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({
-          text: schema.title,
-          font: ctx.headingFont,
-        }),
-      ],
-    }),
-    new Paragraph({
-      style: DOCX_STYLE_IDS.SUBTITLE,
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: subtitle, font: ctx.bodyFont })],
-    }),
-    new Paragraph({
-      style: DOCX_STYLE_IDS.SUBTITLE,
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({
-          text: `Audience: ${audience}`,
-          font: ctx.bodyFont,
-        }),
-      ],
-    }),
-    new Paragraph({
-      style: DOCX_STYLE_IDS.SUBTITLE,
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({
-          text: `Generated: ${generatedAt}`,
-          font: ctx.bodyFont,
-        }),
-        // Hard page break — keeps the cover on its own page so the
-        // TOC (or first body section) starts on page 2 just like a
-        // hand-authored consulting deliverable would.
-        new PageBreak(),
-      ],
-    }),
-  ]);
+  out.push(
+    ...[
+      new Paragraph({
+        style: DOCX_STYLE_IDS.TITLE,
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: schema.title,
+            font: ctx.headingFont,
+          }),
+        ],
+      }),
+      new Paragraph({
+        style: DOCX_STYLE_IDS.SUBTITLE,
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: subtitle, font: ctx.bodyFont })],
+      }),
+      new Paragraph({
+        style: DOCX_STYLE_IDS.SUBTITLE,
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: `Audience: ${audience}`,
+            font: ctx.bodyFont,
+          }),
+        ],
+      }),
+      new Paragraph({
+        style: DOCX_STYLE_IDS.SUBTITLE,
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: `Generated: ${generatedAt}`,
+            font: ctx.bodyFont,
+          }),
+          // Hard page break — keeps the cover on its own page so the
+          // TOC (or first body section) starts on page 2 just like a
+          // hand-authored consulting deliverable would.
+          new PageBreak(),
+        ],
+      }),
+    ]
+  );
   return out;
 }
 

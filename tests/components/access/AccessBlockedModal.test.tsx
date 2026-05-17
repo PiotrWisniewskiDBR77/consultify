@@ -16,6 +16,7 @@ vi.mock('react-i18next', () => ({
         {
           'access.modal.title': 'Access blocked',
           'access.cta.startTrial': 'Start free trial',
+          'access.cta.goToMyWork': 'Go to my work',
           'access.modal.close': 'Close',
         } as Record<string, string>
       )[key] || fallback || key,
@@ -54,6 +55,28 @@ describe('AccessBlockedModal', () => {
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith('/trial/start');
+    });
+  });
+
+  it('routes feature access denials to My Work', async () => {
+    render(<AccessBlockedModal />);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent('access:blocked', {
+          detail: {
+            code: 'FEATURE_ACCESS_DENIED',
+            message: 'Feature access denied for your current plan.',
+          },
+        })
+      );
+    });
+
+    await screen.findByText('Access blocked');
+    fireEvent.click(screen.getByText('Go to my work'));
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/my-work');
     });
   });
 });

@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 export const ApplicationRole = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
@@ -28,8 +29,23 @@ export type ApplicationRoleValue = (typeof ApplicationRole)[keyof typeof Applica
 export type PlatformRoleValue = (typeof PlatformRole)[keyof typeof PlatformRole];
 export type ProjectRoleValue = (typeof ProjectRole)[keyof typeof ProjectRole];
 
+const ROLE_CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
+const ROLE_INVISIBLE_FORMAT_CHARS =
+  /[\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069\u2060\u2061\u2062\u2063]/g;
+const MAX_ROLE_INPUT_LENGTH = 128;
+
 export function normalizeUpper(value: unknown): string {
-  return String(value || '')
+  const raw = String(value || '');
+  const bounded = raw.length > MAX_ROLE_INPUT_LENGTH ? raw.slice(0, MAX_ROLE_INPUT_LENGTH) : raw;
+  let normalized = bounded;
+  try {
+    normalized = bounded.normalize('NFKC');
+  } catch {
+    normalized = bounded;
+  }
+  return normalized
+    .replace(ROLE_CONTROL_CHARS, '')
+    .replace(ROLE_INVISIBLE_FORMAT_CHARS, '')
     .trim()
     .toUpperCase();
 }

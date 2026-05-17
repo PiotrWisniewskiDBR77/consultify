@@ -18,6 +18,27 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+function resolveDocumentsCorrelationId(req: AuthRequest): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildDocumentsFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveDocumentsCorrelationId(req),
+  };
+}
+
 function getRequestUserRole(req: AuthRequest): string | null {
   return (
     req.userRole ||
@@ -88,7 +109,16 @@ router.get(
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to access documents.'
+            )
+          );
       }
       const { projectId } = req.params;
       const documents = await contextDocumentService.listAccessibleDocuments({
@@ -158,7 +188,16 @@ router.get(
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching documents:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_ACCESSIBLE_READ_FAILED',
+            'Failed to load documents.'
+          )
+        );
     }
   })
 );
@@ -269,21 +308,56 @@ router.post(
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+      const uploadedFile = req.file as any;
+      if (
+        !uploadedFile ||
+        (!uploadedFile.originalname &&
+          !uploadedFile.originalName &&
+          !uploadedFile.mimetype &&
+          typeof uploadedFile.size !== 'number' &&
+          !uploadedFile.buffer)
+      ) {
+        return res
+          .status(400)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              400,
+              'DOCUMENTS_UPLOAD_FILE_REQUIRED',
+              'File is required for upload.'
+            )
+          );
       }
 
       const ownerId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!ownerId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to upload documents.'
+            )
+          );
       }
 
-      const { scope = 'user', projectId } = req.body;
+      const { scope = 'user', projectId } = req.body || {};
 
       // Validate scope
       if (scope === 'project' && !projectId) {
-        return res.status(400).json({ error: 'Project ID required for project scope' });
+        return res
+          .status(400)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              400,
+              'DOCUMENTS_PROJECT_ID_REQUIRED',
+              'Project id is required for project-scoped uploads.'
+            )
+          );
       }
       if (scope === 'project') {
         const canAccessProject = await contextDocumentService.canAccessProject({
@@ -331,7 +405,16 @@ router.post(
           quota: error.quota || null,
         });
       }
-      return res.status(500).json({ error: error.message || 'Upload failed' });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_UPLOAD_FAILED',
+            'Failed to upload document.'
+          )
+        );
     }
   })
 );

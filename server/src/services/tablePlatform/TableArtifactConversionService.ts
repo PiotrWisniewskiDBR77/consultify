@@ -193,9 +193,7 @@ async function loadTenant(tableId: string): Promise<TenantRow | null> {
       LIMIT 1`,
     [tableId]
   );
-  const row = rows?.[0] as
-    | { workspace_id?: unknown; organization_id?: unknown }
-    | undefined;
+  const row = rows?.[0] as { workspace_id?: unknown; organization_id?: unknown } | undefined;
   if (!row?.workspace_id || !row?.organization_id) return null;
   return {
     workspaceId: String(row.workspace_id),

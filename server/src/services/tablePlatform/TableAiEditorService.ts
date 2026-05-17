@@ -35,10 +35,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import aiUsageService, {
-  AiBudgetExhaustedError,
-  type AiEditorLevel,
-} from './AiUsageService.js';
+import aiUsageService, { AiBudgetExhaustedError, type AiEditorLevel } from './AiUsageService.js';
 import auditService from './AuditService.js';
 import { dispatchLevelStub } from './TableAiEditorLevels/index.js';
 
@@ -130,10 +127,7 @@ export class TableAiEditorError extends Error {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function isAiEditorLevel(value: unknown): value is AiEditorLevel {
-  return (
-    typeof value === 'string' &&
-    (AI_EDITOR_LEVELS as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (AI_EDITOR_LEVELS as readonly string[]).includes(value);
 }
 
 // ── Service ──────────────────────────────────────────────────────────────────
@@ -311,13 +305,13 @@ const tableAiEditorService = {
       if (input.idempotent) {
         return { proposalId: input.proposalId, applied: true, reason: 'already_applied' };
       }
-      throw new TableAiEditorError(
-        'PROPOSAL_ALREADY_APPLIED',
-        'Proposal is already applied'
-      );
+      throw new TableAiEditorError('PROPOSAL_ALREADY_APPLIED', 'Proposal is already applied');
     }
     if (row.status === 'rejected') {
-      throw new TableAiEditorError('PROPOSAL_REJECTED', 'Proposal is rejected and cannot be applied');
+      throw new TableAiEditorError(
+        'PROPOSAL_REJECTED',
+        'Proposal is rejected and cannot be applied'
+      );
     }
     if (row.status !== 'pending') {
       throw new TableAiEditorError(
@@ -360,7 +354,9 @@ const tableAiEditorService = {
   /**
    * Reject an AI Editor proposal. Always writes an audit row.
    */
-  async rejectProposal(input: RejectProposalInput): Promise<{ proposalId: string; rejected: true }> {
+  async rejectProposal(
+    input: RejectProposalInput
+  ): Promise<{ proposalId: string; rejected: true }> {
     if (!input.proposalId) {
       throw new TableAiEditorError('PROPOSAL_ID_REQUIRED', 'proposalId is required');
     }

@@ -13,29 +13,32 @@ vi.mock('../../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-import { proposeStructureEdit } from '../structureLevel.js';
 import type { LlmProvider } from '../llmProvider.js';
+import { proposeStructureEdit } from '../structureLevel.js';
 
 const TABLE = 'tbl-1';
 const ORG = 'org-A';
 const WS = 'ws-A';
 const ACTOR = 'user-1';
 
-function setupTenantOkSchema(
-  fields: Array<{ id: string; name: string; field_type: string }>
-) {
+function setupTenantOkSchema(fields: Array<{ id: string; name: string; field_type: string }>) {
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes('JOIN tp_bases'))
       return { rows: [{ workspace_id: WS, organization_id: ORG }] };
-    if (sql.includes('FROM tp_fields'))
-      return { rows: fields.map((f) => ({ ...f, options: {} })) };
+    if (sql.includes('FROM tp_fields')) return { rows: fields.map((f) => ({ ...f, options: {} })) };
     return { rows: [] };
   });
 }
 
 function makeProvider(text: string): LlmProvider {
   return {
-    generate: async () => ({ text, tokensInput: 100, tokensOutput: 50, model: 'mock', source: 'live' }),
+    generate: async () => ({
+      text,
+      tokensInput: 100,
+      tokensOutput: 50,
+      model: 'mock',
+      source: 'live',
+    }),
   };
 }
 
@@ -186,9 +189,7 @@ describe('structureLevel.proposeStructureEdit', () => {
     setupTenantOkSchema([{ id: 'f1', name: 'Old', field_type: 'singleLineText' }]);
     const provider = makeProvider(
       JSON.stringify({
-        operations: [
-          { type: 'op_schema_drop_field', id: 'op_1', fieldId: 'f1' },
-        ],
+        operations: [{ type: 'op_schema_drop_field', id: 'op_1', fieldId: 'f1' }],
         confidence: 0.6,
       })
     );

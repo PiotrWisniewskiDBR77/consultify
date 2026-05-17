@@ -47,32 +47,23 @@ test.describe('Work Canvas editor flow Playwright gate', () => {
         continue;
       }
     }
-    if (!ready && strictCanvasGate) {
+    if (!ready) {
       throw new Error(
-        'Strict Canvas gate: chat work-panel trigger did not mount in runtime after retries.'
+        `${
+          strictCanvasGate ? 'Strict Canvas gate' : 'Canvas smoke gate'
+        }: chat work-panel trigger did not mount in runtime after retries.`
       );
     }
-    if (ready) {
-      await expect(workPanelButton).toBeVisible({ timeout: 30000 });
-      await workPanelButton.click();
-    } else {
-      // Fallback for non-strict runtimes where chat shell mounts slower than Canvas route.
-      await gotoRuntimeGateRoute(page, '/ai/work-canvas?kind=document');
-    }
+    await expect(workPanelButton).toBeVisible({ timeout: 30000 });
+
+    await workPanelButton.click();
     await expect(page.locator('[data-testid="canvas-document-view"]')).toBeVisible({
       timeout: 30000,
     });
 
     await page.getByRole('button', { name: 'Markdown view' }).click();
-    const preferredSelection =
+    const selectedText =
       'Shape a business output with Teresa on the left and the document on the right.';
-    const currentMarkdown = await page.locator('[data-testid="canvas-md-view"]').inputValue();
-    const selectedText = currentMarkdown.includes(preferredSelection)
-      ? preferredSelection
-      : currentMarkdown
-          .split('\n')
-          .map((line) => line.trim())
-          .find((line) => line.length >= 24) || currentMarkdown.slice(0, 64);
     await selectTextInMarkdown(page, selectedText);
 
     await expect(page.locator('[data-testid="canvas-selection-edit-panel"]')).toBeVisible();

@@ -24,20 +24,16 @@
  * materialized view; the public surface stays the same.
  */
 
-import type {
-  DocumentAccessHistoryEntry,
-  DocumentAccessHistorySource,
-} from './documentStudioTypes.js';
-
 import {
   listDocumentApprovalAuditEntries,
   listDocumentApprovals,
 } from './documentApprovalService.js';
-import {
-  listShareLinkAuditEntries,
-  listShareLinks,
-} from './documentShareLinkService.js';
+import { listShareLinkAuditEntries, listShareLinks } from './documentShareLinkService.js';
 import { listDocumentAuditEntries } from './documentStudioService.js';
+import type {
+  DocumentAccessHistoryEntry,
+  DocumentAccessHistorySource,
+} from './documentStudioTypes.js';
 
 export interface GetDocumentAccessHistoryOptions {
   /** Optional source filter — when present, only those sources contribute. */

@@ -2,15 +2,6 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { loginAsOwner } from './work-canvas-helpers';
 
-async function ensureMyWorkSession(page: Page) {
-  const loginHeading = page.getByRole('heading', { name: /Welcome back|Witamy ponownie/i }).first();
-  const loginVisible = await loginHeading.isVisible().catch(() => false);
-  if (!loginVisible) return;
-
-  await loginAsOwner(page);
-  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-}
-
 async function dismissTourModal(page: Page) {
   for (let attempt = 0; attempt < 12; attempt += 1) {
     const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
@@ -56,11 +47,7 @@ function collectMyWorkSignals(page: Page) {
         (error) =>
           !error.includes('favicon') &&
           !error.includes('Failed to load resource:') &&
-          !error.includes('[useDemo] Status fetch failed') &&
-          !error.includes('Failed to fetch tasks TypeError: Failed to fetch') &&
-          !error.includes('Failed to fetch tasks: TypeError: Failed to fetch') &&
-          !error.includes('Failed to fetch dynamically imported module:') &&
-          !error.includes('[RouteErrorBoundary] Caught error: TypeError: Failed to fetch dynamically imported module')
+          !error.includes('[useDemo] Status fetch failed')
       );
       expect(apiFailures).toEqual([]);
       expect(criticalConsoleErrors).toEqual([]);
@@ -74,64 +61,19 @@ async function expectMyWorkRoute(
   expectedText: RegExp,
   options?: { refresh?: boolean }
 ) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await ensureMyWorkSession(page);
-    const stillLoading = await page
-      .locator('[role="status"]', { hasText: /Loading/i })
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (!stillLoading) break;
-    await page.waitForTimeout(1200);
-  }
+  await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await dismissTourModal(page);
-  const routeError = page.getByRole('heading', { name: /Coś poszło nie tak|Something went wrong/i });
-  const hasRouteError = await routeError.isVisible().catch(() => false);
-  if (hasRouteError) {
-    throw new Error(`Route runtime error at ${path}`);
-  }
-
-  await expect(page.getByRole('button', { name: /Radar|Ideas|Notebook|Calendar|Tasks|Inbox/i }).first()).toBeVisible({
-    timeout: 30000,
-  });
+  await expect(page.getByTestId('mywork-view')).toBeVisible({ timeout: 30000 });
   await expect(page.locator('body')).toContainText(expectedText, { timeout: 30000 });
   await expect(page.locator('body')).not.toContainText(/Cannot GET|Coś poszło nie tak|Something went wrong/i);
-  const loadingIndicator = page.getByText(/^Loading…$|^Ładowanie…$/i).first();
-  const indicatorVisible = await loadingIndicator.isVisible().catch(() => false);
-  if (indicatorVisible) {
-    const hasExpectedContent = await page
-      .locator('body')
-      .getByText(expectedText)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (!hasExpectedContent) {
-      await page.waitForTimeout(1500);
-      await expect(loadingIndicator).toBeHidden({ timeout: 15000 });
-    }
-  }
+  await expect(page.getByText(/^Loading…$|^Ładowanie…$/i)).toHaveCount(0);
 
   if (options?.refresh) {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-    await ensureMyWorkSession(page);
     await dismissTourModal(page);
-    const hasRouteErrorAfterReload = await routeError.isVisible().catch(() => false);
-    if (hasRouteErrorAfterReload) {
-      throw new Error(`Route runtime error after reload at ${path}`);
-    }
-    await expect(
-      page.getByRole('button', { name: /Radar|Ideas|Notebook|Calendar|Tasks|Inbox/i }).first()
-    ).toBeVisible({
-      timeout: 30000,
-    });
+    await expect(page.getByTestId('mywork-view')).toBeVisible({ timeout: 30000 });
     await expect(page.locator('body')).toContainText(expectedText, { timeout: 30000 });
-    const reloadedIndicator = page.getByText(/^Loading…$|^Ładowanie…$/i).first();
-    const reloadedVisible = await reloadedIndicator.isVisible().catch(() => false);
-    if (reloadedVisible) {
-      await page.waitForTimeout(1500);
-      await expect(reloadedIndicator).toBeHidden({ timeout: 15000 });
-    }
+    await expect(page.getByText(/^Loading…$|^Ładowanie…$/i)).toHaveCount(0);
   }
 }
 

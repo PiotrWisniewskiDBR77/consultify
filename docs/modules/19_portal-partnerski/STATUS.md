@@ -1,30 +1,31 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Status — Portal partnerski
+# Status — Portal Partnerski
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: shipped (portal surfaces) / broader ecosystem: partial (per Wave 2)
+- Runtime class: `real + partial`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: Canonical portal ownership is protected `/partner/*`; public partner acquisition routes remain related but not portal-internal ownership.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Ryzyko “unsafe claim”: nie traktować zamknięcia routingu portalu jako dowodu pełnej dojrzałości ekosystemu partnerów (Wave 2).
-- Brak widocznych w repo dedykowanych plików dla “SuperAdmin partner control tower” mimo że `SUPERADMIN_V8_SSOT.md` je referencjonuje.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Rozjazd partner truth vs operator truth (lifecycle/ledger) → utrata zaufania + ryzyka finansowe.
-- Degraded posture (payout/ledger) nieuczynciwy w UI → ryzyko “fake success”.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
-## Primary evidence
+## Function Coverage Status
 
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md`
-- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_PARTNER_PROGRAM_2026-03-29.md`
-
+- Required functions documented: `2/2`.
+- Covered: `PART_PORTAL_WORKSPACE`, `PART_PUBLIC_ACQUISITION_BOUNDARY`.

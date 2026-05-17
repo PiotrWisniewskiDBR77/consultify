@@ -1076,9 +1076,8 @@ router.post(
         });
       }
       const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
-      const validationSvc = (
-        await import('../services/tablePlatform/ValidationStatusService.js')
-      ).default;
+      const validationSvc = (await import('../services/tablePlatform/ValidationStatusService.js'))
+        .default;
       const result = await validationSvc.setStatus(recordId, rawStatus, {
         actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
         isSuperAdmin: Boolean(authReq.user?.isSuperAdmin),
@@ -1112,9 +1111,8 @@ router.get(
     try {
       const { recordId } = req.params;
       if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-      const validationSvc = (
-        await import('../services/tablePlatform/ValidationStatusService.js')
-      ).default;
+      const validationSvc = (await import('../services/tablePlatform/ValidationStatusService.js'))
+        .default;
       const current = await validationSvc.getStatus(recordId);
       if (current === null) return res.status(404).json({ error: 'Record not found' });
       return res.status(200).json({
@@ -2133,7 +2131,8 @@ router.get(
             .map((f) => f.trim())
             .filter(Boolean)
         : undefined;
-    const wantRegister = req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
+    const wantRegister =
+      req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
     let exportArtifactId: string | null = null;
     try {
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });

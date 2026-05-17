@@ -61,6 +61,7 @@ interface ModuleNavBarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSearch: (query: string) => void;
+  searchValue?: string;
   // Command Row inputs (V3: one row; modes swap in place)
   openDocuments: OpenDocument[];
   activeDocumentId: string | null;
@@ -72,6 +73,8 @@ interface ModuleNavBarProps {
   onClearFilters: () => void;
   // Optional: module-provided "counters / chips / bulk bar" for the command row
   commandRowContent?: React.ReactNode;
+  // Optional right-side command row slot for contextual AI/actions.
+  commandRowRightContent?: React.ReactNode;
   // For Assessment: single "New Assessment" button
   onNewItem?: () => void;
   newItemLabel?: string;
@@ -156,6 +159,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
+  searchValue,
   openDocuments,
   activeDocumentId,
   onSelectDocument,
@@ -165,6 +169,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   onRemoveFilter,
   onClearFilters,
   commandRowContent,
+  commandRowRightContent,
   onNewItem,
   newItemLabel = 'New Item',
   primaryCta,
@@ -180,9 +185,16 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   aiControl,
   forceCommandRow = false,
 }) => {
+  void commandRowRightContent;
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchValue !== undefined) {
+      setSearchQuery(searchValue);
+    }
+  }, [searchValue]);
 
   // Debounce search query (300ms)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);

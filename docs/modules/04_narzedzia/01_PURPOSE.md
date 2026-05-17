@@ -1,38 +1,52 @@
 ---
 module_id: MODULE_TOOLS
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Narzędzia
+# Purpose — Narzędzia / Tools
 
 ## Purpose
 
-Zdefiniować po co istnieje moduł `Narzędzia` i jak przekłada AI-guided analizę na inicjatywy gotowe do planowania i realizacji.
+Biblioteka narzędzi konsultingowych i assessmentów: użytkownik uruchamia narzędzie, zapisuje sesję, otrzymuje wynik i może przekazać go do inicjatyw lub artefaktów.
+
+Function-level realization:
+
+- Discovery lanes: `NZ_DISCOVERY_LIBRARY`, `NZ_DISCOVERY_SESSIONS`, `NZ_DISCOVERY_OUTPUTS`, `NZ_DISCOVERY_INITIATIVES`.
+- Assessment lane: `NZ_ASSESSMENT_HUB`.
+- Strategic lane: `NZ_MEGATRENDS_WORKSPACE`.
 
 ## Must
 
-- MUST: udostępniać bibliotekę narzędzi z jasnymi kategoriami i wejściem do sesji narzędziowej.
-- MUST: prowadzić użytkownika przez strukturę (inputs → kroki → wynik) zamiast “pustego czatu bez metody”.
-- MUST: generować wyniki w sposób, który może zasilić `Inicjatywy` (inicjatywy gotowe do potwierdzenia).
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- MUST NOT: mieszać “wynik narzędzia” z “zatwierdzoną inicjatywą” (inicjatywa wymaga osobnego lifecycle/gates).
+- Unreviewed direct initiative creation.
+- Replacing Interview, Initiatives or Outputs ownership.
 
 ## Should
 
-- SHOULD: utrzymywać mentalny model v3: **Library → Sessions → Reports/Presentations → Initiatives**.
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z `DISCOVERY_TOOLS_MODULE.md` oraz `TOOLS_CATALOG_V3.md`.
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
 - `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md`
 - `DRD/consultify/docs/product/TOOLS_CATALOG_V3.md`
-
+- `DRD/consultify/docs/product/TOOLS_V8_SSOT.md`
+- `DRD/consultify/docs/product/OPERATING_MODEL_V3.md`
+- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
+- `DRD/consultify/docs/ui-standards/03-modules/tools-library-detail-standard.md`
+- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`

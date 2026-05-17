@@ -1,4 +1,5 @@
 /**
+<<<<<<<< HEAD:src/utils/tabeleAiEditorFlag.ts
  * Block C · EPIC-T10 · client-side kill switch for the Tabele AI Editor panel.
  *
  * Mirrors the resolution order of `melsTabeleFlag` so operator overrides
@@ -10,6 +11,12 @@
  *   3. `import.meta.env.VITE_TABELE_AI_EDITOR`
  *   4. Default: OFF until the backend feature flag
  *      `ENABLE_TABLE_AI_EDITOR` is enabled in the target environment.
+========
+ * Chat V10 / V10-AGT anti-pattern catalogue feature flag.
+ *
+ * Default OFF. The registry may describe the contract before the runtime
+ * enforcement is enabled.
+>>>>>>>> origin/main:src/utils/v10/agentAntiPatternsFlag.ts
  */
 
 const LS_KEY = 'ff.tabele_ai_editor';

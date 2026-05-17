@@ -182,6 +182,7 @@ export const FeedbackSidePanel: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   // Context snapshot - captured the moment user opens the panel
   const [capturedCtx, setCapturedCtx] = useState<CapturedContext | null>(null);
@@ -431,6 +432,7 @@ export const FeedbackSidePanel: React.FC = () => {
     setFeatureDescription('');
     setFeatureImpact('medium');
     setUploadedScreenshot(null);
+    setSubmitErrorMessage(null);
   }, []);
 
   // Handle success state
@@ -450,6 +452,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!message.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitErrorMessage(null);
     const ctx = capturedCtx || capturePageContext(t);
     const structuredBlocks: string[] = [];
     if (stepsToReproduce.trim())
@@ -535,6 +538,7 @@ export const FeedbackSidePanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -599,6 +603,7 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const submitPulse = async (rating: PulseRating, comment?: string) => {
     setIsSubmitting(true);
+    setSubmitErrorMessage(null);
     const ctx = capturedCtx || capturePageContext(t);
     try {
       await Api.submitPulseFeedback({
@@ -611,6 +616,7 @@ export const FeedbackSidePanel: React.FC = () => {
       handleSuccess(t('feedback.success.pulse', 'Thanks for your feedback! 🎉'));
     } catch (error) {
       console.error('Error submitting pulse:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -623,6 +629,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!featureName.trim() || !featureDescription.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitErrorMessage(null);
     const ctx = capturedCtx || capturePageContext(t);
     try {
       const data = await Api.submitFeatureFeedback({
@@ -645,6 +652,7 @@ export const FeedbackSidePanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Error submitting feature:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -1343,6 +1351,14 @@ export const FeedbackSidePanel: React.FC = () => {
             renderSuccess()
           ) : (
             <>
+              {submitErrorMessage ? (
+                <div
+                  role="alert"
+                  className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                >
+                  {submitErrorMessage}
+                </div>
+              ) : null}
               {renderQuickPulseComment()}
               {activeTab === 'report' && renderReportTab()}
               {activeTab === 'feature' && renderFeatureTab()}

@@ -18,7 +18,6 @@
  * confirmation. Final confirmation lives at apply time.
  */
 
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -27,16 +26,17 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import {
-  opSchemaAddField,
-  opSchemaDropField,
-  opSchemaRenameField,
-  opSchemaRetypeField,
   type OpSchemaAddField,
+  opSchemaAddField,
   type OpSchemaDropField,
+  opSchemaDropField,
   type OpSchemaRenameField,
+  opSchemaRenameField,
   type OpSchemaRetypeField,
+  opSchemaRetypeField,
 } from './operations.js';
 
 const SYSTEM_PROMPT = `You are an AI Editor for Consultify Table Studio.

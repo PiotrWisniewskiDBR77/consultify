@@ -13,8 +13,8 @@ vi.mock('../../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-import { proposeSourceEdit } from '../sourceLevel.js';
 import type { LlmProvider } from '../llmProvider.js';
+import { proposeSourceEdit } from '../sourceLevel.js';
 
 const TABLE = 'tbl-1';
 const ORG = 'org-A';
@@ -41,7 +41,13 @@ function setupTenantOk(records: Array<{ id: string; data: Record<string, unknown
 
 function makeProvider(text: string): LlmProvider {
   return {
-    generate: async () => ({ text, tokensInput: 50, tokensOutput: 25, model: 'mock', source: 'live' }),
+    generate: async () => ({
+      text,
+      tokensInput: 50,
+      tokensOutput: 25,
+      model: 'mock',
+      source: 'live',
+    }),
   };
 }
 
@@ -117,10 +123,9 @@ describe('sourceLevel.proposeSourceEdit', () => {
       llmProvider: provider,
     });
     expect(out.operations).toHaveLength(1);
-    const candidates = ((out.operations[0] as Record<string, unknown>).payload as Record<
-      string,
-      unknown
-    >).candidates as Array<Record<string, unknown>>;
+    const candidates = (
+      (out.operations[0] as Record<string, unknown>).payload as Record<string, unknown>
+    ).candidates as Array<Record<string, unknown>>;
     expect(candidates).toHaveLength(1);
   });
 
@@ -193,10 +198,9 @@ describe('sourceLevel.proposeSourceEdit', () => {
       actorIsSuperAdmin: true,
       llmProvider: provider,
     });
-    const candidates = ((out.operations[0] as Record<string, unknown>).payload as Record<
-      string,
-      unknown
-    >).candidates as Array<Record<string, unknown>>;
+    const candidates = (
+      (out.operations[0] as Record<string, unknown>).payload as Record<string, unknown>
+    ).candidates as Array<Record<string, unknown>>;
     expect(candidates.length).toBeLessThanOrEqual(5);
   });
 

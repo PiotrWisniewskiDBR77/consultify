@@ -1,24 +1,31 @@
 ---
 module_id: MODULE_MCP_IRIS
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # Status — MCP IRIS
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: planned (v3 integrations/MCP plan)
+- Runtime class: `stub + planned`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: As-Is UI entry exists as a coming-soon integration surface.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Brak jawnego modułu w `MODULE_ROUTING_ARCHITECTURE.md` (routing TBD).
-- Wymaga dopięcia spójnego UI “MCP providers” (org-level) i ujednolicenia 2 warstw MCP w kodzie (wg planu).
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Ryzyko bezpieczeństwa: narzędzia MCP mogą robić outbound — wymagany allowlist + audyt + tenant isolation + minimal scopes.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `IRIS_PLACEHOLDER_SURFACE`, `IRIS_RUNTIME_TARGET`.

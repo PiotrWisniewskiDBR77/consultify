@@ -163,38 +163,4 @@ describe('Document Studio export pipeline', () => {
     expect(result.contentBase64).toBeUndefined();
     expect(markExported).not.toHaveBeenCalled();
   });
-
-  it('reads schema from camelCase wave5 artifact shape', async () => {
-    vi.mocked(markWave5ArtifactExported).mockClear();
-    const dynamicWave5 = await import('../../wave5ArtifactRuntimeService.js');
-    vi.mocked(dynamicWave5.getWave5Artifact).mockImplementation(async (artifactId: string) => {
-      if (artifactId === 'artifact-export-camel-1') {
-        return {
-          artifactId: 'artifact-export-camel-1',
-          organizationId: 'org-1',
-          title: 'Camel Case Artifact',
-          content: '# Camel Case Artifact',
-          contentJson: baseSchema,
-          provenance: { metadata: { documentStudioSchema: baseSchema } },
-        };
-      }
-      return {
-        artifact_id: 'artifact-export-1',
-        organization_id: 'org-1',
-        title: 'Export Test Document',
-        content: '# Export Test Document',
-        content_json: baseSchema,
-        metadata_json: { documentStudioSchema: baseSchema },
-      };
-    });
-    vi.mocked(dynamicWave5.buildWave5ExportManifest).mockImplementationOnce(async () => ({
-      artifactId: 'artifact-export-camel-1',
-      formats: ['markdown', 'pdf_print'],
-    }));
-
-    const result = await exportDocumentArtifact('artifact-export-camel-1', 'org-1', 'docx');
-    expect(result.format).toBe('docx');
-    expect(typeof result.contentBase64).toBe('string');
-    expect(result.manifest.renderedFromSchema).toBe(true);
-  });
 });

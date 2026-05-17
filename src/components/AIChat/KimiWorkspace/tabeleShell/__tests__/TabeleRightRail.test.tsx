@@ -19,10 +19,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildTabeleRightRailTools,
-  TabeleRightRailPanel,
-} from '../TabeleRightRail';
+import { buildTabeleRightRailTools, TabeleRightRailPanel } from '../TabeleRightRail';
 
 describe('buildTabeleRightRailTools', () => {
   it('returns tools in the documented MELS spec order', () => {
@@ -91,16 +88,12 @@ describe('TabeleRightRailPanel', () => {
   });
 
   it('renders nothing when activeToolId is null', () => {
-    const { container } = render(
-      <TabeleRightRailPanel activeToolId={null} panels={panels} />
-    );
+    const { container } = render(<TabeleRightRailPanel activeToolId={null} panels={panels} />);
     expect(container.textContent).toBe('');
   });
 
   it('renders nothing when no matching panel and no fallback', () => {
-    const { container } = render(
-      <TabeleRightRailPanel activeToolId="layout" panels={panels} />
-    );
+    const { container } = render(<TabeleRightRailPanel activeToolId="layout" panels={panels} />);
     expect(container.textContent).toBe('');
   });
 

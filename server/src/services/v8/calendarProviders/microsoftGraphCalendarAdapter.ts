@@ -5,8 +5,6 @@
  * CalendarProviderAdapter contract used by the calendar interop layer.
  */
 
-import { Client } from '@microsoft/microsoft-graph-client';
-
 import logger from '../../../utils/Logger.js';
 import type { RecurrenceModel } from '../calendarInteropService.js';
 import type {
@@ -22,11 +20,53 @@ import type {
 
 const LOG_PREFIX = '[P02-MicrosoftGraph]';
 
+type GraphRequest = {
+  select: (fields: string) => GraphRequest;
+  header: (name: string, value: string) => GraphRequest;
+  get: () => Promise<Record<string, unknown>>;
+  post: (body: unknown) => Promise<unknown>;
+  patch: (body: unknown) => Promise<unknown>;
+  delete: () => Promise<unknown>;
+};
+type GraphClient = {
+  api: (path: string) => GraphRequest;
+};
+type GraphClientCtor = {
+  init: (options: {
+    authProvider: (done: (error: Error | null, token?: string) => void) => void;
+  }) => GraphClient;
+};
+
+let graphClientCtor: GraphClientCtor | null | undefined;
+
 /* -------------------------------------------------------------------------- */
 /*  Graph client factory                                                      */
 /* -------------------------------------------------------------------------- */
 
-function buildGraphClient(connection: ConnectionRef): Client {
+async function getGraphClientCtor(): Promise<GraphClientCtor | null> {
+  if (graphClientCtor !== undefined) return graphClientCtor;
+  try {
+    const optionalModule = '@microsoft/microsoft-graph-client';
+    const mod = (await import(optionalModule)) as {
+      Client?: GraphClientCtor;
+      default?: { Client?: GraphClientCtor };
+    };
+    graphClientCtor = mod.Client ?? mod.default?.Client ?? null;
+    return graphClientCtor;
+  } catch {
+    graphClientCtor = null;
+    return null;
+  }
+}
+
+async function buildGraphClient(connection: ConnectionRef): Promise<GraphClient> {
+  const Client = await getGraphClientCtor();
+  if (!Client) {
+    throw new Error(
+      `${LOG_PREFIX} @microsoft/microsoft-graph-client dependency is required for Microsoft Graph`
+    );
+  }
+
   return Client.init({
     authProvider: (done) => {
       done(null, connection.accessToken);
@@ -298,7 +338,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async listCalendars(connection: ConnectionRef): Promise<ProviderCalendarRef[]> {
     logger.debug(`${LOG_PREFIX} listCalendars for account=${connection.accountRef}`);
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
 
     try {
       const response = await client
@@ -334,7 +374,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
       window,
     });
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
     const allEvents: ProviderEvent[] = [];
     let nextCursor: string | null = null;
 
@@ -400,7 +440,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
       transactionId,
     });
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
     const body = buildEventBody(item);
 
     if (transactionId) {
@@ -437,7 +477,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
       throw new Error(`${LOG_PREFIX} updateEvent requires providerEventId on the item`);
     }
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
     const body = buildEventBody(item);
 
     try {
@@ -472,7 +512,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   ): Promise<void | ProviderConflictError> {
     logger.debug(`${LOG_PREFIX} deleteEvent id=${providerEventId}`);
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
 
     try {
       await client
@@ -500,7 +540,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async watchChanges(connection: ConnectionRef, callbackUrl: string): Promise<WatchSubscription> {
     logger.debug(`${LOG_PREFIX} watchChanges callbackUrl=${callbackUrl}`);
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
 
     const expirationDateTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 

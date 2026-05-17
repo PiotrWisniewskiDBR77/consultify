@@ -885,7 +885,9 @@ export async function recordFailedExport(
     [exportId, artifactId, organizationId, format, requestedBy, 'failed', now, now]
   );
 
-  logger.info(`${LOG_PREFIX} Recorded failed ${format} export ${exportId} for artifact ${artifactId}`);
+  logger.info(
+    `${LOG_PREFIX} Recorded failed ${format} export ${exportId} for artifact ${artifactId}`
+  );
   return record;
 }
 

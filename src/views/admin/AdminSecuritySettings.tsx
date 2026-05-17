@@ -42,6 +42,40 @@ interface SecuritySettingsSnapshot {
   lockoutDuration: number;
 }
 
+const ADMIN_SECURITY_COPY = {
+  loadUnavailableTitle: 'Security settings unavailable',
+  loadUnavailableBody:
+    'We could not load organization security settings. Retry before making policy changes.',
+  oauthUnavailable: 'OAuth provider status unavailable',
+  saveFailed: 'Failed to save security settings. Please try again.',
+  saveNotConfirmed: 'Security settings save was not confirmed by the server',
+};
+
+function parseErrorCode(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const value = (payload as Record<string, unknown>).code;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized ? normalized : null;
+}
+
+function normalizeOAuthStatusPayload(raw: unknown): OAuthStatus {
+  const value = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const normalizeProvider = (provider: unknown): { configured: boolean; loginUrl: string } => {
+    const entry =
+      provider && typeof provider === 'object' ? (provider as Record<string, unknown>) : {};
+    return {
+      configured: Boolean(entry.configured),
+      loginUrl: typeof entry.loginUrl === 'string' ? entry.loginUrl : '',
+    };
+  };
+  return {
+    google: normalizeProvider(value.google),
+    microsoft: normalizeProvider(value.microsoft),
+    linkedin: normalizeProvider(value.linkedin),
+  };
+}
+
 const settingsMatch = (actual: SecuritySettingsSnapshot, expected: SecuritySettingsSnapshot) =>
   actual.mfaRequired === expected.mfaRequired &&
   actual.ssoEnabled === expected.ssoEnabled &&
@@ -64,6 +98,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
   const [loadError, setLoadError] = useState<string | null>(null);
   const [oauthLoadError, setOauthLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveErrorCode, setSaveErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -78,10 +113,10 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
         throw new Error(`HTTP ${response.status}`);
       }
       const data = await response.json();
-      setOAuthStatus(data);
+      setOAuthStatus(normalizeOAuthStatusPayload(data));
     } catch (error: unknown) {
       setOAuthStatus(null);
-      setOauthLoadError(normalizeApiErrorMessage(error, 'Failed to load OAuth status'));
+      setOauthLoadError(ADMIN_SECURITY_COPY.oauthUnavailable);
     }
   };
 
@@ -112,7 +147,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
       setLockoutDuration(snapshot.lockoutDuration);
       return snapshot;
     } catch (error: unknown) {
-      setLoadError(normalizeApiErrorMessage(error, 'Failed to load security settings'));
+      setLoadError(ADMIN_SECURITY_COPY.loadUnavailableBody);
       return null;
     } finally {
       if (showLoader) setLoading(false);
@@ -122,6 +157,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
   const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
+    setSaveErrorCode(null);
     try {
       const expected = {
         mfaRequired,
@@ -140,19 +176,17 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
         body: JSON.stringify(expected),
       });
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to save');
+        const data = await response.json().catch(() => ({}));
+        setSaveErrorCode(parseErrorCode(data));
+        throw new Error(ADMIN_SECURITY_COPY.saveFailed);
       }
       const persisted = await fetchSettings(false);
       if (!persisted || !settingsMatch(persisted, expected)) {
-        throw new Error('Security settings save was not confirmed by the server');
+        throw new Error(ADMIN_SECURITY_COPY.saveNotConfirmed);
       }
       toast.success(t('admin.security.saved', 'Security settings saved'));
     } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(
-        error,
-        t('admin.security.saveError', 'Failed to save settings')
-      );
+      const message = normalizeApiErrorMessage(error, ADMIN_SECURITY_COPY.saveFailed);
       setSaveError(message);
       toast.error(message);
     } finally {
@@ -162,8 +196,16 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div
+        className="flex items-center justify-center gap-2 p-12"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading security settings"
+      >
         <Clock className="w-8 h-8 text-slate-300 animate-spin" />
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          {t('admin.security.loading', 'Loading security settings...')}
+        </span>
       </div>
     );
   }
@@ -181,7 +223,9 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
       </div>
 
       {loadError ? (
-        <DegradedState title="Security settings unavailable" description={loadError} />
+        <div role="alert">
+          <DegradedState title={ADMIN_SECURITY_COPY.loadUnavailableTitle} description={loadError} />
+        </div>
       ) : (
         <>
           {/* MFA Requirement */}
@@ -444,10 +488,12 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
             </div>
           ) : oauthLoadError ? (
             <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-              <DegradedState
-                title="OAuth provider status unavailable"
-                description={oauthLoadError}
-              />
+              <div role="alert">
+                <DegradedState
+                  title={ADMIN_SECURITY_COPY.oauthUnavailable}
+                  description="Retry later or verify identity provider configuration before changing SSO policy."
+                />
+              </div>
             </div>
           ) : null}
 
@@ -457,7 +503,10 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
               role="alert"
               className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
             >
-              {saveError}
+              <p>{saveError}</p>
+              {saveErrorCode ? (
+                <p className="mt-1 font-mono text-xs">Code: {saveErrorCode}</p>
+              ) : null}
             </div>
           )}
 

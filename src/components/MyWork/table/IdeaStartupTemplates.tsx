@@ -20,8 +20,8 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { IdeaWorkspaceSeedIntent } from '../ideaEntryTypes';
-import { IDEA_STARTING_POINTS } from '../ideaStartingPoints';
 import type { CanvasToolType } from '../ideaSelectionTypes';
+import { IDEA_STARTING_POINTS } from '../ideaStartingPoints';
 
 interface IdeaStartupTemplatesProps {
   open: boolean;
@@ -342,7 +342,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 />
                 <input
                   value={structuredBrief.goal}
-                  onChange={(e) => setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))}
+                  onChange={(e) =>
+                    setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))
+                  }
                   placeholder={isPl ? 'Cel / wynik' : 'Goal / outcome'}
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs"
                 />
@@ -352,7 +354,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     setStructuredBrief((prev) => ({ ...prev, constraints: e.target.value }))
                   }
                   rows={2}
-                  placeholder={isPl ? 'Ograniczenia, po jednym w linii' : 'Constraints, one per line'}
+                  placeholder={
+                    isPl ? 'Ograniczenia, po jednym w linii' : 'Constraints, one per line'
+                  }
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs resize-none"
                 />
               </div>

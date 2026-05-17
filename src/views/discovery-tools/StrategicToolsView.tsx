@@ -230,7 +230,17 @@ export const StrategicToolsView: React.FC = () => {
   // Deep link support: /discovery-tools/strategic?artifact=tool:<sessionId>
   useEffect(() => {
     const parsed = parseArtifactRef(searchParams.get('artifact'));
-    if (!parsed || parsed.type !== 'tool') return;
+    if (!parsed || parsed.type !== 'tool') {
+      const hasArtifact = searchParams.has('artifact');
+      const hasCode = searchParams.has('code');
+      if (!hasArtifact && !hasCode) return;
+
+      const next = new URLSearchParams(searchParams);
+      next.delete('artifact');
+      next.delete('code');
+      setSearchParams(next, { replace: true });
+      return;
+    }
 
     const run = async () => {
       try {

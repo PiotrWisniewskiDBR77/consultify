@@ -6,6 +6,7 @@ import { STORAGE_STATE_PATH } from './tests/e2e/_helpers/testSupportState';
 export default defineConfig({
   ...(base as any),
   testDir: './tests/e2e/smoke',
+  captureGitInfo: { commit: false, diff: false },
   // Smoke should be fast and deterministic.
   fullyParallel: false,
   workers: 1,

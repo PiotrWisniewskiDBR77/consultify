@@ -1,39 +1,40 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Portal partnerski
+# Scope — Portal Partnerski
 
 ## Purpose
 
-Ustalić granice odpowiedzialności partner‑facing portalu względem operator tower (SuperAdmin) oraz fundamentów P30/P31/P32.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- Partner portal surfaces (`/partner/*`): landing, onboarding, dashboard, clients, commission/earnings views, directory, resources.
-- Public recruitment/apply (`/become-partner`, `/become-partner/apply`) jako wejście do lifecycle.
-- Partner-facing lifecycle i jego stany (onboard/activate/earn/payout) oraz payout request (jeśli rola pozwala).
+- Partner onboarding, activation, earnings, ledger, payout requests and operator review.
+- Partner/operator role separation.
+- Function set: `PART_PORTAL_WORKSPACE`, `PART_PUBLIC_ACQUISITION_BOUNDARY`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- Operator-only actions: hold/place/release, approve/execute/reconcile payouts, ledger adjustments/reversals → **SuperAdmin / operator**.
-- Org identity edits (companyName/branding) → **Organization (P30)**; portal tylko konsumuje.
-- Tenant membership/roles → **Admin (P32)**; portal zarządza wyłącznie partner-program roles w obrębie partner org (jeśli istnieją).
+- General CRM or admin replacement.
+- Mutable financial ledger without append-only audit.
 
-## Should
+## Inputs
 
-- Jawne linki/komunikaty gdy akcja jest operator-only (“managed by platform operators”).
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Scope jest spójny z P29 (partner portal vs operator tower) i nie tworzy równoległej prawdy w P30/P31/P32/P33.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

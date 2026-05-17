@@ -80,18 +80,15 @@ export const RailResizeHandle: React.FC<RailResizeHandleProps> = ({
     [onResize, side]
   );
 
-  const stopDrag = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!draggingRef.current) return;
-      draggingRef.current = false;
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {
-        /* ignore — capture may have been released by the browser */
-      }
-    },
-    []
-  );
+  const stopDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      /* ignore — capture may have been released by the browser */
+    }
+  }, []);
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {

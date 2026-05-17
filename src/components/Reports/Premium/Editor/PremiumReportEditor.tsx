@@ -42,6 +42,46 @@ export interface PremiumReportEditorProps {
   className?: string;
 }
 
+const premiumEditorExtensions = [
+  StarterKit.configure({
+    heading: {
+      levels: [1, 2, 3, 4],
+    },
+  }),
+  Table.configure({
+    resizable: true,
+    HTMLAttributes: {
+      class: 'premium-table',
+    },
+  }),
+  TableRow,
+  TableCell,
+  TableHeader,
+  Placeholder.configure({
+    placeholder: ({ node }) => {
+      if (node.type.name === 'heading') {
+        return 'Tytuł sekcji...';
+      }
+      return 'Zacznij pisać lub wpisz "/" aby wstawić blok...';
+    },
+  }),
+  Highlight.configure({
+    multicolor: true,
+  }),
+  TextAlign.configure({
+    types: ['heading', 'paragraph'],
+  }),
+  Underline,
+  TextStyle,
+  Color,
+  MaturityRadarExtension,
+  GapHeatmapExtension,
+  RecommendationCardExtension,
+  ExecutiveSummaryExtension,
+  MetricCardExtension,
+  CalloutExtension,
+] as any;
+
 export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
   initialContent,
   reportId,
@@ -57,46 +97,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
   const [blockMenuPosition, setBlockMenuPosition] = useState({ x: 0, y: 0 });
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4],
-        },
-      }),
-      Table.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: 'premium-table',
-        },
-      }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      Placeholder.configure({
-        placeholder: ({ node }) => {
-          if (node.type.name === 'heading') {
-            return 'Tytuł sekcji...';
-          }
-          return 'Zacznij pisać lub wpisz "/" aby wstawić blok...';
-        },
-      }),
-      Highlight.configure({
-        multicolor: true,
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-      Underline,
-      TextStyle,
-      Color,
-      // Custom extensions
-      MaturityRadarExtension,
-      GapHeatmapExtension,
-      RecommendationCardExtension,
-      ExecutiveSummaryExtension,
-      MetricCardExtension,
-      CalloutExtension,
-    ],
+    extensions: premiumEditorExtensions,
     content: initialContent || getDefaultReportStructure(),
     editable: !readOnly,
     onUpdate: ({ editor }) => {

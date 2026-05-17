@@ -88,20 +88,9 @@ function renderHeader(schema: DocumentSchema): string {
   const meta: string[] = [];
   meta.push(`# ${schema.title}`);
   meta.push('');
-  const audienceRaw = (schema as { audience?: unknown }).audience;
-  const audienceList = Array.isArray(audienceRaw)
-    ? audienceRaw
-        .map((entry) => String(entry || '').trim())
-        .filter((entry) => entry.length > 0)
-    : typeof audienceRaw === 'string'
-      ? audienceRaw
-          .split(',')
-          .map((entry) => entry.trim())
-          .filter((entry) => entry.length > 0)
-      : [];
   const labels: Array<[string, string]> = [
     ['Document type', schema.documentType],
-    ['Audience', audienceList.join(', ') || 'Unspecified'],
+    ['Audience', schema.audience.join(', ') || 'Unspecified'],
     ['Goal', schema.goal],
     ['Register', schema.communicationRegister],
     ['Density', schema.density],

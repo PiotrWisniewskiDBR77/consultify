@@ -37,6 +37,8 @@ export interface AuthenticatedRequest<
   tenantId?: string;
   workspaceId?: string;
   db?: IDatabase;
+  _rateLimitUserId?: string;
+  emitAuditEvent?: (input: any) => void | Promise<void>;
 }
 
 export type AsyncHandler<ReqBody = any, P = any, ResBody = any, ReqQuery = any> = (

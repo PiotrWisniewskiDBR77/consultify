@@ -1,40 +1,38 @@
 ---
 module_id: MODULE_PRESENTATIONS
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Prezentacje (Presentation Studio)
+# Permissions & Security — Prezentacje / Presentation Studio
 
 ## Purpose
 
-Uprawnienia i bezpieczeństwo dla decków: tenant/ACL, visibility scopes, share/export integrity, approvals.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- MUST: visibility scopes i ACL są egzekwowane zgodnie z v8.1 substrate (brak “global library leak”).
-- MUST: deny-by-default jeśli capabilities/ACL niepewne.
-- MUST: export/share i review actions są audytowalne.
+- Client-ready decks require visibility/export controls and audit.
 
-## Must Not
+Function-level enforcement applies uniformly to: `PR_GEN_PLACEHOLDER`, `PR_GEN_RUNTIME_TARGET`, `PR_OUTPUTS_OWNERSHIP_BOUNDARY`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: ujawniać decków lub ich treści przez deep link poza scope usera.
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- SHOULD: source panel jest tenant-safe i pokazuje policy-blocked sources bez ujawnienia payloadów.
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
-- `DRD/consultify/docs/product/ROLES_MODEL.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

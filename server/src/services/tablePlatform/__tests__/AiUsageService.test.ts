@@ -126,9 +126,7 @@ describe('AiUsageService.consume', () => {
 
   it('3) hard cap: throws AiBudgetExhaustedError + writes hard_cap_429 audit', async () => {
     // Empty rows from atomic update = budget would be exceeded.
-    mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] });
+    mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
 
     await expect(
       aiUsageService.consume({
@@ -154,9 +152,7 @@ describe('AiUsageService.consume', () => {
   });
 
   it('3b) hard cap error has retryAfterSeconds <= 24h', async () => {
-    mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] });
+    mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
 
     try {
       await aiUsageService.consume({

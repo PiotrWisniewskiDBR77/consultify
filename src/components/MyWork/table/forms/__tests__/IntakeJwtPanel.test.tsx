@@ -73,7 +73,9 @@ describe('IntakeJwtPanel', () => {
 
   it('saves a deduplicated allow-list when the user toggles fields', async () => {
     const onClose = vi.fn();
-    mocks.setFormIntakeAllowList.mockResolvedValue(makeContext({ fieldAllowList: ['fld-1', 'fld-3'] }));
+    mocks.setFormIntakeAllowList.mockResolvedValue(
+      makeContext({ fieldAllowList: ['fld-1', 'fld-3'] })
+    );
 
     render(
       <IntakeJwtPanel

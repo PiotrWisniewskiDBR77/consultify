@@ -3462,15 +3462,7 @@ export class TaskController {
            CASE WHEN CAST(t.id AS TEXT) = ? THEN 0 ELSE 1 END,
            t.updated_at DESC
          LIMIT 20`,
-        [
-          orgId,
-          excludeId,
-          excludeId,
-          effectiveLike,
-          effectiveQuery,
-          effectiveLike,
-          effectiveQuery,
-        ]
+        [orgId, excludeId, excludeId, effectiveLike, effectiveQuery, effectiveLike, effectiveQuery]
       );
 
       res.json({

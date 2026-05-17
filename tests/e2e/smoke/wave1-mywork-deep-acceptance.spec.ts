@@ -1,7 +1,6 @@
 import { expect, Page, test } from '@playwright/test';
 
 import { readTestSupportState } from '../_helpers/testSupportState';
-import { loginAsOwner } from './work-canvas-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
@@ -39,48 +38,6 @@ async function dismissTourModal(page: Page) {
   }
 }
 
-async function openNewNotebookPageModal(page: Page) {
-  const routeError = page.getByRole('heading', { name: /Coś poszło nie tak|Something went wrong/i });
-  if (await routeError.isVisible().catch(() => false)) {
-    throw new Error('MyWork route crashed before notebook modal action');
-  }
-
-  await expect(page.getByRole('button', { name: /Notebook|Notatnik/i }).first()).toBeVisible({
-    timeout: 30000,
-  });
-  const notebookTab = page.getByRole('button', { name: /Notebook|Notatnik/i }).first();
-  if (await notebookTab.isVisible().catch(() => false)) {
-    await notebookTab.click({ timeout: 5000 }).catch(() => {});
-  }
-  await page.waitForTimeout(400);
-
-  const openers = [
-    page.getByTestId('mywork-action-button').first(),
-    page.getByTestId('notebook-new-page-button').first(),
-    page.getByRole('button', { name: /New note|Nowa notatka|New page|Nowa strona/i }).first(),
-    page.getByTitle(/New note|Nowa notatka|New page|Nowa strona/i).first(),
-  ];
-
-  for (const opener of openers) {
-    const visible = await opener.isVisible().catch(() => false);
-    if (!visible) continue;
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      await opener.click({ timeout: 5000 }).catch(() => {});
-      const modalVisible = await page
-        .getByRole('heading', { name: /New Note|Nowa notatka|Nowa strona/i })
-        .first()
-        .isVisible()
-        .catch(() => false);
-      if (modalVisible) return;
-      await page.keyboard.press('Escape').catch(() => {});
-      await page.waitForTimeout(300);
-    }
-  }
-
-  throw new Error('Notebook create-page modal did not open');
-}
-
 async function createIdea(page: Page, token: string, title: string) {
   const res = await page.request.post(`${API_BASE_URL}/api/my-work/my-ideas`, {
     headers: authHeaders(token),
@@ -97,40 +54,19 @@ async function createIdea(page: Page, token: string, title: string) {
   return (await res.json()) as { id: string; title: string };
 }
 
-async function gotoWorkspaceRoute(page: Page, route: string) {
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      await page.goto(route, {
-        waitUntil: 'domcontentloaded',
-        timeout: 90000,
-      });
-      return;
-    } catch (error) {
-      lastError = error;
-      await page.waitForTimeout(1200);
-    }
-  }
-  throw lastError;
-}
-
 test.describe('Wave 1 deep My Work acceptance', () => {
   test.describe.configure({ mode: 'serial' });
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsOwner(page);
-  });
 
   test('notebook persists tag changes across note switches through the real UI flow', async ({
     page,
   }) => {
     const titleA = uniqueLabel('wave1-notebook-a');
     const titleB = uniqueLabel('wave1-notebook-b');
-    await gotoWorkspaceRoute(page, '/my-work/notebook');
+    await page.goto('/my-work/notebook', { waitUntil: 'domcontentloaded' });
     await dismissTourModal(page);
 
-    await openNewNotebookPageModal(page);
-    await expect(page.getByRole('heading', { name: /New Note|Nowa notatka|Nowa strona/i })).toBeVisible();
+    await page.getByRole('button', { name: 'New page', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'New Note' })).toBeVisible();
     const listAResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'GET' && /\/api\/my-work\/notebook\/pages(\?|$)/.test(response.url()),
@@ -141,7 +77,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
         response.request().method() === 'POST' && /\/api\/my-work\/notebook\/pages$/.test(response.url()),
       { timeout: 30000 }
     );
-    await page.getByRole('button', { name: /Blank page|Pusta strona/i }).last().click();
+    await page.getByRole('button', { name: 'Blank page Start from scratch', exact: true }).last().click();
     const createAResponse = await createAResponsePromise;
     if (!createAResponse.ok()) {
       throw new Error(
@@ -163,8 +99,8 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     await page.keyboard.press('Tab');
     await expect(page.getByText(titleA).first()).toBeVisible({ timeout: 30000 });
 
-    await openNewNotebookPageModal(page);
-    await expect(page.getByRole('heading', { name: /New Note|Nowa notatka|Nowa strona/i })).toBeVisible();
+    await page.getByRole('button', { name: 'New page', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'New Note' })).toBeVisible();
     const listBResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'GET' && /\/api\/my-work\/notebook\/pages(\?|$)/.test(response.url()),
@@ -175,7 +111,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
         response.request().method() === 'POST' && /\/api\/my-work\/notebook\/pages$/.test(response.url()),
       { timeout: 30000 }
     );
-    await page.getByRole('button', { name: /Blank page|Pusta strona/i }).last().click();
+    await page.getByRole('button', { name: 'Blank page Start from scratch', exact: true }).last().click();
     const createBResponse = await createBResponsePromise;
     if (!createBResponse.ok()) {
       throw new Error(
@@ -224,7 +160,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     ] as const;
 
     for (const { tool, label } of cases) {
-      await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/${tool}`);
+      await page.goto(`/my-work/ideas/${idea.id}/workspace/${tool}`, { waitUntil: 'domcontentloaded' });
       await dismissTourModal(page);
 
       await expect(page.getByLabel('Idea map workspace')).toBeVisible({ timeout: 30000 });
@@ -238,7 +174,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const { token } = readTestSupportState();
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-mindmap'));
 
-    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/mindmap`);
+    await page.goto(`/my-work/ideas/${idea.id}/workspace/mindmap`, { waitUntil: 'domcontentloaded' });
     await dismissTourModal(page);
 
     const connectButton = page.getByRole('button', {
@@ -255,20 +191,22 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const { token } = readTestSupportState();
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-whiteboard'));
 
-    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/whiteboard`);
+    await page.goto(`/my-work/ideas/${idea.id}/workspace/whiteboard`, {
+      waitUntil: 'domcontentloaded',
+    });
     await dismissTourModal(page);
 
-    await expect(page.getByText(/Board mode|Tryb boardu/)).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('Board mode')).toBeVisible({ timeout: 30000 });
     await expect(
       page.getByText(
-        /You are arranging and editing board elements\. Use Draw only when you want a separate freehand layer\.|Ukladasz i edytujesz elementy tablicy\. Uzyj Rysuj tylko wtedy, gdy chcesz dopisac odrebna warstwe od reki\./
+        'You are arranging and editing board elements. Use Draw only when you want a separate freehand layer.'
       )
     ).toBeVisible();
 
     // In pilot shells, "?" can route to different help surfaces (global panel,
     // modal, or no-op hint). Keep the check focused on whiteboard framing stability.
     await page.keyboard.press('?');
-    await expect(page.getByText(/Board mode|Tryb boardu/)).toBeVisible();
+    await expect(page.getByText('Board mode')).toBeVisible();
   });
 
   test('process flow shows a retryable unavailable state instead of a fake empty canvas', async ({
@@ -278,7 +216,9 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-processflow'));
 
     await page.route(new RegExp(`/api/my-work/my-ideas/${idea.id}/map`), (route) => route.abort());
-    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/process_flow`);
+    await page.goto(`/my-work/ideas/${idea.id}/workspace/process_flow`, {
+      waitUntil: 'domcontentloaded',
+    });
     await dismissTourModal(page);
 
     await expect(page.getByText('Process flow is temporarily unavailable.')).toBeVisible({
@@ -295,7 +235,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-table'));
 
     await page.route(new RegExp(`/api/my-work/my-ideas/${idea.id}/map`), (route) => route.abort());
-    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/table`);
+    await page.goto(`/my-work/ideas/${idea.id}/workspace/table`, { waitUntil: 'domcontentloaded' });
     await dismissTourModal(page);
 
     await expect(page.getByText('Table view is temporarily unavailable.')).toBeVisible({

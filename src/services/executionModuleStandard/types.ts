@@ -14,11 +14,7 @@
 // Module identity
 // =============================================================================
 
-export type ExecutionModuleId =
-  | 'doc-builder'
-  | 'excel-builder'
-  | 'deck-builder'
-  | string;
+export type ExecutionModuleId = 'doc-builder' | 'excel-builder' | 'deck-builder' | string;
 
 // =============================================================================
 // Layout zones
@@ -109,10 +105,7 @@ export interface ExecutionModuleAiActionsDeclaration {
 // Module manifest
 // =============================================================================
 
-export type ExecutionModuleManifestStatus =
-  | 'reference'
-  | 'in_progress'
-  | 'pending_review';
+export type ExecutionModuleManifestStatus = 'reference' | 'in_progress' | 'pending_review';
 
 export interface ExecutionModuleManifest {
   moduleId: ExecutionModuleId;

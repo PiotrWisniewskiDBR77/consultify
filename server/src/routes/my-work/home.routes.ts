@@ -22,6 +22,27 @@ import logger from '../../utils/Logger.js';
 
 const router = Router();
 
+function resolveHomeCorrelationId(req: AuthRequest): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildHomeFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveHomeCorrelationId(req),
+  };
+}
+
 const isPostgres = process.env.DB_TYPE === 'postgres';
 const nowSql = () => (isPostgres ? 'CURRENT_TIMESTAMP' : "datetime('now')");
 const daysAgoSql = (days: number) =>
@@ -168,7 +189,16 @@ router.get(
     const cacheKey = `${orgId}:${userId}:${String(req.user?.role || '')}:${isPolish ? 'pl' : 'en'}`;
 
     if (!db) {
-      return res.status(503).json({ error: 'Database not ready', cards: [], meta: {} });
+      return res
+        .status(503)
+        .json(
+          buildHomeFailClosedError(
+            req,
+            503,
+            'MY_WORK_HOME_DATABASE_UNAVAILABLE',
+            'My Work Home data is temporarily unavailable.'
+          )
+        );
     }
 
     try {
@@ -1390,7 +1420,16 @@ router.get(
       return res.json(payload);
     } catch (err: any) {
       logger.error('[home-v2]', err);
-      res.status(500).json({ error: 'Failed to build Home V2' });
+      res
+        .status(500)
+        .json(
+          buildHomeFailClosedError(
+            req,
+            500,
+            'MY_WORK_HOME_V2_BUILD_FAILED',
+            'Failed to build My Work Home view.'
+          )
+        );
     } finally {
       homeV2Inflight.delete(cacheKey);
     }
@@ -1477,7 +1516,16 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[home-brief]', err);
-      res.status(500).json({ error: 'Failed to load brief' });
+      res
+        .status(500)
+        .json(
+          buildHomeFailClosedError(
+            req,
+            500,
+            'MY_WORK_HOME_BRIEF_READ_FAILED',
+            'Failed to load My Work brief.'
+          )
+        );
     }
   })
 );
@@ -1551,7 +1599,16 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[home-spark]', err);
-      res.status(500).json({ error: 'Failed to load spark data' });
+      res
+        .status(500)
+        .json(
+          buildHomeFailClosedError(
+            req,
+            500,
+            'MY_WORK_HOME_SPARK_READ_FAILED',
+            'Failed to load My Work spark data.'
+          )
+        );
     }
   })
 );
@@ -1603,7 +1660,16 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[home-nudge]', err);
-      res.status(500).json({ error: 'Failed to load nudge data' });
+      res
+        .status(500)
+        .json(
+          buildHomeFailClosedError(
+            req,
+            500,
+            'MY_WORK_HOME_NUDGE_READ_FAILED',
+            'Failed to load My Work nudge data.'
+          )
+        );
     }
   })
 );

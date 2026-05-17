@@ -108,9 +108,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
               );
             })}
             {operations.length > 25 && (
-              <li className="text-slate-400 dark:text-slate-500">
-                +{operations.length - 25} more
-              </li>
+              <li className="text-slate-400 dark:text-slate-500">+{operations.length - 25} more</li>
             )}
           </ul>
         )}

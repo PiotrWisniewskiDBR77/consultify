@@ -1,40 +1,38 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — MCP Marketplace (DBR77)
+# Permissions & Security — MCP Marketplace / DBR77
 
 ## Purpose
 
-Uprawnienia i bezpieczeństwo marketplace: konfiguracja org-level, read vs mutation, licencje i audit.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- MUST: provider config tylko dla ról admin (org admin / superadmin).
-- MUST: allowlist tools obowiązkowy; deny-by-default.
-- MUST: mutation tools (publish/order/license) tylko dla uprawnionych i audytowalne.
+- Provider config admin-only; asset import depends on destination permissions.
 
-## Must Not
+Function-level enforcement applies uniformly to: `MCPM_PLACEHOLDER_SURFACE`, `MCPM_RUNTIME_TARGET`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: importować assetów bez jawnego potwierdzenia usera (no silent writes).
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- TBD
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-- `DRD/consultify/docs/product/ROLES_MODEL.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

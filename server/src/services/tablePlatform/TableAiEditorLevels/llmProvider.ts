@@ -67,9 +67,7 @@ export const stubLlmProvider: LlmProvider = {
       warnings: ['llm_provider_stub_no_operations'],
       confidence: 0,
     });
-    const tokensInput = Math.ceil(
-      (input.systemPrompt.length + input.userMessage.length) / 4
-    );
+    const tokensInput = Math.ceil((input.systemPrompt.length + input.userMessage.length) / 4);
     const tokensOutput = Math.ceil(stubResponse.length / 4);
     return {
       text: stubResponse,
@@ -90,9 +88,7 @@ const liveOpenAiProvider: LlmProvider = {
     const model = input.model || process.env.AI_MODEL || 'gpt-4o-mini';
 
     if (!apiKey) {
-      logger.warn(
-        '[LlmProvider] OPENAI_API_KEY missing at call time; falling back to stub.'
-      );
+      logger.warn('[LlmProvider] OPENAI_API_KEY missing at call time; falling back to stub.');
       return stubLlmProvider.generate(input);
     }
 
@@ -110,8 +106,7 @@ const liveOpenAiProvider: LlmProvider = {
             { role: 'user', content: input.userMessage },
           ],
           temperature: 0.2,
-          response_format:
-            input.responseFormat === 'text' ? undefined : { type: 'json_object' },
+          response_format: input.responseFormat === 'text' ? undefined : { type: 'json_object' },
         }),
       });
       if (!response.ok) {

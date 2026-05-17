@@ -1942,7 +1942,8 @@ export async function extractImageWithOcr(
 
   if (provider === 'tesseract') {
     try {
-      const tesseractMod = (await import('tesseract.js')) as any;
+      const optionalModule = 'tesseract.js';
+      const tesseractMod = (await import(optionalModule)) as any;
       const tesseract = tesseractMod.default || tesseractMod;
       const languages =
         String(process.env.ORG_CONTEXT_IMAGE_OCR_LANGUAGES || 'eng').trim() || 'eng';

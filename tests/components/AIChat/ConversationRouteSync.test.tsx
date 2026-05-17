@@ -93,4 +93,27 @@ describe('ConversationRouteSync', () => {
     expect(fetchConversation).not.toHaveBeenCalled();
     expect(useConversationStore.getState().activeConversationId).toBeNull();
   });
+
+  it('clears dead deep-link conversation and routes back to /chat', async () => {
+    routerState.pathname = '/chat/conv-missing';
+    routerState.params = { conversationId: 'conv-missing' };
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    const clearActiveChat = vi.fn();
+    useConversationStore.setState({
+      activeConversationId: 'conv-missing',
+      activeMessages: [],
+      isLoading: false,
+      _activeConversationState: 'loaded',
+      clearActiveChat,
+    });
+
+    const { ConversationRouteSync } = await import('../../../src/components/AIChat/ConversationRouteSync');
+    const view = render(<ConversationRouteSync />);
+
+    useConversationStore.setState({ _activeConversationState: 'not_found' });
+    view.rerender(<ConversationRouteSync />);
+
+    await waitFor(() => expect(clearActiveChat).toHaveBeenCalledTimes(1));
+    expect(routerState.navigate).toHaveBeenCalledWith('/chat', { replace: true });
+  });
 });

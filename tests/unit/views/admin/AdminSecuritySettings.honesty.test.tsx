@@ -36,6 +36,7 @@ describe('AdminSecuritySettings honest UI', () => {
     await waitFor(() => {
       expect(screen.getByText('Security settings unavailable')).toBeInTheDocument();
     });
+    expect(screen.getByRole('alert')).toHaveTextContent('Security settings unavailable');
 
     expect(screen.queryByText('Require Two-Factor Authentication')).not.toBeInTheDocument();
     expect(screen.queryByText('Session Timeout')).not.toBeInTheDocument();
@@ -73,6 +74,7 @@ describe('AdminSecuritySettings honest UI', () => {
     });
 
     expect(screen.getByText('OAuth provider status unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('OAuth provider status unavailable');
     expect(screen.getByRole('button', { name: /Save Changes/i })).toBeEnabled();
   });
 
@@ -128,5 +130,74 @@ describe('AdminSecuritySettings honest UI', () => {
       );
     });
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('uses status role while loading', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ ok: true, json: async () => ({}) } as any), 20)
+          )
+      )
+    );
+
+    render(<AdminSecuritySettings />);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+  });
+
+  it('does not leak raw backend error details on save failure', async () => {
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === '/api/security/admin-settings' && options?.method === 'PUT') {
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({
+            error: 'postgres connection failed',
+            code: 'INTERNAL_X',
+          }),
+        });
+      }
+      if (url === '/api/security/admin-settings') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            mfaRequired: true,
+            ssoEnabled: false,
+            sessionTimeout: 60,
+            ipWhitelist: '10.0.0.1',
+            loginMaxAttempts: 3,
+            lockoutDuration: 60,
+          }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          google: { configured: false, loginUrl: '' },
+          microsoft: { configured: false, loginUrl: '' },
+          linkedin: { configured: false, loginUrl: '' },
+        }),
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AdminSecuritySettings />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Save Changes/i })).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Failed to save security settings');
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Code: INTERNAL_X');
+    expect(screen.getByRole('alert').textContent || '').not.toContain('postgres');
+    expect(toast.error).toHaveBeenCalledWith('Failed to save security settings. Please try again.');
   });
 });

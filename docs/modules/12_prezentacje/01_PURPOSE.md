@@ -1,39 +1,48 @@
 ---
 module_id: MODULE_PRESENTATIONS
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Prezentacje (Presentation Studio)
+# Purpose — Prezentacje / Presentation Studio
 
 ## Purpose
 
-Zdefiniować po co istnieje Presentation Studio: generować i edytować consulting-grade decision decks, które są jednocześnie piękne (Gamma-level) i governowane (sources, approvals, audit, tenant safety).
+Presentation Studio tworzy Gamma-class enterprise decks jako żywe artefakty: story, slides, sources, versions, approvals and PPTX/PDF export.
+
+As-Is realizacja tej lane jest placeholderowa (`PR_GEN_PLACEHOLDER`), przy zachowaniu kontraktu funkcji docelowej i jawnej granicy ownership z `09_outputs`.
 
 ## Must
 
-- MUST: “beauty is a requirement” (nie akceptujemy “governed but ugly”).
-- MUST: methodology before design (narrative + source pack przed layout).
-- MUST: mieć 3 mode’y end-to-end (generate like gamma / plan template first / generate from approved template).
-- MUST: utrzymywać decki jako trwałe artefakty z lineage i review state (v8.1 substrate).
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- MUST NOT: używać Gamma jako kanonicznego modelu/edytora lub wymuszonej ścieżki eksportu.
-- MUST NOT: ukrywać braków źródeł — claims bez źródeł muszą być oznaczone albo zablokowane wg policy.
+- Simple PowerPoint clone.
+- One-shot slide generator without governance.
 
 ## Should
 
-- SHOULD: utrzymywać szybkie, “Gamma-like” UX (low friction start, content-first, propose→accept).
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z `CONSULTIFY_PRESENTATION_STUDIO_100_PERCENT_IMPLEMENTATION_CONTRACT_2026-05-08.md`.
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
-- `DRD/consultify/docs/product/CONSULTIFY_PRESENTATION_STUDIO_100_PERCENT_IMPLEMENTATION_CONTRACT_2026-05-08.md`
-
+- `DRD/consultify/docs/product/PREZENTACJE_V8_SSOT.md`
+- `DRD/consultify/docs/product/PREZENTACJE_V8_CANONICAL_DECK_MODEL.md`
+- `DRD/consultify/docs/product/PREZENTACJE_V8_AI_GOVERNANCE.md`
+- `DRD/consultify/docs/product/PRESENTATION_GENERATOR_V3.md`
+- `DRD/consultify/docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
+- `DRD/consultify/docs/product/REPORTS_AND_PRESENTATIONS_V8_MASTER_SUMMARY.md`
+- `DRD/consultify/docs/UI_UX/96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`

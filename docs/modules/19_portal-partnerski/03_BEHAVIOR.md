@@ -1,47 +1,39 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Behavior — Portal partnerski
+# Behavior — Portal Partnerski
 
-## Purpose
+## As-Is Runtime Behavior
 
-Opisać kontrakt zachowania portalu partnera: lifecycle transitions, earnings/payout UX, degraded/error posture, i współdzielona prawda z operatorem.
+- Protected partner portal route tree is active for authenticated users.
+- Public recruitment/pricing routes coexist as acquisition layer and are outside secured portal shell.
+- AppView mapping includes partner dashboard/resources/client-access routes under partner namespace.
+
+## Function Runtime Breakdown
+
+- `PART_PORTAL_WORKSPACE`: canonical protected portal runtime function.
+- `PART_PUBLIC_ACQUISITION_BOUNDARY`: explicit boundary between public acquisition and protected portal contexts.
 
 ## Must
 
-- **MUST**: Partner lifecycle jest jedną maszyną stanów: `onboard → activate → earn → payout` (UI copy może mieć sub-fazy, ale mapowanie jest stałe).
-- **MUST**: Nie ma silent transitions; każdy transition ma aktora (partner/operator/system) i jest audytowalny.
-- **MUST**: Payout flows:
-  - partner może złożyć `payout.requested` (jeśli spełnione gate’y),
-  - operator zatwierdza/wykonuje/reconciluje (poza portalem),
-  - portal pokazuje status i historię bez ujawniania operator‑sensitive danych.
-- **MUST**: Degraded posture (P29):
-  - missing payout settings → jawny CTA + disabled request,
-  - hold/review → jawny status + reason category + next step,
-  - provider failure → jawny outcome + next step,
-  - ledger outage → read-only degraded + writes fail closed.
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- **MUST NOT**: Udawać wypłaty/zarobków (brak fake success).
-- **MUST NOT**: Pozwalać na operator-only działania z portalu.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- **SHOULD**: Idempotency UX: powtórzone submit payout pokazuje istniejący request, bez duplikacji.
-
-## Acceptance Criteria
-
-- [ ] Zawiera jawne reguły `proposal -> approval -> execution -> audit` tam, gdzie czat inicjuje działania.
-- [ ] Definiuje “uczciwe” stany błędów i degradacji (bez fake success / infinite spinner).
-
-## Related Sources
-
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md`
-
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.

@@ -9,8 +9,8 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
   didAutoReload: boolean;
+  telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
 }
 
 /**
@@ -25,8 +25,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
@@ -34,18 +34,15 @@ export class RouteErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[RouteErrorBoundary] Caught error:', error, errorInfo);
 
-    this.setState({
-      error,
-      errorInfo,
-    });
+    this.setState({ error });
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
       window
@@ -58,8 +55,16 @@ export class RouteErrorBoundary extends Component<Props, State> {
             componentStack: errorInfo.componentStack,
             url: window.location.href,
           }),
+          keepalive: true,
         })
-        .catch(() => {});
+        .then((response) => {
+          this.setState({ telemetryDelivery: response?.ok ? 'sent' : 'failed' });
+        })
+        .catch(() => {
+          this.setState({ telemetryDelivery: 'failed' });
+        });
+    } else {
+      this.setState({ telemetryDelivery: 'unavailable' });
     }
 
     // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
@@ -109,7 +114,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null,
+      telemetryDelivery: 'idle',
     });
   };
 
@@ -128,8 +133,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/20 rounded-full mb-4">
-              <AlertTriangle className="w-8 h-8 text-rose-600 dark:text-rose-400" />
+            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
 
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2">
@@ -140,20 +145,42 @@ export class RouteErrorBoundary extends Component<Props, State> {
               Wystąpił nieoczekiwany błąd podczas ładowania tej strony.
             </p>
 
-            {this.state.error && (
-              <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm font-mono text-rose-600 dark:text-rose-400 mb-2">
-                  {this.state.error.toString()}
-                </p>
-                {this.state.errorInfo && (
-                  <details className="text-xs text-gray-600 dark:text-gray-400">
-                    <summary className="cursor-pointer">Stack trace</summary>
-                    <pre className="mt-2 overflow-auto max-h-40">
-                      {this.state.errorInfo.componentStack}
-                    </pre>
-                  </details>
-                )}
-              </div>
+            <div
+              className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                Strona napotkała problem i została bezpiecznie zatrzymana.
+              </p>
+              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony
+                głównej.
+              </p>
+            </div>
+            {this.state.telemetryDelivery === 'sent' && (
+              <p
+                data-testid="route-error-boundary-telemetry-sent"
+                className="mb-4 text-xs text-emerald-700 dark:text-emerald-300"
+              >
+                Crash diagnostics were sent successfully.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'failed' && (
+              <p
+                data-testid="route-error-boundary-telemetry-failed"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics could not be delivered. You can retry or report manually.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'unavailable' && (
+              <p
+                data-testid="route-error-boundary-telemetry-unavailable"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics were not sent in this environment.
+              </p>
             )}
 
             <div className="flex gap-3">

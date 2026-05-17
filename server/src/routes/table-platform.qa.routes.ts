@@ -34,8 +34,8 @@ import { type NextFunction, type Request, type Response, Router } from 'express'
 import { featureFlags } from '../config/FeatureFlags.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import tableQaService, {
-  TableQaError,
   type QaTriggerKind,
+  TableQaError,
 } from '../services/tablePlatform/TableQaService.js';
 import logger from '../utils/Logger.js';
 
@@ -78,11 +78,7 @@ function mapServiceError(e: unknown, res: Response): boolean {
   return false;
 }
 
-const VALID_TRIGGERS: ReadonlyArray<QaTriggerKind> = [
-  'on_demand',
-  'scheduled',
-  'record_write',
-];
+const VALID_TRIGGERS: ReadonlyArray<QaTriggerKind> = ['on_demand', 'scheduled', 'record_write'];
 
 router.post(
   '/tables/:tableId/qa/recompute',
@@ -121,29 +117,25 @@ router.post(
   }
 );
 
-router.get(
-  '/tables/:tableId/qa/latest',
-  requireQaEnabled,
-  async (req: Request, res: Response) => {
-    const authReq = req as AuthRequest;
-    const tableId = String(req.params.tableId ?? '');
-    const orgId = String(authReq.organizationId ?? '');
-    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+router.get('/tables/:tableId/qa/latest', requireQaEnabled, async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  const tableId = String(req.params.tableId ?? '');
+  const orgId = String(authReq.organizationId ?? '');
+  if (!tableId) return res.status(400).json({ error: 'tableId is required' });
 
-    try {
-      const report = await tableQaService.getLatestReport(tableId, orgId);
-      if (!report) return res.status(204).end();
-      return res.status(200).json({ data: report });
-    } catch (e) {
-      if (mapServiceError(e, res)) return;
-      logger.error('[TableQaRoutes] latest failed', {
-        tableId,
-        error: (e as Error)?.message,
-      });
-      return res.status(500).json({ error: 'Internal error' });
-    }
+  try {
+    const report = await tableQaService.getLatestReport(tableId, orgId);
+    if (!report) return res.status(204).end();
+    return res.status(200).json({ data: report });
+  } catch (e) {
+    if (mapServiceError(e, res)) return;
+    logger.error('[TableQaRoutes] latest failed', {
+      tableId,
+      error: (e as Error)?.message,
+    });
+    return res.status(500).json({ error: 'Internal error' });
   }
-);
+});
 
 router.post(
   '/tables/:tableId/qa/suggestions/:suggestionId/inapplicable',
@@ -160,8 +152,7 @@ router.post(
     const reason = asString(body.reason) ?? undefined;
 
     if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-    if (!suggestionId)
-      return res.status(400).json({ error: 'suggestionId is required' });
+    if (!suggestionId) return res.status(400).json({ error: 'suggestionId is required' });
     if (!fingerprint)
       return res
         .status(400)

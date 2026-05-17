@@ -1,33 +1,43 @@
 ---
 module_id: MODULE_RESULTS
 doc_kind: META
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# META — Rezultaty (Results)
-
-## Purpose
-
-Metadane kontraktu modułu `Rezultaty` i jego miejsce w lifecycle (po Execution, przed archiwizacją).
+# META — Rezultaty / Results & Value Realization
 
 ## Identity
 
-- **Sidebar label**: Rezultaty
-- **Folder**: `07_rezultaty`
-- **Module id**: `MODULE_RESULTS`
+- Module id: `MODULE_RESULTS`
+- Sidebar label: `Rezultaty`
+- Folder: `07_rezultaty`
+- Route: `/benefits`
+- AppView: `AppView.BENEFITS_REALIZATION`
+- Owner: user
 
-## Canonicality & route truth
+## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
-- **Canonical entry**: `/benefits` (alias `/kpi-okr`)
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Open questions (max 3)
+## Source Package
 
-1. Czy w UI nazywamy moduł “Rezultaty” czy “Benefits/Results” (żeby nie zaciemniać route truth)?
-2. Jakie minimalne write flows są w scope (deviation cases, corrective actions) vs tylko read parity?
-3. Jak utrzymujemy “metric truth” w Results i “modeled truth” w Finance bez split-brain?
+- `DRD/consultify/docs/product/RESULTS_V8_SSOT.md`
+- `DRD/consultify/docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+- `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `DRD/consultify/docs/product/REPORTING_CANONICAL_TEMPLATES.md`
+- `DRD/consultify/docs/product/work-packets/T2_RESULTS_KPI_ROI_CHARTER.md`
+- `DRD/consultify/docs/UI_UX/105_RAW_RESULTS_VALUE_REALIZATION_ENGINE_2026-05-09.md`
 
+## Function Coverage
+
+- Required functions documented: `6/6`.
+- Function contracts are stored in `functions/`.
+
+## Open Questions
+
+1. Does the active code route still match the contract route above?
+2. Are there tenant-specific variants that require a separate permission matrix?
+3. Which acceptance evidence should be attached first when this module is next tested?

@@ -33,10 +33,7 @@ import {
   submitPublicFormByJwt,
 } from '@/services/api/tablePlatform.api';
 
-import {
-  PublicFormFieldInput,
-  type PublicFormField,
-} from './PublicFormFieldInput';
+import { type PublicFormField, PublicFormFieldInput } from './PublicFormFieldInput';
 
 interface FormFieldConfig {
   fieldId: string;
@@ -89,7 +86,9 @@ export function PublicJwtFormPage({
 
   const [context, setContext] = useState<JwtIntakeContext | null>(testInitialContext ?? null);
   const [form, setForm] = useState<PublicFormDefinition | null>(testInitialForm ?? null);
-  const [loading, setLoading] = useState(testInitialContext === undefined || testInitialForm === undefined);
+  const [loading, setLoading] = useState(
+    testInitialContext === undefined || testInitialForm === undefined
+  );
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -251,9 +250,7 @@ export function PublicJwtFormPage({
             {isExpired ? 'This link is no longer valid' : 'Form not found'}
           </h2>
           <p className="text-sm text-gray-500">
-            {isExpired
-              ? 'Ask the sender to issue a fresh intake link.'
-              : error}
+            {isExpired ? 'Ask the sender to issue a fresh intake link.' : error}
           </p>
         </div>
       </div>

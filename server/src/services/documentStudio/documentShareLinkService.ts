@@ -119,8 +119,7 @@ function pushAudit(entry: DocumentShareLinkAuditEntry): void {
  * 256-bit random string (e.g. `openssl rand -base64 48`).
  */
 const SHARE_LINK_TOKEN_SECRET =
-  process.env.SHARE_LINK_TOKEN_SECRET ??
-  'consultify-document-studio-share-link-default-dev-secret';
+  process.env.SHARE_LINK_TOKEN_SECRET ?? 'consultify-document-studio-share-link-default-dev-secret';
 
 /**
  * Generate a 256-bit URL-safe random token using
@@ -493,10 +492,7 @@ export function verifyShareLinkToken(
   // in constant time by lexicographic length-equal byte buffer.
   if (typeof link.token !== 'string' || link.token.length !== candidateToken.length) return false;
   try {
-    return timingSafeEqual(
-      Buffer.from(link.token, 'utf8'),
-      Buffer.from(candidateToken, 'utf8')
-    );
+    return timingSafeEqual(Buffer.from(link.token, 'utf8'), Buffer.from(candidateToken, 'utf8'));
   } catch {
     return false;
   }

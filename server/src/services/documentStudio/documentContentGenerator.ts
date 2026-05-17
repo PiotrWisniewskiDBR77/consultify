@@ -31,21 +31,6 @@ interface BuildSchemaInput {
   sourceRefs: DocumentSourceRef[];
 }
 
-function normalizeAudience(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .map((entry) => String(entry || '').trim())
-      .filter((entry) => entry.length > 0);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(',')
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
-  }
-  return [];
-}
-
 function buildSectionBlocks(
   sectionTitle: string,
   intakeDescription: string,
@@ -159,7 +144,6 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
   const { artifactId, intake, outline, sourceRefs } = input;
   const now = new Date().toISOString();
   const hasSources = sourceRefs.length > 0;
-  const audience = normalizeAudience((intake as { audience?: unknown }).audience);
 
   const sections: DocumentSection[] = outline.sections.map((outlineSection, index) => ({
     sectionId: uuidv4(),
@@ -177,7 +161,7 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
     title: outline.title,
     documentType: outline.documentType,
     language: intake.language ?? 'pl',
-    audience,
+    audience: intake.audience ?? [],
     goal: intake.goal ?? 'inform',
     communicationRegister: outline.recommendedRegister,
     density: outline.recommendedDensity,

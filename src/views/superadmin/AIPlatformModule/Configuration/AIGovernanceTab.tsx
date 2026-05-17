@@ -93,7 +93,9 @@ export const AIGovernanceTab: React.FC = () => {
     return {
       categories: normalizedCategories,
       piiRedaction:
-        source.piiRedaction === 'off' || source.piiRedaction === 'on' ? source.piiRedaction : 'inherit',
+        source.piiRedaction === 'off' || source.piiRedaction === 'on'
+          ? source.piiRedaction
+          : 'inherit',
       retention: source.retention === 'strict' ? 'strict' : 'standard',
     };
   };
@@ -344,7 +346,9 @@ export const AIGovernanceTab: React.FC = () => {
         </h3>
 
         {governanceUnavailable ? (
-          <div className="text-slate-500 dark:text-slate-400 text-sm">Governance policy unavailable.</div>
+          <div className="text-slate-500 dark:text-slate-400 text-sm">
+            Governance policy unavailable.
+          </div>
         ) : !policySummary ? (
           <div className="text-slate-500 dark:text-slate-400 text-sm">No policy loaded.</div>
         ) : (

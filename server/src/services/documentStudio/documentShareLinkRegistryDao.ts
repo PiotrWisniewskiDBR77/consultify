@@ -117,7 +117,9 @@ export async function loadShareLinkByToken(token: string): Promise<DocumentShare
  * wave5 migration to drop plaintext token indexing without changing
  * caller semantics.
  */
-export async function loadShareLinkByTokenHash(tokenHash: string): Promise<DocumentShareLink | null> {
+export async function loadShareLinkByTokenHash(
+  tokenHash: string
+): Promise<DocumentShareLink | null> {
   if (!tokenHash || tokenHash.trim().length === 0) return null;
   const primaryKey = tokenHashIndex.get(tokenHash);
   if (!primaryKey) return null;

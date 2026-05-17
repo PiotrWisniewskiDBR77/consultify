@@ -6,6 +6,7 @@ import {
   buildMyWorkSheetTableOpenPath,
   getPrimaryArtifactLink,
   legacyRefToArtifactLinks,
+  parseArtifactRef,
   type ArtifactLink,
 } from '../../../src/utils/artifactLinks';
 

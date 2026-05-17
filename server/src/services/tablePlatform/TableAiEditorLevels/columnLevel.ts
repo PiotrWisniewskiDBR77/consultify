@@ -17,7 +17,6 @@
  * caller passes more, we truncate and add a warning.
  */
 
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -27,6 +26,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opColumnFill } from './operations.js';
 

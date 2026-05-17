@@ -13,8 +13,8 @@ vi.mock('../../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-import { proposeRecordEdit } from '../recordLevel.js';
 import type { LlmProvider } from '../llmProvider.js';
+import { proposeRecordEdit } from '../recordLevel.js';
 
 const TABLE = '00000000-0000-0000-0000-000000000010';
 const RECORD = '00000000-0000-0000-0000-000000000020';
@@ -42,7 +42,13 @@ function setupTenantOkWithRecord(recordData: Record<string, unknown>) {
 
 function makeProvider(text: string): LlmProvider {
   return {
-    generate: async () => ({ text, tokensInput: 50, tokensOutput: 25, model: 'mock', source: 'live' }),
+    generate: async () => ({
+      text,
+      tokensInput: 50,
+      tokensOutput: 25,
+      model: 'mock',
+      source: 'live',
+    }),
   };
 }
 

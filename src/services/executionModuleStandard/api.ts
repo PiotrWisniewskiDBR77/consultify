@@ -88,13 +88,10 @@ export class ExecutionModuleNotFoundError extends Error {
 export async function fetchExecutionModuleManifest(
   moduleId: ExecutionModuleId
 ): Promise<ExecutionModuleManifest> {
-  const res = await fetchWithRetry(
-    `${BASE}/manifests/${encodeURIComponent(moduleId)}`,
-    {
-      method: 'GET',
-      headers: getHeaders(),
-    }
-  );
+  const res = await fetchWithRetry(`${BASE}/manifests/${encodeURIComponent(moduleId)}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
   if (res.status === 404) {
     throw new ExecutionModuleNotFoundError(moduleId);
   }
@@ -112,14 +109,11 @@ export async function validateExecutionModuleManifest(
   moduleId: ExecutionModuleId,
   candidate: ExecutionModuleManifest
 ): Promise<ExecutionModuleValidationResult> {
-  const res = await fetchWithRetry(
-    `${BASE}/manifests/${encodeURIComponent(moduleId)}/validate`,
-    {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(candidate),
-    }
-  );
+  const res = await fetchWithRetry(`${BASE}/manifests/${encodeURIComponent(moduleId)}/validate`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(candidate),
+  });
   const json = await handleResponse<ValidateResponse>(res, 'ExecutionModule validate');
   return json.result;
 }

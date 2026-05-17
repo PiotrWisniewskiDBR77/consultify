@@ -58,9 +58,7 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
           <span className="text-sm text-slate-800 dark:text-slate-100">{label}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-            {pct}%
-          </span>
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{pct}%</span>
           {open ? (
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
           ) : (

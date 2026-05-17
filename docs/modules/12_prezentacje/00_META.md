@@ -1,39 +1,44 @@
 ---
 module_id: MODULE_PRESENTATIONS
 doc_kind: META
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# META — Prezentacje (Presentation Studio)
-
-## Purpose
-
-Metadane kontraktu modułu `Prezentacje` i jego miejsce w systemie.
+# META — Prezentacje / Presentation Studio
 
 ## Identity
 
-- **Sidebar label**: Prezentacje
-- **Folder**: `12_prezentacje`
-- **Module id**: `MODULE_PRESENTATIONS`
-- **Primary entry (today)**: Outputs `/presentations` → Presentations tab; legacy generator `/prezentacje`
+- Module id: `MODULE_PRESENTATIONS`
+- Sidebar label: `Prezentacje`
+- Folder: `12_prezentacje`
+- Route: `/prezentacje`
+- AppView: `AppView.PREZENTACJE_GEN`
+- Owner: user
 
 ## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Doctrine
+## Source Package
 
-- **Gamma-level beauty** jest wymaganiem jakości, ale Gamma nie jest kanonicznym modelem ani runtime.
-- **Methodology before design**: cel biznesowy → audience → decision context → source pack → narrative plan → template/blueprint → schema → generation → layout/design → QA → approval → export/share.
-- Runtime jest **enterprise-governed**: source grounding, approvals, audyt, tenant safety.
+- `DRD/consultify/docs/product/PREZENTACJE_V8_SSOT.md`
+- `DRD/consultify/docs/product/PREZENTACJE_V8_CANONICAL_DECK_MODEL.md`
+- `DRD/consultify/docs/product/PREZENTACJE_V8_AI_GOVERNANCE.md`
+- `DRD/consultify/docs/product/PRESENTATION_GENERATOR_V3.md`
+- `DRD/consultify/docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
+- `DRD/consultify/docs/product/REPORTS_AND_PRESENTATIONS_V8_MASTER_SUMMARY.md`
+- `DRD/consultify/docs/UI_UX/96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`
 
-## Open questions (max 3)
+## Function Coverage
 
-1. Jaka jest docelowa konsolidacja tras: czy `/prezentacje` zostaje, czy wszystko idzie przez Outputs `/presentations`?
-2. Jaki jest kanoniczny “deck schema/model” (V8) i jak mapuje się na obecny builder?
-3. Jakie są minimalne P0 QA gates przed eksportem PDF/PPTX (visual + methodology + source)?
+- Required functions documented: `3/3`.
+- Function contracts are stored in `functions/`.
 
+## Open Questions
+
+1. Does the active code route still match the contract route above?
+2. Are there tenant-specific variants that require a separate permission matrix?
+3. Which acceptance evidence should be attached first when this module is next tested?

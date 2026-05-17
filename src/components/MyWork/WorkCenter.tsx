@@ -26,7 +26,7 @@ interface TaskCounts {
   overdue: number;
   today: number;
   week: number;
-  urgent: number;
+  urgent?: number;
   newUntriaged?: number;
   later: number;
   noDate: number;

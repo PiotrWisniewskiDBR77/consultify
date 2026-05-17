@@ -194,6 +194,27 @@ async function enforceQualityGatesForExport(
 
 const router = Router();
 
+function resolveReportBuilderCorrelationId(req: Request): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildReportBuilderFailClosedError(
+  req: Request,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveReportBuilderCorrelationId(req),
+  };
+}
+
 // Apply middleware (use default API limiter – 1000 req/15min in dev, not the restrictive auth limiter)
 router.use(defaultRateLimiter);
 router.use(verifyToken);
@@ -1211,7 +1232,16 @@ router.post('/block-types', async (req: Request, res: Response, next: NextFuncti
     res.status(201).json({ block: created });
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating block type:', err);
-    res.status(500).json({ error: err?.message || 'Failed to create block type' });
+    res
+      .status(500)
+      .json(
+        buildReportBuilderFailClosedError(
+          req,
+          500,
+          'REPORT_BUILDER_BLOCK_TYPE_CREATE_FAILED',
+          'Failed to create report block type.'
+        )
+      );
   }
 });
 
@@ -3427,7 +3457,16 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
     return res.json({ success: true, url: result.url });
   } catch (err: any) {
     logger.error('[ReportBuilder] Error exporting to Notion:', err);
-    return res.status(500).json({ error: 'Failed to export to Notion', message: err.message });
+    return res
+      .status(500)
+      .json(
+        buildReportBuilderFailClosedError(
+          req,
+          500,
+          'REPORT_BUILDER_EXPORT_NOTION_FAILED',
+          'Failed to export report to Notion.'
+        )
+      );
   }
 });
 
@@ -3485,7 +3524,16 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
       status: 'failed',
     }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting PDF:', err);
-    return res.status(500).json({ error: 'Failed to export PDF', message: err.message });
+    return res
+      .status(500)
+      .json(
+        buildReportBuilderFailClosedError(
+          req,
+          500,
+          'REPORT_BUILDER_EXPORT_PDF_FAILED',
+          'Failed to export report as PDF.'
+        )
+      );
   }
 });
 

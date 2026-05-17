@@ -17,6 +17,7 @@
  *   * Items must be keyboard-navigable (semantic <button>).
  */
 
+import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle,
   FileText,
@@ -26,7 +27,6 @@ import {
   Sparkles,
   Tag,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
 export type TabeleSectionId =
@@ -93,10 +93,7 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
   const empty = outline.length === 0;
 
   return (
-    <div
-      className="flex flex-col h-full text-sm"
-      data-testid={testId ?? 'tabele-left-rail'}
-    >
+    <div className="flex flex-col h-full text-sm" data-testid={testId ?? 'tabele-left-rail'}>
       {toolsSlot ? (
         <div className="px-3 pt-2 pb-2 flex-shrink-0" data-testid="tabele-left-rail-tools">
           {toolsSlot}

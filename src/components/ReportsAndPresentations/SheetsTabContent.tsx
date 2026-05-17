@@ -35,7 +35,14 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
   const { t } = useTranslation();
   const hasRegistrySheets = rows.length > 0;
 
-  if (hasRegistrySheets || loading || error || searchQuery || activeFilters.length > 0 || initialArtifactId) {
+  if (
+    hasRegistrySheets ||
+    loading ||
+    error ||
+    searchQuery ||
+    activeFilters.length > 0 ||
+    initialArtifactId
+  ) {
     return (
       <OutputsAggregateTabContent
         viewMode={viewMode}

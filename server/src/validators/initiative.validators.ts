@@ -55,75 +55,77 @@ export const SourceTypeEnum = z
   .or(z.string().max(50));
 
 const InitiativePayloadBaseSchema = z.object({
-    projectId: z.string().optional(),
-    title: z.string().min(1).max(255),
-    category: z.string().max(255).optional(),
-    axis: InitiativeAxisEnum.optional(),
-    area: z.string().max(255).optional(),
-    summary: z.string().max(5000).optional(),
-    /**
-     * UI alias: InitiativeDocumentView uses `description` for the long-form narrative.
-     * Backend historically stored this as `hypothesis`.
-     */
-    description: z.string().max(20000).optional(),
-    hypothesis: z.string().max(2000).optional(),
-    status: InitiativeStatusEnum.optional().default('DRAFT'),
-    priority: InitiativePriorityEnum.optional(),
-    impact: z.string().max(50).optional(),
-    effort: z.string().max(50).optional(),
-    businessValue: z.number().optional(),
-    costCapex: z.number().optional(),
-    costOpex: z.number().optional(),
-    expectedRoi: z.number().optional(),
-    valueDriver: z.string().max(255).optional(),
-    confidenceLevel: ConfidenceLevelEnum.optional(),
-    valueTiming: z.string().max(255).optional(),
-    plannedStartDate: DateOnlyOrDateTimeString.optional().nullable(),
-    plannedEndDate: DateOnlyOrDateTimeString.optional().nullable(),
-    /** UI alias: InitiativeDocumentView uses `ownerId` (single owner). */
-    ownerId: z.string().optional().nullable(),
-    ownerBusinessId: z.string().optional().nullable(),
-    ownerExecutionId: z.string().optional().nullable(),
-    /** UI alias: InitiativeDocumentView uses `sponsorId`. */
-    sponsorId: z.string().optional().nullable(),
-    marketContext: z.string().max(5000).optional(),
-    problemStatement: z.string().max(5000).optional(),
-    deliverables: z.array(z.string()).optional(),
-    successCriteria: z.array(z.string()).optional(),
-    scopeIn: z.array(z.string()).optional(),
-    scopeOut: z.array(z.string()).optional(),
-    killCriteria: z.array(z.string()).optional(),
-    keyRisks: z.array(z.string()).optional(),
-    // SaaS persistence helpers used by the N-mode UI
-    estimatedBudget: z.number().optional().nullable(),
-    resourceTools: z.array(z.string()).optional(),
-    tags: z.array(z.string()).optional(),
-    targetState: z
-      .object({
-        description: z.string().max(20000).optional(),
-      })
-      .optional(),
-    // V3-A01: Traceability — every output must have a canonical source
-    sourceType: SourceTypeEnum.optional().default('manual'),
-    sourceId: z.string().max(255).optional().nullable(),
-    sourcePack: z.record(z.string(), z.unknown()).optional(),
-    actionContract: z.record(z.string(), z.unknown()).optional(),
-    evidenceRefs: z.array(z.string()).optional(),
-    reportName: z.string().max(500).optional(),
-    // V4-INIT-02: Program hierarchy
-    programId: z.string().max(255).optional().nullable(),
-  });
+  projectId: z.string().optional(),
+  title: z.string().min(1).max(255),
+  category: z.string().max(255).optional(),
+  axis: InitiativeAxisEnum.optional(),
+  area: z.string().max(255).optional(),
+  summary: z.string().max(5000).optional(),
+  /**
+   * UI alias: InitiativeDocumentView uses `description` for the long-form narrative.
+   * Backend historically stored this as `hypothesis`.
+   */
+  description: z.string().max(20000).optional(),
+  hypothesis: z.string().max(2000).optional(),
+  status: InitiativeStatusEnum.optional().default('DRAFT'),
+  priority: InitiativePriorityEnum.optional(),
+  impact: z.string().max(50).optional(),
+  effort: z.string().max(50).optional(),
+  businessValue: z.number().optional(),
+  costCapex: z.number().optional(),
+  costOpex: z.number().optional(),
+  expectedRoi: z.number().optional(),
+  valueDriver: z.string().max(255).optional(),
+  confidenceLevel: ConfidenceLevelEnum.optional(),
+  valueTiming: z.string().max(255).optional(),
+  plannedStartDate: DateOnlyOrDateTimeString.optional().nullable(),
+  plannedEndDate: DateOnlyOrDateTimeString.optional().nullable(),
+  /** UI alias: InitiativeDocumentView uses `ownerId` (single owner). */
+  ownerId: z.string().optional().nullable(),
+  ownerBusinessId: z.string().optional().nullable(),
+  ownerExecutionId: z.string().optional().nullable(),
+  /** UI alias: InitiativeDocumentView uses `sponsorId`. */
+  sponsorId: z.string().optional().nullable(),
+  marketContext: z.string().max(5000).optional(),
+  problemStatement: z.string().max(5000).optional(),
+  deliverables: z.array(z.string()).optional(),
+  successCriteria: z.array(z.string()).optional(),
+  scopeIn: z.array(z.string()).optional(),
+  scopeOut: z.array(z.string()).optional(),
+  killCriteria: z.array(z.string()).optional(),
+  keyRisks: z.array(z.string()).optional(),
+  // SaaS persistence helpers used by the N-mode UI
+  estimatedBudget: z.number().optional().nullable(),
+  resourceTools: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+  targetState: z
+    .object({
+      description: z.string().max(20000).optional(),
+    })
+    .optional(),
+  // V3-A01: Traceability — every output must have a canonical source
+  sourceType: SourceTypeEnum.optional().default('manual'),
+  sourceId: z.string().max(255).optional().nullable(),
+  sourcePack: z.record(z.string(), z.unknown()).optional(),
+  actionContract: z.record(z.string(), z.unknown()).optional(),
+  evidenceRefs: z.array(z.string()).optional(),
+  reportName: z.string().max(500).optional(),
+  // V4-INIT-02: Program hierarchy
+  programId: z.string().max(255).optional().nullable(),
+});
 
 export const CreateInitiativeSchema = InitiativePayloadBaseSchema.refine(
-    (data) => {
-      const st = (data.sourceType || 'manual').toLowerCase();
-      if (st !== 'manual' && !data.sourceId) return false;
-      return true;
-    },
-    { message: 'sourceId is required when sourceType is not manual', path: ['sourceId'] }
-  );
+  (data) => {
+    const st = (data.sourceType || 'manual').toLowerCase();
+    if (st !== 'manual' && !data.sourceId) return false;
+    return true;
+  },
+  { message: 'sourceId is required when sourceType is not manual', path: ['sourceId'] }
+);
 
-export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({ projectId: true }).partial();
+export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({
+  projectId: true,
+}).partial();
 
 export const UpdateInitiativeStatusSchema = z.object({
   status: InitiativeStatusEnum,

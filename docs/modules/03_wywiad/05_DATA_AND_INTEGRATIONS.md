@@ -1,35 +1,55 @@
 ---
 module_id: MODULE_INTERVIEW
 doc_kind: DATA
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Data & Integrations — Wywiad
+# Data & Integrations — Wywiad / Interview
 
 ## Purpose
 
-Obiekty: program, sesja, szablon, odpowiedzi, insighty, eksport; integracje i lineage.
+Define module objects, integrations and lineage responsibilities.
+
+## Core Objects
+
+- InterviewTemplate, InterviewSubmission, respondent metadata, attachments, answers, extracted insights and export packages.
+
+## Function Data Responsibilities
+
+| Function group | Primary data responsibility | Integration responsibility |
+| --- | --- | --- |
+| Assignment/review (`WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`) | assignment queues, review states, SLA and ownership metadata | interview assignment APIs and status transition paths |
+| Session/template/insight (`WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`) | session lifecycle, template question models, insight records | `V8InterviewApi` + shared `Api` interview endpoints |
+| Interview initiatives (`WY_INITIATIVES`) | interview-local initiative candidates derived from source insights/findings with source envelope, generated/manual mode and review state | `V8InterviewApi` insight candidate/finding/handoff endpoints; downstream ownership/read-back remains `05_inicjatywy` |
 
 ## Must
 
-- TBD
+- MUST keep stable identifiers for durable objects.
+- MUST preserve source/provenance when objects are generated, imported, exported or converted.
+- MUST record integration calls and important transformations with enough metadata for audit.
 
 ## Must Not
 
-- MUST NOT: ujawnienie danych respondentów poza uprawnionymi rolami/tenantem.
+- MUST NOT duplicate another module's canonical object as an independent source of truth.
+- MUST NOT expose raw sensitive payloads where summaries/source links are sufficient.
 
 ## Should
 
-- TBD
+- SHOULD prefer links and ownership references over copied data.
+- SHOULD make stale or partial data visible to the UI layer.
 
 ## Acceptance Criteria
 
-- [ ] Eksport ma traceability i nie gubi kontekstu źródłowego.
+- [ ] Every durable object has owner module, source/provenance and lifecycle state where applicable.
+- [ ] Cross-module handoff preserves lineage.
+- [ ] Integration failures do not corrupt local canonical state.
 
 ## Related Sources
 
+- `DRD/consultify/docs/modules/DISCOVERY_CONSULTANT_MODULE.md`
+- `DRD/consultify/docs/product/INTERVIEW_FORM_ENGINE_V3.md`
+- `DRD/consultify/docs/product/INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
 - `DRD/consultify/docs/product/INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
-

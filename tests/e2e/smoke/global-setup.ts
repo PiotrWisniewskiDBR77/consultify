@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { request, type APIRequestContext, type FullConfig } from '@playwright/test';
+import { request, type FullConfig } from '@playwright/test';
 
 import {
   STORAGE_STATE_PATH,
@@ -16,27 +16,6 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function waitForApiReadiness(apiBaseUrl: string, timeoutMs: number) {
-  const req = await request.newContext({ baseURL: apiBaseUrl });
-  const startedAt = Date.now();
-  let lastError: string | null = null;
-  try {
-    while (Date.now() - startedAt < timeoutMs) {
-      try {
-        const res = await req.get('/api/health/ping');
-        if (res.ok()) return;
-        lastError = `${res.status()} ${res.statusText()}`;
-      } catch (error) {
-        lastError = error instanceof Error ? error.message : String(error);
-      }
-      await sleep(1000);
-    }
-  } finally {
-    await req.dispose();
-  }
-  throw new Error(`api readiness timeout after ${timeoutMs}ms: ${lastError || '<no response>'}`);
-}
-
 function computeRunId(): string {
   const explicit = String(process.env.E2E_RUN_ID || '').trim();
   if (explicit) return explicit;
@@ -47,29 +26,9 @@ function computeRunId(): string {
   return `local-${nonce}`;
 }
 
-async function tryRegisterDemoFallback(req: APIRequestContext, runId: string): Promise<TestSupportState | null> {
-  const email = `e2e+${runId.replace(/[^a-zA-Z0-9_.-]/g, '-')}-fallback@local.test`;
-  const password = `E2E-${Date.now()}-Pass1`;
-  const res = await req.post('/api/auth/register-demo', {
-    data: {
-      email,
-      password,
-      firstName: 'E2E',
-    },
-  });
-  if (!res.ok()) return null;
-  const payload = (await res.json()) as any;
-  const token = String(payload?.token || payload?.accessToken || '').trim();
-  const userId = String(payload?.user?.id || '').trim();
-  const organizationId = String(payload?.user?.organizationId || '').trim();
-  if (!token || !userId || !organizationId) return null;
-  return { runId, token, userId, organizationId };
-}
-
 export default async function globalSetup(_config: FullConfig) {
   const runId = computeRunId();
   const key = String(process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me').trim();
-  await waitForApiReadiness(API_BASE_URL, 180000);
 
   const req = await request.newContext({
     baseURL: API_BASE_URL,
@@ -78,65 +37,44 @@ export default async function globalSetup(_config: FullConfig) {
 
   let data: TestSupportState | null = null;
   let lastError: string | null = null;
-  const deadlineMs = Date.now() + 10 * 60 * 1000; // 10 minutes (cold starts can be long)
+  const deadlineMs = Date.now() + 6 * 60 * 1000; // 6 minutes
   while (Date.now() < deadlineMs) {
+    const res = await req.post('/api/test-support/bootstrap', { data: { runId } });
+    if (res.ok()) {
+      data = (await res.json()) as TestSupportState;
+      break;
+    }
+
+    const status = res.status();
+    const statusText = res.statusText();
+    const bodyText = await res.text().catch(() => '<unreadable>');
+    lastError = `${status} ${statusText} ${bodyText}`;
+
+    let bodyJson: any = null;
     try {
-      const res = await req.post('/api/test-support/bootstrap', { data: { runId } });
-      if (res.ok()) {
-        data = (await res.json()) as TestSupportState;
-        break;
-      }
+      bodyJson = JSON.parse(bodyText);
+    } catch {
+      // ignore
+    }
 
-      const status = res.status();
-      const statusText = res.statusText();
-      const bodyText = await res.text().catch(() => '<unreadable>');
-      lastError = `${status} ${statusText} ${bodyText}`;
+    const isServerStarting =
+      status === 503 &&
+      (bodyJson?.code === 'SERVER_STARTING' || String(bodyJson?.error || '').includes('Server starting'));
 
-      let bodyJson: any = null;
-      try {
-        bodyJson = JSON.parse(bodyText);
-      } catch {
-        // ignore
-      }
+    const isTestSupportRouteMissing =
+      status === 404 && String(bodyText || '').includes('Not found') && Date.now() + 1000 < deadlineMs;
 
-      const isServerStarting =
-        status === 503 &&
-        (bodyJson?.code === 'SERVER_STARTING' ||
-          String(bodyJson?.error || '').includes('Server starting'));
-
-      const isTestSupportRouteMissing = status === 404;
-
-      if (isTestSupportRouteMissing) {
-        // Some environments intentionally don't expose /api/test-support.
-        // Fall back to register-demo bootstrap path instead of hard-failing.
-        break;
-      }
-
-      if (!isServerStarting) {
-        throw new Error(`test-support bootstrap failed: ${lastError}`);
-      }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      lastError = msg;
-      // During startup Playwright can hit a short window where backend socket is not open yet.
-      const isConnectionRace =
-        /ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|connect/i.test(msg) &&
-        Date.now() + 1000 < deadlineMs;
-      if (!isConnectionRace) throw error;
+    if (!isServerStarting && !isTestSupportRouteMissing) {
+      throw new Error(`test-support bootstrap failed: ${lastError}`);
     }
 
     await sleep(1000);
   }
 
   if (!data) {
-    const fallbackState = await tryRegisterDemoFallback(req, runId).catch(() => null);
-    if (fallbackState) {
-      data = fallbackState;
-    } else {
-      throw new Error(
-        `test-support bootstrap failed after retries (runId=${runId}): ${lastError || '<no response>'}`
-      );
-    }
+    throw new Error(
+      `test-support bootstrap failed after retries (runId=${runId}): ${lastError || '<no response>'}`
+    );
   }
   if (!data?.token || !data?.organizationId) {
     throw new Error('test-support bootstrap returned invalid payload');

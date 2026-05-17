@@ -126,9 +126,7 @@ export function useMelsShortcuts(shortcuts: ShortcutDescriptor[]): void {
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName?.toLowerCase();
       const isEditable =
-        tag === 'input' ||
-        tag === 'textarea' ||
-        target?.isContentEditable === true;
+        tag === 'input' || tag === 'textarea' || target?.isContentEditable === true;
       // Allow shortcuts in editable fields only when modifier is held —
       // otherwise we'd hijack typing.
       if (isEditable && !event.metaKey && !event.ctrlKey) return;

@@ -11,7 +11,6 @@ import {
   expectAppMounted,
   expectNoRuntimeGateIssues,
   gotoRuntimeGateRoute,
-  seedE2EAuthWithBootstrap,
 } from './runtime-gate-helpers';
 
 test.describe('Runtime Gate — Chat refresh persistence [@module:ai-chat]', () => {
@@ -20,7 +19,6 @@ test.describe('Runtime Gate — Chat refresh persistence [@module:ai-chat]', () 
   test('preserves conversation messages after hard refresh', async ({ page }) => {
     const issues = collectRuntimeGateIssues(page);
     const prompt = `runtime gate refresh persistence ${Date.now()}`;
-    await seedE2EAuthWithBootstrap(page);
 
     await gotoRuntimeGateRoute(page, '/chat');
     await expectAppMounted(page);
@@ -41,14 +39,18 @@ test.describe('Runtime Gate — Chat refresh persistence [@module:ai-chat]', () 
     const conversationUrl = page.url();
 
     await expect(page.getByText(prompt, { exact: true })).toBeVisible({ timeout: 15000 });
-    // Local/staging backends may not run deterministic E2E_MODE response prefixes.
-    // Conversation URL + user message persistence is the business gate here.
+    await expect(page.locator('p:visible', { hasText: 'E2E_OK:' }).first()).toBeVisible({
+      timeout: 30000,
+    });
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expectAppMounted(page);
 
     await expect(page).toHaveURL(conversationUrl);
     await expect(page.getByText(prompt, { exact: true })).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('p:visible', { hasText: 'E2E_OK:' }).first()).toBeVisible({
+      timeout: 30000,
+    });
 
     expectNoRuntimeGateIssues(issues);
   });

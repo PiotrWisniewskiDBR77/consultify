@@ -1,5 +1,6 @@
 export function workCanvasActionErrorMessage(error: unknown, fallback: string): string {
-  const record = error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
+  const record =
+    error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
   const code = record?.data?.code;
 
   if (code === 'CANVAS_DRAFT_CONFLICT') {
@@ -30,8 +31,5 @@ export function workCanvasActionErrorMessage(error: unknown, fallback: string): 
     return 'Workflow comment body is required before submitting.';
   }
 
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
   return fallback;
 }

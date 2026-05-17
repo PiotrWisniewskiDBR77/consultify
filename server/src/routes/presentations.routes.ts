@@ -11,6 +11,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
@@ -50,7 +51,10 @@ import {
   planBulkRevert,
 } from '../services/presentationDeckBulkRevertService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
-import { normalizeDeckDocument } from '../services/presentationDeckDocumentService.js';
+import {
+  deckDocumentToUnifiedJson,
+  normalizeDeckDocument,
+} from '../services/presentationDeckDocumentService.js';
 import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
@@ -232,30 +236,6 @@ function ensureConfidentialityPolicy(
     return false;
   }
   return true;
-}
-
-type ArtifactAccessStatus = 'ok' | 'missing_link' | 'access_denied';
-
-async function resolvePresentationArtifactAccess(params: {
-  organizationId: string;
-  deckId: string;
-  userId: string;
-  roleKey: string | null;
-}): Promise<ArtifactAccessStatus> {
-  const artifact = await artifactRegistryService.getArtifactByOrigin({
-    organizationId: params.organizationId,
-    originRuntime: 'presentation',
-    originRecordId: params.deckId,
-    userId: params.userId,
-    roleKey: params.roleKey,
-  });
-  if (artifact) return 'ok';
-  const unscopedArtifact = await artifactRegistryService.getArtifactByOriginUnscoped({
-    organizationId: params.organizationId,
-    originRuntime: 'presentation',
-    originRecordId: params.deckId,
-  });
-  return unscopedArtifact ? 'access_denied' : 'missing_link';
 }
 
 const EXPORT_MAX_SLIDE_COUNT = 60;
@@ -820,6 +800,7 @@ router.get(
 );
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // ============================================================
 // TEMPLATES (T059)
@@ -1280,9 +1261,8 @@ router.post(
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
     const setup: DeckSetup = req.body;
-    const result = await generateOutline(setup, orgId, userId);
+    const result = await generateOutline(setup, orgId);
     res.json({ success: true, data: result });
   })
 );
@@ -1292,9 +1272,8 @@ router.post(
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
     const { deckId, outline, setup } = req.body;
-    const result = await generateDeck(deckId, outline, setup, orgId, userId);
+    const result = await generateDeck(deckId, outline, setup, orgId);
     res.json({ success: true, data: result });
   })
 );
@@ -1442,25 +1421,16 @@ router.get(
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
 
-    const artifactAccess = await resolvePresentationArtifactAccess({
+    // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
       organizationId: orgId,
-      deckId: String(req.params.id || ''),
+      originRuntime: 'presentation',
+      originRecordId: String(req.params.id || ''),
       userId,
       roleKey,
     });
-    if (artifactAccess === 'access_denied') {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied to export artifact',
-        code: 'ARTIFACT_ACCESS_DENIED',
-      });
-    }
-    if (artifactAccess === 'missing_link') {
-      return res.status(404).json({
-        success: false,
-        error: 'Export not available',
-        code: 'ARTIFACT_NOT_REGISTERED',
-      });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Export not available' });
     }
 
     const deck = (await dbGet(
@@ -1594,25 +1564,16 @@ router.get(
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
 
-    const artifactAccess = await resolvePresentationArtifactAccess({
+    // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
       organizationId: orgId,
-      deckId: String(deckId || ''),
+      originRuntime: 'presentation',
+      originRecordId: String(deckId || ''),
       userId,
       roleKey,
     });
-    if (artifactAccess === 'access_denied') {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied to export artifact',
-        code: 'ARTIFACT_ACCESS_DENIED',
-      });
-    }
-    if (artifactAccess === 'missing_link') {
-      return res.status(404).json({
-        success: false,
-        error: 'Export not available',
-        code: 'ARTIFACT_NOT_REGISTERED',
-      });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
     }
 
     const deck = (await dbGet(
@@ -1919,25 +1880,15 @@ router.post(
     const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation HTML export'))) return;
 
-    const artifactAccess = await resolvePresentationArtifactAccess({
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
       organizationId: orgId,
-      deckId: String(deckId || ''),
+      originRuntime: 'presentation',
+      originRecordId: String(deckId || ''),
       userId,
       roleKey,
     });
-    if (artifactAccess === 'access_denied') {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied to export artifact',
-        code: 'ARTIFACT_ACCESS_DENIED',
-      });
-    }
-    if (artifactAccess === 'missing_link') {
-      return res.status(404).json({
-        success: false,
-        error: 'Export not available',
-        code: 'ARTIFACT_NOT_REGISTERED',
-      });
+    if (!artifact) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
     }
 
     const deck = await dbGet(
@@ -2193,21 +2144,6 @@ router.put(
     if (bodyStr.length > 10_000_000) {
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
-    const parsedBody = req.body && typeof req.body === 'object' ? req.body : null;
-    const hasCardsArray =
-      parsedBody && Array.isArray((parsedBody as Record<string, unknown>).cards);
-    const hasSlidesArray =
-      parsedBody && Array.isArray((parsedBody as Record<string, unknown>).slides);
-    if (!hasCardsArray && !hasSlidesArray) {
-      return res.status(422).json({
-        success: false,
-        error: 'Autosave payload must include cards or slides array',
-        code: 'INVALID_DECK_PAYLOAD',
-      });
-    }
-    const nextSlideCount = hasCardsArray
-      ? ((parsedBody as Record<string, unknown>).cards as unknown[]).length
-      : ((parsedBody as Record<string, unknown>).slides as unknown[]).length;
 
     const newVersion = (deck.version || 1) + 1;
 
@@ -2232,13 +2168,11 @@ router.put(
     }
 
     await dbRun(
-      `UPDATE presentation_decks
-       SET deck_json = ?, version = ?, slide_count = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND organization_id = ?`,
-      [bodyStr, newVersion, nextSlideCount, deckId, orgId]
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [bodyStr, newVersion, deckId, orgId]
     );
 
-    res.json({ success: true, version: newVersion, slideCount: nextSlideCount });
+    res.json({ success: true, version: newVersion });
   })
 );
 
@@ -5854,6 +5788,21 @@ router.post(
 
     const deckData: any = normalizeDeckDocument(deck) || {};
     const cards = deckData.cards || deckData.slides || [];
+    const pngLimitCheck = enforceExportLimits(deck, cards);
+    if (!pngLimitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'png',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: pngLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
     const title = deck.title || 'presentation';
 
     const Archiver = (await import('archiver')).default;

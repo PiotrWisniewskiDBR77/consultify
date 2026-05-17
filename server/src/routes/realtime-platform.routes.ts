@@ -13,6 +13,30 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 router.use(verifyToken);
 
+const isToolSessionLockUnavailableError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('db') ||
+    message.includes('database') ||
+    message.includes('sql') ||
+    message.includes('timeout') ||
+    message.includes('connection')
+  );
+};
+
+const isRealtimeSubstrateUnavailableError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('db') ||
+    message.includes('database') ||
+    message.includes('sql') ||
+    message.includes('timeout') ||
+    message.includes('connection')
+  );
+};
+
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
   const orgId =
@@ -43,11 +67,25 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid channel payload',
+        code: 'REALTIME_CHANNEL_CREATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createChannel(id.orgId, p.data);
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.createChannel(id.orgId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel substrate is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_CREATE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -57,25 +95,18 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     const resourceType = req.query.resourceType as string | undefined;
-    res.json({ channels: await realtimePlatformService.listChannels(id.orgId, resourceType) });
-  })
-);
-
-router.get(
-  '/channels/:resourceType/:resourceId',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const id = requireUser(req, res);
-    if (!id) return;
-    const ch = await realtimePlatformService.getChannel(
-      id.orgId,
-      req.params.resourceType,
-      req.params.resourceId
-    );
-    if (!ch) {
-      res.status(404).json({ error: 'Channel not found' });
-      return;
+    try {
+      res.json({ channels: await realtimePlatformService.listChannels(id.orgId, resourceType) });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel list is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_LIST_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
     }
-    res.json(ch);
   })
 );
 
@@ -84,7 +115,18 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.deleteChannel(id.orgId, req.params.channelId));
+    try {
+      res.json(await realtimePlatformService.deleteChannel(id.orgId, req.params.channelId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel delete is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_DELETE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -101,14 +143,28 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid channel presence payload',
+        code: 'REALTIME_CHANNEL_PRESENCE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.upsertPresence(req.params.channelId, {
-      userId: id.userId,
-      ...p.data,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.upsertPresence(req.params.channelId, {
+        userId: id.userId,
+        ...p.data,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -117,7 +173,50 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({ presence: await realtimePlatformService.listPresence(req.params.channelId) });
+    try {
+      res.json({ presence: await realtimePlatformService.listPresence(req.params.channelId) });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+router.get(
+  '/channels/:resourceType/:resourceId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    try {
+      const ch = await realtimePlatformService.getChannel(
+        id.orgId,
+        req.params.resourceType,
+        req.params.resourceId
+      );
+      if (!ch) {
+        res.status(404).json({
+          error: 'Channel not found',
+          code: 'REALTIME_CHANNEL_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(ch);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime channel read is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -126,7 +225,18 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.heartbeatPresence(req.params.channelId, id.userId));
+    try {
+      res.json(await realtimePlatformService.heartbeatPresence(req.params.channelId, id.userId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -135,7 +245,18 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.disconnectPresence(req.params.channelId, id.userId));
+    try {
+      res.json(await realtimePlatformService.disconnectPresence(req.params.channelId, id.userId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Channel presence is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -145,7 +266,18 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     const staleMinutes = Number(req.query.staleMinutes) || 5;
-    res.json(await realtimePlatformService.cleanStalePresence(staleMinutes));
+    try {
+      res.json(await realtimePlatformService.cleanStalePresence(staleMinutes));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Realtime stale presence cleanup is temporarily unavailable',
+          code: 'REALTIME_CHANNEL_CLEAN_STALE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -165,11 +297,25 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid CRDT document payload',
+        code: 'REALTIME_CRDT_DOCUMENT_CREATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createCrdtDocument(id.orgId, p.data);
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.createCrdtDocument(id.orgId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -178,16 +324,30 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const doc = await realtimePlatformService.getCrdtDocument(
-      id.orgId,
-      req.params.resourceType,
-      req.params.resourceId
-    );
-    if (!doc) {
-      res.status(404).json({ error: 'CRDT document not found' });
-      return;
+    try {
+      const doc = await realtimePlatformService.getCrdtDocument(
+        id.orgId,
+        req.params.resourceType,
+        req.params.resourceId
+      );
+      if (!doc) {
+        res.status(404).json({
+          error: 'CRDT document not found',
+          code: 'REALTIME_CRDT_DOCUMENT_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(doc);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
     }
-    res.json(doc);
   })
 );
 
@@ -199,15 +359,29 @@ router.put(
     const s = z.object({ stateVector: z.string(), snapshotData: z.string() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid CRDT snapshot payload',
+        code: 'REALTIME_CRDT_SNAPSHOT_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(
-      await realtimePlatformService.saveCrdtSnapshot(req.params.docId, {
-        ...p.data,
-        userId: id.userId,
-      })
-    );
+    try {
+      res.json(
+        await realtimePlatformService.saveCrdtSnapshot(req.params.docId, {
+          ...p.data,
+          userId: id.userId,
+        })
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -219,14 +393,28 @@ router.post(
     const s = z.object({ updateData: z.string(), originClientId: z.string().optional() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid CRDT update payload',
+        code: 'REALTIME_CRDT_UPDATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.appendCrdtUpdate(req.params.docId, {
-      ...p.data,
-      originUserId: id.userId,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.appendCrdtUpdate(req.params.docId, {
+        ...p.data,
+        originUserId: id.userId,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -236,7 +424,20 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     const afterSeq = Number(req.query.afterSequence) || 0;
-    res.json({ updates: await realtimePlatformService.getCrdtUpdates(req.params.docId, afterSeq) });
+    try {
+      res.json({
+        updates: await realtimePlatformService.getCrdtUpdates(req.params.docId, afterSeq),
+      });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'CRDT substrate is temporarily unavailable',
+          code: 'REALTIME_CRDT_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -264,14 +465,28 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation session payload',
+        code: 'REALTIME_FACILITATION_SESSION_CREATE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createFacilitationSession(id.orgId, {
-      ...p.data,
-      facilitatorId: id.userId,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.createFacilitationSession(id.orgId, {
+        ...p.data,
+        facilitatorId: id.userId,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -280,12 +495,29 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const s = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
-    if (!s) {
-      res.status(404).json({ error: 'Facilitation session not found' });
-      return;
+    try {
+      const s = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!s) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(s);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
     }
-    res.json(s);
   })
 );
 
@@ -297,12 +529,37 @@ router.put(
     const s = z.object({ timerState: z.record(z.string(), z.unknown()) });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation timer payload',
+        code: 'REALTIME_FACILITATION_TIMER_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(
-      await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState)
-    );
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(
+        await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState)
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -314,10 +571,35 @@ router.put(
     const s = z.object({ phase: z.string() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation phase payload',
+        code: 'REALTIME_FACILITATION_PHASE_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase));
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -326,7 +608,29 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await realtimePlatformService.endFacilitationSession(req.params.sessionId));
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      res.json(await realtimePlatformService.endFacilitationSession(req.params.sessionId));
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -343,14 +647,39 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation vote payload',
+        code: 'REALTIME_FACILITATION_VOTE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.castVote(req.params.sessionId, {
-      voterId: id.userId,
-      ...p.data,
-    });
-    res.status(201).json(r);
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      const r = await realtimePlatformService.castVote(req.params.sessionId, {
+        voterId: id.userId,
+        ...p.data,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -385,11 +714,36 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation role payload',
+        code: 'REALTIME_FACILITATION_ROLE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
-    res.status(201).json(r);
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      const r = await realtimePlatformService.assignRole(req.params.sessionId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -417,11 +771,36 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation outcome payload',
+        code: 'REALTIME_FACILITATION_OUTCOME_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.createOutcome(req.params.sessionId, p.data);
-    res.status(201).json(r);
+    try {
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
+      if (!session) {
+        res.status(404).json({
+          error: 'Facilitation session not found',
+          code: 'REALTIME_FACILITATION_SESSION_NOT_FOUND',
+        });
+        return;
+      }
+      const r = await realtimePlatformService.createOutcome(req.params.sessionId, p.data);
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -442,16 +821,30 @@ router.put(
     const s = z.object({ exportType: z.string(), exportId: z.string() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid facilitation export payload',
+        code: 'REALTIME_FACILITATION_EXPORT_PAYLOAD_INVALID',
+      });
       return;
     }
-    res.json(
-      await realtimePlatformService.exportOutcome(
-        req.params.outcomeId,
-        p.data.exportType,
-        p.data.exportId
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.exportOutcome(
+          req.params.outcomeId,
+          p.data.exportType,
+          p.data.exportId
+        )
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -473,15 +866,29 @@ router.post(
     });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid tool-session presence payload',
+        code: 'REALTIME_TOOL_SESSION_PRESENCE_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.upsertToolPresence(id.orgId, {
-      toolSessionId: req.params.toolSessionId,
-      userId: id.userId,
-      ...p.data,
-    });
-    res.status(201).json(r);
+    try {
+      const r = await realtimePlatformService.upsertToolPresence(id.orgId, {
+        toolSessionId: req.params.toolSessionId,
+        userId: id.userId,
+        ...p.data,
+      });
+      res.status(201).json(r);
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -490,9 +897,23 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({
-      presence: await realtimePlatformService.listToolPresence(id.orgId, req.params.toolSessionId),
-    });
+    try {
+      res.json({
+        presence: await realtimePlatformService.listToolPresence(
+          id.orgId,
+          req.params.toolSessionId
+        ),
+      });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_READ_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -502,14 +923,25 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     const cursorState = req.body.cursorState;
-    res.json(
-      await realtimePlatformService.heartbeatToolPresence(
-        id.orgId,
-        req.params.toolSessionId,
-        id.userId,
-        cursorState
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.heartbeatToolPresence(
+          id.orgId,
+          req.params.toolSessionId,
+          id.userId,
+          cursorState
+        )
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -518,13 +950,24 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(
-      await realtimePlatformService.disconnectToolPresence(
-        id.orgId,
-        req.params.toolSessionId,
-        id.userId
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.disconnectToolPresence(
+          id.orgId,
+          req.params.toolSessionId,
+          id.userId
+        )
+      );
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session presence is temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_PRESENCE_WRITE_FAILED',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -536,16 +979,37 @@ router.post(
     const s = z.object({ blockId: z.string(), ttlMinutes: z.number().optional() });
     const p = s.safeParse(req.body);
     if (!p.success) {
-      res.status(400).json({ error: p.error.message });
+      res.status(400).json({
+        error: 'Invalid tool-session lock payload',
+        code: 'REALTIME_TOOL_SESSION_LOCK_PAYLOAD_INVALID',
+      });
       return;
     }
-    const r = await realtimePlatformService.acquireEditLock(id.orgId, {
-      toolSessionId: req.params.toolSessionId,
-      blockId: p.data.blockId,
-      lockedBy: id.userId,
-      ttlMinutes: p.data.ttlMinutes,
-    });
-    res.status(r.acquired ? 201 : 409).json(r);
+    try {
+      const r = await realtimePlatformService.acquireEditLock(id.orgId, {
+        toolSessionId: req.params.toolSessionId,
+        blockId: p.data.blockId,
+        lockedBy: id.userId,
+        ttlMinutes: p.data.ttlMinutes,
+      });
+      if (r.acquired) {
+        res.status(201).json(r);
+        return;
+      }
+      res.status(409).json({
+        ...r,
+        code: 'REALTIME_TOOL_SESSION_LOCK_HELD',
+      });
+    } catch (error) {
+      if (isToolSessionLockUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session locks are temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_LOCKS_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -554,14 +1018,25 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(
-      await realtimePlatformService.releaseEditLock(
-        id.orgId,
-        req.params.toolSessionId,
-        req.params.blockId,
-        id.userId
-      )
-    );
+    try {
+      res.json(
+        await realtimePlatformService.releaseEditLock(
+          id.orgId,
+          req.params.toolSessionId,
+          req.params.blockId,
+          id.userId
+        )
+      );
+    } catch (error) {
+      if (isToolSessionLockUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session locks are temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_LOCKS_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -570,9 +1045,20 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({
-      locks: await realtimePlatformService.listEditLocks(id.orgId, req.params.toolSessionId),
-    });
+    try {
+      res.json({
+        locks: await realtimePlatformService.listEditLocks(id.orgId, req.params.toolSessionId),
+      });
+    } catch (error) {
+      if (isToolSessionLockUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Tool-session locks are temporarily unavailable',
+          code: 'REALTIME_TOOL_SESSION_LOCKS_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 

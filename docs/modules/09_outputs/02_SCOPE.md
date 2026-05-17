@@ -1,41 +1,41 @@
 ---
 module_id: MODULE_OUTPUTS
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Outputy (Outputs Library)
+# Scope — Outputs Library
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Outputs Library względem: Chat (creation), My Work (personal filter), moduły domenowe (context), format runtimes (doc/slides/sheet).
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: stabilna biblioteka (registry) dla artefaktów: listowanie, filtrowanie, statusy, metadata, owner.
-- MUST: spójne entry-points do format-specific builderów (doc/slides/sheet).
-- MUST: “Needs review / Mine / All / Templates” jako główne tryby pracy (tabs).
-- MUST: obsługa redirectów routingowych `/reports*` → `/presentations`.
+- Artifact registry and library views.
+- Review states, visibility, templates, exports and provenance.
+- Documents/presentations/sheets as artifact types and filters.
+- Function set: `OUT_LIBRARY_HUB`, `OUT_REPORT_BUILDER`, `OUT_PRESENTATION_WIZARD`, `OUT_DECK_BUILDER`, `OUT_SHARED_PRESENTATION`, `OUT_LEGACY_REPORT_REDIRECT`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: generować artefaktów “w próżni” (generation odbywa się przez Chat / flows), poza przypadkami template authoring.
-- MUST NOT: łamać tenant/ACL boundaries przy “global discoverability”.
+- Replacing format-specific editors/runtimes.
+- Storing private work copies without governance state.
 
-## Should
+## Inputs
 
-- SHOULD: integrować się z `My Work` jako “operacyjny filtr” nad tym samym registry.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres nie tworzy drugiej biblioteki artefaktów poza Outputs.
-- [ ] Jest spójność z `MODULE_ROUTING_ARCHITECTURE.md` (route `/presentations`).
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

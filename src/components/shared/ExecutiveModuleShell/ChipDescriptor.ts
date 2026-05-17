@@ -20,13 +20,7 @@ import type { LucideIcon } from 'lucide-react';
 
 export type TopBarChipKind = 'standard' | 'toggle' | 'primary';
 
-export type TopBarChipDotTone =
-  | 'neutral'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'info'
-  | null;
+export type TopBarChipDotTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info' | null;
 
 export interface TopBarChipDescriptor {
   /** Stable id used for the keyboard-shortcut registry + analytics. */
@@ -71,9 +65,7 @@ export const MELS_CHIP_ORDER = [
 
 export type MelsChipId = (typeof MELS_CHIP_ORDER)[number];
 
-export function sortChipsByMelsOrder(
-  chips: TopBarChipDescriptor[]
-): TopBarChipDescriptor[] {
+export function sortChipsByMelsOrder(chips: TopBarChipDescriptor[]): TopBarChipDescriptor[] {
   const orderIndex = new Map<string, number>();
   MELS_CHIP_ORDER.forEach((id, idx) => orderIndex.set(id, idx));
   return [...chips].sort((a, b) => {

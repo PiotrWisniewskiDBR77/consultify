@@ -1265,6 +1265,11 @@ async function createSessionFromTemplate(params: {
   let questionCount = 0;
   for (const tq of templateQuestions as any[]) {
     const questionId = uuidv4();
+    const isRequiredFlag = toDbFlag(tq.is_required, 0);
+    const allowVoiceFlag = toDbFlag(tq.allow_voice, 0);
+    const allowFileUploadFlag = toDbFlag(tq.allow_file_upload, 0);
+    const allowUrlFlag = toDbFlag(tq.allow_url, 0);
+    const allowContextNoteFlag = toDbFlag(tq.allow_context_note, 1);
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
        (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
@@ -1280,14 +1285,14 @@ async function createSessionFromTemplate(params: {
         'not_started',
         tq.sort_order,
         1,
-        tq.is_required || 0,
+        isRequiredFlag,
         tq.answer_type || 'open',
         tq.answer_options || '[]',
         tq.expected_answer_shape || null,
-        tq.allow_voice || 0,
-        tq.allow_file_upload || 0,
-        tq.allow_url || 0,
-        tq.allow_context_note ?? 1,
+        allowVoiceFlag,
+        allowFileUploadFlag,
+        allowUrlFlag,
+        allowContextNoteFlag,
         tq.id,
         now,
         now,
@@ -1327,6 +1332,18 @@ const normalizeAssignmentStatusForClient = (status?: string): string => {
   const normalized = String(status || '').toLowerCase();
   if (normalized === 'sent_back') return 'in_progress';
   return normalized;
+};
+
+const toDbFlag = (value: unknown, fallback = 0): number => {
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (typeof value === 'number') return value > 0 ? 1 : 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return fallback ? 1 : 0;
+    if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) return 1;
+    if (['false', '0', 'no', 'n', 'off'].includes(normalized)) return 0;
+  }
+  return fallback ? 1 : 0;
 };
 
 async function assertSessionEditable(sessionId: string, organizationId: string): Promise<any> {

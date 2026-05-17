@@ -149,9 +149,6 @@ export interface OutlineItem {
 
 export interface GenerationResult {
   deckId: string;
-  contentSlideCount: number;
-  renderedSlideCount: number;
-  outlineSlideCount: number;
   slideCount: number;
   warnings: string[];
   exportPath?: string;
@@ -975,8 +972,7 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
 
 export async function generateOutline(
   setup: DeckSetup,
-  organizationId: string,
-  actorUserId?: string | null
+  organizationId: string
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
   let templateOutlineUsed = false;
@@ -1035,7 +1031,6 @@ export async function generateOutline(
   });
 
   const deckId = uuidv4().replace(/-/g, '');
-  const ownerUserId = (actorUserId || '').trim() || null;
   const resolvedSourceType =
     setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
   const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
@@ -1085,7 +1080,7 @@ export async function generateOutline(
           ...narrativePlan.warnings,
         ],
       }),
-      ownerUserId,
+      null,
       resolvedSourceType,
       resolvedSourceId,
     ]
@@ -1099,10 +1094,13 @@ export async function generateOutline(
       originRuntime: 'presentation',
       originRecordId: deckId,
       titleSnapshot: setup.title,
-      ownerUserId,
-      createdBy: ownerUserId || 'system',
+      ownerUserId: null,
+      createdBy: 'system',
       deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('draft'),
-      visibilityScope: ownerUserId ? 'private' : 'organization',
+      visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+        outputType: 'presentation',
+        ownerUserId: null,
+      }),
       originSummary: {
         sourceType: resolvedSourceType,
         sourceId: resolvedSourceId,
@@ -1143,10 +1141,8 @@ export async function generateDeck(
   deckId: string,
   outline: OutlineItem[],
   setup: DeckSetup,
-  organizationId: string,
-  actorUserId?: string | null
+  organizationId: string
 ): Promise<GenerationResult> {
-  const ownerUserId = (actorUserId || '').trim() || null;
   await dbRun(
     `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
     [deckId, organizationId]
@@ -1158,9 +1154,7 @@ export async function generateDeck(
     artifactFamily: 'presentation',
     originRuntime: 'presentation',
     originRecordId: deckId,
-    ownerUserId,
-    createdBy: ownerUserId || 'system',
-    visibilityScope: ownerUserId ? 'private' : 'organization',
+    createdBy: 'system',
     deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('generating'),
   });
 
@@ -1222,7 +1216,6 @@ export async function generateDeck(
     const slides: UnifiedSlide[] = enabledSlides.map((item) =>
       buildSlideContent(item, setup, artifactData)
     );
-    const contentSlideCount = slides.length;
 
     let brandColor = setup.brandColor;
     if (!brandColor) {
@@ -1422,14 +1415,6 @@ export async function generateDeck(
         audit: layoutAudit,
       });
       auditedSlides = decorated.slides;
-      if (decorated.cardinalityMismatch) {
-        extraWarnings.push(
-          'Layout audit skipped decoration due to outline/slide cardinality mismatch.'
-        );
-        logger.warn(
-          `[PresentationGen] Layout audit skipped: enabled_outline=${outline.filter((o) => o.enabled).length}, slides=${slides.length}`
-        );
-      }
       if (decorated.decoratedCount > 0) {
         logger.info(
           `[PresentationGen] Layout audit decorated ${decorated.decoratedCount} slide(s) with review markers`
@@ -1542,7 +1527,7 @@ export async function generateDeck(
       [
         JSON.stringify(deckDocument),
         JSON.stringify(unifiedJson),
-        contentSlideCount,
+        result.slideCount,
         exportPath,
         JSON.stringify(deckDocument.generation.warnings),
         JSON.stringify(outlinePayload),
@@ -1557,15 +1542,12 @@ export async function generateDeck(
       artifactFamily: 'presentation',
       originRuntime: 'presentation',
       originRecordId: deckId,
-      ownerUserId,
-      createdBy: ownerUserId || 'system',
-      visibilityScope: ownerUserId ? 'private' : 'organization',
+      createdBy: 'system',
       deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('ready'),
       originSummary: {
         exportPath,
         exportFormat: 'pptx',
-        slideCount: contentSlideCount,
-        renderedSlideCount: result.slideCount,
+        slideCount: result.slideCount,
         nativeStatus: 'ready',
         sourceTable: 'presentation_decks',
       },
@@ -1580,7 +1562,7 @@ export async function generateDeck(
         imageStyle: setup.visuals?.imageDensity || 'medium',
         colorSet: setup.brandColor || 'default',
         contentDepth: 'balanced',
-        cardCount: contentSlideCount,
+        cardCount: result.slideCount,
         totalBlocks,
       });
       logger.info(
@@ -1592,9 +1574,6 @@ export async function generateDeck(
 
     return {
       deckId,
-      contentSlideCount,
-      renderedSlideCount: result.slideCount,
-      outlineSlideCount: enabledSlides.length,
       slideCount: result.slideCount,
       warnings: [
         ...(result.warnings || []),
@@ -1616,9 +1595,7 @@ export async function generateDeck(
       artifactFamily: 'presentation',
       originRuntime: 'presentation',
       originRecordId: deckId,
-      ownerUserId,
-      createdBy: ownerUserId || 'system',
-      visibilityScope: ownerUserId ? 'private' : 'organization',
+      createdBy: 'system',
       deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('failed'),
       originSummary: {
         nativeStatus: 'failed',

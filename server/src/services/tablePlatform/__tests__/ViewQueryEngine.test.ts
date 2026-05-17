@@ -251,8 +251,8 @@ describe('ViewQueryEngine — executeQuery pagination', () => {
     });
 
     expect(result.records).toHaveLength(1);
-    const listCall = mockQuery.mock.calls.find(([sql]) =>
-      String(sql).includes('SELECT r.*') && String(sql).includes('FROM tp_records r')
+    const listCall = mockQuery.mock.calls.find(
+      ([sql]) => String(sql).includes('SELECT r.*') && String(sql).includes('FROM tp_records r')
     );
     expect(listCall).toBeTruthy();
     expect(String(listCall?.[0])).toContain('LIMIT $2');

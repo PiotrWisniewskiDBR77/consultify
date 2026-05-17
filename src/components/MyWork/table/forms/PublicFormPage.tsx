@@ -8,10 +8,7 @@ import { useParams } from 'react-router-dom';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
-import {
-  PublicFormFieldInput,
-  type PublicFormField,
-} from './PublicFormFieldInput';
+import { type PublicFormField, PublicFormFieldInput } from './PublicFormFieldInput';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

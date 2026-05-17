@@ -508,7 +508,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               const err = await res.json().catch(() => ({}));
               throw new Error(String(err?.error || 'Failed to save template'));
             }
-            const payload = (await res.json().catch(() => ({}))) as { data?: { artifactId?: string } };
+            const payload = (await res.json().catch(() => ({}))) as {
+              data?: { artifactId?: string };
+            };
             const templateArtifactId =
               typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
             toast.success(isPolish ? 'Zapisano jako wzorzec' : 'Saved as template');

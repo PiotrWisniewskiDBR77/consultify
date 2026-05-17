@@ -1,41 +1,41 @@
 ---
 module_id: MODULE_EXECUTION
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Realizacja (Execution)
+# Scope — Realizacja / Implementation & PMO
 
 ## Purpose
 
-Ustalić granice odpowiedzialności modułu `Realizacja` i jego relacje z `Inicjatywy`, `Rezultaty` (Benefits/Results), `Outputs` oraz globalnym `Reports`.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: obsługiwać inicjatywy w statusach: `SCHEDULED`, `EXECUTING`, `BLOCKED`, `DONE` (wg routing SoT).
-- MUST: wspierać work graph: tasks, decisions, dependencies, milestones jako initiative-native execution objects.
-- MUST: zapewnić 3 powierzchnie (`Portfolio/Raporty/Manager`) na tej samej prawdzie.
+- Task/decision runtime during delivery.
+- Portfolio, reports and manager/control tower surfaces.
+- Schedule, baseline, blockers, risk, capacity and recovery interventions.
+- Function set: `RL_EXECUTION_PORTFOLIO`, `RL_EXECUTION_REPORTS`, `RL_EXECUTION_MANAGER`, `RL_FULL_EXECUTION_VIEW`, `RL_ROLLOUT_VIEW`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: przejmować planning i gate’ów inicjatywy (należy do `Inicjatywy`).
-- MUST NOT: zastępować Benefits/Tracking (należy do `Rezultaty`).
+- Initial initiative planning ownership.
+- Final KPI/ROI truth ownership after handoff to Results.
 
-## Should
+## Inputs
 
-- SHOULD: konsumować sygnały KPI/Finance/Calendar bez tworzenia shadow runtime (tylko konsumować).
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zgodność z “relationship to adjacent modules” z `EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`.
-- [ ] Nie ma dublowania list portfolio ani reportów w złym miejscu (Raporty ≠ drugi portfolio table).
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
-- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

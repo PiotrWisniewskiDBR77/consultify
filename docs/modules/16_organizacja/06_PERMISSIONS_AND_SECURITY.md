@@ -1,41 +1,38 @@
 ---
 module_id: MODULE_ORGANIZATION
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Organizacja (Organization Context)
+# Permissions & Security — Organizacja / Organization Context
 
 ## Purpose
 
-Kontrakt bezpieczeństwa dla org context: tenant isolation, ACL boundary w backendzie, brak wycieków do AI promptów i logów.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- MUST: backend/API ACL jest boundary (frontend hiding nie jest security).
-- MUST: retrieval stosuje tenant/org/project/user/role/workflow filters zanim chunk trafi do promptu.
-- MUST: raw file access jest kontrolowany (signed/expiring).
-- MUST: deleted/revoked docs nie są dostępne do nowych generacji.
+- Tenant/ACL boundaries are non-negotiable; deny by default on uncertainty.
 
-## Must Not
+Function-level enforcement applies uniformly to: `ORG_CONTEXT_WORKSPACE`, `ORG_LEGACY_CONTEXT_BUILDER`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: logować raw treści dokumentów w telemetry/system prompts.
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- SHOULD: mieć testy negatywne cross-tenant i audit queries (wg runbook).
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_SOURCE_OF_TRUTH.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_RELEASE_GATE_RUNBOOK.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

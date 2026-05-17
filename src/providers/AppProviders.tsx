@@ -1,8 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import React, { useLayoutEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 
+import { createAppQueryClient } from '@/lib/createAppQueryClient';
+import { installQueryFailureWebPerf } from '@/lib/installQueryFailureWebPerf';
 import { V8Provider } from '@/providers/V8Provider';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -17,11 +19,8 @@ import { TeresaVoiceProvider } from '../contexts/TeresaVoiceContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, staleTime: 30_000 },
-  },
-});
+const queryClient = createAppQueryClient();
+installQueryFailureWebPerf(queryClient);
 
 /**
  * ThemeSync - Keeps the DOM `dark` class in sync with the Zustand theme state.

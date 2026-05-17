@@ -1,39 +1,46 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Portal partnerski
+# Purpose — Portal Partnerski
 
 ## Purpose
 
-Zdefiniować po co istnieje `Portal partnerski`: jako partner‑facing runtime programu partnerskiego, który prowadzi użytkownika przez lifecycle (**onboard → activate → earn → payout**) i daje operacyjne narzędzia (directory/resources/clients/earnings) bez rozjazdu z “operator truth”.
+Portal i program partnerski: lifecycle onboard -> activate -> earn -> payout, partner/operator roles, ledger and payout governance.
+
+Cel jest realizowany przez funkcję chronionego workspace partnera i osobną funkcję granicy dla publicznej ścieżki akwizycyjnej.
 
 ## Must
 
-- **MUST**: Lifecycle partnera jest jawny i trwały; portal i operator widzą **tę samą prawdę** statusu (P29).
-- **MUST**: Earnings/payouts opierają się na ledger semantics (append-only, derived balances; brak “magicznego salda” jako truth).
-- **MUST**: Payout actions mają jasne gate’y (partner request vs operator approval/execute/reconcile).
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- **MUST NOT**: Prowadzić do sprzecznych statusów partner vs operator.
-- **MUST NOT**: Pozwalać na ukryte transitions i edycję historii ledger (korekty są nowymi wpisami).
+- General CRM or admin replacement.
+- Mutable financial ledger without append-only audit.
 
 ## Should
 
-- **SHOULD**: Dawać partnerowi jasne next steps w degraded states (missing payout settings, hold/review, provider failure).
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z P29: jedna maszyna stanów i jedna księga ledger, z jasnym podziałem partner vs operator.
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
 - `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md`
+- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_PARTNER_PROGRAM_2026-03-29.md`
 - `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_PARTNER_PROGRAM.md`
-
+- `DRD/consultify/docs/product/PARTNER_PROGRAM_V8_MASTER_SUMMARY.md`
+- `DRD/consultify/docs/product/modules/partner/PARTNER_PORTAL_MODULE.md`

@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { recordSpaNavigationWebPerf } from '@/lib/spaNavigationWebPerf';
+
 /**
  * usePageTracking - Analytics tracking hook
  *
@@ -14,6 +16,8 @@ export function usePageTracking() {
     const pagePath = location.pathname + location.search;
     const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'GA_MEASUREMENT_ID';
     const analyticsDebug = import.meta.env.VITE_ANALYTICS_DEBUG === 'true';
+
+    recordSpaNavigationWebPerf(pagePath);
 
     // Google Analytics (gtag.js)
     if (typeof window !== 'undefined' && (window as any).gtag) {

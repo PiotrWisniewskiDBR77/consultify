@@ -40,8 +40,8 @@ import toast from 'react-hot-toast';
 import {
   type FormIntakeContext,
   getFormIntakeContext,
-  issueFormIntakeJwt,
   type IssuedFormIntakeJwt,
+  issueFormIntakeJwt,
   setFormIntakeAllowList,
 } from '@/services/api/tablePlatform.api';
 
@@ -155,20 +155,17 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
     }
   }, [formId, subject, ttlSeconds]);
 
-  const handleCopy = useCallback(
-    async (value: string, kind: 'token' | 'url') => {
-      try {
-        if (typeof navigator !== 'undefined' && navigator.clipboard) {
-          await navigator.clipboard.writeText(value);
-        }
-        setCopied(kind);
-        setTimeout(() => setCopied(null), 1800);
-      } catch {
-        toast.error('Failed to copy to clipboard');
+  const handleCopy = useCallback(async (value: string, kind: 'token' | 'url') => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(value);
       }
-    },
-    []
-  );
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1800);
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  }, []);
 
   const handleToggleField = useCallback((fieldId: string) => {
     setAllowListDraft((prev) =>
@@ -187,8 +184,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
   const handleSaveAllowList = useCallback(async () => {
     setSavingAllowList(true);
     try {
-      const next =
-        allowListDraft.length > 0 ? Array.from(new Set(allowListDraft)) : null;
+      const next = allowListDraft.length > 0 ? Array.from(new Set(allowListDraft)) : null;
       const updated = await setFormIntakeAllowList(formId, next);
       setContext(updated);
       setAllowListDraft(updated.fieldAllowList ?? []);
@@ -316,8 +312,8 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                   </div>
                 </div>
                 <p className="mb-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  Empty allow-list falls back to the form&apos;s configured fields. Selecting
-                  a subset narrows what recipients can submit.
+                  Empty allow-list falls back to the form&apos;s configured fields. Selecting a
+                  subset narrows what recipients can submit.
                 </p>
                 <ul
                   className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto"

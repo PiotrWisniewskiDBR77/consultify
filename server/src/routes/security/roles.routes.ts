@@ -62,106 +62,6 @@ async function requireProjectRolesManage(req: AuthRequest, res: any): Promise<bo
   return true;
 }
 
-type RolePayloadValidation = {
-  valid: boolean;
-  status: number;
-  error?: string;
-  name?: string;
-  permissions?: string[];
-};
-
-function validateRolePayload(body: unknown, options: { requireName: boolean }): RolePayloadValidation {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return {
-      valid: false,
-      status: 400,
-      error: 'Invalid payload. Expected JSON object.',
-    };
-  }
-
-  const payload = body as Record<string, unknown>;
-  const roleKeyRaw = payload.roleKey;
-  if (roleKeyRaw !== undefined) {
-    if (typeof roleKeyRaw !== 'string' || roleKeyRaw.trim().length === 0) {
-      return {
-        valid: false,
-        status: 400,
-        error: 'roleKey must be a non-empty string when provided.',
-      };
-    }
-  }
-
-  const nameRaw = payload.name ?? payload.label;
-  const hasNameField = nameRaw !== undefined;
-  let normalizedName: string | undefined;
-  if (hasNameField) {
-    if (typeof nameRaw !== 'string') {
-      return {
-        valid: false,
-        status: 400,
-        error: 'name (or label) must be a string.',
-      };
-    }
-    const trimmed = nameRaw.trim();
-    if (trimmed.length === 0) {
-      return {
-        valid: false,
-        status: 400,
-        error: 'Role name cannot be empty.',
-      };
-    }
-    normalizedName = trimmed;
-  }
-
-  if (options.requireName && !normalizedName) {
-    return {
-      valid: false,
-      status: 400,
-      error: 'Role name is required.',
-    };
-  }
-
-  const permissionsRaw = payload.permissions ?? payload.capabilities;
-  const hasPermissionsField = permissionsRaw !== undefined;
-  let normalizedPermissions: string[] | undefined;
-  if (hasPermissionsField) {
-    if (!Array.isArray(permissionsRaw)) {
-      return {
-        valid: false,
-        status: 400,
-        error: 'permissions (or capabilities) must be an array of strings.',
-      };
-    }
-    const values: string[] = [];
-    for (const entry of permissionsRaw) {
-      if (typeof entry !== 'string') {
-        return {
-          valid: false,
-          status: 400,
-          error: 'permissions (or capabilities) must be an array of strings.',
-        };
-      }
-      const trimmed = entry.trim();
-      if (trimmed.length === 0) {
-        return {
-          valid: false,
-          status: 400,
-          error: 'permissions (or capabilities) cannot contain empty values.',
-        };
-      }
-      values.push(trimmed);
-    }
-    normalizedPermissions = Array.from(new Set(values));
-  }
-
-  return {
-    valid: true,
-    status: 200,
-    name: normalizedName,
-    permissions: normalizedPermissions,
-  };
-}
-
 router.get(
   '/',
   verifyToken,
@@ -204,15 +104,10 @@ router.post(
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
-    const validation = validateRolePayload(req.body, { requireName: true });
-    if (!validation.valid) {
-      return res.status(validation.status).json({ success: false, error: validation.error });
-    }
-
     const id = uuidv4();
     const now = new Date().toISOString();
-    const name = validation.name!;
-    const permissions = validation.permissions ?? [];
+    const name = String(req.body?.name || 'Custom Role');
+    const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions : [];
 
     await dbRun(
       `INSERT INTO security_roles (id, organization_id, name, permissions_json, created_at, updated_at, created_by, updated_by)
@@ -239,18 +134,13 @@ router.put(
     );
     if (!existing) return res.status(404).json({ error: 'Role not found' });
 
-    const validation = validateRolePayload(req.body, { requireName: false });
-    if (!validation.valid) {
-      return res.status(validation.status).json({ success: false, error: validation.error });
-    }
-
-    const name = validation.name;
-    const permissions = validation.permissions;
-    if (name === undefined && permissions === undefined) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'No updatable fields provided (name/label or permissions/capabilities).' });
-    }
+    const name = req.body?.name !== undefined ? String(req.body.name) : undefined;
+    const permissions =
+      req.body?.permissions !== undefined
+        ? Array.isArray(req.body.permissions)
+          ? req.body.permissions
+          : []
+        : undefined;
 
     await dbRun(
       `

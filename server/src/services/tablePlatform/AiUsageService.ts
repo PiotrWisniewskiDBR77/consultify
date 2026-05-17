@@ -128,7 +128,12 @@ function secondsUntilNextUtcMidnight(): number {
 }
 
 function ensurePositiveInteger(name: string, value: unknown): number {
-  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+  if (
+    typeof value !== 'number' ||
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value < 0
+  ) {
     throw new Error(`${name} must be a non-negative integer`);
   }
   return value;

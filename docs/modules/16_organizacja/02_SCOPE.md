@@ -1,40 +1,40 @@
 ---
 module_id: MODULE_ORGANIZATION
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Organizacja (Organization Context)
+# Scope — Organizacja / Organization Context
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Organization Context Engine oraz relacje z modułami (Chat/Interview/Outputs).
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: przyjmowanie assetów (org/project/user), processing jobs, normalizacja, chunking, indexing.
-- MUST: retrieval z filtrami ACL/tenant/project/user/workflow przed promptem.
-- MUST: lineage ledger dla użycia kontekstu w AI outputach.
-- MUST: quota + cost visibility + retention policy.
+- Organization context ingestion, extraction, package/chunking, retrieval, citations and lineage.
+- Org/project/user scoped knowledge available to AI under permissions.
+- Function set: `ORG_CONTEXT_WORKSPACE`, `ORG_LEGACY_CONTEXT_BUILDER`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: “frontend-only uploads” jako źródło prawdy (backend ingestion jest wymagany).
-- MUST NOT: przemycać raw content do logów/system prompts bez governance.
+- Bypassing permissions via AI context.
+- Replacing Admin/Settings ownership.
 
-## Should
+## Inputs
 
-- SHOULD: wspierać multimodalność (image OCR / audio transcription) tylko przy jawnych policy+cost controls.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres jest spójny z staged rollout i gate’ami z implementation planu.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_IMPLEMENTATION_PLAN.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

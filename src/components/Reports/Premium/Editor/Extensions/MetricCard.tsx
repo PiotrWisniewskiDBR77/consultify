@@ -162,7 +162,7 @@ export const MetricCardExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(MetricCardComponent as any);
+    return ReactNodeViewRenderer(MetricCardComponent as any) as any;
   },
 });
 

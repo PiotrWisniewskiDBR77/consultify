@@ -19,7 +19,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TabeleLeftRail, TABELE_DEFAULT_OUTLINE } from '../TabeleLeftRail';
+import { TABELE_DEFAULT_OUTLINE, TabeleLeftRail } from '../TabeleLeftRail';
 
 describe('TabeleLeftRail', () => {
   it('renders the default Foundation Block outline in order', () => {
@@ -63,10 +63,7 @@ describe('TabeleLeftRail', () => {
   it('does not call onSelect when item is disabled', () => {
     const onSelect = vi.fn();
     render(
-      <TabeleLeftRail
-        items={[{ id: 'x', label: 'X', disabled: true }]}
-        onSelect={onSelect}
-      />
+      <TabeleLeftRail items={[{ id: 'x', label: 'X', disabled: true }]} onSelect={onSelect} />
     );
     fireEvent.click(screen.getByTestId('tabele-outline-x'));
     expect(onSelect).not.toHaveBeenCalled();
@@ -74,9 +71,7 @@ describe('TabeleLeftRail', () => {
 
   it('renders a badge when supplied', () => {
     render(
-      <TabeleLeftRail
-        items={[{ id: 'records', label: 'Records', badge: 23, tone: 'warning' }]}
-      />
+      <TabeleLeftRail items={[{ id: 'records', label: 'Records', badge: 23, tone: 'warning' }]} />
     );
     const badge = screen.getByLabelText('Records count');
     expect(badge).toHaveTextContent('23');
@@ -89,9 +84,7 @@ describe('TabeleLeftRail', () => {
 
   it('renders the tools slot above the outline', () => {
     render(
-      <TabeleLeftRail
-        toolsSlot={<input data-testid="tools-input" placeholder="Search…" />}
-      />
+      <TabeleLeftRail toolsSlot={<input data-testid="tools-input" placeholder="Search…" />} />
     );
     expect(screen.getByTestId('tabele-left-rail-tools')).toBeInTheDocument();
     expect(screen.getByTestId('tools-input')).toBeInTheDocument();

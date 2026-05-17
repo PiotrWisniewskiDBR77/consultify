@@ -2,8 +2,9 @@ import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucid
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -12,7 +13,9 @@ import {
 } from '@/services/api/v8/results';
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
 import { useAppStore } from '@/store/useAppStore';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
+import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
@@ -136,8 +139,10 @@ const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'co
 
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const currentUser = useAppStore((state) => state.currentUser);
   const [searchParams, setSearchParams] = useSearchParams();
+  const scopedInitiativeId = String(searchParams.get('initiativeId') || '').trim() || undefined;
 
   const [activeTab, setActiveTabRaw] = useState<ModuleTab>(
     (VALID_TABS.includes(searchParams.get('tab') as ModuleTab)
@@ -195,6 +200,8 @@ export const ResultsHub: React.FC = () => {
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kpiLoadError, setKpiLoadError] = useState<string | null>(null);
+  const [kpiLoadErrorCode, setKpiLoadErrorCode] = useState<string | null>(null);
   const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
   const [resultsSource, setResultsSource] = useState<'v8' | 'legacy' | 'empty' | 'showcase'>(
     'empty'
@@ -271,7 +278,9 @@ export const ResultsHub: React.FC = () => {
   useEffect(() => {
     if (deepLinkHandled) return;
     const openId = String(searchParams.get('open') || '').trim();
-    const mode = String(searchParams.get('mode') || '').trim().toLowerCase();
+    const mode = String(searchParams.get('mode') || '')
+      .trim()
+      .toLowerCase();
     if (!openId || (mode !== 'initiative' && mode !== 'doc')) return;
 
     setActiveTabRaw('results_initiatives');
@@ -296,15 +305,20 @@ export const ResultsHub: React.FC = () => {
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
+    setKpiLoadError(null);
+    setKpiLoadErrorCode(null);
     try {
       const result = await loadResultsKpis();
       setTrackedInitiatives(result.initiatives);
       setKpis(result.kpis);
       setResultsSource(result.source);
-    } catch {
-      setTrackedInitiatives([]);
-      setKpis([]);
-      setResultsSource('empty');
+    } catch (error: any) {
+      const { message, code } = mapHubLoadFailureToPresentation(
+        error,
+        'Failed to load KPI catalog.'
+      );
+      setKpiLoadError(message);
+      setKpiLoadErrorCode(code);
     } finally {
       setLoading(false);
     }
@@ -312,12 +326,12 @@ export const ResultsHub: React.FC = () => {
 
   const loadV8Snapshot = useCallback(async () => {
     try {
-      const response = await V8ResultsApi.getDashboard();
+      const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
       setV8Snapshot(response.snapshot);
     } catch {
       setV8Snapshot(null);
     }
-  }, []);
+  }, [scopedInitiativeId]);
 
   useEffect(() => {
     fetchKPIs();
@@ -689,12 +703,7 @@ export const ResultsHub: React.FC = () => {
       },
       ['initiativeName']
     );
-  }, [
-    activeTab,
-    replaceResultsFilters,
-    searchParams,
-    trackedInitiatives,
-  ]);
+  }, [activeTab, replaceResultsFilters, searchParams, trackedInitiatives]);
 
   const openInitiativeKpiLane = useCallback(
     (initiative: ResultsTrackedInitiative) => {
@@ -714,15 +723,29 @@ export const ResultsHub: React.FC = () => {
     [replaceResultsFilters]
   );
 
-  const openInitiativeReportsLane = useCallback((initiative?: ResultsTrackedInitiative) => {
-    setActiveTab('results_reports');
-    setReportWorkspaceMode('reports');
-    if (initiative?.initiativeId) {
-      const next = new URLSearchParams(searchParams);
-      next.set('initiativeId', initiative.initiativeId);
-      setSearchParams(next, { replace: true });
-    }
-  }, [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]);
+  const openInitiativeReportsLane = useCallback(
+    (initiative?: ResultsTrackedInitiative) => {
+      setActiveTab('results_reports');
+      setReportWorkspaceMode('reports');
+      if (initiative?.initiativeId) {
+        const next = new URLSearchParams(searchParams);
+        next.set('initiativeId', initiative.initiativeId);
+        setSearchParams(next, { replace: true });
+      }
+    },
+    [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]
+  );
+
+  const openScopedExecutionLane = useCallback(() => {
+    if (!scopedInitiativeId) return;
+    const query = new URLSearchParams();
+    query.set('initiativeId', scopedInitiativeId);
+    query.set('open', scopedInitiativeId);
+    query.set('mode', 'doc');
+    query.set('tab', 'list');
+    query.set('view', 'table');
+    navigate(`${ROUTES.IMPLEMENTATION}?${query.toString()}`);
+  }, [navigate, scopedInitiativeId]);
 
   const openInitiativeDocument = useCallback(
     (initiative: ResultsTrackedInitiative) => {
@@ -1074,6 +1097,7 @@ export const ResultsHub: React.FC = () => {
     kpiWorkspaceMode,
     lifecycleFilter,
     observationPhaseFilter,
+    scopedInitiativeId,
     t,
     trackedInitiatives,
   ]);
@@ -1224,8 +1248,10 @@ export const ResultsHub: React.FC = () => {
     activeTab,
     governedRuntimeStrip,
     kpiWorkspaceMode,
+    openScopedExecutionLane,
     openFirstFilteredKpiRecord,
     observationPhaseFilter,
+    scopedInitiativeId,
     openRoiPicker,
     reportWorkspaceMode,
     setQueueFilter,
@@ -1233,20 +1259,30 @@ export const ResultsHub: React.FC = () => {
   ]);
 
   const commandRowRightContent = useMemo(() => {
+    const scopedExecutionButton = scopedInitiativeId ? (
+      <button type="button" onClick={openScopedExecutionLane} className={MENU_3_ACTION_NEUTRAL}>
+        <span>{t('results.actions.openInExecution', 'Open in Execution')}</span>
+      </button>
+    ) : null;
+
     if (activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue') {
       return (
-        <button
-          type="button"
-          onClick={() => setSignalSheetCreateNonce(Date.now())}
-          className={MENU_3_ACTION_NEUTRAL}
-        >
-          <Plus size={14} />
-          <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
-        </button>
+        <div className="inline-flex items-center gap-2">
+          {scopedExecutionButton}
+          <button
+            type="button"
+            onClick={() => setSignalSheetCreateNonce(Date.now())}
+            className={MENU_3_ACTION_NEUTRAL}
+          >
+            <Plus size={14} />
+            <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
+          </button>
+        </div>
       );
     }
-    return null;
-  }, [activeTab, kpiWorkspaceMode, t]);
+
+    return scopedExecutionButton;
+  }, [activeTab, kpiWorkspaceMode, openScopedExecutionLane, scopedInitiativeId, t]);
 
   return (
     <>
@@ -1354,6 +1390,21 @@ export const ResultsHub: React.FC = () => {
             onBack={() => setActiveSignalSheet(null)}
             onRecorded={() => void refreshResultsTruth()}
             onOpenKpi={openKpiDrawer}
+          />
+        ) : kpiLoadError ? (
+          <HubWorkAreaLoadError
+            title={t('results.hub.failedToLoadKpis', 'Failed to load KPI catalog.')}
+            message={kpiLoadError}
+            errorCode={kpiLoadErrorCode}
+            retryLabel={t('results.hub.retry', 'Retry')}
+            dismissLabel={t('results.hub.dismiss', 'Dismiss')}
+            onRetry={() => {
+              void fetchKPIs();
+            }}
+            onDismiss={() => {
+              setKpiLoadError(null);
+              setKpiLoadErrorCode(null);
+            }}
           />
         ) : activeTab === 'results_initiatives' ? (
           <ResultsInitiativesView

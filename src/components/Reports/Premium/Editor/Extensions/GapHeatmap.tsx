@@ -311,7 +311,7 @@ export const GapHeatmapExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(GapHeatmapComponent);
+    return ReactNodeViewRenderer(GapHeatmapComponent) as any;
   },
 });
 

@@ -41,8 +41,7 @@ export const BottomNavigation: React.FC = () => {
     toggleChatCollapse,
     isChatCollapsed,
     returnToFullChat,
-  } =
-    useAppStore();
+  } = useAppStore();
   const setDisplayMode = useConversationStore((state) => state.setDisplayMode);
 
   // Don't render on non-mobile devices

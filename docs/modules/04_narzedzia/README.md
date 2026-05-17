@@ -1,24 +1,49 @@
 ---
 module_id: MODULE_TOOLS
 doc_kind: ENTRYPOINT
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Narzędzia
+# Narzędzia / Tools
 
 ## Purpose
 
-Moduł `Narzędzia` (Tools) dostarcza powtarzalne metody pracy (tools), które prowadzą użytkownika przez strukturę analizy, zbierają inputs i generują wyniki, które mogą przechodzić downstream do `Inicjatywy`.
+Biblioteka narzędzi konsultingowych i assessmentów: użytkownik uruchamia narzędzie, zapisuje sesję, otrzymuje wynik i może przekazać go do inicjatyw lub artefaktów.
 
-W praktyce “as-is” ten moduł odpowiada przede wszystkim za `Discovery Tools` (biblioteka + kategorie + sesje narzędziowe). W modelu v3 jest to jeden mentalny obszar: **Library → Sessions → Outputs → Initiatives**.
+## Contract Layers
 
-## Where is the contract?
+- `SSOT.md` — priority and source map.
+- `00_META.md` — identity, route, owner and canonicality.
+- `01_PURPOSE.md` — why this module exists.
+- `02_SCOPE.md` — in-scope and out-of-scope boundaries.
+- `03_BEHAVIOR.md` — required runtime behavior.
+- `04_UI_UX.md` — required user experience and visual/interaction rules.
+- `05_DATA_AND_INTEGRATIONS.md` — objects, integrations and lineage.
+- `06_PERMISSIONS_AND_SECURITY.md` — roles, tenant boundaries and security.
+- `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
+- `RAW_INPUT.md` — raw author notes before normalization.
+- `CHANGELOG.md` — contract changes.
 
-- Kontrakt zachowania: `03_BEHAVIOR.md`
-- Kontrakt UI/UX: `04_UI_UX.md`
-- Zakres i granice: `02_SCOPE.md` (w tym relacja do Assessment)
-- Źródła prawdy: `SSOT.md`
+## Function Coverage (Current)
 
+- `NZ_DISCOVERY_LIBRARY`
+- `NZ_DISCOVERY_SESSIONS`
+- `NZ_DISCOVERY_OUTPUTS`
+- `NZ_DISCOVERY_INITIATIVES`
+- `NZ_ASSESSMENT_HUB`
+- `NZ_MEGATRENDS_WORKSPACE`
+
+Function contracts live in `functions/` and are mandatory for gate completeness.
+
+## Primary Sources
+
+- `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md`
+- `DRD/consultify/docs/product/TOOLS_CATALOG_V3.md`
+- `DRD/consultify/docs/product/TOOLS_V8_SSOT.md`
+- `DRD/consultify/docs/product/OPERATING_MODEL_V3.md`
+- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
+- `DRD/consultify/docs/ui-standards/03-modules/tools-library-detail-standard.md`
+- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`

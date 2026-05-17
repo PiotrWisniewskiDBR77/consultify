@@ -1,42 +1,42 @@
 ---
 module_id: MODULE_RESULTS
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Rezultaty (Results)
+# Scope — Rezultaty / Results & Value Realization
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Results względem: Inicjatywy (definicje kontekstu), Realizacja (execution), Outputs/Reporting (narrative), Finanse (modeled truth).
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: KPI definitions, scorecards/OKR, dashboards, deviation cases i corrective loop.
-- MUST: ROI registry + ROI analysis + evidence + realized tracking (w granicach SoT).
-- MUST: Results reporting surfaces (template-first narrative w Results).
-- MUST: inicjatywy jako scope surface w Results (obserwacja).
+- KPI and scorecard truth.
+- Baseline/target/actual/deviation tracking.
+- ROI realization, reconciliation and evidence.
+- Corrective action loop linked to initiatives/execution/finance.
+- Function set: `RZ_INITIATIVES_TRACKING`, `RZ_KPI_WORKSPACE`, `RZ_REPORTS_WORKSPACE`, `RZ_ROI_TRACKING`, `RZ_ROI_ANALYSIS`, `RZ_KPI_OKR_ROUTE`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: zastępować `Inicjatywy` jako miejsce planowania/gate’ów.
-- MUST NOT: zastępować `Finanse` jako miejsce modeli finansowych; Results trzyma metric truth.
+- Owning financial model calculations that belong in Finance.
+- Owning task execution runtime that belongs in Realizacja.
 
-## Should
+## Inputs
 
-- SHOULD: spójny link do Outputs gdzie powstają artefakty (reports/presentations) oraz spójny model materiałów przeglądu.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres jest spójny z `RESULTS_V8_SSOT.md` (co Results owns) i nie dubluje Finance.
-- [ ] Route truth: `/benefits` jest kanoniczne, `/kpi-okr` tylko alias.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/RESULTS_V8_SSOT.md`
-- `DRD/consultify/docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

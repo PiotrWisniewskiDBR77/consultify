@@ -1,38 +1,39 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # Behavior — Meeting
 
-## Purpose
+## As-Is Runtime Behavior
 
-Kontrakt zachowania Meeting: capture → strukturyzacja → linkowanie → follow-up.
+- Users can navigate to meeting module via sidebar and direct URL.
+- Current route returns placeholder UI rather than active meeting orchestration workspace.
+- Potential runtime (`MeetingHub`) is present in codebase but not wired in current route tree.
+
+## Function Runtime Breakdown
+
+- `ME_MEETING_PLACEHOLDER`: active placeholder function on `/meeting`.
+- `ME_MEETING_RUNTIME_TARGET`: documented meeting runtime target, currently not mounted.
 
 ## Must
 
-- MUST: umożliwić zapis notatek oraz wydzielenie “Decisions” i “Action items”.
-- MUST: zapewnić traceability do kontekstu (initiative/workspace/note) i jawny author/audit.
-- MUST: AI może pomagać w strukturyzacji, ale działa proposal-first (accept/reject).
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- MUST NOT: silent execution (auto-tworzenie tasków/decisions bez akceptacji).
-- MUST NOT: ujawniać w UI/logach raw payloadów wrażliwych.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- SHOULD: wspierać eksport/konwersję (np. meeting minutes → document) przez Outputs, jeśli pipeline istnieje.
-
-## Acceptance Criteria
-
-- [ ] Brak “fake confidence”: jeśli nie ma integracji (calendar), UI to komunikuje.
-
-## Related Sources
-
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md`
-
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.

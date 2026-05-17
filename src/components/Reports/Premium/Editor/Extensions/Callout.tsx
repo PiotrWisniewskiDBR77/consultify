@@ -125,7 +125,7 @@ export const CalloutExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(CalloutComponent as any);
+    return ReactNodeViewRenderer(CalloutComponent as any) as any;
   },
 });
 

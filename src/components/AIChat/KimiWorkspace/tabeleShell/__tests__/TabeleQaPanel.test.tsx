@@ -43,7 +43,11 @@ const SAMPLE_REPORT = {
   triggerKind: 'on_demand' as const,
   overallScore: 0.72,
   axes: {
-    completeness: { score: 0.6, band: 'amber' as const, details: [{ metric: 'fill_rate', value: 0.6 }] },
+    completeness: {
+      score: 0.6,
+      band: 'amber' as const,
+      details: [{ metric: 'fill_rate', value: 0.6 }],
+    },
     freshness: { score: 1, band: 'green' as const, details: [] },
     sourceCoverage: { score: 0.4, band: 'red' as const, details: [] },
     methodology: { score: 1, band: 'green' as const, details: [] },
@@ -118,11 +122,7 @@ describe('<TabeleQaPanel>', () => {
   it('forwards "Open in AI Editor" to the parent callback', () => {
     const onOpen = vi.fn();
     render(
-      <TabeleQaPanel
-        tableId="tbl-1"
-        testInitialReport={SAMPLE_REPORT}
-        onOpenInAiEditor={onOpen}
-      />
+      <TabeleQaPanel tableId="tbl-1" testInitialReport={SAMPLE_REPORT} onOpenInAiEditor={onOpen} />
     );
     fireEvent.click(screen.getByTestId('qa-suggestion-open-ai'));
     expect(onOpen).toHaveBeenCalledWith(

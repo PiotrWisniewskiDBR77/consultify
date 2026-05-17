@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import {
@@ -797,6 +798,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
   users,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   if (!initiative) return null;
   const init = initiative as any;
 
@@ -880,6 +882,20 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
           </div>
         </div>
       )}
+
+      {init.id ? (
+        <button
+          onClick={() =>
+            navigate(
+              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(String(init.id))}`
+            )
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <span>{t('initiatives.preview.resultsAndReports', 'Results & KPI reports')}</span>
+        </button>
+      ) : null}
 
       {/* Kill Criteria / Scope */}
       {init.killCriteria?.length > 0 && (

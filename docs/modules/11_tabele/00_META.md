@@ -1,37 +1,43 @@
 ---
 module_id: MODULE_TABLES
 doc_kind: META
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# META — Tabele (Table Studio)
-
-## Purpose
-
-Metadane kontraktu modułu `Tabele` i jego miejsca w systemie.
+# META — Tabele / Table Studio
 
 ## Identity
 
-- **Sidebar label**: Tabele
-- **Folder**: `11_tabele`
-- **Module id**: `MODULE_TABLES`
+- Module id: `MODULE_TABLES`
+- Sidebar label: `Tabele`
+- Folder: `11_tabele`
+- Route: `/excele`
+- AppView: `AppView.EXCELE`
+- Owner: user
 
 ## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Doctrine
+## Source Package
 
-- Tabele są lane’em Table Platform: template catalog + provenance ledger + AI operator + QA + source pack + conversions + intake forms.
-- Surface jest shipowane za kill switchami (dark-by-default) do czasu zakończenia residual follow-ups.
+- `DRD/consultify/docs/product/TABLE_V8_SSOT.md`
+- `DRD/consultify/docs/product/TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+- `DRD/consultify/docs/product/TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+- `DRD/consultify/docs/product/TABLE_V8_READINESS_AUDIT.md`
+- `DRD/consultify/docs/strategy/TABELE_V8_SSOT.md`
+- `DRD/consultify/docs/UI_UX/101_RAW_IDEAS_TABLES_STRUCTURED_THINKING_TABLE_ENGINE_2026-05-09.md`
 
-## Open questions (max 3)
+## Function Coverage
 
-1. Jakie są kanoniczne entry routes / AppView dla Tabele w aktualnym UI (lane vs sidebar “wkrótce”)?
-2. Kiedy i gdzie dopuszczamy public JWT intake w produkcie (rate limits + allow-list)?
-3. Jakie są warunki flipnięcia kill switchy per workspace (Anygravity verdict + demo + localization)?
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
+## Open Questions
+
+1. Does the active code route still match the contract route above?
+2. Are there tenant-specific variants that require a separate permission matrix?
+3. Which acceptance evidence should be attached first when this module is next tested?

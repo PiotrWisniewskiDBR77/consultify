@@ -1,27 +1,41 @@
 ---
 module_id: MODULE_DOCUMENTS
 doc_kind: CODEMAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — Dokumenty (Document Studio)
+# Codemap — Dokumenty / Wordy
 
-## Route / AppView / Entry component
+## Route / AppView / Sidebar (As-Is evidence)
 
-Routing dla “Dokumenty” jest **w fazie budowy**: doc runtime ma być dostępny chat-first + przez hub Outputs.
+- Sidebar entry: `MODULE_WORDY` (label `Documents`, badge `soon`)
+- Launch AppView: `AppView.WORDY`
+- Launch route: `/wordy`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: As-Is route is active in router and sidebar, but current runtime is placeholder (coming-soon).
 
-- **Primary user entry (today)**: `Outputs Library` `/presentations` → tab `Documents` (`ReportsAndPresentationsHub`)
-- **Planned route (Document Studio)**: `/document-studio/:artifactId` (wg `CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md`)
-- **Backend API (planned)**: `/api/document-studio/*` (wg planu)
-- **Frontend components (planned)**:
-  - `src/components/DocumentStudio/DocumentStudioIntakePanel.tsx`
-  - `src/components/DocumentStudio/DocumentStudioWorkspace.tsx`
-  - `src/components/DocumentStudio/DocumentStudioExportButton.tsx`
+## Routed Components
 
-## Implementation notes
+- `src/routes/AppRoutes.tsx` -> route `ROUTES.WORDY` renders `V4ComingSoonView`
+- `src/components/AIChat/KimiWorkspace/WordyView.tsx` is imported but not mounted on current route
 
-Zasada architektoniczna: Document Studio **nie tworzy równoległego registry** — trwały stan idzie przez v8.1 substrate (`Artifact`, `ArtifactRun`, `ArtifactVersion`, `ArtifactSourceRef`).
+## Function Map (As-Is)
 
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `DOC_WORDY_PLACEHOLDER` | `V4ComingSoonView` on `/wordy` | active and honest placeholder runtime. |
+| `DOC_STUDIO_RUNTIME_TARGET` | `WordyView` (imported only) | target runtime contract, not currently mounted. |
+
+## Relevant Services / Types
+
+- `src/services/api.ts` (shared API client used by app shells)
+- `src/store/useAppStore.ts` (global state and navigation state)
+- `src/types/core.ts` keeps enum identity for `AppView.WORDY`.
+
+## Current Runtime Status
+
+- Classification: `soon + code_gap`
+- This codemap is As-Is only and reflects currently mounted route behavior.

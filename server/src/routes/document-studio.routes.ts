@@ -154,6 +154,7 @@ import { type Request, type Response, Router } from 'express';
 import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
   cancelApproval,
@@ -375,6 +376,7 @@ function logoUploadSingleMiddleware(
 }
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 function getAuthContext(req: AuthRequest): {
   userId: string;
@@ -3220,27 +3222,6 @@ router.get(
   })
 );
 
-// Lightweight policy lookup so the frontend can hide / disable
-// privilege-only actions (currently: the QA export-gate override) before
-// the user attempts them. Cheap enough to call on every Document Studio
-// session bootstrap.
-router.get(
-  '/policy',
-  asyncHandler(async (req: Request, res: Response) => {
-    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
-    if (!userId || !organizationId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    res.json({
-      policy: {
-        canOverrideQa: canOverrideQa(userRole),
-        role: userRole || null,
-      },
-    });
-  })
-);
-
 router.get(
   '/:artifactId',
   asyncHandler(async (req: Request, res: Response) => {
@@ -3320,6 +3301,27 @@ router.get(
       const status = message.toLowerCase().includes('not found') ? 404 : 500;
       res.status(status).json({ error: 'export_failed', message });
     }
+  })
+);
+
+// Lightweight policy lookup so the frontend can hide / disable
+// privilege-only actions (currently: the QA export-gate override) before
+// the user attempts them. Cheap enough to call on every Document Studio
+// session bootstrap.
+router.get(
+  '/policy',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    res.json({
+      policy: {
+        canOverrideQa: canOverrideQa(userRole),
+        role: userRole || null,
+      },
+    });
   })
 );
 
