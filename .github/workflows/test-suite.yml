@@ -726,7 +726,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [unit-tests, component-tests, readiness-paths]
-    if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' }}
+    if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
     steps:
       - uses: actions/checkout@v4
       - name: Capture job start
