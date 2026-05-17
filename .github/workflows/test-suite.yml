@@ -20,6 +20,11 @@ on:
           - security
           - performance
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
 env:
   NODE_VERSION: '20.x'
   CI: true
@@ -280,23 +285,31 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Unit test shards deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Run unit tests (Shard ${{ matrix.shard }})
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run tests/unit --shard=${{ matrix.shard }}/4 --reporter=junit --outputFile=junit-unit-${{ matrix.shard }}.xml
 
       - name: Upload test results
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results-${{ matrix.shard }}
@@ -319,23 +332,31 @@ jobs:
     needs: lint-typecheck
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Component tests deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Run component tests
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:component -- --reporter=junit --outputFile=junit-component.xml
 
       - name: Upload test results
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: component-test-results

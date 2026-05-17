@@ -47,12 +47,13 @@ test.describe('Work Canvas editor flow Playwright gate', () => {
         continue;
       }
     }
-    if (!ready && strictCanvasGate) {
+    if (!ready) {
       throw new Error(
-        'Strict Canvas gate: chat work-panel trigger did not mount in runtime after retries.'
+        `${
+          strictCanvasGate ? 'Strict Canvas gate' : 'Canvas smoke gate'
+        }: chat work-panel trigger did not mount in runtime after retries.`
       );
     }
-    test.skip(!ready, 'Chat work-panel trigger did not mount in this runtime.');
     await expect(workPanelButton).toBeVisible({ timeout: 30000 });
 
     await workPanelButton.click();
