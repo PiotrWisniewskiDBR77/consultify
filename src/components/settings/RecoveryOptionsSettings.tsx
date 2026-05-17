@@ -27,7 +27,9 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import { User } from '../../types';
+import { DegradedState } from '../Admin/AdminState';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
@@ -72,36 +74,24 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
   const [showBackupCodes, setShowBackupCodes] = useState(false);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [generatingCodes, setGeneratingCodes] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Fetch recovery options
   useEffect(() => {
     const fetchRecoveryOptions = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/settings/recovery', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
+        setLoadError(null);
+        const data = await Api.get('/settings/recovery');
+        if (data) {
           setRecoveryOptions(data);
         } else {
-          // Use defaults if API not available
-          setRecoveryOptions({
-            recoveryEmail: currentUser.email || '',
-            recoveryPhone: '',
-            backupCodesCount: 0,
-          });
+          throw new Error('Recovery options response was empty');
         }
       } catch (error) {
         console.error('Failed to fetch recovery options:', error);
-        setRecoveryOptions({
-          recoveryEmail: currentUser.email || '',
-          recoveryPhone: '',
-          backupCodesCount: 0,
-        });
+        setLoadError(error instanceof Error ? error.message : 'Failed to load recovery options');
+        setRecoveryOptions({ recoveryEmail: '', recoveryPhone: '', backupCodesCount: 0 });
       } finally {
         setLoading(false);
       }
@@ -119,22 +109,16 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
       const updates =
         editMode === 'email' ? { recoveryEmail: editValue } : { recoveryPhone: editValue };
 
-      const response = await fetch('/api/settings/recovery', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        setRecoveryOptions((prev) => ({ ...prev, ...updates }));
-        toast({
-          title: t('settings.recovery.saved', 'Recovery Option Updated'),
-          description: t('settings.recovery.savedDesc', 'Your recovery option has been saved'),
-        });
+      await Api.put('/settings/recovery', updates);
+      const persisted = await Api.get('/settings/recovery');
+      if (!persisted) {
+        throw new Error('Recovery options were saved but could not be reloaded');
       }
+      setRecoveryOptions((prev) => ({ ...prev, ...updates, ...persisted }));
+      toast({
+        title: t('settings.recovery.saved', 'Recovery Option Updated'),
+        description: t('settings.recovery.savedDesc', 'Your recovery option has been saved'),
+      });
 
       setEditMode(null);
       setEditValue('');
@@ -154,15 +138,11 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
   const handleGenerateBackupCodes = async () => {
     setGeneratingCodes(true);
     try {
-      // In production, this would call the actual API
-      // For now, generate demo codes
-      const codes = Array.from(
-        { length: 10 },
-        () =>
-          Math.random().toString(36).substring(2, 6).toUpperCase() +
-          '-' +
-          Math.random().toString(36).substring(2, 6).toUpperCase()
-      );
+      const response = await Api.post('/settings/recovery/backup-codes', {});
+      const codes = Array.isArray(response?.codes) ? response.codes : [];
+      if (codes.length === 0) {
+        throw new Error('Backup code generation returned no codes');
+      }
 
       setBackupCodes(codes);
       setShowBackupCodes(true);
@@ -243,58 +223,62 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
 
   return (
     <div className="space-y-6">
+      {loadError && <DegradedState title="Recovery options unavailable" description={loadError} />}
+
       {/* Recovery Status */}
-      <Alert
-        className={cn(
-          recoveryScore === 3
-            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
-            : recoveryScore >= 1
-              ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
-              : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-        )}
-      >
-        <Shield
-          className={cn(
-            'w-5 h-5',
-            recoveryScore === 3
-              ? 'text-emerald-600'
-              : recoveryScore >= 1
-                ? 'text-amber-600'
-                : 'text-red-600'
-          )}
-        />
-        <AlertTitle
+      {!loadError && (
+        <Alert
           className={cn(
             recoveryScore === 3
-              ? 'text-emerald-800 dark:text-emerald-200'
+              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
               : recoveryScore >= 1
-                ? 'text-amber-800 dark:text-amber-200'
-                : 'text-red-800 dark:text-red-200'
+                ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
+                : 'border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/20'
           )}
         >
-          {recoveryScore === 3
-            ? t('settings.recovery.statusExcellent', 'Excellent Recovery Protection')
-            : recoveryScore >= 1
-              ? t('settings.recovery.statusGood', 'Good Recovery Protection')
-              : t('settings.recovery.statusWeak', 'Weak Recovery Protection')}
-        </AlertTitle>
-        <AlertDescription
-          className={cn(
-            recoveryScore === 3
-              ? 'text-emerald-700 dark:text-emerald-300'
+          <Shield
+            className={cn(
+              'w-5 h-5',
+              recoveryScore === 3
+                ? 'text-emerald-600'
+                : recoveryScore >= 1
+                  ? 'text-amber-600'
+                  : 'text-rose-600'
+            )}
+          />
+          <AlertTitle
+            className={cn(
+              recoveryScore === 3
+                ? 'text-emerald-800 dark:text-emerald-200'
+                : recoveryScore >= 1
+                  ? 'text-amber-800 dark:text-amber-200'
+                  : 'text-rose-800 dark:text-rose-200'
+            )}
+          >
+            {recoveryScore === 3
+              ? t('settings.recovery.statusExcellent', 'Excellent Recovery Protection')
               : recoveryScore >= 1
-                ? 'text-amber-700 dark:text-amber-300'
-                : 'text-red-700 dark:text-red-300'
-          )}
-        >
-          {recoveryScore === 3
-            ? t('settings.recovery.statusExcellentDesc', 'All recovery options are configured')
-            : t(
-                'settings.recovery.statusImprove',
-                'Add more recovery options to secure your account'
-              )}
-        </AlertDescription>
-      </Alert>
+                ? t('settings.recovery.statusGood', 'Good Recovery Protection')
+                : t('settings.recovery.statusWeak', 'Weak Recovery Protection')}
+          </AlertTitle>
+          <AlertDescription
+            className={cn(
+              recoveryScore === 3
+                ? 'text-emerald-700 dark:text-emerald-300'
+                : recoveryScore >= 1
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-rose-700 dark:text-rose-300'
+            )}
+          >
+            {recoveryScore === 3
+              ? t('settings.recovery.statusExcellentDesc', 'All recovery options are configured')
+              : t(
+                  'settings.recovery.statusImprove',
+                  'Add more recovery options to secure your account'
+                )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Recovery Email */}
       <Card>
@@ -329,7 +313,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 placeholder={t('settings.recovery.emailPlaceholder', 'Enter recovery email')}
                 className="flex-1"
               />
-              <Button onClick={handleSave} disabled={saving}>
+              <Button onClick={handleSave} disabled={saving || !!loadError}>
                 {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
               </Button>
               <Button variant="outline" onClick={() => setEditMode(null)}>
@@ -346,6 +330,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
               <Button
                 variant="outline"
                 size="sm"
+                disabled={!!loadError}
                 onClick={() => {
                   setEditMode('email');
                   setEditValue(recoveryOptions.recoveryEmail);
@@ -390,7 +375,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 placeholder={t('settings.recovery.phonePlaceholder', 'Enter phone number')}
                 className="flex-1"
               />
-              <Button onClick={handleSave} disabled={saving}>
+              <Button onClick={handleSave} disabled={saving || !!loadError}>
                 {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
               </Button>
               <Button variant="outline" onClick={() => setEditMode(null)}>
@@ -407,6 +392,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
               <Button
                 variant="outline"
                 size="sm"
+                disabled={!!loadError}
                 onClick={() => {
                   setEditMode('phone');
                   setEditValue(recoveryOptions.recoveryPhone);
@@ -426,8 +412,8 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-                <Key className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Key className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <CardTitle className="text-base">
@@ -466,7 +452,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
               variant="outline"
               size="sm"
               onClick={handleGenerateBackupCodes}
-              disabled={generatingCodes}
+              disabled={generatingCodes || !!loadError}
             >
               {generatingCodes ? (
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />

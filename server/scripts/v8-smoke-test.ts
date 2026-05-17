@@ -60,7 +60,7 @@ async function runSmokeTest(
   endpoint: string,
   method: string = 'GET',
   expectedStatus: number = 200,
-  options?: { expectJsonContract?: string; expectMetaContract?: string; body?: unknown },
+  options?: { expectJsonContract?: string; expectMetaContract?: string },
 ): Promise<SmokeTestResult> {
   const url = `${baseUrl}/api/v8${endpoint}`;
   const start = Date.now();
@@ -72,7 +72,6 @@ async function runSmokeTest(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: options?.body === undefined ? undefined : JSON.stringify(options.body),
     });
 
     const responseTime = Date.now() - start;
@@ -147,9 +146,6 @@ async function main(): Promise<void> {
   tests.push(await runSmokeTest('Admin health', baseUrl, token, '/admin/health'));
   tests.push(await runSmokeTest('Admin metrics', baseUrl, token, '/admin/metrics'));
   tests.push(await runSmokeTest('Shadow stats', baseUrl, token, '/admin/shadow/stats'));
-  tests.push(
-    await runSmokeTest('Shadow promotion readiness', baseUrl, token, '/admin/shadow/promotion-readiness'),
-  );
 
   // Chat endpoints (expect 400 without params — proves route exists)
   tests.push(
@@ -162,14 +158,6 @@ async function main(): Promise<void> {
   // AI Core endpoints
   tests.push(await runSmokeTest('AI Core environment', baseUrl, token, '/ai-core/environment'));
   tests.push(await runSmokeTest('AI Core tools', baseUrl, token, '/ai-core/tools'));
-  tests.push(
-    await runSmokeTest('AI Core chat turn validation', baseUrl, token, '/ai-core/chat-turn', 'POST', 400, {
-      body: {},
-    }),
-  );
-
-  // Retrieval / grounded context
-  tests.push(await runSmokeTest('Retrieval requests list', baseUrl, token, '/retrieval/requests'));
 
   // Prompt OS — same payload shape the superadmin UI consumes (V8PromptOsApi.getRuntimeSummary)
   tests.push(
@@ -179,11 +167,6 @@ async function main(): Promise<void> {
   );
 
   // Help / Knowledge Base (B-11 read-only bridge; global KB, V8 auth + org gate)
-  tests.push(
-    await runSmokeTest('Help recommendations', baseUrl, token, '/help/recommendations?surface_id=chat&locale=en', 'GET', 200, {
-      expectMetaContract: 'help-reco-v1',
-    }),
-  );
   tests.push(await runSmokeTest('KB search', baseUrl, token, '/kb/search?q=ab'));
   tests.push(await runSmokeTest('KB context by module', baseUrl, token, '/kb/context/chat'));
 

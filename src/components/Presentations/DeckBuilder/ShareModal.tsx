@@ -120,7 +120,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'text-purple-600 border-b-2 border-purple-500'
+                  ? 'text-primary-600 border-b-2 border-primary-500'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -143,7 +143,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     placeholder="email@example.com"
                     className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm"
                   />
-                  <button className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:bg-purple-500">
+                  <button className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500">
                     <Mail size={14} />
                   </button>
                 </div>
@@ -156,7 +156,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 ].map((perm) => (
                   <button
                     key={perm.label}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-400 text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-400 text-left"
                   >
                     <perm.icon size={16} className="text-slate-400" />
                     <div>
@@ -254,10 +254,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <button
                   key={exp.format}
                   onClick={() => onExport?.(exp.format)}
-                  className="w-full flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/5 text-left transition-colors"
+                  className="w-full flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/5 text-left transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <exp.icon size={20} className="text-purple-500" />
+                  <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+                    <exp.icon size={20} className="text-primary-500" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -290,7 +290,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <button
                     onClick={generateShareLink}
                     disabled={generatingLink}
-                    className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:bg-purple-500 disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500 disabled:opacity-50"
                   >
                     {generatingLink ? (
                       <Loader2 size={14} className="animate-spin inline mr-1" />
@@ -316,7 +316,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       navigator.clipboard.writeText(embedCode);
                       toast.success('Embed code copied');
                     }}
-                    className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-500"
+                    className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-500"
                   >
                     <Copy size={12} /> Copy embed code
                   </button>

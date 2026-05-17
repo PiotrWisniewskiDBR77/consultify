@@ -11,33 +11,30 @@
  */
 
 import {
-  AlertTriangle,
   Calendar,
   CheckCircle,
-  ChevronRight,
   Clock,
   Cloud,
   Download,
-  FileArchive,
   HardDrive,
   Loader2,
   Lock,
-  Pause,
   Play,
   Plus,
   RefreshCw,
-  Server,
   Settings,
   Shield,
   Trash2,
   Upload,
   XCircle,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { ADMIN_UI_COPY } from '../../../utils/adminUiCopy';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface Backup {
   id: string;
@@ -78,18 +75,62 @@ interface BackupConfig {
   auto_verify: boolean;
 }
 
+const getCreatedBackupId = (result: unknown) => {
+  if (!result || typeof result !== 'object') return '';
+  const payload = result as { id?: unknown; backup?: { id?: unknown }; data?: unknown };
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : null;
+  return String(
+    payload.id ||
+      payload.backup?.id ||
+      (data as { id?: unknown; backup?: { id?: unknown } } | null)?.id ||
+      (data as { backup?: { id?: unknown } } | null)?.backup?.id ||
+      ''
+  );
+};
+
+const normalizeBackups = (payload: unknown): Backup[] => {
+  if (Array.isArray(payload)) return payload as Backup[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { backups?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.backups)) return candidate.backups as Backup[];
+    if (Array.isArray(candidate.data)) return candidate.data as Backup[];
+    if (Array.isArray(candidate.items)) return candidate.items as Backup[];
+  }
+  throw new Error('Backups response was not a list');
+};
+
+const normalizeSchedules = (payload: unknown): BackupSchedule[] => {
+  if (Array.isArray(payload)) return payload as BackupSchedule[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { schedules?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.schedules)) return candidate.schedules as BackupSchedule[];
+    if (Array.isArray(candidate.data)) return candidate.data as BackupSchedule[];
+    if (Array.isArray(candidate.items)) return candidate.items as BackupSchedule[];
+  }
+  throw new Error('Backup schedules response was not a list');
+};
+
 const BACKUP_TYPE_CONFIG = {
-  full: { color: 'bg-purple-500/20 text-purple-400', label: 'Full' },
+  full: { color: 'bg-primary-500/20 text-primary-400', label: 'Full' },
   incremental: { color: 'bg-blue-500/20 text-blue-400', label: 'Incremental' },
-  differential: { color: 'bg-cyan-500/20 text-cyan-400', label: 'Differential' },
+  differential: { color: 'bg-blue-500/20 text-blue-400', label: 'Differential' },
 };
 
 const STATUS_CONFIG = {
   pending: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Clock },
   in_progress: { color: 'bg-amber-500', text: 'text-amber-400', icon: RefreshCw },
   completed: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
-  failed: { color: 'bg-red-500', text: 'text-red-400', icon: XCircle },
+  failed: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
 };
+
+const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-400', label: 'Unknown' };
+const fallbackStatusConfig = {
+  color: 'bg-slate-500',
+  text: 'text-slate-400 dark:text-slate-500',
+  icon: Clock,
+};
+
+const destructiveBackupActionReason = ADMIN_UI_COPY.destructiveDisabled.description;
 
 export const EnterpriseBackupPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'backups' | 'schedules' | 'settings' | 'dr-test'>(
@@ -106,27 +147,53 @@ export const EnterpriseBackupPanel: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [restoring, setRestoring] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [backupLoadError, setBackupLoadError] = useState<string | null>(null);
+  const [scheduleLoadError, setScheduleLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return 'Unknown date';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return 'Never';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  };
 
   const fetchBackups = useCallback(async () => {
     try {
       const data = await Api.getBackups();
-      setBackups(data || []);
+      const backupsData = normalizeBackups(data);
+      setBackups(backupsData);
+      setBackupLoadError(null);
+      return backupsData;
     } catch (error) {
-      console.error('Failed to fetch backups:', error);
+      setBackupLoadError(
+        normalizeApiErrorMessage(
+          error,
+          'Backup service is unavailable. Backup actions are disabled until the backend workflow is connected.'
+        )
+      );
       setBackups([]);
+      return null;
     }
   }, []);
 
   const fetchSchedules = useCallback(async () => {
     try {
       const data = await Api.getBackupSchedules();
-      setSchedules(data || []);
+      const schedulesData = normalizeSchedules(data);
+      setSchedules(schedulesData);
+      setScheduleLoadError(null);
+      return schedulesData;
     } catch (error) {
-      console.error('Failed to fetch schedules:', error);
+      setScheduleLoadError(normalizeApiErrorMessage(error, 'Backup schedules are unavailable.'));
       setSchedules([]);
+      return null;
     }
   }, []);
 
@@ -140,81 +207,72 @@ export const EnterpriseBackupPanel: React.FC = () => {
   }, [fetchBackups, fetchSchedules]);
 
   const handleCreateBackup = async (type: 'full' | 'incremental', reason: string = 'manual') => {
+    if (backupLoadError) {
+      toast.error(backupLoadError);
+      return;
+    }
+
     setCreating(true);
+    setActionError(null);
     try {
-      await Api.createBackup(type, reason);
+      const result = await Api.createBackup(type, reason);
+      const createdId = getCreatedBackupId(result);
+      if (!createdId) {
+        throw new Error('Backup creation response was incomplete');
+      }
+      const refreshed = await fetchBackups();
+      if (!refreshed?.some((backup) => backup.id === createdId)) {
+        throw new Error('Backup creation was not confirmed by the server');
+      }
       toast.success('Backup started');
-      fetchBackups();
-    } catch (error: any) {
-      console.error('Failed to create backup:', error);
-      toast.error(error?.message || 'Failed to create backup - production configuration required');
+      setShowCreateModal(false);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        'Failed to create backup - production configuration required'
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setCreating(false);
-      setShowCreateModal(false);
-    }
-  };
-
-  const handleDeleteBackup = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this backup? This action cannot be undone.'))
-      return;
-
-    try {
-      await Api.deleteBackup(id);
-      toast.success('Backup deleted');
-      fetchBackups();
-    } catch (error: any) {
-      console.error('Failed to delete backup:', error);
-      toast.error(error?.message || 'Failed to delete backup');
-    }
-  };
-
-  const handleRestoreBackup = async (id: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to restore from this backup? Current data will be overwritten.'
-      )
-    )
-      return;
-
-    setRestoring(id);
-    try {
-      const result = await Api.restoreBackup(id);
-      if (result.success) {
-        toast.success('Restore completed successfully');
-      } else {
-        throw new Error(result.error || 'Restore failed');
-      }
-    } catch (error: any) {
-      console.error('Failed to restore:', error);
-      toast.error(error?.message || 'Failed to restore from backup');
-    } finally {
-      setRestoring(null);
     }
   };
 
   const handleToggleSchedule = async (id: string, enabled: boolean) => {
+    setActionError(null);
     try {
-      setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
       await Api.updateBackupSchedule(id, { enabled });
+      const refreshed = await fetchSchedules();
+      if (!refreshed?.some((schedule) => schedule.id === id && schedule.enabled === enabled)) {
+        throw new Error('Backup schedule update was not confirmed by the server');
+      }
       toast.success(`Schedule ${enabled ? 'enabled' : 'disabled'}`);
-      fetchSchedules();
-    } catch (error) {
-      toast.error('Failed to update schedule');
-      fetchSchedules();
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to update schedule');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  const safeNumber = (value: unknown, fallback = 0) => {
+    const parsed = Number(value ?? fallback);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const formatBytes = (value: unknown) => {
+    const bytes = safeNumber(value);
+    if (bytes <= 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const getTotalBackupSize = () => {
-    return backups.reduce((acc, b) => acc + (b.sizeBytes || 0), 0);
+    return backups.reduce((acc, b) => acc + safeNumber(b.sizeBytes), 0);
   };
+
+  const hasBackupDataError = Boolean(backupLoadError || scheduleLoadError);
 
   return (
     <div className="p-6 space-y-6">
@@ -230,41 +288,60 @@ export const EnterpriseBackupPanel: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          disabled={creating}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          disabled={creating || Boolean(backupLoadError)}
+          title={backupLoadError || undefined}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Create Backup
         </button>
       </div>
 
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Total Backups</div>
-          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {backups.length}
+      {hasBackupDataError ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState
+            title="Backup overview unavailable"
+            description={backupLoadError || scheduleLoadError || 'Backup data is unavailable.'}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Total Backups</div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {backups.length}
+            </div>
+          </div>
+          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Storage Used</div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {formatBytes(getTotalBackupSize())}
+            </div>
+          </div>
+          <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Last Backup</div>
+            <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+              {formatDate(backups[0]?.createdAt)}
+            </div>
+          </div>
+          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Active Schedules</div>
+            <div className="text-2xl font-semibold text-primary-700 dark:text-primary-300">
+              {schedules.filter((s) => s.enabled).length}
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Storage Used</div>
-          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {formatBytes(getTotalBackupSize())}
-          </div>
-        </div>
-        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Last Backup</div>
-          <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-            {backups[0] ? new Date(backups[0].createdAt).toLocaleDateString() : 'Never'}
-          </div>
-        </div>
-        <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Active Schedules</div>
-          <div className="text-2xl font-semibold text-purple-700 dark:text-purple-300">
-            {schedules.filter((s) => s.enabled).length}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
@@ -276,7 +353,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -298,7 +375,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {/* Backups Tab */}
           {activeTab === 'backups' && (
             <div className="space-y-2">
-              {backups.length === 0 ? (
+              {backupLoadError ? (
+                <DegradedState title="Backup service unavailable" description={backupLoadError} />
+              ) : backups.length === 0 ? (
                 <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                   <HardDrive className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No backups available</p>
@@ -306,8 +385,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 </div>
               ) : (
                 backups.map((backup) => {
-                  const typeConfig = BACKUP_TYPE_CONFIG[backup.type];
-                  const statusConfig = STATUS_CONFIG[backup.status];
+                  const typeConfig = BACKUP_TYPE_CONFIG[backup.type] || fallbackBackupTypeConfig;
+                  const statusConfig = STATUS_CONFIG[backup.status] || fallbackStatusConfig;
                   const StatusIcon = statusConfig.icon;
 
                   return (
@@ -333,12 +412,12 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                 {backup.filename}
                               </code>
                               {backup.encrypted && <Lock className="w-3 h-3 text-emerald-400" />}
-                              {backup.hasS3 && <Cloud className="w-3 h-3 text-cyan-400" />}
+                              {backup.hasS3 && <Cloud className="w-3 h-3 text-blue-400" />}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              <span>{backup.sizeMB} MB</span>
+                              <span>{formatBytes(backup.sizeBytes)}</span>
                               <span>•</span>
-                              <span>Created: {new Date(backup.createdAt).toLocaleString()}</span>
+                              <span>Created: {formatDateTime(backup.createdAt)}</span>
                               <span>•</span>
                               <span>Reason: {backup.reason}</span>
                             </div>
@@ -348,36 +427,34 @@ export const EnterpriseBackupPanel: React.FC = () => {
                           <span
                             className={`px-2 py-1 text-xs rounded ${statusConfig.color}/20 ${statusConfig.text}`}
                           >
-                            {backup.status.replace('_', ' ')}
+                            {STATUS_CONFIG[backup.status]
+                              ? backup.status.replace('_', ' ')
+                              : 'unknown'}
                           </span>
                           {backup.status === 'completed' && (
                             <>
                               <button
-                                onClick={() => handleRestoreBackup(backup.id)}
-                                disabled={restoring === backup.id}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                                title="Restore"
+                                disabled
+                                className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                                title={destructiveBackupActionReason}
                               >
-                                {restoring === backup.id ? (
-                                  <Loader2 className="w-4 h-4 text-slate-400 dark:text-slate-500 animate-spin" />
-                                ) : (
-                                  <Upload className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                                )}
+                                <Upload className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                               </button>
                               <button
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                                title="Download"
+                                disabled
+                                className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                                title={destructiveBackupActionReason}
                               >
                                 <Download className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                               </button>
                             </>
                           )}
                           <button
-                            onClick={() => handleDeleteBackup(backup.id)}
-                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                            title="Delete"
+                            disabled
+                            className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                            title={destructiveBackupActionReason}
                           >
-                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <Trash2 className="w-4 h-4 text-rose-400" />
                           </button>
                         </div>
                       </div>
@@ -396,8 +473,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   Backup Schedules
                 </h3>
                 <button
-                  onClick={() => setShowScheduleModal(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100 text-sm rounded-lg transition-colors"
+                  disabled
+                  title={destructiveBackupActionReason}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100 text-sm rounded-lg opacity-50 cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Add Schedule
@@ -405,66 +483,83 @@ export const EnterpriseBackupPanel: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                {schedules.map((schedule) => (
-                  <div
-                    key={schedule.id}
-                    className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-100 dark:bg-slate-700'}`}
-                        >
-                          <Calendar
-                            className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}
-                          />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
-                              {schedule.name}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 text-xs rounded ${BACKUP_TYPE_CONFIG[schedule.type].color}`}
-                            >
-                              {BACKUP_TYPE_CONFIG[schedule.type].label}
-                            </span>
+                {scheduleLoadError ? (
+                  <DegradedState
+                    title="Backup schedules unavailable"
+                    description={scheduleLoadError}
+                  />
+                ) : schedules.length === 0 ? (
+                  <div className="text-center py-12 text-slate-600 dark:text-slate-400">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No backup schedules configured</p>
+                    <p className="text-sm mt-1">
+                      Schedules can be enabled after backend workflow setup.
+                    </p>
+                  </div>
+                ) : (
+                  schedules.map((schedule) => (
+                    <div
+                      key={schedule.id}
+                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-100 dark:bg-slate-700'}`}
+                          >
+                            <Calendar
+                              className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}
+                            />
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
-                            <span className="capitalize">
-                              {schedule.frequency} at {schedule.time}
-                            </span>
-                            <span>•</span>
-                            <span>Retention: {schedule.retention_days} days</span>
-                            {schedule.next_run && (
-                              <>
-                                <span>•</span>
-                                <span>
-                                  Next run: {new Date(schedule.next_run).toLocaleString()}
-                                </span>
-                              </>
-                            )}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-slate-900 dark:text-slate-100">
+                                {schedule.name}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 text-xs rounded ${BACKUP_TYPE_CONFIG[schedule.type].color}`}
+                              >
+                                {BACKUP_TYPE_CONFIG[schedule.type].label}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
+                              <span className="capitalize">
+                                {schedule.frequency} at {schedule.time}
+                              </span>
+                              <span>•</span>
+                              <span>Retention: {schedule.retention_days} days</span>
+                              {schedule.next_run && (
+                                <>
+                                  <span>•</span>
+                                  <span>Next run: {formatDateTime(schedule.next_run)}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleToggleSchedule(schedule.id, !schedule.enabled)}
-                          className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                            schedule.enabled
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-slate-700 text-slate-400 dark:text-slate-500'
-                          }`}
-                        >
-                          {schedule.enabled ? 'Enabled' : 'Disabled'}
-                        </button>
-                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
-                          <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleSchedule(schedule.id, !schedule.enabled)}
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                              schedule.enabled
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                            }`}
+                          >
+                            {schedule.enabled ? 'Enabled' : 'Disabled'}
+                          </button>
+                          <button
+                            disabled
+                            title="Schedule editing requires an audited schedule editor workflow."
+                            className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                          >
+                            <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -472,6 +567,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="space-y-6">
+              <ReadOnlyState
+                title="Backup settings are read-only"
+                description="Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration endpoint is connected."
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
@@ -479,12 +578,17 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   </h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                      <label
+                        htmlFor="backup-retention-days"
+                        className="block text-sm text-slate-600 dark:text-slate-400 mb-1"
+                      >
                         Retention Days
                       </label>
                       <input
+                        id="backup-retention-days"
                         type="number"
                         value={config.retention_days}
+                        disabled
                         onChange={(e) =>
                           setConfig({ ...config, retention_days: parseInt(e.target.value) })
                         }
@@ -492,12 +596,17 @@ export const EnterpriseBackupPanel: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                      <label
+                        htmlFor="backup-max-local-backups"
+                        className="block text-sm text-slate-600 dark:text-slate-400 mb-1"
+                      >
                         Max Local Backups
                       </label>
                       <input
+                        id="backup-max-local-backups"
                         type="number"
                         value={config.max_local_backups}
+                        disabled
                         onChange={(e) =>
                           setConfig({
                             ...config,
@@ -520,10 +629,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={config.encryption_enabled}
+                        disabled
                         onChange={(e) =>
                           setConfig({ ...config, encryption_enabled: e.target.checked })
                         }
-                        className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+                        className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
                       />
                     </label>
                     <label className="flex items-center justify-between">
@@ -533,8 +643,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={config.auto_verify}
+                        disabled
                         onChange={(e) => setConfig({ ...config, auto_verify: e.target.checked })}
-                        className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+                        className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
                       />
                     </label>
                   </div>
@@ -542,7 +653,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 md:col-span-2">
                   <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-cyan-400" />
+                    <Cloud className="w-4 h-4 text-blue-400" />
                     Cloud Storage
                   </h4>
                   <label className="flex items-center justify-between mb-4">
@@ -552,10 +663,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={config.cloud_storage_enabled}
+                      disabled
                       onChange={(e) =>
                         setConfig({ ...config, cloud_storage_enabled: e.target.checked })
                       }
-                      className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+                      className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
                     />
                   </label>
                   {config.cloud_storage_enabled && (
@@ -579,7 +691,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                <button
+                  disabled
+                  title="Backup settings persistence is not connected"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                >
                   Save Settings
                 </button>
               </div>
@@ -589,7 +705,12 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {/* DR Testing Tab */}
           {activeTab === 'dr-test' && (
             <div className="space-y-6">
-              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/30">
+              <ReadOnlyState
+                title="Disaster recovery workflow unavailable"
+                description={destructiveBackupActionReason}
+              />
+
+              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/10 rounded-xl border border-amber-500/30">
                 <div className="flex items-start gap-4">
                   <Shield className="w-8 h-8 text-amber-400" />
                   <div>
@@ -601,7 +722,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                       continuity. DR tests run in an isolated environment and do not affect
                       production data.
                     </p>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors">
+                    <button
+                      disabled
+                      title={destructiveBackupActionReason}
+                      className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg opacity-50 cursor-not-allowed"
+                    >
                       <Play className="w-4 h-4" />
                       Start DR Test
                     </button>
@@ -609,87 +734,14 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Zap className="w-5 h-5 text-emerald-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
-                      Last DR Test
-                    </span>
-                  </div>
-                  <div className="text-2xl font-bold text-emerald-400">Passed</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">14 days ago</div>
-                </div>
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Clock className="w-5 h-5 text-cyan-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
-                      Recovery Time
-                    </span>
-                  </div>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                    4m 32s
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Average restore time
-                  </div>
-                </div>
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FileArchive className="w-5 h-5 text-purple-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
-                      Data Integrity
-                    </span>
-                  </div>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">100%</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    All checksums verified
-                  </div>
-                </div>
-              </div>
-
               <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
+                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">
                   DR Test History
                 </h4>
-                <div className="space-y-2">
-                  {[
-                    {
-                      date: '2024-12-19',
-                      status: 'passed',
-                      duration: '4m 32s',
-                      type: 'Full restore',
-                    },
-                    {
-                      date: '2024-12-05',
-                      status: 'passed',
-                      duration: '3m 58s',
-                      type: 'Full restore',
-                    },
-                    {
-                      date: '2024-11-21',
-                      status: 'passed',
-                      duration: '4m 15s',
-                      type: 'Point-in-time',
-                    },
-                  ].map((test, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-4 h-4 text-emerald-400" />
-                        <span className="text-sm text-slate-900 dark:text-slate-100">
-                          {test.type}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-slate-400 dark:text-slate-500">
-                        <span>{test.duration}</span>
-                        <span>{test.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No verified disaster recovery test history is available until the backend job
+                  lifecycle is connected.
+                </p>
               </div>
             </div>
           )}
@@ -708,16 +760,18 @@ export const EnterpriseBackupPanel: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleCreateBackup('full')}
-                  className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg text-left hover:bg-purple-500/20 transition-colors"
+                  disabled={creating}
+                  className="p-4 bg-primary-500/10 border border-primary-500/30 rounded-lg text-left hover:bg-primary-500/20 transition-colors disabled:opacity-50"
                 >
-                  <div className="font-medium text-purple-400 mb-1">Full Backup</div>
+                  <div className="font-medium text-primary-400 mb-1">Full Backup</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     Complete database snapshot
                   </div>
                 </button>
                 <button
                   onClick={() => handleCreateBackup('incremental')}
-                  className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left hover:bg-blue-500/20 transition-colors"
+                  disabled={creating}
+                  className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left hover:bg-blue-500/20 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium text-blue-400 mb-1">Incremental</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">

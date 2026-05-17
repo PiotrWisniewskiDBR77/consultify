@@ -84,7 +84,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <FileOutput size={16} className="text-purple-500" />
+            <FileOutput size={16} className="text-primary-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('traceability.convertTo.title', 'Convert to output')}
             </h3>
@@ -116,7 +116,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
                   key={`${s.type}-${s.id}-${i}`}
                   className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2"
                 >
-                  <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-400">
+                  <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-primary-500/20 text-primary-400">
                     {s.type}
                   </span>
                   {s.title}

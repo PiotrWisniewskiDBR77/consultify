@@ -106,6 +106,7 @@ export type RenderingHintStyle = (typeof RenderingHintStyleValues)[number];
  * - `executed`       — side-effect applied successfully.
  * - `failed`         — execution attempted but failed.
  * - `audited`        — post-execution audit record closed; terminal success.
+ * - `closed`         — archived/closed after review.
  *
  * This vocabulary is exposed ALONGSIDE the legacy DB enum (PENDING/APPROVED/
  * REJECTED/EXECUTED) via `mapDbActionStatusToV8Lifecycle` — the DB storage
@@ -120,6 +121,7 @@ export const V8LifecycleStateValues = [
   'executed',
   'failed',
   'audited',
+  'closed',
 ] as const;
 export type V8LifecycleState = (typeof V8LifecycleStateValues)[number];
 
@@ -152,6 +154,10 @@ export function mapDbActionStatusToV8Lifecycle(
       return 'failed';
     case 'EXECUTING':
       return 'executing';
+    case 'AUDITED':
+      return 'audited';
+    case 'CLOSED':
+      return 'closed';
     default:
       return 'proposed';
   }
@@ -176,6 +182,7 @@ export function mapV8LifecycleToDbActionStatus(
       return 'REJECTED';
     case 'executed':
     case 'audited':
+    case 'closed':
     case 'failed':
       return 'EXECUTED';
     default:

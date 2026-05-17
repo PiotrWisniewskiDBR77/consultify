@@ -118,7 +118,13 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    // SECURITY: do not embed LLM API keys in the frontend bundle.
+    define: {
+      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.NEXT_PUBLIC_GEMINI_API_KEY': JSON.stringify(
+        env.NEXT_PUBLIC_GEMINI_API_KEY || env.GEMINI_API_KEY
+      ),
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
@@ -127,7 +133,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      entries: ['index.html', 'src/**/*.{ts,tsx}'],
+      // Keep dependency pre-bundling focused on real app entrypoints.
+      // A broad glob like `src/**/*.{ts,tsx}` can accidentally pull in vitest files
+      // (which may import server-only code) and break the dev server.
+      entries: ['index.html', 'src/index.tsx', 'src/App.tsx', 'src/routes/AppRoutes.tsx'],
       include: [
         'react',
         'react-dom',

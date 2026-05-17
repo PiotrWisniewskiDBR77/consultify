@@ -137,7 +137,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
       case 'medium':
         return 'bg-amber-500 text-amber-500 border-amber-500';
       case 'high':
-        return 'bg-red-500 text-red-500 border-red-500';
+        return 'bg-rose-500 text-rose-500 border-rose-500';
       default:
         return 'bg-slate-500 text-slate-500 border-slate-500';
     }
@@ -147,7 +147,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
   const getScoreColor = (score: number) => {
     if (score <= 3.3) return 'text-emerald-500';
     if (score <= 6.6) return 'text-amber-500';
-    return 'text-red-500';
+    return 'text-rose-500';
   };
 
   // Get overall label
@@ -216,7 +216,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
               key={dim.id}
               className={`relative rounded-xl border transition-all ${
                 isExpanded
-                  ? 'border-purple-300 dark:border-purple-500/50 bg-purple-50/50 dark:bg-purple-500/10'
+                  ? 'border-primary-300 dark:border-primary-500/50 bg-primary-50/50 dark:bg-primary-500/10'
                   : 'border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900'
               }`}
             >
@@ -350,7 +350,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                       />
                     </div>
                     <div>
@@ -372,7 +372,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                       />
                     </div>
                   </div>
@@ -408,7 +408,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                 {/* Timeline estimate */}
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
                   <div className="flex items-center gap-2 mb-3">
-                    <Clock size={16} className="text-purple-500" />
+                    <Clock size={16} className="text-primary-500" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       {isPolish ? 'Wpływ na czas' : 'Timeline Impact'}
                     </span>
@@ -430,7 +430,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       }
                       placeholder="0"
                       disabled={readOnly}
-                      className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                      className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                     />
                     <select
                       value={impact.timelineEstimate?.unit || 'weeks'}
@@ -509,7 +509,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                       />
                     </div>
                     <div>
@@ -532,7 +532,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="e.g. 3 months"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                       />
                     </div>
                   </div>
@@ -578,7 +578,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   placeholder={
                     isPolish ? 'Opisz szczegóły wpływu decyzji...' : 'Describe impact details...'
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-purple-400 resize-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                 />
               </div>
             </motion.div>

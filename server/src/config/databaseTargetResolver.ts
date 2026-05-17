@@ -24,6 +24,7 @@ function isRunningInsideRailway(env: NodeJS.ProcessEnv): boolean {
 function allowLocalDatabaseForTests(env: NodeJS.ProcessEnv): boolean {
   return Boolean(
     env.NODE_ENV === 'test' ||
+    env.CI === 'true' ||
     normalize(env.VITEST) ||
     normalize(env.VITEST_POOL_ID) ||
     normalize(env.JEST_WORKER_ID)

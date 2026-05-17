@@ -401,7 +401,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white ring-4 ring-purple-100 dark:ring-purple-900/30 shadow-lg shadow-purple-200 dark:shadow-purple-900/20'
+                      ? 'bg-gradient-to-br from-primary-500 to-indigo-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30 shadow-lg shadow-primary-200 dark:shadow-primary-900/20'
                       : isCompleted
                         ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600 shadow-sm'
                         : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -416,7 +416,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                 <div
                   className={`text-xs font-semibold ${
                     isActive
-                      ? 'text-purple-600 dark:text-purple-400'
+                      ? 'text-primary-600 dark:text-primary-400'
                       : isCompleted
                         ? 'text-green-600 dark:text-green-400'
                         : 'text-slate-400 dark:text-slate-500'
@@ -440,7 +440,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                       currentStep > index
                         ? 'bg-gradient-to-r from-green-400 to-green-500'
                         : currentStep === index
-                          ? 'bg-gradient-to-r from-purple-300 to-slate-200 dark:from-purple-800 dark:to-navy-700'
+                          ? 'bg-gradient-to-r from-primary-300 to-slate-200 dark:from-primary-800 dark:to-navy-700'
                           : 'bg-slate-200 dark:bg-navy-700'
                     }
                   `}
@@ -657,8 +657,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               ${
                 canGoNext && !isLoading && !isGenerating
                   ? activeStepId === 3
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg'
-                    : 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm'
+                    ? 'bg-gradient-to-r from-primary-500 to-indigo-500 hover:from-primary-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg'
+                    : 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
               }
             `}
@@ -694,8 +694,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-500/10">
-              <Sparkles className="w-6 h-6 text-purple-500" />
+            <div className="p-2 rounded-xl bg-primary-500/10">
+              <Sparkles className="w-6 h-6 text-primary-500" />
             </div>
             {isPl ? 'Kreator Raportów' : 'Report Builder'}
           </h1>
@@ -729,15 +729,15 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
 
       {/* Error Banner */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
-          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-3">
+          <XCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <div className="font-medium text-red-800 dark:text-red-200">
+            <div className="font-medium text-rose-800 dark:text-rose-200">
               {isPl ? 'Wystąpił błąd' : 'An error occurred'}
             </div>
-            <div className="text-sm text-red-600 dark:text-red-300 mt-1">{error}</div>
+            <div className="text-sm text-rose-600 dark:text-rose-300 mt-1">{error}</div>
           </div>
-          <button onClick={clearError} className="text-red-500 hover:text-red-700">
+          <button onClick={clearError} className="text-rose-500 hover:text-rose-700">
             <XCircle className="w-5 h-5" />
           </button>
         </div>
@@ -752,7 +752,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              <span className="text-purple-500 mr-2">{currentStep + 1}.</span>
+              <span className="text-primary-500 mr-2">{currentStep + 1}.</span>
               {isPl ? STEPS[currentStep].titlePl : STEPS[currentStep].title}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">

@@ -31,7 +31,7 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(
         {/* Diamond Shape */}
         <div
           className={`
-                    w-28 h-28 rotate-45 border-2 border-amber-500 
+                    w-28 h-28 rotate-45 border-2 border-amber-500
                     bg-amber-50 dark:bg-slate-800
                     flex items-center justify-center transition-all duration-200
                     ${selected ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : ''}
@@ -64,9 +64,9 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(
           position={Position.Bottom}
           id="no"
           isConnectable={isConnectable}
-          className="!w-3 !h-3 !bg-red-500 !border-2 !border-white dark:!border-slate-800"
+          className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white dark:!border-slate-800"
         />
-        <span className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-[10px] text-red-600 dark:text-red-400 font-medium">
+        <span className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-[10px] text-rose-600 dark:text-rose-400 font-medium">
           {noLabel}
         </span>
       </div>

@@ -144,7 +144,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
           <button
             onClick={() => handleConvert('initiative')}
             disabled={locked || selected.size === 0 || converting}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
           >
             {converting ? <Loader2 size={12} className="animate-spin" /> : <Rocket size={12} />}
             {isPl

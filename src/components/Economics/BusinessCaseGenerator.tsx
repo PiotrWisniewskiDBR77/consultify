@@ -150,8 +150,8 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         </div>
         <button
           onClick={() => setShowOptions(!showOptions)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 
-                        hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400
+                        hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5
                         rounded-lg transition-colors"
         >
           <Settings size={16} />
@@ -313,7 +313,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       <button
         onClick={handleGenerate}
         disabled={isGenerating || selectedSectionsCount === 0}
-        className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 
+        className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-500 hover:to-primary-500
                     text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed
                     shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30"
       >

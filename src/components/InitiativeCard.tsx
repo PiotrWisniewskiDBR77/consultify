@@ -60,13 +60,13 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case InitiativeStatus.PLANNING:
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case InitiativeStatus.REVIEW:
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+        return 'bg-primary-500/10 text-primary-400 border-primary-500/20';
       case InitiativeStatus.APPROVED:
-        return 'bg-teal-500/10 text-teal-400 border-teal-500/20';
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case InitiativeStatus.EXECUTING:
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case InitiativeStatus.BLOCKED:
-        return 'bg-red-500/10 text-red-400 border-red-500/20';
+        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
       case InitiativeStatus.DONE:
         return 'bg-green-500/10 text-green-400 border-green-500/20';
       case InitiativeStatus.CANCELLED:
@@ -99,7 +99,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case 'Grow':
         return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
       case 'Fix':
-        return 'bg-red-500/10 text-red-500 border-red-500/20';
+        return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
       case 'Stabilize':
         return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'De-risk':
@@ -136,7 +136,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case 'Accelerator':
         return 'text-amber-500 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30';
       case 'Scaling':
-        return 'text-purple-500 bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-900/30';
+        return 'text-primary-500 bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-900/30';
       default:
         return 'hidden';
     }
@@ -151,7 +151,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
     if (typeof confidence === 'number') {
       if (confidence >= 70) return { color: 'bg-green-500', label: 'High Confidence' };
       if (confidence >= 40) return { color: 'bg-yellow-500', label: 'Review Needed' };
-      if (confidence > 0) return { color: 'bg-red-500', label: 'Not Decision Ready' };
+      if (confidence > 0) return { color: 'bg-rose-500', label: 'Not Decision Ready' };
       return { color: 'bg-slate-300', label: 'Not Analyzed' };
     }
     // Handle string confidence
@@ -161,7 +161,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case 'Medium':
         return { color: 'bg-yellow-500', label: 'Review Needed' };
       case 'Low':
-        return { color: 'bg-red-500', label: 'Not Decision Ready' };
+        return { color: 'bg-rose-500', label: 'Not Decision Ready' };
       default:
         return { color: 'bg-slate-300', label: 'Not Analyzed' };
     }
@@ -194,7 +194,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             {(typeof initiative.aiConfidence === 'number'
               ? initiative.aiConfidence < 40
               : initiative.aiConfidence === 'Low') && (
-              <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">
+              <span className="text-[9px] font-bold text-rose-500 uppercase tracking-wider border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/20 px-1.5 py-0.5 rounded">
                 Not Ready
               </span>
             )}
@@ -344,9 +344,9 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
           {initiative.problemStatement && (
             <div className="flex gap-2">
-              <div className="min-w-[4px] w-1 bg-red-400/50 rounded-full h-auto"></div>
+              <div className="min-w-[4px] w-1 bg-rose-400/50 rounded-full h-auto"></div>
               <div>
-                <span className="text-[10px] font-bold text-red-400 uppercase">Problem</span>
+                <span className="text-[10px] font-bold text-rose-400 uppercase">Problem</span>
                 <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
                   {initiative.problemStatement}
                 </p>
@@ -358,7 +358,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
       {/* Logic Link (PRO MAX) */}
       {initiative.relatedGap && (
-        <div className="mb-4 bg-purple-50 dark:bg-purple-900/10 p-2 rounded-lg border border-purple-200 dark:border-purple-500/20 flex items-center gap-2">
+        <div className="mb-4 bg-primary-50 dark:bg-primary-900/10 p-2 rounded-lg border border-primary-200 dark:border-primary-500/20 flex items-center gap-2">
           <svg
             width="12"
             height="12"
@@ -368,7 +368,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-purple-500 shrink-0"
+            className="text-primary-500 shrink-0"
           >
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
@@ -415,7 +415,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             <div className="w-4 h-4 rounded-full bg-blue-500 border border-white dark:border-navy-900 flex items-center justify-center text-[6px] text-white">
               B
             </div>
-            <div className="w-4 h-4 rounded-full bg-purple-500 border border-white dark:border-navy-900 flex items-center justify-center text-[6px] text-white">
+            <div className="w-4 h-4 rounded-full bg-primary-500 border border-white dark:border-navy-900 flex items-center justify-center text-[6px] text-white">
               E
             </div>
           </div>

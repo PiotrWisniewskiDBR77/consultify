@@ -119,7 +119,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
   if (loading) {
     return (
       <div
-        className={`bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-navy-800 dark:to-purple-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 p-4 ${className}`}
+        className={`bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 p-4 ${className}`}
       >
         <div className="flex items-center gap-3">
           <Loader2 size={18} className="animate-spin text-indigo-500" />
@@ -135,10 +135,10 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
   if (error) {
     return (
       <div
-        className={`bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/50 p-4 ${className}`}
+        className={`bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-800/50 p-4 ${className}`}
       >
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        <button onClick={handleSkip} className="mt-2 text-xs text-red-500 hover:underline">
+        <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
+        <button onClick={handleSkip} className="mt-2 text-xs text-rose-500 hover:underline">
           {t('research.skipAndSearch', 'Skip and start research')}
         </button>
       </div>
@@ -150,7 +150,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-navy-800 dark:to-purple-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 overflow-hidden ${className}`}
+      className={`bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 overflow-hidden ${className}`}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-indigo-100 dark:border-indigo-800/30">

@@ -122,13 +122,13 @@ const MenuButton: React.FC<{
       onClick={() => onSectionChange(item.id)}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
         activeSection === item.id
-          ? 'bg-gradient-to-r from-purple-600/20 to-transparent text-purple-600 dark:text-white border-l-2 border-purple-500'
+          ? 'bg-gradient-to-r from-primary-600/20 to-transparent text-primary-600 dark:text-white border-l-2 border-primary-500'
           : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
       }`}
       title={!showFull ? label : undefined}
     >
       <span
-        className={`shrink-0 ${activeSection === item.id ? 'text-purple-500 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+        className={`shrink-0 ${activeSection === item.id ? 'text-primary-500 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
       >
         {item.icon}
       </span>
@@ -142,7 +142,7 @@ const MenuButton: React.FC<{
       </span>
 
       {showFull && activeSection === item.id && (
-        <ChevronRight size={14} className="text-purple-500 dark:text-purple-400 ml-auto" />
+        <ChevronRight size={14} className="text-primary-500 dark:text-primary-400 ml-auto" />
       )}
     </button>
   );
@@ -174,7 +174,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     >
       {/* Header / Brand */}
       <div className="h-16 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 gap-3 relative shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 dark:from-purple-600 dark:to-purple-700 flex items-center justify-center shadow-lg shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 dark:from-primary-600 dark:to-primary-700 flex items-center justify-center shadow-lg shrink-0">
           <Settings size={18} className="text-white" />
         </div>
 
@@ -239,8 +239,8 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         <div
           className={`flex items-center gap-3 px-2 py-2 mb-1 overflow-hidden transition-all duration-300 ${showFull ? 'opacity-100' : 'opacity-0 h-0 hidden'}`}
         >
-          <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center shrink-0">
-            <UserCircle size={16} className="text-purple-500 dark:text-purple-400" />
+          <div className="w-8 h-8 rounded-full bg-primary-600/20 flex items-center justify-center shrink-0">
+            <UserCircle size={16} className="text-primary-500 dark:text-primary-400" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
@@ -253,7 +253,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         </div>
         <button
           onClick={onBackToApp}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400 transition-all group ${!showFull ? 'justify-center' : ''}`}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-all group ${!showFull ? 'justify-center' : ''}`}
           title={t('settings.backToApp', 'Back to App')}
         >
           <ArrowLeft size={18} className="shrink-0" />

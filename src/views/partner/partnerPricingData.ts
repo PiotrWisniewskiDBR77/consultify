@@ -351,8 +351,8 @@ export const TIER_COLORS: Record<PartnerTierId, { bg: string; text: string; bord
     border: 'border-yellow-400 dark:border-yellow-600',
   },
   PLATINUM: {
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
-    text: 'text-purple-700 dark:text-purple-400',
-    border: 'border-purple-400 dark:border-purple-600',
+    bg: 'bg-primary-100 dark:bg-primary-900/30',
+    text: 'text-primary-700 dark:text-primary-400',
+    border: 'border-primary-400 dark:border-primary-600',
   },
 };

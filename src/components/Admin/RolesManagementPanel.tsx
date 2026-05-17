@@ -212,9 +212,9 @@ const SYSTEM_ROLES: Role[] = [
 const ROLE_COLORS = [
   {
     id: 'violet',
-    bg: 'bg-violet-500',
-    text: 'text-violet-500',
-    light: 'bg-violet-100 dark:bg-violet-900/30',
+    bg: 'bg-primary-500',
+    text: 'text-primary-500',
+    light: 'bg-primary-100 dark:bg-primary-900/30',
   },
   {
     id: 'blue',
@@ -242,9 +242,9 @@ const ROLE_COLORS = [
   },
   {
     id: 'cyan',
-    bg: 'bg-cyan-500',
-    text: 'text-cyan-500',
-    light: 'bg-cyan-100 dark:bg-cyan-900/30',
+    bg: 'bg-blue-500',
+    text: 'text-blue-500',
+    light: 'bg-blue-100 dark:bg-blue-900/30',
   },
   {
     id: 'slate',
@@ -590,7 +590,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
           <div className="flex items-center gap-1">
             <button
               onClick={() => startEditing(role)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={t('admin.roles.edit', 'Edit')}
             >
               <Edit size={16} />
@@ -605,7 +605,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             {!role.isSystem && (
               <button
                 onClick={() => deleteRole(role)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                 title={t('admin.roles.delete', 'Delete')}
               >
                 <Trash2 size={16} />
@@ -647,7 +647,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                   onClick={() => setFormData((prev) => ({ ...prev, color: color.id }))}
                   disabled={selectedRole?.isSystem}
                   className={`w-8 h-8 rounded-full ${color.bg} ${
-                    formData.color === color.id ? 'ring-2 ring-offset-2 ring-violet-500' : ''
+                    formData.color === color.id ? 'ring-2 ring-offset-2 ring-primary-500' : ''
                   } disabled:opacity-50`}
                 />
               ))}
@@ -723,7 +723,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                         }}
                         className={`px-2 py-1 text-xs rounded ${
                           allSelected
-                            ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                             : 'bg-slate-200 dark:bg-navy-600 text-slate-600 dark:text-slate-400'
                         }`}
                       >
@@ -756,7 +756,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => togglePermission(permission.key)}
-                                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-violet-500 focus:ring-violet-500"
+                                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
                                 />
                                 <div className="flex-1">
                                   <span className="font-medium text-slate-900 dark:text-white text-sm">
@@ -766,7 +766,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                     {permission.description}
                                   </p>
                                 </div>
-                                {isSelected && <Check className="text-violet-500" size={16} />}
+                                {isSelected && <Check className="text-primary-500" size={16} />}
                               </label>
                             );
                           })}
@@ -805,14 +805,14 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
           <button
             onClick={loadRoles}
             disabled={loading}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={startCreating}
-            className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
             <Plus size={18} />
             {t('admin.roles.createRole', 'Create Role')}
@@ -893,7 +893,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
               <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <button
                   onClick={saveRole}
-                  className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Save size={16} />
                   {t('common.save', 'Save')}
@@ -920,7 +920,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
               </p>
               <button
                 onClick={startCreating}
-                className="px-4 py-2 border border-violet-500 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
+                className="px-4 py-2 border border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
               >
                 <Plus size={16} />
                 {t('admin.roles.createRole', 'Create Role')}

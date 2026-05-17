@@ -399,8 +399,8 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
 
       {/* Bulk Actions */}
       {selectedUsers.size > 0 && (
-        <div className="flex items-center gap-4 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
-          <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
+        <div className="flex items-center gap-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
             {t('admin.team.activity.selected', '{{count}} selected', {
               count: selectedUsers.size,
             })}
@@ -498,7 +498,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                 key={user.userId}
                 className={cn(
                   'grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-slate-50 dark:hover:bg-navy-900',
-                  selectedUsers.has(user.userId) && 'bg-violet-50 dark:bg-violet-900/20'
+                  selectedUsers.has(user.userId) && 'bg-primary-50 dark:bg-primary-900/20'
                 )}
               >
                 <div className="col-span-1">

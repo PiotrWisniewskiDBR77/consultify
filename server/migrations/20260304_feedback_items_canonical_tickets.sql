@@ -5,6 +5,30 @@
 -- --------------------------------------------
 -- Canonical ticket metadata
 -- --------------------------------------------
+CREATE TABLE IF NOT EXISTS feedback_items (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  feedback_type TEXT NOT NULL DEFAULT 'general',
+  category TEXT,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  priority TEXT DEFAULT 'medium',
+  status TEXT DEFAULT 'new',
+  votes_count INTEGER DEFAULT 0,
+  user_impact TEXT,
+  screenshots_json TEXT DEFAULT '[]',
+  attachments_json TEXT DEFAULT '[]',
+  metadata_json TEXT DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_items_org ON feedback_items(organization_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_items_user ON feedback_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_items_type ON feedback_items(feedback_type);
+CREATE INDEX IF NOT EXISTS idx_feedback_items_status ON feedback_items(status);
+
 ALTER TABLE feedback_items ADD COLUMN IF NOT EXISTS severity TEXT;
 ALTER TABLE feedback_items ADD COLUMN IF NOT EXISTS source_env TEXT; -- production|staging|development
 ALTER TABLE feedback_items ADD COLUMN IF NOT EXISTS linked_task_id TEXT;

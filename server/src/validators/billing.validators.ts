@@ -6,16 +6,20 @@
 import { z } from 'zod';
 
 // Invoice Line Item
-export const InvoiceLineItemSchema = z.object({
-  description: z.string().min(1),
-  amount: z.number().positive(),
-  quantity: z.number().int().positive().default(1),
-  unitPrice: z.number().positive().optional(),
-});
+export const InvoiceLineItemSchema = z
+  .object({
+    description: z.string().min(1),
+    amount: z.number().positive().optional(),
+    quantity: z.number().int().positive().default(1),
+    unitPrice: z.number().positive().optional(),
+  })
+  .refine((item) => item.amount !== undefined || item.unitPrice !== undefined, {
+    message: 'Each line item requires amount or unitPrice',
+  });
 
 // Create Invoice Request
 export const CreateInvoiceRequestSchema = z.object({
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   lineItems: z.array(InvoiceLineItemSchema).min(1),
   currency: z.string().default('USD'),
   dueDate: z.string().datetime().optional(),
@@ -135,7 +139,7 @@ export const BillingStatsQuerySchema = z.object({
 
 export const ListInvoicesQuerySchema = z.object({
   status: z.enum(['draft', 'open', 'paid', 'past_due', 'void']).optional(),
-  organizationId: z.string().uuid().optional(),
+  organizationId: z.string().min(1).optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(50),
 });

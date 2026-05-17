@@ -18,7 +18,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   Dialog,
@@ -146,6 +146,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const location = useLocation();
   const { isEnabled } = useFeatureFlagsContext();
   const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -285,7 +286,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             {row.kind === 'document' ? (
               <FileText size={16} className="shrink-0 text-blue-400" />
             ) : row.kind === 'presentation' ? (
-              <Presentation size={16} className="shrink-0 text-purple-400" />
+              <Presentation size={16} className="shrink-0 text-blue-400" />
             ) : (
               <FileSpreadsheet size={16} className="shrink-0 text-emerald-400" />
             )}
@@ -309,7 +310,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           {
             value: 'presentation',
             label: t('rap.outputs.kind.presentation', 'Presentation'),
-            color: 'bg-purple-400',
+            color: 'bg-blue-400',
           },
           {
             value: 'sheet',
@@ -346,7 +347,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             label: isPolish ? 'Wyeksportowany' : 'Exported',
             color: 'bg-blue-400',
           },
-          { value: 'shared', label: isPolish ? 'Udostępniony' : 'Shared', color: 'bg-purple-400' },
+          { value: 'shared', label: isPolish ? 'Udostępniony' : 'Shared', color: 'bg-blue-400' },
           {
             value: 'archived',
             label: isPolish ? 'Zarchiwizowany' : 'Archived',
@@ -507,8 +508,18 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               const err = await res.json().catch(() => ({}));
               throw new Error(String(err?.error || 'Failed to save template'));
             }
+            const payload = (await res.json().catch(() => ({}))) as {
+              data?: { artifactId?: string };
+            };
+            const templateArtifactId =
+              typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
             toast.success(isPolish ? 'Zapisano jako wzorzec' : 'Saved as template');
-            navigate('/presentations?tab=templates');
+            const params = new URLSearchParams(location.search || '');
+            params.set('tab', 'templates');
+            if (templateArtifactId) {
+              params.set('artifactId', templateArtifactId);
+            }
+            navigate(`/presentations?${params.toString()}`);
           } catch (e: any) {
             toast.error(
               e?.message ? String(e.message) : isPolish ? 'Błąd zapisu wzorca' : 'Failed'

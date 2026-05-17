@@ -283,7 +283,10 @@ checkFileContains('server/src/index.ts', [
 // 19. Auth middleware must actually verify JWT with a secret
 console.log('  Checking JWT verification path in auth middleware...');
 checkFileContains('server/src/middleware/auth.middleware.ts', [
-  { pattern: /verify\(token,\s*jwtSecret/, message: 'Auth middleware does not verify token with jwtSecret' },
+  {
+    pattern: /(jwt\.verify|verifyJwt|verifyFn)\s*\([\s\S]{0,120}token,\s*jwtSecret/,
+    message: 'Auth middleware does not verify token with jwtSecret',
+  },
   { pattern: 'JWT_SECRET', message: 'Auth middleware does not reference JWT_SECRET' },
 ]);
 

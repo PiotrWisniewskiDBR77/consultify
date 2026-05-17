@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-05-15T20:47:18.555Z",
+  "completedAt": "2026-05-15T20:47:23.655Z",
+  "root": "/Users/piotrwisniewski/Documents/Antygracity/DRD",
+  "paths": [
+    "consultify/src",
+    "consultify/server/src",
+    "consultify/server/scripts",
+    "consultify/server/migrations",
+    "consultify/docs/testing",
+    "consultify/docs/product",
+    "consultify/tests/e2e"
+  ],
+  "snapshotDir": "/Users/piotrwisniewski/Documents/Antygracity/DRD/.drive-sync-backup/2026-05-15T20-47-18.556Z",
+  "totals": {
+    "files": 9368,
+    "bytes": 104767191,
+    "skipped": 2
+  },
+  "pruned": [],
+  "warnings": []
+}

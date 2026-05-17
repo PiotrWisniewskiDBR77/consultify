@@ -1,0 +1,195 @@
+/**
+ * SourceReferenceCell — Read-only display for `source_reference` specialized
+ * field type.
+ *
+ * Accepts three value shapes (mirror of server-side
+ * `SpecializedFieldTypes.checkSpecializedFieldValue`):
+ *
+ *   1. UUID string (a `tp_record_sources.id`).
+ *   2. `{ source_id: <UUID> }` object.
+ *   3. `{ external_url: <https://...> }` object — only when the field
+ *      `allow_external = true`.
+ *
+ * The UI renders a compact source badge:
+ *   - UUID-backed sources → "Source" link (opens ProvenanceDrawer in lane —
+ *     for now exposed via `data-source-id` for downstream wiring).
+ *   - External URL → outbound link with truncated host.
+ *   - External URL when `allow_external = false` → rose "blocked" chip.
+ *   - Empty → dash with "Add source" affordance.
+ *
+ * Block A · EPIC-T7 · Sprint A-S5 frontend.
+ *
+ * DBR77 invariants: no raw hex literals; semantic Tailwind tone classes only.
+ */
+import { Anchor, ExternalLink, Link2Off } from 'lucide-react';
+import React from 'react';
+
+import type { SourceReferenceFieldOptions } from '@/types/tablePlatform';
+
+interface SourceReferenceCellProps {
+  value: unknown;
+  fieldOptions?: SourceReferenceFieldOptions;
+  /** Optional callback to open the in-lane provenance drawer for a source UUID. */
+  onOpenSource?: (sourceId: string) => void;
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_EXTERNAL_URL = 2048;
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return v != null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url.slice(0, 32);
+  }
+}
+
+export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
+  value,
+  fieldOptions,
+  onOpenSource,
+}) => {
+  const allowExternal = fieldOptions?.allow_external === true;
+
+  if (value == null || value === '') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-1 text-xs text-slate-400 dark:text-slate-500 italic"
+        data-testid="source-ref-empty"
+      >
+        <Anchor size={10} className="flex-shrink-0" />
+        <span>No source</span>
+      </span>
+    );
+  }
+
+  // Shape 1: bare UUID string.
+  if (typeof value === 'string' && UUID_REGEX.test(value)) {
+    return (
+      <button
+        type="button"
+        onClick={() => onOpenSource?.(value)}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+        data-testid="source-ref-internal"
+        data-source-id={value}
+        title={`Internal source ${value}`}
+      >
+        <Anchor size={10} className="flex-shrink-0" />
+        <span>Source</span>
+      </button>
+    );
+  }
+
+  // Shape 1b: bare external URL string when allow_external = true.
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!allowExternal) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/20 text-[10px] font-semibold text-rose-700 dark:text-rose-300"
+          data-testid="source-ref-blocked"
+          title="External sources not allowed for this field"
+        >
+          <Link2Off size={10} className="flex-shrink-0" />
+          <span>Blocked</span>
+        </span>
+      );
+    }
+    if (trimmed.length === 0 || trimmed.length > MAX_EXTERNAL_URL) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 px-1"
+          data-testid="source-ref-invalid"
+          title={`source_reference value invalid (length ${trimmed.length})`}
+        >
+          !
+        </span>
+      );
+    }
+    return (
+      <a
+        href={trimmed}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-900/20 text-[10px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors max-w-full"
+        data-testid="source-ref-external"
+        data-href={trimmed}
+        title={trimmed}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ExternalLink size={10} className="flex-shrink-0" />
+        <span className="truncate">{safeHost(trimmed)}</span>
+      </a>
+    );
+  }
+
+  // Shape 2 & 3: object with `source_id` or `external_url`.
+  if (isPlainObject(value)) {
+    const sid = (value as { source_id?: unknown }).source_id;
+    const ext = (value as { external_url?: unknown }).external_url;
+
+    if (typeof sid === 'string' && UUID_REGEX.test(sid)) {
+      return (
+        <button
+          type="button"
+          onClick={() => onOpenSource?.(sid)}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+          data-testid="source-ref-internal"
+          data-source-id={sid}
+          title={`Internal source ${sid}`}
+        >
+          <Anchor size={10} className="flex-shrink-0" />
+          <span>Source</span>
+        </button>
+      );
+    }
+
+    if (typeof ext === 'string' && ext.length > 0) {
+      if (!allowExternal) {
+        return (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/20 text-[10px] font-semibold text-rose-700 dark:text-rose-300"
+            data-testid="source-ref-blocked"
+            title="External sources not allowed for this field"
+          >
+            <Link2Off size={10} className="flex-shrink-0" />
+            <span>Blocked</span>
+          </span>
+        );
+      }
+      return (
+        <a
+          href={ext}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-900/20 text-[10px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors max-w-full"
+          data-testid="source-ref-external"
+          data-href={ext}
+          title={ext}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ExternalLink size={10} className="flex-shrink-0" />
+          <span className="truncate">{safeHost(ext)}</span>
+        </a>
+      );
+    }
+  }
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 px-1"
+      data-testid="source-ref-invalid"
+      title="source_reference value has unrecognized shape"
+    >
+      !
+    </span>
+  );
+};
+
+SourceReferenceCell.displayName = 'SourceReferenceCell';
+
+export default SourceReferenceCell;

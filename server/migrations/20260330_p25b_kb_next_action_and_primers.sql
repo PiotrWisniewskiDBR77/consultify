@@ -5,8 +5,80 @@
 -- - `next_action` is runtime-only metadata for Help: it routes user back to the correct surface.
 -- - Seed articles are minimal primers for Tools / Interview / Outputs + one EN-only for fallback proof.
 
+CREATE TABLE IF NOT EXISTS kb_categories (
+    id TEXT PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    icon TEXT NOT NULL DEFAULT 'BookOpen',
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    is_public INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_kb_categories_slug ON kb_categories(slug);
+CREATE INDEX IF NOT EXISTS idx_kb_categories_active ON kb_categories(is_active);
+CREATE INDEX IF NOT EXISTS idx_kb_categories_public ON kb_categories(is_public);
+
+CREATE TABLE IF NOT EXISTS kb_articles (
+    id TEXT PRIMARY KEY,
+    category_id TEXT REFERENCES kb_categories(id),
+    slug TEXT UNIQUE NOT NULL,
+    status TEXT DEFAULT 'draft',
+    is_featured INTEGER DEFAULT 0,
+    is_public INTEGER DEFAULT 0,
+    view_count INTEGER DEFAULT 0,
+    reading_time_minutes INTEGER DEFAULT 3,
+    thumbnail_url TEXT,
+    video_url TEXT,
+    video_teaser_url TEXT,
+    related_modules TEXT,
+    target_audience TEXT,
+    related_article_ids TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_kb_articles_category ON kb_articles(category_id);
+CREATE INDEX IF NOT EXISTS idx_kb_articles_slug ON kb_articles(slug);
+CREATE INDEX IF NOT EXISTS idx_kb_articles_status ON kb_articles(status);
+CREATE INDEX IF NOT EXISTS idx_kb_articles_public ON kb_articles(is_public);
+CREATE INDEX IF NOT EXISTS idx_kb_articles_featured ON kb_articles(is_featured);
+
+CREATE TABLE IF NOT EXISTS kb_category_translations (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    category_id TEXT NOT NULL REFERENCES kb_categories(id) ON DELETE CASCADE,
+    language TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    UNIQUE(category_id, language)
+);
+
+CREATE INDEX IF NOT EXISTS idx_kb_cat_trans_category ON kb_category_translations(category_id);
+CREATE INDEX IF NOT EXISTS idx_kb_cat_trans_lang ON kb_category_translations(language);
+
+CREATE TABLE IF NOT EXISTS kb_article_translations (
+    id TEXT PRIMARY KEY,
+    article_id TEXT NOT NULL REFERENCES kb_articles(id) ON DELETE CASCADE,
+    language TEXT NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT,
+    content TEXT,
+    video_script TEXT,
+    UNIQUE(article_id, language)
+);
+
+CREATE INDEX IF NOT EXISTS idx_kb_art_trans_article ON kb_article_translations(article_id);
+CREATE INDEX IF NOT EXISTS idx_kb_art_trans_lang ON kb_article_translations(language);
+
+INSERT INTO kb_categories (id, slug, icon, sort_order, is_active, is_public) VALUES
+  ('kb-cat-tools-features', 'tools-features', 'Wrench', 5, 1, 1),
+  ('kb-cat-quick-guides', 'quick-guides', 'BookOpen', 1, 1, 1),
+  ('kb-cat-analytics', 'analytics-reporting', 'BarChart3', 9, 1, 1)
+ON CONFLICT (id) DO NOTHING;
+
 -- 1) Schema: next_action JSON blob (nullable)
-ALTER TABLE kb_articles ADD COLUMN next_action TEXT;
+ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS next_action TEXT;
 
 -- 2) Seed: Tools primer
 INSERT OR IGNORE INTO kb_articles (

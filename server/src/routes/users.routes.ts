@@ -193,6 +193,11 @@ router.put(
     const updates = req.body;
 
     try {
+      const firstNameValue = updates?.firstName ?? updates?.first_name;
+      if (firstNameValue !== undefined && !String(firstNameValue).trim()) {
+        return res.status(400).json({ error: 'First name is required before saving' });
+      }
+
       // Build dynamic update query
       const allowedFields = ['first_name', 'last_name', 'avatar_url', 'status'];
       const setClause: string[] = [];
@@ -202,7 +207,7 @@ router.put(
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
         if (allowedFields.includes(snakeKey)) {
           setClause.push(`${snakeKey} = ?`);
-          values.push(value);
+          values.push(snakeKey === 'first_name' ? String(value).trim() : value);
         }
       }
 
@@ -210,10 +215,13 @@ router.put(
         return res.status(400).json({ error: 'No valid fields to update' });
       }
 
-      setClause.push('updated_at = datetime("now")');
+      setClause.push('updated_at = CURRENT_TIMESTAMP');
       values.push(id);
 
-      await dbRun(`UPDATE users SET ${setClause.join(', ')} WHERE id = ?`, values);
+      const result = await dbRun(`UPDATE users SET ${setClause.join(', ')} WHERE id = ?`, values, {
+        fallback: false,
+      });
+      if (!result.success) throw new Error(result.error || 'Failed to update user');
 
       logger.info(`[users] User ${id} updated`);
       return res.json({ success: true, data: updates });
@@ -260,10 +268,12 @@ router.post(
       const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
       // Update user with new avatar
-      await dbRun('UPDATE users SET avatar_url = ?, updated_at = datetime("now") WHERE id = ?', [
-        avatarUrl,
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [avatarUrl, id],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to persist avatar');
 
       // Delete old avatar file if exists and is local
       if (oldUser?.avatar_url && oldUser.avatar_url.startsWith('/uploads/')) {
@@ -325,9 +335,12 @@ router.delete(
       }
 
       // Update user to remove avatar
-      await dbRun('UPDATE users SET avatar_url = NULL, updated_at = datetime("now") WHERE id = ?', [
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [id],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to remove avatar');
 
       logger.info(`[users] Avatar removed for user ${id}`);
       return res.json({ success: true });

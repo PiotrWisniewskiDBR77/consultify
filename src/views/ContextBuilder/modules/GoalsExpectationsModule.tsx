@@ -73,13 +73,13 @@ export const GoalsExpectationsModule: React.FC = () => {
     <div className="space-y-6">
       {/* AI Suggestion Banner (Mock) - Contextual to Metrics Tab */}
       {aiSuggestions.length > 0 && activeTab === 'metrics' && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 flex items-start gap-3">
-          <Sparkles className="text-purple-600 mt-1" size={18} />
+        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex items-start gap-3">
+          <Sparkles className="text-primary-600 mt-1" size={18} />
           <div className="flex-1">
-            <h4 className="text-sm font-bold text-purple-900 dark:text-purple-300">
+            <h4 className="text-sm font-bold text-primary-900 dark:text-primary-300">
               AI Suggested Addition
             </h4>
-            <p className="text-xs text-purple-800 dark:text-purple-200 mt-1">
+            <p className="text-xs text-primary-800 dark:text-primary-200 mt-1">
               I noticed you haven't included <strong>Safety Incident Rate (TRIR)</strong>. This is a
               standard manufacturing KPI. Shall I add it?
             </p>
@@ -95,13 +95,13 @@ export const GoalsExpectationsModule: React.FC = () => {
                 });
                 setAiSuggestions([]);
               }}
-              className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700"
+              className="px-3 py-1 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
             >
               Add KPI
             </button>
             <button
               onClick={() => setAiSuggestions([])}
-              className="px-3 py-1 bg-white dark:bg-navy-900 text-purple-600 border border-purple-200 text-xs rounded hover:bg-slate-50 dark:hover:bg-navy-800/20"
+              className="px-3 py-1 bg-white dark:bg-navy-900 text-primary-600 border border-primary-200 text-xs rounded hover:bg-slate-50 dark:hover:bg-navy-800/20"
             >
               Dismiss
             </button>
@@ -121,7 +121,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${
                               activeTab === tab.id
-                                ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                             }
                         `}
@@ -187,7 +187,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                   >
                     <input
                       type="checkbox"
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 peer"
+                      className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500 peer"
                       checked={goals.topPriorities.includes(p.id)}
                       onChange={(e) => {
                         const newPriorities = e.target.checked
@@ -196,10 +196,10 @@ export const GoalsExpectationsModule: React.FC = () => {
                         setGoals({ topPriorities: newPriorities });
                       }}
                     />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200 peer-checked:text-purple-700 dark:peer-checked:text-purple-300">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200 peer-checked:text-primary-700 dark:peer-checked:text-primary-300">
                       {p.label}
                     </span>
-                    <div className="absolute inset-0 border-2 border-purple-500 rounded-lg opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></div>
+                    <div className="absolute inset-0 border-2 border-primary-500 rounded-lg opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></div>
                   </label>
                 ))}
               </div>
@@ -305,9 +305,9 @@ export const GoalsExpectationsModule: React.FC = () => {
         {activeTab === 'expectations' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Transformation Archetype */}
-            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors">
+            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-                <Rocket size={20} className="text-orange-500" />
+                <Rocket size={20} className="text-amber-500" />
                 Transformation Archetype
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
@@ -340,12 +340,12 @@ export const GoalsExpectationsModule: React.FC = () => {
                       checked={goals.transformationArchetype === style.id}
                       onChange={() => setGoals({ transformationArchetype: style.id })}
                     />
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/20 peer-checked:border-orange-500 peer-checked:ring-1 peer-checked:ring-orange-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/20 peer-checked:border-amber-500 peer-checked:ring-1 peer-checked:ring-amber-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-orange-700 dark:peer-checked:text-orange-400">
+                        <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-amber-700 dark:peer-checked:text-amber-400">
                           {style.label}
                         </span>
-                        <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-navy-700 peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center">
+                        <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-navy-700 peer-checked:border-amber-500 peer-checked:bg-amber-500 flex items-center justify-center">
                           <div className="w-1.5 h-1.5 bg-white dark:bg-navy-900 rounded-full opacity-0 peer-checked:opacity-100" />
                         </div>
                       </div>
@@ -359,9 +359,9 @@ export const GoalsExpectationsModule: React.FC = () => {
             </div>
 
             {/* Human-AI Engagement Model */}
-            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors">
+            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-                <Bot size={20} className="text-purple-500" />
+                <Bot size={20} className="text-primary-500" />
                 Human-AI Collaboration
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
@@ -394,12 +394,12 @@ export const GoalsExpectationsModule: React.FC = () => {
                       checked={goals.aiRole === role.id}
                       onChange={() => setGoals({ aiRole: role.id })}
                     />
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/20 peer-checked:border-purple-500 peer-checked:ring-1 peer-checked:ring-purple-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-purple-700 dark:peer-checked:text-purple-400">
+                        <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-primary-700 dark:peer-checked:text-primary-400">
                           {role.label}
                         </span>
-                        <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-navy-700 peer-checked:border-purple-500 peer-checked:bg-purple-500 flex items-center justify-center">
+                        <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-navy-700 peer-checked:border-primary-500 peer-checked:bg-primary-500 flex items-center justify-center">
                           <div className="w-1.5 h-1.5 bg-white dark:bg-navy-900 rounded-full opacity-0 peer-checked:opacity-100" />
                         </div>
                       </div>
@@ -413,7 +413,7 @@ export const GoalsExpectationsModule: React.FC = () => {
             </div>
 
             {/* Steering & Governance */}
-            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors">
+            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <GanttChartSquare size={20} className="text-blue-500" />
                 Steering & Governance

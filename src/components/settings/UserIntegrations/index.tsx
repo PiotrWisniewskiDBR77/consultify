@@ -177,7 +177,7 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
 
       {/* Error message */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-700 dark:text-red-400">
+        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg flex items-center gap-2 text-rose-700 dark:text-rose-400">
           <AlertCircle size={16} />
           {error}
         </div>
@@ -189,7 +189,7 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
           className={`p-4 rounded-lg flex items-center gap-2 ${
             testResult.success
               ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+              : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
           }`}
         >
           {testResult.success ? <Check size={16} /> : <AlertCircle size={16} />}

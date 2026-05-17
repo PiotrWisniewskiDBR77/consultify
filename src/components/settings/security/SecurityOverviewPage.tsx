@@ -13,11 +13,8 @@
 import {
   AlertTriangle,
   ArrowRight,
-  Check,
   CheckCircle,
-  Clock,
   Fingerprint,
-  Globe,
   History,
   Key,
   LifeBuoy,
@@ -25,10 +22,9 @@ import {
   Shield,
   ShieldAlert,
   ShieldCheck,
-  Smartphone,
   XCircle,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,6 +32,8 @@ import { cn } from '../../../lib/utils';
 import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from '../shared';
 
 interface SecurityOverviewPageProps {
@@ -65,6 +63,15 @@ interface LoginEvent {
   device: string;
 }
 
+interface ActiveSessionsResponse {
+  sessions?: unknown[];
+}
+
+interface MfaStatusResponse {
+  isEnabled?: boolean;
+  method?: string;
+}
+
 const DEFAULT_STATUS: SecurityStatus = {
   passwordStrength: 'unknown',
   mfaEnabled: false,
@@ -77,7 +84,6 @@ const DEFAULT_STATUS: SecurityStatus = {
 
 export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   currentUser,
-  onUpdateUser,
   className = '',
 }) => {
   const { t } = useTranslation();
@@ -85,44 +91,47 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   const [status, setStatus] = useState<SecurityStatus>(DEFAULT_STATUS);
   const [recentEvents, setRecentEvents] = useState<LoginEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSecurityData();
-  }, [currentUser.id]);
-
-  const loadSecurityData = async () => {
+  const loadSecurityData = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const [sessionsRes, historyRes, recoveryRes, mfaRes] = await Promise.all([
-        Api.getActiveSessions().catch(() => ({ sessions: [] })),
-        Api.getLoginHistory().catch(() => []),
-        fetch('/api/settings/recovery', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        })
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null),
-        Api.get('/api/mfa/status').catch(() => null),
+        Api.getActiveSessions(),
+        Api.getLoginHistory(),
+        Api.get('/settings/recovery'),
+        Api.get('/api/mfa/status'),
       ]);
+      if (!sessionsRes || !Array.isArray(historyRes) || !recoveryRes || !mfaRes) {
+        throw new Error('Security overview response was missing required data');
+      }
+
+      const sessions = (sessionsRes as ActiveSessionsResponse).sessions ?? [];
+      const mfa = mfaRes as MfaStatusResponse;
 
       setStatus({
         passwordStrength: 'medium',
-        mfaEnabled: currentUser?.mfaEnabled || (mfaRes as any)?.isEnabled || false,
-        mfaMethod: (mfaRes as any)?.method || 'totp',
-        activeSessions: (sessionsRes as any)?.sessions?.length || 1,
+        mfaEnabled: currentUser?.mfaEnabled || mfa.isEnabled || false,
+        mfaMethod: mfa.method || 'totp',
+        activeSessions: sessions.length,
         recoveryEmail: !!recoveryRes?.recoveryEmail,
         recoveryPhone: !!recoveryRes?.recoveryPhone,
         backupCodes: (recoveryRes?.backupCodesCount || 0) > 0,
         backupCodesCount: recoveryRes?.backupCodesCount || 0,
       });
 
-      const events = Array.isArray(historyRes) ? historyRes : [];
-      setRecentEvents(events.slice(0, 5));
-    } catch (error) {
-      console.error('Failed to load security data:', error);
+      setRecentEvents(historyRes.slice(0, 5));
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load security overview'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser?.mfaEnabled]);
+
+  useEffect(() => {
+    void loadSecurityData();
+  }, [currentUser.id, loadSecurityData]);
 
   const securityScore = useMemo(() => {
     let score = 0;
@@ -315,9 +324,14 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     }
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  };
+
   const colorMap = {
     violet: {
-      icon: 'bg-violet-500/10 text-violet-400',
+      icon: 'bg-primary-500/10 text-primary-400',
       statusOk: 'text-emerald-400',
       statusBad: 'text-amber-400',
     },
@@ -340,6 +354,24 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
   const circumference = 2 * Math.PI * 42;
   const dashOffset = circumference - (scorePercentage / 100) * circumference;
+
+  if (loadError) {
+    return (
+      <SettingsSection
+        icon={Shield}
+        title={t('settings.securityOverview.title', 'Security Overview')}
+        description={t(
+          'settings.securityOverview.description',
+          'Monitor your account security status and manage protection settings'
+        )}
+        cardId="settings-security-overview"
+        loading={loading}
+        className={className}
+      >
+        <DegradedState title="Security overview unavailable" description={loadError} />
+      </SettingsSection>
+    );
+  }
 
   return (
     <SettingsSection
@@ -418,7 +450,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         {/* Status Cards Grid */}
         <div>
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <Shield size={14} className="text-violet-400" />
+            <Shield size={14} className="text-primary-400" />
             {t('settings.securityOverview.protectionStatus', 'Protection Status')}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -429,7 +461,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 <button
                   key={card.id}
                   onClick={card.action}
-                  className="bg-navy-900/30 border border-white/5 rounded-lg p-4 text-left hover:border-violet-500/30 hover:bg-violet-600/5 transition-all group"
+                  className="bg-navy-900/30 border border-white/5 rounded-lg p-4 text-left hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -450,7 +482,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                     <ArrowRight
                       size={16}
-                      className="text-slate-600 group-hover:text-violet-400 transition-colors mt-1"
+                      className="text-slate-600 group-hover:text-primary-400 transition-colors mt-1"
                     />
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">{card.description}</p>
@@ -509,12 +541,12 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <History size={14} className="text-violet-400" />
+              <History size={14} className="text-primary-400" />
               {t('settings.securityOverview.recentActivity', 'Recent Activity')}
             </h4>
             <button
               onClick={() => navigateTo('auth-access')}
-              className="text-xs text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1"
+              className="text-xs text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
             >
               {t('settings.securityOverview.viewFullHistory', 'View full history')}
               <ArrowRight size={12} />
@@ -538,7 +570,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                   </div>
                   <span className="text-xs text-slate-500">
-                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}
+                    {event.timestamp ? formatTimestamp(event.timestamp) : ''}
                   </span>
                 </div>
               ))}

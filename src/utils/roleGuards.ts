@@ -7,6 +7,24 @@ export function normalizeAppRole(role: string | null | undefined): string {
     return 'SUPERADMIN';
   }
 
+  if (normalized === 'ADMINISTRATOR') {
+    return 'ADMIN';
+  }
+
+  if (
+    normalized === 'TEAM_MEMBER' ||
+    normalized === 'MEMBER' ||
+    normalized === 'PROJECT_MANAGER' ||
+    normalized === 'MANAGER' ||
+    normalized === 'CONSULTANT'
+  ) {
+    return 'USER';
+  }
+
+  if (normalized === 'VIEWER' || normalized === 'CLIENT') {
+    return 'GUEST';
+  }
+
   return normalized;
 }
 
@@ -16,7 +34,7 @@ export function isSuperAdminRole(role: string | null | undefined): boolean {
 
 export function isAdminOrSuperAdminRole(role: string | null | undefined): boolean {
   const normalized = normalizeAppRole(role);
-  return normalized === 'ADMIN' || normalized === 'SUPERADMIN';
+  return normalized === 'ADMIN' || normalized === 'OWNER' || normalized === 'SUPERADMIN';
 }
 
 export function isAdminOwnerOrSuperAdminRole(role: string | null | undefined): boolean {
@@ -26,13 +44,7 @@ export function isAdminOwnerOrSuperAdminRole(role: string | null | undefined): b
 
 export function isPilotRestrictedRole(role: string | null | undefined): boolean {
   const normalized = normalizeAppRole(role);
-  return (
-    normalized === 'USER' ||
-    normalized === 'MEMBER' ||
-    normalized === 'GUEST' ||
-    normalized === 'TEAM_MEMBER' ||
-    normalized === 'VIEWER'
-  );
+  return normalized === 'USER' || normalized === 'GUEST';
 }
 
 export function getDefaultAuthenticatedRoute(role: string | null | undefined): string {

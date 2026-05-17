@@ -118,7 +118,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
+          <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-500 rounded-lg">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -238,7 +238,7 @@ Przykłady:
             <button
               onClick={handleCustomGenerate}
               disabled={!customPrompt.trim() || isGenerating !== null}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-primary-600 to-blue-600 text-white rounded-lg hover:from-primary-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {isGenerating === 'custom' ? (
                 <>

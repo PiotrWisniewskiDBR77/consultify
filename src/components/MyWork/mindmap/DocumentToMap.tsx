@@ -130,7 +130,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           <button
             onClick={extractIdeas}
             disabled={!text.trim() || loading || locked}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/15 to-cyan-500/10 text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-cyan-500/15 transition-all disabled:opacity-40 mb-3"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/15 to-blue-500/10 text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-blue-500/15 transition-all disabled:opacity-40 mb-3"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {loading
@@ -173,7 +173,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           <button
             onClick={handleApply}
             disabled={extractedIdeas.length === 0 || locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500/15 to-cyan-500/10 text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-cyan-500/15 border border-blue-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500/15 to-blue-500/10 text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-blue-500/15 border border-blue-500/10 transition-all disabled:opacity-40"
           >
             <FileText size={12} />
             {isPl

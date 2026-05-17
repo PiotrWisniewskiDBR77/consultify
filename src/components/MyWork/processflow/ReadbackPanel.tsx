@@ -40,13 +40,13 @@ function stepIcon(type: ReadbackStep['type']) {
     case 'start':
       return { Icon: Play, className: 'text-emerald-600 dark:text-emerald-400' };
     case 'end':
-      return { Icon: Square, className: 'text-red-600 dark:text-red-400' };
+      return { Icon: Square, className: 'text-rose-600 dark:text-rose-400' };
     case 'decision':
       return { Icon: GitBranch, className: 'text-amber-600 dark:text-amber-400' };
     case 'parallel_split':
-      return { Icon: Split, className: 'text-violet-600 dark:text-violet-400' };
+      return { Icon: Split, className: 'text-primary-600 dark:text-primary-400' };
     case 'parallel_join':
-      return { Icon: Merge, className: 'text-violet-600 dark:text-violet-400' };
+      return { Icon: Merge, className: 'text-primary-600 dark:text-primary-400' };
     case 'step':
     default:
       return { Icon: ChevronRight, className: 'text-slate-500 dark:text-slate-400' };

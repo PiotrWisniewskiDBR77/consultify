@@ -8,6 +8,25 @@
 -- 4. conversations.language: per-conversation language (if missing)
 -- 5. Index for team project listing
 
+CREATE TABLE IF NOT EXISTS chat_projects (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    color TEXT DEFAULT '#6366f1',
+    icon TEXT DEFAULT 'folder',
+    conversation_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_projects_user ON chat_projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_projects_org ON chat_projects(organization_id);
+
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS chat_project_id TEXT REFERENCES chat_projects(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_conversations_chat_project ON conversations(chat_project_id);
+
 -- ============================================
 -- 1. chat_projects: add scope column
 -- ============================================

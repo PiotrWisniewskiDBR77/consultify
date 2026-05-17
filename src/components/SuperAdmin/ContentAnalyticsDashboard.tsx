@@ -73,7 +73,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         <p className="text-slate-400 dark:text-slate-500">Failed to load analytics data</p>
         <button
           onClick={loadDashboard}
-          className="mt-4 px-4 py-2 text-violet-400 hover:text-violet-300"
+          className="mt-4 px-4 py-2 text-primary-400 hover:text-primary-300"
         >
           Try Again
         </button>
@@ -86,8 +86,8 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-600/20 border border-violet-500/20">
-            <BarChart2 className="w-6 h-6 text-violet-400" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/20 border border-primary-500/20">
+            <BarChart2 className="w-6 h-6 text-primary-400" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Content Analytics</h2>
@@ -100,7 +100,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -143,10 +143,10 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Categories */}
-        <div className="bg-gradient-to-br from-violet-500/10 to-violet-600/5 border border-violet-500/20 rounded-xl p-4">
+        <div className="bg-gradient-to-br from-primary-500/10 to-primary-600/5 border border-primary-500/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <FolderOpen size={18} className="text-violet-400" />
-            <span className="text-sm font-medium text-violet-300">Categories</span>
+            <FolderOpen size={18} className="text-primary-400" />
+            <span className="text-sm font-medium text-primary-300">Categories</span>
           </div>
           <div className="text-3xl font-bold text-white mb-1">{data.totalCategories}</div>
           <div className="text-sm text-slate-400 dark:text-slate-500">Content organization</div>
@@ -183,7 +183,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     ? 'text-emerald-400'
                     : data.avgPlaybookSuccessRate >= 40
                       ? 'text-amber-400'
-                      : 'text-red-400'
+                      : 'text-rose-400'
                 }`}
               >
                 {data.avgPlaybookSuccessRate}%
@@ -196,7 +196,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     ? 'bg-emerald-500'
                     : data.avgPlaybookSuccessRate >= 40
                       ? 'bg-amber-500'
-                      : 'bg-red-500'
+                      : 'bg-rose-500'
                 }`}
                 style={{ width: `${data.avgPlaybookSuccessRate}%` }}
               />
@@ -239,7 +239,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
               <span className="text-slate-300 group-hover:text-white">Manage Playbooks</span>
               <TrendingUp
                 size={14}
-                className="text-slate-500 dark:text-slate-400 group-hover:text-violet-400"
+                className="text-slate-500 dark:text-slate-400 group-hover:text-primary-400"
               />
             </a>
             <a
@@ -343,7 +343,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
       {data.usageByCategory && data.usageByCategory.length > 0 && (
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
           <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <FolderOpen size={18} className="text-violet-400" />
+            <FolderOpen size={18} className="text-primary-400" />
             Usage by Category
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

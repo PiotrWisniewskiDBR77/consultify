@@ -55,7 +55,16 @@ export type ToolType =
 
 export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
 
-export type DynamicSwotPhaseId = 'mission' | 'input' | 'swot' | 'insights' | 'outputs';
+export type DynamicSwotPhaseId =
+  | 'mission'
+  | 'input'
+  | 'swot'
+  | 'forces'
+  | 'options'
+  | 'items'
+  | 'assumptions'
+  | 'insights'
+  | 'outputs';
 export type SWOTEvidenceType = 'fact' | 'observation' | 'hypothesis';
 export type SWOTSignalState = 'accepted' | 'proposed' | 'needs-evidence';
 export type SWOTCardStatus = 'accepted' | 'proposed';
@@ -195,6 +204,13 @@ export interface SWOTData {
 }
 
 // Porter's Forces types
+export type PorterForceId =
+  | 'rivalry'
+  | 'newEntrants'
+  | 'substitutes'
+  | 'buyerPower'
+  | 'supplierPower';
+
 export interface ForceData {
   id: string;
   name: string;
@@ -202,6 +218,62 @@ export interface ForceData {
   trend: 'increasing' | 'stable' | 'decreasing';
   drivers: string[];
   aiAnalysis?: string;
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterImplication {
+  id: string;
+  title: string;
+  forceIds: PorterForceId[];
+  insight: string;
+  marginImpact: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterMove {
+  id: string;
+  title: string;
+  category: 'positioning' | 'pricing' | 'partnership' | 'capability-build' | 'defensive-move';
+  rationale: string;
+  linkedImplicationIds: string[];
+  linkedForceIds: PorterForceId[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedForceIds: PorterForceId[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface PorterData {
@@ -209,7 +281,15 @@ export interface PorterData {
     industry: string;
     geographicScope: string;
     position: 'leader' | 'challenger' | 'follower' | 'niche';
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
   };
+  signals: PorterSignal[];
   forces: {
     rivalry: ForceData;
     newEntrants: ForceData;
@@ -217,31 +297,110 @@ export interface PorterData {
     buyerPower: ForceData;
     supplierPower: ForceData;
   };
+  implications: PorterImplication[];
+  recommendedMoves: PorterMove[];
+  outputCandidates: PorterOutputCandidate[];
   overallAttractiveness?: number;
-  summary?: {
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
     keyInsights: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
 
 // Growth Paths (Ansoff) types
+export type GrowthQuadrantId =
+  | 'marketPenetration'
+  | 'marketDevelopment'
+  | 'productDevelopment'
+  | 'diversification';
+
 export interface GrowthPathItem {
   id: string;
   title: string;
   description: string;
   impact: 'high' | 'medium' | 'low';
   effort: 'high' | 'medium' | 'low';
+  quadrant?: GrowthQuadrantId;
+  rationale?: string;
+  evidence?: string[];
+  riskLevel?: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthComparison {
+  id: string;
+  title: string;
+  insight: string;
+  linkedQuadrants: GrowthQuadrantId[];
+  recommendation: string;
+  priority: 'high' | 'medium' | 'low';
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthMove {
+  id: string;
+  title: string;
+  category: 'scale-core' | 'enter-market' | 'build-product' | 'diversify' | 'validate-first';
+  rationale: string;
+  linkedOptionIds: string[];
+  linkedQuadrants: GrowthQuadrantId[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedOptionIds: string[];
+  linkedQuadrants: GrowthQuadrantId[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface GrowthPathsData {
   context: ConsultingMissionContext;
+  signals: GrowthSignal[];
   quadrants: {
     marketPenetration: GrowthPathItem[];
     marketDevelopment: GrowthPathItem[];
     productDevelopment: GrowthPathItem[];
     diversification: GrowthPathItem[];
   };
+  comparisons: GrowthComparison[];
+  recommendedMoves: GrowthMove[];
+  outputCandidates: GrowthOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    appliedConclusions: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -255,12 +414,75 @@ export interface PortfolioItem {
   marketShare: number; // 1-5
   investmentLevel: number; // 1-5
   category: 'star' | 'cash-cow' | 'question-mark' | 'dog';
+  rationale?: string;
+  evidence?: string[];
+  recommendation?: 'invest' | 'maintain' | 'test' | 'harvest' | 'stop';
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioTradeOff {
+  id: string;
+  title: string;
+  insight: string;
+  linkedItemIds: string[];
+  recommendation: string;
+  priority: 'high' | 'medium' | 'low';
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioMove {
+  id: string;
+  title: string;
+  category: 'invest' | 'maintain' | 'test' | 'harvest' | 'stop';
+  rationale: string;
+  linkedItemIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedItemIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface PortfolioPriorityData {
   context: ConsultingMissionContext;
+  signals: PortfolioSignal[];
   initiatives: PortfolioItem[];
+  tradeOffs: PortfolioTradeOff[];
+  recommendedMoves: PortfolioMove[];
+  outputCandidates: PortfolioOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    appliedConclusions: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -270,14 +492,26 @@ export interface RiskAssumption {
   id: string;
   text: string;
   confidence: number; // 1-5
+  evidence?: string[];
+  consequenceIfWrong?: string;
+  validationMethod?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface RiskItem {
   id: string;
+  title?: string;
   description: string;
   probability: number; // 1-5
   impact: number; // 1-5
   mitigation: string;
+  trigger?: string;
+  owner?: string;
+  evidence?: string[];
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface ScenarioItem {
@@ -285,14 +519,64 @@ export interface ScenarioItem {
   title: string;
   likelihood: number; // 1-5
   notes: string;
+  posture?: 'base' | 'upside' | 'downside' | 'stress';
+  signalsToWatch?: string[];
+  response?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface RiskSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface RiskMove {
+  id: string;
+  title: string;
+  category: 'validate' | 'mitigate' | 'monitor' | 'hedge' | 'escalate';
+  rationale: string;
+  linkedRiskIds: string[];
+  linkedAssumptionIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface RiskOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedRiskIds: string[];
+  linkedScenarioIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface RiskUncertaintyData {
   context: ConsultingMissionContext;
+  signals: RiskSignal[];
   assumptions: RiskAssumption[];
   risks: RiskItem[];
   scenarios: ScenarioItem[];
+  recommendedMoves: RiskMove[];
+  outputCandidates: RiskOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    appliedConclusions: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -492,65 +776,47 @@ export const SWOT_STEPS: StepDefinition[] = [
 
 export const PORTER_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Industry Context',
-    namePl: 'Kontekst Branżowy',
-    description: 'Define the industry, market, and competitive position',
-    descriptionPl: 'Zdefiniuj branżę, rynek i pozycję konkurencyjną',
+    id: 'mission',
+    name: 'Mission & Market Context',
+    namePl: 'Mission & Market Context',
+    description: 'Define the market, scope, decision frame, and success signal',
+    descriptionPl: 'Zdefiniuj rynek, zakres, ramę decyzji i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'rivalry',
-    name: 'Competitive Rivalry',
-    namePl: 'Rywalizacja Konkurencyjna',
-    description: 'Assess intensity of competition among existing players',
-    descriptionPl: 'Oceń intensywność konkurencji między istniejącymi graczami',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture market evidence, interview notes, benchmarks, and competitive signals',
+    descriptionPl: 'Zbierz dowody rynkowe, wywiad, benchmarki i sygnały konkurencyjne',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'newEntrants',
-    name: 'Threat of New Entrants',
-    namePl: 'Zagrożenie Nowych Graczy',
-    description: 'Evaluate barriers to entry and threat of new competitors',
-    descriptionPl: 'Oceń bariery wejścia i zagrożenie ze strony nowych konkurentów',
+    id: 'forces',
+    name: 'Five Forces Build',
+    namePl: 'Five Forces Build',
+    description: 'Turn signals into scored Porter forces with drivers, evidence, and confidence',
+    descriptionPl: 'Zamień sygnały w ocenione siły Portera z driverami, dowodami i confidence',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'substitutes',
-    name: 'Threat of Substitutes',
-    namePl: 'Zagrożenie Substytutów',
-    description: 'Identify substitute products and their impact',
-    descriptionPl: 'Zidentyfikuj produkty zastępcze i ich wpływ',
+    id: 'insights',
+    name: 'Strategic Implications',
+    namePl: 'Strategic Implications',
+    description: 'Synthesize market structure into margin pressure, levers, and strategic moves',
+    descriptionPl: 'Przekształć strukturę rynku w presję marży, dźwignie i ruchy strategiczne',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'buyerPower',
-    name: 'Buyer Power',
-    namePl: 'Siła Nabywców',
-    description: 'Assess bargaining power of customers',
-    descriptionPl: 'Oceń siłę przetargową klientów',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'supplierPower',
-    name: 'Supplier Power',
-    namePl: 'Siła Dostawców',
-    description: 'Assess bargaining power of suppliers',
-    descriptionPl: 'Oceń siłę przetargową dostawców',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Review analysis and generate competitive initiatives',
-    descriptionPl: 'Przegląd analizy i generowanie inicjatyw konkurencyjnych',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
     required: true,
     aiAssisted: true,
   },
@@ -558,56 +824,48 @@ export const PORTER_STEPS: StepDefinition[] = [
 
 export const GROWTH_PATHS_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Growth Context',
-    namePl: 'Kontekst Wzrostu',
-    description: 'Define the growth goal, scope, and time horizon',
-    descriptionPl: 'Zdefiniuj cel wzrostu, zakres i horyzont czasowy',
+    id: 'mission',
+    name: 'Growth Mission & Context',
+    namePl: 'Growth Mission & Context',
+    description: 'Define the growth ambition, scope, constraints, and success signal',
+    descriptionPl: 'Zdefiniuj ambicję wzrostu, zakres, ograniczenia i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'market-penetration',
-    name: 'Market Penetration',
-    namePl: 'Penetracja Rynku',
-    description: 'Opportunities to grow in current markets with current products',
-    descriptionPl: 'Możliwości wzrostu na obecnych rynkach z obecnymi produktami',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description:
+      'Capture growth signals from interviews, organization context, and market evidence',
+    descriptionPl: 'Zbierz sygnały wzrostu z wywiadów, kontekstu organizacji i rynku',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'market-development',
-    name: 'Market Development',
-    namePl: 'Rozwój Rynku',
-    description: 'Opportunities to enter new markets with current products',
-    descriptionPl: 'Wejście na nowe rynki z obecnymi produktami',
+    id: 'options',
+    name: 'Ansoff Options Build',
+    namePl: 'Ansoff Options Build',
+    description: 'Turn signals into growth options across the four Ansoff quadrants',
+    descriptionPl: 'Zamień sygnały w opcje wzrostu w czterech polach Ansoffa',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'product-development',
-    name: 'Product Development',
-    namePl: 'Rozwój Produktu',
-    description: 'Opportunities to develop new products for current markets',
-    descriptionPl: 'Nowe produkty dla obecnych rynków',
+    id: 'insights',
+    name: 'Strategic Comparison',
+    namePl: 'Strategic Comparison',
+    description: 'Compare options, expose trade-offs, and select recommended growth moves',
+    descriptionPl: 'Porównaj opcje, pokaż trade-offy i wybierz rekomendowane ruchy wzrostu',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'diversification',
-    name: 'Diversification',
-    namePl: 'Dywersyfikacja',
-    description: 'Opportunities to enter new markets with new products',
-    descriptionPl: 'Wejście na nowe rynki z nowymi produktami',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Review growth paths and generate initiatives',
-    descriptionPl: 'Przegląd ścieżek wzrostu i generowanie inicjatyw',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and downstream growth initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz dalsze inicjatywy wzrostowe',
     required: true,
     aiAssisted: true,
   },
@@ -615,38 +873,48 @@ export const GROWTH_PATHS_STEPS: StepDefinition[] = [
 
 export const PORTFOLIO_PRIORITY_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Portfolio Context',
-    namePl: 'Kontekst Portfolio',
-    description: 'Define the portfolio scope and constraints',
-    descriptionPl: 'Zdefiniuj zakres portfolio i ograniczenia',
+    id: 'mission',
+    name: 'Portfolio Mission & Context',
+    namePl: 'Portfolio Mission & Context',
+    description: 'Define the portfolio scope, decision frame, constraints, and success signal',
+    descriptionPl: 'Zdefiniuj zakres portfolio, ramę decyzji, ograniczenia i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'portfolio-items',
-    name: 'Portfolio Items',
-    namePl: 'Elementy Portfolio',
-    description: 'List initiatives with growth and share assessments',
-    descriptionPl: 'Lista inicjatyw z oceną wzrostu i udziału',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description:
+      'Capture portfolio evidence, constraints, performance signals, and sponsor context',
+    descriptionPl: 'Zbierz dowody portfolio, ograniczenia, sygnały wyników i kontekst sponsora',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'portfolio-matrix',
-    name: 'BCG Matrix',
-    namePl: 'Macierz BCG',
-    description: 'Review portfolio categories and priorities',
-    descriptionPl: 'Przegląd kategorii i priorytetów portfolio',
+    id: 'items',
+    name: 'Portfolio Items & Matrix',
+    namePl: 'Portfolio Items & Matrix',
+    description: 'Score portfolio items and classify them into BCG-style categories',
+    descriptionPl: 'Oceń elementy portfolio i sklasyfikuj je w kategoriach BCG',
     required: true,
-    aiAssisted: false,
+    aiAssisted: true,
   },
   {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Summarize portfolio priorities and initiatives',
-    descriptionPl: 'Podsumowanie priorytetów i inicjatyw',
+    id: 'insights',
+    name: 'Trade-offs & Priorities',
+    namePl: 'Trade-offs & Priorities',
+    description: 'Synthesize trade-offs, portfolio bets, and recommended resource moves',
+    descriptionPl: 'Syntezuj trade-offy, top bety i rekomendowane przesunięcia zasobów',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and downstream portfolio actions',
+    descriptionPl: 'Przygotuj final source summary oraz dalsze działania portfolio',
     required: true,
     aiAssisted: true,
   },
@@ -654,47 +922,47 @@ export const PORTFOLIO_PRIORITY_STEPS: StepDefinition[] = [
 
 export const RISK_UNCERTAINTY_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Risk Context',
-    namePl: 'Kontekst Ryzyka',
-    description: 'Define scope and time horizon for risk analysis',
-    descriptionPl: 'Zdefiniuj zakres i horyzont czasowy analizy ryzyka',
+    id: 'mission',
+    name: 'Risk Mission & Context',
+    namePl: 'Risk Mission & Context',
+    description: 'Define the decision, uncertainty scope, constraints, and success signal',
+    descriptionPl: 'Zdefiniuj decyzję, zakres niepewności, ograniczenia i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture weak signals, constraints, evidence, and uncertainty cues',
+    descriptionPl: 'Zbierz słabe sygnały, ograniczenia, evidence i wskazówki niepewności',
+    required: true,
+    aiAssisted: true,
+  },
+  {
     id: 'assumptions',
-    name: 'Key Assumptions',
-    namePl: 'Kluczowe Założenia',
-    description: 'List critical assumptions and confidence levels',
-    descriptionPl: 'Lista kluczowych założeń i poziomu pewności',
+    name: 'Assumptions & Risk Map',
+    namePl: 'Assumptions & Risk Map',
+    description: 'Turn signals into assumptions, risks, and plausible scenarios',
+    descriptionPl: 'Zamień sygnały w założenia, ryzyka i scenariusze',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'risks',
-    name: 'Strategic Risks',
-    namePl: 'Ryzyka Strategiczne',
-    description: 'Identify and score risks with mitigation actions',
-    descriptionPl: 'Identyfikuj ryzyka i działania mitygujące',
+    id: 'insights',
+    name: 'Risk Synthesis',
+    namePl: 'Risk Synthesis',
+    description: 'Synthesize risk posture, early warnings, and recommended resilience moves',
+    descriptionPl: 'Syntezuj postawę ryzyka, early warnings i rekomendowane ruchy odporności',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'scenarios',
-    name: 'Scenarios',
-    namePl: 'Scenariusze',
-    description: 'Describe possible scenarios and likelihood',
-    descriptionPl: 'Opisz scenariusze i prawdopodobieństwo',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Summarize risks and resilience initiatives',
-    descriptionPl: 'Podsumowanie ryzyk i inicjatyw odporności',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and downstream resilience actions',
+    descriptionPl: 'Przygotuj final source summary oraz dalsze działania odporności',
     required: true,
     aiAssisted: true,
   },
@@ -1177,7 +1445,15 @@ const createInitialPorterData = (): PorterData => ({
     industry: '',
     geographicScope: '',
     position: 'challenger',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
   },
+  signals: [],
   forces: {
     rivalry: { id: 'rivalry', name: 'Competitive Rivalry', score: 3, trend: 'stable', drivers: [] },
     newEntrants: {
@@ -1197,28 +1473,42 @@ const createInitialPorterData = (): PorterData => ({
       drivers: [],
     },
   },
+  implications: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialGrowthPathsData = (): GrowthPathsData => ({
   context: createConsultingMissionContext(),
+  signals: [],
   quadrants: {
     marketPenetration: [],
     marketDevelopment: [],
     productDevelopment: [],
     diversification: [],
   },
+  comparisons: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialPortfolioPriorityData = (): PortfolioPriorityData => ({
   context: createConsultingMissionContext(),
+  signals: [],
   initiatives: [],
+  tradeOffs: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialRiskUncertaintyData = (): RiskUncertaintyData => ({
   context: createConsultingMissionContext(),
+  signals: [],
   assumptions: [],
   risks: [],
   scenarios: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialOperationalData = (steps: StepDefinition[]): OperationalToolData => {
@@ -1475,6 +1765,343 @@ const normalizeDynamicSwotData = (input: SWOTData): SWOTData => ({
   })),
 });
 
+const normalizePorterData = (input: PorterData): PorterData => {
+  const initial = createInitialPorterData();
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    forces: (Object.keys(initial.forces) as PorterForceId[]).reduce<PorterData['forces']>(
+      (acc, forceId) => {
+        const current = input.forces?.[forceId];
+        acc[forceId] = {
+          ...initial.forces[forceId],
+          ...current,
+          drivers: current?.drivers || [],
+          evidence: current?.evidence || [],
+          proposalStatus: current?.proposalStatus || 'accepted',
+        };
+        return acc;
+      },
+      { ...initial.forces }
+    ),
+    implications: (input.implications || []).map((implication) => ({
+      ...implication,
+      proposalStatus: implication.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+  };
+};
+
+const normalizeGrowthPathsData = (input: GrowthPathsData): GrowthPathsData => {
+  const initial = createInitialGrowthPathsData();
+  const quadrants = {
+    ...initial.quadrants,
+    ...(input.quadrants || {}),
+  };
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    quadrants: (Object.keys(initial.quadrants) as GrowthQuadrantId[]).reduce<
+      GrowthPathsData['quadrants']
+    >(
+      (acc, quadrant) => {
+        acc[quadrant] = (quadrants[quadrant] || []).map((option) => ({
+          ...option,
+          quadrant: option.quadrant || quadrant,
+          evidence: option.evidence || [],
+          riskLevel: option.riskLevel || 'medium',
+          confidence: option.confidence ?? 3,
+          proposalStatus: option.proposalStatus || 'accepted',
+        }));
+        return acc;
+      },
+      { ...initial.quadrants }
+    ),
+    comparisons: (input.comparisons || []).map((comparison) => ({
+      ...comparison,
+      linkedQuadrants: comparison.linkedQuadrants || [],
+      priority: comparison.priority || 'medium',
+      proposalStatus: comparison.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      linkedOptionIds: move.linkedOptionIds || [],
+      linkedQuadrants: move.linkedQuadrants || [],
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      linkedOptionIds: candidate.linkedOptionIds || [],
+      linkedQuadrants: candidate.linkedQuadrants || [],
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+    summary: input.summary
+      ? {
+          ...input.summary,
+          keyInsights: input.summary.keyInsights || [],
+          appliedConclusions: input.summary.appliedConclusions || [],
+          recommendedInitiatives: input.summary.recommendedInitiatives || [],
+          proposalStatus: input.summary.proposalStatus || 'accepted',
+        }
+      : undefined,
+  };
+};
+
+const updateGrowthProposalCard = (
+  growthData: GrowthPathsData,
+  cardType: ProposalCardType,
+  cardId: string,
+  updates: Record<string, unknown>
+): GrowthPathsData => {
+  const updateList = <T extends { id: string }>(items: T[]) =>
+    items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
+
+  if (cardType === 'signal') {
+    return { ...growthData, signals: updateList(growthData.signals) };
+  }
+
+  if (cardType === 'item') {
+    const quadrants = { ...growthData.quadrants };
+    (Object.keys(quadrants) as GrowthQuadrantId[]).forEach((quadrant) => {
+      quadrants[quadrant] = updateList(quadrants[quadrant]);
+    });
+    return { ...growthData, quadrants };
+  }
+
+  if (cardType === 'tension' || cardType === 'correlation') {
+    return { ...growthData, comparisons: updateList(growthData.comparisons) };
+  }
+
+  if (cardType === 'move') {
+    return { ...growthData, recommendedMoves: updateList(growthData.recommendedMoves) };
+  }
+
+  if (cardType === 'output-candidate') {
+    return { ...growthData, outputCandidates: updateList(growthData.outputCandidates) };
+  }
+
+  if (cardType === 'conclusion' && growthData.summary) {
+    return {
+      ...growthData,
+      summary: {
+        ...growthData.summary,
+        ...updates,
+      },
+    };
+  }
+
+  return growthData;
+};
+
+const getPortfolioCategory = (growth: number, share: number): PortfolioItem['category'] => {
+  if (growth >= 4 && share >= 4) return 'star';
+  if (growth >= 4 && share < 4) return 'question-mark';
+  if (growth < 4 && share >= 4) return 'cash-cow';
+  return 'dog';
+};
+
+const normalizePortfolioPriorityData = (input: PortfolioPriorityData): PortfolioPriorityData => {
+  const initial = createInitialPortfolioPriorityData();
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    initiatives: (input.initiatives || []).map((item) => ({
+      ...item,
+      marketGrowth: item.marketGrowth ?? 3,
+      marketShare: item.marketShare ?? 3,
+      investmentLevel: item.investmentLevel ?? 3,
+      category:
+        item.category || getPortfolioCategory(item.marketGrowth ?? 3, item.marketShare ?? 3),
+      evidence: item.evidence || [],
+      confidence: item.confidence ?? 3,
+      proposalStatus: item.proposalStatus || 'accepted',
+    })),
+    tradeOffs: (input.tradeOffs || []).map((tradeOff) => ({
+      ...tradeOff,
+      linkedItemIds: tradeOff.linkedItemIds || [],
+      priority: tradeOff.priority || 'medium',
+      proposalStatus: tradeOff.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      linkedItemIds: move.linkedItemIds || [],
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      linkedItemIds: candidate.linkedItemIds || [],
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+    summary: input.summary
+      ? {
+          ...input.summary,
+          keyInsights: input.summary.keyInsights || [],
+          appliedConclusions: input.summary.appliedConclusions || [],
+          recommendedInitiatives: input.summary.recommendedInitiatives || [],
+          proposalStatus: input.summary.proposalStatus || 'accepted',
+        }
+      : undefined,
+  };
+};
+
+const updatePortfolioProposalCard = (
+  portfolioData: PortfolioPriorityData,
+  cardType: ProposalCardType,
+  cardId: string,
+  updates: Record<string, unknown>
+): PortfolioPriorityData => {
+  const updateList = <T extends { id: string }>(items: T[]) =>
+    items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
+
+  if (cardType === 'signal')
+    return { ...portfolioData, signals: updateList(portfolioData.signals) };
+  if (cardType === 'item')
+    return { ...portfolioData, initiatives: updateList(portfolioData.initiatives) };
+  if (cardType === 'tension' || cardType === 'correlation')
+    return { ...portfolioData, tradeOffs: updateList(portfolioData.tradeOffs) };
+  if (cardType === 'move')
+    return { ...portfolioData, recommendedMoves: updateList(portfolioData.recommendedMoves) };
+  if (cardType === 'output-candidate')
+    return { ...portfolioData, outputCandidates: updateList(portfolioData.outputCandidates) };
+  if (cardType === 'conclusion' && portfolioData.summary) {
+    return { ...portfolioData, summary: { ...portfolioData.summary, ...updates } };
+  }
+  return portfolioData;
+};
+
+const normalizeRiskUncertaintyData = (input: RiskUncertaintyData): RiskUncertaintyData => {
+  const initial = createInitialRiskUncertaintyData();
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    assumptions: (input.assumptions || []).map((assumption) => ({
+      ...assumption,
+      confidence: assumption.confidence ?? 3,
+      evidence: assumption.evidence || [],
+      proposalStatus: assumption.proposalStatus || 'accepted',
+    })),
+    risks: (input.risks || []).map((risk) => ({
+      ...risk,
+      probability: risk.probability ?? 3,
+      impact: risk.impact ?? 3,
+      mitigation: risk.mitigation || '',
+      evidence: risk.evidence || [],
+      confidence: risk.confidence ?? 3,
+      proposalStatus: risk.proposalStatus || 'accepted',
+    })),
+    scenarios: (input.scenarios || []).map((scenario) => ({
+      ...scenario,
+      likelihood: scenario.likelihood ?? 3,
+      posture: scenario.posture || 'base',
+      signalsToWatch: scenario.signalsToWatch || [],
+      proposalStatus: scenario.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      linkedRiskIds: move.linkedRiskIds || [],
+      linkedAssumptionIds: move.linkedAssumptionIds || [],
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      linkedRiskIds: candidate.linkedRiskIds || [],
+      linkedScenarioIds: candidate.linkedScenarioIds || [],
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+    summary: input.summary
+      ? {
+          ...input.summary,
+          keyInsights: input.summary.keyInsights || [],
+          appliedConclusions: input.summary.appliedConclusions || [],
+          recommendedInitiatives: input.summary.recommendedInitiatives || [],
+          proposalStatus: input.summary.proposalStatus || 'accepted',
+        }
+      : undefined,
+  };
+};
+
+const updateRiskProposalCard = (
+  riskData: RiskUncertaintyData,
+  cardType: ProposalCardType,
+  cardId: string,
+  updates: Record<string, unknown>
+): RiskUncertaintyData => {
+  const updateList = <T extends { id: string }>(items: T[]) =>
+    items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
+
+  if (cardType === 'signal') return { ...riskData, signals: updateList(riskData.signals) };
+  if (cardType === 'item')
+    return {
+      ...riskData,
+      assumptions: updateList(riskData.assumptions),
+      risks: updateList(riskData.risks),
+      scenarios: updateList(riskData.scenarios),
+    };
+  if (cardType === 'tension' || cardType === 'move')
+    return { ...riskData, recommendedMoves: updateList(riskData.recommendedMoves) };
+  if (cardType === 'output-candidate')
+    return { ...riskData, outputCandidates: updateList(riskData.outputCandidates) };
+  if (cardType === 'conclusion' && riskData.summary) {
+    return { ...riskData, summary: { ...riskData.summary, ...updates } };
+  }
+  return riskData;
+};
+
 const mergeToolAnswersWithInitialData = (
   toolType: ToolType,
   answers: Record<string, unknown>
@@ -1541,6 +2168,22 @@ const mergeToolAnswersWithInitialData = (
     return normalizeDynamicSwotData(merged as SWOTData);
   }
 
+  if (toolType === 'market-forces') {
+    return normalizePorterData(merged as PorterData);
+  }
+
+  if (toolType === 'growth-paths') {
+    return normalizeGrowthPathsData(merged as GrowthPathsData);
+  }
+
+  if (toolType === 'portfolio-priority') {
+    return normalizePortfolioPriorityData(merged as PortfolioPriorityData);
+  }
+
+  if (toolType === 'risk-uncertainty') {
+    return normalizeRiskUncertaintyData(merged as RiskUncertaintyData);
+  }
+
   return merged as any;
 };
 
@@ -1595,6 +2238,157 @@ const computeStepStatusFromAnswers = (
       }
     }
 
+    if (toolType === 'market-forces') {
+      const porterAnswers = normalizePorterData(answers as PorterData);
+
+      if (stepId === 'mission') {
+        return porterAnswers.context?.industry && porterAnswers.context?.geographicScope
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (porterAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'forces') {
+        return (Object.values(porterAnswers.forces || {}) as ForceData[]).every(
+          (force) => (force.drivers?.length || 0) > 0
+        )
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (porterAnswers.implications?.length || 0) > 0 ||
+          (porterAnswers.recommendedMoves?.length || 0) > 0 ||
+          (porterAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return porterAnswers.summary?.executiveSummary ||
+          (porterAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (porterAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
+    if (toolType === 'growth-paths') {
+      const growthAnswers = normalizeGrowthPathsData(answers as GrowthPathsData);
+
+      if (stepId === 'mission') {
+        return growthAnswers.context?.goal && growthAnswers.context?.scope
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (growthAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'options') {
+        return Object.values(growthAnswers.quadrants || {}).some(
+          (items) => (items?.length || 0) > 0
+        )
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (growthAnswers.comparisons?.length || 0) > 0 ||
+          (growthAnswers.recommendedMoves?.length || 0) > 0 ||
+          (growthAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return growthAnswers.summary?.executiveSummary ||
+          (growthAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (growthAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
+    if (toolType === 'portfolio-priority') {
+      const portfolioAnswers = normalizePortfolioPriorityData(answers as PortfolioPriorityData);
+
+      if (stepId === 'mission') {
+        return portfolioAnswers.context?.goal &&
+          portfolioAnswers.context?.scope &&
+          portfolioAnswers.context?.successSignal
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (portfolioAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'items') {
+        return (portfolioAnswers.initiatives?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (portfolioAnswers.tradeOffs?.length || 0) > 0 ||
+          (portfolioAnswers.recommendedMoves?.length || 0) > 0 ||
+          (portfolioAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return portfolioAnswers.summary?.executiveSummary ||
+          (portfolioAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (portfolioAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
+    if (toolType === 'risk-uncertainty') {
+      const riskAnswers = normalizeRiskUncertaintyData(answers as RiskUncertaintyData);
+
+      if (stepId === 'mission') {
+        return riskAnswers.context?.goal &&
+          riskAnswers.context?.scope &&
+          riskAnswers.context?.successSignal
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (riskAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'assumptions') {
+        return (riskAnswers.assumptions?.length || 0) > 0 ||
+          (riskAnswers.risks?.length || 0) > 0 ||
+          (riskAnswers.scenarios?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (riskAnswers.recommendedMoves?.length || 0) > 0 ||
+          (riskAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return riskAnswers.summary?.executiveSummary ||
+          (riskAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (riskAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
     // Context step (all tools)
     if (stepId === 'context') {
       if (toolType === 'market-forces') {
@@ -1635,21 +2429,6 @@ const computeStepStatusFromAnswers = (
       };
       const key = map[stepId];
       if (key) return (answers?.quadrants?.[key]?.length || 0) > 0 ? 'completed' : 'pending';
-    }
-
-    if (toolType === 'portfolio-priority') {
-      if (stepId === 'portfolio-items')
-        return (answers?.initiatives?.length || 0) > 0 ? 'completed' : 'pending';
-      if (stepId === 'portfolio-matrix')
-        return answers?.initiatives?.some((i: any) => i.category) ? 'completed' : 'pending';
-    }
-
-    if (toolType === 'risk-uncertainty') {
-      if (stepId === 'assumptions')
-        return (answers?.assumptions?.length || 0) > 0 ? 'completed' : 'pending';
-      if (stepId === 'risks') return (answers?.risks?.length || 0) > 0 ? 'completed' : 'pending';
-      if (stepId === 'scenarios')
-        return (answers?.scenarios?.length || 0) > 0 ? 'completed' : 'pending';
     }
 
     // Toolsets & operational: section arrays (generic)
@@ -1746,6 +2525,44 @@ const normalizeSessionForRuntime = (session: ToolSession): ToolSession => {
   };
   if (session.toolType === 'dynamic-swot') {
     return normalizeDynamicSwotSession(normalizedBase);
+  }
+
+  if (session.toolType === 'market-forces') {
+    const inputData = normalizePorterData(normalizedBase.inputData as PorterData);
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('market-forces', inputData),
+    };
+  }
+
+  if (session.toolType === 'growth-paths') {
+    const inputData = normalizeGrowthPathsData(normalizedBase.inputData as GrowthPathsData);
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('growth-paths', inputData),
+    };
+  }
+
+  if (session.toolType === 'portfolio-priority') {
+    const inputData = normalizePortfolioPriorityData(
+      normalizedBase.inputData as PortfolioPriorityData
+    );
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('portfolio-priority', inputData),
+    };
+  }
+
+  if (session.toolType === 'risk-uncertainty') {
+    const inputData = normalizeRiskUncertaintyData(normalizedBase.inputData as RiskUncertaintyData);
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('risk-uncertainty', inputData),
+    };
   }
 
   return normalizedBase;
@@ -1939,6 +2756,155 @@ export const useToolStore = create<ToolStoreState>()(
           }
         }
 
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+
+          if (stepDef.id === 'mission') {
+            return Boolean(porterData.context?.industry && porterData.context?.geographicScope);
+          }
+
+          if (stepDef.id === 'input') {
+            return (porterData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'forces') {
+            return (Object.values(porterData.forces || {}) as ForceData[]).every(
+              (force) => (force.drivers?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (porterData.implications?.length || 0) > 0 ||
+              (porterData.recommendedMoves?.length || 0) > 0 ||
+              (porterData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              porterData.summary?.executiveSummary ||
+              (porterData.summary?.keyInsights?.length || 0) > 0 ||
+              (porterData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              growthData.context?.goal &&
+              growthData.context?.scope &&
+              growthData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (growthData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'options') {
+            return Object.values(growthData.quadrants || {}).some(
+              (items) => (items?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (growthData.comparisons?.length || 0) > 0 ||
+              (growthData.recommendedMoves?.length || 0) > 0 ||
+              (growthData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              growthData.summary?.executiveSummary ||
+              (growthData.summary?.keyInsights?.length || 0) > 0 ||
+              (growthData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              portfolioData.context?.goal &&
+              portfolioData.context?.scope &&
+              portfolioData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (portfolioData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'items') {
+            return (portfolioData.initiatives?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (portfolioData.tradeOffs?.length || 0) > 0 ||
+              (portfolioData.recommendedMoves?.length || 0) > 0 ||
+              (portfolioData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              portfolioData.summary?.executiveSummary ||
+              (portfolioData.summary?.keyInsights?.length || 0) > 0 ||
+              (portfolioData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              riskData.context?.goal && riskData.context?.scope && riskData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (riskData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'assumptions') {
+            return (
+              (riskData.assumptions?.length || 0) > 0 ||
+              (riskData.risks?.length || 0) > 0 ||
+              (riskData.scenarios?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (riskData.recommendedMoves?.length || 0) > 0 ||
+              (riskData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              riskData.summary?.executiveSummary ||
+              (riskData.summary?.keyInsights?.length || 0) > 0 ||
+              (riskData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
         // Context step: check if required fields are filled
         if (stepDef.id === 'context') {
           const data = currentSession.inputData as
@@ -2005,26 +2971,6 @@ export const useToolStore = create<ToolStoreState>()(
           };
           const key = keyMap[stepDef.id];
           return growthData.quadrants[key].length > 0;
-        }
-
-        // Portfolio items step: require at least one initiative
-        if (stepDef.id === 'portfolio-items') {
-          const portfolioData = currentSession.inputData as PortfolioPriorityData;
-          return portfolioData.initiatives.length > 0;
-        }
-
-        // Risk & Uncertainty steps: require at least one item
-        if (stepDef.id === 'assumptions') {
-          const riskData = currentSession.inputData as RiskUncertaintyData;
-          return riskData.assumptions.length > 0;
-        }
-        if (stepDef.id === 'risks') {
-          const riskData = currentSession.inputData as RiskUncertaintyData;
-          return riskData.risks.length > 0;
-        }
-        if (stepDef.id === 'scenarios') {
-          const riskData = currentSession.inputData as RiskUncertaintyData;
-          return riskData.scenarios.length > 0;
         }
 
         // Operational tools: sections with list items
@@ -2121,7 +3067,11 @@ export const useToolStore = create<ToolStoreState>()(
         const nextInputData =
           currentSession.toolType === 'dynamic-swot'
             ? normalizeDynamicSwotData(mergedInputData as SWOTData)
-            : mergedInputData;
+            : currentSession.toolType === 'market-forces'
+              ? normalizePorterData(mergedInputData as PorterData)
+              : currentSession.toolType === 'growth-paths'
+                ? normalizeGrowthPathsData(mergedInputData as GrowthPathsData)
+                : mergedInputData;
 
         set({
           currentSession: withRecomputedSteps(currentSession, nextInputData),
@@ -2335,7 +3285,68 @@ export const useToolStore = create<ToolStoreState>()(
 
       acceptCard: (cardType, cardId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            proposalStatus: 'accepted' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            proposalStatus: 'accepted' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            proposalStatus: 'accepted' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                proposalStatus: 'accepted',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              proposalStatus: 'accepted' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2347,7 +3358,7 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate')
+        else if ((cardType as ProposalCardType) === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
         else if (cardType === 'conclusion' && swotData.summary) {
           updated.summary = { ...swotData.summary, proposalStatus: 'accepted' as ProposalStatus };
@@ -2357,7 +3368,68 @@ export const useToolStore = create<ToolStoreState>()(
 
       rejectCard: (cardType, cardId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            proposalStatus: 'rejected' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            proposalStatus: 'rejected' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            proposalStatus: 'rejected' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId ? { ...item, proposalStatus: 'rejected' as ProposalStatus } : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                proposalStatus: 'rejected',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              proposalStatus: 'rejected' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2379,7 +3451,63 @@ export const useToolStore = create<ToolStoreState>()(
 
       commentOnCard: (cardType, cardId, comment) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            userComment: comment,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            userComment: comment,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            userComment: comment,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) => (item.id === cardId ? { ...item, userComment: comment } : item));
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                userComment: comment,
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = { ...porterData.summary, userComment: comment };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) => (item.id === cardId ? { ...item, userComment: comment } : item));
@@ -2399,7 +3527,70 @@ export const useToolStore = create<ToolStoreState>()(
 
       markRethinking: (cardType, cardId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            proposalStatus: 'rethinking' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            proposalStatus: 'rethinking' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            proposalStatus: 'rethinking' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId
+                ? { ...item, proposalStatus: 'rethinking' as ProposalStatus }
+                : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                proposalStatus: 'rethinking',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              proposalStatus: 'rethinking' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2421,7 +3612,75 @@ export const useToolStore = create<ToolStoreState>()(
 
       updateCardAfterRethink: (cardType, cardId, updates) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId
+                ? { ...item, ...updates, proposalStatus: 'ai-proposed' as ProposalStatus }
+                : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                ...updates,
+                proposalStatus: 'ai-proposed',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              ...updates,
+              proposalStatus: 'ai-proposed' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2449,7 +3708,132 @@ export const useToolStore = create<ToolStoreState>()(
 
       acceptAllInPhase: (phaseId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...riskData };
+          if (phaseId === 'input') updated.signals = acceptAll(riskData.signals);
+          else if (phaseId === 'assumptions') {
+            updated.assumptions = acceptAll(riskData.assumptions);
+            updated.risks = acceptAll(riskData.risks);
+            updated.scenarios = acceptAll(riskData.scenarios);
+          } else if (phaseId === 'insights') {
+            updated.recommendedMoves = acceptAll(riskData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(riskData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...portfolioData };
+          if (phaseId === 'input') updated.signals = acceptAll(portfolioData.signals);
+          else if (phaseId === 'items') updated.initiatives = acceptAll(portfolioData.initiatives);
+          else if (phaseId === 'insights') {
+            updated.tradeOffs = acceptAll(portfolioData.tradeOffs);
+            updated.recommendedMoves = acceptAll(portfolioData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(portfolioData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...growthData };
+          if (phaseId === 'input') updated.signals = acceptAll(growthData.signals);
+          else if (phaseId === 'options') {
+            updated.quadrants = Object.fromEntries(
+              Object.entries(growthData.quadrants).map(([quadrant, items]) => [
+                quadrant,
+                acceptAll(items),
+              ])
+            ) as GrowthPathsData['quadrants'];
+          } else if (phaseId === 'insights') {
+            updated.comparisons = acceptAll(growthData.comparisons);
+            updated.recommendedMoves = acceptAll(growthData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(growthData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...porterData };
+          if (phaseId === 'input') updated.signals = acceptAll(porterData.signals);
+          else if (phaseId === 'forces') {
+            updated.forces = Object.fromEntries(
+              Object.entries(porterData.forces).map(([forceId, force]) => [
+                forceId,
+                force.proposalStatus === 'ai-proposed'
+                  ? { ...force, proposalStatus: 'accepted' as ProposalStatus }
+                  : force,
+              ])
+            ) as PorterData['forces'];
+          } else if (phaseId === 'insights') {
+            updated.implications = acceptAll(porterData.implications);
+            updated.recommendedMoves = acceptAll(porterData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(porterData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const acceptAll = (arr: any[]) =>
           arr.map((item: any) =>

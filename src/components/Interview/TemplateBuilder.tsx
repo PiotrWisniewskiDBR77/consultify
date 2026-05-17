@@ -1553,11 +1553,11 @@ ${sourceText || '(none)'}`;
                   }
                   className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50'
                       : 'border-slate-300 dark:border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
                   }`}
                 />
-                {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-xs text-rose-400 mt-1">{errors.name}</p>}
               </div>
 
               {/* Description */}
@@ -1582,8 +1582,8 @@ ${sourceText || '(none)'}`;
               </div>
 
               {isApplicationTemplate ? (
-                <div className="mb-3 rounded-lg border border-violet-500/20 bg-violet-500/8 px-3 py-2.5">
-                  <p className="text-[11px] leading-relaxed text-violet-700 dark:text-violet-200 mb-2">
+                <div className="mb-3 rounded-lg border border-primary-500/20 bg-primary-500/8 px-3 py-2.5">
+                  <p className="text-[11px] leading-relaxed text-primary-700 dark:text-primary-200 mb-2">
                     {isPolish
                       ? 'To jest szablon systemowy (tylko do odczytu). Sklonuj go, aby edytować własną kopię.'
                       : 'This is a system template (read-only). Clone it to edit your own copy.'}
@@ -1592,7 +1592,7 @@ ${sourceText || '(none)'}`;
                     type="button"
                     onClick={handleCloneTemplate}
                     disabled={isCloning}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-50"
                   >
                     {isCloning ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -1819,8 +1819,8 @@ ${sourceText || '(none)'}`;
               </button>
 
               {errors.questions && (
-                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <p className="text-xs text-red-400 flex items-center gap-2">
+                <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg">
+                  <p className="text-xs text-rose-400 flex items-center gap-2">
                     <AlertCircle size={14} />
                     {errors.questions}
                   </p>
@@ -1864,7 +1864,7 @@ ${sourceText || '(none)'}`;
                     type="button"
                     onClick={() => void proposeQuestionImprovementsWithAI()}
                     disabled={isAiGenerating || isApplicationTemplate}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-primary-500/25 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.04] text-violet-500 dark:text-violet-300 hover:bg-violet-500/5 dark:hover:bg-violet-400/10 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-primary-500/25 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.04] text-primary-500 dark:text-primary-300 hover:bg-primary-500/5 dark:hover:bg-primary-400/10 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {isAiGenerating ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -2303,7 +2303,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   return (
     <div
       className={`rounded-lg overflow-hidden transition-all ${
-        error ? 'ring-1 ring-red-500/40' : ''
+        error ? 'ring-1 ring-rose-500/40' : ''
       } ${isDragging ? 'shadow-lg' : ''}`}
     >
       {/* Header */}
@@ -2328,7 +2328,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
         <div className="flex items-center gap-1.5 shrink-0">
           {question.isRequired && (
-            <span className="px-1.5 py-0.5 bg-red-500/15 text-red-500 dark:text-red-300 text-[10px] rounded border border-red-500/20 leading-none">
+            <span className="px-1.5 py-0.5 bg-rose-500/15 text-rose-500 dark:text-rose-300 text-[10px] rounded border border-rose-500/20 leading-none">
               {isPolish ? 'Wymagane' : 'Required'}
             </span>
           )}
@@ -2404,7 +2404,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               rows={2}
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
                 error
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
+                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50'
                   : 'border-slate-300 dark:border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
               }`}
             />
@@ -2440,7 +2440,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 disabled={readOnly}
                 className={`w-full h-10 px-3 rounded-lg border text-sm font-medium transition-all ${
                   question.isRequired
-                    ? 'bg-red-500/20 border-red-500 text-red-500 dark:text-red-400'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-500 dark:text-rose-400'
                     : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
                 } disabled:opacity-50 disabled:pointer-events-none`}
               >
@@ -2479,7 +2479,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     <button
                       onClick={() => handleRemoveOption(idx)}
                       disabled={readOnly}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <X size={14} />
                     </button>
@@ -2506,7 +2506,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 </div>
               </div>
               {error && error.includes('opcje') && (
-                <p className="text-xs text-red-400 mt-1">{error}</p>
+                <p className="text-xs text-rose-400 mt-1">{error}</p>
               )}
             </div>
           )}

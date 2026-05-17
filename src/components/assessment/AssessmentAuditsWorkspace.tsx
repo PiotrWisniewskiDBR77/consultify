@@ -51,11 +51,11 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
         {audits.map((audit) => (
           <div
             key={audit.id}
-            className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 relative group hover:border-purple-500/30 transition-colors shadow-sm dark:shadow-none"
+            className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 relative group hover:border-primary-500/30 transition-colors shadow-sm dark:shadow-none"
           >
             <button
               onClick={() => onRemoveAudit(audit.id)}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-red-400 transition-opacity"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-opacity"
             >
               <Trash2 size={16} />
             </button>
@@ -72,7 +72,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
 
             <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 rounded px-3 py-2 mb-2 border border-slate-100 dark:border-transparent">
               <span className="text-xs text-slate-500 dark:text-slate-400">Score</span>
-              <span className="font-mono font-bold text-purple-600 dark:text-purple-300">
+              <span className="font-mono font-bold text-primary-600 dark:text-primary-300">
                 {audit.score}
               </span>
             </div>
@@ -99,12 +99,12 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
 
         {/* Form Card */}
         {isAdding && (
-          <div className="bg-white dark:bg-navy-800 border border-purple-500/50 rounded-xl p-4 shadow-lg shadow-purple-900/20">
+          <div className="bg-white dark:bg-navy-800 border border-primary-500/50 rounded-xl p-4 shadow-lg shadow-primary-900/20">
             <div className="space-y-3">
               <input
                 type="text"
                 placeholder="Audit Name (e.g. ADMA 2024)"
-                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-primary-500"
                 value={newAudit.name || ''}
                 onChange={(e) => setNewAudit({ ...newAudit, name: e.target.value })}
               />
@@ -141,7 +141,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
                 </button>
                 <button
                   onClick={handleAdd}
-                  className="flex-1 px-3 py-2 rounded text-xs bg-purple-600 text-white font-bold hover:bg-purple-500"
+                  className="flex-1 px-3 py-2 rounded text-xs bg-primary-600 text-white font-bold hover:bg-primary-500"
                 >
                   Save
                 </button>

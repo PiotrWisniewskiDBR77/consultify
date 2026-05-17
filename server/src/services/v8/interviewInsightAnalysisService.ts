@@ -193,9 +193,10 @@ async function loadSourceSessions(sessionIds: string[]): Promise<SourceSessionRo
        s.owner_id,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') AS respondent_name,
        u.job_title,
-       u.department
+       upe.department
      FROM interview_sessions s
      LEFT JOIN users u ON u.id = s.owner_id
+     LEFT JOIN user_profile_extended upe ON upe.user_id = u.id
      WHERE s.id IN (${placeholders})`,
     sessionIds
   );
@@ -225,6 +226,10 @@ function buildTopicEntries(params: {
   answerSessionMap: Record<string, string>;
 }): TopicEntry[] {
   const { insight, findings, answerSessionMap } = params;
+  const contradictionText = (insight.signals || [])
+    .filter((signal) => signal.type === 'contradiction')
+    .map((signal) => `${signal.title || ''} ${signal.description || ''}`.toLowerCase())
+    .join('\n');
   const findingsBySourceKey = findings.reduce<Record<string, P10Finding>>((acc, finding) => {
     if (finding.source_key) acc[finding.source_key] = finding;
     return acc;
@@ -252,6 +257,13 @@ function buildTopicEntries(params: {
         finding?.evidence_pointers?.filter((pointer) => !pointer.isTombstone).length ||
         uniqueStrings(item.evidence_refs || []).length;
       const confidenceLevel = finding?.confidence_level || inferFallbackConfidence(kind, item);
+      const topicText =
+        `${item.title || ''} ${item.description || ''} ${item.divergence_note || ''}`.toLowerCase();
+      const signalContradictsTopic =
+        Boolean(contradictionText) &&
+        uniqueStrings([item.title, ...(item.perspective_labels || [])]).some((label) =>
+          contradictionText.includes(label.toLowerCase())
+        );
       return {
         id: `${sourceKey}`,
         sourceKey,
@@ -266,7 +278,10 @@ function buildTopicEntries(params: {
         answerRefs: uniqueStrings(item.evidence_refs || []),
         supportSessionIds,
         crossSessionPattern: Boolean(item.crossSessionPattern) || supportSessionIds.length > 1,
-        isContradicted: confidenceLevel === 'contradicted',
+        isContradicted:
+          confidenceLevel === 'contradicted' ||
+          signalContradictsTopic ||
+          /\b(conflict|contradict|sprzecz|disagree|different owners|różn)/i.test(topicText),
         perspectiveLabels: uniqueStrings(item.perspective_labels || []),
         divergenceNote: String(item.divergence_note || '').trim() || undefined,
       };

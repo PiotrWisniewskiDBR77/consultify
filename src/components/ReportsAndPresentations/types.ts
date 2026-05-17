@@ -209,8 +209,8 @@ export const REPORT_TYPE_META: Record<
   R2: {
     label: 'Steering Committee',
     labelPl: 'Komitet sterujący',
-    color: 'text-purple-400',
-    dotColor: 'bg-purple-400',
+    color: 'text-blue-400',
+    dotColor: 'bg-blue-400',
   },
   R3: {
     label: 'Benefits Tracking',
@@ -245,7 +245,7 @@ export const PRESENTATION_STATUS_META: Record<
   generated: { label: 'Generated', labelPl: 'Wygenerowana', dotColor: 'bg-blue-400' },
   editing: { label: 'Editing', labelPl: 'Edycja', dotColor: 'bg-amber-400' },
   ready: { label: 'Ready', labelPl: 'Gotowa', dotColor: 'bg-emerald-400' },
-  shared: { label: 'Shared', labelPl: 'Udostępniona', dotColor: 'bg-purple-400' },
+  shared: { label: 'Shared', labelPl: 'Udostępniona', dotColor: 'bg-blue-400' },
   archived: { label: 'Archived', labelPl: 'Zarchiwizowana', dotColor: 'bg-slate-500' },
 };
 
@@ -254,7 +254,7 @@ export const SOURCE_TYPE_META: Record<
   { label: string; labelPl: string; color: string }
 > = {
   tool: { label: 'Tool', labelPl: 'Narzędzie', color: 'text-emerald-400' },
-  assessment: { label: 'Assessment', labelPl: 'Ocena', color: 'text-purple-400' },
+  assessment: { label: 'Assessment', labelPl: 'Ocena', color: 'text-blue-400' },
   finance: { label: 'Finance', labelPl: 'Finanse', color: 'text-blue-400' },
   upload: { label: 'Upload', labelPl: 'Przesłane', color: 'text-amber-400' },
 };
@@ -265,7 +265,7 @@ export const TEMPLATE_TYPE_META: Record<
 > = {
   report: { label: 'Report', labelPl: 'Raport', dotColor: 'bg-blue-400' },
   sheet: { label: 'Sheet', labelPl: 'Tabela', dotColor: 'bg-emerald-400' },
-  presentation: { label: 'Presentation', labelPl: 'Prezentacja', dotColor: 'bg-purple-400' },
+  presentation: { label: 'Presentation', labelPl: 'Prezentacja', dotColor: 'bg-blue-400' },
 };
 
 export const TEMPLATE_STATUS_META: Record<

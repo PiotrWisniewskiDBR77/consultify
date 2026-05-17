@@ -132,7 +132,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="text-xl lg:text-2xl text-white/90 leading-relaxed font-medium"
           >
             {t('landing.hero.subtitleLine1', 'Your')}{' '}
-            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">
+            <span className="bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent font-bold">
               {t('landing.hero.coThinker', 'AI Co-Thinker')}
             </span>{' '}
             {t('landing.hero.subtitleLine1End', 'for Enterprise Strategy.')}
@@ -151,9 +151,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             const colorMap: Record<string, { border: string; glow: string; hoverBorder: string }> =
               {
                 purple: {
-                  border: 'ring-purple-500/40',
-                  glow: 'shadow-purple-500/20',
-                  hoverBorder: 'group-hover:ring-purple-400/60',
+                  border: 'ring-primary-500/40',
+                  glow: 'shadow-primary-500/20',
+                  hoverBorder: 'group-hover:ring-primary-400/60',
                 },
                 indigo: {
                   border: 'ring-indigo-500/40',
@@ -176,9 +176,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   hoverBorder: 'group-hover:ring-blue-400/60',
                 },
                 cyan: {
-                  border: 'ring-cyan-500/40',
-                  glow: 'shadow-cyan-500/20',
-                  hoverBorder: 'group-hover:ring-cyan-400/60',
+                  border: 'ring-blue-500/40',
+                  glow: 'shadow-blue-500/20',
+                  hoverBorder: 'group-hover:ring-blue-400/60',
                 },
               };
             const colors = colorMap[card.color] || colorMap['purple'];
@@ -198,11 +198,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   }
                 }}
                 className={`
-                                    group relative rounded-xl overflow-hidden 
+                                    group relative rounded-xl overflow-hidden
                                     shadow-lg hover:shadow-2xl ${colors.glow} hover:shadow-xl
                                     transition-all duration-500 cursor-pointer select-none
                                     ${card.className}
-                                    ${card.primary ? 'ring-2 ring-purple-600 ring-offset-4 dark:ring-offset-navy-950' : ''}
+                                    ${card.primary ? 'ring-2 ring-primary-600 ring-offset-4 dark:ring-offset-navy-950' : ''}
                                 `}
               >
                 {/* Background Image */}
@@ -257,7 +257,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {/* Glowing accent for primary */}
                 {card.primary && (
                   <div
-                    className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`}
+                    className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow ${isDark ? 'bg-primary-500/20' : 'bg-primary-600/10'}`}
                   />
                 )}
               </motion.div>
@@ -270,13 +270,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.25 }}
             whileHover={{ scale: 1.02, y: -4 }}
-            className="hidden lg:block lg:col-span-1 lg:row-span-1 relative group cursor-pointer shadow-lg hover:shadow-2xl shadow-purple-500/20 hover:shadow-xl transition-all duration-500"
+            className="hidden lg:block lg:col-span-1 lg:row-span-1 relative group cursor-pointer shadow-lg hover:shadow-2xl shadow-primary-500/20 hover:shadow-xl transition-all duration-500"
           >
             {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-indigo-600/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-600/30 to-indigo-600/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
 
             {/* Content */}
-            <div className="relative h-full px-8 py-8 rounded-xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-purple-500/40 group-hover:ring-purple-400/60 ring-inset transition-all duration-500 overflow-hidden">
+            <div className="relative h-full px-8 py-8 rounded-xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-primary-500/40 group-hover:ring-primary-400/60 ring-inset transition-all duration-500 overflow-hidden">
               {/* Background Image */}
               <img
                 src="/assets/landing/cinematic/decisions_manifest.png"
@@ -289,7 +289,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
                   {t('landing.hero.tagline.line1', 'AI consulting.')}
                 </p>
-                <p className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight leading-tight">
+                <p className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent tracking-tight leading-tight">
                   {t('landing.hero.tagline.line2', 'No slides.')}
                 </p>
                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
@@ -298,7 +298,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
 
               {/* Accent line */}
-              <div className="relative z-10 mt-4 h-1.5 w-20 ml-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
+              <div className="relative z-10 mt-4 h-1.5 w-20 ml-auto bg-gradient-to-r from-primary-600 to-pink-600 rounded-full"></div>
             </div>
           </motion.div>
         </div>

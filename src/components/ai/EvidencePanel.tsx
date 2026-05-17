@@ -60,17 +60,17 @@ const EVIDENCE_TYPE_CONFIG: Record<
   SIGNAL: {
     icon: <AlertCircle className="w-4 h-4" />,
     label: 'Signal',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
   },
   DOC_REF: {
     icon: <FileText className="w-4 h-4" />,
     label: 'Document',
-    color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   },
   USER_EVENT: {
     icon: <Clock className="w-4 h-4" />,
     label: 'User Event',
-    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   },
   SYSTEM_EVENT: {
     icon: <FileCode className="w-4 h-4" />,
@@ -173,8 +173,8 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-        <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+      <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
         </div>

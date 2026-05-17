@@ -99,7 +99,7 @@ const SettingToggle: React.FC<{
       <button
         onClick={() => onChange(!value)}
         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-          value ? 'bg-purple-600' : 'bg-slate-200 dark:bg-white/10'
+          value ? 'bg-primary-600' : 'bg-slate-200 dark:bg-white/10'
         }`}
       >
         <motion.div
@@ -129,7 +129,7 @@ const SettingsSection: React.FC<{
     >
       <div className="p-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-lg shadow-sm">
+          <div className="p-2 bg-gradient-to-br from-primary-500 to-indigo-600 text-white rounded-lg shadow-sm">
             {icon}
           </div>
           <div>
@@ -161,7 +161,7 @@ const TimeSelect: React.FC<{
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="w-full px-3 py-2 bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
       >
         {hours.map((hour) => (
           <option key={hour} value={hour}>
@@ -226,7 +226,7 @@ export const NotificationSettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -238,15 +238,15 @@ export const NotificationSettings: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="sticky top-0 z-10 flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-lg"
+          className="sticky top-0 z-10 flex items-center justify-between p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/30 rounded-lg"
         >
-          <span className="text-sm text-purple-700 dark:text-purple-300">
+          <span className="text-sm text-primary-700 dark:text-primary-300">
             {t('notifications.unsavedChanges', 'You have unsaved changes')}
           </span>
           <button
             onClick={saveSettings}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 text-sm font-medium"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {t('notifications.save', 'Save Changes')}
@@ -436,7 +436,7 @@ export const NotificationSettings: React.FC = () => {
         <button
           onClick={saveSettings}
           disabled={saving || !hasChanges}
-          className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           {t('notifications.saveSettings', 'Save Settings')}

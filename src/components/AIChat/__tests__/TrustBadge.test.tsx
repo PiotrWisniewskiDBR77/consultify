@@ -72,21 +72,21 @@ describe('TrustBadge', () => {
   });
 
   it('renders the badge when the flag is enabled', () => {
-    render(<TrustBadge isEnabled={() => true} />);
+    render(<TrustBadge isEnabled={() => true} citations={[validCitation(1)]} />);
     expect(screen.getByTestId('trust-badge-trigger')).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------
   // Source label.
   // -------------------------------------------------------------------
-  it('renders "No cited sources" when citations is empty', () => {
+  it('renders nothing when citations is empty', () => {
     render(<TrustBadge isEnabled={() => true} citations={[]} />);
-    expect(screen.getByTestId('trust-badge-trigger')).toHaveTextContent('No cited sources');
+    expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 
-  it('renders "No cited sources" when citations is missing entirely', () => {
+  it('renders nothing when citations is missing entirely', () => {
     render(<TrustBadge isEnabled={() => true} />);
-    expect(screen.getByTestId('trust-badge-trigger')).toHaveTextContent('No cited sources');
+    expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 
   it('renders the source count when citations contain valid entries', () => {
@@ -109,30 +109,31 @@ describe('TrustBadge', () => {
           null,
           'not an object',
           { id: 'missing-title' },
-          { title: 'missing-id' },
           validCitation(2),
         ]}
       />
     );
-    expect(screen.getByTestId('trust-badge-trigger')).toHaveAttribute('data-source-count', '2');
+    expect(screen.getByTestId('trust-badge-trigger')).toHaveAttribute('data-source-count', '3');
   });
 
-  it('treats a non-array citations value as zero sources', () => {
+  it('does not render for a non-array citations value', () => {
     render(<TrustBadge isEnabled={() => true} citations={{ foo: 'bar' } as unknown} />);
-    expect(screen.getByTestId('trust-badge-trigger')).toHaveAttribute('data-source-count', '0');
+    expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------
   // Model label.
   // -------------------------------------------------------------------
   it('renders the model label only when a non-empty string is provided', () => {
-    const { rerender } = render(<TrustBadge isEnabled={() => true} modelUsed="GPT-4o" />);
+    const { rerender } = render(
+      <TrustBadge isEnabled={() => true} modelUsed="GPT-4o" citations={[validCitation(1)]} />
+    );
     expect(screen.getByTestId('trust-badge-model')).toHaveTextContent('GPT-4o');
 
-    rerender(<TrustBadge isEnabled={() => true} modelUsed="   " />);
+    rerender(<TrustBadge isEnabled={() => true} modelUsed="   " citations={[validCitation(1)]} />);
     expect(screen.queryByTestId('trust-badge-model')).not.toBeInTheDocument();
 
-    rerender(<TrustBadge isEnabled={() => true} modelUsed={null} />);
+    rerender(<TrustBadge isEnabled={() => true} modelUsed={null} citations={[validCitation(1)]} />);
     expect(screen.queryByTestId('trust-badge-model')).not.toBeInTheDocument();
   });
 
@@ -151,7 +152,7 @@ describe('TrustBadge', () => {
   });
 
   it('closes the popover on Escape', () => {
-    render(<TrustBadge isEnabled={() => true} />);
+    render(<TrustBadge isEnabled={() => true} citations={[validCitation(1)]} />);
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByTestId('trust-badge-popover')).not.toBeInTheDocument();
@@ -160,7 +161,7 @@ describe('TrustBadge', () => {
   it('closes the popover on outside click', () => {
     render(
       <div>
-        <TrustBadge isEnabled={() => true} />
+        <TrustBadge isEnabled={() => true} citations={[validCitation(1)]} />
         <div data-testid="outside">outside</div>
       </div>
     );
@@ -183,10 +184,9 @@ describe('TrustBadge', () => {
     expect(screen.getByText('… and 2 more in the full list below.')).toBeInTheDocument();
   });
 
-  it('shows the "no sources" body when the popover opens on an empty reply', () => {
+  it('does not render the badge for an empty reply', () => {
     render(<TrustBadge isEnabled={() => true} />);
-    fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    expect(screen.getByTestId('trust-badge-no-sources-body')).toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------
@@ -213,9 +213,8 @@ describe('TrustBadge', () => {
     expect(payload).not.toHaveProperty('titles');
   });
 
-  it('buckets source counts correctly: none / few / many', () => {
-    const cases: Array<{ n: number; bucket: 'none' | 'few' | 'many' }> = [
-      { n: 0, bucket: 'none' },
+  it('buckets source counts correctly: few / many', () => {
+    const cases: Array<{ n: number; bucket: 'few' | 'many' }> = [
       { n: 1, bucket: 'few' },
       { n: 3, bucket: 'few' },
       { n: 4, bucket: 'many' },
@@ -256,6 +255,7 @@ describe('TrustBadge', () => {
         isEnabled={() => true}
         isHumanizeModelEnabled={() => true}
         modelUsed="gpt-4o-2024-08-06"
+        citations={[validCitation(1)]}
       />
     );
     expect(screen.getByTestId('trust-badge-model')).toHaveTextContent('GPT-4o');
@@ -268,6 +268,7 @@ describe('TrustBadge', () => {
         isEnabled={() => true}
         isHumanizeModelEnabled={() => false}
         modelUsed="  gpt-4o-2024-08-06  "
+        citations={[validCitation(1)]}
       />
     );
     expect(screen.getByTestId('trust-badge-model')).toHaveTextContent('gpt-4o-2024-08-06');
@@ -279,6 +280,7 @@ describe('TrustBadge', () => {
         isEnabled={() => true}
         isHumanizeModelEnabled={() => true}
         modelUsed="e3b0c442-98fc-1c14-9afb-c4e9c4e9c4e9"
+        citations={[validCitation(1)]}
       />
     );
     expect(screen.getByTestId('trust-badge-model')).toHaveTextContent('Private model');
@@ -330,6 +332,7 @@ describe('TrustBadge', () => {
         isEnabled={() => true}
         isHumanizeModelEnabled={() => true}
         modelUsed="e3b0c442-98fc-1c14-9afb-c4e9c4e9c4e9"
+        citations={[validCitation(1)]}
       />
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
@@ -359,10 +362,9 @@ describe('TrustBadge', () => {
     expect(screen.queryByTestId('trust-badge-copy-citations')).not.toBeInTheDocument();
   });
 
-  it('does not render the Copy button when there are no citations (flag ON)', () => {
+  it('does not render the badge when there are no citations (flag ON)', () => {
     render(<TrustBadge isEnabled={() => true} isCopyCitationsEnabled={() => true} />);
-    fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    expect(screen.queryByTestId('trust-badge-copy-citations')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 
   it('renders the Copy button when flag is ON and there is at least one citation', () => {
@@ -586,15 +588,11 @@ describe('TrustBadge', () => {
     expect(screen.getByTestId('trust-badge-reasoning-verify')).toBeInTheDocument();
   });
 
-  it('T-TR2: uses retrieval-none + model-unknown when inputs are degraded', () => {
+  it('T-TR2: does not render for degraded input without citations', () => {
     render(
       <TrustBadge isEnabled={() => true} isReasoningEnabled={() => true} citations={undefined} />
     );
-    fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    fireEvent.click(screen.getByTestId('trust-badge-reasoning-toggle'));
-
-    expect(screen.getByTestId('trust-badge-reasoning-retrieval-none')).toBeInTheDocument();
-    expect(screen.getByTestId('trust-badge-reasoning-model-unknown')).toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 
   it('T-TR2: a second toggle click collapses the body', () => {

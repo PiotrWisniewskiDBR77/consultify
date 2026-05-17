@@ -6,7 +6,7 @@ interface SignalNodeProps {
   icon: LucideIcon;
   label: string;
   count: number;
-  colorClass: string; // e.g., 'bg-red-500' or 'text-red-500'
+  colorClass: string; // e.g., 'bg-rose-500' or 'text-rose-500'
   active: boolean;
   onClick: () => void;
 }
@@ -36,7 +36,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
       onClick={onClick}
       className={`
                 relative flex items-center justify-center p-2 rounded-xl transition-all duration-300
-                group border bg-white dark:bg-navy-950/50 
+                group border bg-white dark:bg-navy-950/50
                 ${
                   active
                     ? `border-${colorClass.split('-')[1]}-500/30 bg-slate-50 dark:bg-white/5`
@@ -47,7 +47,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
     >
       {/* Critical Blinking Ring (Red Light only) */}
       {count > 0 && isCritical && (
-        <div className="absolute inset-0 rounded-xl bg-red-500/20 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl bg-rose-500/20 animate-pulse pointer-events-none" />
       )}
 
       {/* Active Status Dot (Top-Right) with Ping */}
@@ -68,12 +68,12 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
       {count > 0 && (
         <span
           className={`
-                    absolute -top-2 -right-2 
-                    min-w-[20px] h-5 
-                    flex items-center justify-center 
-                    text-[10px] font-bold 
-                    rounded-full 
-                    bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 
+                    absolute -top-2 -right-2
+                    min-w-[20px] h-5
+                    flex items-center justify-center
+                    text-[10px] font-bold
+                    rounded-full
+                    bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700
                     text-slate-900 dark:text-white
                     shadow-sm dark:shadow-lg dark:shadow-black/50
                     z-10

@@ -23,9 +23,9 @@ import _logger from '../utils/Logger.js';
 // ==========================================
 
 export const CATEGORIES = {
-  EMAIL: 'email',
+  EMAIL: 'communication',
   CALENDAR: 'calendar',
-  TASK_MANAGEMENT: 'task_management',
+  TASK_MANAGEMENT: 'project_management',
   CLOUD_STORAGE: 'cloud_storage',
 } as const;
 
@@ -57,7 +57,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.EMAIL,
     capabilities: ['email', 'contacts', 'labels'],
     authType: 'oauth2',
-    configFields: [],
+    configFields: ['domain'],
   },
   outlook: {
     id: 'outlook',
@@ -73,7 +73,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.EMAIL,
     capabilities: ['messages', 'channels', 'notifications'],
     authType: 'oauth2',
-    configFields: [],
+    configFields: ['workspace_id'],
   },
   teams: {
     id: 'teams',
@@ -125,7 +125,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.TASK_MANAGEMENT,
     capabilities: ['issues', 'projects', 'sprints', 'boards'],
     authType: 'oauth2',
-    configFields: ['site_url'],
+    configFields: ['site_url', 'cloud_id'],
   },
   asana: {
     id: 'asana',
@@ -133,7 +133,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.TASK_MANAGEMENT,
     capabilities: ['tasks', 'projects', 'portfolios'],
     authType: 'oauth2',
-    configFields: [],
+    configFields: ['workspace_gid'],
   },
   trello: {
     id: 'trello',

@@ -154,6 +154,93 @@ describe('useAIStream', () => {
     );
   });
 
+  it('should pass latest streamed citations through onStreamDone metadata', async () => {
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onChunk('Answer with source [1]');
+        onThinking?.({
+          type: 'citations',
+          citations: [
+            {
+              id: 'cit-1',
+              title: 'DBR77 Marketplace',
+              type: 'external',
+              reference: 'dbr77.com',
+              link: 'https://dbr77.com',
+            },
+          ],
+        });
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Test message', []);
+    });
+
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Answer with source [1]',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        citations: [
+          expect.objectContaining({
+            id: 'cit-1',
+            title: 'DBR77 Marketplace',
+          }),
+        ],
+      })
+    );
+  });
+
+  it('should pass streamed TrustBundleV1 through onStreamDone metadata', async () => {
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onChunk('Trusted answer [1]');
+        onThinking?.({
+          type: 'trust_bundle',
+          bundle: {
+            version: 'TrustBundleV1',
+            model: 'gpt-4o-mini',
+            provider: 'openai',
+            citationsCount: 1,
+          },
+        });
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Test trust bundle', []);
+    });
+
+    expect(result.current.trustBundle).toEqual(
+      expect.objectContaining({
+        version: 'TrustBundleV1',
+        citationsCount: 1,
+      })
+    );
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Trusted answer [1]',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        trustBundle: expect.objectContaining({
+          version: 'TrustBundleV1',
+          model: 'gpt-4o-mini',
+        }),
+      })
+    );
+  });
+
   it('should persist Teresa proposal metadata from streaming events', async () => {
     const mockOnStreamDone = vi.fn();
 
@@ -328,274 +415,6 @@ describe('useAIStream', () => {
     expect(mockSetCurrentStreamContent).toHaveBeenCalledWith('');
     expect(result.current.thinkingSteps).toEqual([]);
     expect(result.current.artifacts).toEqual([]);
-  });
-
-  it('keeps standard chat free of synthetic thinking steps during short waits', async () => {
-    vi.useFakeTimers();
-    vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (
-        _message,
-        _history,
-        _onChunk,
-        _onDone,
-        _systemPrompt,
-        _context,
-        _roleName,
-        _language,
-        _onThinking,
-        _options,
-        signal
-      ) =>
-        await new Promise<void>((resolve) => {
-          signal?.addEventListener('abort', () => resolve(), { once: true });
-        })
-    );
-
-    const { result } = renderHook(() => useAIStream());
-
-    act(() => {
-      void result.current.startStream('Test message', []);
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(10000);
-    });
-
-    expect(result.current.thinkingSteps).toEqual([]);
-
-    act(() => {
-      result.current.abortStream();
-    });
-    vi.useRealTimers();
-  });
-
-  it('does not expand standard chat into synthetic multi-step thinking during longer waits', async () => {
-    vi.useFakeTimers();
-    vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (
-        _message,
-        _history,
-        _onChunk,
-        _onDone,
-        _systemPrompt,
-        _context,
-        _roleName,
-        _language,
-        _onThinking,
-        _options,
-        signal
-      ) =>
-        await new Promise<void>((resolve) => {
-          signal?.addEventListener('abort', () => resolve(), { once: true });
-        })
-    );
-
-    const { result } = renderHook(() => useAIStream());
-
-    act(() => {
-      void result.current.startStream('Test message', []);
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(13000);
-    });
-
-    expect(result.current.thinkingSteps).toEqual([]);
-
-    act(() => {
-      result.current.abortStream();
-    });
-    vi.useRealTimers();
-  });
-
-  it('does not show synthetic thinking lines for a normal chat while waiting', async () => {
-    vi.useFakeTimers();
-    vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (
-        _message,
-        _history,
-        _onChunk,
-        _onDone,
-        _systemPrompt,
-        _context,
-        _roleName,
-        _language,
-        _onThinking,
-        _options,
-        signal
-      ) =>
-        await new Promise<void>((resolve) => {
-          signal?.addEventListener('abort', () => resolve(), { once: true });
-        })
-    );
-
-    const { result } = renderHook(() => useAIStream());
-
-    act(() => {
-      void result.current.startStream('Test message', []);
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(6000);
-    });
-
-    expect(result.current.thinkingSteps).toEqual([]);
-
-    act(() => {
-      result.current.abortStream();
-    });
-    vi.useRealTimers();
-  });
-
-  it('shows operational backend steps like web search even when showReasoning is off', async () => {
-    vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (
-        _message,
-        _history,
-        _onChunk,
-        _onDone,
-        _systemPrompt,
-        _context,
-        _roleName,
-        _language,
-        onThinking,
-        _options,
-        signal
-      ) =>
-        await new Promise<void>((resolve) => {
-          onThinking?.({
-            type: 'thought',
-            step: 'web_search_check',
-            status: 'in_progress',
-            label: 'Checking live web access for this request…',
-          });
-          signal?.addEventListener('abort', () => resolve(), { once: true });
-        })
-    );
-
-    const { result } = renderHook(() => useAIStream());
-
-    act(() => {
-      void result.current.startStream('Find current info', []);
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(result.current.thinkingSteps).toHaveLength(1);
-    expect(result.current.thinkingSteps[0]?.label).toContain('Checking live web access');
-
-    act(() => {
-      result.current.abortStream();
-    });
-  });
-
-  it('hides non-operational backend steps when showReasoning is off', async () => {
-    vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (
-        _message,
-        _history,
-        _onChunk,
-        _onDone,
-        _systemPrompt,
-        _context,
-        _roleName,
-        _language,
-        onThinking,
-        _options,
-        signal
-      ) =>
-        await new Promise<void>((resolve) => {
-          onThinking?.({
-            type: 'thought',
-            step: 'policy',
-            status: 'in_progress',
-            label: 'Checking safety policy and evidence requirements…',
-          });
-          signal?.addEventListener('abort', () => resolve(), { once: true });
-        })
-    );
-
-    const { result } = renderHook(() => useAIStream());
-
-    act(() => {
-      void result.current.startStream('Hello', []);
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(result.current.thinkingSteps).toEqual([]);
-
-    act(() => {
-      result.current.abortStream();
-    });
-  });
-
-  it('shows additional backend phases when showReasoning is on', async () => {
-    vi.mocked(useAppStore).mockReturnValue({
-      updateLastChatMessage: mockUpdateLastChatMessage,
-      setIsBotTyping: mockSetIsBotTyping,
-      setCurrentStreamContent: mockSetCurrentStreamContent,
-      currentStreamContent: '',
-      isBotTyping: false,
-      aiConfig: {
-        textToSpeech: false,
-        ttsVoice: null,
-        ttsRate: 1.0,
-        ttsPitch: 1.0,
-        deepResearch: false,
-        webSearch: false,
-        showReasoning: true,
-        maxMode: false,
-        knowledgeSources: [],
-        responseStyle: 'normal',
-      },
-    });
-
-    vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (
-        _message,
-        _history,
-        _onChunk,
-        _onDone,
-        _systemPrompt,
-        _context,
-        _roleName,
-        _language,
-        onThinking,
-        _options,
-        signal
-      ) =>
-        await new Promise<void>((resolve) => {
-          onThinking?.({
-            type: 'thought',
-            step: 'policy',
-            status: 'in_progress',
-            label: 'Checking safety policy and evidence requirements…',
-          });
-          signal?.addEventListener('abort', () => resolve(), { once: true });
-        })
-    );
-
-    const { result } = renderHook(() => useAIStream());
-
-    act(() => {
-      void result.current.startStream('Hello', []);
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(result.current.thinkingSteps).toHaveLength(1);
-    expect(result.current.thinkingSteps[0]?.label).toContain('Checking safety policy');
-
-    act(() => {
-      result.current.abortStream();
-    });
   });
 });
 

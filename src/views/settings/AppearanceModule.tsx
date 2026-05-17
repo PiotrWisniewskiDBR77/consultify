@@ -38,14 +38,14 @@ import { Language, User } from '../../types';
 
 // Accent color options
 const ACCENT_COLORS = [
-  { id: 'purple', label: 'Purple', value: '#8B5CF6', dark: '#A78BFA' },
+  { id: 'purple', label: 'Purple', value: '#6366F1', dark: '#A78BFA' },
   { id: 'blue', label: 'Blue', value: '#3B82F6', dark: '#60A5FA' },
   { id: 'green', label: 'Green', value: '#10B981', dark: '#34D399' },
   { id: 'amber', label: 'Amber', value: '#F59E0B', dark: '#FBBF24' },
   { id: 'rose', label: 'Rose', value: '#F43F5E', dark: '#FB7185' },
-  { id: 'cyan', label: 'Cyan', value: '#06B6D4', dark: '#22D3EE' },
+  { id: 'cyan', label: 'Cyan', value: '#3B82F6', dark: '#22D3EE' },
   { id: 'indigo', label: 'Indigo', value: '#6366F1', dark: '#818CF8' },
-  { id: 'teal', label: 'Teal', value: '#14B8A6', dark: '#2DD4BF' },
+  { id: 'teal', label: 'Teal', value: '#3B82F6', dark: '#2DD4BF' },
 ];
 
 interface AppearanceModuleProps {
@@ -97,7 +97,7 @@ const ThemeSettings: React.FC<{
               onClick={() => toggleTheme(t_.id)}
               className={`p-6 rounded-xl border-2 transition-all ${
                 theme === t_.id
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
               }`}
             >
@@ -105,7 +105,7 @@ const ThemeSettings: React.FC<{
               <p
                 className={`font-medium ${
                   theme === t_.id
-                    ? 'text-purple-700 dark:text-purple-300'
+                    ? 'text-primary-700 dark:text-primary-300'
                     : 'text-slate-900 dark:text-white'
                 }`}
               >
@@ -239,7 +239,7 @@ const LanguageSettings: React.FC<{
             onClick={() => handleLanguageChange(lang.code as Language)}
             className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${
               selectedLanguage === lang.code
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
                 : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
             }`}
           >
@@ -247,13 +247,13 @@ const LanguageSettings: React.FC<{
             <span
               className={`font-medium ${
                 selectedLanguage === lang.code
-                  ? 'text-purple-700 dark:text-purple-300'
+                  ? 'text-primary-700 dark:text-primary-300'
                   : 'text-slate-900 dark:text-white'
               }`}
             >
               {lang.name}
             </span>
-            {selectedLanguage === lang.code && <span className="ml-auto text-purple-500">✓</span>}
+            {selectedLanguage === lang.code && <span className="ml-auto text-primary-500">✓</span>}
           </button>
         ))}
       </div>

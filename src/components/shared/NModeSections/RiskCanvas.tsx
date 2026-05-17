@@ -81,7 +81,7 @@ export const getRiskScore = (risk: RiskItem): number =>
   riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
 
 const getRiskScoreClass = (score: number): string => {
-  if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+  if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
   if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
   if (score >= 4)
     return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -90,9 +90,8 @@ const getRiskScoreClass = (score: number): string => {
 
 const getRiskLevelClass = (level?: string): string => {
   const n = String(level || '').toLowerCase();
-  if (n === 'critical') return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
-  if (n === 'high')
-    return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+  if (n === 'critical') return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
+  if (n === 'high') return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (n === 'medium')
     return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
@@ -203,7 +202,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
             <button
               onClick={onAIGenerate}
               disabled={locked || isGeneratingAI}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isGeneratingAI ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -281,7 +280,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       <button
                         onClick={() => onRemoveRisk(risk.id)}
                         disabled={locked}
-                        className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                        className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                       >
                         <X size={12} />
                       </button>
@@ -391,7 +390,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                             })
                           }
                           disabled={locked}
-                          className="px-1.5 py-0.5 rounded border border-red-400/30 text-red-500 dark:text-red-400 text-[10px] hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                          className="px-1.5 py-0.5 rounded border border-rose-400/30 text-rose-500 dark:text-rose-400 text-[10px] hover:bg-rose-500/10 transition-colors disabled:opacity-40"
                         >
                           +{arg}
                         </button>

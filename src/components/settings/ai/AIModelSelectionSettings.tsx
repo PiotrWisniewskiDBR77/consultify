@@ -216,7 +216,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -229,7 +229,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Bot size={28} className="text-violet-500" />
+            <Bot size={28} className="text-primary-500" />
             {t('settings.ai.models.title', 'AI Model Selection')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -242,7 +242,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save Changes
@@ -250,10 +250,10 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       </div>
 
       {/* Cost Estimate Card */}
-      <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-200 dark:border-violet-500/30 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-primary-500/10 to-primary-500/10 border border-primary-200 dark:border-primary-500/30 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <DollarSign size={20} className="text-violet-600" />
+            <DollarSign size={20} className="text-primary-600" />
             <div>
               <p className="font-medium text-slate-900 dark:text-white">Estimated Monthly Cost</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -262,7 +262,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-violet-600">${costEstimate.monthly.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-primary-600">
+              ${costEstimate.monthly.toFixed(2)}
+            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               ${costEstimate.daily.toFixed(2)}/day
             </p>
@@ -284,7 +286,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >
@@ -309,8 +311,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 onClick={() => setSettings({ ...settings, defaultModel: model.id })}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
                   settings.defaultModel === model.id
-                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-violet-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -322,7 +324,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     </div>
                   </div>
                   {settings.defaultModel === model.id && (
-                    <CheckCircle size={20} className="text-violet-600" />
+                    <CheckCircle size={20} className="text-primary-600" />
                   )}
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
@@ -335,7 +337,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                         ? 'bg-green-100 text-green-700'
                         : model.speed === 'medium'
                           ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
+                          : 'bg-rose-100 text-rose-700'
                     }`}
                   >
                     <Clock size={10} className="inline mr-1" />
@@ -369,7 +371,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               <div key={useCase.id} className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 bg-white dark:bg-navy-900 rounded-lg">
-                    <Icon size={18} className="text-violet-600" />
+                    <Icon size={18} className="text-primary-600" />
                   </div>
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{useCase.label}</p>
@@ -416,7 +418,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                   Higher = more creative, Lower = more focused
                 </p>
               </div>
-              <span className="text-lg font-mono text-violet-600">
+              <span className="text-lg font-mono text-primary-600">
                 {settings.temperature.toFixed(1)}
               </span>
             </div>
@@ -429,7 +431,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               onChange={(e) =>
                 setSettings({ ...settings, temperature: parseFloat(e.target.value) })
               }
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-violet-600"
+              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
             />
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Precise</span>
@@ -449,7 +451,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                   Maximum length of AI responses
                 </p>
               </div>
-              <span className="text-lg font-mono text-violet-600">
+              <span className="text-lg font-mono text-primary-600">
                 {settings.maxTokens.toLocaleString()}
               </span>
             </div>
@@ -460,7 +462,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               step="256"
               value={settings.maxTokens}
               onChange={(e) => setSettings({ ...settings, maxTokens: parseInt(e.target.value) })}
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-violet-600"
+              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
             />
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Short (256)</span>
@@ -480,7 +482,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             <button
               onClick={() => setSettings({ ...settings, streamResponse: !settings.streamResponse })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.streamResponse ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'
+                settings.streamResponse ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <span

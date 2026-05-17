@@ -39,7 +39,7 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
   showTarget = true,
   showDots = true,
   animate = true,
-  color = '#8B5CF6',
+  color = '#6366F1',
   targetColor = '#F59E0B',
   fillOpacity = 0.2,
   yAxisMin,

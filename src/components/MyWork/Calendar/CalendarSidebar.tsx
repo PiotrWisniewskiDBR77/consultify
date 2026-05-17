@@ -211,7 +211,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               return (
                 <Callout
                   key={source}
-                  variant={variant}
+                  variant={variant as 'info' | 'warning' | 'critical' | 'success'}
                   compact
                   title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${lifecycleInfo ? lifecycleInfo.label : state.statusLabel}`}
                 >

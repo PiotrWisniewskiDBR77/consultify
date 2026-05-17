@@ -37,7 +37,7 @@ const IMPACT_COLORS = {
   low: 'text-slate-500 bg-slate-500/10',
 };
 const EFFORT_COLORS = {
-  high: 'text-red-600 bg-red-500/10',
+  high: 'text-rose-600 bg-rose-500/10',
   medium: 'text-amber-600 bg-amber-500/10',
   low: 'text-emerald-600 bg-emerald-500/10',
 };
@@ -167,7 +167,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
               <button
                 onClick={analyze}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Analizuj priorytety' : 'Analyze priorities'}
@@ -262,7 +262,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
             <button
               onClick={handleApplyAll}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
             >
               <CheckCircle2 size={12} />
               {isPl ? 'Zastosuj priorytety' : 'Apply priorities'}

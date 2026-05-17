@@ -76,9 +76,9 @@ const categoryIcons: Record<string, React.ReactNode> = {
 
 const categoryColors: Record<string, string> = {
   ui: 'text-blue-400 bg-blue-400/10',
-  ai: 'text-purple-400 bg-purple-400/10',
+  ai: 'text-primary-400 bg-primary-400/10',
   performance: 'text-green-400 bg-green-400/10',
-  experimental: 'text-orange-400 bg-orange-400/10',
+  experimental: 'text-amber-400 bg-amber-400/10',
   beta: 'text-pink-400 bg-pink-400/10',
 };
 

@@ -2,6 +2,16 @@ import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+} from '@/components/shared/ModuleMenu3';
 
 type Menu3Chip = {
   id: string;
@@ -27,40 +37,20 @@ interface AssessmentMenu3ActionBarProps {
   className?: string;
 }
 
-const CHIP_BASE =
-  'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-
-const BADGE_BASE = 'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
-
 export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> = ({
   chips = [],
   actions,
   className = '',
 }) => {
   return (
-    <div
-      className={`flex items-center justify-between gap-3 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5 px-4 py-2 ${className}`}
-    >
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar min-w-0">
+    <div className={`${MENU_3_INNER_CLASS} ${className}`}>
+      <div className={MENU_3_LEFT_CLASS}>
         {chips.map((chip) => (
-          <div
-            key={chip.id}
-            className={`${CHIP_BASE} ${
-              chip.active
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60'
-            }`}
-          >
-            {chip.icon || <span className="h-2 w-2 rounded-full bg-slate-400" />}
+          <div key={chip.id} className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}>
+            {chip.icon || <span className={MENU_3_ALL_DOT_CLASS} />}
             <span className="truncate">{chip.label}</span>
             {chip.badge !== undefined && chip.badge !== null ? (
-              <span
-                className={`${BADGE_BASE} ${
-                  chip.active
-                    ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                }`}
-              >
+              <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {chip.badge}
               </span>
             ) : null}
@@ -68,7 +58,7 @@ export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> =
         ))}
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className={MENU_3_RIGHT_CLASS}>
         {actions.map((action) => {
           const Icon = action.icon;
           return (

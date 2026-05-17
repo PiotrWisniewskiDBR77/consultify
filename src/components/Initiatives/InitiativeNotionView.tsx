@@ -300,7 +300,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
                   onClick={() => onSelectSection(group.id)}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm transition-colors ${
                     isActive
-                      ? 'bg-purple-500/10 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-l-2 border-purple-500'
+                      ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
                   }`}
                   title={group.label}
@@ -346,7 +346,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             </div>
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
-                <Users size={11} className="text-purple-500" />
+                <Users size={11} className="text-primary-500" />
                 <span className="text-[9px] font-semibold text-slate-400 uppercase">
                   {isPolish ? 'Zespół' : 'Team'}
                 </span>
@@ -357,7 +357,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             </div>
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
-                <Calendar size={11} className="text-cyan-500" />
+                <Calendar size={11} className="text-blue-500" />
                 <span className="text-[9px] font-semibold text-slate-400 uppercase">
                   {isPolish ? 'Zasoby' : 'Resources'}
                 </span>
@@ -388,7 +388,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="flex items-center gap-1.5">
                 {ctx.riskCount > 0 && (
                   <span
-                    className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                    className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}
                   >
                     {ctx.riskCount}R
                   </span>

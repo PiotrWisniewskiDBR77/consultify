@@ -1,5 +1,7 @@
 # Reports & Presentations v3 — SSOT (Gamma‑like UX)
 
+> Note (v1 doctrine update): the Document runtime referenced from this document is now productized as **Consultify Document Studio**. See `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`. R1–R4 reports remain the `report` family within Document Studio's Template Registry. The unified Reports & Presentations hub remains the primary R&P surface.
+>
 > **Status:** Canonical (v3)  
 > **⚠️ PRESENTATION GENERATOR** — pełna specyfikacja flow, model danych, AI agent, templates, media library, eksport, learning:  
 > → **[`PRESENTATION_GENERATOR_V3.md`](PRESENTATION_GENERATOR_V3.md)** ← P0, kanoniczny SSOT  

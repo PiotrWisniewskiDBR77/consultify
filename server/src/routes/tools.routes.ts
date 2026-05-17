@@ -10,6 +10,7 @@ const ToolController = ToolControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
   ApproveToolSchema,
@@ -25,6 +26,7 @@ const router = Router();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 router.post('/', validateBody(CreateToolSessionSchema), ToolController.createToolSession);
@@ -55,5 +57,8 @@ router.post(
   ToolController.generateInitiatives
 );
 router.get('/:toolId/generated-initiatives', ToolController.getGeneratedInitiatives);
+router.get('/:toolId/comments', ToolController.listComments);
+router.post('/:toolId/comments', ToolController.addComment);
+router.delete('/:toolId/comments/:commentId', ToolController.deleteComment);
 
 export default router;

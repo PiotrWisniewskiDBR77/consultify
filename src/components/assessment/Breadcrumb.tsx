@@ -72,25 +72,22 @@ export const Breadcrumb: React.FC = () => {
   }
 
   return (
-    <nav className="flex items-center space-x-2 text-sm text-slate-700 dark:text-slate-300 mb-4">
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
       {breadcrumbs.map((crumb, index) => (
         <React.Fragment key={index}>
           {index > 0 && (
-            <ChevronRight
-              className="w-4 h-4 text-slate-400 dark:text-slate-500"
-              aria-hidden="true"
-            />
+            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
           )}
           {crumb.viewId ? (
             <button
               onClick={() => setCurrentView(crumb.viewId!)}
-              className="text-slate-700 hover:text-primary-700 dark:text-slate-300 dark:hover:text-primary-400 transition-colors flex items-center gap-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
+              className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1"
             >
               {index === 0 && <Home className="w-4 h-4" />}
               {crumb.label}
             </button>
           ) : (
-            <span className="text-slate-900 dark:text-white font-semibold">{crumb.label}</span>
+            <span className="text-gray-900 dark:text-white font-medium">{crumb.label}</span>
           )}
         </React.Fragment>
       ))}

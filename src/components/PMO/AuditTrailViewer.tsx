@@ -46,21 +46,20 @@ interface AuditTrailViewerProps {
 
 const DOMAIN_COLORS: Record<string, string> = {
   GOVERNANCE_DECISION_MAKING:
-    'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
   SCOPE_CHANGE_CONTROL: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   SCHEDULE_MILESTONES: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  RESOURCE_RESPONSIBILITY:
-    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  RISK_ISSUE_MANAGEMENT: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  PERFORMANCE_REPORTING: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+  RESOURCE_RESPONSIBILITY: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  RISK_ISSUE_MANAGEMENT: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  PERFORMANCE_REPORTING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
 };
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
   created: <CheckCircle size={14} className="text-green-500" />,
   updated: <Clock size={14} className="text-blue-500" />,
-  deleted: <AlertCircle size={14} className="text-red-500" />,
-  approved: <Shield size={14} className="text-purple-500" />,
-  rejected: <AlertCircle size={14} className="text-orange-500" />,
+  deleted: <AlertCircle size={14} className="text-rose-500" />,
+  approved: <Shield size={14} className="text-primary-500" />,
+  rejected: <AlertCircle size={14} className="text-amber-500" />,
 };
 
 export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId }) => {
@@ -202,7 +201,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <FileText size={24} className="text-purple-500" />
+            <FileText size={24} className="text-primary-500" />
             Audit Trail
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -211,7 +210,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         </div>
         <button
           onClick={exportAuditTrail}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white dark:bg-purple-600 rounded-lg hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white dark:bg-primary-600 rounded-lg hover:opacity-90 transition-opacity"
         >
           <Download size={16} />
           Export Report
@@ -231,7 +230,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
             placeholder="Search entries..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
 
@@ -239,7 +238,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value as 'today' | 'week' | 'month' | 'all')}
-          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="today">Today</option>
           <option value="week">Last 7 days</option>
@@ -251,7 +250,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         <select
           value={selectedDomain || ''}
           onChange={(e) => setSelectedDomain(e.target.value || null)}
-          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">All Domains</option>
           {uniqueDomains.map((domain) => (
@@ -265,7 +264,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         <select
           value={selectedAction || ''}
           onChange={(e) => setSelectedAction(e.target.value || null)}
-          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">All Actions</option>
           {uniqueActions.map((action) => (
@@ -295,7 +294,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
           <div className="text-xs text-slate-500 dark:text-slate-400">Created</div>
         </div>
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-navy-700">
-          <div className="text-2xl font-bold text-purple-600">{uniqueDomains.length}</div>
+          <div className="text-2xl font-bold text-primary-600">{uniqueDomains.length}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Domains</div>
         </div>
       </div>
@@ -304,7 +303,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-100 dark:border-navy-700 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-            <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-2"></div>
             Loading audit trail...
           </div>
         ) : filteredEntries.length === 0 ? (

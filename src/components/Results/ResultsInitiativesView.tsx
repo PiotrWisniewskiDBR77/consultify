@@ -156,7 +156,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
 
   const getAttentionTone = (initiative: PreviewInitiative) => {
     if (initiative.belowTargetCount > 0 || initiative.openDeviationCount > 0) {
-      return 'text-red-600 dark:text-red-400';
+      return 'text-rose-600 dark:text-rose-400';
     }
     if (initiative.needsEntryCount > 0) {
       return 'text-amber-600 dark:text-amber-300';
@@ -632,7 +632,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                                 initiative.attentionCount > 0
                                   ? initiative.belowTargetCount > 0 ||
                                     initiative.openDeviationCount > 0
-                                    ? 'bg-red-500'
+                                    ? 'bg-rose-500'
                                     : 'bg-amber-500'
                                   : 'bg-emerald-500'
                               }`}

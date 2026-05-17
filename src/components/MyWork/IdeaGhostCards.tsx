@@ -41,9 +41,9 @@ const GHOST_COLORS: Record<string, string> = {
   goal: 'border-emerald-300/50 bg-emerald-50/30 dark:bg-emerald-900/10',
   options: 'border-amber-300/50 bg-amber-50/30 dark:bg-amber-900/10',
   evidence: 'border-sky-300/50 bg-sky-50/30 dark:bg-sky-900/10',
-  risks: 'border-purple-300/50 bg-purple-50/30 dark:bg-purple-900/10',
-  experiments: 'border-cyan-300/50 bg-cyan-50/30 dark:bg-cyan-900/10',
-  default: 'border-violet-300/50 bg-violet-50/30 dark:bg-violet-900/10',
+  risks: 'border-primary-300/50 bg-primary-50/30 dark:bg-primary-900/10',
+  experiments: 'border-blue-300/50 bg-blue-50/30 dark:bg-blue-900/10',
+  default: 'border-primary-300/50 bg-primary-50/30 dark:bg-primary-900/10',
 };
 
 export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
@@ -165,15 +165,15 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
               className={`relative w-[170px] min-h-[80px] p-3 rounded-xl border-2 border-dashed ${colorClass} backdrop-blur-sm`}
             >
               <div className="flex items-start gap-1.5">
-                <Sparkles size={10} className="text-violet-400 mt-0.5 shrink-0" />
+                <Sparkles size={10} className="text-primary-400 mt-0.5 shrink-0" />
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
                   {ghost.text}
                 </div>
               </div>
-              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-violet-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                 <Plus size={10} />
               </div>
-              <div className="mt-1.5 text-[8px] text-violet-400 flex items-center gap-1">
+              <div className="mt-1.5 text-[8px] text-primary-400 flex items-center gap-1">
                 <span>{Math.round(ghost.confidence * 100)}%</span>
                 {ghost.source && <span>· {ghost.source}</span>}
               </div>
@@ -183,7 +183,7 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
       })}
       {loading && (
         <div className="absolute top-4 right-4 pointer-events-auto">
-          <div className="flex items-center gap-1.5 bg-white/80 dark:bg-navy-800/80 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[10px] text-violet-500 shadow-sm">
+          <div className="flex items-center gap-1.5 bg-white/80 dark:bg-navy-800/80 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[10px] text-primary-500 shadow-sm">
             <Loader2 size={10} className="animate-spin" />
             {isPl ? 'AI szuka luk...' : 'AI finding gaps...'}
           </div>

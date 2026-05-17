@@ -6,9 +6,27 @@
 -- - SQLite doesn't support ADD COLUMN IF NOT EXISTS; migration runner should ignore duplicates.
 -- - Template "category" must match the CHECK constraint in 045_initiative_templates.sql.
 
+CREATE TABLE IF NOT EXISTS initiative_templates (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL CHECK(category IN ('DATA', 'PROCESS', 'PRODUCT', 'CULTURE', 'SECURITY', 'AI_ML', 'CUSTOM')),
+    description TEXT,
+    applicable_axes TEXT,
+    template_data TEXT NOT NULL,
+    is_public INTEGER DEFAULT 0,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
+    created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_templates_category ON initiative_templates(category);
+CREATE INDEX IF NOT EXISTS idx_templates_org ON initiative_templates(organization_id);
+CREATE INDEX IF NOT EXISTS idx_templates_public ON initiative_templates(is_public);
+
 -- Link initiatives to a template defining card scope/sections
 ALTER TABLE initiatives
-  ADD COLUMN initiative_template_id TEXT REFERENCES initiative_templates(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS initiative_template_id TEXT REFERENCES initiative_templates(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS idx_initiatives_template_id ON initiatives(initiative_template_id);
 

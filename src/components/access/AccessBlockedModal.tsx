@@ -27,6 +27,7 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   TRIAL_EXPIRED: { labelKey: 'access.cta.upgradeNow', href: '/settings?tab=billing' },
   AI_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  FEATURE_ACCESS_DENIED: { labelKey: 'access.cta.goToMyWork', href: ROUTES.MY_WORK },
   AI_TOKEN_BUDGET_EXCEEDED: {
     labelKey: 'access.cta.addPaymentMethod',
     href: '/settings?tab=billing',
@@ -138,8 +139,8 @@ export const AccessBlockedModal: React.FC = () => {
         <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">{resolved.message}</div>
 
         {(resolved.isTrialBlock || resolved.isLimitBlock) && (
-          <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
-            <p className="text-xs text-purple-700 dark:text-purple-300">
+          <div className="mt-4 p-3 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
+            <p className="text-xs text-primary-700 dark:text-primary-300">
               {t('access.upgrade.instantUnlock')}
             </p>
           </div>

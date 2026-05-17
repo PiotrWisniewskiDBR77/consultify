@@ -99,7 +99,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
   const getScoreColor = (score: number) => {
     if (score >= 7) return 'text-emerald-500';
     if (score >= 4) return 'text-amber-500';
-    return 'text-red-500';
+    return 'text-rose-500';
   };
 
   return (
@@ -137,7 +137,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 }}
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-white dark:bg-navy-700 shadow-sm text-purple-600 dark:text-purple-400'
+                    ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={isPolish ? 'Widok listy' : 'List view'}
@@ -151,7 +151,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 }}
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'comparison'
-                    ? 'bg-white dark:bg-navy-700 shadow-sm text-purple-600 dark:text-purple-400'
+                    ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={isPolish ? 'Porównanie' : 'Comparison view'}
@@ -179,7 +179,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   onGenerateAI();
                 }}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={isPolish ? 'Generuj AI' : 'Generate AI'}
               >
                 {isGenerating ? (
@@ -235,7 +235,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             <div
                               className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
                                 index === 0
-                                  ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+                                  ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white'
                                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
                               }`}
                             >
@@ -247,7 +247,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                 value={alt.title}
                                 onChange={(e) => onUpdate(alt.id, { title: e.target.value })}
                                 placeholder={isPolish ? 'Nazwa opcji...' : 'Option name...'}
-                                className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500/20 rounded px-1 -mx-1"
+                                className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500/20 rounded px-1 -mx-1"
                               />
                               <div className="flex items-center gap-2 mt-1">
                                 {alt.isRecommended && (
@@ -281,7 +281,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             </button>
                             <button
                               onClick={() => onRemove(alt.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -294,7 +294,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                           onChange={(e) => onUpdate(alt.id, { description: e.target.value })}
                           placeholder={isPolish ? 'Opis opcji...' : 'Option description...'}
                           rows={2}
-                          className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-purple-400 resize-none"
+                          className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                         />
 
                         {/* Pros & Cons */}
@@ -329,7 +329,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                         pros: alt.pros.filter((_, idx) => idx !== i),
                                       });
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity"
+                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 transition-opacity"
                                   >
                                     <X size={10} />
                                   </button>
@@ -347,7 +347,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
 
                           {/* Cons */}
                           <div>
-                            <div className="flex items-center gap-1 mb-2 text-xs font-medium text-red-600 dark:text-red-400">
+                            <div className="flex items-center gap-1 mb-2 text-xs font-medium text-rose-600 dark:text-rose-400">
                               <ThumbsDown size={12} />
                               <span>{isPolish ? 'Wady' : 'Cons'}</span>
                               <span className="text-slate-500 dark:text-slate-400">
@@ -357,7 +357,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             <div className="space-y-1">
                               {alt.cons.map((con, i) => (
                                 <div key={i} className="flex items-center gap-1 group">
-                                  <span className="text-red-500 text-xs">-</span>
+                                  <span className="text-rose-500 text-xs">-</span>
                                   <input
                                     type="text"
                                     value={con}
@@ -375,7 +375,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                         cons: alt.cons.filter((_, idx) => idx !== i),
                                       });
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity"
+                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 transition-opacity"
                                   >
                                     <X size={10} />
                                   </button>
@@ -383,7 +383,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                               ))}
                               <button
                                 onClick={() => onUpdate(alt.id, { cons: [...alt.cons, ''] })}
-                                className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+                                className="text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1"
                               >
                                 <Plus size={10} />
                                 {isPolish ? 'Dodaj' : 'Add'}
@@ -496,12 +496,12 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                       {/* Cons count row */}
                       <tr>
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                          <ThumbsDown size={14} className="text-red-500" />
+                          <ThumbsDown size={14} className="text-rose-500" />
                           {isPolish ? 'Wady' : 'Cons'}
                         </td>
                         {sortedAlternatives.map((alt) => (
                           <td key={alt.id} className="text-center py-3 px-4">
-                            <span className="text-red-600 dark:text-red-400 font-medium">
+                            <span className="text-rose-600 dark:text-rose-400 font-medium">
                               {alt.cons.filter((c) => c.trim()).length}
                             </span>
                           </td>
@@ -518,7 +518,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onAdd}
-                  className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
+                  className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-primary-400 dark:hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
                 >
                   <Plus size={18} />
                   <span>{isPolish ? 'Dodaj alternatywę' : 'Add alternative'}</span>

@@ -80,7 +80,7 @@ function normalizePortfolioSummary(
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
   'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
-  below: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-500' },
+  below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
 
@@ -354,7 +354,7 @@ export const ROIAnalysisView: React.FC = () => {
 
   const statusFilterOptions: FilterOption[] = [
     { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-slate-400' },
-    { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-red-500' },
+    { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-rose-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
   ];
 
@@ -396,7 +396,7 @@ export const ROIAnalysisView: React.FC = () => {
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
-              <TrendingDown size={16} className="text-red-400" />
+              <TrendingDown size={16} className="text-rose-400" />
             )}
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.portfolioVariance', 'Portfolio Variance')}
@@ -407,7 +407,7 @@ export const ROIAnalysisView: React.FC = () => {
               totalVariance > 0
                 ? 'text-emerald-400'
                 : totalVariance < 0
-                  ? 'text-red-400'
+                  ? 'text-rose-400'
                   : 'text-slate-400'
             }`}
           >
@@ -451,7 +451,7 @@ export const ROIAnalysisView: React.FC = () => {
                   >
                     <div
                       className={`w-full min-h-[4px] rounded-t transition-all ${
-                        isNeg ? 'bg-red-500' : 'bg-emerald-500'
+                        isNeg ? 'bg-rose-500' : 'bg-emerald-500'
                       }`}
                       style={{ height: `${Math.max(h, 4)}%` }}
                     />
@@ -548,7 +548,7 @@ export const ROIAnalysisView: React.FC = () => {
                     varPct > 0
                       ? 'text-emerald-400'
                       : varPct < 0
-                        ? 'text-red-400'
+                        ? 'text-rose-400'
                         : 'text-slate-400';
 
                   return (

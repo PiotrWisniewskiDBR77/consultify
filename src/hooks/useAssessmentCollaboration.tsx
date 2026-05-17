@@ -58,13 +58,13 @@ interface UseAssessmentCollaborationOptions {
 // Generate consistent avatar color from user ID
 const getAvatarColor = (userId: string): string => {
   const colors = [
-    'bg-purple-500',
+    'bg-primary-500',
     'bg-blue-500',
     'bg-green-500',
     'bg-amber-500',
     'bg-pink-500',
     'bg-indigo-500',
-    'bg-cyan-500',
+    'bg-blue-500',
     'bg-rose-500',
   ];
   let hash = 0;

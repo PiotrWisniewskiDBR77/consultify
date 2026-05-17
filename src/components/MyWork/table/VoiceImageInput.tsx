@@ -238,9 +238,9 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           {mode === 'voice' ? (
-            <Mic size={16} className="text-violet-500" />
+            <Mic size={16} className="text-primary-500" />
           ) : (
-            <Camera size={16} className="text-violet-500" />
+            <Camera size={16} className="text-primary-500" />
           )}
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {mode === 'voice'
@@ -255,14 +255,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           <div className="flex items-center gap-0.5 rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
             <button
               onClick={() => setMode('voice')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-violet-500/10 text-violet-600' : 'text-slate-400'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-400'}`}
             >
               <Mic size={10} className="inline mr-0.5" />
               {isPl ? 'Głos' : 'Voice'}
             </button>
             <button
               onClick={() => setMode('image')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-violet-500/10 text-violet-600' : 'text-slate-400'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-400'}`}
             >
               <ImageIcon size={10} className="inline mr-0.5" />
               {isPl ? 'Obraz' : 'Image'}
@@ -284,8 +284,8 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center transition-all ${
                   isRecording
-                    ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
-                    : 'bg-violet-500/10 text-violet-600 hover:bg-violet-500/20'
+                    ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/30'
+                    : 'bg-primary-500/10 text-primary-600 hover:bg-primary-500/20'
                 }`}
               >
                 {isRecording ? <Square size={20} /> : <Mic size={24} />}
@@ -311,7 +311,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             <div
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
                 isDragOver
-                  ? 'border-violet-500 bg-violet-500/5'
+                  ? 'border-primary-500 bg-primary-500/5'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
               onDragOver={(e) => {
@@ -341,7 +341,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-violet-600 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-primary-600 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                   >
                     <ImageIcon size={10} />
                     {isPl ? 'Wybierz plik' : 'Choose file'}
@@ -366,7 +366,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           <button
             onClick={handleParse}
             disabled={loading || (mode === 'voice' ? !transcript : !imagePreview)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 dark:text-violet-400 hover:from-violet-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-indigo-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
             {loading
@@ -402,7 +402,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                     type="checkbox"
                     checked={idea.selected}
                     onChange={() => toggleIdea(idx)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
+                    className="w-3.5 h-3.5 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
                   />
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 block truncate">
@@ -415,7 +415,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                     )}
                   </div>
                   {idea.category && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 flex-shrink-0">
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500/10 text-primary-600 flex-shrink-0">
                       {idea.category}
                     </span>
                   )}
@@ -438,7 +438,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             <button
               onClick={handleAddSelected}
               disabled={parsedIdeas.filter((p) => p.selected).length === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-50"
             >
               <Plus size={12} />
               {isPl

@@ -15,12 +15,13 @@ import {
   UserCircle,
   Users,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { InfoButton } from '../shared/InfoButton';
 
 interface ProfileSettingsProps {
@@ -64,6 +65,39 @@ const JOB_TITLE_SUGGESTIONS = [
   'Other',
 ];
 
+const JOB_TITLE_I18N_KEYS: Record<string, string> = {
+  CEO: 'ceo',
+  CTO: 'cto',
+  CFO: 'cfo',
+  COO: 'coo',
+  CMO: 'cmo',
+  'VP of Engineering': 'vpEngineering',
+  'VP of Product': 'vpProduct',
+  'VP of Operations': 'vpOperations',
+  Director: 'director',
+  'Senior Manager': 'seniorManager',
+  Manager: 'manager',
+  'Project Manager': 'projectManager',
+  'Product Manager': 'productManager',
+  'Program Manager': 'programManager',
+  'Team Lead': 'teamLead',
+  'Tech Lead': 'techLead',
+  'Engineering Lead': 'engineeringLead',
+  'Senior Developer': 'seniorDeveloper',
+  Developer: 'developer',
+  'Software Engineer': 'softwareEngineer',
+  'Business Analyst': 'businessAnalyst',
+  'Data Analyst': 'dataAnalyst',
+  'Data Scientist': 'dataScientist',
+  Consultant: 'consultant',
+  'Senior Consultant': 'seniorConsultant',
+  'Principal Consultant': 'principalConsultant',
+  Designer: 'designer',
+  'UX Designer': 'uxDesigner',
+  'Product Designer': 'productDesigner',
+  Other: 'other',
+};
+
 // Common timezones
 const COMMON_TIMEZONES = [
   { value: 'Europe/Warsaw', label: 'Warsaw (CET/CEST)' },
@@ -95,24 +129,26 @@ const TIME_FORMATS = [
   { value: '12h', label: '12-hour (2:30 PM)' },
 ];
 
-// Pronouns and department option values (labels resolved via i18n inside component)
-const PRONOUNS_VALUES = ['', 'he/him', 'she/her', 'they/them', 'other'] as const;
-const DEPARTMENT_VALUES = [
-  '',
-  'Engineering',
-  'Product',
-  'Design',
-  'Marketing',
-  'Sales',
-  'Operations',
-  'Finance',
-  'HR',
-  'Legal',
-  'Customer Success',
-  'Support',
-  'Executive',
-  'Other',
+const PROFILE_CONFIRMATION_FIELDS = [
+  'firstName',
+  'lastName',
+  'phone',
+  'companyName',
+  'jobTitle',
+  'timezone',
+  'dateFormat',
+  'timeFormat',
+  'linkedinId',
+  'displayName',
+  'pronouns',
+  'department',
+  'statusMessage',
+  'isOutOfOffice',
+  'outOfOfficeUntil',
+  'outOfOfficeMessage',
 ] as const;
+
+type ProfileConfirmationField = (typeof PROFILE_CONFIRMATION_FIELDS)[number];
 
 // Extended form state type
 interface ExtendedFormState {
@@ -134,6 +170,126 @@ interface ExtendedFormState {
   outOfOfficeUntil: string;
   outOfOfficeMessage: string;
 }
+
+const toFormStateFromUser = (user: User): ExtendedFormState => ({
+  firstName: user.firstName || '',
+  lastName: user.lastName || '',
+  phone: user.phone || '',
+  companyName: user.companyName || '',
+  jobTitle: user.jobTitle || '',
+  timezone: user.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+  dateFormat: user.dateFormat || 'DD/MM/YYYY',
+  timeFormat: user.timeFormat || '24h',
+  linkedinId: user.linkedinId || '',
+  displayName: user.displayName || '',
+  pronouns: user.pronouns || '',
+  department: user.department || '',
+  statusMessage: user.statusMessage || '',
+  isOutOfOffice: user.isOutOfOffice || false,
+  outOfOfficeUntil: user.outOfOfficeUntil || '',
+  outOfOfficeMessage: user.outOfOfficeMessage || '',
+});
+
+const areProfileValuesEqual = (left: unknown, right: unknown): boolean => {
+  if (typeof left === 'boolean' || typeof right === 'boolean') {
+    return Boolean(left) === Boolean(right);
+  }
+  return String(left ?? '') === String(right ?? '');
+};
+
+const normalizeDateOnlyValue = (value: unknown): string => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw.slice(0, 10);
+  return raw;
+};
+
+const areProfileFieldValuesEqual = (
+  field: ProfileConfirmationField,
+  left: unknown,
+  right: unknown
+): boolean => {
+  if (field === 'outOfOfficeUntil') {
+    return normalizeDateOnlyValue(left) === normalizeDateOnlyValue(right);
+  }
+  return areProfileValuesEqual(left, right);
+};
+
+const removeKnownSuffix = (value: string, suffix: string): string => {
+  const trimmedValue = value.trim();
+  const trimmedSuffix = suffix.trim();
+  if (!trimmedValue || !trimmedSuffix || trimmedValue === trimmedSuffix) return trimmedValue;
+  const withoutSuffix = trimmedValue.endsWith(trimmedSuffix)
+    ? trimmedValue.slice(0, -trimmedSuffix.length).trim()
+    : trimmedValue;
+  return withoutSuffix.replace(/\b(.{3,}?)\1\b/g, '$1').trim();
+};
+
+const collapseRepeatedTextFragments = (value: string): string => {
+  let next = value.trim();
+  let previous = '';
+  while (next !== previous) {
+    previous = next;
+    for (let size = Math.floor(next.length / 2); size >= 3; size--) {
+      const first = next.slice(0, size);
+      if (next.startsWith(first + first)) {
+        next = first + next.slice(size * 2);
+        break;
+      }
+    }
+  }
+  return next.trim();
+};
+
+const removeKnownValueArtifacts = (value: string, knownValue: string): string => {
+  let next = value.trim();
+  const known = knownValue.trim();
+  if (!next || !known || next === known) return next;
+
+  let previous = '';
+  while (next !== previous) {
+    previous = next;
+
+    if (next.endsWith(known) && next.length > known.length) {
+      next = next.slice(0, -known.length).trim();
+    }
+
+    for (let size = known.length - 1; size >= 3; size--) {
+      const prefix = known.slice(0, size).trim();
+      if (prefix && next.endsWith(prefix) && next.length > prefix.length) {
+        next = next.slice(0, -prefix.length).trim();
+        break;
+      }
+    }
+
+    next = collapseRepeatedTextFragments(next);
+  }
+
+  return next;
+};
+
+const sanitizeProfileTextInput = (
+  value: string,
+  knownValues: string[],
+  options: { removeLeadingKnownValue?: boolean } = {}
+): string => {
+  let next = knownValues.reduce(
+    (current, knownValue) => removeKnownValueArtifacts(current, knownValue),
+    value.trim()
+  );
+
+  if (options.removeLeadingKnownValue) {
+    for (const knownValue of knownValues) {
+      const known = knownValue.trim();
+      if (known && next.startsWith(known) && next.length > known.length) {
+        next = next.slice(known.length).trim();
+      }
+    }
+  }
+
+  return collapseRepeatedTextFragments(next);
+};
 
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   currentUser,
@@ -191,67 +347,185 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [firstNameValidationError, setFirstNameValidationError] = useState<string | null>(null);
   const [showJobTitleSuggestions, setShowJobTitleSuggestions] = useState(false);
+  const initialFormState = useMemo(() => toFormStateFromUser(currentUser), [currentUser.id]);
+  const [formState, setFormState] = useState<ExtendedFormState>(initialFormState);
+  const lastSyncedFormRef = useRef<ExtendedFormState>(initialFormState);
+  const previousUserIdRef = useRef<string>(currentUser.id);
+  const hasLocalEditsRef = useRef(false);
 
-  const [formState, setFormState] = useState<ExtendedFormState>({
-    firstName: currentUser.firstName || '',
-    lastName: currentUser.lastName || '',
-    phone: currentUser.phone || '',
-    companyName: currentUser.companyName || '',
-    jobTitle: currentUser.jobTitle || '',
-    timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-    dateFormat: currentUser.dateFormat || 'DD/MM/YYYY',
-    timeFormat: currentUser.timeFormat || '24h',
-    linkedinId: currentUser.linkedinId || '',
-    // New fields
-    displayName: currentUser.displayName || '',
-    pronouns: currentUser.pronouns || '',
-    department: currentUser.department || '',
-    statusMessage: currentUser.statusMessage || '',
-    isOutOfOffice: currentUser.isOutOfOffice || false,
-    outOfOfficeUntil: currentUser.outOfOfficeUntil || '',
-    outOfOfficeMessage: currentUser.outOfOfficeMessage || '',
-  });
+  const getJobTitleLabel = useCallback(
+    (title: string) =>
+      t(`settings.profile.jobTitleSuggestions.${JOB_TITLE_I18N_KEYS[title] || 'other'}`, title),
+    [t]
+  );
+  const formatI18nKey = (value: string) =>
+    value.replace(/\//g, '_slash_').replace(/\./g, '_dot_').replace(/-/g, '_dash_');
+  const updateFormField = useCallback(
+    <K extends keyof ExtendedFormState>(field: K, value: ExtendedFormState[K]) => {
+      hasLocalEditsRef.current = true;
+      let nextValidationValue = value;
+      setFormState((current) => {
+        const sanitizedValue =
+          typeof value === 'string' && (field === 'firstName' || field === 'jobTitle')
+            ? sanitizeProfileTextInput(
+                value,
+                [String(current[field] || ''), String(lastSyncedFormRef.current[field] || '')],
+                { removeLeadingKnownValue: field === 'jobTitle' }
+              )
+            : value;
+        nextValidationValue = sanitizedValue as ExtendedFormState[K];
+        return { ...current, [field]: sanitizedValue as ExtendedFormState[K] };
+      });
+      setSaveStatus('idle');
+      setSaveError(null);
+      if (field === 'firstName') {
+        const nextFirstName =
+          typeof nextValidationValue === 'string' ? nextValidationValue.trim() : '';
+        if (!nextFirstName) {
+          setFirstNameValidationError(
+            t(
+              'settings.profile.validation.firstNameRequired',
+              'First name is required before saving'
+            )
+          );
+        } else {
+          setFirstNameValidationError(null);
+        }
+      }
+    },
+    [t]
+  );
 
   // Filter job title suggestions
   const filteredJobTitles = useMemo(() => {
     if (!formState.jobTitle) return JOB_TITLE_SUGGESTIONS;
-    return JOB_TITLE_SUGGESTIONS.filter((title) =>
-      title.toLowerCase().includes(formState.jobTitle.toLowerCase())
+    const query = formState.jobTitle.toLowerCase();
+    return JOB_TITLE_SUGGESTIONS.filter(
+      (title) =>
+        title.toLowerCase().includes(query) || getJobTitleLabel(title).toLowerCase().includes(query)
     );
-  }, [formState.jobTitle]);
+  }, [formState.jobTitle, getJobTitleLabel]);
 
-  // Initial state sync
+  // Initial state sync.
+  // Keep local edits stable while typing and only resync when:
+  // - user identity changes, or
+  // - local form is clean and a fresh server snapshot arrived.
   useEffect(() => {
-    setFormState({
-      firstName: currentUser.firstName || '',
-      lastName: currentUser.lastName || '',
-      phone: currentUser.phone || '',
-      companyName: currentUser.companyName || '',
-      jobTitle: currentUser.jobTitle || '',
-      timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      dateFormat: currentUser.dateFormat || 'DD/MM/YYYY',
-      timeFormat: currentUser.timeFormat || '24h',
-      linkedinId: currentUser.linkedinId || '',
-      displayName: currentUser.displayName || '',
-      pronouns: currentUser.pronouns || '',
-      department: currentUser.department || '',
-      statusMessage: currentUser.statusMessage || '',
-      isOutOfOffice: currentUser.isOutOfOffice || false,
-      outOfOfficeUntil: currentUser.outOfOfficeUntil || '',
-      outOfOfficeMessage: currentUser.outOfOfficeMessage || '',
-    });
+    const incomingFormState = toFormStateFromUser(currentUser);
+    const incomingDiffersFromLastSynced = PROFILE_CONFIRMATION_FIELDS.some(
+      (field) => !areProfileValuesEqual(incomingFormState[field], lastSyncedFormRef.current[field])
+    );
+    const userIdentityChanged = previousUserIdRef.current !== currentUser.id;
+    previousUserIdRef.current = currentUser.id;
+
+    if (userIdentityChanged) {
+      hasLocalEditsRef.current = false;
+      lastSyncedFormRef.current = incomingFormState;
+      setFormState(incomingFormState);
+      return;
+    }
+
+    if (!hasLocalEditsRef.current && incomingDiffersFromLastSynced) {
+      lastSyncedFormRef.current = incomingFormState;
+      setFormState(incomingFormState);
+    }
   }, [currentUser]);
+
+  const buildProfileUpdatePayload = (): Partial<User> => {
+    const updates: Partial<User> = {};
+
+    for (const field of PROFILE_CONFIRMATION_FIELDS) {
+      let nextValue = formState[field];
+      const currentValue = lastSyncedFormRef.current[field];
+      if (
+        (field === 'jobTitle' || field === 'firstName') &&
+        typeof nextValue === 'string' &&
+        typeof currentValue === 'string'
+      ) {
+        nextValue = sanitizeProfileTextInput(nextValue, [currentValue], {
+          removeLeadingKnownValue: field === 'jobTitle',
+        });
+      }
+      if (!areProfileValuesEqual(nextValue, currentValue)) {
+        (
+          updates as Partial<
+            Record<ProfileConfirmationField, ExtendedFormState[ProfileConfirmationField]>
+          >
+        )[field] = nextValue;
+      }
+    }
+
+    return updates;
+  };
 
   // Handle manual save
   const handleSave = async () => {
+    const normalizedFirstName = formState.firstName.trim();
+    if (!normalizedFirstName) {
+      const validationMessage = t(
+        'settings.profile.validation.firstNameRequired',
+        'First name is required before saving'
+      );
+      setFirstNameValidationError(validationMessage);
+      setSaveError(validationMessage);
+      setSaveStatus('error');
+      return;
+    }
+
     setIsSaving(true);
+    setSaveStatus('idle');
+    setSaveError(null);
+    setFirstNameValidationError(null);
     try {
-      await Api.updateUser(currentUser.id, formState as any);
-      onUpdateUser(formState as any);
+      const updates = buildProfileUpdatePayload();
+
+      if (Object.keys(updates).length === 0) {
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        return;
+      }
+
+      if (updates.firstName !== undefined) updates.firstName = normalizedFirstName;
+      if (updates.lastName !== undefined) updates.lastName = formState.lastName.trim();
+      if (updates.jobTitle !== undefined) {
+        updates.jobTitle = sanitizeProfileTextInput(
+          String(updates.jobTitle || ''),
+          [formState.jobTitle, lastSyncedFormRef.current.jobTitle],
+          { removeLeadingKnownValue: true }
+        );
+      }
+
+      await Api.updateUser(currentUser.id, updates);
+      const persistedUser = await Api.getMe();
+
+      if (!persistedUser) {
+        throw new Error('Profile save was not confirmed by the server');
+      }
+
+      const persistedFormState = toFormStateFromUser(persistedUser);
+      const updatedProfileFields = (Object.keys(updates) as Array<keyof typeof updates>).filter(
+        (field): field is ProfileConfirmationField =>
+          PROFILE_CONFIRMATION_FIELDS.includes(field as ProfileConfirmationField)
+      );
+      const mismatchedField = updatedProfileFields.find(
+        (field) => !areProfileFieldValuesEqual(field, persistedFormState[field], updates[field])
+      );
+
+      if (mismatchedField) {
+        throw new Error('Profile changes were not confirmed by the server');
+      }
+
+      lastSyncedFormRef.current = persistedFormState;
+      hasLocalEditsRef.current = false;
+      setFormState(persistedFormState);
+      onUpdateUser(persistedUser);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
+    } catch (error: unknown) {
+      setSaveError(normalizeApiErrorMessage(error, 'Failed to save profile settings'));
       setSaveStatus('error');
     } finally {
       setIsSaving(false);
@@ -260,11 +534,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   // Input class for consistent styling
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+  const firstNameInputClass = firstNameValidationError
+    ? 'w-full px-3 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-500 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-rose-500/50 outline-none transition-all'
+    : inputClass;
   const inputWithIconClass =
-    'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const selectClass =
-    'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer';
+    'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer';
   const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-navy-700 pb-2';
@@ -288,7 +565,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving
@@ -325,7 +602,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             {formState.pronouns && (
               <p className="text-slate-400 dark:text-slate-500 text-xs">({formState.pronouns})</p>
             )}
-            <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">
+            <p className="text-primary-600 dark:text-primary-400 text-sm font-medium">
               {currentUser.companyName}
             </p>
 
@@ -393,7 +670,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.displayName}
-                    onChange={(e) => setFormState({ ...formState, displayName: e.target.value })}
+                    onChange={(e) => updateFormField('displayName', e.target.value)}
                     placeholder={`${formState.firstName} ${formState.lastName}`}
                     className={inputWithIconClass}
                   />
@@ -410,7 +687,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <select
                     value={formState.pronouns}
-                    onChange={(e) => setFormState({ ...formState, pronouns: e.target.value })}
+                    onChange={(e) => updateFormField('pronouns', e.target.value)}
                     className={inputClass + ' appearance-none cursor-pointer pr-8'}
                   >
                     {PRONOUNS_OPTIONS.map((opt) => (
@@ -447,7 +724,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <select
                     value={formState.department}
-                    onChange={(e) => setFormState({ ...formState, department: e.target.value })}
+                    onChange={(e) => updateFormField('department', e.target.value)}
                     className={selectClass}
                   >
                     {DEPARTMENT_OPTIONS.map((opt) => (
@@ -488,15 +765,27 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </label>
                 <input
                   value={formState.firstName}
-                  onChange={(e) => setFormState({ ...formState, firstName: e.target.value })}
-                  className={inputClass}
+                  aria-invalid={firstNameValidationError ? 'true' : undefined}
+                  aria-describedby={
+                    firstNameValidationError ? 'first-name-validation-error' : undefined
+                  }
+                  onChange={(e) => updateFormField('firstName', e.target.value)}
+                  className={firstNameInputClass}
                 />
+                {firstNameValidationError && (
+                  <p
+                    id="first-name-validation-error"
+                    className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400"
+                  >
+                    {firstNameValidationError}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <label className={labelClass}>{t('settings.profile.lastName', 'Last Name')}</label>
                 <input
                   value={formState.lastName}
-                  onChange={(e) => setFormState({ ...formState, lastName: e.target.value })}
+                  onChange={(e) => updateFormField('lastName', e.target.value)}
                   className={inputClass}
                 />
               </div>
@@ -509,7 +798,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.phone}
-                    onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
+                    onChange={(e) => updateFormField('phone', e.target.value)}
                     className={inputWithIconClass}
                   />
                 </div>
@@ -523,7 +812,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.companyName}
-                    onChange={(e) => setFormState({ ...formState, companyName: e.target.value })}
+                    onChange={(e) => updateFormField('companyName', e.target.value)}
                     className={inputWithIconClass}
                   />
                 </div>
@@ -539,7 +828,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.linkedinId}
-                    onChange={(e) => setFormState({ ...formState, linkedinId: e.target.value })}
+                    onChange={(e) => updateFormField('linkedinId', e.target.value)}
                     placeholder="e.g. piotr-wisniewski-123"
                     className={inputWithIconClass}
                   />
@@ -561,7 +850,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.jobTitle}
-                    onChange={(e) => setFormState({ ...formState, jobTitle: e.target.value })}
+                    onChange={(e) => updateFormField('jobTitle', e.target.value)}
                     onFocus={() => setShowJobTitleSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowJobTitleSuggestions(false), 200)}
                     placeholder={t(
@@ -578,12 +867,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                           key={title}
                           type="button"
                           onClick={() => {
-                            setFormState({ ...formState, jobTitle: title });
+                            updateFormField('jobTitle', getJobTitleLabel(title));
                             setShowJobTitleSuggestions(false);
                           }}
-                          className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+                          className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
                         >
-                          {title}
+                          {getJobTitleLabel(title)}
                         </button>
                       ))}
                     </div>
@@ -611,7 +900,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.statusMessage}
-                    onChange={(e) => setFormState({ ...formState, statusMessage: e.target.value })}
+                    onChange={(e) => updateFormField('statusMessage', e.target.value)}
                     placeholder={t(
                       'settings.profile.statusPlaceholder',
                       'e.g. In meetings until 3pm, Working remotely...'
@@ -658,9 +947,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() =>
-                      setFormState({ ...formState, isOutOfOffice: !formState.isOutOfOffice })
-                    }
+                    onClick={() => updateFormField('isOutOfOffice', !formState.isOutOfOffice)}
                     className={`relative w-12 h-6 rounded-full transition-colors ${
                       formState.isOutOfOffice ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
                     }`}
@@ -682,9 +969,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       <input
                         type="date"
                         value={formState.outOfOfficeUntil}
-                        onChange={(e) =>
-                          setFormState({ ...formState, outOfOfficeUntil: e.target.value })
-                        }
+                        onChange={(e) => updateFormField('outOfOfficeUntil', e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
                         className={inputClass}
                       />
@@ -695,9 +980,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       </label>
                       <textarea
                         value={formState.outOfOfficeMessage}
-                        onChange={(e) =>
-                          setFormState({ ...formState, outOfOfficeMessage: e.target.value })
-                        }
+                        onChange={(e) => updateFormField('outOfOfficeMessage', e.target.value)}
                         placeholder={t(
                           'settings.profile.outOfOfficePlaceholder',
                           "I'm currently out of office and will respond when I return..."
@@ -728,12 +1011,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <select
                     value={formState.timezone}
-                    onChange={(e) => setFormState({ ...formState, timezone: e.target.value })}
+                    onChange={(e) => updateFormField('timezone', e.target.value)}
                     className={selectClass}
                   >
                     {COMMON_TIMEZONES.map((tz) => (
                       <option key={tz.value} value={tz.value}>
-                        {tz.label}
+                        {t(`settings.profile.timezones.${tz.value}`, tz.label)}
                       </option>
                     ))}
                   </select>
@@ -755,7 +1038,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {t('settings.profile.timezoneHint', 'Current local time:')}{' '}
-                  {new Date().toLocaleTimeString('en-US', {
+                  {new Date().toLocaleTimeString(undefined, {
                     timeZone: formState.timezone,
                     hour: '2-digit',
                     minute: '2-digit',
@@ -775,12 +1058,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <select
                     value={formState.dateFormat}
-                    onChange={(e) => setFormState({ ...formState, dateFormat: e.target.value })}
+                    onChange={(e) => updateFormField('dateFormat', e.target.value)}
                     className={selectClass}
                   >
                     {DATE_FORMATS.map((fmt) => (
                       <option key={fmt.value} value={fmt.value}>
-                        {fmt.label}
+                        {t(`settings.profile.dateFormats.${formatI18nKey(fmt.value)}`, fmt.label)}
                       </option>
                     ))}
                   </select>
@@ -813,8 +1096,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       key={fmt.value}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all ${
                         formState.timeFormat === fmt.value
-                          ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
-                          : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                          ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
+                          : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
                       }`}
                     >
                       <input
@@ -822,10 +1105,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         name="timeFormat"
                         value={fmt.value}
                         checked={formState.timeFormat === fmt.value}
-                        onChange={(e) => setFormState({ ...formState, timeFormat: e.target.value })}
+                        onChange={(e) => updateFormField('timeFormat', e.target.value)}
                         className="sr-only"
                       />
-                      <span className="text-sm font-medium">{fmt.label}</span>
+                      <span className="text-sm font-medium">
+                        {t(`settings.profile.timeFormats.${formatI18nKey(fmt.value)}`, fmt.label)}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -864,7 +1149,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     </button>
                     <button
                       onClick={() => toggleTheme('system')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'system' ? 'bg-white dark:bg-navy-800 shadow text-purple-600' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'system' ? 'bg-white dark:bg-navy-800 shadow text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {t('settings.profile.system', 'System')}
                     </button>
@@ -914,6 +1199,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <div className="fixed bottom-8 right-8 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle size={16} />
           {t('settings.profile.saved', 'Saved!')}
+        </div>
+      )}
+      {saveStatus === 'error' && saveError && (
+        <div
+          role="alert"
+          className="fixed bottom-8 right-8 bg-rose-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
+        >
+          {saveError}
         </div>
       )}
     </div>

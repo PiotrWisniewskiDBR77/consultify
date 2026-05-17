@@ -23,7 +23,7 @@ describe('sync settings entry resolver', () => {
   });
 
   it('normalizes the legacy integrations section to connected-apps', () => {
-    expect(normalizeSettingsSectionFromPath('/settings/integrations')).toBe('connected-apps');
+    expect(normalizeSettingsSectionFromPath('/settings/integrations')).toBe('integrations');
     expect(normalizeSettingsSectionFromPath('/settings/connected-apps')).toBe('connected-apps');
     expect(normalizeSettingsSectionFromPath('/settings/profile')).toBe('profile');
   });

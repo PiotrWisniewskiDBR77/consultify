@@ -77,14 +77,14 @@ const RAID_TYPES: Record<
   ISSUE: {
     label: 'Issue',
     icon: AlertCircle,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
   },
   DEPENDENCY: {
     label: 'Dependency',
     icon: Link2,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
   },
   DECISION: {
     label: 'Decision',
@@ -206,7 +206,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
   };
 
   const getRiskScoreColor = (score: number): string => {
-    if (score >= 9) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    if (score >= 9) return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
     if (score >= 6) return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
     if (score >= 3)
       return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400';
@@ -244,7 +244,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     : item.status === 'MITIGATED'
                       ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                       : item.status === 'REALIZED'
-                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
                         : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                 }`}
               >
@@ -320,7 +320,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                 {item.type === 'RISK' && (
                   <button
                     onClick={() => handleStatusChange(item, 'REALIZED')}
-                    className="p-1.5 text-red-400 hover:bg-red-900/20 rounded"
+                    className="p-1.5 text-rose-400 hover:bg-rose-900/20 rounded"
                     title="Mark Realized"
                   >
                     <XCircle size={16} />
@@ -334,7 +334,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   handleDeleteItem(item.id);
                 }
               }}
-              className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-900/20 rounded"
+              className="p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-900/20 rounded"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -371,7 +371,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full ${
                         tab === 'ISSUE' && count > 0
-                          ? 'bg-red-900/30 text-red-400'
+                          ? 'bg-rose-900/30 text-rose-400'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -386,7 +386,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Add Item
@@ -511,7 +511,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
               </button>
               <button
                 onClick={handleEditItem}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
               >
                 Save Changes
               </button>
@@ -682,7 +682,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
               </button>
               <button
                 onClick={handleAddItem}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
               >
                 Add Item
               </button>

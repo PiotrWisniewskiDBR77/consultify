@@ -167,7 +167,7 @@ export const Modal: React.FC<ModalProps> = ({
         >
           {/* Overlay */}
           <motion.div
-            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60"
+            className="absolute inset-0 bg-black/30 dark:bg-black/50"
             variants={overlayVariants}
           />
 
@@ -182,9 +182,8 @@ export const Modal: React.FC<ModalProps> = ({
             className={`
               relative w-full ${sizeStyles[size]}
               bg-white dark:bg-navy-900
-              border border-slate-200 dark:border-navy-700
               rounded-xl
-              shadow-[0_25px_50px_rgba(15,23,42,0.18),0_12px_24px_rgba(15,23,42,0.12)]
+              shadow-[0_25px_50px_rgba(0,0,0,0.15),0_12px_24px_rgba(0,0,0,0.1)]
               dark:shadow-[0_25px_50px_rgba(0,0,0,0.5),0_12px_24px_rgba(0,0,0,0.4)]
               overflow-hidden
               outline-none
@@ -202,7 +201,7 @@ export const Modal: React.FC<ModalProps> = ({
                   {title && (
                     <h2
                       id="modal-title"
-                      className="text-lg font-semibold text-slate-900 dark:text-white"
+                      className="text-lg font-semibold text-navy-900 dark:text-white"
                     >
                       {title}
                     </h2>
@@ -210,7 +209,7 @@ export const Modal: React.FC<ModalProps> = ({
                   {description && (
                     <p
                       id="modal-description"
-                      className="mt-1 text-sm text-slate-600 dark:text-slate-400"
+                      className="mt-1 text-sm text-slate-500 dark:text-slate-400"
                     >
                       {description}
                     </p>
@@ -235,7 +234,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="px-6 py-4 bg-slate-50 dark:bg-navy-950 border-t border-slate-200 dark:border-navy-700 flex items-center justify-end gap-3 text-slate-900 dark:text-white">
+              <div className="px-6 py-4 bg-slate-50 dark:bg-navy-950 border-t border-slate-200 dark:border-navy-700 flex items-center justify-end gap-3">
                 {footer}
               </div>
             )}
@@ -289,7 +288,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </>
       }
     >
-      {message && <p className="text-slate-700 dark:text-slate-300">{message}</p>}
+      {message && <p className="text-slate-600 dark:text-slate-300">{message}</p>}
     </Modal>
   );
 };

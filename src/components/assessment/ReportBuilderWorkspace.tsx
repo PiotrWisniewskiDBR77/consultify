@@ -375,7 +375,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center max-w-md px-6">
-          <FileWarning className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <FileWarning className="w-16 h-16 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
             {isPolish ? 'Błąd ładowania raportu' : 'Error loading report'}
           </h2>
@@ -428,7 +428,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-6">
-            <Sparkles className="w-16 h-16 text-purple-500 mx-auto mb-4" />
+            <Sparkles className="w-16 h-16 text-primary-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
               {isPolish ? 'Raport jest pusty' : 'Report is empty'}
             </h2>
@@ -440,7 +440,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             <button
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all disabled:opacity-50"
             >
               {isRegenerating ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -563,7 +563,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       {!showComments && (
         <button
           onClick={() => setShowComments(true)}
-          className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+          className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
           title={isPolish ? 'Pokaż komentarze' : 'Show comments'}
         >
           <MessageCircle className="w-5 h-5" />
@@ -596,13 +596,13 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 
       {/* Error banner */}
       {error && (
-        <div className="absolute bottom-4 left-4 right-4 max-w-md mx-auto bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg p-4 flex items-start gap-3 shadow-lg">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="absolute bottom-4 left-4 right-4 max-w-md mx-auto bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4 flex items-start gap-3 shadow-lg">
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            <p className="text-sm text-rose-700 dark:text-rose-400">{error}</p>
             <button
               onClick={clearError}
-              className="text-xs text-red-600 dark:text-red-400 hover:underline mt-1"
+              className="text-xs text-rose-600 dark:text-rose-400 hover:underline mt-1"
             >
               {isPolish ? 'Zamknij' : 'Dismiss'}
             </button>
@@ -621,7 +621,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           <div className="w-96 shadow-sm flex flex-col bg-white dark:bg-navy-900 flex-shrink-0">
             <div className="p-4 border-b border-slate-100 dark:border-navy-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-purple-500" />
+                <MessageSquare className="w-5 h-5 text-primary-500" />
                 <span className="font-semibold text-navy-900 dark:text-white">
                   {isPolish ? 'Czat AI' : 'AI Chat'}
                 </span>
@@ -662,7 +662,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             <div className="absolute top-4 left-4 z-10">
               <button
                 onClick={() => setShowChat(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
                 <span className="text-sm font-medium">{isPolish ? 'Pokaż czat' : 'Show chat'}</span>

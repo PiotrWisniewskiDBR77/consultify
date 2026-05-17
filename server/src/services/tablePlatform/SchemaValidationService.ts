@@ -5,6 +5,13 @@
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import { ValidationError } from './ErrorHandling.js';
+import {
+  checkSpecializedFieldValue,
+  isSpecializedFieldType,
+  SPECIALIZED_FIELD_TYPES,
+  type SpecializedFieldType,
+  validateSpecializedField,
+} from './SpecializedFieldTypes.js';
 
 const MAX_RECORD_DATA_BYTES = 1_048_576;
 
@@ -42,6 +49,12 @@ export const ALLOWED_FIELD_TYPES = [
   'rating',
   'duration',
   'barcode',
+  // EPIC-T7 specialised types (Block A · Sprint 3). Validators live in
+  // `SpecializedFieldTypes.ts`; AI-derived fields (ai_generated_summary,
+  // ai_classification) are listed in `AI_REGEN_FIELD_TYPES` rather than
+  // `AUTO_FIELD_TYPES` so manual writes are allowed (audited as
+  // `manual_override = true` by Block C).
+  ...SPECIALIZED_FIELD_TYPES,
 ] as const;
 
 export const RESERVED_FIELD_NAMES = [
@@ -235,6 +248,14 @@ const schemaValidationService = {
       const validFormats = ['h:mm', 'h:mm:ss', 'h:mm:ss.S'];
       if (options.format != null && !validFormats.includes(String(options.format))) {
         errors.push(`duration format must be one of: ${validFormats.join(', ')}`);
+      }
+    }
+
+    // EPIC-T7 specialised types — dispatch to dedicated validators.
+    if (isSpecializedFieldType(normalizedType)) {
+      const specialisedResult = validateSpecializedField(normalizedType, options);
+      if (!specialisedResult.valid) {
+        errors.push(...specialisedResult.errors);
       }
     }
 
@@ -635,6 +656,25 @@ const schemaValidationService = {
             errors.push({ fieldId: field.id, message: `'${field.name}' must be a string` });
           }
           break;
+
+        case 'risk_score':
+        case 'priority':
+        case 'ai_generated_summary':
+        case 'ai_classification':
+        case 'source_reference': {
+          const check = checkSpecializedFieldValue(
+            field.field_type as SpecializedFieldType,
+            value,
+            field.options
+          );
+          if (!check.ok) {
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' ${check.message ?? 'has an invalid value'}`,
+            });
+          }
+          break;
+        }
 
         default:
           break;

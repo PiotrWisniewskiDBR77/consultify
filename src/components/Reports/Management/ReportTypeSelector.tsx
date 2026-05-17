@@ -216,19 +216,19 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                 className={`flex flex-col p-4 rounded-xl border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-500/50'
+                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
                                     }`}
               >
                 <div className="flex items-center gap-3 mb-2">
                   <div
-                    className={`p-2 rounded-lg ${isSelected ? 'bg-violet-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}
+                    className={`p-2 rounded-lg ${isSelected ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}
                   >
                     <Icon size={20} />
                   </div>
                   <div>
                     <h3
-                      className={`font-semibold ${isSelected ? 'text-violet-900 dark:text-violet-100' : 'text-navy-900 dark:text-white'}`}
+                      className={`font-semibold ${isSelected ? 'text-primary-900 dark:text-primary-100' : 'text-navy-900 dark:text-white'}`}
                     >
                       {option.title}
                     </h3>
@@ -258,8 +258,8 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-all
                             ${
                               scope === 'PORTFOLIO'
-                                ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-violet-300'
+                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
                             }`}
           >
             <Briefcase size={18} />
@@ -270,8 +270,8 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-all
                             ${
                               scope === 'PROJECT'
-                                ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-violet-300'
+                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
                             }`}
           >
             <FileText size={18} />
@@ -290,7 +290,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             <select
               value={selectedProjectId || ''}
               onChange={(e) => onProjectChange(e.target.value || undefined)}
-              className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Choose a project...</option>
               {projects.map((project) => (
@@ -317,7 +317,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
           <select
             value={periodDays}
             onChange={(e) => onPeriodChange(parseInt(e.target.value))}
-            className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             {periodOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -337,7 +337,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
         <div>
           <button
             onClick={() => setShowSectionConfig(!showSectionConfig)}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
           >
             <Settings2 size={16} />
             <span>Configure Report Sections</span>
@@ -369,13 +369,13 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                       className={`flex items-center gap-2 p-2 rounded-lg text-left text-sm transition-all
                                                 ${
                                                   isEnabled
-                                                    ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                                                     : 'bg-white dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                                                 }
                                                 ${
                                                   isRequired
                                                     ? 'cursor-not-allowed opacity-70'
-                                                    : 'hover:bg-violet-50 dark:hover:bg-violet-900/20'
+                                                    : 'hover:bg-primary-50 dark:hover:bg-primary-900/20'
                                                 }
                                             `}
                       title={isRequired ? 'Required section' : undefined}
@@ -384,7 +384,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                         className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0
                                                 ${
                                                   isEnabled
-                                                    ? 'bg-violet-500 border-violet-500 text-white'
+                                                    ? 'bg-primary-500 border-primary-500 text-white'
                                                     : 'border-slate-300 dark:border-slate-600'
                                                 }`}
                       >

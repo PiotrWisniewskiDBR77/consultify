@@ -21,7 +21,7 @@ export const ToolbarBtn: React.FC<{
     aria-pressed={ariaPressed ?? (active || undefined)}
     className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 shrink-0 ${FOCUS_RING} ${
       danger
-        ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+        ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20'
         : active
           ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'

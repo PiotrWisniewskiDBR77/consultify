@@ -240,7 +240,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleDeleteScene(scene.id);
                     }}
-                    className="p-0.5 text-slate-400 hover:text-red-500"
+                    className="p-0.5 text-slate-400 hover:text-rose-500"
                   >
                     <Trash2 size={10} />
                   </button>

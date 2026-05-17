@@ -262,12 +262,12 @@ function highlightFormula(
 
   // Simple token-based highlighting
   const allPatterns = [
-    { pattern: stringPattern, cls: 'text-orange-500 dark:text-orange-400' },
+    { pattern: stringPattern, cls: 'text-amber-500 dark:text-amber-400' },
     ...(fieldPattern
       ? [{ pattern: fieldPattern, cls: 'text-emerald-600 dark:text-emerald-400 font-semibold' }]
       : []),
     { pattern: funcPattern, cls: 'text-blue-600 dark:text-blue-400 font-semibold' },
-    { pattern: numberPattern, cls: 'text-violet-600 dark:text-violet-400' },
+    { pattern: numberPattern, cls: 'text-primary-600 dark:text-primary-400' },
     { pattern: operatorPattern, cls: 'text-slate-400 dark:text-zinc-500' },
   ];
 
@@ -657,7 +657,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
                 <X className="h-3.5 w-3.5" />
                 {validation.error ?? (isPl ? 'Niepoprawna formuła' : 'Invalid formula')}
               </div>

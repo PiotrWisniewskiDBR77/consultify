@@ -31,7 +31,7 @@ export interface OutlineProposalStepProps {
 const lengthBadgeClasses: Record<string, string> = {
   short: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  long: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  long: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
 export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
@@ -101,7 +101,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <div className="relative">
-          <Sparkles className="w-8 h-8 text-purple-400 absolute -top-2 -right-2 animate-pulse" />
+          <Sparkles className="w-8 h-8 text-primary-400 absolute -top-2 -right-2 animate-pulse" />
           <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -114,7 +114,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+        <p className="text-sm text-rose-500 dark:text-rose-400">{error}</p>
         <button
           onClick={() => {
             setFetching(true);
@@ -144,8 +144,8 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -208,7 +208,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               className={`flex-shrink-0 p-1.5 rounded-md transition-colors ${
                 section.required
                   ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                  : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20'
               }`}
               title={
                 section.required

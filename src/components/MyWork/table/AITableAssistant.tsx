@@ -280,9 +280,9 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
 
   return (
     <div className="absolute left-4 right-4 top-2 z-50">
-      <div className="rounded-2xl border border-violet-500/30 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden">
+      <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3">
-          <Sparkles size={16} className="text-violet-500 flex-shrink-0" />
+          <Sparkles size={16} className="text-primary-500 flex-shrink-0" />
           <input
             ref={inputRef}
             value={command}
@@ -294,7 +294,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             placeholder={isPl ? 'Wpisz polecenie dla tabeli…' : 'Type a table command…'}
             className="flex-1 bg-transparent border-0 outline-none text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400"
           />
-          {loading && <Loader2 size={16} className="animate-spin text-violet-400" />}
+          {loading && <Loader2 size={16} className="animate-spin text-primary-400" />}
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
@@ -304,7 +304,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         </div>
 
         {lastResult && (
-          <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60 bg-violet-500/5">
+          <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60 bg-primary-500/5">
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
               {lastResult}
             </p>

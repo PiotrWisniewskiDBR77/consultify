@@ -33,6 +33,7 @@ vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getCommissionTransactions: vi.fn(),
     getEarningsSummary: vi.fn(),
+    getProgramStatus: vi.fn(),
     getPayouts: vi.fn(),
     getPayoutSettings: vi.fn(),
     updatePayoutSettings: vi.fn(),
@@ -85,6 +86,19 @@ describe('EarningsSection V8 payout settings seam', () => {
         readyForPayout: 150,
         currency: 'EUR',
       },
+    } as any);
+    vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue({
+      lifecyclePhase: 'payout',
+      payoutSettingsComplete: true,
+      balances: {
+        grossEarned: 1200,
+        paidOut: 500,
+        heldAmount: 0,
+        availableToPayout: 150,
+        currency: 'EUR',
+      },
+      whatNext: [],
+      hold: null,
     } as any);
     vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({ transactions: [] } as any);
     vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({ payouts: [] } as any);

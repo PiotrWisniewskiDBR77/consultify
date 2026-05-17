@@ -93,7 +93,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/my-work', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/interview', { replace: true });
     });
 
     expect(setMyWorkIntentMock).not.toHaveBeenCalled();
@@ -131,6 +131,18 @@ describe('RouterSync idea artifact deep links', () => {
     navigateMock.mockReset();
 
     routerState.pathname = '/finance';
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+    });
+  });
+
+  it('protects AI OS routes for unauthenticated users', async () => {
+    appState.currentUser = null as any;
+    routerState.searchParams = new URLSearchParams();
+    routerState.pathname = '/ai/actions';
+
     render(<RouterSync />);
 
     await waitFor(() => {

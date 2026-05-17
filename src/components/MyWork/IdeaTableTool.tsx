@@ -687,7 +687,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usePlatform, ideaId]);
 
   const handleTabSelectTable = useCallback(
@@ -728,10 +727,34 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   const handleTabDuplicateTable = useCallback(
-    async (_tableId: string) => {
-      toast(isPl ? 'Duplikowanie tabeli — wkrótce' : 'Duplicate table — coming soon');
+    async (tableId: string) => {
+      const sourceTable = baseTables.find((t) => t.id === tableId);
+      const suggestedName = sourceTable?.name
+        ? `${sourceTable.name} ${isPl ? 'Kopia' : 'Copy'}`
+        : isPl
+          ? 'Nowa kopia'
+          : 'New copy';
+      const name = window.prompt(
+        isPl ? 'Nazwa duplikatu tabeli:' : 'Duplicate table name:',
+        suggestedName
+      );
+      if (!name?.trim()) return;
+      try {
+        const duplicated = await Api.post(`/table-platform/tables/${tableId}/duplicate`, {
+          name: name.trim(),
+        });
+        const duplicatedId = String((duplicated as any)?.id || '').trim();
+        const duplicatedName = String((duplicated as any)?.name || name.trim()).trim();
+        if (!duplicatedId) throw new Error('missing duplicated table id');
+        setBaseTables((prev) => [...prev, { id: duplicatedId, name: duplicatedName }]);
+        setPlatformTableOverrideId(duplicatedId);
+        setExpandedRecordId(null);
+        toast.success(isPl ? 'Tabela zduplikowana' : 'Table duplicated');
+      } catch {
+        toast.error(isPl ? 'Nie udało się zduplikować tabeli' : 'Failed to duplicate table');
+      }
     },
-    [isPl]
+    [baseTables, isPl]
   );
 
   const handleTabDeleteTable = useCallback(
@@ -1114,7 +1137,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           isSelected
             ? 'bg-primary-500/5'
             : detailNodeId === row.id
-              ? 'bg-violet-500/5'
+              ? 'bg-primary-500/5'
               : selectedNodeForLines === row.id
                 ? 'bg-indigo-500/5'
                 : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
@@ -1249,7 +1272,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 copyTableToClipboard(_cols, effectiveNodes);
                 toast.success(isPl ? 'Skopiowano' : 'Copied');
               }}
-              onAddRowWithTemplate={handleAddRowWithTemplate}
+              onAddRowWithTemplate={() => handleAddRowWithTemplate()}
               onBulkConvert={handleBulkConvert}
               onShowAIAssistant={() => setShowAIAssistant(true)}
               onShowAICategorize={() => setShowAICategorize(true)}
@@ -1324,7 +1347,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 currentUserName={currentUserName}
                 enabled={true}
                 renderIndicator={!isV8MultiplayerEnabled}
-                onPresenceUpdate={(users) => setRemotePresenceUsers(users as PresenceUser[])}
+                onPresenceUpdate={(users) => setRemotePresenceUsers(users)}
               />
               {usePlatform && (
                 <PresenceIndicators
@@ -1483,7 +1506,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       {isPl ? 'Aktualizuj' : 'Update'}
                     </button>
                     <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
                       onClick={() => {
                         deleteSavedView(viewContextMenu.viewId);
                         toast.success(isPl ? 'Widok usunięty' : 'View deleted');
@@ -1526,7 +1549,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => setShowFilterPanel(!showFilterPanel)}
                   className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                     _filters.rules.length > 0
-                      ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                      ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                   }`}
                 >
@@ -1617,7 +1640,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {/* AI Assistant */}
               <button
                 onClick={() => setShowAIAssistant(true)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                 title={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'}
               >
                 <Sparkles size={12} />
@@ -1724,7 +1747,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* History / Audit */}
                 <button
                   onClick={() => setShowAuditTrail((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Historia zmian' : 'History'}
                 >
                   <History size={12} />
@@ -1733,7 +1756,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Activity Feed */}
                 <button
                   onClick={() => setShowActivityFeed((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Aktywność' : 'Activity'}
                 >
                   <Activity size={12} />
@@ -1794,7 +1817,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Conditional formatting */}
                 <button
                   onClick={() => setShowConditionalFmt(true)}
-                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
                 >
                   <Paintbrush size={12} />
@@ -1804,7 +1827,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <div className="relative">
                   <button
                     onClick={() => setShowColorPalette(!showColorPalette)}
-                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Paleta kolorów' : 'Color Palette'}
                   >
                     <Palette size={12} />
@@ -1881,7 +1904,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {usePlatform && (
                   <button
                     onClick={() => setShowInterfaceDesigner(true)}
-                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
                   >
                     <Layout size={12} />
@@ -1937,7 +1960,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                         >
-                          <Link2 size={14} className="text-cyan-500" />
+                          <Link2 size={14} className="text-blue-500" />
                           {isPl ? 'Synchronizacja danych' : 'Data Sync'}
                         </button>
                         <button
@@ -1991,7 +2014,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                         >
-                          <Layout size={14} className="text-violet-500" />
+                          <Layout size={14} className="text-primary-500" />
                           {isPl ? 'Interfejsy' : 'Interfaces'}
                         </button>
                         <button
@@ -2011,7 +2034,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                         >
-                          <Download size={14} className="text-teal-500" />
+                          <Download size={14} className="text-blue-500" />
                           {isPl ? 'Konektory' : 'Connectors'}
                         </button>
                         <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
@@ -2148,7 +2171,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                     )}
                     {connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
-                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
                     )}
                   </button>
                 )}
@@ -2231,7 +2254,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           setShowColumnConfig(false);
                           setShowAddColumn(true);
                         }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                       >
                         <Plus size={12} />
                         {isPl ? 'Nowa kolumna' : 'New column'}
@@ -2307,7 +2330,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       </div>
                       <button
                         onClick={_bulkDel}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-red-600 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
                       >
                         <Trash2 size={11} />
                         {isPl ? 'Usuń' : 'Delete'}
@@ -2780,7 +2803,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             )}
                             {/* Resize handle */}
                             <div
-                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500/30 transition-colors"
+                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-500/30 transition-colors"
                               onMouseDown={(e) => handleResizeStart(col.key, e)}
                             />
                           </th>
@@ -2821,7 +2844,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                                   <button
                                     onClick={_addRow}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
                                   >
                                     <Plus size={14} />
                                     {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
@@ -3000,7 +3023,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 </button>
                 <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
                 <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
                   onClick={() => {
                     deleteColumn(colContextMenu.colKey);
                     toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');

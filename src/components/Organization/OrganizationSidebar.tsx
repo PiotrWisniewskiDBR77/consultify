@@ -192,7 +192,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             onClick={onBack}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
           >
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-300">
               <Target size={16} />
             </span>
             {t('organization.sidebar.back', 'Back to Dashboard')}
@@ -235,7 +235,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                         className={cn(
                           'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
                           active
-                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'
                         )}
                       >
@@ -243,7 +243,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                           className={cn(
                             'inline-flex items-center justify-center w-8 h-8 rounded-lg',
                             active
-                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                               : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                           )}
                         >

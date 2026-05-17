@@ -168,7 +168,7 @@ Only if the feature instruments something new.
 1. Extend `FunnelEventName` in `src/services/funnelAnalytics.ts`
    with the new event name (closed enum — the compiler rejects
    anything not in the union).
-2. Document the event in `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md`:
+2. Document the event in `CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md`:
    add an index row and a dedicated section covering the payload
    enum, the trigger, and the privacy contract.
 3. Emit the event from inside the flag gate:

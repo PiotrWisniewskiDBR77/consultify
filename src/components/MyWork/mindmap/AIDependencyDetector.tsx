@@ -38,10 +38,10 @@ const TYPE_CONFIG: Record<
   string,
   { color: string; label: string; labelPl: string; dash?: string }
 > = {
-  depends_on: { color: '#ef4444', label: 'Depends on', labelPl: 'Zależy od' },
+  depends_on: { color: '#f43f5e', label: 'Depends on', labelPl: 'Zależy od' },
   enables: { color: '#22c55e', label: 'Enables', labelPl: 'Umożliwia' },
   conflicts_with: { color: '#f59e0b', label: 'Conflicts with', labelPl: 'Konflikt z', dash: '5 5' },
-  related_to: { color: '#8b5cf6', label: 'Related to', labelPl: 'Powiązane z', dash: '3 6' },
+  related_to: { color: '#6366f1', label: 'Related to', labelPl: 'Powiązane z', dash: '3 6' },
 };
 
 export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
@@ -153,7 +153,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div>
             <div className="flex items-center gap-2">
-              <Network size={16} className="text-violet-500" />
+              <Network size={16} className="text-primary-500" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">
                 {isPl ? 'AI: Wykrywanie zależności' : 'AI: Dependency Detection'}
               </h3>
@@ -184,7 +184,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
               <button
                 onClick={detectDependencies}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/15 to-indigo-500/10 text-[11px] font-bold text-violet-700 dark:text-violet-300 hover:from-violet-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-indigo-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
               >
                 <Network size={14} />
                 {isPl ? 'Analizuj zależności' : 'Analyze dependencies'}
@@ -194,7 +194,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-violet-500" />
+              <Loader2 size={16} className="animate-spin text-primary-500" />
               <span className="text-[11px] text-slate-500">
                 {isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}
               </span>
@@ -252,7 +252,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                       <button
                         onClick={() => handleApply(dep)}
                         disabled={locked}
-                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-40"
+                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40"
                       >
                         <Plus size={9} />
                         {isPl ? 'Dodaj połączenie' : 'Add connection'}
@@ -274,7 +274,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 <button
                   onClick={handleApplyAll}
                   disabled={locked || applied.size === dependencies.length}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
                 >
                   <Network size={12} />
                   {isPl ? 'Dodaj wszystkie' : 'Add all'}

@@ -222,7 +222,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
                 p-2 rounded-lg
                 ${
                   block.category === 'ai'
-                    ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+                    ? 'bg-gradient-to-br from-primary-500 to-blue-500 text-white'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }
               `}

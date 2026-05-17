@@ -36,7 +36,7 @@ function outcomeColor(status: PastDecision['outcomeStatus']): string {
     case 'positive':
       return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
     case 'negative':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
     case 'mixed':
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
     case 'neutral':

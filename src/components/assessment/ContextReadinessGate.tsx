@@ -71,15 +71,15 @@ interface ContextReadinessGateProps {
 
 const LEVEL_COLORS = {
   Insufficient: {
-    bg: 'bg-red-50 dark:bg-red-500/10',
-    border: 'border-red-200 dark:border-red-500/30',
-    text: 'text-red-700 dark:text-red-400',
+    bg: 'bg-rose-50 dark:bg-rose-500/10',
+    border: 'border-rose-200 dark:border-rose-500/30',
+    text: 'text-rose-700 dark:text-rose-400',
     icon: AlertCircle,
   },
   Minimal: {
-    bg: 'bg-orange-50 dark:bg-orange-500/10',
-    border: 'border-orange-200 dark:border-orange-500/30',
-    text: 'text-orange-700 dark:text-orange-400',
+    bg: 'bg-amber-50 dark:bg-amber-500/10',
+    border: 'border-amber-200 dark:border-amber-500/30',
+    text: 'text-amber-700 dark:text-amber-400',
     icon: AlertTriangle,
   },
   Standard: {
@@ -178,8 +178,8 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
-        <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+      <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg">
+        <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
         </div>
@@ -210,7 +210,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
             </span>
           </div>
           {!readiness.canFinalize && (
-            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+            <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">
               Required: {readiness.requiredThreshold}%
             </span>
           )}
@@ -254,15 +254,15 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                 readiness.canFinalize
                   ? 'bg-green-500'
                   : readiness.score >= 40
-                    ? 'bg-orange-500'
-                    : 'bg-red-500'
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500'
               }`}
               style={{ width: `${readiness.score}%` }}
             />
           </div>
           <div className="flex justify-between mt-1 text-xs text-slate-400 dark:text-slate-500">
             <span>0%</span>
-            <span className={readiness.score >= 40 ? 'text-orange-500' : ''}>40% Minimal</span>
+            <span className={readiness.score >= 40 ? 'text-amber-500' : ''}>40% Minimal</span>
             <span className={readiness.score >= 70 ? 'text-blue-500' : ''}>70% Standard</span>
             <span className={readiness.score >= 90 ? 'text-green-500' : ''}>90% Complete</span>
           </div>
@@ -302,8 +302,8 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                       percentage >= 80
                         ? 'text-green-600'
                         : percentage >= 50
-                          ? 'text-orange-600'
-                          : 'text-red-600'
+                          ? 'text-amber-600'
+                          : 'text-rose-600'
                     }`}
                   >
                     {scores.score}/{scores.total}pts
@@ -320,7 +320,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                     {categoryGaps.map((gap) => (
                       <div key={gap.key} className="flex items-center justify-between text-sm py-1">
                         <span className="text-slate-600 dark:text-slate-400">{gap.label}</span>
-                        <span className="text-red-500 font-medium">-{gap.weight}pts</span>
+                        <span className="text-rose-500 font-medium">-{gap.weight}pts</span>
                       </div>
                     ))}
                   </div>
@@ -344,7 +344,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                 key={idx}
                 className={`p-3 rounded-lg text-sm ${
                   rec.priority === 'HIGH'
-                    ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                    ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400'
                     : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
                 }`}
               >
@@ -362,7 +362,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
       <div className="p-4 border-t border-inherit bg-white/30 dark:bg-black/10">
         {!readiness.canFinalize ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
               <AlertCircle className="w-5 h-5" />
               <span className="text-sm font-medium">
                 Cannot finalize assessment - context score below {readiness.requiredThreshold}%

@@ -1,11 +1,14 @@
 import type { Express } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
+import verifyToken from './middleware/auth.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
+import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
+import effectiveAccessRoutes from './routes/access.routes.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
@@ -42,6 +45,7 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
+import artifactConversionsRoutes from './routes/artifact-conversions.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
@@ -76,6 +80,7 @@ import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
 import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
+import conclusionsRoutes from './routes/conclusions.routes.js';
 import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
 import consultantRoutes from './routes/consultants.routes.js';
 import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
@@ -88,9 +93,13 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
+import documentStudioRoutes, {
+  documentShareLinkPublicRoutes,
+} from './routes/document-studio.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
+import executionModulesRoutes from './routes/execution-modules.routes.js';
 import executionControlRoutes from './routes/executionControl.routes.js';
 import executiveAggregateRoutes from './routes/executiveAggregate.routes.js';
 import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
@@ -141,6 +150,7 @@ import megatrendRoutes from './routes/megatrend.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
+import moduleAccessRoutes from './routes/module-access.routes.js';
 import moduleInterestRoutes from './routes/module-interest.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
@@ -151,6 +161,7 @@ import notificationRoutes from './routes/notifications/notifications.routes.js';
 import notificationSettingsRoutes from './routes/notifications/notificationSettings.routes.js';
 import oauthRoutes from './routes/oauthRoutes.routes.js';
 import onboardingRoutes from './routes/onboarding.routes.js';
+import approvedDomainsRoutes from './routes/organization/approved-domains.routes.js';
 import brandingRoutes from './routes/organization/branding.routes.js';
 import invitationRoutes from './routes/organization/invitations.routes.js';
 import organizationDataRoutes from './routes/organization/organization-data.routes.js';
@@ -190,6 +201,7 @@ import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.j
 import premiumReportsRoutes from './routes/premiumReports.routes.js';
 import presentationEnterpriseRoutes from './routes/presentation-enterprise.routes.js';
 import presentationsRoutes from './routes/presentations.routes.js';
+import presentationStudioRoutes from './routes/presentationStudio.routes.js';
 import previewAiRoutes from './routes/preview-ai.routes.js';
 import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
 import publicAnnaRoutes from './routes/public-anna.routes.js';
@@ -231,7 +243,15 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
+import tablePlatformAiEditorRoutes from './routes/table-platform.ai-editor.routes.js';
+import tablePlatformConversionRoutes from './routes/table-platform.conversion.routes.js';
+import tablePlatformFormIntakeRoutes from './routes/table-platform.form-intake.routes.js';
+import tablePlatformFormPublicRoutes from './routes/table-platform.form-public.routes.js';
+import tablePlatformQaRoutes from './routes/table-platform.qa.routes.js';
+import tablePlatformRecordSourcesRoutes from './routes/table-platform.record-sources.routes.js';
+import tablePlatformRelationsExplainRoutes from './routes/table-platform.relations-explain.routes.js';
 import tablePlatformRoutes, { publicFormRouter } from './routes/table-platform.routes.js';
+import tablePlatformSourcePackRoutes from './routes/table-platform.source-pack.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import testSupportRoutes from './routes/testSupport.routes.js';
 import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
@@ -254,18 +274,24 @@ import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
-import v10Router from './routes/v10/index.js';
+import v10TeresaRoutes from './routes/v10/teresa.routes.js';
 import verifyRoutes from './routes/verify.routes.js';
 import videoRoutes from './routes/videos.routes.js';
 import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
 import voiceRoutes from './routes/voice.routes.js';
+import wave6ContextRoutes from './routes/wave6-context.routes.js';
+import wave7ConnectorsRoutes from './routes/wave7-connectors.routes.js';
+import wave8AgentsRoutes from './routes/wave8-agents.routes.js';
+import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
+import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
+import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
 
 export class ApiGateway {
@@ -315,6 +341,28 @@ export class ApiGateway {
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       // V8 shadow mode: check flag and intercept legacy AI routes for comparison
       app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
+
+      const internalToolsGuard = [verifyToken, requireInternalToolsAccess];
+      app.use('/api/ai/actions', ...internalToolsGuard);
+      app.use('/api/ai/prompts', ...internalToolsGuard);
+      app.use('/api/ai-context', ...internalToolsGuard);
+      app.use('/api/ai-connectors', ...internalToolsGuard);
+      app.use('/api/ai-agents', ...internalToolsGuard);
+      app.use('/api/ai-outcomes', ...internalToolsGuard);
+      app.use('/api/research', ...internalToolsGuard);
+      app.use('/api/artifacts', ...internalToolsGuard);
+      app.use('/api/artifact-runs', ...internalToolsGuard);
+      app.use('/api/work-canvas', workCanvasRoutes);
+      app.use('/api/agents', ...internalToolsGuard);
+      app.use('/api/ai-operator', ...internalToolsGuard);
+      app.use('/api/ai-memory', ...internalToolsGuard);
+      app.use('/api/ai-prompts', ...internalToolsGuard);
+      app.use('/api/ai-training', ...internalToolsGuard);
+      app.use('/api/ai-analytics', ...internalToolsGuard);
+      app.use('/api/ai-budgets', ...internalToolsGuard);
+      app.use('/api/ai-infrastructure', ...internalToolsGuard);
+      app.use('/api/ai-development', ...internalToolsGuard);
+      app.use('/api/ai-operations', ...internalToolsGuard);
 
       logger.info('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);
@@ -445,6 +493,7 @@ export class ApiGateway {
 
       // Module interest / waitlist
       app.use('/api/module-interest', moduleInterestRoutes);
+      app.use('/api/module-access', moduleAccessRoutes);
 
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
@@ -458,8 +507,26 @@ export class ApiGateway {
       mountStub('/api/integrations', integrationsRoutes, 'integrationsRoutes');
       mountStub('/api/system-config', systemConfigRoutes, 'systemConfigRoutes');
       app.use('/api/system-health', systemHealthRoutes);
-      mountStub('/api/api-keys', apiKeysRoutes, 'apiKeysRoutes');
-      mountStub('/api/research', researchRoutes, 'researchRoutes');
+      app.use('/api/api-keys', apiKeysRoutes);
+      // Wave 4 ResearchSession is a production route, not a generated stub.
+      app.use('/api/research', researchRoutes);
+      setImmediate(() => {
+        import('./services/researchSessionService.js')
+          .then(({ recoverInterruptedResearchSessions }) => recoverInterruptedResearchSessions())
+          .then((result) => {
+            if (result.recovered > 0) {
+              logger.info(
+                `[ApiGateway] Recovered ${result.recovered} interrupted research session(s)`
+              );
+            }
+          })
+          .catch((err) =>
+            logger.warn(
+              '[ApiGateway] Research session recovery skipped',
+              err?.message || String(err)
+            )
+          );
+      });
       app.use('/api/backups', backupRoutes);
 
       // Link preview (og:meta fetcher for whiteboard LinkNodes)
@@ -509,6 +576,8 @@ export class ApiGateway {
       });
 
       // Core API routes
+      app.use('/api/conclusions', conclusionsRoutes);
+      app.use('/api/artifact-conversions', artifactConversionsRoutes);
       app.use('/api/projects', projectRoutes);
       app.use('/api/knowledge', knowledgeRoutes);
       app.use('/api/knowledge-graph', knowledgeGraphRoutes);
@@ -527,6 +596,7 @@ export class ApiGateway {
       app.use('/api/change-sentiment', changeSentimentRoutes);
       app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);
+      app.use('/api/access', effectiveAccessRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
       app.use('/api/admin/integrations', adminIntegrationsRoutes);
 
@@ -549,6 +619,7 @@ export class ApiGateway {
       app.use('/api/megatrends', megatrendRoutes);
       app.use('/api/organizations', organizationRoutes);
       app.use('/api/organizations', ownershipRoutes);
+      app.use('/api/organizations', approvedDomainsRoutes);
       mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
@@ -590,6 +661,25 @@ export class ApiGateway {
       app.use('/api/my-work', myWorkRoutes);
       app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
       app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
+      // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
+      // above the V8.1 substrate. See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md
+      //
+      // Slice E13.1 — public share-link consume endpoint MUST mount BEFORE
+      // the authed `documentStudioRoutes` so the consumer (who has no
+      // workspace seat) can resolve a token without `verifyToken` rejecting
+      // the request. Express matches the first router whose path matches,
+      // so `POST /share-links/resolve` lands here and never reaches the
+      // authed router.
+      app.use('/api/document-studio', documentShareLinkPublicRoutes);
+      app.use('/api/document-studio', documentStudioRoutes);
+      // Execution-module UI/UX standard (Epic E11) — read-only governance
+      // surface exposing the canonical Doc / Excel / Deck Builder standard
+      // and the system-owned reference manifests.
+      app.use('/api/execution-modules', executionModulesRoutes);
+      app.use('/api/ai-context', wave6ContextRoutes);
+      app.use('/api/ai-connectors', wave7ConnectorsRoutes);
+      app.use('/api/ai-agents', wave8AgentsRoutes);
+      app.use('/api/ai-outcomes', wave9OutcomesRoutes);
       app.use('/api/preview-ai', previewAiRoutes);
       app.use('/api/notebook', deprecationHeader('/api/v8/notebook'), notebookV4Routes);
 
@@ -675,6 +765,26 @@ export class ApiGateway {
       app.use('/api/economics', economicsRoutes);
       app.use('/api/presentations', presentationsRoutes);
       app.use('/api/presentations-v4', presentationEnterpriseRoutes);
+      // Sprint S18 — restore persisted layout-capacity overrides BEFORE
+      // mounting Studio routes so the first GET /admin/layout-capacity
+      // already sees the restored state. A missing file is silent; a
+      // corrupt file falls back to defaults and surfaces a load warning
+      // on the registry's load-warning channel (visible via the GET).
+      try {
+        const restore = initializeLayoutCapacityPersistence();
+        logger.info(
+          `[PresentationStudio] Layout-capacity persistence: ${restore.status} (path=${restore.sourcePath})`
+        );
+      } catch (err: any) {
+        // Defense in depth: a transient persistence init failure must
+        // never block the Studio surface from coming up. The registry
+        // stays at defaults and operators can re-apply via the admin
+        // surface.
+        logger.warn(
+          `[PresentationStudio] Layout-capacity persistence init failed: ${err?.message || err}`
+        );
+      }
+      app.use('/api/presentation-studio', presentationStudioRoutes);
       app.use('/api/results', resultsKpiReportsRoutes);
       app.use('/api/results-v4', resultsEnterpriseRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
@@ -718,6 +828,14 @@ export class ApiGateway {
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
       app.use('/api/sync-hub', deprecationHeader('/api/v8/sync'), syncHubRoutes);
       app.use('/api/table-platform', tablePlatformRoutes);
+      app.use('/api/table-platform', tablePlatformRelationsExplainRoutes);
+      app.use('/api/table-platform', tablePlatformRecordSourcesRoutes);
+      app.use('/api/table-platform', tablePlatformAiEditorRoutes);
+      app.use('/api/table-platform', tablePlatformQaRoutes);
+      app.use('/api/table-platform', tablePlatformSourcePackRoutes);
+      app.use('/api/table-platform', tablePlatformConversionRoutes);
+      app.use('/api/table-platform', tablePlatformFormIntakeRoutes);
+      app.use('/api/table-platform', tablePlatformFormPublicRoutes);
       app.use('/api/table-platform', publicFormRouter);
       app.use('/api/table-platform', dataCollectionRoutes);
       app.use('/api/studio', studioRoutes);
@@ -754,9 +872,9 @@ export class ApiGateway {
       logger.info('[ApiGateway] Mounting /api/v8');
       app.use('/api/v8', v8FeatureGate, v8Router);
 
-      // V10 API namespace — authenticated by each router, default-off by flags internally.
-      logger.info('[ApiGateway] Mounting /api/v10');
-      app.use('/api/v10', v10Router);
+      // V10 AI OS namespace — Wave 2 Teresa voice/runtime contract.
+      logger.info('[ApiGateway] Mounting /api/v10/teresa');
+      app.use('/api/v10/teresa', v10TeresaRoutes);
 
       // Catch-all RBAC or 404 for /api
       app.use('/api', rbacRoutes);

@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   artifactLinkToOpenPayload,
   buildArtifactLink,
+  buildMyWorkSheetTableOpenPath,
   getPrimaryArtifactLink,
   legacyRefToArtifactLinks,
+  parseArtifactRef,
   type ArtifactLink,
 } from '../../../src/utils/artifactLinks';
 
@@ -58,6 +60,14 @@ describe('artifactLinks helpers', () => {
 
     it('returns empty array for malformed ref', () => {
       expect(legacyRefToArtifactLinks('no-colon')).toEqual([]);
+    });
+  });
+
+  describe('buildMyWorkSheetTableOpenPath', () => {
+    it('returns Option A deep-link path for sheets builder', () => {
+      expect(buildMyWorkSheetTableOpenPath('ws-123', 'tbl-456')).toBe(
+        '/my-work/sheets/ws-123/tables/tbl-456'
+      );
     });
   });
 });

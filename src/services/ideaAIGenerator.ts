@@ -17,7 +17,6 @@ export interface GeneratorContext {
   existingEdges: any[];
   existingLanes?: any[];
   language: string;
-  organizationContext?: unknown;
   selection?: {
     type?: string;
     count?: number;

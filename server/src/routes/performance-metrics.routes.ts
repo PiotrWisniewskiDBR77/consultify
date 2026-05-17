@@ -4,7 +4,7 @@
  */
 import os from 'node:os';
 
-import { Router } from 'express';
+import { type Request, Router } from 'express';
 
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -14,7 +14,7 @@ const router = Router();
 
 router.get(
   '/',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const startedAt = Number(process.env.SERVER_STARTED_AT || Date.now());
     const uptimeMs = Date.now() - startedAt;
 
@@ -27,7 +27,7 @@ router.get(
     }
 
     const payload = {
-      ok: true,
+      ok: dbOk === true,
       timestamp: new Date().toISOString(),
       node: {
         uptimeMs,
@@ -45,6 +45,9 @@ router.get(
         ok: dbOk,
         type: process.env.DB_TYPE || (process.env.DATABASE_URL ? 'postgres' : 'unknown'),
       },
+      meta: {
+        correlationId: (req as Request & { correlationId?: string }).correlationId ?? null,
+      },
     };
 
     return res.status(200).json(payload);
@@ -53,11 +56,18 @@ router.get(
 
 router.get(
   '/health',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const db = await DbPromise.get('SELECT 1 as ok', [], { fallback: false })
       .then(() => true)
       .catch(() => false);
-    return res.status(db ? 200 : 503).json({ ok: db, timestamp: new Date().toISOString() });
+    return res.status(db ? 200 : 503).json({
+      ok: db,
+      code: db ? 'PERFORMANCE_METRICS_DB_OK' : 'PERFORMANCE_METRICS_DB_PROBE_FAILED',
+      meta: {
+        correlationId: (req as Request & { correlationId?: string }).correlationId ?? null,
+      },
+      timestamp: new Date().toISOString(),
+    });
   })
 );
 

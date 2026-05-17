@@ -2132,11 +2132,5 @@
     "upgrade": {
       "instantUnlock": "アップグレード後、すべての制限が即座に解除されます"
     }
-  },
-  "feedback": {
-    "floatingButton": {
-      "label": "バグを報告",
-      "ariaLabel": "バグを報告 (Shift+Ctrl+B)"
-    }
   }
 }

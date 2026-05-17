@@ -23,7 +23,7 @@ const STEP_KEYS = [
 const STEP_VISUALS = [
   { number: '01', icon: FileText, color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
   { number: '02', icon: Brain, color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
-  { number: '03', icon: CheckCircle2, color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
+  { number: '03', icon: CheckCircle2, color: '#3b82f6', glow: 'rgba(6,182,212,0.25)' },
   { number: '04', icon: Zap, color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
   { number: '05', icon: TrendingUp, color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
 ];
@@ -49,10 +49,10 @@ export const HowItWorksSection: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 mb-5"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 mb-5"
           >
-            <Play size={11} className="text-cyan-600 dark:text-cyan-400" fill="currentColor" />
-            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
+            <Play size={11} className="text-blue-600 dark:text-blue-400" fill="currentColor" />
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
               {t('landing.howItWorks.badge', 'How it works')}
             </span>
           </motion.div>
@@ -157,7 +157,7 @@ export const HowItWorksSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-slate-50 dark:bg-white/[0.03] border border-violet-300/25 dark:border-violet-600/25"
+          className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-slate-50 dark:bg-white/[0.03] border border-primary-300/25 dark:border-primary-600/25"
         >
           {/* Glow */}
           <div
@@ -194,7 +194,7 @@ export const HowItWorksSection: React.FC = () => {
                 href="https://vector.dbr77.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-600 dark:text-cyan-300 transition-colors hover:text-cyan-500 dark:hover:text-cyan-200"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-500 dark:hover:text-blue-200"
               >
                 {t('landing.howItWorks.techExplore', 'Explore DBR77 Vector')}
                 <ArrowRight size={14} />
@@ -211,7 +211,7 @@ export const HowItWorksSection: React.FC = () => {
                 {
                   labelKey: 'landing.howItWorks.tech.mcp',
                   descKey: 'landing.howItWorks.tech.mcpDesc',
-                  color: '#06b6d4',
+                  color: '#3b82f6',
                 },
                 {
                   labelKey: 'landing.howItWorks.tech.private',

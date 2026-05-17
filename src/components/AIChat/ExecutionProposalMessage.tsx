@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ExecutionProposalMessage
  *
@@ -46,6 +45,7 @@ import { TrustPanel } from './TrustPanel';
 // ============================================================================
 
 export type ExecutionMessageType = 'execution_proposal' | 'execution_progress' | 'execution_result';
+type TrustBundle = unknown;
 
 export interface ExecutionProposalMessageProps {
   msg: ChatMessage;
@@ -58,6 +58,7 @@ export interface ExecutionProposalMessageProps {
    */
   onApprove?: (proposalId: string, msg: ChatMessage) => void;
   onReject?: (proposalId: string, msg: ChatMessage, reason?: string) => void;
+  onExecute?: (proposalId: string, msg: ChatMessage) => void;
 
   /**
    * Optional handler for inspecting the underlying execution run / audit log.
@@ -70,6 +71,7 @@ export interface ExecutionProposalMessageProps {
    */
   isApproveBusy?: boolean;
   isRejectBusy?: boolean;
+  isExecuteBusy?: boolean;
 }
 
 interface ProposalMetadata {
@@ -86,6 +88,43 @@ interface ProposalMetadata {
   /** Pass-through preview produced by the execution planner. */
   preview?: string | null;
 }
+
+interface ProposalStepListProps {
+  steps: Array<{ id?: string; label?: string; description?: string }>;
+  isRtl: boolean;
+  t: (key: string, defaultValue?: string, options?: Record<string, unknown>) => string;
+}
+
+const ProposalStepList: React.FC<ProposalStepListProps> = ({ steps, isRtl, t }) => {
+  if (steps.length === 0) return null;
+
+  return (
+    <ol
+      className={`mt-2 space-y-1 list-decimal ${isRtl ? 'pr-5' : 'pl-5'} text-[12px] text-slate-600 dark:text-slate-300`}
+    >
+      {steps.slice(0, 8).map((step, i) => (
+        <li key={step.id || i}>
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            {String(step.label || t('chatProposal.step.untitled', 'Step'))}
+          </span>
+          {step.description ? (
+            <span className="text-slate-500 dark:text-slate-400">
+              {' — '}
+              {String(step.description)}
+            </span>
+          ) : null}
+        </li>
+      ))}
+      {steps.length > 8 ? (
+        <li className="list-none text-slate-400 dark:text-slate-500 italic">
+          {t('chatProposal.step.more', '…and {{count}} more', {
+            count: steps.length - 8,
+          } as any)}
+        </li>
+      ) : null}
+    </ol>
+  );
+};
 
 // ============================================================================
 // Helpers
@@ -194,8 +233,16 @@ function lifecycleVisual(
         label: t('chatProposal.state.audited', 'Audited'),
         Icon: FileSearch,
         pillClassName:
-          'bg-violet-50 dark:bg-violet-950/30 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-900/40',
-        cardAccentClassName: 'border-violet-200 dark:border-violet-900/40',
+          'bg-primary-50 dark:bg-primary-950/30 text-primary-800 dark:text-primary-200 border-primary-200 dark:border-primary-900/40',
+        cardAccentClassName: 'border-primary-200 dark:border-primary-900/40',
+      };
+    case 'closed':
+      return {
+        label: t('chatProposal.state.closed', 'Closed'),
+        Icon: FileSearch,
+        pillClassName:
+          'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-navy-700',
+        cardAccentClassName: 'border-slate-200 dark:border-navy-700',
       };
     case 'rejected':
       return {
@@ -256,9 +303,11 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
   isRtl = false,
   onApprove,
   onReject,
+  onExecute,
   onInspect,
   isApproveBusy = false,
   isRejectBusy = false,
+  isExecuteBusy = false,
 }) => {
   const { t: rawT } = useTranslation();
   // Adapter: tighten `TFunction` into the simple `(k, d?) => string` shape
@@ -287,8 +336,7 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
   const freshProposal = useProposalLifecycle(meta.proposalId);
   const effectiveLifecycleState: V8LifecycleState | undefined =
     freshProposal?.lifecycleState || meta.lifecycleState;
-  const effectiveRejectionReason: string | null =
-    freshProposal?.rejectionReason ?? meta.rejectionReason ?? null;
+  const effectiveRejectionReason = freshProposal?.rejectionReason ?? meta.rejectionReason ?? null;
 
   // V8 / Wave A7 (Gap #10 — Output trust as one contract).
   //
@@ -297,23 +345,25 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
   // the latest bundle across the proposal's message chain). Fall back to
   // the metadata snapshot frozen at write time so historical conversations
   // still render a bubble even before the cache is seeded.
-  const effectiveTrustBundle: unknown =
-    ((freshProposal as { trustBundle?: unknown } | undefined)?.trustBundle as unknown) ??
-    ((msg as any).metadata?.trustBundle as unknown) ??
+  const effectiveTrustBundle: TrustBundle | null | undefined =
+    (freshProposal?.trustBundle as TrustBundle | null | undefined) ??
+    ((msg as any).metadata?.trustBundle as TrustBundle | undefined) ??
     null;
 
   const visual = lifecycleVisual(effectiveLifecycleState, messageType, t);
   const risk = riskVisual(meta.risk, t);
 
-  const planSummary: string =
+  const planSummary =
     meta.planSummary && meta.planSummary.trim().length > 0
       ? meta.planSummary.trim()
       : (msg.content || '').trim();
-  const steps: Array<{ id?: string; label?: string; description?: string }> = Array.isArray(
+  const proposalSteps: Array<{ id?: string; label?: string; description?: string }> = Array.isArray(
     meta.steps
   )
     ? meta.steps
     : [];
+  const renderStructuredSteps = (): any =>
+    React.createElement(ProposalStepList, { steps: proposalSteps, isRtl, t });
 
   const canApprove =
     typeof onApprove === 'function' &&
@@ -327,15 +377,10 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
     (!effectiveLifecycleState ||
       effectiveLifecycleState === 'proposed' ||
       effectiveLifecycleState === 'pending_review');
+  const canExecute =
+    typeof onExecute === 'function' && !!meta.proposalId && effectiveLifecycleState === 'approved';
 
   const textSize = isCompact ? 'text-xs' : 'text-sm';
-  const reviewerName = typeof meta.reviewer?.name === 'string' ? meta.reviewer.name : '';
-  const showReviewerAttribution =
-    reviewerName.length > 0 &&
-    (effectiveLifecycleState === 'approved' ||
-      effectiveLifecycleState === 'rejected' ||
-      effectiveLifecycleState === 'executed' ||
-      effectiveLifecycleState === 'audited');
   return (
     <div
       className={`flex flex-col space-y-1.5 group items-start`}
@@ -396,6 +441,37 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
               )}
             </div>
 
+            {/* Plan summary */}
+            {planSummary && (
+              <div className={`text-slate-700 dark:text-slate-200 whitespace-pre-wrap ${textSize}`}>
+                {planSummary}
+              </div>
+            )}
+
+            {/* Structured steps */}
+            {renderStructuredSteps()}
+
+            {/* Rejection reason (terminal state) */}
+            {effectiveLifecycleState === 'rejected' && effectiveRejectionReason && (
+              <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 italic">
+                {t('chatProposal.rejectionReason', 'Reason')}: {effectiveRejectionReason}
+              </div>
+            )}
+
+            {/* Reviewer attribution */}
+            {meta.reviewer?.name &&
+              (effectiveLifecycleState === 'approved' ||
+                effectiveLifecycleState === 'rejected' ||
+                effectiveLifecycleState === 'executed' ||
+                effectiveLifecycleState === 'audited' ||
+                effectiveLifecycleState === 'closed') && (
+                <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {t('chatProposal.reviewer', 'Reviewed by {{name}}', {
+                    name: meta.reviewer.name,
+                  } as any)}
+                </div>
+              )}
+
             {/*
               V8 / Wave A7 — Canonical trust panel inside the proposal bubble.
               Renders the newest bundle (cache → metadata fallback). Empty /
@@ -414,7 +490,7 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
             )}
 
             {/* Action row */}
-            {(canApprove || canReject || typeof onInspect === 'function') && (
+            {(canApprove || canReject || canExecute || typeof onInspect === 'function') && (
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 {canApprove && (
                   <button
@@ -444,6 +520,21 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
                       <X size={12} />
                     )}
                     {t('chatProposal.action.reject', 'Reject')}
+                  </button>
+                )}
+                {canExecute && (
+                  <button
+                    type="button"
+                    onClick={() => meta.proposalId && onExecute?.(meta.proposalId, msg)}
+                    disabled={isApproveBusy || isRejectBusy || isExecuteBusy}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium border bg-sky-600 text-white border-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isExecuteBusy ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <PlayCircle size={12} />
+                    )}
+                    {t('chatProposal.action.execute', 'Execute')}
                   </button>
                 )}
                 {typeof onInspect === 'function' && meta.proposalId && (

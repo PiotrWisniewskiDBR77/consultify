@@ -47,7 +47,7 @@ const CategoryHeader: React.FC<{ category: (typeof CANVAS_CATEGORIES)[0]; nodeCo
   const isPolish = i18n.language === 'pl';
 
   const colorClasses: Record<string, string> = {
-    red: 'border-red-300 bg-red-50/80 text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300',
+    red: 'border-rose-300 bg-rose-50/80 text-rose-700 dark:border-rose-700 dark:bg-rose-900/20 dark:text-rose-300',
     amber:
       'border-amber-300 bg-amber-50/80 text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
     green:
@@ -307,12 +307,12 @@ const DiscoveryCanvasInner: React.FC = () => {
         <MiniMap
           nodeColor={(n: any) => {
             const colors: Record<string, string> = {
-              painPoint: '#ef4444',
+              painPoint: '#f43f5e',
               insight: '#f59e0b',
               opportunity: '#22c55e',
               recommendation: '#3b82f6',
               tool: '#a855f7',
-              assessment: '#06b6d4',
+              assessment: '#3b82f6',
               quote: '#64748b',
               initiative: '#6366f1',
             };

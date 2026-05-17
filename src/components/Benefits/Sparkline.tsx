@@ -67,9 +67,9 @@ export const Sparkline: React.FC<SparklineProps> = ({
     return { path, targetY, minVal, maxVal, points };
   }, [data, width, height, targetValue, showTarget]);
 
-  const lineColor = isOnTarget ? 'stroke-green-500' : 'stroke-red-500';
-  const dotColor = isOnTarget ? 'fill-green-500' : 'fill-red-500';
-  const areaColor = isOnTarget ? 'fill-green-500/10' : 'fill-red-500/10';
+  const lineColor = isOnTarget ? 'stroke-green-500' : 'stroke-rose-500';
+  const dotColor = isOnTarget ? 'fill-green-500' : 'fill-rose-500';
+  const areaColor = isOnTarget ? 'fill-green-500/10' : 'fill-rose-500/10';
 
   // Create area path
   const areaPath = useMemo(() => {

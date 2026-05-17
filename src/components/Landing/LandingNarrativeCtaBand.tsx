@@ -43,7 +43,7 @@ export const LandingNarrativeCtaBand: React.FC<LandingNarrativeCtaBandProps> = (
               <button
                 type="button"
                 onClick={onAnnaClick}
-                className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 dark:border-violet-300/20 bg-violet-500/15 dark:bg-violet-500/12 px-4 py-2.5 text-sm font-semibold text-violet-700 dark:text-violet-100 transition-all duration-200 hover:bg-violet-500/25 dark:hover:bg-violet-500/20"
+                className="inline-flex items-center gap-2 rounded-full border border-primary-400/30 dark:border-primary-300/20 bg-primary-500/15 dark:bg-primary-500/12 px-4 py-2.5 text-sm font-semibold text-primary-700 dark:text-primary-100 transition-all duration-200 hover:bg-primary-500/25 dark:hover:bg-primary-500/20"
               >
                 <Sparkles size={14} />
                 <span>{t('landing.narrativeCta.askAnna', 'Ask Anna first')}</span>

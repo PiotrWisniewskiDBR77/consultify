@@ -148,14 +148,14 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
         onClick={() => setIsExpanded(true)}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
           activeFiltersCount > 0
-            ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
+            ? 'bg-primary-500/10 border-primary-500/30 text-primary-400'
             : 'bg-slate-800/50 border-slate-700/50 text-slate-400 dark:text-slate-500 hover:text-white'
         }`}
       >
         <Filter size={16} />
         Filters
         {activeFiltersCount > 0 && (
-          <span className="px-1.5 py-0.5 bg-violet-500 text-white text-xs rounded-full">
+          <span className="px-1.5 py-0.5 bg-primary-500 text-white text-xs rounded-full">
             {activeFiltersCount}
           </span>
         )}
@@ -168,10 +168,10 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
         <div className="flex items-center gap-2">
-          <Filter size={18} className="text-violet-400" />
+          <Filter size={18} className="text-primary-400" />
           <span className="font-semibold text-white">Filters</span>
           {activeFiltersCount > 0 && (
-            <span className="px-2 py-0.5 bg-violet-500/20 text-violet-400 text-xs rounded-full">
+            <span className="px-2 py-0.5 bg-primary-500/20 text-primary-400 text-xs rounded-full">
               {activeFiltersCount} active
             </span>
           )}
@@ -218,7 +218,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                   }
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.contentType === type
-                      ? 'bg-violet-500 text-white'
+                      ? 'bg-primary-500 text-white'
                       : 'bg-slate-900 text-slate-400 dark:text-slate-500 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
@@ -274,7 +274,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                     type="checkbox"
                     checked={filters.categoryIds.includes(category.id)}
                     onChange={() => handleCategoryToggle(category.id)}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-violet-500 focus:ring-violet-500/50"
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-primary-500 focus:ring-primary-500/50"
                   />
                   <span className="text-sm text-slate-300">{category.name}</span>
                 </label>
@@ -340,7 +340,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, from: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 />
               </div>
               <div>
@@ -354,7 +354,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, to: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 />
               </div>
             </div>
@@ -380,7 +380,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                     type="checkbox"
                     checked={filters.createdBy.includes(user.id)}
                     onChange={() => handleUserToggle(user.id)}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-violet-500 focus:ring-violet-500/50"
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-primary-500 focus:ring-primary-500/50"
                   />
                   <span className="text-sm text-slate-300">
                     {user.firstName} {user.lastName}
@@ -403,7 +403,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <select
               value={filters.language}
               onChange={(e) => onChange({ ...filters, language: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">All languages</option>
               {languages.map((lang) => (
@@ -446,7 +446,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
           <span className="text-slate-500 dark:text-slate-400">{icon}</span>
           <span className="text-sm font-medium text-slate-300">{title}</span>
           {count > 0 && (
-            <span className="px-1.5 py-0.5 bg-violet-500/20 text-violet-400 text-xs rounded-full">
+            <span className="px-1.5 py-0.5 bg-primary-500/20 text-primary-400 text-xs rounded-full">
               {count}
             </span>
           )}

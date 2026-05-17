@@ -1,13 +1,8 @@
 /**
- * Chat V10 / V10-AGT-029 — feature flag for the 12-anti-patterns
- * lint + runtime rule registry (Wave A seed).
+ * Chat V10 / V10-AGT anti-pattern catalogue feature flag.
  *
- * Runtime contract lives in
- * `src/models/agent/AgentAntiPatterns.ts`. Default OFF — Wave A
- * seed pins the closed 12-entry catalogue, closed 2-entry
- * `ENFORCEMENT_KINDS`, canonical-name mapping, and five
- * invariants. The Wave B eslint plugin + runtime detector chain
- * activate only when this flag is ON.
+ * Default OFF. The registry may describe the contract before the runtime
+ * enforcement is enabled.
  */
 
 const LS_KEY = 'ff.agent_anti_patterns';

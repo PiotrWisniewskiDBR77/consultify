@@ -1,66 +1,119 @@
-/**
- * @vitest-environment jsdom
- */
-import React from 'react';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const navigateMock = vi.fn();
-const setActiveConversationMock = vi.fn();
-
-const routeState: { conversationId?: string } = {};
-const conversationState: { activeConversationId: string | null } = {
-  activeConversationId: null,
-};
-
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => navigateMock,
-  useParams: () => routeState,
+const routerState = vi.hoisted(() => ({
+  params: {} as { conversationId?: string },
+  pathname: '/chat',
+  navigate: vi.fn(),
 }));
 
-vi.mock('../../../src/store/useConversationStore', () => ({
-  useConversationStore: (selector: (state: { activeConversationId: string | null; setActiveConversation: typeof setActiveConversationMock }) => unknown) =>
-    selector({
-      activeConversationId: conversationState.activeConversationId,
-      setActiveConversation: setActiveConversationMock,
-    }),
+vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: routerState.pathname }),
+  useNavigate: () => routerState.navigate,
+  useParams: () => routerState.params,
 }));
 
 describe('ConversationRouteSync', () => {
-  beforeEach(() => {
-    navigateMock.mockReset();
-    setActiveConversationMock.mockReset();
-    routeState.conversationId = undefined;
-    conversationState.activeConversationId = null;
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    routerState.params = {};
+    routerState.pathname = '/chat';
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    useConversationStore.setState({
+      activeConversationId: null,
+      activeMessages: [],
+      isLoading: false,
+    });
   });
 
-  it('does not redirect away from /chat on initial mount when a conversation is already restored in store', async () => {
-    conversationState.activeConversationId = 'conv-restored';
+  it('lets a newly created chat on /chat navigate to its conversation route', async () => {
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    const { ConversationRouteSync } = await import(
+      '../../../src/components/AIChat/ConversationRouteSync'
+    );
 
-    const { ConversationRouteSync } = await import('../../../src/components/AIChat/ConversationRouteSync');
+    useConversationStore.setState({
+      activeConversationId: 'conversation-id',
+      activeMessages: [],
+      isLoading: false,
+    });
+
     render(<ConversationRouteSync />);
 
-    expect(navigateMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(routerState.navigate).toHaveBeenCalledWith('/chat/conversation-id', {
+        replace: true,
+      });
+    });
+    expect(useConversationStore.getState().activeConversationId).toBe('conversation-id');
   });
 
-  it('navigates to /chat/:conversationId after the user activates a conversation from /chat', async () => {
+  it('does not let active chat state redirect non-chat module routes', async () => {
+    routerState.pathname = '/ai/artifacts';
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    const { ConversationRouteSync } = await import(
+      '../../../src/components/AIChat/ConversationRouteSync'
+    );
+
+    useConversationStore.setState({
+      activeConversationId: 'conversation-id',
+      activeMessages: [],
+      isLoading: false,
+    });
+
+    render(<ConversationRouteSync />);
+
+    await waitFor(() => {
+      expect(routerState.navigate).not.toHaveBeenCalled();
+    });
+  });
+
+  it('redirects a known missing conversation route without fetching it again', async () => {
+    routerState.pathname = '/chat/missing-conversation';
+    routerState.params = { conversationId: 'missing-conversation' };
+    localStorage.setItem('consultify-missing-conversations', JSON.stringify(['missing-conversation']));
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    const fetchConversation = vi.fn();
+    useConversationStore.setState({
+      activeConversationId: 'missing-conversation',
+      activeMessages: [],
+      isLoading: false,
+      fetchConversation,
+    });
+    const { ConversationRouteSync } = await import(
+      '../../../src/components/AIChat/ConversationRouteSync'
+    );
+
+    render(<ConversationRouteSync />);
+
+    await waitFor(() => {
+      expect(routerState.navigate).toHaveBeenCalledWith('/chat', { replace: true });
+    });
+    expect(fetchConversation).not.toHaveBeenCalled();
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+  });
+
+  it('clears dead deep-link conversation and routes back to /chat', async () => {
+    routerState.pathname = '/chat/conv-missing';
+    routerState.params = { conversationId: 'conv-missing' };
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    const clearActiveChat = vi.fn();
+    useConversationStore.setState({
+      activeConversationId: 'conv-missing',
+      activeMessages: [],
+      isLoading: false,
+      _activeConversationState: 'loaded',
+      clearActiveChat,
+    });
+
     const { ConversationRouteSync } = await import('../../../src/components/AIChat/ConversationRouteSync');
     const view = render(<ConversationRouteSync />);
 
-    expect(navigateMock).not.toHaveBeenCalled();
-
-    conversationState.activeConversationId = 'conv-selected';
+    useConversationStore.setState({ _activeConversationState: 'not_found' });
     view.rerender(<ConversationRouteSync />);
 
-    expect(navigateMock).toHaveBeenCalledWith('/chat/conv-selected', { replace: true });
-  });
-
-  it('hydrates the store from /chat/:conversationId', async () => {
-    routeState.conversationId = 'conv-deeplink';
-
-    const { ConversationRouteSync } = await import('../../../src/components/AIChat/ConversationRouteSync');
-    render(<ConversationRouteSync />);
-
-    expect(setActiveConversationMock).toHaveBeenCalledWith('conv-deeplink');
+    await waitFor(() => expect(clearActiveChat).toHaveBeenCalledTimes(1));
+    expect(routerState.navigate).toHaveBeenCalledWith('/chat', { replace: true });
   });
 });

@@ -36,6 +36,8 @@ interface PortfolioState {
   clearSelection: () => void;
   openSidePanel: (initiativeId: string) => void;
   closeSidePanel: () => void;
+  refreshTrigger: number;
+  triggerRefresh: () => void;
 }
 
 const initialFilters: PortfolioFilters = {};
@@ -55,8 +57,10 @@ export const usePortfolioStore = create<PortfolioState>()(
       selectedInitiativeId: null,
       selectedInitiativeIds: [],
       isSidePanelOpen: false,
+      refreshTrigger: 0,
 
       // Actions
+      triggerRefresh: () => set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
       setViewMode: (mode) => set({ viewMode: mode }),
 
       setFilters: (filters) =>

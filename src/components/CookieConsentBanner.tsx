@@ -111,14 +111,14 @@ export const CookieConsentBanner: React.FC = () => {
               <div className="p-6">
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
                   {/* Icon */}
-                  <div className="hidden lg:flex w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 items-center justify-center shrink-0">
-                    <Cookie className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <div className="hidden lg:flex w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 items-center justify-center shrink-0">
+                    <Cookie className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-                      <Cookie className="w-5 h-5 lg:hidden text-purple-600" />
+                      <Cookie className="w-5 h-5 lg:hidden text-primary-600" />
                       We use cookies
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -126,7 +126,7 @@ export const CookieConsentBanner: React.FC = () => {
                       content. You can customize your preferences or accept all cookies.{' '}
                       <a
                         href="/legal/cookies"
-                        className="text-purple-600 dark:text-purple-400 hover:underline font-medium"
+                        className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
                       >
                         Learn more
                       </a>
@@ -137,8 +137,8 @@ export const CookieConsentBanner: React.FC = () => {
                   <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto shrink-0">
                     <button
                       onClick={() => setShowDetails(!showDetails)}
-                      className="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 
-                                                       border border-slate-200 dark:border-navy-700 rounded-lg 
+                      className="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300
+                                                       border border-slate-200 dark:border-navy-700 rounded-lg
                                                        hover:bg-slate-50 dark:hover:bg-white/5 transition-colors
                                                        flex items-center justify-center gap-2"
                     >
@@ -147,17 +147,17 @@ export const CookieConsentBanner: React.FC = () => {
                     </button>
                     <button
                       onClick={acceptNecessary}
-                      className="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 
-                                                       border border-slate-200 dark:border-navy-700 rounded-lg 
+                      className="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300
+                                                       border border-slate-200 dark:border-navy-700 rounded-lg
                                                        hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                     >
                       Necessary Only
                     </button>
                     <button
                       onClick={acceptAll}
-                      className="px-6 py-2.5 text-sm font-semibold text-white 
-                                                       bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors
-                                                       shadow-lg shadow-purple-500/25"
+                      className="px-6 py-2.5 text-sm font-semibold text-white
+                                                       bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors
+                                                       shadow-lg shadow-primary-500/25"
                     >
                       Accept All
                     </button>
@@ -215,8 +215,8 @@ export const CookieConsentBanner: React.FC = () => {
                       <div className="mt-6 flex justify-end">
                         <button
                           onClick={saveCustomPreferences}
-                          className="px-6 py-2.5 text-sm font-semibold text-white 
-                                                               bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors
+                          className="px-6 py-2.5 text-sm font-semibold text-white
+                                                               bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors
                                                                flex items-center gap-2"
                         >
                           <Check size={16} />
@@ -255,7 +255,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
 }) => {
   return (
     <div
-      className={`flex items-center justify-between p-4 rounded-xl bg-white dark:bg-navy-900 
+      className={`flex items-center justify-between p-4 rounded-xl bg-white dark:bg-navy-900
                         border border-slate-200 dark:border-navy-700 ${disabled ? 'opacity-50' : ''}`}
     >
       <div className="flex-1">
@@ -263,7 +263,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
           <h4 className="font-semibold text-navy-900 dark:text-white">{title}</h4>
           {locked && (
             <span
-              className="px-2 py-0.5 text-[10px] font-bold uppercase bg-slate-100 dark:bg-white/10 
+              className="px-2 py-0.5 text-[10px] font-bold uppercase bg-slate-100 dark:bg-white/10
                                          text-slate-500 dark:text-slate-400 rounded"
             >
               Required
@@ -279,7 +279,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
         disabled={locked || disabled}
         className={`relative w-12 h-7 rounded-full transition-colors ${
           locked || disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-        } ${enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+        } ${enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-700'}`}
       >
         <motion.div
           animate={{ x: enabled ? 22 : 2 }}
@@ -287,7 +287,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
           className="absolute top-1 w-5 h-5 bg-white dark:bg-navy-900 rounded-full shadow-md flex items-center justify-center"
         >
           {enabled ? (
-            <Check size={12} className="text-purple-600" />
+            <Check size={12} className="text-primary-600" />
           ) : (
             <X size={12} className="text-slate-400 dark:text-slate-500" />
           )}

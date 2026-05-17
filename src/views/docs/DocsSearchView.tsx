@@ -35,7 +35,7 @@ export const DocsSearchView: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-        <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
+        <Link to="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
@@ -53,7 +53,7 @@ export const DocsSearchView: React.FC = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t('docs.search.placeholder', 'Search documentation...')}
-            className="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+            className="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
             autoFocus
           />
         </div>
@@ -122,17 +122,17 @@ export const DocsSearchView: React.FC = () => {
             >
               <Link
                 to={`/docs/${article.category_slug}/${article.slug}`}
-                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
+                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     {/* Category Badge */}
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium mb-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium mb-2">
                       <Book size={10} />
                       {article.category_name}
                     </span>
 
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {article.title}
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
@@ -153,7 +153,7 @@ export const DocsSearchView: React.FC = () => {
                   </div>
                   <ChevronRight
                     size={20}
-                    className="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                    className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
                   />
                 </div>
               </Link>
@@ -166,7 +166,7 @@ export const DocsSearchView: React.FC = () => {
       <div className="mt-8">
         <Link
           to="/docs"
-          className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           <ArrowLeft size={16} />
           {t('docs.search.backToDocs', 'Back to Documentation')}

@@ -1,24 +1,7 @@
 /**
- * Chat V10 / V10-ART-002 — feature flag for the ArtifactType registry.
+ * Chat V10 / V10-ART artifact-type registry feature flag.
  *
- * What this flag gates
- * --------------------
- * Adoption of `ARTIFACT_TYPE_REGISTRY` as the single lookup for
- * artifact-type metadata (renderer, supported ops, default
- * classification, export formats). Wave A seed ships only the
- * registry; the gate becomes meaningful when per-type implementation
- * tickets (V10-ART-006, V10-ART-016..020) start resolving renderer /
- * default classification through this registry instead of hard-coded
- * switch statements.
- *
- * Default: **OFF**. See `ADR-V10-002`.
- *
- * Resolution order
- * ----------------
- *   1. URL query   `?ff_artifact_type_registry=0|1`
- *   2. localStorage `ff.artifact_type_registry`
- *   3. env          `VITE_ARTIFACT_TYPE_REGISTRY`
- *   4. Hard default — `false`.
+ * Default OFF until artifact renderers and supported operations use the registry.
  */
 
 const LS_KEY = 'ff.artifact_type_registry';

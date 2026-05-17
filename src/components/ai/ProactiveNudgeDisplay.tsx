@@ -70,10 +70,10 @@ const nudgeStyles = {
   },
   INSIGHT: {
     icon: TrendingUp,
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    borderColor: 'border-purple-200 dark:border-purple-800',
-    iconColor: 'text-purple-500',
-    titleColor: 'text-purple-900 dark:text-purple-100',
+    bgColor: 'bg-primary-50 dark:bg-primary-900/20',
+    borderColor: 'border-primary-200 dark:border-primary-800',
+    iconColor: 'text-primary-500',
+    titleColor: 'text-primary-900 dark:text-primary-100',
   },
   TIP: {
     icon: Sparkles,
@@ -84,10 +84,10 @@ const nudgeStyles = {
   },
   WARNING: {
     icon: AlertCircle,
-    bgColor: 'bg-red-50 dark:bg-red-900/20',
-    borderColor: 'border-red-200 dark:border-red-800',
-    iconColor: 'text-red-500',
-    titleColor: 'text-red-900 dark:text-red-100',
+    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
+    borderColor: 'border-rose-200 dark:border-rose-800',
+    iconColor: 'text-rose-500',
+    titleColor: 'text-rose-900 dark:text-rose-100',
   },
 };
 
@@ -250,7 +250,7 @@ export function ProactiveNudgeDisplay({
                 key={nudge.id}
                 className={`
                                     ${style.bgColor} ${style.borderColor}
-                                    border rounded-xl shadow-lg p-4 
+                                    border rounded-xl shadow-lg p-4
                                     animate-slideIn
                                     transition-all duration-300
                                 `}
@@ -301,7 +301,7 @@ export function ProactiveNudgeDisplay({
                         </button>
                         <button
                           onClick={() => handleFeedback(nudge.id, 'negative')}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                           title="Not helpful"
                         >
                           <ThumbsDown size={14} />

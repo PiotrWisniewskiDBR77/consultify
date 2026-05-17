@@ -98,7 +98,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
       </div>
 
       <div className="flex items-center gap-1.5">
-        <TrendingUp size={13} className="text-violet-500" />
+        <TrendingUp size={13} className="text-primary-500" />
         <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">PCE:</span>
         <span
           className={`text-[11px] font-bold ${
@@ -106,7 +106,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
               ? 'text-emerald-700 dark:text-emerald-300'
               : metrics.pce >= 10
                 ? 'text-amber-700 dark:text-amber-300'
-                : 'text-red-700 dark:text-red-300'
+                : 'text-rose-700 dark:text-rose-300'
           }`}
         >
           {metrics.pce.toFixed(1)}%
@@ -129,7 +129,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
           )}
           {nvaPercent > 0 && (
             <div
-              className="h-full bg-red-400 dark:bg-red-500 transition-all duration-300"
+              className="h-full bg-rose-400 dark:bg-rose-500 transition-all duration-300"
               style={{ width: `${nvaPercent}%` }}
               title={
                 isPl
@@ -147,7 +147,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
             <span className="text-[8px] text-slate-500 dark:text-slate-400">VA</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-red-400 dark:bg-red-500" />
+            <div className="w-2 h-2 rounded-full bg-rose-400 dark:bg-rose-500" />
             <span className="text-[8px] text-slate-500 dark:text-slate-400">NVA</span>
           </div>
         </div>

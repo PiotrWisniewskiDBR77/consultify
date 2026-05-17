@@ -48,7 +48,7 @@ const DELEGATION_TYPES: {
       pl: 'Przekaż decyzję innej osobie',
     },
     icon: ArrowRight,
-    color: 'text-purple-500 bg-purple-500/10',
+    color: 'text-primary-500 bg-primary-500/10',
   },
   {
     type: 'review',
@@ -220,8 +220,8 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <Share2 size={20} className="text-purple-500" />
+              <div className="p-2 rounded-lg bg-primary-500/10">
+                <Share2 size={20} className="text-primary-500" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">

@@ -49,14 +49,14 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               <div className="flex items-center justify-center gap-2 py-1 opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
                 >
                   <Plus size={10} />
                   {t('presentations.builder.addBlank', 'Blank')}
                 </button>
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
                 >
                   <Sparkles size={10} />
                   {t('presentations.builder.addAi', 'AI')}

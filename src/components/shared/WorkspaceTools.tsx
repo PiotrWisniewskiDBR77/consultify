@@ -86,7 +86,7 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           {icon || (
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-violet-500/20">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-primary-500/20">
               <Sparkles size={13} className="text-white" />
             </div>
           )}
@@ -141,7 +141,7 @@ export const AIQuickActions: React.FC<AIQuickActionsProps> = ({
             className="flex-1 group rounded-xl py-2.5 px-3 bg-slate-50/60 dark:bg-white/[0.03] border border-slate-200/30 dark:border-white/[0.05] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm"
           >
             <div className="flex flex-col items-center gap-1">
-              <Sparkles size={16} className="text-violet-500 dark:text-violet-400" />
+              <Sparkles size={16} className="text-primary-500 dark:text-primary-400" />
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
                 {isPl ? 'Polecenie' : 'Command'}
               </span>
@@ -296,7 +296,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             onClick={() => setStyleMenuOpen(!styleMenuOpen)}
             className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] hover:shadow-sm"
           >
-            <div className="relative w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center text-violet-500 dark:text-violet-400 shrink-0">
+            <div className="relative w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center text-primary-500 dark:text-primary-400 shrink-0">
               <PenLine size={14} />
             </div>
             <div className="relative flex-1 min-w-0 text-left">
@@ -321,7 +321,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
                     handleChangeStyle(s.id);
                     setStyleMenuOpen(false);
                   }}
-                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/30 dark:border-white/[0.06] hover:bg-violet-500/10 hover:border-violet-500/15 text-[10px] font-medium text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300 transition-all"
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/30 dark:border-white/[0.06] hover:bg-primary-500/10 hover:border-primary-500/15 text-[10px] font-medium text-slate-600 dark:text-slate-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
                 >
                   <span>{s.icon}</span>
                   {isPl ? s.labelPl : s.labelEn}
@@ -336,7 +336,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             onClick={() => handleChangeLength('shorter')}
             className="group flex-1 flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] hover:shadow-sm"
           >
-            <div className="relative w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center text-orange-500 dark:text-orange-400 shrink-0">
+            <div className="relative w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center text-amber-500 dark:text-amber-400 shrink-0">
               <ArrowDownFromLine size={14} />
             </div>
             <div className="relative text-left">
@@ -349,7 +349,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             onClick={() => handleChangeLength('longer')}
             className="group flex-1 flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] hover:shadow-sm"
           >
-            <div className="relative w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center text-teal-500 dark:text-teal-400 shrink-0">
+            <div className="relative w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center text-blue-500 dark:text-blue-400 shrink-0">
               <ArrowUpFromLine size={14} />
             </div>
             <div className="relative text-left">

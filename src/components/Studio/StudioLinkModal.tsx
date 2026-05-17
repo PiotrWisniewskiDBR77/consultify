@@ -132,8 +132,8 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <Link2 size={20} className="text-purple-400" />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+              <Link2 size={20} className="text-primary-400" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">Link Diagram</h2>

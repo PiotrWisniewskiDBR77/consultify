@@ -271,7 +271,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   if (loading) {
     return (
       <div className={`${embedded ? 'p-4' : 'p-8'} flex items-center justify-center`}>
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -286,7 +286,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
         <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 text-slate-900 dark:text-white rounded-lg shadow-sm">
+              <div className="p-2 bg-gradient-to-br from-primary-500 to-pink-600 text-slate-900 dark:text-white rounded-lg shadow-sm">
                 <Bell size={20} />
               </div>
               <div>
@@ -296,7 +296,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {counts.total} {t('decisions.pending', 'pending')}
                   {counts.overdue > 0 && (
-                    <span className="text-red-500 ml-1">
+                    <span className="text-rose-500 ml-1">
                       • {counts.overdue} {t('decisions.overdue', 'overdue')}
                     </span>
                   )}
@@ -320,7 +320,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               {onCreateDecision && (
                 <button
                   onClick={onCreateDecision}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm flex items-center gap-2"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium text-sm flex items-center gap-2"
                 >
                   <Plus size={16} />
                   {t('decisions.new', 'New')}
@@ -344,7 +344,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               <span
                 className={`px-2 py-0.5 rounded-full text-xs ${
                   viewMode === 'my'
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                     : 'bg-slate-200 dark:bg-white/10'
                 }`}
               >
@@ -364,7 +364,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               <span
                 className={`px-2 py-0.5 rounded-full text-xs ${
                   viewMode === 'awaiting'
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                     : 'bg-slate-200 dark:bg-white/10'
                 }`}
               >
@@ -383,7 +383,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               <span
                 className={`px-2 py-0.5 rounded-full text-xs ${
                   viewMode === 'all'
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                     : 'bg-slate-200 dark:bg-white/10'
                 }`}
               >
@@ -405,7 +405,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('decisions.search', 'Search decisions...')}
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -413,7 +413,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
             <select
               value={contextFilter}
               onChange={(e) => setContextFilter(e.target.value as ContextFilter)}
-              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="all">{t('decisions.allContexts', 'All Contexts')}</option>
               <option value="initiative">🎯 {t('decisions.initiatives', 'Initiatives')}</option>
@@ -429,7 +429,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-3 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-colors ${
                   filterType !== 'all'
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                     : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
               >
@@ -450,14 +450,14 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                       }}
                       className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
                         filterType === filter
-                          ? 'text-purple-600 dark:text-purple-400 font-medium'
+                          ? 'text-primary-600 dark:text-primary-400 font-medium'
                           : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      {filter === 'overdue' && <AlertCircle size={14} className="text-red-500" />}
-                      {filter === 'blocking' && <Clock size={14} className="text-orange-500" />}
-                      {filter === 'critical' && <TrendingUp size={14} className="text-red-500" />}
-                      {filter === 'high' && <TrendingUp size={14} className="text-orange-500" />}
+                      {filter === 'overdue' && <AlertCircle size={14} className="text-rose-500" />}
+                      {filter === 'blocking' && <Clock size={14} className="text-amber-500" />}
+                      {filter === 'critical' && <TrendingUp size={14} className="text-rose-500" />}
+                      {filter === 'high' && <TrendingUp size={14} className="text-amber-500" />}
                       {filter === 'all'
                         ? t('decisions.filterAll', 'All')
                         : filter === 'overdue'
@@ -479,7 +479,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="urgency">⚠️ {t('decisions.sortUrgency', 'Urgency')}</option>
               <option value="newest">↓ {t('decisions.sortNewest', 'Newest')}</option>
@@ -529,7 +529,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               {onCreateDecision && (
                 <button
                   onClick={onCreateDecision}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
                 >
                   <Plus size={14} />
                   {t('decisions.create', 'Create Decision Request')}

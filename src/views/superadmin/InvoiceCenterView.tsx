@@ -12,20 +12,14 @@
 import {
   AlertTriangle,
   ArrowDownRight,
-  ArrowUpRight,
-  Building2,
-  Calendar,
   CheckCircle2,
   Clock,
   CreditCard,
   DollarSign,
   Download,
-  Edit3,
   Eye,
   FileText,
-  Filter,
   Loader2,
-  MoreVertical,
   Pencil,
   Plus,
   Printer,
@@ -43,6 +37,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import {
   CreditNotesPanel,
   InvoiceTemplateEditor,
@@ -104,6 +99,7 @@ export const InvoiceCenterView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [stats, setStats] = useState<BillingStats | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('30d');
@@ -121,6 +117,7 @@ export const InvoiceCenterView: React.FC = () => {
   // Usage Pricing Tiers state
   const [usageTiers, setUsageTiers] = useState<UsagePricingTier[]>([]);
   const [usageTiersLoading, setUsageTiersLoading] = useState(false);
+  const [usageTiersLoadError, setUsageTiersLoadError] = useState<string | null>(null);
   const [editingTier, setEditingTier] = useState<UsagePricingTier | null>(null);
   const [showCreateTier, setShowCreateTier] = useState(false);
   const [tierFormData, setTierFormData] = useState({
@@ -138,8 +135,9 @@ export const InvoiceCenterView: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const [invoicesResult, statsResult] = await Promise.all([
-        Api.getSuperAdminInvoices(dateFilter),
+        Api.getSuperAdminInvoices({ period: dateFilter }),
         Api.getSuperAdminInvoiceStats(),
       ]);
       setInvoices((invoicesResult as any)?.invoices || []);
@@ -155,16 +153,9 @@ export const InvoiceCenterView: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to fetch invoices:', error);
-      // Set empty defaults on error
       setInvoices([]);
-      setStats({
-        totalRevenue: 0,
-        paidInvoices: 0,
-        pendingInvoices: 0,
-        overdueInvoices: 0,
-        overdueAmount: 0,
-        monthlyGrowth: 0,
-      });
+      setStats(null);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load invoices');
     } finally {
       setLoading(false);
     }
@@ -173,11 +164,15 @@ export const InvoiceCenterView: React.FC = () => {
   const fetchUsageTiers = useCallback(async () => {
     setUsageTiersLoading(true);
     try {
+      setUsageTiersLoadError(null);
       const result = await Api.getUsagePricingTiers();
       setUsageTiers((result as any)?.tiers || []);
     } catch (error) {
       console.error('Failed to fetch usage pricing tiers:', error);
       setUsageTiers([]);
+      setUsageTiersLoadError(
+        error instanceof Error ? error.message : 'Failed to load usage pricing tiers'
+      );
     } finally {
       setUsageTiersLoading(false);
     }
@@ -284,9 +279,10 @@ export const InvoiceCenterView: React.FC = () => {
   const handleSendReminder = async (invoiceId: string) => {
     try {
       await Api.post(`/api/superadmin/invoices/${invoiceId}/remind`, {});
-      // Show success toast
+      toast.success('Invoice reminder sent');
     } catch (error) {
       console.error('Failed to send reminder:', error);
+      toast.error('Failed to send invoice reminder');
     }
   };
 
@@ -294,8 +290,10 @@ export const InvoiceCenterView: React.FC = () => {
     try {
       await Api.post(`/api/superadmin/invoices/${invoiceId}/mark-paid`, {});
       fetchData();
+      toast.success('Invoice marked as paid');
     } catch (error) {
       console.error('Failed to mark as paid:', error);
+      toast.error('Failed to mark invoice as paid');
     }
   };
 
@@ -333,13 +331,13 @@ export const InvoiceCenterView: React.FC = () => {
     setCreatingInvoice(true);
     try {
       const dueDate = newInvoice.dueDate ? `${newInvoice.dueDate}T00:00:00.000Z` : undefined;
-      await Api.post('/billing/invoices', {
+      await Api.post('/superadmin/invoices', {
         organizationId: newInvoice.organizationId.trim(),
         lineItems: [
           {
             description: newInvoice.description.trim(),
-            amount: Math.round(newInvoice.amount * 100),
             quantity: 1,
+            unitPrice: newInvoice.amount,
           },
         ],
         currency: newInvoice.currency,
@@ -374,7 +372,7 @@ export const InvoiceCenterView: React.FC = () => {
       draft: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
       pending: 'bg-amber-500/10 text-amber-600',
       paid: 'bg-emerald-500/10 text-emerald-600',
-      overdue: 'bg-red-500/10 text-red-600',
+      overdue: 'bg-rose-500/10 text-rose-600',
       cancelled: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
       refunded: 'bg-blue-500/10 text-blue-600',
     };
@@ -398,8 +396,10 @@ export const InvoiceCenterView: React.FC = () => {
 
   const renderInvoicesTab = () => (
     <div className="space-y-6">
+      {loadError && <DegradedState title="Invoice overview unavailable" description={loadError} />}
+
       {/* Stats Cards */}
-      {stats && (
+      {!loadError && stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between mb-3">
@@ -412,7 +412,7 @@ export const InvoiceCenterView: React.FC = () => {
               {formatCurrency(stats.totalRevenue)}
             </div>
             <div
-              className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+              className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
             >
               {stats.monthlyGrowth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               {Math.abs(stats.monthlyGrowth)}% vs last month
@@ -448,12 +448,12 @@ export const InvoiceCenterView: React.FC = () => {
           <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-slate-500 dark:text-slate-400">Overdue</span>
-              <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="text-red-500" size={20} />
+              <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                <AlertTriangle className="text-rose-500" size={20} />
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-600">{stats.overdueInvoices}</div>
-            <div className="mt-1 text-sm text-red-500">
+            <div className="text-2xl font-bold text-rose-600">{stats.overdueInvoices}</div>
+            <div className="mt-1 text-sm text-rose-500">
               {formatCurrency(stats.overdueAmount)} outstanding
             </div>
           </div>
@@ -472,12 +472,14 @@ export const InvoiceCenterView: React.FC = () => {
             placeholder="Search invoices..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={!!loadError}
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
+          disabled={!!loadError}
           className="px-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
         >
           <option value="all">All Status</option>
@@ -490,6 +492,7 @@ export const InvoiceCenterView: React.FC = () => {
         <select
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+          disabled={!!loadError}
           className="px-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
         >
           <option value="7d">Last 7 days</option>
@@ -500,7 +503,8 @@ export const InvoiceCenterView: React.FC = () => {
         </select>
         <button
           onClick={() => setShowCreateInvoice(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          disabled={!!loadError}
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
         >
           <Plus size={18} />
           Create Invoice
@@ -536,78 +540,86 @@ export const InvoiceCenterView: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                <td className="px-6 py-4">
-                  <div className="font-medium text-slate-900 dark:text-white font-mono">
-                    {invoice.invoiceNumber}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                      {invoice.organizationName.charAt(0)}
-                    </div>
-                    <span className="text-slate-700 dark:text-slate-300">
-                      {invoice.organizationName}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="font-semibold text-slate-900 dark:text-white">
-                    {formatCurrency(invoice.total, invoice.currency)}
-                  </div>
-                  {invoice.tax > 0 && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      incl. {formatCurrency(invoice.tax, invoice.currency)} tax
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {new Date(invoice.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`text-sm ${
-                      invoice.status === 'overdue'
-                        ? 'text-red-600 font-medium'
-                        : 'text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {new Date(invoice.dueDate).toLocaleDateString()}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => setSelectedInvoice(invoice)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                      title="View"
-                    >
-                      <Eye size={16} className="text-slate-400 dark:text-slate-500" />
-                    </button>
-                    <button
-                      onClick={() => handleDownloadPdf(invoice.id)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                      title="Download Invoice"
-                    >
-                      <Download size={16} className="text-slate-400 dark:text-slate-500" />
-                    </button>
-                    {(invoice.status === 'pending' || invoice.status === 'overdue') && (
-                      <button
-                        onClick={() => handleSendReminder(invoice.id)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                        title="Send Reminder"
-                      >
-                        <Send size={16} className="text-slate-400 dark:text-slate-500" />
-                      </button>
-                    )}
-                  </div>
+            {loadError ? (
+              <tr>
+                <td colSpan={7} className="p-6">
+                  <DegradedState title="Invoices unavailable" description={loadError} />
                 </td>
               </tr>
-            ))}
-            {filteredInvoices.length === 0 && (
+            ) : (
+              filteredInvoices.map((invoice) => (
+                <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900 dark:text-white font-mono">
+                      {invoice.invoiceNumber}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
+                        {invoice.organizationName.charAt(0)}
+                      </div>
+                      <span className="text-slate-700 dark:text-slate-300">
+                        {invoice.organizationName}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {formatCurrency(invoice.total, invoice.currency)}
+                    </div>
+                    {invoice.tax > 0 && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        incl. {formatCurrency(invoice.tax, invoice.currency)} tax
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                    {new Date(invoice.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`text-sm ${
+                        invoice.status === 'overdue'
+                          ? 'text-rose-600 font-medium'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {new Date(invoice.dueDate).toLocaleDateString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setSelectedInvoice(invoice)}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                        title="View"
+                      >
+                        <Eye size={16} className="text-slate-400 dark:text-slate-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(invoice.id)}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                        title="Download Invoice"
+                      >
+                        <Download size={16} className="text-slate-400 dark:text-slate-500" />
+                      </button>
+                      {(invoice.status === 'pending' || invoice.status === 'overdue') && (
+                        <button
+                          onClick={() => handleSendReminder(invoice.id)}
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                          title="Send Reminder"
+                        >
+                          <Send size={16} className="text-slate-400 dark:text-slate-500" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+            {!loadError && filteredInvoices.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center">
                   <Receipt size={40} className="mx-auto mb-3 text-slate-300" />
@@ -722,7 +734,7 @@ export const InvoiceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateInvoice}
                 disabled={creatingInvoice}
-                className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
               >
                 {creatingInvoice ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -865,7 +877,7 @@ export const InvoiceCenterView: React.FC = () => {
             <button
               onClick={handleSaveTier}
               disabled={savingTier}
-              className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
             >
               {savingTier ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -896,7 +908,8 @@ export const InvoiceCenterView: React.FC = () => {
         </div>
         <button
           onClick={openCreateTier}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          disabled={!!usageTiersLoadError}
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
         >
           <Plus size={18} />
           Add Tier
@@ -907,7 +920,14 @@ export const InvoiceCenterView: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         {usageTiersLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 size={28} className="animate-spin text-violet-500" />
+            <Loader2 size={28} className="animate-spin text-primary-500" />
+          </div>
+        ) : usageTiersLoadError ? (
+          <div className="p-6">
+            <DegradedState
+              title="Usage pricing tiers unavailable"
+              description={usageTiersLoadError}
+            />
           </div>
         ) : usageTiers.length === 0 ? (
           <div className="px-6 py-12 text-center">
@@ -984,14 +1004,14 @@ export const InvoiceCenterView: React.FC = () => {
                         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                         title="Edit"
                       >
-                        <Pencil size={16} className="text-violet-500" />
+                        <Pencil size={16} className="text-primary-500" />
                       </button>
                       <button
                         onClick={() => handleDeleteTier(tier.id)}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                         title="Delete"
                       >
-                        <Trash2 size={16} className="text-red-400" />
+                        <Trash2 size={16} className="text-rose-400" />
                       </button>
                     </div>
                   </td>
@@ -1175,32 +1195,23 @@ export const InvoiceCenterView: React.FC = () => {
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-900 p-1 rounded-lg w-fit overflow-x-auto">
         {[
-          { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} />, disabled: false },
-          { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} />, disabled: false },
-          { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} />, disabled: false },
-          { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} />, disabled: false },
-          { id: 'templates', label: 'Templates', icon: <FileText size={16} />, disabled: false },
+          { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} /> },
+          { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} /> },
+          { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} /> },
+          { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} /> },
+          { id: 'templates', label: 'Templates', icon: <FileText size={16} /> },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => !tab.disabled && setActiveTab(tab.id as TabType)}
-            disabled={tab.disabled}
-            title={tab.disabled ? 'Coming soon' : undefined}
+            onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab.disabled
-                ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
-                : activeTab === tab.id
-                  ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              activeTab === tab.id
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {tab.icon}
             {tab.label}
-            {tab.disabled && (
-              <span className="text-[10px] bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">
-                Soon
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -1208,7 +1219,7 @@ export const InvoiceCenterView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         <>

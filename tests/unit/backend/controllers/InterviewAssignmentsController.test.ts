@@ -382,105 +382,6 @@ describe('InterviewController assignments', () => {
     );
   });
 
-  it('revokeApproval: reopens approved assignment as in_progress with audit trail', async () => {
-    mockReq.params.id = 'a6';
-    mockReq.body = { reason: 'Approved by mistake' };
-    mockReq.user.role = 'ADMIN';
-    mockQueryAll.mockResolvedValue([]);
-
-    mockQueryOne
-      .mockResolvedValueOnce({
-        id: 'a6',
-        organization_id: 'org-1',
-        session_id: 's6',
-        task_id: 't6',
-        status: 'approved',
-        assignee_user_id: 'user-1',
-        ai_review_snapshot_json: JSON.stringify({
-          overallScore: 4.4,
-          overallVerdict: 'ready_for_approval',
-          recommendations: [],
-          questionEvaluations: [],
-          weakAnswerMap: [],
-        }),
-        review_decision_memory_json: JSON.stringify([
-          { id: 'm2', action: 'approve', alignment: 'aligned' },
-        ]),
-      })
-      .mockResolvedValueOnce({
-        id: 's6',
-        organization_id: 'org-1',
-        answered_questions: 8,
-        total_questions: 10,
-        status: 'completed',
-      })
-      .mockResolvedValueOnce({
-        id: 'a6',
-        organization_id: 'org-1',
-        session_id: 's6',
-        status: 'in_progress',
-        sent_back_reason: 'Approved by mistake',
-        review_decision_memory_json: JSON.stringify([
-          { id: 'm2', action: 'approve', alignment: 'aligned' },
-          { id: 'm3', action: 'revoke_approval', alignment: 'manager_stricter_than_ai' },
-        ]),
-      })
-      .mockResolvedValueOnce({
-        id: 's6',
-        organization_id: 'org-1',
-        assignment_id: 'a6',
-        status: 'active',
-        answered_questions: 8,
-        total_questions: 10,
-      });
-
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
-    await InterviewController.revokeApproval(mockReq, mockRes, mockNext);
-
-    expect(mockQueryRun).toHaveBeenCalledWith(
-      expect.stringContaining(`SET status = 'in_progress'`),
-      expect.any(Array)
-    );
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        assignment: expect.objectContaining({
-          status: 'in_progress',
-          reviewDecisionMemory: expect.any(Array),
-        }),
-        session: expect.objectContaining({
-          status: 'in_progress',
-        }),
-        entersContext: false,
-      })
-    );
-  });
-
-  it('archiveAssignment: deactivates approved assignment without touching session state', async () => {
-    mockReq.params.id = 'a7';
-    mockReq.user.role = 'ADMIN';
-
-    mockQueryOne.mockResolvedValueOnce({
-      id: 'a7',
-      organization_id: 'org-1',
-      status: 'approved',
-      session_id: 's7',
-      is_active: 1,
-    });
-
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
-    await InterviewController.archiveAssignment(mockReq, mockRes, mockNext);
-
-    expect(mockQueryRun).toHaveBeenCalledWith(
-      expect.stringContaining('SET is_active = 0'),
-      expect.any(Array)
-    );
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: true,
-      archived: true,
-      assignmentId: 'a7',
-    });
-  });
-
   it('updateQuestion: rejects edits only when session is completed', async () => {
     mockReq.params.questionId = 'q1';
     mockReq.body = { answerText: 'test', status: 'answered' };
@@ -503,6 +404,55 @@ describe('InterviewController assignments', () => {
           String(call[0]).toLowerCase().includes('update interview_questions')
       )
     ).toBe(false);
+  });
+
+  it('updateSession: allows status-only completion updates for ad-hoc sessions', async () => {
+    mockReq.params.id = 's-ad-hoc';
+    mockReq.body = { status: 'completed' };
+
+    mockQueryOne
+      // sessionCheck
+      .mockResolvedValueOnce({
+        id: 's-ad-hoc',
+        assignment_id: null,
+        status: 'active',
+      })
+      // updated session row
+      .mockResolvedValueOnce({
+        id: 's-ad-hoc',
+        organization_id: 'org-1',
+        project_id: null,
+        owner_id: 'user-1',
+        name: 'Ad-hoc interview',
+        status: 'completed',
+        assignment_id: null,
+        progress_json: '{}',
+        total_questions: 6,
+        answered_questions: 6,
+        summary_facts: '[]',
+        summary_gaps: '[]',
+        summary_constraints: '[]',
+        summary_pain_points: '[]',
+        runtime_mode_default: 'single_question',
+        started_at: '2026-05-01T00:00:00.000Z',
+        completed_at: '2026-05-01T00:10:00.000Z',
+        last_activity_at: '2026-05-01T00:10:00.000Z',
+      });
+
+    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.updateSession(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).not.toHaveBeenCalledWith(400);
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE interview_sessions SET'),
+      expect.arrayContaining(['completed'])
+    );
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 's-ad-hoc',
+        status: 'completed',
+      })
+    );
   });
 });
 

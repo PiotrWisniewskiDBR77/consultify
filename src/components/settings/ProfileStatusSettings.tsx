@@ -23,8 +23,8 @@ interface ProfileStatusSettingsProps {
 const STATUS_OPTIONS = [
   { value: 'online', label: 'Online', icon: Circle, color: 'text-green-500' },
   { value: 'away', label: 'Away', icon: Clock, color: 'text-yellow-500' },
-  { value: 'busy', label: 'Busy', icon: Zap, color: 'text-orange-500' },
-  { value: 'dnd', label: 'Do Not Disturb', icon: Moon, color: 'text-red-500' },
+  { value: 'busy', label: 'Busy', icon: Zap, color: 'text-amber-500' },
+  { value: 'dnd', label: 'Do Not Disturb', icon: Moon, color: 'text-rose-500' },
 ] as const;
 
 type AvailabilityStatus = 'available' | 'away' | 'busy' | 'dnd' | 'offline';
@@ -104,8 +104,8 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
                                     flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
                                     ${
                                       isSelected
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                                     }
                                 `}
               >
@@ -116,7 +116,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
                 <span
                   className={`text-sm font-medium ${
                     isSelected
-                      ? 'text-purple-700 dark:text-purple-300'
+                      ? 'text-primary-700 dark:text-primary-300'
                       : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -145,7 +145,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
             'e.g., In a meeting until 3 PM'
           )}
           maxLength={100}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
         <p className="text-xs text-slate-400 dark:text-slate-500">
           {statusMessage.length}/100 {t('common.characters', 'characters')}
@@ -182,7 +182,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -206,7 +206,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.profile.status.error', 'Failed to update status')}
         </div>

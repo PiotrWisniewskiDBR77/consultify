@@ -46,7 +46,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
             let statusDot = null;
             if (isActual && isTarget) {
               statusDot = (
-                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-primary-500" />
               );
             } else if (isActual) {
               statusDot = (
@@ -54,7 +54,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
               );
             } else if (isTarget) {
               statusDot = (
-                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-purple-500" />
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary-500" />
               );
             }
 
@@ -67,7 +67,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                                     min-w-[60px] px-3 py-2 rounded-xl border transition-all touch-ripple
                                     ${
                                       isActive
-                                        ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/30'
+                                        ? 'bg-primary-600 border-primary-500 text-white shadow-lg shadow-primary-600/30'
                                         : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 active:bg-slate-100 dark:active:bg-white/10'
                                     }
                                 `}
@@ -75,7 +75,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                 {statusDot}
                 <span className={`text-lg font-bold ${isActive ? 'text-white' : ''}`}>{key}</span>
                 <span
-                  className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
+                  className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                 >
                   {t('common.level')}
                 </span>
@@ -129,7 +129,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
           let statusLabel = null;
           if (isActual && isTarget)
             statusLabel = (
-              <span className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-primary-500 px-2 py-0.5 rounded-full">
                 {t('assessment.workspace.actual_target')}
               </span>
             );

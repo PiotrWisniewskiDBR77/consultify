@@ -198,6 +198,7 @@ export * from './ui/index';
 
 // Specialized types
 export * from './AIContract';
+export * from './artifactContent';
 export * from './discovery';
 export * from './myWork';
 export * from './tablePlatform';

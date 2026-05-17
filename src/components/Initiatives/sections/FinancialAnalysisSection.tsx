@@ -21,8 +21,8 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
     <CollapsibleSection
       id="financialAnalysis"
       title={isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
-      icon={<BarChart3 size={18} className="text-cyan-500 dark:text-cyan-400" />}
-      iconBg="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20"
+      icon={<BarChart3 size={18} className="text-blue-500 dark:text-blue-400" />}
+      iconBg="bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20"
       expanded={expanded}
       onToggle={onToggle}
       actions={
@@ -36,7 +36,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
             handleGenerateAI('financialAnalysis');
           }}
           disabled={isGeneratingAI === 'financialAnalysis'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50"
         >
           {isGeneratingAI === 'financialAnalysis' ? (
             <Loader2 size={14} className="animate-spin" />
@@ -65,7 +65,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
           </div>
           <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={14} className="text-orange-500" />
+              <DollarSign size={14} className="text-amber-500" />
               <span className="text-xs font-medium text-slate-500 uppercase">OPEX</span>
             </div>
             <div className="text-2xl font-bold text-slate-700 dark:text-white">
@@ -97,11 +97,11 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
               {initiative.npv ? `$${initiative.npv.toLocaleString()}` : '-'}
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-500/5 border border-purple-200/40 dark:border-purple-500/20 text-center">
-            <div className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase mb-1">
+          <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-500/5 border border-primary-200/40 dark:border-primary-500/20 text-center">
+            <div className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase mb-1">
               {isPolish ? 'Zwrot' : 'Payback'}
             </div>
-            <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
+            <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {initiative.paybackMonths ? `${initiative.paybackMonths}m` : '-'}
             </div>
           </div>

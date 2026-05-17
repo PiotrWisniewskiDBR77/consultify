@@ -122,6 +122,23 @@ async function requireInboxTriageTables(res: Response): Promise<boolean> {
 }
 
 async function requireNotebookPagesTable(res: Response): Promise<boolean> {
+  const isTestGateway =
+    process.env.NODE_ENV === 'test' ||
+    process.env.E2E_MODE === 'true' ||
+    process.env.ENABLE_TEST_GATEWAY === 'true';
+  const mockDbEnabled =
+    process.env.MOCK_DB === 'true' ||
+    process.env.E2E_MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false');
+
+  // Mock/test gateways often do not expose schema introspection reliably.
+  // Skip table-introspection gating there to avoid false 503s.
+  if (isTestGateway && mockDbEnabled) {
+    return true;
+  }
+
   const cols = await getTableColumns('notebook_pages');
   if (!cols?.size) {
     res.status(503).json({
@@ -666,11 +683,12 @@ router.post(
     const confidence = typeof req.body?.confidence === 'number' ? req.body.confidence : undefined;
 
     if (!VALID_INBOX_TRIAGE_ACTIONS.includes(action as any)) {
-      return res.status(400).json({ error: 'Invalid action' });
+      return res.status(400).json({ error: 'Invalid action', code: 'INBOX_TRIAGE_ACTION_INVALID' });
     }
     if (!itemKey || !itemKey.includes(':')) {
       return res.status(400).json({
         error: 'Missing itemKey (expected task:<id> | decision:<id> | notification:<id>)',
+        code: 'INBOX_TRIAGE_ITEM_KEY_REQUIRED',
       });
     }
 
@@ -725,10 +743,12 @@ router.post(
       : undefined;
 
     if (!VALID_INBOX_TRIAGE_ACTIONS.includes(action as any)) {
-      return res.status(400).json({ error: 'Invalid action' });
+      return res.status(400).json({ error: 'Invalid action', code: 'INBOX_TRIAGE_ACTION_INVALID' });
     }
     if (itemKeys.length === 0) {
-      return res.status(400).json({ error: 'Missing itemKeys[]' });
+      return res
+        .status(400)
+        .json({ error: 'Missing itemKeys[]', code: 'INBOX_TRIAGE_ITEM_KEYS_REQUIRED' });
     }
 
     const data = await applyGovernedBulkInboxTriage({
@@ -756,7 +776,9 @@ router.post(
     const payload = InboxAiAssistItemSchema.safeParse(body.item);
 
     if (!payload.success) {
-      return res.status(400).json({ error: 'Invalid item payload' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid item payload', code: 'INBOX_AI_ASSIST_INVALID_ITEM' });
     }
 
     try {
@@ -771,7 +793,11 @@ router.post(
         meta: { version: 'v8', contract: V8_INBOX_AI_ASSIST_CONTRACT },
       });
     } catch (err: any) {
-      return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
+      return res.status(503).json({
+        error: 'AI assist unavailable',
+        code: 'INBOX_AI_ASSIST_UNAVAILABLE',
+        message: err?.message,
+      });
     }
   })
 );

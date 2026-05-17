@@ -37,7 +37,7 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
           cy={18}
           r={15}
           fill="transparent"
-          stroke="#ef4444"
+          stroke="#f43f5e"
           strokeWidth={3}
           className={selected ? 'stroke-[4]' : ''}
         />

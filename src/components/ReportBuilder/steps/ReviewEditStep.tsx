@@ -430,9 +430,9 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                   : report.status === 'IN_REVIEW'
                     ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                     : report.status === 'SENT_INTERNAL'
-                      ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                       : report.status === 'SENT_EXTERNAL'
-                        ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
               }
             `}
@@ -568,7 +568,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
               <button
                 onClick={onMarkSentInternal}
                 disabled={isLoading}
-                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50"
+                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -584,16 +584,16 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
 
       {/* Sent Internal actions - Mark as sent externally */}
       {report?.status === 'SENT_INTERNAL' && onMarkSentExternal && (
-        <div className="mt-8 p-6 bg-cyan-50 dark:bg-cyan-900/10 rounded-xl border border-cyan-200 dark:border-cyan-800">
+        <div className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
-              <Send className="w-6 h-6 text-cyan-700 dark:text-cyan-300" />
+            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <Send className="w-6 h-6 text-blue-700 dark:text-blue-300" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-cyan-900 dark:text-cyan-100">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100">
                 {isPl ? 'Wysłany wewnętrznie' : 'Sent Internally'}
               </h3>
-              <p className="text-sm text-cyan-700 dark:text-cyan-300 mt-1">
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                 {isPl
                   ? 'Raport został wysłany wewnętrznie. Oznacz jako wysłany zewnętrznie, gdy przekażesz go do klienta.'
                   : 'Report has been sent internally. Mark as sent externally when you share it with the client.'}
@@ -602,7 +602,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
               <button
                 onClick={onMarkSentExternal}
                 disabled={isLoading}
-                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -618,16 +618,16 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
 
       {/* Sent External - Final status info */}
       {report?.status === 'SENT_EXTERNAL' && (
-        <div className="mt-8 p-6 bg-teal-50 dark:bg-teal-900/10 rounded-xl border border-teal-200 dark:border-teal-800">
+        <div className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-              <ArrowRight className="w-6 h-6 text-teal-700 dark:text-teal-300" />
+            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <ArrowRight className="w-6 h-6 text-blue-700 dark:text-blue-300" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-teal-900 dark:text-teal-100">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100">
                 {isPl ? 'Wysłany zewnętrznie' : 'Sent Externally'}
               </h3>
-              <p className="text-sm text-teal-700 dark:text-teal-300 mt-1">
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                 {isPl
                   ? 'Raport został wysłany do klienta. Cykl życia raportu został zakończony.'
                   : 'Report has been sent to the client. The report lifecycle is complete.'}

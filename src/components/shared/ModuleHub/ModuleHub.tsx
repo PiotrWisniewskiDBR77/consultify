@@ -26,6 +26,7 @@ interface ModuleHubProps {
 
   // Search
   onSearch: (query: string) => void;
+  searchValue?: string;
 
   // Dynamic documents
   openDocuments: OpenDocument[];
@@ -78,6 +79,8 @@ interface ModuleHubProps {
   // Command Row content (V3: one line under module topbar)
   // Used for status counters / bulk actions / dynamic chips when search & docs tabs are not active.
   commandRowContent?: React.ReactNode;
+  // Right-side Command Row content. Canonical place for contextual AI/actions in open documents.
+  commandRowRightContent?: React.ReactNode;
 
   /**
    * If true, `commandRowContent` overrides Search/DynamicTabs (used for multi-select bulk mode).
@@ -104,6 +107,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
+  searchValue,
   openDocuments,
   activeDocumentId,
   onSelectDocument,
@@ -126,6 +130,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   toolControl,
   aiControl,
   commandRowContent,
+  commandRowRightContent,
   forceCommandRow,
   showTabCounts,
   filterActions,
@@ -146,6 +151,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
         onSearch={onSearch}
+        searchValue={searchValue}
         openDocuments={openDocuments}
         activeDocumentId={activeDocumentId}
         onSelectDocument={onSelectDocument}
@@ -168,6 +174,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         toolControl={toolControl}
         aiControl={aiControl}
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
         forceCommandRow={forceCommandRow}
       />
 

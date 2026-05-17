@@ -144,7 +144,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
                   {variables.find((v) => v.name === entry.dataKey)?.namePl || entry.dataKey}:
                 </span>
                 <span
-                  className={`font-medium ${entry.value >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                  className={`font-medium ${entry.value >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
                 >
                   {new Intl.NumberFormat('pl-PL', {
                     style: 'currency',
@@ -169,7 +169,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
           <p className="font-bold text-navy-900 dark:text-white mb-2">{data.variablePl}</p>
           <div className="space-y-1.5 text-sm">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-red-500">Min NPV:</span>
+              <span className="text-rose-500">Min NPV:</span>
               <span className="font-medium text-navy-900 dark:text-white">
                 {new Intl.NumberFormat('pl-PL', {
                   style: 'currency',
@@ -228,7 +228,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Activity size={20} className="text-purple-500" />
+            <Activity size={20} className="text-primary-500" />
             Sensitivity Analysis
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -314,7 +314,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
             <Bar
               dataKey="lowNpv"
               name="Min NPV"
-              fill="#ef4444"
+              fill="#f43f5e"
               radius={[4, 0, 0, 4]}
               barSize={20}
             />
@@ -371,9 +371,9 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
       )}
 
       {/* Insight */}
-      <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-xl">
+      <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 rounded-xl">
         <div className="flex items-start gap-3">
-          <ArrowLeftRight size={20} className="text-purple-500 shrink-0 mt-0.5" />
+          <ArrowLeftRight size={20} className="text-primary-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-navy-900 dark:text-white">
               Most important variables
@@ -382,13 +382,13 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
               {tornadoData.length > 0 && (
                 <>
                   Highest impact on NPV has{' '}
-                  <span className="font-medium text-purple-600 dark:text-purple-400">
+                  <span className="font-medium text-primary-600 dark:text-primary-400">
                     {tornadoData[0].variablePl}
                   </span>
                   {tornadoData.length > 1 && (
                     <>
                       , then{' '}
-                      <span className="font-medium text-purple-600 dark:text-purple-400">
+                      <span className="font-medium text-primary-600 dark:text-primary-400">
                         {tornadoData[1].variablePl}
                       </span>
                     </>

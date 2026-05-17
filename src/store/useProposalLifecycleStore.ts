@@ -33,6 +33,7 @@ interface CachedProposal {
   actionType?: string;
   planSummary?: string;
   risk?: string;
+  trustBundle?: unknown;
   rejectionReason?: string | null;
   reviewer?: { userId?: string; name?: string } | null;
   latestMessageType?: ChatProposalView['latestMessageType'];
@@ -106,6 +107,7 @@ export const useProposalLifecycleStore = create<ProposalLifecycleStoreState>((se
               actionType: p.actionType,
               planSummary: p.planSummary,
               risk: p.risk,
+              trustBundle: (p as { trustBundle?: unknown }).trustBundle,
               rejectionReason: p.rejectionReason ?? null,
               reviewer: p.reviewer ?? null,
               latestMessageType: p.latestMessageType,

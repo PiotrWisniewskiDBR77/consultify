@@ -14,7 +14,17 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: 'controls', label: 'Budgets & tax' },
 ];
 
+const DEFAULT_BILLING_ALERTS = [
+  { id: 'default-tokens', type: 'tokens', threshold: 80, isActive: true },
+  { id: 'default-spend', type: 'spend', threshold: 75, isActive: true },
+];
+
 export const AdminBillingFinOpsPanel: React.FC = () => {
+  const stripeEnabled = ['true', '1', 'yes'].includes(
+    String(import.meta.env.VITE_STRIPE_ENABLED || '')
+      .trim()
+      .toLowerCase()
+  );
   const [activeTab, setActiveTab] = useState<TabId>('summary');
   const [summary, setSummary] = useState<any>(null);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -39,7 +49,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
         setSummary(summaryResult);
         setPaymentMethods(paymentResult?.paymentMethods || []);
         setInvoices(invoiceResult?.invoices || []);
-        setAlerts(alertResult?.alerts || []);
+        const nextAlerts = Array.isArray(alertResult?.alerts) ? alertResult.alerts : [];
+        setAlerts(nextAlerts.length > 0 ? nextAlerts : DEFAULT_BILLING_ALERTS);
         setTaxSettings(taxResult?.settings || taxResult);
         setUsageDetails(usageResult?.summary || usageResult);
       } catch (error: any) {
@@ -51,7 +62,10 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   }, []);
 
   const addPaymentMethod = async () => {
-    if (!newPaymentMethodId.trim()) return;
+    if (!newPaymentMethodId.trim()) {
+      toast.error('Enter a payment method id, for example pm_demo_4242');
+      return;
+    }
     try {
       const result = await Api.addAdminBillingPaymentMethod({
         paymentMethodId: newPaymentMethodId.trim(),
@@ -118,7 +132,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             />
             <button
               onClick={() => void addPaymentMethod()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Add method
             </button>
@@ -177,17 +191,25 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {invoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td className="py-3 pr-4 text-slate-900 dark:text-white">
-                    {invoice.invoice_number || invoice.id}
+              {invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
+                    No invoices yet for this workspace.
                   </td>
-                  <td className="py-3 pr-4">{invoice.status || '-'}</td>
-                  <td className="py-3 pr-4">{invoice.amount_due || 0}</td>
-                  <td className="py-3 pr-4">{invoice.amount_paid || 0}</td>
-                  <td className="py-3">{invoice.due_date || '-'}</td>
                 </tr>
-              ))}
+              ) : (
+                invoices.map((invoice) => (
+                  <tr key={invoice.id}>
+                    <td className="py-3 pr-4 text-slate-900 dark:text-white">
+                      {invoice.invoice_number || invoice.id}
+                    </td>
+                    <td className="py-3 pr-4">{invoice.status || '-'}</td>
+                    <td className="py-3 pr-4">{invoice.amount_due || 0}</td>
+                    <td className="py-3 pr-4">{invoice.amount_paid || 0}</td>
+                    <td className="py-3">{invoice.due_date || '-'}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -219,7 +241,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             ))}
             <button
               onClick={() => void saveAlerts()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Save alerts
             </button>
@@ -255,7 +277,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             />
             <button
               onClick={() => void saveTaxSettings()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Save tax settings
             </button>
@@ -322,9 +344,17 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {!stripeEnabled && (
+        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-sm font-semibold">Self-service checkout is currently disabled.</p>
+          <p className="mt-1 text-sm">
+            Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales.
+          </p>
+        </div>
+      )}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-          <CreditCard className="h-5 w-5 text-violet-500" />
+          <CreditCard className="h-5 w-5 text-primary-500" />
           Billing, FinOps, and commercial controls
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -341,7 +371,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               className={cn(
                 'rounded-xl px-4 py-2 text-sm font-medium transition',
                 activeTab === tab.id
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
               )}
             >

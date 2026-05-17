@@ -5,6 +5,7 @@ import { getAppViewFromPath } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AuthStep, SessionMode } from '../types';
 import { parseArtifactRef } from '../utils/artifactLinks';
+import { canUseInternalTools, isInternalToolsPath } from '../utils/internalToolsAccess';
 import {
   dispatchPilotAccessBlocked,
   getPilotBlockedFallbackPath,
@@ -118,7 +119,7 @@ export const RouterSync: React.FC = () => {
 
     if (type === 'sheet') {
       nextParams.set('artifactId', id);
-      navigate(`/excele?${nextParams.toString()}`, { replace: true });
+      navigate(`/tabele?${nextParams.toString()}`, { replace: true });
       return;
     }
 
@@ -144,7 +145,7 @@ export const RouterSync: React.FC = () => {
       setMyWorkIntent({
         tab: 'notebook' as any,
         open: { type: 'notebook', id },
-      });
+      } as any);
       navigate(`/my-work?${nextParams.toString()}`, { replace: true });
       return;
     }
@@ -179,6 +180,7 @@ export const RouterSync: React.FC = () => {
     const userRole = currentUser?.role ?? null;
     const defaultAuthenticatedRoute = getDefaultAuthenticatedRoute(userRole);
     const isPilotAllowedRoute = isPilotAllowedPath(path);
+    const isInternalToolsRoute = isInternalToolsPath(path);
 
     // Prevent infinite loops: skip if we're already navigating
     if (isNavigatingRef.current) {
@@ -228,6 +230,10 @@ export const RouterSync: React.FC = () => {
     const isProtected =
       path === '/chat' ||
       path.startsWith('/chat/') ||
+      path === '/ai' ||
+      path.startsWith('/ai/') ||
+      path === '/ai-os' ||
+      path.startsWith('/ai-os/') ||
       path === '/studio' ||
       path.startsWith('/admin') ||
       path.startsWith('/settings') ||
@@ -248,6 +254,7 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/interview') ||
       path.startsWith('/wordy') ||
       path.startsWith('/excele') ||
+      path.startsWith('/tabele') ||
       path.startsWith('/prezentacje') ||
       path.startsWith('/meeting') ||
       path.startsWith('/mcp/');
@@ -256,6 +263,16 @@ export const RouterSync: React.FC = () => {
       console.log('[RouterSync] Not authenticated, redirecting to /login');
       isNavigatingRef.current = true;
       navigate('/login', { replace: true });
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 50);
+      return;
+    }
+
+    if (isAuthenticated && isInternalToolsRoute && !canUseInternalTools(currentUser)) {
+      console.log('[RouterSync] Internal tools route blocked, redirecting to /chat');
+      isNavigatingRef.current = true;
+      navigate('/chat', { replace: true });
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 50);
@@ -304,10 +321,7 @@ export const RouterSync: React.FC = () => {
     }
 
     // SUPERADMIN should not stay on /chat
-    if (
-      (path === '/chat' || path.startsWith('/chat/')) &&
-      isSuperAdminRole(userRole)
-    ) {
+    if ((path === '/chat' || path.startsWith('/chat/')) && isSuperAdminRole(userRole)) {
       console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
       isNavigatingRef.current = true;
       navigate('/superadmin', { replace: true });
@@ -330,6 +344,10 @@ export const RouterSync: React.FC = () => {
   }, [
     location.pathname,
     currentUser?.isAuthenticated,
+    currentUser?.email,
+    currentUser?.companyName,
+    currentUser?.organizationName,
+    currentUser?.organizationId,
     currentUser?.role,
     navigate,
     setCurrentViewState,

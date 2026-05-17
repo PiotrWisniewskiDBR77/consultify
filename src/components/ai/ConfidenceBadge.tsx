@@ -27,10 +27,10 @@ const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
   const getColorClasses = () => {
     if (normalizedConfidence < 0.4) {
       return {
-        bg: 'bg-red-100 dark:bg-red-900/30',
-        text: 'text-red-700 dark:text-red-400',
-        ring: 'ring-red-600/20 dark:ring-red-500/30',
-        dot: 'bg-red-500',
+        bg: 'bg-rose-100 dark:bg-rose-900/30',
+        text: 'text-rose-700 dark:text-rose-400',
+        ring: 'ring-rose-600/20 dark:ring-rose-500/30',
+        dot: 'bg-rose-500',
       };
     } else if (normalizedConfidence <= 0.7) {
       return {
@@ -91,7 +91,7 @@ const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
       <div
         className="
                 absolute bottom-full left-1/2 -translate-x-1/2 mb-2
-                px-3 py-2 text-xs text-white bg-gray-900 dark:bg-gray-700 
+                px-3 py-2 text-xs text-white bg-gray-900 dark:bg-gray-700
                 rounded-lg shadow-lg
                 opacity-0 invisible group-hover:opacity-100 group-hover:visible
                 transition-all duration-200 z-50

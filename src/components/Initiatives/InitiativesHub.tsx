@@ -17,6 +17,7 @@ import {
   Plus,
   RefreshCw,
   Shield,
+  Sparkles,
   Target,
   Users,
 } from 'lucide-react';
@@ -45,6 +46,7 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
+import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
 // Detail views
@@ -56,8 +58,25 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
-import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
+import {
+  FilterChip,
+  HubWorkAreaLoading,
+  ModuleHub,
+  ModuleTab,
+  OpenDocument,
+  ViewMode,
+} from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ACTION_NEUTRAL,
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+} from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
@@ -66,6 +85,7 @@ import {
   normalizeInitiativeForPortfolio,
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
+import { InitiativeDocumentView } from './InitiativeDocumentView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -73,9 +93,24 @@ import {
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const MIN_SHOWCASE_INITIATIVES = 10;
+
+const unwrapApiList = (response: unknown, listKey?: string): any[] => {
+  if (Array.isArray(response)) return response;
+  const payload = (response as { data?: unknown } | null)?.data;
+  if (Array.isArray(payload)) return payload;
+  if (listKey) {
+    const directList = (response as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(directList)) return directList;
+    const nestedList = (payload as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(nestedList)) return nestedList;
+  }
+  return [];
+};
+
 // D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
@@ -125,7 +160,7 @@ export const INITIATIVE_LEVELS: {
     id: 'strategic',
     label: 'Strategic Program',
     description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
-    color: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
+    color: 'text-primary-500 bg-primary-500/10 border-primary-500/30',
     icon: '🎯',
   },
   {
@@ -145,10 +180,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentProjectId, currentUser } = useAppStore();
+  const refreshTrigger = usePortfolioStore((state) => state.refreshTrigger);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
   const [handledDeepLinkNew, setHandledDeepLinkNew] = useState(false);
+  const handledDeepLinkOpenRef = useRef<string | null>(null);
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
@@ -178,6 +214,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
   const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
@@ -188,6 +225,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -308,6 +346,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       try {
         setLoadError(null);
+        setLoadErrorCode(null);
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
         // Scope-based filtering: 'active' sends only core statuses, 'all' sends everything.
@@ -381,6 +420,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             'Failed to load initiatives from the active data source.'
           )
         );
+        const code =
+          typeof error?.data?.code === 'string' && error.data.code.trim()
+            ? error.data.code.trim()
+            : null;
+        setLoadErrorCode(code);
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -403,6 +447,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     fetchRetryRef.current = 0;
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchData(true);
+    }
+  }, [refreshTrigger, fetchData]);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -487,9 +537,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           : [...currentPriorities, priority];
         const chips: FilterChip[] = next.map((p) => ({
           id: `priority:${p}`,
+          label: t(`initiatives.priority.${p.toLowerCase()}`, p),
           column: 'priority',
           value: p,
-          label: t(`initiatives.priority.${p.toLowerCase()}`, p),
         }));
         return [...withoutPriority, ...chips];
       });
@@ -572,6 +622,28 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [handlePreviewSelection]
   );
 
+  const handleOpenInitiativeDocument = useCallback(
+    (initiative: PortfolioInitiative) => {
+      const existingDoc = openDocuments.find(
+        (document) => document.id === initiative.id && document.type === 'initiative'
+      );
+      if (!existingDoc) {
+        const newDoc: OpenDocument = {
+          id: initiative.id,
+          name: initiative.name || t('initiatives.document.untitled', 'Untitled initiative'),
+          type: 'initiative',
+          subType: String(initiative.axis || 'initiative'),
+          status: (initiative.status || InitiativeStatus.DRAFT) as any,
+        };
+        setOpenDocuments((prev) => [...prev, newDoc]);
+      }
+      setActiveTab('list');
+      setActiveDocumentId(initiative.id);
+      handlePreviewSelection(initiative.id);
+    },
+    [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
+  );
+
   // Open decision as dynamic tab (called from InitiativeDocumentView → DecisionsSection)
   const handleOpenDecision = useCallback(
     async (decisionId: string) => {
@@ -641,14 +713,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Deep link: open initiative preview via URL params
   // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
   useEffect(() => {
-    if (handledDeepLinkOpen) return;
     const openId = searchParams.get('open');
     if (!openId) {
-      setHandledDeepLinkOpen(true);
+      handledDeepLinkOpenRef.current = null;
       return;
     }
 
     const mode = (searchParams.get('mode') || 'doc').toLowerCase();
+    const deepLinkKey = `${openId}:${mode}`;
+    if (handledDeepLinkOpenRef.current === deepLinkKey) return;
+    handledDeepLinkOpenRef.current = deepLinkKey;
 
     const run = async () => {
       try {
@@ -659,18 +733,42 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (!fromList && !fromShowcase) {
           try {
             response = await V8PlanningApi.getInitiative(openId);
-          } catch {
-            response = await Api.get(`/initiatives/${openId}`);
+          } catch (v8Error) {
+            try {
+              response = await Api.get(`/initiatives/${encodeURIComponent(openId)}`);
+            } catch {
+              const interviewResponse = await Api.get('/initiatives?source=interview_insight');
+              const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
+              response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
+              if (!response) throw v8Error;
+            }
           }
         }
-        const initiative = (fromList || fromShowcase || response?.initiative || response) as any;
+        const initiative = normalizeInitiativeForPortfolio(
+          (fromList || fromShowcase || response?.initiative || response) as any,
+          openId
+        );
 
         if (!initiative?.id) {
           toast.error(t('initiatives.toast.notFound', 'Nie znaleziono inicjatywy'));
           return;
         }
 
-        handleInitiativeClick(initiative as any);
+        setInitiatives((prev) => upsertPortfolioInitiative(prev, initiative));
+        setAllInitiatives((prev) => upsertPortfolioInitiative(prev, initiative));
+
+        const reveal = getCreatedInitiativeRevealState(
+          { scope, activeStatusFilter },
+          initiative.status
+        );
+        setScope(reveal.scope);
+        setActiveStatusFilter(reveal.activeStatusFilter);
+
+        if (mode === 'doc') {
+          handleOpenInitiativeDocument(initiative);
+        } else {
+          handleInitiativeClick(initiative);
+        }
       } catch (e: any) {
         toast.error(
           e?.response?.data?.error ||
@@ -683,34 +781,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         next.delete('open');
         next.delete('mode');
         setSearchParams(next, { replace: true });
-        setHandledDeepLinkOpen(true);
       }
     };
 
     run();
   }, [
-    handledDeepLinkOpen,
     searchParams,
     setSearchParams,
     initiatives,
     initiativesDemoData,
     handleInitiativeClick,
+    handleOpenInitiativeDocument,
+    scope,
+    activeStatusFilter,
   ]);
-
-  useEffect(() => {
-    setOpenDocuments((prev) => {
-      const filtered = prev.filter((document) => document.type !== 'initiative');
-      return filtered.length === prev.length ? prev : filtered;
-    });
-  }, [setOpenDocuments]);
-
-  useEffect(() => {
-    if (!activeDocumentId) return;
-    const activeDoc = openDocuments.find((document) => document.id === activeDocumentId);
-    if (activeDoc?.type === 'initiative') {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId, openDocuments, setActiveDocumentId]);
 
   // Deep link: open "New Initiative" modal
   // Supported: /initiatives?new=1
@@ -1010,8 +1094,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (showNewModal) setShowNewModal(false);
+    if (showInitiativeWizard) setShowInitiativeWizard(false);
     if (showBulkModal) setShowBulkModal(false);
-  }, [isPilotParticipant, showBulkModal, showNewModal]);
+  }, [isPilotParticipant, showBulkModal, showInitiativeWizard, showNewModal]);
 
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
@@ -1067,21 +1152,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       }
 
+      if (activeDoc?.type === 'initiative' || !activeDoc) {
+        return (
+          <InitiativeDocumentView
+            initiativeId={activeDocumentId}
+            sourceModule="initiatives"
+            onBack={handleShowList}
+            onOpenTask={handleOpenTask}
+            onOpenDecision={handleOpenDecision}
+            onStatusChange={() => fetchData(true)}
+          />
+        );
+      }
+
       return null;
     }
 
     if (loadError) {
       return (
         <div className="flex items-center justify-center h-full px-6">
-          <div className="max-w-xl w-full p-5 rounded-2xl border border-red-500/20 bg-red-900/10">
-            <div className="text-sm font-semibold text-red-300">
+          <div className="max-w-xl w-full p-5 rounded-2xl border border-rose-500/20 bg-rose-900/10">
+            <div className="text-sm font-semibold text-rose-300">
               {t('initiatives.hub.failedToLoad')}
             </div>
-            <div className="text-sm text-red-200/80 mt-1">{loadError}</div>
+            <div className="text-sm text-rose-200/80 mt-1">{loadError}</div>
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => fetchData(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 transition-colors"
               >
                 {t('initiatives.hub.retry')}
               </button>
@@ -1098,18 +1196,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
 
     if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     if (initiatives.length === 0) {
       return (
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-purple-400/50" />
+            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-primary-400/50" />
             <p className="text-lg text-slate-900 dark:text-white">{t('initiatives.empty.title')}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               {t('initiatives.empty.description')}
@@ -1286,7 +1380,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </div>
                 {searchedInitiatives.length === 0 && (
                   <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-                    No initiatives found
+                    {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
                   </div>
                 )}
               </div>
@@ -1411,7 +1505,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'resources',
       labelKey: 'initiatives.analysis.resources.title',
-      icon: <Users size={14} className="text-violet-400" />,
+      icon: <Users size={14} className="text-primary-400" />,
     },
     {
       id: 'feasibility',
@@ -1421,7 +1515,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'logic',
       labelKey: 'initiatives.analysis.logic.title',
-      icon: <GitBranch size={14} className="text-cyan-400" />,
+      icon: <GitBranch size={14} className="text-blue-400" />,
     },
     {
       id: 'timeline',
@@ -1437,147 +1531,138 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const analysisCommandRow = (
     <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         {ANALYSIS_SUBVIEWS.map((sv) => (
           <button
             key={sv.id}
             type="button"
             onClick={() => setAnalysisSubview(sv.id)}
-            className={[
-              'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap',
-              analysisSubview === sv.id
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50',
-            ].join(' ')}
+            className={analysisSubview === sv.id ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           >
             {sv.icon}
             {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
           </button>
         ))}
       </div>
-      {analysisActionButtons && (
-        <div className="flex items-center gap-1.5 shrink-0">{analysisActionButtons}</div>
-      )}
+      {analysisActionButtons && <div className={MENU_3_RIGHT_CLASS}>{analysisActionButtons}</div>}
     </div>
   );
 
   const commandRowContent = (
-    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-      <button
-        type="button"
-        onClick={() => setActiveStatusFilter(null)}
-        className={[
-          'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-          !activeStatusFilter
-            ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-            : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-        ].join(' ')}
-      >
-        <span className="w-2 h-2 rounded-full bg-slate-500" />
-        <span>ALL</span>
-        <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-          {statusCounts.all ?? 0}
-        </span>
-      </button>
-      {ALLOWED_STATUSES.map((s) => {
-        const meta = STATUS_METADATA[s];
-        const isActive = activeStatusFilter === s;
-        const count = statusCounts[s] ?? 0;
-        return (
+    <div className="flex items-center justify-between gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
+        <button
+          type="button"
+          onClick={() => setActiveStatusFilter(null)}
+          className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+        >
+          <span className={MENU_3_ALL_DOT_CLASS} />
+          <span>ALL</span>
+          <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+            {statusCounts.all ?? 0}
+          </span>
+        </button>
+        {ALLOWED_STATUSES.map((s) => {
+          const meta = STATUS_METADATA[s];
+          const isActive = activeStatusFilter === s;
+          const count = statusCounts[s] ?? 0;
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setActiveStatusFilter(isActive ? null : s)}
+              className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            >
+              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
+              <span>{meta?.label || s}</span>
+              <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+        {v8PendingDecisionChains.length > 0 && (
+          <>
+            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+            <div className={MENU_3_CHIP_INACTIVE}>
+              <span className="w-2 h-2 rounded-full bg-primary-400" />
+              <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
+              <span className={MENU_3_BADGE_INACTIVE}>{v8PendingDecisionChains.length}</span>
+            </div>
+            <div className={MENU_3_CHIP_INACTIVE}>
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>{t('initiatives.v8.pendingDecisions', 'V8 pending decisions')}</span>
+              <span className={MENU_3_BADGE_INACTIVE}>{totalPendingDecisionEntries}</span>
+            </div>
+          </>
+        )}
+        {v8SnapshotTargetId && (isV8InitiativeSnapshotLoading || hasActiveV8Snapshot) && (
+          <>
+            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+            <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-primary-200/80 dark:border-primary-400/20 text-primary-700 dark:text-primary-200 bg-primary-50/80 dark:bg-primary-500/10">
+              <Shield className="w-3 h-3" />
+              <span>{t('initiatives.v8.snapshot', 'V8 snapshot')}</span>
+              <span className="rounded-full bg-white/80 dark:bg-primary-950/50 px-2 py-0.5 text-[10px] text-primary-700 dark:text-primary-100">
+                {isV8InitiativeSnapshotLoading
+                  ? t('initiatives.v8.loading', 'loading')
+                  : t('initiatives.v8.ready', 'ready')}
+              </span>
+            </div>
+            {hasActiveV8Snapshot && (
+              <>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      v8InitiativeSnapshot.wbsCompleteness.complete
+                        ? 'bg-emerald-400'
+                        : 'bg-amber-400'
+                    }`}
+                  />
+                  <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>
+                    {v8InitiativeSnapshot.wbsCompleteness.complete
+                      ? t('initiatives.v8.complete', 'complete')
+                      : t('initiatives.v8.gaps', {
+                          count: v8SnapshotGapCount,
+                          defaultValue: '{{count}} gaps',
+                        })}
+                  </span>
+                </div>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span className="w-2 h-2 rounded-full bg-sky-400" />
+                  <span>{t('initiatives.v8.criticalPath', 'V8 critical path')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>
+                    {v8InitiativeSnapshot.criticalPath.length}
+                  </span>
+                </div>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span className="w-2 h-2 rounded-full bg-fuchsia-400" />
+                  <span>{t('initiatives.v8.dependencies', 'V8 dependencies')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>
+                    {v8InitiativeSnapshot.crossInitiativeDependencies.length}
+                  </span>
+                </div>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span>{t('initiatives.v8.snapshotDecisions', 'V8 initiative decisions')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>{v8SnapshotPendingDecisionEntries}</span>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+      {!isPilotParticipant && (
+        <div className={MENU_3_RIGHT_CLASS}>
           <button
-            key={s}
             type="button"
-            onClick={() => setActiveStatusFilter(isActive ? null : s)}
-            className={[
-              'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-              isActive
-                ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-            ].join(' ')}
+            onClick={() => setShowInitiativeWizard(true)}
+            className={MENU_3_ACTION_NEUTRAL}
           >
-            <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
-            <span>{meta?.label || s}</span>
-            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-              {count}
-            </span>
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Initiative Wizard
           </button>
-        );
-      })}
-      {v8PendingDecisionChains.length > 0 && (
-        <>
-          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
-            <span className="w-2 h-2 rounded-full bg-violet-400" />
-            <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
-            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-              {v8PendingDecisionChains.length}
-            </span>
-          </div>
-          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span>{t('initiatives.v8.pendingDecisions', 'V8 pending decisions')}</span>
-            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-              {totalPendingDecisionEntries}
-            </span>
-          </div>
-        </>
-      )}
-      {v8SnapshotTargetId && (isV8InitiativeSnapshotLoading || hasActiveV8Snapshot) && (
-        <>
-          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-violet-200/80 dark:border-violet-400/20 text-violet-700 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-500/10">
-            <Shield className="w-3 h-3" />
-            <span>{t('initiatives.v8.snapshot', 'V8 snapshot')}</span>
-            <span className="rounded-full bg-white/80 dark:bg-violet-950/50 px-2 py-0.5 text-[10px] text-violet-700 dark:text-violet-100">
-              {isV8InitiativeSnapshotLoading
-                ? t('initiatives.v8.loading', 'loading')
-                : t('initiatives.v8.ready', 'ready')}
-            </span>
-          </div>
-          {hasActiveV8Snapshot && (
-            <>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    v8InitiativeSnapshot.wbsCompleteness.complete
-                      ? 'bg-emerald-400'
-                      : 'bg-amber-400'
-                  }`}
-                />
-                <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {v8InitiativeSnapshot.wbsCompleteness.complete
-                    ? t('initiatives.v8.complete', 'complete')
-                    : t('initiatives.v8.gaps', {
-                        count: v8SnapshotGapCount,
-                        defaultValue: '{{count}} gaps',
-                      })}
-                </span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
-                <span>{t('initiatives.v8.criticalPath', 'V8 critical path')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {v8InitiativeSnapshot.criticalPath.length}
-                </span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
-                <span className="w-2 h-2 rounded-full bg-fuchsia-400" />
-                <span>{t('initiatives.v8.dependencies', 'V8 dependencies')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {v8InitiativeSnapshot.crossInitiativeDependencies.length}
-                </span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>{t('initiatives.v8.snapshotDecisions', 'V8 initiative decisions')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {v8SnapshotPendingDecisionEntries}
-                </span>
-              </div>
-            </>
-          )}
-        </>
+        </div>
       )}
     </div>
   );
@@ -1609,6 +1694,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
+
+      <InitiativeWizardModal
+        isOpen={showInitiativeWizard}
+        projectId={currentProjectId || undefined}
+        existingInitiatives={allInitiatives}
+        onClose={() => setShowInitiativeWizard(false)}
+        onCreated={(created) => {
+          if (!created.length) return;
+          setAllInitiatives((prev) =>
+            created.reduce((next, initiative) => upsertPortfolioInitiative(next, initiative), prev)
+          );
+          setInitiatives((prev) =>
+            created.reduce((next, initiative) => upsertPortfolioInitiative(next, initiative), prev)
+          );
+          const first = created[0];
+          if (first?.id) {
+            const revealState = getCreatedInitiativeRevealState(
+              {
+                scope,
+                activeStatusFilter,
+              },
+              first.status
+            );
+            setScope(revealState.scope);
+            setActiveStatusFilter(revealState.activeStatusFilter);
+            setPreviewInitiativeId(first.id);
+          }
+        }}
+      />
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

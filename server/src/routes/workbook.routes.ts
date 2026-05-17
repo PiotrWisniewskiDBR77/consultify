@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -22,6 +23,7 @@ const router = Router();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 // In-memory cache for recent workbooks (bounded to 50 entries)
@@ -63,6 +65,15 @@ async function ensureWorkbookSchema() {
       )
     `);
     await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS action_contract_json TEXT DEFAULT '{}'`
+    );
+    await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS source_pack_json TEXT DEFAULT '{}'`
+    );
+    await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS evidence_refs_json TEXT DEFAULT '[]'`
+    );
+    await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_workbooks_org ON generated_workbooks(organization_id)`
     );
   } catch {
@@ -84,8 +95,17 @@ router.post(
       return;
     }
 
-    const { prompt, researchContext, language, projectId, sourceInitiativeId, conversationId } =
-      req.body;
+    const {
+      prompt,
+      researchContext,
+      language,
+      projectId,
+      sourceInitiativeId,
+      conversationId,
+      actionContract,
+      sourcePack,
+      evidenceRefs,
+    } = req.body;
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
       res.status(400).json({ error: 'prompt is required (min 5 chars)' });
       return;
@@ -117,8 +137,8 @@ router.post(
     // Persist metadata
     try {
       await queryHelpers.queryRun(
-        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           result.id,
           user.organizationId,
@@ -132,6 +152,11 @@ router.post(
           result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
           result.qualityScore,
           JSON.stringify(result.pipelineLog),
+          JSON.stringify(
+            actionContract && typeof actionContract === 'object' ? actionContract : {}
+          ),
+          JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
+          JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
           user.id,
           result.generatedAt,
         ]
@@ -329,13 +354,20 @@ router.get(
     await ensureWorkbookSchema();
 
     const rows = await queryHelpers.queryAll(
-      `SELECT id, title, description, sheet_count, file_name, file_size, created_by, created_at
+      `SELECT id, title, description, sheet_count, file_name, file_size, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at
      FROM generated_workbooks WHERE organization_id = ?
      ORDER BY created_at DESC LIMIT 50`,
       [user.organizationId]
     );
 
-    res.json({ workbooks: rows || [] });
+    res.json({
+      workbooks: (rows || []).map((row: any) => ({
+        ...row,
+        actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
+        sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
+        evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],
+      })),
+    });
   })
 );
 
@@ -367,10 +399,13 @@ router.get(
       file_name: string;
       file_size: number;
       quality_score: number | null;
+      action_contract_json?: string | null;
+      source_pack_json?: string | null;
+      evidence_refs_json?: string | null;
       created_by: string;
       created_at: string;
     }>(
-      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, created_by, created_at
+      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at
      FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -390,6 +425,9 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
+      actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
+      sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
+      evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],
       created_by: row.created_by,
       created_at: row.created_at,
       downloadUrl: `/api/workbook/${row.id}/download`,

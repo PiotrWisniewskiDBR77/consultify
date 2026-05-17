@@ -41,6 +41,8 @@ type ConvStoreState = {
 let mockAppState: AppStoreState = {};
 let mockConvState: ConvStoreState = {};
 
+const firstMockArg = (mock: { mock: { calls: unknown[][] } }) => mock.mock.calls[0]?.[0] as any;
+
 vi.mock('../../../store/useAppStore', () => ({
   useAppStore: (selector: (state: AppStoreState) => unknown) => selector(mockAppState),
 }));
@@ -53,10 +55,6 @@ const trackFunnelEventMock = vi.fn();
 vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: (...args: unknown[]) => trackFunnelEventMock(...args),
 }));
-
-function getFirstCallArg<T extends (...args: any[]) => any>(mockFn: ReturnType<typeof vi.fn<T>>) {
-  return mockFn.mock.calls.at(0)?.[0];
-}
 
 describe('WorkspaceBreadcrumb', () => {
   beforeEach(() => {
@@ -207,7 +205,7 @@ describe('WorkspaceBreadcrumb', () => {
     render(<WorkspaceBreadcrumb isEnabled={() => true} build={build} />);
 
     expect(build).toHaveBeenCalledTimes(1);
-    expect(getFirstCallArg(build)).toMatchObject({
+    expect(firstMockArg(build)).toMatchObject({
       view: AppView.ASSESSMENT_SIRI,
       hasActiveConversation: true,
     });
@@ -246,7 +244,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(build).toHaveBeenCalledTimes(1);
-      expect(getFirstCallArg(build)).toMatchObject({
+      expect(firstMockArg(build)).toMatchObject({
         conversationTitle: 'SIRI rollout Q3',
         conversationSegmentEnabled: true,
       });
@@ -275,7 +273,7 @@ describe('WorkspaceBreadcrumb', () => {
         />
       );
 
-      expect(getFirstCallArg(build)).toMatchObject({
+      expect(firstMockArg(build)).toMatchObject({
         conversationTitle: null,
       });
     });
@@ -303,7 +301,7 @@ describe('WorkspaceBreadcrumb', () => {
         />
       );
 
-      expect(getFirstCallArg(build)).toMatchObject({
+      expect(firstMockArg(build)).toMatchObject({
         conversationSegmentEnabled: false,
       });
     });
@@ -679,10 +677,10 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(buildRecents).toHaveBeenCalledTimes(1);
-      expect(getFirstCallArg(buildRecents)).toMatchObject({
+      expect(firstMockArg(buildRecents)).toMatchObject({
         activeConversationId: 'conv-1',
       });
-      expect(getFirstCallArg(buildRecents)?.conversations).toBe(conversations);
+      expect(firstMockArg(buildRecents).conversations).toBe(conversations);
     });
 
     // -----------------------------------------------------------
@@ -709,7 +707,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(buildRecents).toHaveBeenCalledTimes(1);
-      expect(getFirstCallArg(buildRecents)?.pinnedEnabled).toBe(true);
+      expect(firstMockArg(buildRecents).pinnedEnabled).toBe(true);
     });
 
     it('passes pinnedEnabled=false to the builder when the pinned flag is OFF', () => {
@@ -733,7 +731,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(buildRecents).toHaveBeenCalledTimes(1);
-      expect(getFirstCallArg(buildRecents)?.pinnedEnabled).toBe(false);
+      expect(firstMockArg(buildRecents).pinnedEnabled).toBe(false);
     });
 
     it('renders the pin glyph next to pinned rows in the popover', () => {

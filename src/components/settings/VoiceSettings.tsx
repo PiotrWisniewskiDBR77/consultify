@@ -12,12 +12,14 @@
  *  - Test voice button
  */
 
-import { Mic, Play, Square, Volume2 } from 'lucide-react';
+import { Play, Square, Volume2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import {
   SettingsDivider,
   SettingsFormRow,
@@ -51,6 +53,15 @@ const VOICE_OPTIONS = [
   { value: 'shimmer', label: 'Shimmer' },
 ];
 
+const BROWSER_VOICE_HINTS: Record<string, string[]> = {
+  alloy: ['Google US English', 'Samantha', 'Microsoft Jenny'],
+  echo: ['Daniel', 'Microsoft Guy', 'Google UK English Male'],
+  fable: ['Serena', 'Google UK English Female', 'Microsoft Sonia'],
+  onyx: ['Alex', 'Microsoft David', 'Fred'],
+  nova: ['Victoria', 'Microsoft Aria', 'Google US English'],
+  shimmer: ['Karen', 'Microsoft Zira', 'Google Australian English'],
+};
+
 export const VoiceSettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<AIVoicePreferences>(defaultPreferences);
@@ -59,6 +70,9 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -66,14 +80,16 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const response = await Api.getAIVoice();
-        if (response?.preferences) {
-          const merged = { ...defaultPreferences, ...response.preferences };
-          setPreferences(merged);
-          setOriginalPreferences(merged);
+        if (!response?.preferences) {
+          throw new Error('Voice settings response was missing preferences');
         }
-      } catch (err) {
-        console.error('Failed to load voice settings:', err);
+        const merged = { ...defaultPreferences, ...response.preferences };
+        setPreferences(merged);
+        setOriginalPreferences(merged);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load voice settings'));
       } finally {
         setLoading(false);
       }
@@ -81,32 +97,68 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
     load();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const loadVoices = () => setBrowserVoices(window.speechSynthesis.getVoices());
+    loadVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.saveAIVoice(preferences);
-      setOriginalPreferences(preferences);
+      const response = await Api.getAIVoice();
+      if (!response?.preferences) {
+        throw new Error('Voice settings save was not confirmed by the server');
+      }
+      const next = { ...defaultPreferences, ...response.preferences };
+      if (JSON.stringify(next) !== JSON.stringify(preferences)) {
+        throw new Error('Voice settings save was not confirmed by the server');
+      }
+      setPreferences(next);
+      setOriginalPreferences(next);
       toast.success(t('settings.voice.saved', 'Voice settings saved'));
-    } catch {
-      toast.error(t('settings.voice.error', 'Failed to save voice settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.voice.error', 'Failed to save voice settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   }, [preferences, t]);
 
   const testVoice = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error(
+        t('settings.voice.unsupported', 'Text-to-speech is not supported in this browser')
+      );
+      return;
+    }
     setTesting(true);
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(
       t('settings.voice.testText', 'Hello! This is a test of the voice settings.')
     );
     utterance.rate = preferences.speed;
+    const hints = BROWSER_VOICE_HINTS[preferences.voice] || [];
+    utterance.voice =
+      browserVoices.find((voice) => hints.some((hint) => voice.name.includes(hint))) ||
+      browserVoices.find((voice) => voice.lang?.toLowerCase().startsWith('en')) ||
+      browserVoices[0] ||
+      null;
     utterance.onend = () => setTesting(false);
     utterance.onerror = () => setTesting(false);
-    speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(utterance);
   };
 
   const stopTest = () => {
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
     setTesting(false);
   };
 
@@ -116,8 +168,25 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
 
   const anyVoiceEnabled = preferences.ttsEnabled || preferences.sttEnabled;
 
+  if (loadError) {
+    return (
+      <div className={className}>
+        <DegradedState title="Voice settings unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={Volume2}
         title={t('settings.voice.title', 'Voice & TTS')}
@@ -199,7 +268,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
                       step="0.1"
                       value={preferences.speed}
                       onChange={(e) => update('speed', parseFloat(e.target.value))}
-                      className="flex-1 accent-violet-500"
+                      className="flex-1 accent-primary-500"
                     />
                     <span className="text-sm font-mono text-white w-10 text-right">
                       {preferences.speed.toFixed(1)}x

@@ -5,6 +5,38 @@
 --  - add audience, duration and runtime defaults
 --  - add question modality flags for voice / attachment / link / context
 
+CREATE TABLE IF NOT EXISTS interview_library_templates (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL DEFAULT 'general',
+  status TEXT DEFAULT 'approved',
+  visibility TEXT DEFAULT 'org',
+  is_default INTEGER DEFAULT 0,
+  version INTEGER DEFAULT 1,
+  created_by TEXT,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS interview_library_template_questions (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  template_id TEXT NOT NULL REFERENCES interview_library_templates(id) ON DELETE CASCADE,
+  category TEXT NOT NULL DEFAULT 'general',
+  question_text TEXT NOT NULL,
+  answer_type TEXT DEFAULT 'open',
+  is_required INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  helper_text TEXT,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_interview_library_templates_org ON interview_library_templates(organization_id);
+CREATE INDEX IF NOT EXISTS idx_interview_library_templates_status ON interview_library_templates(status);
+CREATE INDEX IF NOT EXISTS idx_interview_library_templates_category ON interview_library_templates(category);
+CREATE INDEX IF NOT EXISTS idx_interview_library_questions_template ON interview_library_template_questions(template_id);
+
 ALTER TABLE interview_library_templates
   ADD COLUMN IF NOT EXISTS template_scope TEXT DEFAULT 'organization';
 

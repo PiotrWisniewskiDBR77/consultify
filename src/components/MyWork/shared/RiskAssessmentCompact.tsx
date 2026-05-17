@@ -59,24 +59,24 @@ const RISK_LEVELS = {
   },
   high: {
     label: { en: 'High', pl: 'Wysokie' },
-    color: 'bg-orange-500',
-    textColor: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-500/10 dark:bg-orange-500/20',
+    color: 'bg-amber-500',
+    textColor: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-500/10 dark:bg-amber-500/20',
     score: 3,
   },
   critical: {
     label: { en: 'Critical', pl: 'Krytyczne' },
-    color: 'bg-red-500',
-    textColor: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-500/10 dark:bg-red-500/20',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-500/10 dark:bg-rose-500/20',
     score: 4,
   },
 };
 
 const RISK_CATEGORIES = {
   technical: { label: { en: 'Technical', pl: 'Techniczne' }, color: 'text-blue-500' },
-  business: { label: { en: 'Business', pl: 'Biznesowe' }, color: 'text-purple-500' },
-  operational: { label: { en: 'Operational', pl: 'Operacyjne' }, color: 'text-cyan-500' },
+  business: { label: { en: 'Business', pl: 'Biznesowe' }, color: 'text-primary-500' },
+  operational: { label: { en: 'Operational', pl: 'Operacyjne' }, color: 'text-blue-500' },
   financial: { label: { en: 'Financial', pl: 'Finansowe' }, color: 'text-emerald-500' },
   legal: { label: { en: 'Legal', pl: 'Prawne' }, color: 'text-amber-500' },
   other: { label: { en: 'Other', pl: 'Inne' }, color: 'text-slate-500' },
@@ -124,9 +124,9 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
       case 'medium':
         return <Shield size={16} className="text-amber-500" />;
       case 'high':
-        return <ShieldAlert size={16} className="text-orange-500" />;
+        return <ShieldAlert size={16} className="text-amber-500" />;
       case 'critical':
-        return <AlertTriangle size={16} className="text-red-500" />;
+        return <AlertTriangle size={16} className="text-rose-500" />;
       default:
         return <Shield size={16} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -184,7 +184,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                   onGenerateAI();
                 }}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={isPolish ? 'Generuj AI' : 'Generate AI'}
               >
                 {isGenerating ? (
@@ -236,7 +236,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                         exit={{ opacity: 0, y: -10 }}
                         className={`rounded-xl border ${
                           isEditing
-                            ? 'border-purple-300 dark:border-purple-500/50 bg-purple-50/50 dark:bg-purple-500/5'
+                            ? 'border-primary-300 dark:border-primary-500/50 bg-primary-50/50 dark:bg-primary-500/5'
                             : 'border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50'
                         } overflow-hidden`}
                       >
@@ -272,7 +272,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                   e.stopPropagation();
                                   onRemove(risk.id);
                                 }}
-                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -308,7 +308,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                                     >
                                       {Object.entries(RISK_CATEGORIES).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -330,7 +330,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                                     >
                                       {Object.entries(RISK_LEVELS).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -352,7 +352,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                                     >
                                       {Object.entries(RISK_LEVELS).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -375,7 +375,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     }
                                     rows={2}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-purple-400 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                                     placeholder={
                                       isPolish
                                         ? 'Działania minimalizujące ryzyko...'
@@ -396,7 +396,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     }
                                     rows={2}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-purple-400 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
                                     placeholder={
                                       isPolish
                                         ? 'Plan na wypadek materializacji...'
@@ -421,7 +421,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onAdd}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-orange-400 dark:hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-amber-400 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                   >
                     <Plus size={18} />
                     <span className="text-sm font-medium">

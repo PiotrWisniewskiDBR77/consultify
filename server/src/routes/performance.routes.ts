@@ -130,7 +130,7 @@ function approxQuantileFromBuckets(summary: HistogramSummary, q: number): number
  *   }
  * }
  */
-router.get('/metrics', async (_req: Request, res: Response) => {
+router.get('/metrics', async (req: Request, res: Response) => {
   try {
     const metricsService = getMetricsService();
     const register = metricsService.getRegistry();
@@ -158,7 +158,10 @@ router.get('/metrics', async (_req: Request, res: Response) => {
     logger.error('[PerformanceRoutes] Error generating performance metrics:', err);
     return res.status(500).json({
       error: 'Failed to generate performance metrics',
-      details: err.message,
+      correlationId:
+        (req as Request & { correlationId?: string }).correlationId ||
+        req.get('X-Correlation-ID') ||
+        null,
     });
   }
 });

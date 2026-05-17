@@ -36,7 +36,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   values,
   width = 60,
   height = 18,
-  color = '#8b5cf6',
+  color = '#6366f1',
   showDots = false,
 }) => {
   if (values.length < 2) return null;
@@ -113,7 +113,7 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
   const isUp = diff > 0;
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[8px] font-bold ${isUp ? 'text-emerald-500' : 'text-red-500'}`}
+      className={`inline-flex items-center gap-0.5 text-[8px] font-bold ${isUp ? 'text-emerald-500' : 'text-rose-500'}`}
     >
       {isUp ? <TrendingUp size={8} /> : <TrendingDown size={8} />}
       {showLabel && `${isUp ? '+' : ''}${pctChange}%`}
@@ -227,7 +227,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           <button
             key={p}
             onClick={() => onPaletteChange(p)}
-            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-violet-500/10 text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-primary-500/10 text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
           >
             {p === 'warm' ? '🔥' : p === 'cool' ? '❄️' : '↕️'} {p}
           </button>
@@ -245,7 +245,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
               type="checkbox"
               checked={enabledColumns.has(col.key)}
               onChange={() => onToggleColumn(col.key)}
-              className="w-3 h-3 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
+              className="w-3 h-3 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
             />
             <span className="text-[10px] text-slate-600 dark:text-slate-300">{col.header}</span>
           </label>
@@ -291,7 +291,7 @@ export const AnalyticsSummaryStrip: React.FC<AnalyticsSummaryStripProps> = ({
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
               {col.header}
             </span>
-            <Sparkline values={sparkValues} width={40} height={14} color="#8b5cf6" />
+            <Sparkline values={sparkValues} width={40} height={14} color="#6366f1" />
             <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300 tabular-nums">
               ø{Math.round(avg * 10) / 10}
             </span>

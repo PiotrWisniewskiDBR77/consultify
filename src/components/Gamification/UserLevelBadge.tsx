@@ -55,7 +55,7 @@ export const UserLevelBadge: React.FC<{ compact?: boolean }> = ({ compact = fals
   }
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-xl p-3 border border-amber-100 dark:border-amber-900/30">
+    <div className="bg-gradient-to-br from-amber-50 to-amber-50 dark:from-amber-900/10 dark:to-amber-900/10 rounded-xl p-3 border border-amber-100 dark:border-amber-900/30">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-white dark:bg-navy-900 shadow-sm flex items-center justify-center text-amber-500">
@@ -75,7 +75,7 @@ export const UserLevelBadge: React.FC<{ compact?: boolean }> = ({ compact = fals
       {/* Progress Bar */}
       <div className="relative w-full h-1.5 bg-white dark:bg-navy-900 rounded-full overflow-hidden mb-1">
         <div
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-1000"
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-1000"
           style={{ width: `${stats.progress}%` }}
         />
       </div>

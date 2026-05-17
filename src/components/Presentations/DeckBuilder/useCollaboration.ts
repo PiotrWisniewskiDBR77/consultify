@@ -27,17 +27,17 @@ interface CollaborationState {
 }
 
 const PRESENCE_COLORS = [
-  '#EF4444',
+  '#F43F5E',
   '#F59E0B',
   '#10B981',
   '#3B82F6',
-  '#8B5CF6',
+  '#6366F1',
   '#EC4899',
-  '#F97316',
-  '#06B6D4',
+  '#F59E0B',
+  '#3B82F6',
   '#84CC16',
   '#A855F7',
-  '#14B8A6',
+  '#3B82F6',
   '#FB923C',
 ];
 

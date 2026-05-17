@@ -150,7 +150,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-slate-800">
         <div
-          className="h-full bg-purple-500 transition-all duration-300"
+          className="h-full bg-primary-500 transition-all duration-300"
           style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
         />
       </div>

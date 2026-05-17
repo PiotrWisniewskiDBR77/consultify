@@ -11,9 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type {
   FilterGroup as TPFilterGroup,
-  TablePlatformBase,
   TablePlatformField,
-  TablePlatformTable,
   TablePlatformView,
   ViewConfig,
 } from '@/types/tablePlatform';
@@ -137,11 +135,11 @@ export interface UseTablePlatformIntegrationReturn {
   loadMore: () => Promise<void>;
   hasMore: boolean;
   totalRecords: number;
-  base: TablePlatformBase | null;
-  table: TablePlatformTable | null;
 
   platformFields: TablePlatformField[];
   platformViews: TablePlatformView[];
+  base?: { id?: string; name?: string } | null;
+  table?: { id: string; name: string; primaryFieldId?: string | null } | null;
   applyPlatformFilters: (filters: TPFilterGroup) => Promise<void>;
   createPlatformView: (
     name: string,
@@ -507,8 +505,6 @@ export function useTablePlatformIntegration(
       loadMore: NOOP_ASYNC,
       hasMore: false,
       totalRecords: 0,
-      base: null,
-      table: null,
       platformFields: [],
       platformViews: [],
       applyPlatformFilters: NOOP_ASYNC,
@@ -563,8 +559,6 @@ export function useTablePlatformIntegration(
     loadMore: bridge.loadMore,
     hasMore: bridge.hasMore,
     totalRecords: bridge.totalRecords,
-    base: bridge.base,
-    table: bridge.table,
     platformFields: bridge.fields,
     platformViews: bridge.views,
     applyPlatformFilters: bridge.applyFilters,

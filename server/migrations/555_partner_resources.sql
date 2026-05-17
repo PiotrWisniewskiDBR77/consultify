@@ -3,6 +3,31 @@
 -- Note: `partner_resources` already exists (created by 215_partner_portal.sql).
 -- This migration extends it with V2 fields for versioning + real download handling.
 
+CREATE TABLE IF NOT EXISTS partner_resources (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    title TEXT NOT NULL,
+    description TEXT,
+    category TEXT NOT NULL CHECK (category IN ('documentation', 'marketing', 'case_study', 'template', 'training')),
+    file_type TEXT,
+    file_size_bytes BIGINT,
+    file_url TEXT,
+    thumbnail_url TEXT,
+    is_featured BOOLEAN DEFAULT FALSE,
+    min_partner_tier TEXT DEFAULT 'REGISTERED',
+    download_count INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS partner_resource_downloads (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    resource_id TEXT NOT NULL REFERENCES partner_resources(id) ON DELETE CASCADE,
+    partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    downloaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE partner_resources
   ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'en',
   ADD COLUMN IF NOT EXISTS version TEXT NOT NULL DEFAULT 'v1',

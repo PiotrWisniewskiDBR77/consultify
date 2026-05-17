@@ -30,8 +30,9 @@ Order from left to right:
 4. Artifact index/ID
 5. Link/permalink + link-between-artifacts tools
 6. Save button
-7. Chat button (context transfer to chat)
-8. View mode switcher (`N` / `C`)
+7. Card view settings button (visible cards)
+8. Chat button (context transfer to chat)
+9. View mode switcher (`N` / `C`)
 
 Visual:
 
@@ -45,6 +46,7 @@ Behavior:
 - If nothing to save: reduce visual prominence (not hidden)
 - If dirty: increase prominence
 - Permalink/link controls are treated as standard controls and should be visible by default
+- Card view settings opens the visibility menu for N-mode cards and lives near save/view controls, not in the left nav or Menu 3
 
 ---
 
@@ -53,6 +55,9 @@ Behavior:
 - Final target mode set: **`N` + `C` only**
 - `D` mode may exist temporarily as legacy/transition mode
 - Long-term UX and documentation must treat `N/C` as canonical
+- `N` is the default active mode until `C-mode` is fully designed, implemented and approved
+- Selecting `C` before implementation shows `C-mode coming soon` / `C-mode wkrótce`
+- Selecting unavailable `C` must not switch to an unfinished view or lose draft/context
 
 ---
 
@@ -62,6 +67,12 @@ Behavior:
 - Field content depends on artifact type/context
 - Inputs/selects/chips in this strip must have the same control height, border weight, and corner radius
 - No mixed control heights inside the strip
+- Properties strip is connected to workflow, not just metadata:
+  - status drives lifecycle actions,
+  - priority/deadline drive risk, alerts and ordering,
+  - owner/assignee/decider drive permissions and responsibility,
+  - workflow-blocking fields require inline validation,
+  - important changes are reflected in activity/audit history.
 
 ---
 
@@ -71,16 +82,33 @@ Behavior:
 - Right side: global AI CTA for current screen
 - In top CTA bar: **only one AI CTA**
 - Section-level AI actions are allowed inside section canvases (not in top CTA bar)
+- Workflow/lifecycle buttons should fit in one compact line on desktop
+- If actions exceed available width, secondary actions move to `More` / overflow
+- Buttons follow DBR77 Tech Sexy 2027 density and shape:
+  - compact `h-8` or tight `h-9`,
+  - `rounded-hig-full` or `rounded-hig-xl`,
+  - neutral Layer 2/3 surface,
+  - subtle hover only,
+  - no rectangular legacy buttons,
+  - no gradients or strong shadows
 
 ---
 
 ## 6) N-mode left navigation standard
 
-- Same fixed width for all artifacts: **220px**
+- Same fixed width for all N-type/N-mode artifacts: **242px**
 - Section labels should be designed for one-line display
 - Drag handle for reorder: visible on hover (not permanently visible)
 - Badge counters are allowed but optional; no globally forced usage
 - Left nav width is non-negotiable and should not vary per artifact
+
+N-mode layout contract:
+
+- left side is a column of tab/section names,
+- the left column is navigation only, not an action bar,
+- the central area is the main work canvas for the current tool/artifact,
+- the central canvas uses the full remaining width after the left nav and gutter,
+- N-mode must not degrade into a 2/3 + 1/3 layout with a second right-side shell.
 
 Fallback for long labels:
 
@@ -94,16 +122,23 @@ Fallback for long labels:
 Adopt one baseline and keep it global:
 
 - `--artifact-header-h: 48px`
-- `--artifact-properties-h: 60px`
-- `--artifact-actionbar-h: 36px`
+- `--artifact-properties-h: 44-56px`
+- `--artifact-actionbar-h: 36-44px`
 - `--artifact-field-h: 32px`
 - `--artifact-btn-h: 28px`
 - `--artifact-nav-item-h: 30px`
-- `--artifact-stack-gap: 12px`
+- `--artifact-stack-gap: 8-12px`
 - `--artifact-canvas-gap: 14px`
 - `--artifact-nav-canvas-gutter: 20px`
 - `--artifact-radius: 12px`
-- `--artifact-left-nav-w: 220px`
+- `--artifact-left-nav-w: 242px`
+
+Vertical density rule:
+
+- header + properties + workflow/action row must preserve working canvas space,
+- properties and workflow rows should stay compact on desktop,
+- avoid large stacked cards in the top control area,
+- the first N-mode card should remain visible in a standard desktop viewport whenever possible.
 
 Implementation note:
 
@@ -150,6 +185,27 @@ Excluded for this canonical version:
 - If explicit `visibleSections` exists, it is the source of truth
 - No automatic "show all defaults" override when explicit template visibility exists
 
+N-mode card catalog contract:
+
+- Full SSOT: `docs/ui-standards/01-shell-layout/n-mode-card-standard.md`.
+- every artifact/tool type must define a potential card list,
+- every card has a stable id, label, role, content contract and AI contract,
+- each tool suggests a default visible card set,
+- default cards are recommendations for the work context, not hard-coded accidents,
+- user/template visibility is controlled by `visibleSections`,
+- hidden cards keep their data; visibility is presentation only,
+- required cards can be locked/disabled in the visibility menu.
+
+View settings control:
+
+- N-mode needs a card view settings trigger,
+- the menu lists all cards potentially available for the current tool/artifact,
+- visible cards show a checkmark/checkbox,
+- toggling a card updates `visibleSections`,
+- selected cards appear in canonical order,
+- the pattern should feel analogous to table column visibility settings,
+- this control configures view composition only; it does not create/delete underlying data.
+
 ---
 
 ## 10) Definition of Done (UI shell)
@@ -158,7 +214,7 @@ A change to artifact detail UI is done only if:
 
 - 4-layer shell is preserved
 - N/C mode behavior is unchanged and stable
-- Left nav width remains 220px
+- Left nav width remains 242px
 - Strip/control/button heights follow canonical tokens
 - Save visibility logic follows standard (visible but low prominence when clean)
 - Top CTA bar has max one AI CTA on the right
@@ -653,3 +709,38 @@ Card-level blueprint:
 
 - Gate timeline visualization, readiness checklist, approval request actions.
 - AI supports readiness hints only (user remains decision-maker).
+
+---
+
+## 20) N/C mode approval notes (2026-05-01)
+
+Current reference screen:
+
+- `My Work / Moja praca > Decyzje`
+- screenshot: `Screenshot_2026-05-01_at_16.36.55-bd7111b5-768e-4100-9561-f7f28da3272d.png`
+
+Approved N-mode direction:
+
+- N-mode is the currently visible work format,
+- the left side contains a vertical column of tab/section names,
+- the center contains the main work canvas for the selected artifact/tool,
+- the center canvas should use the full available width,
+- N-mode is the standard for focused, document-like artifact work.
+
+Pending C-mode work:
+
+- C-mode is a second graphic/work format to be designed next,
+- C-mode must not be improvised from the current N-mode screen,
+- C-mode needs its own layout contract before implementation.
+- C-mode direction is inspired by ClickUp: more side breathing room, horizontal top menu/title structure, minimalist surfaces and less document-like presentation.
+- Until C-mode is implemented and approved, the N/C switcher remains on `N` by default.
+- If user selects `C` before implementation, show `C-mode coming soon` / `C-mode wkrótce` and do not switch to an unfinished view.
+
+New N-mode decision to develop:
+
+- define the full potential card list for each N-mode tool/artifact,
+- document what each card contains,
+- document what AI is allowed to do inside each card,
+- define default suggested card sets per tool,
+- add a card view settings control for showing/hiding cards with checkmarks,
+- use `visibleSections` as the visibility mechanism where possible.

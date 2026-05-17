@@ -75,7 +75,7 @@ const statusColors: Record<string, string> = {
   todo: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   done: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  blocked: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  blocked: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300',
 };
 
 export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps> = ({
@@ -123,7 +123,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
 
   if (error || !report) {
     return (
-      <div className="p-6 text-center text-red-500">
+      <div className="p-6 text-center text-rose-500">
         <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
         <p>{error || 'Failed to load report'}</p>
       </div>
@@ -206,7 +206,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
       </div>
 
       {/* Progress Card */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-indigo-600 to-primary-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{t('reports.progress')}</h2>
           <div className="text-4xl font-bold">{report.progress}%</div>
@@ -243,13 +243,13 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
       {report.blockers.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <AlertTriangle className="w-5 h-5 text-rose-500" />
             {t('reports.blockers')} ({report.blockers.length})
           </h2>
-          <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 space-y-3">
+          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 space-y-3">
             {report.blockers.map((blocker, idx) => (
               <div key={idx} className="flex items-start gap-3">
-                <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">{blocker.task}</div>
                   {blocker.reason && (
@@ -266,22 +266,22 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
       {report.upcomingDeadlines.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-orange-500" />
+            <Clock className="w-5 h-5 text-amber-500" />
             {t('reports.upcomingDeadlines')}
           </h2>
           <div className="space-y-2">
             {report.upcomingDeadlines.map((deadline, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg"
+                className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <Clock className="w-4 h-4 text-orange-500" />
+                  <Clock className="w-4 h-4 text-amber-500" />
                   <span className="font-medium text-gray-900 dark:text-white">{deadline.task}</span>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   {deadline.assignee && <span>{deadline.assignee}</span>}
-                  <span className="font-medium text-orange-600 dark:text-orange-400">
+                  <span className="font-medium text-amber-600 dark:text-amber-400">
                     {new Date(deadline.dueDate).toLocaleDateString()}
                   </span>
                 </div>
@@ -311,7 +311,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                       : task.status === 'in_progress'
                         ? 'bg-blue-500'
                         : task.status === 'blocked'
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : 'bg-gray-400'
                   }`}
                 />

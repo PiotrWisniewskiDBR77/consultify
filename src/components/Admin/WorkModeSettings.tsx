@@ -307,7 +307,7 @@ export const WorkModeSettings: React.FC = () => {
                       </span>
                     )}
                     {option.hasProjects && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200">
                         <FolderKanban className="h-3 w-3" />
                         {t('admin.workMode.projects', 'Projects')}
                       </span>
@@ -354,7 +354,7 @@ export const WorkModeSettings: React.FC = () => {
               value={labels.project}
               onChange={(e) => setLabels((prev) => ({ ...prev, project: e.target.value }))}
               placeholder="Project, Campaign, Engagement..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
@@ -368,7 +368,7 @@ export const WorkModeSettings: React.FC = () => {
               value={labels.location}
               onChange={(e) => setLabels((prev) => ({ ...prev, location: e.target.value }))}
               placeholder="Location, Office, Department..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
@@ -382,7 +382,7 @@ export const WorkModeSettings: React.FC = () => {
               value={labels.team}
               onChange={(e) => setLabels((prev) => ({ ...prev, team: e.target.value }))}
               placeholder="Team, Squad, Pod..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
@@ -410,7 +410,7 @@ export const WorkModeSettings: React.FC = () => {
               </span>
             )}
             {config.hasProjects && (
-              <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400">
+              <span className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400">
                 <CheckCircle2 className="h-4 w-4" />
                 {t('admin.workMode.projectsEnabled', 'Projects Enabled')}
               </span>

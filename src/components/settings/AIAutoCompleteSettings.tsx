@@ -16,6 +16,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { SettingsDivider, SettingsFormRow, SettingsSection, SettingsToggle } from './shared';
 
 interface AutoCompletePreferences {
@@ -41,6 +43,8 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
     useState<AutoCompletePreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -48,14 +52,16 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const response = await Api.getAIAutoComplete();
-        if (response?.preferences) {
-          const merged = { ...defaultPreferences, ...response.preferences };
-          setPreferences(merged);
-          setOriginalPreferences(merged);
+        if (!response?.preferences) {
+          throw new Error('AI auto-complete response was missing preferences');
         }
-      } catch (err) {
-        console.error('Failed to load auto-complete settings:', err);
+        const merged = { ...defaultPreferences, ...response.preferences };
+        setPreferences(merged);
+        setOriginalPreferences(merged);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load auto-complete settings'));
       } finally {
         setLoading(false);
       }
@@ -66,11 +72,26 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.saveAIAutoComplete(preferences);
+      const response = await Api.getAIAutoComplete();
+      if (!response?.preferences) {
+        throw new Error('AI auto-complete save was not confirmed by the server');
+      }
+      const next = { ...defaultPreferences, ...response.preferences };
+      if (JSON.stringify(next) !== JSON.stringify(preferences)) {
+        throw new Error('AI auto-complete save was not confirmed by the server');
+      }
+      setPreferences(next);
       setOriginalPreferences(preferences);
       toast.success(t('settings.ai.autocompleteSaved', 'Auto-complete settings saved'));
-    } catch {
-      toast.error(t('settings.ai.autocompleteError', 'Failed to save auto-complete settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.ai.autocompleteError', 'Failed to save auto-complete settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -83,8 +104,25 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
+  if (loadError) {
+    return (
+      <div className={className}>
+        <DegradedState title="AI auto-complete unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={Zap}
         title={t('settings.ai.autocompleteTitle', 'Auto-Complete & Suggestions')}
@@ -131,7 +169,7 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
                       step="0.1"
                       value={preferences.sensitivity}
                       onChange={(e) => update('sensitivity', Number(e.target.value))}
-                      className="flex-1 accent-violet-500"
+                      className="flex-1 accent-primary-500"
                     />
                     <span className="text-sm font-mono text-white w-12 text-right">
                       {Math.round(preferences.sensitivity * 100)}%

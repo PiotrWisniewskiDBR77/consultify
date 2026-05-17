@@ -1,9 +1,11 @@
-import { Check, Loader2, MessageSquare, Sparkles, X } from 'lucide-react';
+import { Check, MessageSquare, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import type { ProposalCardType, ProposalStatus } from '@/store/useToolStore';
+
+import { ProposalStatusBadge } from './ProposalCardGovernance';
 
 interface ProposalCardProps {
   cardId: string;
@@ -19,43 +21,13 @@ interface ProposalCardProps {
 
 const STATUS_STYLES: Record<ProposalStatus, string> = {
   'ai-proposed':
-    'border-l-4 border-l-violet-400 border border-dashed border-violet-200/60 bg-violet-50/20 dark:border-l-violet-500 dark:border-violet-800/40 dark:bg-violet-950/10',
+    'border-l-4 border-l-primary-400 border border-dashed border-primary-200/60 bg-primary-50/20 dark:border-l-primary-500 dark:border-primary-800/40 dark:bg-primary-950/10',
   accepted:
     'border-l-4 border-l-emerald-400 border border-emerald-200/60 bg-white dark:border-l-emerald-500 dark:border-emerald-800/40 dark:bg-navy-900/40',
   rejected:
     'border-l-4 border-l-slate-300 border border-slate-200/40 bg-slate-50/50 opacity-50 dark:border-l-slate-600 dark:border-slate-700/40 dark:bg-navy-950/20',
   rethinking:
     'border-l-4 border-l-amber-400 border border-amber-200/60 bg-amber-50/20 animate-pulse dark:border-l-amber-500 dark:border-amber-800/40 dark:bg-amber-950/10',
-};
-
-const STATUS_BADGE: Record<
-  ProposalStatus,
-  { label: string; labelPl: string; icon: React.ReactNode; tone: string }
-> = {
-  'ai-proposed': {
-    label: 'AI Proposal',
-    labelPl: 'Propozycja AI',
-    icon: <Sparkles className="h-3 w-3" />,
-    tone: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
-  },
-  accepted: {
-    label: 'Accepted',
-    labelPl: 'Zaakceptowane',
-    icon: <Check className="h-3 w-3" />,
-    tone: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  },
-  rejected: {
-    label: 'Rejected',
-    labelPl: 'Odrzucone',
-    icon: <X className="h-3 w-3" />,
-    tone: 'bg-slate-100 text-slate-500 dark:bg-slate-800/30 dark:text-slate-400',
-  },
-  rethinking: {
-    label: 'Rethinking...',
-    labelPl: 'Przemyślam...',
-    icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    tone: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  },
 };
 
 export const ProposalCard: React.FC<ProposalCardProps> = ({
@@ -75,7 +47,6 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   const isPolish = i18n.language === 'pl';
 
   const status = proposalStatus || 'ai-proposed';
-  const badge = STATUS_BADGE[status];
   const isRethinking = status === 'rethinking';
   const isRejected = status === 'rejected';
 
@@ -127,17 +98,15 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   return (
     <div
       className={`rounded-xl ${STATUS_STYLES[status]} ${compact ? 'p-3' : 'p-4'} transition-all duration-200 ${className}`}
+      data-ai-proposal-card={
+        status === 'ai-proposed' || status === 'rethinking' ? 'true' : undefined
+      }
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">{children}</div>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <div
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${badge.tone}`}
-          >
-            {badge.icon}
-            <span>{isPolish ? badge.labelPl : badge.label}</span>
-          </div>
+          <ProposalStatusBadge status={status} isPolish={isPolish} />
 
           {menuActions.length > 0 ? (
             <RowActionsMenu actions={menuActions} iconVariant="vertical" />
@@ -153,12 +122,12 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRethink()}
             placeholder={isPolish ? 'Dodaj feedback dla AI...' : 'Your feedback for AI...'}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             autoFocus
           />
           <button
             onClick={handleRethink}
-            className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-700"
+            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-700"
           >
             {isPolish ? 'Przemyśl' : 'Rethink'}
           </button>

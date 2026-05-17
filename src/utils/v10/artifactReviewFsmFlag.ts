@@ -1,21 +1,7 @@
 /**
- * Chat V10 / V10-ART-003 — feature flag for the ReviewState FSM.
+ * Chat V10 / V10-ART review lifecycle FSM feature flag.
  *
- * What this flag gates
- * --------------------
- * Adoption of `nextReviewState` / `canTransition` (via
- * `ReviewStateMachine.ts`) as the single resolver for artifact
- * review-lifecycle transitions. Off-by-default until the store
- * integration (V10-ART-023) lands.
- *
- * Default: **OFF**. See `ADR-V10-002`.
- *
- * Resolution order
- * ----------------
- *   1. URL query   `?ff_artifact_review_fsm=0|1`
- *   2. localStorage `ff.artifact_review_fsm`
- *   3. env          `VITE_ARTIFACT_REVIEW_FSM`
- *   4. Hard default — `false`.
+ * Default OFF until the closed review transition resolver is adopted by runtime.
  */
 
 const LS_KEY = 'ff.artifact_review_fsm';

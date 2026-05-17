@@ -284,7 +284,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
           <span className="text-xs font-medium px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
             12 On Track
           </span>
-          <span className="text-xs font-medium px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+          <span className="text-xs font-medium px-2 py-1 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             3 At Risk
           </span>
         </div>

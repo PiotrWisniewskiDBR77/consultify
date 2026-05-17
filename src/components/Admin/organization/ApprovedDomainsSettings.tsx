@@ -159,7 +159,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Mail size={20} className="text-violet-500" />
+            <Mail size={20} className="text-primary-500" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">
               {t('admin.org.domains.title', 'Approved Email Domains')}
             </h3>
@@ -276,7 +276,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                       onClick={() => handleToggleAutoJoin(domain)}
                       className={cn(
                         'relative w-10 h-6 rounded-full transition-colors',
-                        domain.autoJoin ? 'bg-violet-600' : 'bg-slate-200 dark:bg-navy-700'
+                        domain.autoJoin ? 'bg-primary-600' : 'bg-slate-200 dark:bg-navy-700'
                       )}
                     >
                       <span
@@ -373,7 +373,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
               onClick={() => setAutoJoin(!autoJoin)}
               className={cn(
                 'relative w-10 h-6 rounded-full transition-colors',
-                autoJoin ? 'bg-violet-600' : 'bg-slate-200 dark:bg-navy-700'
+                autoJoin ? 'bg-primary-600' : 'bg-slate-200 dark:bg-navy-700'
               )}
             >
               <span

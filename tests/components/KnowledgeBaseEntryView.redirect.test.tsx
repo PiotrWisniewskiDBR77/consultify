@@ -14,6 +14,7 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../src/routes/routeConfig', () => ({
   ROUTES: {
     DOCS: '/docs',
+    KNOWLEDGE_BASE_PUBLIC: '/knowledge-base',
   },
 }));
 
@@ -21,6 +22,6 @@ describe('KnowledgeBaseEntryView redirect shim', () => {
   it('redirects the legacy knowledge base entry to the canonical docs route', () => {
     render(<KnowledgeBaseEntryView />);
 
-    expect(screen.getByTestId('navigate-target')).toHaveTextContent('/docs');
+    expect(screen.getByTestId('navigate-target')).toHaveTextContent('/knowledge-base');
   });
 });

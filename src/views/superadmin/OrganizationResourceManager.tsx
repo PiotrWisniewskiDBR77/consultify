@@ -7,6 +7,7 @@ import './OrganizationResourceManager.css';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import ResourceLimitInput from '../../components/SuperAdmin/ResourceLimitInput';
 import api from '../../services/api';
@@ -75,12 +76,30 @@ export const OrganizationResourceManager: React.FC = () => {
     description: '',
   });
 
+  const safeNumber = (value: unknown, fallback = 0) => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : fallback;
+  };
+
+  const safePercent = (current: unknown, limit: unknown) => {
+    const currentValue = safeNumber(current);
+    const limitValue = safeNumber(limit);
+    if (limitValue <= 0) return 0;
+    return Math.min((currentValue / limitValue) * 100, 100);
+  };
+
+  const formatMoney = (value: unknown) => `$${safeNumber(value).toFixed(2)}`;
+
   // Fetch organizations list
   const { data: organizations } = useQuery({
     queryKey: ['organizations'],
     queryFn: async () => {
-      const response = await api.get('/api/organizations');
-      return response.data.organizations as Array<{ id: string; name: string }>;
+      const response = await api.get('/superadmin/organizations');
+      const payload = response.data;
+      return (Array.isArray(payload) ? payload : payload?.organizations || []) as Array<{
+        id: string;
+        name: string;
+      }>;
     },
   });
 
@@ -102,6 +121,10 @@ export const OrganizationResourceManager: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orgResources', selectedOrgId] });
       setShowBudgetModal(false);
+      toast.success('Budget updated');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to update budget');
     },
   });
 
@@ -113,6 +136,10 @@ export const OrganizationResourceManager: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orgResources', selectedOrgId] });
       setShowQuotaModal(false);
+      toast.success('Quotas updated');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to update quotas');
     },
   });
 
@@ -127,6 +154,10 @@ export const OrganizationResourceManager: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orgResources', selectedOrgId] });
       setShowChargeModal(false);
+      toast.success('Resource charge recorded');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to record resource charge');
     },
   });
 
@@ -194,15 +225,17 @@ export const OrganizationResourceManager: React.FC = () => {
                   <div
                     className="progress-fill"
                     style={{
-                      width: `${Math.min((resourceData.organization.memory_usage_mb_current / resourceData.organization.memory_limit_mb) * 100, 100)}%`,
+                      width: `${safePercent(
+                        resourceData.organization.memory_usage_mb_current,
+                        resourceData.organization.memory_limit_mb
+                      )}%`,
                     }}
                   />
                 </div>
                 <span className="percentage">
-                  {(
-                    (resourceData.organization.memory_usage_mb_current /
-                      resourceData.organization.memory_limit_mb) *
-                    100
+                  {safePercent(
+                    resourceData.organization.memory_usage_mb_current,
+                    resourceData.organization.memory_limit_mb
                   ).toFixed(1)}
                   % used
                 </span>
@@ -214,7 +247,7 @@ export const OrganizationResourceManager: React.FC = () => {
               <div className="gauge">
                 <div className="gauge-label">
                   <span className="current">
-                    {resourceData.organization.cpu_usage_percent_avg.toFixed(1)}%
+                    {safeNumber(resourceData.organization.cpu_usage_percent_avg).toFixed(1)}%
                   </span>
                   <span className="limit">/ {resourceData.organization.cpu_quota_percent}%</span>
                 </div>
@@ -222,7 +255,10 @@ export const OrganizationResourceManager: React.FC = () => {
                   <div
                     className="progress-fill"
                     style={{
-                      width: `${Math.min((resourceData.organization.cpu_usage_percent_avg / resourceData.organization.cpu_quota_percent) * 100, 100)}%`,
+                      width: `${safePercent(
+                        resourceData.organization.cpu_usage_percent_avg,
+                        resourceData.organization.cpu_quota_percent
+                      )}%`,
                     }}
                   />
                 </div>
@@ -233,10 +269,10 @@ export const OrganizationResourceManager: React.FC = () => {
               <h3>Token Balance</h3>
               <div className="token-display">
                 <span className="token-value">
-                  {resourceData.organization.token_balance.toLocaleString()}
+                  {safeNumber(resourceData.organization.token_balance).toLocaleString()}
                 </span>
                 <span className="token-limit">
-                  Limit: {resourceData.organization.token_limit.toLocaleString()}
+                  Limit: {safeNumber(resourceData.organization.token_limit).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -266,16 +302,16 @@ export const OrganizationResourceManager: React.FC = () => {
                 <div className="budget-stats">
                   <div className="stat">
                     <label>Monthly Budget</label>
-                    <span className="value">${resourceData.budget.monthlyBudget.toFixed(2)}</span>
+                    <span className="value">{formatMoney(resourceData.budget.monthlyBudget)}</span>
                   </div>
                   <div className="stat">
                     <label>Spent</label>
-                    <span className="value spent">${resourceData.budget.spent.toFixed(2)}</span>
+                    <span className="value spent">{formatMoney(resourceData.budget.spent)}</span>
                   </div>
                   <div className="stat">
                     <label>Remaining</label>
                     <span className="value remaining">
-                      ${resourceData.budget.remaining.toFixed(2)}
+                      {formatMoney(resourceData.budget.remaining)}
                     </span>
                   </div>
                 </div>
@@ -284,11 +320,13 @@ export const OrganizationResourceManager: React.FC = () => {
                   <div className="progress-bar">
                     <div
                       className={`progress-fill ${resourceData.budget.exceeded ? 'exceeded' : resourceData.budget.approachingLimit ? 'warning' : ''}`}
-                      style={{ width: `${Math.min(resourceData.budget.percentageUsed, 100)}%` }}
+                      style={{
+                        width: `${Math.min(safeNumber(resourceData.budget.percentageUsed), 100)}%`,
+                      }}
                     />
                   </div>
                   <span className="percentage">
-                    {resourceData.budget.percentageUsed.toFixed(1)}% used
+                    {safeNumber(resourceData.budget.percentageUsed).toFixed(1)}% used
                   </span>
                 </div>
               </div>
@@ -313,7 +351,7 @@ export const OrganizationResourceManager: React.FC = () => {
                         <span className="category-badge">{expense.category}</span>
                       </td>
                       <td>{expense.description}</td>
-                      <td className="amount">${expense.amount.toFixed(2)}</td>
+                      <td className="amount">{formatMoney(expense.amount)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,14 +1,7 @@
 /**
- * Chat V10 / V10-ART-004 — feature flag for DataClassification gating.
+ * Chat V10 / V10-ART data-classification policy feature flag.
  *
- * What this flag gates
- * --------------------
- * Adoption of `DATA_CLASSIFICATION_POLICIES` + `canExportToFormat` as
- * the single export / egress / masking resolver. When ON, the
- * ArtifactStore (V10-ART-015) blocks exports that violate the table;
- * when OFF, V9 legacy export proceeds.
- *
- * Default: **OFF**. See `ADR-V10-002`.
+ * Default OFF until artifact egress and masking policy enforcement is wired.
  */
 
 const LS_KEY = 'ff.artifact_data_classification';

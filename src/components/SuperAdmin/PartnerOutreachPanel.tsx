@@ -174,7 +174,7 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
             <button
               disabled={importing}
               onClick={importLeads}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm disabled:opacity-60"
             >
               <Upload className="w-4 h-4" />
               {t('partners.outreach.importCta', 'Import')}

@@ -178,7 +178,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -188,8 +188,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-            <ClipboardCheck className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+          <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+            <ClipboardCheck className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Reviewer Panel</h1>
@@ -236,8 +236,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
 
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Timer className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Timer className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -264,8 +264,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
 
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.overdue}</p>
@@ -298,7 +298,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -308,7 +308,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
               <span
                 className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                   activeTab === tab.id
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -322,7 +322,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
       {/* Reviews List */}
       <div className="space-y-4">
         {error && (
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg text-red-700 dark:text-red-300">
+          <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300">
             <AlertCircle className="w-5 h-5" />
             <span>{error}</span>
           </div>
@@ -343,7 +343,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
               key={review.id}
               className={`bg-white dark:bg-navy-900 rounded-xl border p-4 transition-all hover:shadow-lg ${
                 review.isOverdue && review.status !== 'COMPLETED'
-                  ? 'border-red-300 dark:border-red-500/30'
+                  ? 'border-rose-300 dark:border-rose-500/30'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -354,18 +354,18 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     review.status === 'COMPLETED'
                       ? 'bg-green-100 dark:bg-green-900/30'
                       : review.isOverdue
-                        ? 'bg-red-100 dark:bg-red-900/30'
+                        ? 'bg-rose-100 dark:bg-rose-900/30'
                         : review.status === 'IN_PROGRESS'
-                          ? 'bg-purple-100 dark:bg-purple-900/30'
+                          ? 'bg-primary-100 dark:bg-primary-900/30'
                           : 'bg-amber-100 dark:bg-amber-900/30'
                   }`}
                 >
                   {review.status === 'COMPLETED' ? (
                     <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
                   ) : review.isOverdue ? (
-                    <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                    <AlertTriangle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
                   ) : review.status === 'IN_PROGRESS' ? (
-                    <Timer className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    <Timer className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                   ) : (
                     <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                   )}
@@ -384,7 +384,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     </div>
 
                     {review.isOverdue && review.status !== 'COMPLETED' && (
-                      <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium rounded-full">
+                      <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-medium rounded-full">
                         Przeterminowane
                       </span>
                     )}
@@ -402,7 +402,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     {review.dueDate && (
                       <span
                         className={`flex items-center gap-1 ${
-                          review.isOverdue ? 'text-red-500' : ''
+                          review.isOverdue ? 'text-rose-500' : ''
                         }`}
                       >
                         <Timer className="w-3.5 h-3.5" />
@@ -451,7 +451,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     </button>
                     <button
                       onClick={() => setReviewingReview(review)}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
                     >
                       <FileEdit className="w-4 h-4" />
                       Submit Review

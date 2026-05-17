@@ -153,7 +153,7 @@ export const AdminAuditLogPanel: React.FC = () => {
             />
             <button
               onClick={() => void saveRetention()}
-              className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white"
             >
               Save retention
             </button>
@@ -189,7 +189,7 @@ export const AdminAuditLogPanel: React.FC = () => {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {exporting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

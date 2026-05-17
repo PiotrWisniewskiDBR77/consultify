@@ -152,7 +152,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
       <p className={cn('text-xs mt-0.5', statusColor)}>{status}</p>
     </div>
     {action && (
-      <div className="flex items-center gap-1 text-xs text-slate-500 group-hover:text-violet-400 transition-colors flex-shrink-0">
+      <div className="flex items-center gap-1 text-xs text-slate-500 group-hover:text-primary-400 transition-colors flex-shrink-0">
         <span className="hidden sm:inline">{action}</span>
         <ChevronRight size={14} />
       </div>
@@ -219,11 +219,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
     (async () => {
       setRecoveryLoading(true);
       try {
-        const response = await fetch('/api/settings/recovery', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const data = await Api.get('/settings/recovery');
+        if (data) {
           setRecoveryEmail(data.recoveryEmail || '');
           setRecoveryPhone(data.recoveryPhone || '');
           setRecoveryBackupCount(data.backupCodesCount || 0);
@@ -557,7 +554,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               <button
                 type="submit"
                 disabled={!allReqsMet || !passwordsMatch || passwordLoading}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
               >
                 {passwordLoading && <Loader2 size={14} className="animate-spin" />}
                 {t('settings.password.update', 'Update Password')}
@@ -579,8 +576,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
         ) : (
           <StatusCard
             icon={Key}
-            iconColor="text-violet-400"
-            iconBg="bg-violet-500/10"
+            iconColor="text-primary-400"
+            iconBg="bg-primary-500/10"
             title={t('settings.password.title', 'Password')}
             status={t('settings.security.passwordSet', 'Password is set')}
             statusColor="text-slate-400"
@@ -708,8 +705,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   key={b.title}
                   className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
                 >
-                  <div className="p-1.5 rounded-lg bg-violet-500/10 w-fit mb-2">
-                    <b.icon size={16} className="text-violet-400" />
+                  <div className="p-1.5 rounded-lg bg-primary-500/10 w-fit mb-2">
+                    <b.icon size={16} className="text-primary-400" />
                   </div>
                   <p className="text-sm font-medium text-slate-200">{b.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{b.desc}</p>
@@ -719,7 +716,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             <button
               onClick={startMfaSetup}
               disabled={mfaLoading}
-              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {mfaLoading ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -784,13 +781,13 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                       maxLength={6}
                       placeholder="000000"
-                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       onKeyDown={(e) => e.key === 'Enter' && verifyMfa()}
                     />
                     <button
                       onClick={verifyMfa}
                       disabled={mfaLoading || verificationCode.length !== 6}
-                      className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
                     >
                       {mfaLoading ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -931,8 +928,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
           {/* Backup Codes */}
           <StatusCard
             icon={Key}
-            iconColor="text-violet-400"
-            iconBg="bg-violet-500/10"
+            iconColor="text-primary-400"
+            iconBg="bg-primary-500/10"
             title={t('settings.recovery.backupCodes', 'Backup Codes')}
             status={
               recoveryBackupCount > 0
@@ -989,7 +986,7 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
                   isCompleted
                     ? 'bg-emerald-500 text-white'
                     : isActive
-                      ? 'bg-violet-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-white/[0.06] text-slate-500'
                 )}
               >

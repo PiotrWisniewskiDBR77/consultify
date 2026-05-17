@@ -146,7 +146,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
       >
-        <BarChart3 size={13} className="text-violet-500" />
+        <BarChart3 size={13} className="text-primary-500" />
         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
           {isPl ? 'Podsumowanie tabeli' : 'Table Summary'}
         </span>
@@ -178,19 +178,19 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                     ? '#10b981'
                     : stats.completeness > 40
                       ? '#f59e0b'
-                      : '#ef4444',
+                      : '#f43f5e',
               },
               {
                 label: isPl ? 'Kategorie' : 'Categories',
                 value: stats.categories,
                 icon: TrendingUp,
-                color: '#8b5cf6',
+                color: '#6366f1',
               },
               {
                 label: isPl ? 'Z komentarzami' : 'With comments',
                 value: stats.withComments,
                 icon: FileText,
-                color: '#06b6d4',
+                color: '#3b82f6',
               },
             ].map((stat) => {
               const Icon = stat.icon;
@@ -223,7 +223,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${stats.completeness}%`,
-                  background: `linear-gradient(90deg, ${stats.completeness > 70 ? '#10b981' : stats.completeness > 40 ? '#f59e0b' : '#ef4444'}, ${stats.completeness > 70 ? '#06d6a0' : stats.completeness > 40 ? '#fbbf24' : '#f87171'})`,
+                  background: `linear-gradient(90deg, ${stats.completeness > 70 ? '#10b981' : stats.completeness > 40 ? '#f59e0b' : '#f43f5e'}, ${stats.completeness > 70 ? '#06d6a0' : stats.completeness > 40 ? '#fbbf24' : '#fb7185'})`,
                 }}
               />
             </div>
@@ -311,10 +311,10 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           )}
 
           {/* AI Narrative */}
-          <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
+          <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3">
             <div className="flex items-center gap-1.5 mb-2">
-              <Sparkles size={11} className="text-violet-500" />
-              <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
+              <Sparkles size={11} className="text-primary-500" />
+              <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400">
                 {isPl ? 'Narracja AI' : 'AI Narrative'}
               </span>
             </div>
@@ -326,7 +326,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               <button
                 onClick={handleGenerateNarrative}
                 disabled={aiLoading}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {aiLoading ? (
                   <Loader2 size={12} className="animate-spin" />

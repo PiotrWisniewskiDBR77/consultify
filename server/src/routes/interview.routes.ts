@@ -14,6 +14,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 
 const router = Router();
 const templateSourceUpload = multer({
@@ -32,6 +33,7 @@ const templateSourceUpload = multer({
 // Middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 // ==========================================
@@ -139,20 +141,6 @@ router.patch(
   InterviewController.updateAssignment
 );
 
-/** PATCH /interview/assignments/:id/manage - Manage or recreate assignment safely */
-router.patch(
-  '/assignments/:id/manage',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
-  InterviewController.manageAssignment
-);
-
-/** POST /interview/assignments/:id/archive - Archive closed assignment from active operations list */
-router.post(
-  '/assignments/:id/archive',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
-  InterviewController.archiveAssignment
-);
-
 /** DELETE /interview/assignments/:id - Delete assignment (only if not started) */
 router.delete(
   '/assignments/:id',
@@ -172,13 +160,6 @@ router.post(
   '/assignments/:id/approve',
   requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   InterviewController.approveAssignment
-);
-
-/** POST /interview/assignments/:id/revoke-approval - Admin/PM revoke approval and reopen work */
-router.post(
-  '/assignments/:id/revoke-approval',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
-  InterviewController.revokeApproval
 );
 
 // ==========================================

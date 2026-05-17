@@ -80,7 +80,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
               <span
                 className={
                   dataPoint.status === 'Overload'
-                    ? 'text-red-500'
+                    ? 'text-rose-500'
                     : dataPoint.status === 'High'
                       ? 'text-amber-500'
                       : 'text-green-500'

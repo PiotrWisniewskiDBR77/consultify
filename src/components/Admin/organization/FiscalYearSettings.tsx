@@ -179,7 +179,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Calendar size={20} className="text-violet-500" />
+            <Calendar size={20} className="text-primary-500" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">
               {t('admin.org.fiscalYear.title', 'Fiscal Year Configuration')}
             </h3>
@@ -212,7 +212,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
             <select
               value={formData.startMonth}
               onChange={(e) => updateStartMonth(Number(e.target.value))}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-transparent rounded-xl text-navy-900 dark:text-white transition-all duration-150 outline-none focus:ring-2 focus:border-violet-500 focus:ring-violet-500/20"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-transparent rounded-xl text-navy-900 dark:text-white transition-all duration-150 outline-none focus:ring-2 focus:border-primary-500 focus:ring-primary-500/20"
             >
               {MONTHS.map((month) => (
                 <option key={month.value} value={month.value}>
@@ -252,7 +252,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                 className={cn(
                   'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                   formData.firstDayOfWeek === 'sunday'
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-slate-100 dark:bg-navy-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-800'
                 )}
               >
@@ -263,7 +263,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                 className={cn(
                   'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                   formData.firstDayOfWeek === 'monday'
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-slate-100 dark:bg-navy-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-800'
                 )}
               >
@@ -274,27 +274,27 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
         </div>
 
         {/* Fiscal Year Preview */}
-        <div className="mt-6 p-4 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-xl border border-violet-200 dark:border-violet-800">
+        <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-xl border border-primary-200 dark:border-primary-800">
           <div className="flex items-center gap-2 mb-3">
-            <Info size={16} className="text-violet-600 dark:text-violet-400" />
-            <p className="text-sm font-medium text-violet-800 dark:text-violet-200">
+            <Info size={16} className="text-primary-600 dark:text-primary-400" />
+            <p className="text-sm font-medium text-primary-800 dark:text-primary-200">
               {t('admin.org.fiscalYear.currentFiscalYear', 'Current Fiscal Year')}
             </p>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-violet-900 dark:text-violet-100">
+              <p className="text-2xl font-bold text-primary-900 dark:text-primary-100">
                 {fiscalYearPreview.label}
               </p>
-              <p className="text-sm text-violet-700 dark:text-violet-300 mt-1">
+              <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
                 {fiscalYearPreview.range}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-violet-600 dark:text-violet-400">
+              <p className="text-sm text-primary-600 dark:text-primary-400">
                 {t('admin.org.fiscalYear.currentQuarter', 'Current Quarter')}
               </p>
-              <p className="text-lg font-semibold text-violet-900 dark:text-violet-100">
+              <p className="text-lg font-semibold text-primary-900 dark:text-primary-100">
                 Q{fiscalYearPreview.currentQuarter}
               </p>
             </div>
@@ -318,7 +318,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
               className={cn(
                 'p-4 rounded-lg border',
                 quarter.quarter === fiscalYearPreview.currentQuarter
-                  ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700'
+                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700'
                   : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700'
               )}
             >
@@ -327,14 +327,14 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                   className={cn(
                     'text-lg font-bold',
                     quarter.quarter === fiscalYearPreview.currentQuarter
-                      ? 'text-violet-700 dark:text-violet-300'
+                      ? 'text-primary-700 dark:text-primary-300'
                       : 'text-navy-900 dark:text-white'
                   )}
                 >
                   {quarter.label}
                 </span>
                 {quarter.quarter === fiscalYearPreview.currentQuarter && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-violet-200 dark:bg-violet-800 text-violet-800 dark:text-violet-200 rounded-full">
+                  <span className="px-2 py-0.5 text-xs font-medium bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 rounded-full">
                     {t('admin.org.fiscalYear.current', 'Current')}
                   </span>
                 )}

@@ -10,7 +10,7 @@
  * - NModeHeader       — Title bar with save, chat, mode switcher
  * - NModePropertiesStrip — Full-width property fields row
  * - NModeActionBar    — Primary + contextual AI action buttons
- * - NModeLeftNav      — Section navigation rail (220px)
+ * - NModeLeftNav      — Section navigation rail (242px)
  * - NModeCanvas       — Animated section content area
  * - NModeSectionWrapper — Utility wrapper for section content
  *

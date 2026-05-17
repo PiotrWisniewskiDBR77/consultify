@@ -28,6 +28,8 @@ import { useTranslation } from 'react-i18next';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 import type {
   DataClass,
   ErrorCategory,
@@ -137,7 +139,7 @@ function CapabilityIcons({ caps }: { caps: RegistryModel['capabilities'] }) {
         </span>
       )}
       {caps.jsonMode && (
-        <span title="JSON mode" className="p-1 rounded bg-purple-500/10 text-purple-400">
+        <span title="JSON mode" className="p-1 rounded bg-primary-500/10 text-primary-400">
           <Server size={12} />
         </span>
       )}
@@ -147,6 +149,7 @@ function CapabilityIcons({ caps }: { caps: RegistryModel['capabilities'] }) {
 
 interface ActionsMenuProps {
   model: RegistryModel;
+  disabled?: boolean;
   onToggleActive: (model: RegistryModel) => void;
   onEdit: (model: RegistryModel) => void;
   onTestConnection: (model: RegistryModel) => void;
@@ -155,6 +158,7 @@ interface ActionsMenuProps {
 
 function ActionsMenu({
   model,
+  disabled = false,
   onToggleActive,
   onEdit,
   onTestConnection,
@@ -175,6 +179,9 @@ function ActionsMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
+        disabled={disabled}
+        aria-label={`Actions for ${model.name}`}
+        title={disabled ? 'Model catalog is unavailable' : undefined}
         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
       >
         <MoreVertical size={16} className="text-slate-400" />
@@ -215,7 +222,7 @@ function ActionsMenu({
               onDelete(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
           >
             <Trash2 size={14} /> Delete
           </button>
@@ -382,6 +389,7 @@ export const ModelCatalogTable: React.FC = () => {
   const [filterActive, setFilterActive] = useState<'' | 'active' | 'inactive'>('');
   const [showFilters, setShowFilters] = useState(false);
   const [editingModel, setEditingModel] = useState<RegistryModel | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadModels();
@@ -389,6 +397,7 @@ export const ModelCatalogTable: React.FC = () => {
 
   const loadModels = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch('/api/llm/providers', { headers: authHeaders() });
       if (res.ok) {
@@ -435,12 +444,16 @@ export const ModelCatalogTable: React.FC = () => {
         setModels(mapped);
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err?.error || 'Failed to load providers');
+        const message = normalizeApiErrorMessage(err?.error || err, 'Failed to load providers');
+        setLoadError(message);
+        toast.error(message);
         setModels([]);
       }
       trackFunnelEvent('model_registry_viewed');
-    } catch {
-      toast.error('Failed to load providers');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load providers');
+      setLoadError(message);
+      toast.error(message);
       setModels([]);
     } finally {
       setLoading(false);
@@ -448,8 +461,11 @@ export const ModelCatalogTable: React.FC = () => {
   };
 
   const handleToggleActive = async (model: RegistryModel) => {
+    if (loadError) {
+      toast.error('Model catalog is unavailable');
+      return;
+    }
     const nextActive = !model.isActive;
-    setModels((prev) => prev.map((m) => (m.id === model.id ? { ...m, isActive: nextActive } : m)));
     try {
       const res = await fetch(`/api/llm/providers/${encodeURIComponent(model.id)}`, {
         method: 'PUT',
@@ -461,12 +477,9 @@ export const ModelCatalogTable: React.FC = () => {
         throw new Error(json?.error || 'Update failed');
       }
       toast.success(`${model.name} ${nextActive ? 'activated' : 'deactivated'}`);
-    } catch (e: any) {
-      // revert
-      setModels((prev) =>
-        prev.map((m) => (m.id === model.id ? { ...m, isActive: model.isActive } : m))
-      );
-      toast.error(e?.message || 'Failed to update model');
+      await loadModels();
+    } catch (e: unknown) {
+      toast.error(normalizeApiErrorMessage(e, 'Failed to update model'));
     }
   };
 
@@ -493,9 +506,11 @@ export const ModelCatalogTable: React.FC = () => {
   };
 
   const handleDelete = async (model: RegistryModel) => {
+    if (loadError) {
+      toast.error('Model catalog is unavailable');
+      return;
+    }
     if (!confirm(`Delete ${model.name}? This cannot be undone.`)) return;
-    const previous = models;
-    setModels((prev) => prev.filter((m) => m.id !== model.id));
     try {
       const res = await fetch(`/api/llm/providers/${encodeURIComponent(model.id)}`, {
         method: 'DELETE',
@@ -504,9 +519,9 @@ export const ModelCatalogTable: React.FC = () => {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'Delete failed');
       toast.success('Provider deleted');
-    } catch (e: any) {
-      setModels(previous);
-      toast.error(e?.message || 'Failed to delete provider');
+      await loadModels();
+    } catch (e: unknown) {
+      toast.error(normalizeApiErrorMessage(e, 'Failed to delete provider'));
     }
   };
 
@@ -562,6 +577,7 @@ export const ModelCatalogTable: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={loadModels}
+            disabled={loading}
             className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <RefreshCw size={18} />
@@ -572,7 +588,9 @@ export const ModelCatalogTable: React.FC = () => {
               setCurrentView(AppView.SUPERADMIN_LLM_MANAGEMENT);
               toast('Go to LLM Providers to add a model/provider');
             }}
-            className="flex items-center gap-2 px-4 h-9 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors"
+            disabled={!!loadError}
+            title={loadError || undefined}
+            className="flex items-center gap-2 px-4 h-9 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors disabled:opacity-50"
           >
             <Plus size={16} />
             {t('modelRegistry.catalog.addModel', 'Add Model')}
@@ -580,283 +598,302 @@ export const ModelCatalogTable: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Total</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{models.length}</div>
+      {loadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState title="Model catalog unavailable" description={loadError} />
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Active</div>
-          <div className="text-2xl font-bold text-emerald-500">
-            {models.filter((m) => m.isActive).length}
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="text-sm text-slate-500 dark:text-slate-400">Total</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {models.length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="text-sm text-slate-500 dark:text-slate-400">Active</div>
+              <div className="text-2xl font-bold text-emerald-500">
+                {models.filter((m) => m.isActive).length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="text-sm text-blue-400">TEXT_LLM</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {models.filter((m) => m.kind === 'TEXT_LLM').length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="text-sm text-primary-400">IMAGE_MODEL</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {models.filter((m) => m.kind === 'IMAGE_MODEL').length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="text-sm text-amber-400">BUSINESS_MODEL</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {models.filter((m) => m.kind === 'BUSINESS_MODEL').length}
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-blue-400">TEXT_LLM</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {models.filter((m) => m.kind === 'TEXT_LLM').length}
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-purple-400">IMAGE_MODEL</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {models.filter((m) => m.kind === 'IMAGE_MODEL').length}
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-amber-400">BUSINESS_MODEL</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {models.filter((m) => m.kind === 'BUSINESS_MODEL').length}
-          </div>
-        </div>
-      </div>
 
-      {/* Search & Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t(
-              'modelRegistry.catalog.searchPlaceholder',
-              'Search by name, model ID, provider...'
-            )}
-            className="w-full pl-10 pr-4 h-9 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-400"
-          />
-        </div>
-        <select
-          value={filterKind}
-          onChange={(e) => setFilterKind(e.target.value as ModelKind | '')}
-          className="h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
-        >
-          <option value="">All Kinds</option>
-          <option value="TEXT_LLM">TEXT_LLM</option>
-          <option value="IMAGE_MODEL">IMAGE_MODEL</option>
-          <option value="BUSINESS_MODEL">BUSINESS_MODEL</option>
-        </select>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-3 h-9 border rounded-lg text-sm transition-colors ${
-            showFilters
-              ? 'bg-indigo-600 border-indigo-500 text-white'
-              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
-          }`}
-        >
-          <Filter size={14} />
-          Filters
-        </button>
-      </div>
+          {/* Search & Filters */}
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t(
+                  'modelRegistry.catalog.searchPlaceholder',
+                  'Search by name, model ID, provider...'
+                )}
+                disabled={!!loadError}
+                className="w-full pl-10 pr-4 h-9 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-400"
+              />
+            </div>
+            <select
+              value={filterKind}
+              onChange={(e) => setFilterKind(e.target.value as ModelKind | '')}
+              disabled={!!loadError}
+              className="h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+            >
+              <option value="">All Kinds</option>
+              <option value="TEXT_LLM">TEXT_LLM</option>
+              <option value="IMAGE_MODEL">IMAGE_MODEL</option>
+              <option value="BUSINESS_MODEL">BUSINESS_MODEL</option>
+            </select>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              disabled={!!loadError}
+              className={`flex items-center gap-2 px-3 h-9 border rounded-lg text-sm transition-colors ${
+                showFilters
+                  ? 'bg-indigo-600 border-indigo-500 text-white'
+                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
+              }`}
+            >
+              <Filter size={14} />
+              Filters
+            </button>
+          </div>
 
-      {showFilters && (
-        <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-              Provider Type
-            </label>
-            <select
-              value={filterProviderType}
-              onChange={(e) => setFilterProviderType(e.target.value as ProviderType | '')}
-              className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
-            >
-              <option value="">All</option>
-              <option value="direct">Direct</option>
-              <option value="aggregator">Aggregator</option>
-              <option value="local">Local</option>
-              <option value="customer_managed">Customer Managed</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-              Health Status
-            </label>
-            <select
-              value={filterHealth}
-              onChange={(e) => setFilterHealth(e.target.value as HealthStatus | '')}
-              className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
-            >
-              <option value="">All</option>
-              <option value="healthy">Healthy</option>
-              <option value="degraded">Degraded</option>
-              <option value="unhealthy">Unhealthy</option>
-              <option value="unknown">Unknown</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Status</label>
-            <select
-              value={filterActive}
-              onChange={(e) => setFilterActive(e.target.value as '' | 'active' | 'inactive')}
-              className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
-            >
-              <option value="">All</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Name
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Provider
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Kind
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Health
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Capabilities
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Regions
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Cost/1k
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Latency
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-              {filteredModels.map((model) => (
-                <tr
-                  key={model.id}
-                  className={`hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors ${
-                    !model.isActive ? 'opacity-50' : ''
-                  }`}
+          {showFilters && (
+            <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
+              <div>
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  Provider Type
+                </label>
+                <select
+                  value={filterProviderType}
+                  onChange={(e) => setFilterProviderType(e.target.value as ProviderType | '')}
+                  className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
                 >
-                  <td className="px-4 py-3">
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white text-sm">
-                        {model.name}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        {model.modelId}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      <div className="text-sm text-slate-700 dark:text-slate-300">
-                        {model.originVendor}
-                      </div>
-                      <ProviderTypeBadge type={model.providerType} />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <KindBadge kind={model.kind} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        model.isActive
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-slate-500/10 text-slate-500'
+                  <option value="">All</option>
+                  <option value="direct">Direct</option>
+                  <option value="aggregator">Aggregator</option>
+                  <option value="local">Local</option>
+                  <option value="customer_managed">Customer Managed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  Health Status
+                </label>
+                <select
+                  value={filterHealth}
+                  onChange={(e) => setFilterHealth(e.target.value as HealthStatus | '')}
+                  className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                >
+                  <option value="">All</option>
+                  <option value="healthy">Healthy</option>
+                  <option value="degraded">Degraded</option>
+                  <option value="unhealthy">Unhealthy</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  Status
+                </label>
+                <select
+                  value={filterActive}
+                  onChange={(e) => setFilterActive(e.target.value as '' | 'active' | 'inactive')}
+                  className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                >
+                  <option value="">All</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-navy-700">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Name
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Provider
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Kind
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Status
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Health
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Capabilities
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Regions
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Cost/1k
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Latency
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+                  {filteredModels.map((model) => (
+                    <tr
+                      key={model.id}
+                      className={`hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors ${
+                        !model.isActive ? 'opacity-50' : ''
                       }`}
                     >
-                      {model.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <HealthBadge status={model.healthStatus} />
-                      <ErrorCategoryBadge
-                        category={model.lastErrorCategory}
-                        httpStatus={model.lastErrorHttpStatus}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <CapabilityIcons caps={model.capabilities} />
-                    {model.capabilities.contextWindow > 0 && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {formatContextWindow(model.capabilities.contextWindow)} ctx
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {model.executionRegions.map((region) => (
+                      <td className="px-4 py-3">
+                        <div>
+                          <div className="font-medium text-slate-900 dark:text-white text-sm">
+                            {model.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                            {model.modelId}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <div className="text-sm text-slate-700 dark:text-slate-300">
+                            {model.originVendor}
+                          </div>
+                          <ProviderTypeBadge type={model.providerType} />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <KindBadge kind={model.kind} />
+                      </td>
+                      <td className="px-4 py-3">
                         <span
-                          key={region}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 rounded text-xs text-slate-600 dark:text-slate-400"
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            model.isActive
+                              ? 'bg-emerald-500/10 text-emerald-500'
+                              : 'bg-slate-500/10 text-slate-500'
+                          }`}
                         >
-                          <Globe size={10} />
-                          {region}
+                          {model.isActive ? 'Active' : 'Inactive'}
                         </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
-                      {model.costPer1k ? `$${model.costPer1k.toFixed(4)}` : '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
-                      {model.avgLatencyMs
-                        ? model.avgLatencyMs < 1000
-                          ? `${model.avgLatencyMs}ms`
-                          : `${(model.avgLatencyMs / 1000).toFixed(1)}s`
-                        : '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <ActionsMenu
-                      model={model}
-                      onToggleActive={handleToggleActive}
-                      onEdit={handleEdit}
-                      onTestConnection={handleTestConnection}
-                      onDelete={handleDelete}
-                    />
-                  </td>
-                </tr>
-              ))}
-              {filteredModels.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={10}
-                    className="px-4 py-12 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    <Database size={32} className="mx-auto mb-3 opacity-40" />
-                    <p>No models match your filters</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <HealthBadge status={model.healthStatus} />
+                          <ErrorCategoryBadge
+                            category={model.lastErrorCategory}
+                            httpStatus={model.lastErrorHttpStatus}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <CapabilityIcons caps={model.capabilities} />
+                        {model.capabilities.contextWindow > 0 && (
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {formatContextWindow(model.capabilities.contextWindow)} ctx
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {model.executionRegions.map((region) => (
+                            <span
+                              key={region}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 rounded text-xs text-slate-600 dark:text-slate-400"
+                            >
+                              <Globe size={10} />
+                              {region}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                          {model.costPer1k ? `$${model.costPer1k.toFixed(4)}` : '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                          {model.avgLatencyMs
+                            ? model.avgLatencyMs < 1000
+                              ? `${model.avgLatencyMs}ms`
+                              : `${(model.avgLatencyMs / 1000).toFixed(1)}s`
+                            : '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <ActionsMenu
+                          model={model}
+                          disabled={!!loadError}
+                          onToggleActive={handleToggleActive}
+                          onEdit={handleEdit}
+                          onTestConnection={handleTestConnection}
+                          onDelete={handleDelete}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredModels.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-4 py-12 text-center text-slate-500 dark:text-slate-400"
+                      >
+                        <Database size={32} className="mx-auto mb-3 opacity-40" />
+                        <p>No models match your filters</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      {editingModel && (
-        <EditModelModal
-          model={editingModel}
-          onClose={() => setEditingModel(null)}
-          onSaved={() => {
-            setEditingModel(null);
-            loadModels();
-          }}
-        />
+          {editingModel && (
+            <EditModelModal
+              model={editingModel}
+              onClose={() => setEditingModel(null)}
+              onSaved={() => {
+                setEditingModel(null);
+                loadModels();
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   );

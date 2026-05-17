@@ -712,25 +712,30 @@ function emptyReconciliationStatusCounts(): Partial<Record<ReconciliationStatus,
 /**
  * KPI scorecard: counts, status/category breakdown, average capped achievement vs target.
  */
-export async function getKPIScorecard(organizationId: string): Promise<KPIScorecardSummary> {
+export async function getKPIScorecard(
+  organizationId: string,
+  initiativeId?: string
+): Promise<KPIScorecardSummary> {
+  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const totalRow = await dbGet<{ total: number }>(
-    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?`,
-    [organizationId],
+    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
   const totalKpis = totalRow?.total ?? 0;
 
   const statusRows = await dbAll<{ status: string; cnt: number }>(
     `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ? GROUP BY status`,
-    [organizationId],
+     WHERE organization_id = ?${initiativeClause} GROUP BY status`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
   const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
     `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ? GROUP BY metric_type`,
-    [organizationId],
+     WHERE organization_id = ?${initiativeClause} GROUP BY metric_type`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -748,8 +753,8 @@ export async function getKPIScorecard(organizationId: string): Promise<KPIScorec
          ELSE NULL
        END
      ) AS avg_rate
-     FROM v8_kpi_definitions WHERE organization_id = ?`,
-    [organizationId],
+     FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -828,25 +833,38 @@ export async function getKPITrend(
  */
 export async function getActiveDeviations(
   organizationId: string,
-  severity?: DeviationSeverity
+  severity?: DeviationSeverity,
+  initiativeId?: string
 ): Promise<DeviationRecord[]> {
   if (severity != null && !DeviationSeverityValues.includes(severity)) {
     throw new Error(`Invalid deviation severity: ${severity}`);
   }
 
+  const initiativeClause = initiativeId
+    ? ` AND EXISTS (
+         SELECT 1
+         FROM v8_kpi_definitions k
+         WHERE k.kpi_id = v8_deviation_records.kpi_id
+           AND k.organization_id = v8_deviation_records.organization_id
+           AND k.initiative_id = ?
+       )`
+    : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const rows = severity
     ? await dbAll<DeviationRow>(
         `SELECT * FROM v8_deviation_records
          WHERE organization_id = ? AND resolved_at IS NULL AND severity = ?
+         ${initiativeClause}
          ORDER BY created_at DESC`,
-        [organizationId, severity],
+        [organizationId, severity, ...initiativeParams],
         { fallback: true }
       )
     : await dbAll<DeviationRow>(
         `SELECT * FROM v8_deviation_records
          WHERE organization_id = ? AND resolved_at IS NULL
+         ${initiativeClause}
          ORDER BY created_at DESC`,
-        [organizationId],
+        [organizationId, ...initiativeParams],
         { fallback: true }
       );
 
@@ -1189,11 +1207,16 @@ interface LegacyDeviationActionRow {
 /**
  * ROI realization aggregates for dashboards.
  */
-export async function getROIDashboard(organizationId: string): Promise<ROIDashboardSummary> {
+export async function getROIDashboard(
+  organizationId: string,
+  initiativeId?: string
+): Promise<ROIDashboardSummary> {
+  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const totalRow = await dbGet<{ total_entries: number; total_realized: number }>(
     `SELECT COUNT(*) AS total_entries, COALESCE(SUM(realized_value), 0) AS total_realized
-     FROM v8_roi_realization_entries WHERE organization_id = ?`,
-    [organizationId],
+     FROM v8_roi_realization_entries WHERE organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -1201,21 +1224,23 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
     `SELECT COALESCE(SUM(k.target_value), 0) AS projected
      FROM v8_kpi_definitions k
      WHERE k.organization_id = ?
+       ${initiativeId ? ` AND k.initiative_id = ?` : ''}
        AND k.target_value IS NOT NULL
        AND EXISTS (
          SELECT 1 FROM v8_roi_realization_entries r
          WHERE r.organization_id = k.organization_id AND r.kpi_id = k.kpi_id
+           ${initiativeId ? `AND r.initiative_id = ?` : ''}
        )`,
-    [organizationId],
+    [organizationId, ...initiativeParams, ...initiativeParams],
     { fallback: true }
   );
 
   const initiativeRows = await dbAll<RoiInitiativeAggRow>(
     `SELECT initiative_id, COUNT(*) AS entry_count, COALESCE(SUM(realized_value), 0) AS realized_sum
      FROM v8_roi_realization_entries
-     WHERE organization_id = ?
+     WHERE organization_id = ?${initiativeClause}
      GROUP BY initiative_id`,
-    [organizationId],
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -1243,7 +1268,13 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
  * ROI portfolio rollup for the active Results ROI surfaces.
  * This is a bounded V8 bridge over the existing org-scoped ROI assumptions and realized tables.
  */
-export async function getROIPortfolioSummary(organizationId: string): Promise<ROIPortfolioSummary> {
+export async function getROIPortfolioSummary(
+  organizationId: string,
+  options?: { initiativeId?: string }
+): Promise<ROIPortfolioSummary> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  const initiativeClause = initiativeId ? ' AND ra.initiative_id = ?' : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const assumptions = await dbAll<LegacyRoiAssumptionRow>(
     `SELECT
        ra.initiative_id,
@@ -1257,11 +1288,12 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
        ra.confidence
      FROM roi_assumptions ra
      JOIN initiatives i ON i.id = ra.initiative_id
-     WHERE ra.organization_id = ?`,
-    [organizationId],
+     WHERE ra.organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
+  const realizedClause = initiativeId ? ' AND initiative_id = ?' : '';
   const realized = await dbAll<LegacyRoiRealizedAggRow>(
     `SELECT
        initiative_id,
@@ -1269,9 +1301,9 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
        SUM(realized_cost_delta) AS total_cost,
        SUM(realized_savings) AS total_savings
      FROM roi_realized_values
-     WHERE organization_id = ?
+     WHERE organization_id = ?${realizedClause}
      GROUP BY initiative_id`,
-    [organizationId],
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -1441,13 +1473,26 @@ export async function getROIInitiativeDetail(
  */
 export async function getResultsKpiCatalog(
   organizationId: string,
-  options: { kpiId?: string } = {}
+  options: { kpiId?: string; initiativeId?: string } = {}
 ): Promise<ResultsKpiCatalog> {
   const params: Array<string> = [organizationId, organizationId, organizationId, organizationId];
   let kpiFilterSql = '';
   if (options.kpiId) {
     kpiFilterSql = ' AND k.id = ?';
     params.push(options.kpiId);
+  }
+  if (options.initiativeId) {
+    kpiFilterSql += ` AND (
+      k.initiative_id = ?
+      OR EXISTS (
+        SELECT 1
+        FROM initiative_kpi_mappings map_scope
+        WHERE map_scope.organization_id = ?
+          AND map_scope.initiative_id = ?
+          AND map_scope.kpi_id = k.id
+      )
+    )`;
+    params.push(options.initiativeId, organizationId, options.initiativeId);
   }
 
   const kpiRows = await dbAll<LegacyResultsKpiRow>(
@@ -1535,6 +1580,10 @@ export async function getResultsKpiCatalog(
   if (options.kpiId) {
     mappingFilterSql = ' AND m.kpi_id = ?';
     mappingParams.push(options.kpiId);
+  }
+  if (options.initiativeId) {
+    mappingFilterSql += ' AND m.initiative_id = ?';
+    mappingParams.push(options.initiativeId);
   }
 
   const mappingRows = await dbAll<LegacyResultsKpiMappingRow>(
@@ -1727,8 +1776,34 @@ function deriveLegacyKpiPeriodKey(
  */
 export async function getResultsKpiDrawerDetail(
   kpiId: string,
-  organizationId: string
+  organizationId: string,
+  options?: { initiativeId?: string }
 ): Promise<ResultsKpiDrawerDetail> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  if (initiativeId) {
+    const scopedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ?
+         AND COALESCE(k.organization_id, i.organization_id) = ?
+         AND (
+           k.initiative_id = ?
+           OR EXISTS (
+             SELECT 1
+             FROM initiative_kpi_mappings m
+             WHERE m.organization_id = ?
+               AND m.initiative_id = ?
+               AND m.kpi_id = k.id
+           )
+         )`,
+      [kpiId, organizationId, initiativeId, organizationId, initiativeId],
+      { fallback: true }
+    );
+    if (!scopedKpi?.id) {
+      throw new Error('RESULTS_KPI_NOT_FOUND');
+    }
+  }
   const measurementRows = await dbAll<LegacyKpiTimeSeriesRow>(
     `SELECT
        ts.*,
@@ -1982,13 +2057,15 @@ export async function getReconciliationHealth(
  * Master Results surface: composes scorecard, deviations, ROI, reconciliation, recent packs.
  */
 export async function getResultsDashboard(
-  organizationId: string
+  organizationId: string,
+  options?: { initiativeId?: string }
 ): Promise<ResultsDashboardSnapshot> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
   const [kpiScorecard, activeDeviations, roiDashboard, reconciliationHealth, reviewTimeline] =
     await Promise.all([
-      getKPIScorecard(organizationId),
-      getActiveDeviations(organizationId),
-      getROIDashboard(organizationId),
+      getKPIScorecard(organizationId, initiativeId),
+      getActiveDeviations(organizationId, undefined, initiativeId),
+      getROIDashboard(organizationId, initiativeId),
       getReconciliationHealth(organizationId),
       getReviewPackTimeline(organizationId),
     ]);

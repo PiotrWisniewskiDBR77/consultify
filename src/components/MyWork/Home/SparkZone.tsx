@@ -33,7 +33,7 @@ export const SparkZone: React.FC<SparkZoneProps> = ({
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-500 flex items-center justify-center">
             <Lightbulb size={16} className="text-white" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Spark Zone</h3>
@@ -44,8 +44,8 @@ export const SparkZone: React.FC<SparkZoneProps> = ({
       </div>
 
       {data.aiNudge && (
-        <div className="flex items-center gap-3 p-3.5 bg-gradient-to-r from-amber-500/[0.06] to-orange-500/[0.04] border border-amber-500/10 rounded-xl mb-5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-3 p-3.5 bg-gradient-to-r from-amber-500/[0.06] to-amber-500/[0.04] border border-amber-500/10 rounded-xl mb-5">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-500 flex items-center justify-center flex-shrink-0">
             <Sparkles size={12} className="text-white" />
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400 flex-1">{data.aiNudge.text}</p>
@@ -100,7 +100,7 @@ const IdeaCard: React.FC<{ item: SparkItem; onClick: () => void }> = ({ item, on
     onClick={onClick}
     className="text-left p-6 bg-white/[0.03] dark:bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:bg-white/[0.06] hover:border-amber-500/15 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20 transition-all duration-200 group relative overflow-hidden"
   >
-    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500 via-orange-500 to-rose-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500 via-amber-500 to-rose-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     {item.stage && (
       <span
         className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-3 ${STAGE_STYLES[item.stage] || STAGE_STYLES.spark}`}

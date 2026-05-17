@@ -21,7 +21,9 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { InfoButton } from '../shared/InfoButton';
+import { DegradedState } from './AdminState';
 
 interface HealthError {
   title: string;
@@ -80,6 +82,111 @@ interface LLMHealthPanelProps {
   refreshInterval?: number;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toNumber = (value: unknown, fallback = 0) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const normalizeProviders = (value: unknown): ProviderHealth[] => {
+  if (!Array.isArray(value)) {
+    throw new Error('LLM health providers response was not a list');
+  }
+
+  return value.filter(isRecord).map((provider) => {
+    const status =
+      provider.status === 'healthy' ||
+      provider.status === 'degraded' ||
+      provider.status === 'unhealthy'
+        ? provider.status
+        : 'unknown';
+    const statusLabel = isRecord(provider.statusLabel) ? provider.statusLabel : {};
+    const error = isRecord(provider.error) ? provider.error : null;
+
+    return {
+      id: asText(provider.id, ''),
+      name: asText(provider.name, 'Unknown provider'),
+      providerId: asText(provider.providerId, ''),
+      status,
+      statusLabel: {
+        text: asText(statusLabel.text, status),
+        textEn: asText(statusLabel.textEn, status),
+        color: asText(statusLabel.color, ''),
+        icon: asText(statusLabel.icon, ''),
+      },
+      isHealthy: status === 'healthy',
+      isDegraded: status === 'degraded',
+      isUnhealthy: status === 'unhealthy',
+      errorCategory:
+        provider.errorCategory === null || provider.errorCategory === undefined
+          ? null
+          : asText(provider.errorCategory, ''),
+      error: error
+        ? {
+            title: asText(error.title, 'Provider error'),
+            description: asText(error.description, ''),
+            action: asText(error.action, ''),
+            code: asText(error.code, ''),
+          }
+        : null,
+      rawError:
+        provider.rawError === null || provider.rawError === undefined
+          ? null
+          : asText(provider.rawError, ''),
+      statusCode:
+        provider.statusCode === null || provider.statusCode === undefined
+          ? null
+          : toNumber(provider.statusCode, 0),
+      responseTime: toNumber(provider.responseTime, 0),
+      lastCheck: asText(provider.lastCheck, ''),
+    };
+  });
+};
+
+const normalizeSummary = (value: unknown): HealthSummary => {
+  if (!isRecord(value)) {
+    throw new Error('LLM health summary response was incomplete');
+  }
+  return {
+    total: toNumber(value.total, 0),
+    healthy: toNumber(value.healthy, 0),
+    degraded: toNumber(value.degraded, 0),
+    unhealthy: toNumber(value.unhealthy, 0),
+    healthyCount: toNumber(value.healthyCount ?? value.healthy, 0),
+    degradedCount: toNumber(value.degradedCount ?? value.degraded, 0),
+    unhealthyCount: toNumber(value.unhealthyCount ?? value.unhealthy, 0),
+    lastCheck: asText(value.lastCheck, ''),
+  };
+};
+
+const normalizeAlerts = (value: unknown): HealthAlert[] =>
+  Array.isArray(value)
+    ? value.filter(isRecord).map((alert) => ({
+        severity:
+          alert.severity === 'error' || alert.severity === 'warning' ? alert.severity : 'info',
+        provider: asText(alert.provider, 'Unknown provider'),
+        providerId: asText(alert.providerId, ''),
+        title: asText(alert.title, 'Health alert'),
+        description: asText(alert.description, ''),
+        action: asText(alert.action, ''),
+        code: asText(alert.code, ''),
+        timestamp: asText(alert.timestamp, ''),
+      }))
+    : [];
+
 export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   onProviderAction,
   autoRefresh = true,
@@ -92,6 +199,13 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   const [summary, setSummary] = useState<HealthSummary | null>(null);
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const formatDateTime = (value: string | null | undefined) => {
+    if (!value) return 'Unknown date';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown date';
+    return date.toLocaleString('pl-PL');
+  };
 
   const fetchHealthData = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true);
@@ -107,19 +221,21 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 
       if (!response.ok) throw new Error('Failed to fetch health data');
 
-      const data = await response.json();
+      const data = getObjectPayload(await response.json());
 
-      if (data.success) {
-        setProviders(data.providers || []);
-        setAlerts(data.alerts || []);
-        setSummary(data.summary || null);
+      if (isRecord(data) && data.success) {
+        setProviders(normalizeProviders(data.providers));
+        setAlerts(normalizeAlerts(data.alerts));
+        setSummary(normalizeSummary(data.summary));
         setError(null);
       } else {
-        throw new Error(data.error || 'Unknown error');
+        throw new Error(isRecord(data) ? asText(data.error, 'Unknown error') : 'Unknown error');
       }
-    } catch (err) {
-      console.error('[LLMHealthPanel] Error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load health data');
+    } catch (err: unknown) {
+      setProviders([]);
+      setAlerts([]);
+      setSummary(null);
+      setError(normalizeApiErrorMessage(err, 'Failed to load health data'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -152,19 +268,13 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         body: JSON.stringify({ providerId }),
       });
 
-      const data = await response.json();
-
-      // Update provider in list
-      if (data.provider) {
-        setProviders((prev) =>
-          prev.map((p) => (p.id === providerId ? { ...p, ...data.provider } : p))
-        );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.message || data?.error || 'Provider test failed');
       }
-
-      // Refresh full data
       await fetchHealthData(false);
-    } catch (err) {
-      console.error('[LLMHealthPanel] Test error:', err);
+    } catch {
+      await fetchHealthData(false);
     }
   };
 
@@ -175,7 +285,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
       case 'degraded':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case 'unhealthy':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-rose-500" />;
       default:
         return <Info className="w-5 h-5 text-gray-500 dark:text-gray-400" />;
     }
@@ -184,7 +294,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   const getAlertIcon = (severity: string) => {
     switch (severity) {
       case 'error':
-        return <AlertOctagon className="w-5 h-5 text-red-500" />;
+        return <AlertOctagon className="w-5 h-5 text-rose-500" />;
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       default:
@@ -203,14 +313,11 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-          <XCircle className="w-5 h-5" />
-          <span>Błąd: {error}</span>
-        </div>
+      <div className="p-6 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+        <DegradedState title="LLM health unavailable" description={error} />
         <button
           onClick={handleRefresh}
-          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
+          className="mt-3 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500"
         >
           Spróbuj ponownie
         </button>
@@ -254,12 +361,12 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
           </div>
         </div>
 
-        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="bg-rose-50 dark:bg-rose-900/20 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
             <XCircle className="w-4 h-4" />
             Niedostępne
           </div>
-          <div className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
+          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
             {summary?.unhealthyCount || 0}
           </div>
         </div>
@@ -270,7 +377,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <AlertOctagon className="w-5 h-5 text-red-500" />
+              <AlertOctagon className="w-5 h-5 text-rose-500" />
               Alerty ({alerts.length})
             </h3>
           </div>
@@ -280,7 +387,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                 key={index}
                 className={`p-4 ${
                   alert.severity === 'error'
-                    ? 'bg-red-50 dark:bg-red-900/10'
+                    ? 'bg-rose-50 dark:bg-rose-900/10'
                     : 'bg-yellow-50 dark:bg-yellow-900/10'
                 }`}
               >
@@ -294,7 +401,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                       <span
                         className={`px-2 py-0.5 text-xs rounded-full ${
                           alert.severity === 'error'
-                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
                             : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
                         }`}
                       >
@@ -371,7 +478,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                         : provider.status === 'degraded'
                           ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                          : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
                     }`}
                   >
                     {provider.statusLabel.text}
@@ -388,11 +495,11 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
               {expandedProvider === provider.id && (
                 <div className="mt-4 pl-8 space-y-3">
                   {provider.error && (
-                    <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                      <p className="font-medium text-red-700 dark:text-red-300">
+                    <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
+                      <p className="font-medium text-rose-700 dark:text-rose-300">
                         {provider.error.title}
                       </p>
-                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      <p className="text-sm text-rose-600 dark:text-rose-400 mt-1">
                         {provider.error.description}
                       </p>
                       <div className="mt-2 p-2 bg-white dark:bg-navy-800 rounded">
@@ -410,7 +517,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 
                   <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                     <Clock className="w-4 h-4" />
-                    Ostatnie sprawdzenie: {new Date(provider.lastCheck).toLocaleString('pl-PL')}
+                    Ostatnie sprawdzenie: {formatDateTime(provider.lastCheck)}
                   </div>
 
                   <div className="flex gap-2">
@@ -441,7 +548,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
       {/* Last Update Info */}
       {summary?.lastCheck && (
         <p className="text-sm text-center text-slate-400 dark:text-slate-500">
-          Ostatnia aktualizacja: {new Date(summary.lastCheck).toLocaleString('pl-PL')}
+          Ostatnia aktualizacja: {formatDateTime(summary.lastCheck)}
         </p>
       )}
     </div>

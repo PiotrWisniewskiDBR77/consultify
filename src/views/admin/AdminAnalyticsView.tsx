@@ -139,7 +139,7 @@ export const AdminAnalyticsView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -460,7 +460,7 @@ export const AdminAnalyticsView: React.FC = () => {
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               {t('admin.analytics.ideasBoard', 'Strategic Ideas Board')}
             </h2>
-            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2">
               <Lightbulb className="w-4 h-4" />
               {t('admin.analytics.submitIdea', 'Submit New Idea')}
             </button>
@@ -471,13 +471,13 @@ export const AdminAnalyticsView: React.FC = () => {
               ideas.map((idea) => (
                 <div
                   key={idea.id}
-                  className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-purple-500/30 transition-colors"
+                  className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-primary-500/30 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         idea.priority === 'high'
-                          ? 'bg-red-500/20 text-red-400'
+                          ? 'bg-rose-500/20 text-rose-400'
                           : idea.priority === 'medium'
                             ? 'bg-amber-500/20 text-amber-400'
                             : 'bg-emerald-500/20 text-emerald-400'
@@ -505,7 +505,7 @@ export const AdminAnalyticsView: React.FC = () => {
                         <ThumbsUp className="w-4 h-4" />
                       </button>
                       <button
-                        className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
+                        className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-400 transition-colors"
                         title="Reject"
                       >
                         <ThumbsDown className="w-4 h-4" />
@@ -537,7 +537,7 @@ export const AdminAnalyticsView: React.FC = () => {
                 <p className="text-slate-500 dark:text-slate-400">
                   {t('admin.analytics.noIdeas', 'No strategic ideas yet. Start by creating one!')}
                 </p>
-                <button className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors">
+                <button className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm transition-colors">
                   {t('admin.analytics.createFirst', 'Create First Idea')}
                 </button>
               </div>
@@ -571,9 +571,9 @@ export const AdminAnalyticsView: React.FC = () => {
                     <div
                       className={`mt-1 p-2 rounded-lg mr-4 ${
                         obs.category === 'anomaly'
-                          ? 'bg-red-500/20 text-red-400'
+                          ? 'bg-rose-500/20 text-rose-400'
                           : obs.category === 'insight'
-                            ? 'bg-purple-500/20 text-purple-400'
+                            ? 'bg-primary-500/20 text-primary-400'
                             : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'
                       }`}
                     >

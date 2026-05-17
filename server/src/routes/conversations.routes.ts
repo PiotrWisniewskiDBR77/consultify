@@ -37,6 +37,27 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+function resolveConversationCorrelationId(req: AuthRequest): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildConversationFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveConversationCorrelationId(req),
+  };
+}
+
 // ==================== HELPERS ====================
 
 /**
@@ -569,16 +590,11 @@ router.patch(
         }
       }
 
-      // Build update query (bump version on every write)
+      // Build update query. Keep it schema-tolerant: older staging schemas do not
+      // have the optimistic `version` column yet, and failing the whole update
+      // makes rename/folder moves look successful in the UI but disappear later.
       const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
       const params: (string | boolean | null)[] = [];
-
-      // Bump version for conflict detection
-      try {
-        setClauses.push('version = COALESCE(version, 1) + 1');
-      } catch {
-        // version column may not exist yet
-      }
 
       if (updates.title !== undefined) {
         setClauses.push('title = ?');
@@ -618,7 +634,14 @@ router.patch(
 
       params.push(id);
 
-      await dbRun(`UPDATE conversations SET ${setClauses.join(', ')} WHERE id = ?`, params);
+      const updateResult = await dbRun(
+        `UPDATE conversations SET ${setClauses.join(', ')} WHERE id = ?`,
+        params,
+        { fallback: false }
+      );
+      if (updateResult.success === false) {
+        return res.status(500).json({ error: updateResult.error || 'Conversation update failed' });
+      }
 
       const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [id]);
 
@@ -779,24 +802,12 @@ router.post(
       const now = new Date().toISOString();
       const authorUserId = role === 'user' ? req.userId! : null;
 
-      // Resolve active session for this conversation (§2.3.1 session linkage)
-      let activeSessionId: string | null = null;
-      try {
-        const session = await dbGet(
-          `SELECT id FROM conversation_sessions WHERE conversation_id = ? AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
-          [conversationId]
-        );
-        activeSessionId = (session as any)?.id || null;
-      } catch {
-        /* session table may not exist */
-      }
-
-      await dbRun(
+      const insertResult = await dbRun(
         `
                 INSERT INTO conversation_messages (
                     id, conversation_id, role, content, message_type, 
-                    metadata, token_count, model_used, author_user_id, session_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    metadata, token_count, model_used, author_user_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           messageId,
@@ -808,10 +819,13 @@ router.post(
           tokenCount || null,
           modelUsed || null,
           authorUserId,
-          activeSessionId,
           now,
-        ]
+        ],
+        { fallback: false }
       );
+      if (insertResult.success === false) {
+        return res.status(500).json({ error: insertResult.error || 'Message insert failed' });
+      }
 
       // Auto-persist metadata.attachments to conversation_message_attachments (L4 bridge)
       if (metadata && Array.isArray((metadata as any).attachments)) {
@@ -1213,8 +1227,16 @@ router.post(
       return res.json({ title: generatedTitle });
     } catch (err: any) {
       logger.error('[Conversations] Generate title error:', err);
-      // Return error status instead of masking failure
-      return res.status(500).json({ error: 'Title generation failed', details: err.message });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_TITLE_GENERATION_FAILED',
+            'Failed to generate conversation title.'
+          )
+        );
     }
   })
 );
@@ -1239,7 +1261,16 @@ router.post(
       const ownedIds = owned.map((c) => c.id);
 
       if (ownedIds.length === 0) {
-        return res.status(404).json({ error: 'No conversations found' });
+        return res
+          .status(404)
+          .json(
+            buildConversationFailClosedError(
+              req,
+              404,
+              'CONVERSATIONS_BULK_NOT_FOUND',
+              'No conversations were found for this bulk request.'
+            )
+          );
       }
 
       const ownedPlaceholders = ownedIds.map(() => '?').join(',');
@@ -1296,7 +1327,16 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Conversations] Bulk operation error:', err);
-      return res.status(500).json({ error: err.message });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_BULK_OPERATION_FAILED',
+            'Bulk conversation operation failed.'
+          )
+        );
     }
   })
 );
@@ -1648,7 +1688,16 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[Conversations] Search error:', err);
-      return res.status(500).json({ error: 'Search failed' });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_SEARCH_FAILED',
+            'Failed to search conversations.'
+          )
+        );
     }
   })
 );
@@ -2049,7 +2098,16 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Conversations] Auto-archive error:', err);
-      return res.status(500).json({ error: 'Auto-archive failed' });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_AUTO_ARCHIVE_FAILED',
+            'Failed to auto-archive conversations.'
+          )
+        );
     }
   })
 );

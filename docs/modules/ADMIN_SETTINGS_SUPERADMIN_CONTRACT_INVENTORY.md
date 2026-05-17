@@ -50,9 +50,9 @@ Canonical route sources:
 | `ai-model-params` | `AIModelParametersSettings` | `GET /api/ai-settings/available-models`, `GET/PUT /api/ai-settings/user` | `real` |
 | `ai-autocomplete` | `AIAutoCompleteSettings` | `GET/PUT /api/ai-settings/user` | `real` |
 | `ai-memory` | `AIMemorySettings` | `GET/PUT /api/ai-settings/user` | `real` |
-| `ai-privacy` | `AIPrivacySettings` | local state with simulated save | `stub` |
-| `ai-prompt-library` | `AIPromptLibrarySettings` | in-memory list only | `stub` |
-| `ai-voice` | `VoiceSettings` | localStorage-backed helpers | `stub` |
+| `ai-privacy` | `AIPrivacySettings` | `GET/PUT /api/settings/preferences/ai-privacy` | `partial` (`API_WIRED_NOT_E2E_PROVEN`) |
+| `ai-prompt-library` | `AIPromptLibrarySettings` | `GET/PUT /api/settings/preferences/prompt-library` | `partial` (`API_WIRED_NOT_E2E_PROVEN`) |
+| `ai-voice` | `VoiceSettings` | `GET/PUT /api/settings/preferences/ai-voice` | `partial` (`API_WIRED_NOT_E2E_PROVEN`) |
 | `ai-usage` | `AIUsageDashboard` | `GET /api/ai-settings/user/costs?period=...` | `real` |
 | `notifications-overview` | `NotificationSettings` | `GET/POST /api/settings/notifications`, `GET /api/integrations` | `real` |
 | `notifications-email-digest` | `EmailDigestSettings` | `GET/PUT /api/settings/notifications/email`, `GET/PUT /api/settings/notifications/digest` | `real` |
@@ -116,9 +116,9 @@ The highest-priority mounted stubs or partial flows that must be replaced before
 - `ThemeSettings`
 - `KeyboardShortcutsSettings`
 - `PrivacySettings` load path
-- `AIPrivacySettings`
-- `AIPromptLibrarySettings`
-- `VoiceSettings`
+- `AIPrivacySettings` E2E persistence evidence
+- `AIPromptLibrarySettings` E2E persistence evidence
+- `VoiceSettings` E2E persistence evidence
 - `OrgAISettingsView` raw fetch client
 - `PromptManagementUI` preview and test actions
 
@@ -128,3 +128,4 @@ The highest-priority mounted stubs or partial flows that must be replaced before
 - Mounted surfaces must not use local mock state as their source of truth.
 - Canonical admin entry points are `SettingsView`, `AdminSettingsModule`, and `SuperAdminView`.
 - Legacy views can remain only if they are mounted strictly as child content or redirect shells.
+- Stage 1.5 Settings audit reclassifies API-wired rows separately from pure stubs; `API_WIRED_NOT_E2E_PROVEN` is not production-ready until runtime persistence evidence exists.

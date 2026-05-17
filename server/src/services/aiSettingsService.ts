@@ -21,6 +21,8 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 
+const dateWindowSql = (days: number) => `CURRENT_TIMESTAMP - INTERVAL '${days} days'`;
+
 // Helper: safe JSON parse
 const parseJSON = <T>(value: any, fallback: T): T => {
   if (value === null || value === undefined) return fallback;
@@ -374,7 +376,7 @@ class AISettingsService {
     ua?: string | null
   ) {
     const current = await this.getUserSettings(userId);
-    await dbRun(
+    const result = await dbRun(
       `INSERT INTO user_ai_settings (
                 user_id, response_style, writing_tone, preferred_language,
                 code_explanations, show_sources, proactivity_mode,
@@ -425,8 +427,12 @@ class AISettingsService {
         (settings.share_usage_analytics ?? current.share_usage_analytics) ? 1 : 0,
         settings.context_retention ?? current.context_retention,
         (settings.auto_suggestions ?? current.auto_suggestions) ? 1 : 0,
-      ]
+      ],
+      { fallback: false }
     );
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to persist AI user settings');
+    }
 
     if (actorId && actorRole) {
       await logAudit({
@@ -538,12 +544,15 @@ class AISettingsService {
   static async getUserCostHistory(userId: string, period: string = '7d') {
     const days = period === '30d' ? 30 : period === '90d' ? 90 : 7;
     const rows = await dbAll(
-      `SELECT date(created_at) as date, COALESCE(SUM(cost_usd), 0) as cost, COALESCE(SUM(tokens_used), 0) as tokens
+      `SELECT date(created_at) as date,
+              COUNT(*) as requests,
+              COALESCE(SUM(cost_usd), 0) as cost,
+              COALESCE(SUM(tokens_used), 0) as tokens
              FROM ai_usage_logs
-             WHERE user_id = ? AND created_at > datetime('now', '-' || ? || ' days')
+             WHERE user_id = ? AND created_at > ${dateWindowSql(days)}
              GROUP BY date(created_at)
              ORDER BY date(created_at)`,
-      [userId, days]
+      [userId]
     );
     return rows;
   }
@@ -574,9 +583,9 @@ class AISettingsService {
     const rows = await dbAll(
       `SELECT user_id, COALESCE(SUM(cost_usd), 0) as cost, COALESCE(SUM(tokens_used), 0) as tokens
              FROM ai_usage_logs
-             WHERE organization_id = ? AND created_at > datetime('now', '-' || ? || ' days')
+             WHERE organization_id = ? AND created_at > ${dateWindowSql(days)}
              GROUP BY user_id`,
-      [orgId, days]
+      [orgId]
     );
     return rows;
   }

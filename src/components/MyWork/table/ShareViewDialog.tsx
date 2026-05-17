@@ -72,7 +72,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Share2 size={16} className="text-violet-500" />
+            <Share2 size={16} className="text-primary-500" />
             <h3 className="font-semibold text-sm">{isPl ? 'Udostępnij widok' : 'Share View'}</h3>
           </div>
           <button
@@ -92,7 +92,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
             onClick={handleToggleShare}
             disabled={loading}
             className={`w-10 h-5 rounded-full transition-colors ${
-              shared ? 'bg-violet-500' : 'bg-slate-300 dark:bg-navy-600'
+              shared ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'
             }`}
           >
             <div
@@ -114,7 +114,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
               />
               <button
                 onClick={handleCopy}
-                className="p-2 rounded-lg bg-violet-100 dark:bg-violet-800/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 transition-colors"
+                className="p-2 rounded-lg bg-primary-100 dark:bg-primary-800/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 transition-colors"
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
               </button>

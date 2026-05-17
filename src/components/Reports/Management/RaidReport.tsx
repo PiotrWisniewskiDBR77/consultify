@@ -88,7 +88,7 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
         overallHealth={overallStatus}
       />
 
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-500/20 p-6">
+      <div className="bg-gradient-to-r from-amber-50 to-amber-50 dark:from-amber-900/20 dark:to-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-500/20 p-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={18} className="text-amber-500" />
           <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
@@ -100,7 +100,7 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
         </p>
       </div>
 
-      {renderSectionTable('Risks', content.risks, 'bg-red-500')}
+      {renderSectionTable('Risks', content.risks, 'bg-rose-500')}
       {renderSectionTable('Assumptions', content.assumptions, 'bg-slate-400')}
       {renderSectionTable('Issues', content.issues, 'bg-amber-500')}
       {renderSectionTable('Dependencies', content.dependencies, 'bg-blue-500')}
@@ -129,7 +129,7 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
       {content.escalations?.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={18} className="text-red-500" />
+            <AlertTriangle size={18} className="text-rose-500" />
             <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Escalations</h3>
           </div>
           <div className="space-y-3 text-sm">

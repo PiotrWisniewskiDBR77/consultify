@@ -133,7 +133,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     const rawValue = row.data?.[col.key];
     const isLinked = fieldType === 'linkedRecord';
     const linkedTableId =
-      (fieldOptions as unknown as LinkedRecordFieldOptions | undefined)?.linkedTableId ?? '';
+      (fieldOptions as unknown as LinkedRecordFieldOptions)?.linkedTableId ?? '';
 
     if (isEditing) {
       return (
@@ -180,7 +180,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       <div
         role="gridcell"
         tabIndex={0}
-        className="min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-violet-500/40 cursor-text"
+        className="min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 cursor-text"
         onDoubleClick={(e) => {
           e.stopPropagation();
           if (locked || pf?.isComputed) return;
@@ -367,8 +367,6 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     },
     [activeViewId, removeMissingFieldFromView]
   );
-
-  const initialLoading = loading && !nodes.length;
 
   const platformFieldById = useMemo(() => {
     const m = new Map<
@@ -585,53 +583,50 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
 
   const switchToGrid = useCallback(() => setViewLayout('grid'), [setViewLayout]);
 
-  const loadingContent = (
-    <div className="flex flex-1 items-center justify-center p-12">
-      <div className="space-y-3 w-full max-w-2xl">
-        <div className="h-10 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-        <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse" />
-        <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-3/4" />
-        <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-1/2" />
-        <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-5/6" />
+  const mainContent =
+    loading && !nodes.length ? (
+      <div className="flex flex-1 items-center justify-center p-12">
+        <div className="space-y-3 w-full max-w-2xl">
+          <div className="h-10 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-3/4" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-1/2" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-5/6" />
+        </div>
       </div>
-    </div>
-  );
-
-  const mainContent = initialLoading ? (
-    loadingContent
-  ) : processedRows.length === 0 ? (
-    <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
-      <EmptyStateView
-        viewType={viewLayout}
-        onAddRow={handleAddRow}
-        onImportCSV={() => csvInputRef.current?.click()}
-        onUseAI={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showChatToSchema' })}
-      />
-    </ViewErrorBoundary>
-  ) : viewLayout === 'table' ? (
-    <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
-      <PlatformGridView
-        processedRows={processedRows}
-        groupedRows={groupedRows}
-        visibleColumns={visibleColumns}
-        platformFieldById={platformFieldById}
-        locked={locked}
-        selectedRowIds={selectedRowIds}
-        toggleRowSelection={toggleRowSelection}
-        handleFieldChange={handleFieldChange}
-        editingCellId={ui.editingCellId}
-        setEditingCellId={setEditingCellId}
-        onOpenLinkedRecord={onOpenLinkedRecord}
-        viewConfig={activeViewConfig}
-        onRemoveMissingField={handleRemoveMissingField}
-        isPl={isPl}
-      />
-    </ViewErrorBoundary>
-  ) : (
-    <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
-      <div className="flex min-h-0 flex-1 flex-col">{alternateView}</div>
-    </ViewErrorBoundary>
-  );
+    ) : processedRows.length === 0 ? (
+      <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
+        <EmptyStateView
+          viewType={viewLayout}
+          onAddRow={handleAddRow}
+          onImportCSV={() => csvInputRef.current?.click()}
+          onUseAI={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showChatToSchema' })}
+        />
+      </ViewErrorBoundary>
+    ) : viewLayout === 'table' ? (
+      <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
+        <PlatformGridView
+          processedRows={processedRows}
+          groupedRows={groupedRows}
+          visibleColumns={visibleColumns}
+          platformFieldById={platformFieldById}
+          locked={locked}
+          selectedRowIds={selectedRowIds}
+          toggleRowSelection={toggleRowSelection}
+          handleFieldChange={handleFieldChange}
+          editingCellId={ui.editingCellId}
+          setEditingCellId={setEditingCellId}
+          onOpenLinkedRecord={onOpenLinkedRecord}
+          viewConfig={activeViewConfig}
+          onRemoveMissingField={handleRemoveMissingField}
+          isPl={isPl}
+        />
+      </ViewErrorBoundary>
+    ) : (
+      <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
+        <div className="flex min-h-0 flex-1 flex-col">{alternateView}</div>
+      </ViewErrorBoundary>
+    );
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">

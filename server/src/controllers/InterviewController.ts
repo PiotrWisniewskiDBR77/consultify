@@ -37,6 +37,51 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 const INTERVIEW_CATEGORIES = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
 type InterviewCategory = (typeof INTERVIEW_CATEGORIES)[number];
 
+const DEFAULT_INTERVIEW_QUESTION_TEMPLATES = [
+  {
+    id: 'tpl_strategy_1',
+    category: 'strategy',
+    questionText: 'What are your main business objectives for the next 2-3 years?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_strategy_2',
+    category: 'strategy',
+    questionText: "What is your company's vision for digital transformation?",
+    sortOrder: 2,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_operations_1',
+    category: 'operations',
+    questionText: 'Where do you see the biggest inefficiencies in your operations?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_digital_1',
+    category: 'digital',
+    questionText: 'What systems and tools do you currently use?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_people_1',
+    category: 'people',
+    questionText: "How would you describe your team's digital skills?",
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_finance_1',
+    category: 'finance',
+    questionText: 'What is the available budget for transformation initiatives?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+] as const;
+
 // Question statuses (task-list style)
 const QUESTION_STATUSES = ['not_started', 'in_progress', 'answered', 'needs_follow_up'] as const;
 type QuestionStatus = (typeof QUESTION_STATUSES)[number];
@@ -160,7 +205,7 @@ type InterviewAiReviewSnapshot = {
 
 type InterviewReviewDecisionMemoryEntry = {
   id: string;
-  action: 'approve' | 'send_back' | 'revoke_approval';
+  action: 'approve' | 'send_back';
   actorId: string;
   actorRole?: string;
   createdAt: string;
@@ -180,8 +225,6 @@ const parseReviewDecisionMemory = (
   value: string | null | undefined
 ): InterviewReviewDecisionMemoryEntry[] =>
   parseJson<InterviewReviewDecisionMemoryEntry[]>(value, []);
-
-type InterviewAssignmentManageMode = 'update' | 'restart' | 'assign_again';
 
 const normalizeInterviewAiFixType = (
   value: unknown,
@@ -310,7 +353,7 @@ const buildInterviewAiReviewSnapshot = (
 };
 
 const resolveInterviewReviewAlignment = (
-  action: 'approve' | 'send_back' | 'revoke_approval',
+  action: 'approve' | 'send_back',
   aiReview: InterviewAiReviewSnapshot | null
 ): InterviewReviewAlignment => {
   const verdict = aiReview?.overallVerdict;
@@ -323,7 +366,7 @@ const resolveInterviewReviewAlignment = (
 
 const appendInterviewReviewDecisionMemory = (params: {
   existing: InterviewReviewDecisionMemoryEntry[];
-  action: 'approve' | 'send_back' | 'revoke_approval';
+  action: 'approve' | 'send_back';
   actorId: string;
   actorRole?: string;
   aiReview: InterviewAiReviewSnapshot | null;
@@ -476,6 +519,10 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_questions');
   const missingColumns: Array<{ name: string; sql: string }> = [
     {
+      name: 'answer_options',
+      sql: `ALTER TABLE interview_questions ADD COLUMN answer_options TEXT DEFAULT '[]'`,
+    },
+    {
       name: 'answer_type',
       sql: `ALTER TABLE interview_questions ADD COLUMN answer_type TEXT DEFAULT 'open'`,
     },
@@ -547,9 +594,73 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
 
 async function ensureInterviewSessionV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_sessions');
-  if (!cols.has('runtime_mode_default')) {
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'runtime_mode_default',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN runtime_mode_default TEXT DEFAULT 'single_question'`,
+    },
+    {
+      name: 'template_id',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN template_id TEXT`,
+    },
+    {
+      name: 'template_version',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN template_version INTEGER DEFAULT 1`,
+    },
+    {
+      name: 'assignment_id',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN assignment_id TEXT`,
+    },
+    {
+      name: 'total_questions',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN total_questions INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'answered_questions',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN answered_questions INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'last_activity_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN last_activity_at TIMESTAMP`,
+    },
+    {
+      name: 'started_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN started_at TIMESTAMP`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
+  }
+}
+
+async function ensureInterviewQuestionTemplatesTable(): Promise<void> {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_question_templates (
+      id TEXT PRIMARY KEY,
+      category TEXT NOT NULL,
+      question_text TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      is_required INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+
+  for (const template of DEFAULT_INTERVIEW_QUESTION_TEMPLATES) {
     await queryHelpers.queryRun(
-      `ALTER TABLE interview_sessions ADD COLUMN runtime_mode_default TEXT DEFAULT 'single_question'`
+      `INSERT INTO interview_question_templates
+       (id, category, question_text, sort_order, is_required)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        template.id,
+        template.category,
+        template.questionText,
+        template.sortOrder,
+        template.isRequired,
+      ]
     );
   }
 }
@@ -570,67 +681,6 @@ async function ensureInterviewAssignmentAiReviewColumns(): Promise<void> {
     await queryHelpers.queryRun(
       `ALTER TABLE interview_assignments ADD COLUMN review_decision_memory_json TEXT`
     );
-  }
-}
-
-async function ensureInterviewAssignmentManagementSchema(): Promise<void> {
-  await ensureInterviewAssignmentAiReviewColumns();
-  const cols = await getTableColumns('interview_assignments');
-  if (!cols.has('is_active')) {
-    await queryHelpers.queryRun(
-      `ALTER TABLE interview_assignments ADD COLUMN is_active INTEGER DEFAULT 1`
-    );
-  }
-
-  await queryHelpers.queryRun(
-    `CREATE TABLE IF NOT EXISTS interview_assignment_events (
-      id TEXT PRIMARY KEY,
-      assignment_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      actor_id TEXT,
-      event_type TEXT NOT NULL,
-      reason TEXT,
-      payload_json TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_assignment
-     ON interview_assignment_events(assignment_id, created_at DESC)`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_org
-     ON interview_assignment_events(organization_id, created_at DESC)`
-  );
-}
-
-async function logInterviewAssignmentEvent(params: {
-  assignmentId: string;
-  organizationId: string;
-  actorId?: string;
-  eventType: string;
-  reason?: string;
-  payload?: Record<string, unknown>;
-}): Promise<void> {
-  try {
-    await ensureInterviewAssignmentManagementSchema();
-    await queryHelpers.queryRun(
-      `INSERT INTO interview_assignment_events
-       (id, assignment_id, organization_id, actor_id, event_type, reason, payload_json, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uuidv4(),
-        params.assignmentId,
-        params.organizationId,
-        params.actorId || null,
-        params.eventType,
-        params.reason || null,
-        params.payload ? JSON.stringify(params.payload) : null,
-        new Date().toISOString(),
-      ]
-    );
-  } catch (error) {
-    logger.warn('[InterviewController] Failed to log interview assignment event', error);
   }
 }
 
@@ -1215,6 +1265,11 @@ async function createSessionFromTemplate(params: {
   let questionCount = 0;
   for (const tq of templateQuestions as any[]) {
     const questionId = uuidv4();
+    const isRequiredFlag = toDbFlag(tq.is_required, 0);
+    const allowVoiceFlag = toDbFlag(tq.allow_voice, 0);
+    const allowFileUploadFlag = toDbFlag(tq.allow_file_upload, 0);
+    const allowUrlFlag = toDbFlag(tq.allow_url, 0);
+    const allowContextNoteFlag = toDbFlag(tq.allow_context_note, 1);
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
        (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
@@ -1230,14 +1285,14 @@ async function createSessionFromTemplate(params: {
         'not_started',
         tq.sort_order,
         1,
-        tq.is_required || 0,
+        isRequiredFlag,
         tq.answer_type || 'open',
         tq.answer_options || '[]',
         tq.expected_answer_shape || null,
-        tq.allow_voice || 0,
-        tq.allow_file_upload || 0,
-        tq.allow_url || 0,
-        tq.allow_context_note ?? 1,
+        allowVoiceFlag,
+        allowFileUploadFlag,
+        allowUrlFlag,
+        allowContextNoteFlag,
         tq.id,
         now,
         now,
@@ -1277,6 +1332,18 @@ const normalizeAssignmentStatusForClient = (status?: string): string => {
   const normalized = String(status || '').toLowerCase();
   if (normalized === 'sent_back') return 'in_progress';
   return normalized;
+};
+
+const toDbFlag = (value: unknown, fallback = 0): number => {
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (typeof value === 'number') return value > 0 ? 1 : 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return fallback ? 1 : 0;
+    if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) return 1;
+    if (['false', '0', 'no', 'n', 'off'].includes(normalized)) return 0;
+  }
+  return fallback ? 1 : 0;
 };
 
 async function assertSessionEditable(sessionId: string, organizationId: string): Promise<any> {
@@ -1559,7 +1626,6 @@ export async function loadAcceptedInterviewSessionsForManager(
     totalQuestions: number;
   }>
 > {
-  await ensureInterviewAssignmentManagementSchema();
   const rows = await queryHelpers.queryAll(
     `SELECT
        s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
@@ -1567,12 +1633,11 @@ export async function loadAcceptedInterviewSessionsForManager(
        t.name as template_name, t.category as template_category,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
      FROM interview_sessions s
-      INNER JOIN interview_assignments a
-      ON a.session_id = s.id
-      AND a.organization_id = ?
-      AND a.created_by = ?
-      AND COALESCE(a.is_active, 1) = 1
-      AND a.status IN ('approved', 'completed')
+     INNER JOIN interview_assignments a
+       ON a.session_id = s.id
+       AND a.organization_id = ?
+       AND a.created_by = ?
+       AND a.status IN ('approved', 'completed')
      LEFT JOIN projects p ON p.id = s.project_id
      LEFT JOIN interview_library_templates t ON t.id = s.template_id
      LEFT JOIN users u ON u.id = s.owner_id
@@ -1637,7 +1702,6 @@ export async function loadManagedInterviewSessionsForManager(
     sentBackReason?: string;
   }>
 > {
-  await ensureInterviewAssignmentManagementSchema();
   const scope =
     options?.scope ||
     (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: userId });
@@ -1683,7 +1747,6 @@ export async function loadManagedInterviewSessionsForManager(
      LEFT JOIN users assignee_u ON assignee_u.id = a.assignee_user_id
      WHERE a.organization_id = ?
        ${scopeClause.clause}
-       AND COALESCE(a.is_active, 1) = 1
        AND a.status IN ('in_progress', 'submitted', 'sent_back', 'approved', 'completed')
        AND (
          p.organization_id = ?
@@ -1937,6 +2000,7 @@ export const InterviewController = {
     const now = new Date().toISOString();
     await ensureInterviewSessionV6Columns();
     await ensureInterviewQuestionV6Columns();
+    await ensureInterviewQuestionTemplatesTable();
 
     // Create session
     // Note: Schema uses owner_id (not user_id) and doesn't have topic column
@@ -2046,6 +2110,15 @@ export const InterviewController = {
       params.push(JSON.stringify(summaryPainPoints));
     }
 
+    if (normalizedStatus) {
+      updates.push('status = ?');
+      params.push(normalizedStatus);
+      if (normalizedStatus === 'completed') {
+        updates.push('completed_at = ?');
+        params.push(new Date().toISOString());
+      }
+    }
+
     if (updates.length === 0) {
       res.status(400).json({ error: 'No updates provided' });
       return;
@@ -2080,15 +2153,6 @@ export const InterviewController = {
       return;
     }
 
-    if (normalizedStatus) {
-      updates.push('status = ?');
-      params.push(normalizedStatus);
-      if (normalizedStatus === 'completed') {
-        updates.push('completed_at = ?');
-        params.push(new Date().toISOString());
-      }
-    }
-
     await queryHelpers.queryRun(
       `UPDATE interview_sessions SET ${updates.join(', ')} WHERE id = ?`,
       params
@@ -2106,11 +2170,10 @@ export const InterviewController = {
 
   getMyAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    await ensureInterviewAssignmentManagementSchema();
     const { status, includeCompleted } = req.query as any;
 
     const params: unknown[] = [user.organizationId, user.id, user.id];
-    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND (a.assignee_user_id = ? OR m.user_id = ?)`;
+    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR m.user_id = ?)`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -2144,7 +2207,7 @@ export const InterviewController = {
     } catch {
       // Back-compat: environments without `interview_assignment_members`.
       const fallbackParams: unknown[] = [user.organizationId, user.id];
-      let fallbackWhere = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND a.assignee_user_id = ?`;
+      let fallbackWhere = `WHERE a.organization_id = ? AND a.assignee_user_id = ?`;
       if (status) {
         fallbackWhere += ` AND a.status = ?`;
         fallbackParams.push(status);
@@ -2395,11 +2458,10 @@ export const InterviewController = {
 
   listAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
-    await ensureInterviewAssignmentManagementSchema();
     const { status, assigneeUserId, createdBy, projectId, overdue } = req.query as any;
 
     const params: unknown[] = [admin.organizationId];
-    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1`;
+    let where = `WHERE a.organization_id = ?`;
     if (status) {
       where += ` AND a.status = ?`;
       params.push(status);
@@ -3099,183 +3161,12 @@ export const InterviewController = {
     });
   }),
 
-  revokeApproval: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const reviewer = requireUser(req);
-    const { id } = req.params;
-    const { reason } = req.body || {};
-    await ensureInterviewAssignmentAiReviewColumns();
-
-    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
-    if (!normalizedReason) {
-      res.status(400).json({ error: 'Revoke reason is required' });
-      return;
-    }
-
-    const assignment = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
-      [id, reviewer.organizationId]
-    );
-    if (!assignment) {
-      res.status(404).json({ error: 'Assignment not found' });
-      return;
-    }
-    const revokeGate = evaluateGatePolicy({
-      action: 'REVOKE_INTERVIEW_APPROVAL',
-      contextType: 'interview_assignment',
-      user: reviewer,
-      context: { assignment },
-    });
-    if (!revokeGate.allow) {
-      const gateError = revokeGate as {
-        allow: false;
-        error: string;
-        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
-      };
-      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
-      return;
-    }
-
-    const sessionRow = await queryHelpers.queryOne(
-      `SELECT s.*
-       FROM interview_sessions s
-       LEFT JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ?
-         AND (
-           p.organization_id = ?
-           OR (s.project_id IS NULL AND s.organization_id = ?)
-         )`,
-      [(assignment as any).session_id, reviewer.organizationId, reviewer.organizationId]
-    );
-    if (!sessionRow) {
-      res.status(404).json({ error: 'Session not found' });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
-    const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
-      existing: parseReviewDecisionMemory((assignment as any)?.review_decision_memory_json),
-      action: 'revoke_approval',
-      actorId: reviewer.id,
-      actorRole: reviewer.role,
-      aiReview,
-      reason: normalizedReason,
-      createdAt: now,
-    });
-    try {
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET status = 'in_progress',
-             sent_back_at = ?,
-             sent_back_reason = ?,
-             missing_items_json = NULL,
-             review_decision_memory_json = ?,
-             updated_at = ?
-         WHERE id = ?`,
-        [now, normalizedReason, JSON.stringify(reviewDecisionMemory), now, id]
-      );
-    } catch (error) {
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET status = 'in_progress',
-             sent_back_at = ?,
-             sent_back_reason = ?,
-             review_decision_memory_json = ?,
-             updated_at = ?
-         WHERE id = ?`,
-        [now, normalizedReason, JSON.stringify(reviewDecisionMemory), now, id]
-      );
-      logger.warn(
-        '[InterviewController] revokeApproval: missing_items_json column unavailable, using reason-only fallback'
-      );
-      logger.debug('[InterviewController] revokeApproval fallback details', error);
-    }
-    await queryHelpers.queryRun(
-      `UPDATE interview_sessions
-       SET status = 'active',
-           completed_at = NULL,
-           updated_at = ?,
-           last_activity_at = ?
-       WHERE id = ?`,
-      [now, now, (assignment as any).session_id]
-    );
-
-    if ((assignment as any).task_id) {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
-        ['in_progress', 75, now, (assignment as any).task_id]
-      );
-    }
-
-    try {
-      const recipients = new Set<string>();
-      if ((assignment as any).assignee_user_id) {
-        recipients.add(String((assignment as any).assignee_user_id));
-      }
-      try {
-        const memberRows = await queryHelpers.queryAll(
-          `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
-          [id]
-        );
-        (memberRows || []).forEach((row: any) => {
-          if (row?.user_id) recipients.add(String(row.user_id));
-        });
-      } catch {
-        // ignore - members table may not exist
-      }
-      for (const userId of recipients) {
-        await notificationService.send({
-          userId,
-          organizationId: reviewer.organizationId,
-          type: 'interview_sent_back',
-          title: 'Interview approval revoked',
-          body: normalizedReason,
-          entityType: 'interview_assignment',
-          entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}`,
-          priority: 'high',
-          actorId: reviewer.id,
-        });
-      }
-    } catch (e) {
-      logger.warn(
-        '[InterviewController] Failed to send interview_approval_revoked notification',
-        e
-      );
-    }
-
-    const updatedAssignment = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ?`,
-      [id]
-    );
-    const updatedSession = await queryHelpers.queryOne(
-      `SELECT * FROM interview_sessions WHERE id = ?`,
-      [(assignment as any).session_id]
-    );
-
-    res.json({
-      assignment: {
-        ...(updatedAssignment as any),
-        status: normalizeAssignmentStatusForClient((updatedAssignment as any)?.status),
-        missingItems: parseMissingItems((updatedAssignment as any)?.missing_items_json),
-        aiReview: parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
-        aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
-        reviewDecisionMemory: parseReviewDecisionMemory(
-          (updatedAssignment as any)?.review_decision_memory_json
-        ),
-      },
-      session: buildSessionResponse(updatedSession),
-      entersContext: false,
-    });
-  }),
-
   // ==========================================
   // EXTENDED ASSIGNMENTS (Team, Reminders, Counts)
   // ==========================================
 
   getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    await ensureInterviewAssignmentManagementSchema();
     const { status, projectId } = req.query as any;
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
@@ -3284,7 +3175,7 @@ export const InterviewController = {
     });
     const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
     const params: unknown[] = [user.organizationId, ...scopeClause.params];
-    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1${scopeClause.clause}`;
+    let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -3372,7 +3263,6 @@ export const InterviewController = {
 
   getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    await ensureInterviewAssignmentManagementSchema();
     const now = new Date().toISOString();
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
@@ -3396,7 +3286,6 @@ export const InterviewController = {
        LEFT JOIN interview_sessions s ON s.id = a.session_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        WHERE a.organization_id = ?
-         AND COALESCE(a.is_active, 1) = 1
          ${scopeClause.clause}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
@@ -3444,7 +3333,6 @@ export const InterviewController = {
 
   getAssignmentCounts: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    await ensureInterviewAssignmentManagementSchema();
     const now = new Date().toISOString();
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
@@ -3463,7 +3351,6 @@ export const InterviewController = {
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
          WHERE a.organization_id = ?
-           AND COALESCE(a.is_active, 1) = 1
            AND (a.assignee_user_id = ? OR m.user_id = ?)
            AND a.status NOT IN ('approved', 'completed')`,
         [user.organizationId, user.id, user.id]
@@ -3473,7 +3360,7 @@ export const InterviewController = {
       myResult = await queryHelpers.queryOne(
         `SELECT COUNT(*) as count
          FROM interview_assignments
-         WHERE organization_id = ? AND COALESCE(is_active, 1) = 1 AND assignee_user_id = ? AND status NOT IN ('approved', 'completed')`,
+         WHERE organization_id = ? AND assignee_user_id = ? AND status NOT IN ('approved', 'completed')`,
         [user.organizationId, user.id]
       );
     }
@@ -3483,7 +3370,6 @@ export const InterviewController = {
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
-         AND COALESCE(is_active, 1) = 1
          ${countScopeClause.clause}`,
       [user.organizationId, ...countScopeClause.params]
     );
@@ -3493,7 +3379,6 @@ export const InterviewController = {
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
-         AND COALESCE(is_active, 1) = 1
          ${countScopeClause.clause}
          AND due_at IS NOT NULL
          AND due_at < ?
@@ -3680,393 +3565,6 @@ export const InterviewController = {
       [id]
     );
     res.json(updated);
-  }),
-
-  manageAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = requireUser(req);
-    const { id } = req.params;
-    const { assigneeUserId, templateId, dueAt, priority, notes, mode, reason } = req.body || {};
-
-    await ensureInterviewAssignmentManagementSchema();
-
-    const allowedPriorities = new Set(['low', 'medium', 'high', 'urgent']);
-    const allowedModes = new Set<InterviewAssignmentManageMode>([
-      'update',
-      'restart',
-      'assign_again',
-    ]);
-    if (mode !== undefined && !allowedModes.has(mode)) {
-      res.status(400).json({ error: 'Invalid mode. Must be update, restart, or assign_again.' });
-      return;
-    }
-    if (priority !== undefined && !allowedPriorities.has(String(priority))) {
-      res.status(400).json({ error: 'Invalid priority' });
-      return;
-    }
-    if (
-      dueAt !== undefined &&
-      dueAt !== null &&
-      (typeof dueAt !== 'string' || Number.isNaN(new Date(dueAt).getTime()))
-    ) {
-      res.status(400).json({ error: 'Invalid dueAt value' });
-      return;
-    }
-
-    const existing = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
-      [id, user.organizationId]
-    );
-    if (!existing) {
-      res.status(404).json({ error: 'Assignment not found' });
-      return;
-    }
-    if (Number((existing as any).is_active ?? 1) === 0) {
-      res.status(409).json({ error: 'Assignment has already been superseded' });
-      return;
-    }
-
-    const nextAssigneeUserId =
-      assigneeUserId !== undefined
-        ? String(assigneeUserId || '').trim()
-        : (existing as any).assignee_user_id;
-    const nextTemplateId =
-      templateId !== undefined ? String(templateId || '').trim() : (existing as any).template_id;
-    const nextPriority =
-      priority !== undefined ? String(priority) : String((existing as any).priority || 'medium');
-    const nextDueAt = dueAt !== undefined ? dueAt : ((existing as any).due_at ?? null);
-    const nextNotes = notes !== undefined ? notes : ((existing as any).notes ?? null);
-    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
-
-    if (!nextAssigneeUserId) {
-      res.status(400).json({ error: 'assigneeUserId is required' });
-      return;
-    }
-    if (!nextTemplateId) {
-      res.status(400).json({ error: 'templateId is required' });
-      return;
-    }
-
-    const assigneeChanged = nextAssigneeUserId !== String((existing as any).assignee_user_id || '');
-    const templateChanged = nextTemplateId !== String((existing as any).template_id || '');
-    const dueAtChanged = (nextDueAt ?? null) !== ((existing as any).due_at ?? null);
-    const priorityChanged = nextPriority !== String((existing as any).priority || 'medium');
-    const notesChanged = (nextNotes ?? null) !== ((existing as any).notes ?? null);
-    const hasSensitiveChange = assigneeChanged || templateChanged;
-
-    const currentStatus = String((existing as any).status || '').toLowerCase();
-    let effectiveMode: InterviewAssignmentManageMode = 'update';
-    if (mode === 'assign_again') {
-      effectiveMode =
-        currentStatus === 'approved' || currentStatus === 'completed' ? 'assign_again' : 'restart';
-    } else if (mode === 'restart') {
-      effectiveMode = 'restart';
-    } else if (mode === 'update') {
-      effectiveMode = 'update';
-    } else if (currentStatus === 'approved' || currentStatus === 'completed') {
-      effectiveMode = hasSensitiveChange ? 'assign_again' : 'update';
-    } else if (currentStatus !== 'assigned' && hasSensitiveChange) {
-      effectiveMode = 'restart';
-    }
-
-    const template = await queryHelpers.queryOne(
-      `SELECT id, name, version, status FROM interview_library_templates WHERE id = ?`,
-      [nextTemplateId]
-    );
-    if (!template) {
-      res.status(404).json({ error: 'Template not found' });
-      return;
-    }
-    if (String((template as any).status || '').toLowerCase() !== 'approved') {
-      res.status(400).json({ error: 'Template is not approved yet' });
-      return;
-    }
-
-    const assigneeMembership = await queryHelpers.queryOne(
-      `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id = ?`,
-      [user.organizationId, nextAssigneeUserId]
-    );
-    if (!assigneeMembership) {
-      res.status(404).json({ error: 'Assignee is not a member of this organization' });
-      return;
-    }
-    if ((existing as any).project_id) {
-      const projectMember = await queryHelpers.queryOne(
-        `SELECT user_id FROM project_members WHERE project_id = ? AND user_id = ?`,
-        [(existing as any).project_id, nextAssigneeUserId]
-      );
-      if (!projectMember) {
-        res.status(403).json({
-          error: 'Assignee must be a member of the assignment project to receive this interview.',
-        });
-        return;
-      }
-    }
-
-    const hasAnyChange =
-      assigneeChanged ||
-      templateChanged ||
-      dueAtChanged ||
-      priorityChanged ||
-      notesChanged ||
-      effectiveMode !== 'update';
-    if (!hasAnyChange) {
-      res.status(400).json({ error: 'No changes provided' });
-      return;
-    }
-
-    const { default: interviewAssignmentService } =
-      await import('../services/InterviewAssignmentService.js');
-    const now = new Date().toISOString();
-
-    if (effectiveMode === 'update') {
-      if (currentStatus !== 'assigned' && hasSensitiveChange) {
-        res.status(409).json({
-          error:
-            'Changing assignee or template after the interview has started requires creating a fresh assignment.',
-        });
-        return;
-      }
-
-      const updates: string[] = [];
-      const params: unknown[] = [];
-
-      if (dueAtChanged) {
-        updates.push('due_at = ?');
-        params.push(nextDueAt);
-      }
-      if (priorityChanged) {
-        updates.push('priority = ?');
-        params.push(nextPriority);
-      }
-      if (notesChanged) {
-        updates.push('notes = ?');
-        params.push(nextNotes);
-      }
-      if (assigneeChanged) {
-        updates.push('assignee_user_id = ?');
-        params.push(nextAssigneeUserId);
-      }
-      if (templateChanged) {
-        updates.push('template_id = ?');
-        params.push(nextTemplateId);
-        updates.push('template_version = ?');
-        params.push((template as any).version || 1);
-      }
-
-      if (updates.length === 0) {
-        res.status(400).json({ error: 'No supported updates for this assignment state' });
-        return;
-      }
-
-      updates.push('updated_at = ?');
-      params.push(now, id);
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments SET ${updates.join(', ')} WHERE id = ?`,
-        params
-      );
-
-      if ((existing as any).task_id) {
-        const taskUpdates: string[] = [];
-        const taskParams: unknown[] = [];
-        if (dueAtChanged) {
-          taskUpdates.push('due_date = ?');
-          taskParams.push(nextDueAt);
-        }
-        if (priorityChanged) {
-          taskUpdates.push('priority = ?');
-          taskParams.push(nextPriority);
-        }
-        if (assigneeChanged) {
-          taskUpdates.push('assignee_id = ?');
-          taskParams.push(nextAssigneeUserId);
-        }
-        if (templateChanged) {
-          taskUpdates.push('title = ?');
-          taskParams.push(`Interview: ${(template as any).name || 'Discovery Interview'}`);
-          taskUpdates.push('description = ?');
-          taskParams.push(
-            JSON.stringify({
-              type: 'interview_assignment',
-              assignmentId: id,
-              templateId: nextTemplateId,
-              templateVersion: (template as any).version || 1,
-            })
-          );
-        }
-        if (taskUpdates.length > 0) {
-          taskUpdates.push('updated_at = ?');
-          taskParams.push(now, (existing as any).task_id);
-          await queryHelpers.queryRun(
-            `UPDATE tasks SET ${taskUpdates.join(', ')} WHERE id = ?`,
-            taskParams
-          );
-        }
-      }
-
-      const updatedAssignment = await interviewAssignmentService.getByIdWithDetails(id);
-      await logInterviewAssignmentEvent({
-        assignmentId: id,
-        organizationId: user.organizationId,
-        actorId: user.id,
-        eventType: 'assignment_updated',
-        reason: normalizedReason || undefined,
-        payload: {
-          assigneeChanged,
-          templateChanged,
-          dueAtChanged,
-          priorityChanged,
-          notesChanged,
-          mode: effectiveMode,
-        },
-      });
-      res.json({
-        assignment: updatedAssignment,
-        action: 'updated',
-        createdFreshAssignment: false,
-      });
-      return;
-    }
-
-    if (
-      effectiveMode === 'restart' &&
-      currentStatus !== 'assigned' &&
-      currentStatus !== 'in_progress' &&
-      currentStatus !== 'sent_back' &&
-      currentStatus !== 'submitted'
-    ) {
-      res.status(409).json({ error: 'This assignment state cannot be restarted' });
-      return;
-    }
-
-    if (effectiveMode === 'restart' && currentStatus !== 'assigned' && !normalizedReason) {
-      res.status(400).json({ error: 'Reason is required when replacing a started assignment' });
-      return;
-    }
-
-    const created = await interviewAssignmentService.create({
-      organizationId: user.organizationId,
-      projectId: (existing as any).project_id || undefined,
-      templateId: nextTemplateId,
-      templateVersion: (template as any).version || 1,
-      assigneeUserIds: [nextAssigneeUserId],
-      dueAt:
-        typeof nextDueAt === 'string' && nextDueAt
-          ? nextDueAt
-          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      priority: nextPriority as 'low' | 'medium' | 'high' | 'urgent',
-      escalateTo: (existing as any).escalate_to || user.id,
-      notes:
-        typeof nextNotes === 'string' && nextNotes.trim().length > 0 ? nextNotes.trim() : undefined,
-      processRef: (existing as any).process_ref || undefined,
-      createdBy: user.id,
-    });
-    const replacementAssignment = await interviewAssignmentService.getByIdWithDetails(created.id);
-
-    const shouldDeactivateCurrent =
-      effectiveMode === 'restart' && currentStatus !== 'approved' && currentStatus !== 'completed';
-
-    if (shouldDeactivateCurrent) {
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments SET is_active = 0, updated_at = ? WHERE id = ?`,
-        [now, id]
-      );
-      if ((existing as any).task_id) {
-        await queryHelpers.queryRun(`UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`, [
-          'cancelled',
-          now,
-          (existing as any).task_id,
-        ]);
-      }
-      if ((existing as any).session_id) {
-        await queryHelpers.queryRun(
-          `UPDATE interview_sessions
-           SET status = 'archived',
-               completed_at = COALESCE(completed_at, ?),
-               last_activity_at = ?,
-               updated_at = ?
-           WHERE id = ?`,
-          [now, now, now, (existing as any).session_id]
-        );
-      }
-    }
-
-    await logInterviewAssignmentEvent({
-      assignmentId: id,
-      organizationId: user.organizationId,
-      actorId: user.id,
-      eventType: shouldDeactivateCurrent ? 'assignment_replaced' : 'assignment_follow_up_created',
-      reason: normalizedReason || undefined,
-      payload: {
-        createdAssignmentId: created.id,
-        mode: effectiveMode,
-        assigneeChanged,
-        templateChanged,
-        dueAtChanged,
-        priorityChanged,
-        notesChanged,
-      },
-    });
-    await logInterviewAssignmentEvent({
-      assignmentId: created.id,
-      organizationId: user.organizationId,
-      actorId: user.id,
-      eventType: 'assignment_created_from_existing',
-      reason: normalizedReason || undefined,
-      payload: {
-        sourceAssignmentId: id,
-        mode: effectiveMode,
-      },
-    });
-
-    res.json({
-      assignment: replacementAssignment,
-      action: effectiveMode === 'assign_again' ? 'assigned_again' : 'restarted',
-      createdFreshAssignment: true,
-      previousAssignmentId: id,
-      previousAssignmentDeactivated: shouldDeactivateCurrent,
-    });
-  }),
-
-  archiveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = requireUser(req);
-    const { id } = req.params;
-
-    await ensureInterviewAssignmentManagementSchema();
-
-    const existing = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND COALESCE(is_active, 1) = 1`,
-      [id, user.organizationId]
-    );
-    if (!existing) {
-      res.status(404).json({ error: 'Assignment not found' });
-      return;
-    }
-
-    const currentStatus = String((existing as any).status || '').toLowerCase();
-    if (currentStatus !== 'approved' && currentStatus !== 'completed') {
-      res.status(409).json({ error: 'Only approved or completed assignments can be archived' });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    await queryHelpers.queryRun(
-      `UPDATE interview_assignments SET is_active = 0, updated_at = ? WHERE id = ?`,
-      [now, id]
-    );
-
-    await logInterviewAssignmentEvent({
-      assignmentId: id,
-      organizationId: user.organizationId,
-      actorId: user.id,
-      eventType: 'assignment_archived',
-      payload: { previousStatus: currentStatus },
-    });
-
-    res.json({
-      success: true,
-      archived: true,
-      assignmentId: id,
-    });
   }),
 
   deleteAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -5362,12 +4860,23 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     const { sessionId } = req.params;
     const { language } = req.body || {};
 
-    const session = await queryHelpers.queryOne(
-      `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, user.organizationId]
-    );
+    let session: any = null;
+    try {
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    } catch {
+      // Backward compatibility for environments still using legacy user_id.
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    }
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
       return;
@@ -5440,12 +4949,23 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       return;
     }
 
-    const session = await queryHelpers.queryOne(
-      `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, user.organizationId]
-    );
+    let session: any = null;
+    try {
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    } catch {
+      // Backward compatibility for environments still using legacy user_id.
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    }
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
       return;
@@ -6948,24 +6468,32 @@ ${JSON.stringify(questions || [], null, 2)}
 
   getCompletedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    const userProfileExtendedColumns = await getTableColumns('user_profile_extended');
+    const hasUserProfileExtended = userProfileExtendedColumns.size > 0;
 
-    // Filter by organization (project-scoped OR org-scoped) and return lightweight rows for Insights tab
+    // Filter by organization and return approved/completed source material only.
+    // Assigned interviews must be manager-approved; legacy/ad-hoc sessions remain eligible when completed.
     const rows = await queryHelpers.queryAll(
       `SELECT 
         s.id, s.name as name, s.template_id, s.status, s.completed_at, s.owner_id,
         s.answered_questions, s.total_questions,
+        a.status as assignment_status,
         t.name as template_name, t.category as template_category,
+        u.job_title, ${hasUserProfileExtended ? 'upe.department' : 'NULL'} as department,
         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
        LEFT JOIN projects p ON p.id = s.project_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
        LEFT JOIN users u ON u.id = s.owner_id
+       ${hasUserProfileExtended ? 'LEFT JOIN user_profile_extended upe ON upe.user_id = u.id' : ''}
        WHERE (
          p.organization_id = ?
          OR (s.project_id IS NULL AND s.organization_id = ?)
        ) AND s.status = 'completed'
+       AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))
        ORDER BY s.completed_at DESC`,
-      [user.organizationId, user.organizationId]
+      [user.organizationId, user.organizationId, user.organizationId]
     );
 
     const sessions = (rows || []).map((row: any) => ({
@@ -6975,9 +6503,13 @@ ${JSON.stringify(questions || [], null, 2)}
       templateName: row.template_name,
       templateCategory: row.template_category,
       status: row.status,
+      approvalStatus: row.assignment_status || 'completed',
+      sourceScopeStatus: 'approved_only',
       completedAt: row.completed_at,
       respondentId: row.owner_id,
       respondentName: row.respondent_name,
+      respondentRole: row.job_title,
+      department: row.department,
       answeredQuestions: row.answered_questions,
       totalQuestions: row.total_questions,
     }));
@@ -7015,7 +6547,21 @@ ${JSON.stringify(questions || [], null, 2)}
 
   createInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { title, sessionIds, sessionId, promptType, filters, customPrompt } = req.body || {};
+    const {
+      title,
+      sessionIds,
+      sessionId,
+      promptType,
+      filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
+      customPrompt,
+      selectedContextDocumentIds,
+    } = req.body || {};
 
     const normalizedSessionIds: string[] = Array.isArray(sessionIds)
       ? sessionIds.map(String).filter(Boolean)
@@ -7025,6 +6571,31 @@ ${JSON.stringify(questions || [], null, 2)}
 
     if (normalizedSessionIds.length === 0) {
       res.status(400).json({ error: 'sessionId or sessionIds is required' });
+      return;
+    }
+
+    const placeholders = normalizedSessionIds.map(() => '?').join(',');
+    const approvedRows = await queryHelpers.queryAll<{ id: string }>(
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id IN (${placeholders})
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )
+         AND s.status = 'completed'
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
+      [user.organizationId, ...normalizedSessionIds, user.organizationId, user.organizationId]
+    );
+    const approvedIds = new Set((approvedRows || []).map((row) => String(row.id)));
+    const rejectedIds = normalizedSessionIds.filter((id) => !approvedIds.has(id));
+    if (rejectedIds.length > 0) {
+      res.status(409).json({
+        error: 'Interview Insight can only be generated from approved/completed interview sessions',
+        rejectedSessionIds: rejectedIds,
+      });
       return;
     }
 
@@ -7056,7 +6627,16 @@ ${JSON.stringify(questions || [], null, 2)}
       sessionIds: normalizedSessionIds,
       promptType: normalizedPromptType,
       filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
       customPrompt,
+      selectedContextDocumentIds: Array.isArray(selectedContextDocumentIds)
+        ? selectedContextDocumentIds.map(String).filter(Boolean)
+        : [],
       createdBy: user.id,
     });
 

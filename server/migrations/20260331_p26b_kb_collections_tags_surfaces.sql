@@ -5,9 +5,9 @@
 -- 1. Collections (IA spine — replaces flat categories as primary browse)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_collections (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   slug VARCHAR(200) NOT NULL UNIQUE,
-  parent_collection_id UUID REFERENCES kb_collections(id) ON DELETE SET NULL,
+  parent_collection_id TEXT REFERENCES kb_collections(id) ON DELETE SET NULL,
   visibility VARCHAR(20) NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'in-app', 'internal')),
   featured BOOLEAN NOT NULL DEFAULT FALSE,
   sort_order INT NOT NULL DEFAULT 0,
@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS kb_collections (
 );
 
 CREATE TABLE IF NOT EXISTS kb_collection_translations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  collection_id UUID NOT NULL REFERENCES kb_collections(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  collection_id TEXT NOT NULL REFERENCES kb_collections(id) ON DELETE CASCADE,
   language VARCHAR(5) NOT NULL DEFAULT 'en',
   title VARCHAR(500) NOT NULL,
   description TEXT,
@@ -34,21 +34,21 @@ CREATE INDEX IF NOT EXISTS idx_kb_collection_translations_coll ON kb_collection_
 -- 2. Tags (cross-cutting facets for filtering and discovery)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_tags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   slug VARCHAR(200) NOT NULL UNIQUE,
   kind VARCHAR(30) NOT NULL DEFAULT 'domain' CHECK (kind IN ('domain', 'tool', 'concept', 'stage', 'audience')),
   synonyms JSONB DEFAULT '[]',
   visibility VARCHAR(20) NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'in-app', 'internal')),
   status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'deprecated')),
-  redirect_to_tag_id UUID REFERENCES kb_tags(id) ON DELETE SET NULL,
+  redirect_to_tag_id TEXT REFERENCES kb_tags(id) ON DELETE SET NULL,
   owner_user_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS kb_tag_translations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tag_id UUID NOT NULL REFERENCES kb_tags(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  tag_id TEXT NOT NULL REFERENCES kb_tags(id) ON DELETE CASCADE,
   language VARCHAR(5) NOT NULL DEFAULT 'en',
   label VARCHAR(200) NOT NULL,
   description TEXT,
@@ -63,8 +63,8 @@ CREATE INDEX IF NOT EXISTS idx_kb_tag_translations_tag ON kb_tag_translations(ta
 -- 3. Article ↔ Collection junction
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_article_collections (
-  article_id UUID NOT NULL,
-  collection_id UUID NOT NULL REFERENCES kb_collections(id) ON DELETE CASCADE,
+  article_id TEXT NOT NULL,
+  collection_id TEXT NOT NULL REFERENCES kb_collections(id) ON DELETE CASCADE,
   sort_order INT NOT NULL DEFAULT 0,
   PRIMARY KEY (article_id, collection_id)
 );
@@ -75,8 +75,8 @@ CREATE INDEX IF NOT EXISTS idx_kb_article_collections_coll ON kb_article_collect
 -- 4. Article ↔ Tag junction
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_article_tags (
-  article_id UUID NOT NULL,
-  tag_id UUID NOT NULL REFERENCES kb_tags(id) ON DELETE CASCADE,
+  article_id TEXT NOT NULL,
+  tag_id TEXT NOT NULL REFERENCES kb_tags(id) ON DELETE CASCADE,
   PRIMARY KEY (article_id, tag_id)
 );
 
@@ -86,8 +86,8 @@ CREATE INDEX IF NOT EXISTS idx_kb_article_tags_tag ON kb_article_tags(tag_id);
 -- 5. Surface Bindings (where content appears)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_surface_bindings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  article_id UUID NOT NULL,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  article_id TEXT NOT NULL,
   surface VARCHAR(50) NOT NULL CHECK (surface IN ('lp', 'help', 'right_panel', 'ai_recommendations', 'public_docs')),
   tool_context VARCHAR(200),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -101,8 +101,8 @@ CREATE INDEX IF NOT EXISTS idx_kb_surface_bindings_surface ON kb_surface_binding
 -- 6. Article Versions (audit trail)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_article_versions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  article_id UUID NOT NULL,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  article_id TEXT NOT NULL,
   version INT NOT NULL DEFAULT 1,
   change_type VARCHAR(20) NOT NULL DEFAULT 'update' CHECK (change_type IN ('typo', 'clarify', 'update', 'breaking')),
   change_note TEXT,
@@ -117,7 +117,7 @@ CREATE INDEX IF NOT EXISTS idx_kb_article_versions_article ON kb_article_version
 -- 7. Sources (evidence pointers)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS kb_sources (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   kind VARCHAR(30) NOT NULL DEFAULT 'internal' CHECK (kind IN ('internal', 'benchmark', 'customer_input', 'release_note', 'external')),
   title VARCHAR(500),
   uri VARCHAR(2000),
@@ -129,8 +129,8 @@ CREATE TABLE IF NOT EXISTS kb_sources (
 );
 
 CREATE TABLE IF NOT EXISTS kb_article_sources (
-  article_id UUID NOT NULL,
-  source_id UUID NOT NULL REFERENCES kb_sources(id) ON DELETE CASCADE,
+  article_id TEXT NOT NULL,
+  source_id TEXT NOT NULL REFERENCES kb_sources(id) ON DELETE CASCADE,
   PRIMARY KEY (article_id, source_id)
 );
 
@@ -143,8 +143,8 @@ ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS canonical_topic_key VARCHAR(200
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS visibility VARCHAR(20) DEFAULT 'public';
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS deprecated_at TIMESTAMPTZ;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS deprecation_reason TEXT;
-ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS replacement_article_id UUID;
-ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS redirect_to_article_id UUID;
+ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS replacement_article_id TEXT;
+ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS redirect_to_article_id TEXT;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS owner_user_id UUID;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS review_cadence_days INT;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS review_due_at TIMESTAMPTZ;

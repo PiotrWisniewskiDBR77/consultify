@@ -112,7 +112,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-navy-800">
         <div className="flex items-center gap-2">
-          <ImageIcon size={14} className="text-purple-500" />
+          <ImageIcon size={14} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
             {t('presentations.builder.mediaLibrary.title', 'Media Library')}
           </h3>
@@ -130,7 +130,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('presentations.builder.mediaLibrary.search', 'Search by tag or name...')}
-            className="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 outline-none focus:ring-1 focus:ring-purple-400"
+            className="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 outline-none focus:ring-1 focus:ring-primary-400"
           />
         </div>
       </div>
@@ -143,7 +143,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             onClick={() => setCategory(cat.id)}
             className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap transition-colors ${
               category === cat.id
-                ? 'bg-purple-500 text-white'
+                ? 'bg-primary-500 text-white'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 hover:bg-slate-200'
             }`}
           >
@@ -156,7 +156,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       <div className="flex-1 overflow-y-auto px-3 py-2">
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-slate-400">
@@ -166,7 +166,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             </p>
             <button
               onClick={handleUpload}
-              className="mt-2 text-[10px] text-purple-500 hover:text-purple-600 font-medium"
+              className="mt-2 text-[10px] text-primary-500 hover:text-primary-600 font-medium"
             >
               {t('presentations.builder.mediaLibrary.uploadFirst', 'Upload your first image')}
             </button>
@@ -177,7 +177,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelect(item)}
-                className="relative group rounded-lg overflow-hidden border border-slate-200 dark:border-navy-700 hover:border-purple-400 transition-colors aspect-square"
+                className="relative group rounded-lg overflow-hidden border border-slate-200 dark:border-navy-700 hover:border-primary-400 transition-colors aspect-square"
               >
                 <img
                   src={item.thumbnail_url || item.storage_url}
@@ -205,7 +205,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       <div className="px-3 py-2 border-t border-slate-100 dark:border-navy-800">
         <button
           onClick={handleUpload}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:text-purple-500 hover:border-purple-400 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:text-primary-500 hover:border-primary-400 transition-colors"
         >
           <Upload size={12} />
           {t('presentations.builder.mediaLibrary.upload', 'Upload images')}

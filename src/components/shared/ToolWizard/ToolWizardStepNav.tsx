@@ -1,6 +1,6 @@
 /**
  * ToolWizardStepNav — Left sidebar step navigation for wizard
- * Follows NModeLeftNav pattern (220px sticky), adapted for wizard flow.
+ * Follows NModeLeftNav pattern (242px sticky), adapted for wizard flow.
  */
 
 import { Check, Circle, Lock } from 'lucide-react';
@@ -55,7 +55,7 @@ export const ToolWizardStepNav: React.FC<ToolWizardStepNavProps> = ({
 
   return (
     <nav
-      className="w-[220px] shrink-0 sticky top-0 self-start border-r border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 overflow-y-auto"
+      className="w-[242px] shrink-0 sticky top-0 self-start border-r border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 overflow-y-auto"
       style={{ maxHeight: 'calc(100vh - 120px)' }}
     >
       <div className="py-4 px-3 space-y-1">

@@ -146,10 +146,10 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
             {laneCount > 1 && (
               <button
                 onClick={() => onDelete?.(lane.id)}
-                className="p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="p-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20"
                 title="Delete lane"
               >
-                <X size={9} className="text-red-400" />
+                <X size={9} className="text-rose-400" />
               </button>
             )}
           </div>

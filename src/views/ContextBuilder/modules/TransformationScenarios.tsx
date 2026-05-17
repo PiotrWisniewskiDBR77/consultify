@@ -60,9 +60,9 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
   return (
     <div className="flex flex-col h-full space-y-6 pb-20">
       {/* Top Banner: AI Recommendation */}
-      <div className="relative z-20 bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/10 dark:to-navy-900 p-6 rounded-xl border border-purple-100 dark:border-navy-700 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+      <div className="relative z-20 bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/10 dark:to-navy-900 p-6 rounded-xl border border-primary-100 dark:border-navy-700 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
         <div className="flex gap-4 items-center">
-          <div className="w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-900/20">
+          <div className="w-12 h-12 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-900/20">
             <BrainCircuit size={24} />
           </div>
           <div>
@@ -71,7 +71,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
               {t.banner.subtitle
                 .replace('{count}', challenges.declaredChallenges.length.toString())
                 .replace('{name}', recName)}
-              <strong className="text-purple-600 dark:text-purple-400 ml-1">{recName}</strong>
+              <strong className="text-primary-600 dark:text-primary-400 ml-1">{recName}</strong>
             </p>
           </div>
         </div>
@@ -100,7 +100,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
                 <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
                   {getScenarioText(viewedScenario.id, 'name')}
                   {viewedScenario.id === recommendedId && (
-                    <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-xs font-bold uppercase rounded-full border border-purple-200 dark:border-purple-500/30">
+                    <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold uppercase rounded-full border border-primary-200 dark:border-primary-500/30">
                       {t.recommended}
                     </span>
                   )}
@@ -137,7 +137,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
               </button>
               <button
                 onClick={() => handleConfirm(viewedScenario.id)}
-                className="group flex items-center gap-2 px-8 py-3 bg-navy-900 dark:bg-purple-600 text-white rounded-xl hover:bg-navy-800 dark:hover:bg-purple-500 transition-all font-bold shadow-lg shadow-navy-900/20 dark:shadow-purple-900/40"
+                className="group flex items-center gap-2 px-8 py-3 bg-navy-900 dark:bg-primary-600 text-white rounded-xl hover:bg-navy-800 dark:hover:bg-primary-500 transition-all font-bold shadow-lg shadow-navy-900/20 dark:shadow-primary-900/40"
               >
                 {selectedId === viewedScenario.id ? t.selected : t.select}
                 {selectedId !== viewedScenario.id && (

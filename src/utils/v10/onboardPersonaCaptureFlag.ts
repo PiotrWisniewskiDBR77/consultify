@@ -1,28 +1,8 @@
 /**
- * Chat V10 / V10-ONB-001 — feature flag for persona capture.
+ * Chat V10 / V10-ONB persona-capture feature flag.
  *
- * What this flag gates
- * --------------------
- * The V10 first-run persona capture surface (picker UI + inference
- * resolver). At Wave A seed only the `PersonaCapture` schema exists;
- * the gate becomes meaningful when V10-ONB-002..005 ship the picker,
- * inference, override, and trust banner.
- *
- * When OFF: tenants fall back to V9 generic onboarding (no persona
- * record materialised). This is the documented kill-switch in
- * `ONBOARDING_ACTIVATION_DEVELOPMENT_PLAN §V10-ONB-001 acceptance
- * criteria #5`.
- *
- * Default
- * -------
- * **OFF**. See `ADR-V10-002`.
- *
- * Resolution order
- * ----------------
- *   1. URL query   `?ff_onboard_persona_capture=0|1`
- *   2. localStorage `ff.onboard_persona_capture`
- *   3. env          `VITE_ONBOARD_PERSONA_CAPTURE`
- *   4. Hard default — `false`.
+ * Default OFF. Enables materialising first-run persona capture only when the
+ * onboarding runtime is deliberately rolled out.
  */
 
 const LS_KEY = 'ff.onboard_persona_capture';

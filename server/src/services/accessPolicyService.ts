@@ -395,7 +395,8 @@ class AccessPolicyServiceClass {
         }
       }
 
-      // Trial gating: require org setup completion before using AI
+      // Trial gating: allow first AI interactions before requiring org setup completion.
+      // This preserves the "aha moment" and avoids hard onboarding walls right after signup.
       if (effectiveOrgType === ORG_TYPES.TRIAL && action === 'ai_call') {
         try {
           const row = await DbPromise.get<{ onboarding_status?: string | null }>(
@@ -405,6 +406,10 @@ class AccessPolicyServiceClass {
             { fallback: false }
           );
           if ((row as any)?.onboarding_status !== 'ORG_SETUP_COMPLETED') {
+            const graceAiCalls = 3;
+            if ((usage.aiCallsCount || 0) < graceAiCalls) {
+              return { allowed: true };
+            }
             return {
               allowed: false,
               reason: 'Please complete organization setup to start your trial AI experience.',

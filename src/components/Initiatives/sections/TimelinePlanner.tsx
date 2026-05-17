@@ -121,8 +121,8 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     icon: Flag,
     label: 'Milestone',
     labelPl: 'Kamień milowy',
-    color: 'text-purple-500',
-    bgTint: 'bg-purple-500/3',
+    color: 'text-primary-500',
+    bgTint: 'bg-primary-500/3',
     shortLabel: 'M',
   },
   decision: {
@@ -137,8 +137,8 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     icon: Megaphone,
     label: 'Info Event',
     labelPl: 'Zdarzenie info',
-    color: 'text-cyan-500',
-    bgTint: 'bg-cyan-500/3',
+    color: 'text-blue-500',
+    bgTint: 'bg-blue-500/3',
     shortLabel: 'I',
   },
   notification: {
@@ -153,8 +153,8 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     icon: CalendarDays,
     label: 'Recurring Meeting',
     labelPl: 'Spotkanie cykliczne',
-    color: 'text-teal-500',
-    bgTint: 'bg-teal-500/4',
+    color: 'text-blue-500',
+    bgTint: 'bg-blue-500/4',
     shortLabel: 'R',
   },
   pause: {
@@ -169,16 +169,16 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     icon: AlertTriangle,
     label: 'Escalation',
     labelPl: 'Eskalacja',
-    color: 'text-orange-500',
-    bgTint: 'bg-orange-500/3',
+    color: 'text-amber-500',
+    bgTint: 'bg-amber-500/3',
     shortLabel: 'E',
   },
   finish: {
     icon: Flag,
     label: 'Finish',
     labelPl: 'Koniec',
-    color: 'text-red-500',
-    bgTint: 'bg-red-500/5',
+    color: 'text-rose-500',
+    bgTint: 'bg-rose-500/5',
     shortLabel: 'F',
   },
 };
@@ -186,15 +186,15 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-500',
-  review: 'bg-purple-500',
-  blocked: 'bg-red-500',
+  review: 'bg-primary-500',
+  blocked: 'bg-rose-500',
   done: 'bg-emerald-500',
 };
 
 const DECISION_OUTCOME_STYLES: Record<string, { dot: string; label: string; labelPl: string }> = {
   GO: { dot: 'bg-emerald-500', label: 'GO', labelPl: 'GO' },
-  NO_GO: { dot: 'bg-red-500', label: 'NO-GO', labelPl: 'NO-GO' },
-  ESCALATE: { dot: 'bg-orange-500', label: 'Escalate', labelPl: 'Eskalacja' },
+  NO_GO: { dot: 'bg-rose-500', label: 'NO-GO', labelPl: 'NO-GO' },
+  ESCALATE: { dot: 'bg-amber-500', label: 'Escalate', labelPl: 'Eskalacja' },
 };
 
 /** Which types the user can add via "+ Add Item" */
@@ -946,7 +946,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <button
                       key={at.type}
                       onClick={() => handleSelectType(at.type)}
-                      className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-cyan-500/40 hover:bg-cyan-500/5 transition-all text-left group"
+                      className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-left group"
                     >
                       <Icon size={16} className={`${meta.color} mt-0.5 flex-shrink-0`} />
                       <div className="min-w-0">
@@ -1000,7 +1000,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={isPolish ? 'Nazwa elementu...' : 'Item name...'}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -1025,7 +1025,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         if (t.estimatedHours != null) setEstimatedHours(String(t.estimatedHours));
                       }
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {isPolish ? 'Wybierz zadanie' : 'Select task'} —</option>
                     {taskOptions.map((t) => (
@@ -1053,7 +1053,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       const d = decisionOptions.find((x) => x.id === id);
                       if (d) setName(d.title);
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {isPolish ? 'Wybierz decyzję' : 'Select decision'} —</option>
                     {decisionOptions.map((d) => (
@@ -1081,7 +1081,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         if (!fixedDate) setFixedDate(toISO(m.date));
                       }
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">
                       — {isPolish ? 'Wybierz kamień milowy' : 'Select milestone'} —
@@ -1108,7 +1108,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     }}
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'dependency'
-                        ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                         : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
                     }`}
                   >
@@ -1121,7 +1121,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     }}
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'date'
-                        ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                         : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
                     }`}
                   >
@@ -1134,7 +1134,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     }}
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'event'
-                        ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                         : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
                     }`}
                   >
@@ -1152,7 +1152,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <select
                     value={dependsOnId}
                     onChange={(e) => setDependsOnId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
                     {depOptions.map((o) => (
                       <option key={o.id} value={o.id}>
@@ -1173,7 +1173,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     type="date"
                     value={fixedDate}
                     onChange={(e) => setFixedDate(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -1191,7 +1191,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         ? 'np. Zatwierdzenie gate / sygnał z systemu'
                         : 'e.g. Gate approval / system signal'
                     }
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -1210,7 +1210,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onClick={() => setEndSchedulingMode('from_duration')}
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'from_duration'
-                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
@@ -1221,7 +1221,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onClick={() => setEndSchedulingMode('manual_date')}
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'manual_date'
-                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
@@ -1232,7 +1232,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onClick={() => setEndSchedulingMode('from_successor')}
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'from_successor'
-                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
@@ -1244,14 +1244,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       type="date"
                       value={manualEndDate}
                       onChange={(e) => setManualEndDate(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                     />
                   )}
                   {endSchedulingMode === 'from_successor' && (
                     <select
                       value={successorId}
                       onChange={(e) => setSuccessorId(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
                         — {isPolish ? 'Wybierz sukcesora' : 'Select successor'} —
@@ -1280,7 +1280,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={durationDays}
                         onChange={(e) => setDurationDays(e.target.value)}
                         placeholder="—"
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -1294,7 +1294,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={estimatedHours}
                         onChange={(e) => setEstimatedHours(e.target.value)}
                         placeholder="—"
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1315,7 +1315,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <button
                     onClick={() => setDecisionBlocks(!decisionBlocks)}
                     className={`relative w-9 h-5 rounded-full transition-colors ${
-                      decisionBlocks ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-navy-600'
+                      decisionBlocks ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'
                     }`}
                   >
                     <div
@@ -1342,7 +1342,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                             e.target.value as 'cyclical' | 'specific_date' | 'after_event'
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="cyclical">
                           {isPolish ? 'Spotkanie cykliczne' : 'Cyclical meeting'}
@@ -1363,7 +1363,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={infoEventCadence}
                           onChange={(e) => setInfoEventCadence(e.target.value as any)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
                           <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
@@ -1387,7 +1387,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           placeholder={
                             isPolish ? 'np. Po akceptacji gate GO' : 'e.g. After GO gate approval'
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                         />
                         {submitAttempted && !infoEventReferenceEventValid && (
                           <p className="mt-1 text-[10px] text-rose-500">
@@ -1415,7 +1415,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={audience}
                       onChange={(e) => setAudience(e.target.value)}
                       placeholder={isPolish ? 'np. Steering Committee' : 'e.g. Steering Committee'}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1428,7 +1428,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         onChange={(e) =>
                           setInfoEventParticipantMode(e.target.value as 'person' | 'group')
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
                         <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
@@ -1448,7 +1448,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                                 | 'custom_group'
                             )
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                             <option key={g.key} value={g.key}>
@@ -1460,7 +1460,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={infoEventParticipantUserId}
                           onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             — {isPolish ? 'Wybierz osobę' : 'Select person'} —
@@ -1490,7 +1490,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={infoAssetType}
                       onChange={(e) => setInfoAssetType(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="internal_report">
                         {isPolish ? 'Raport wewnętrzny' : 'Internal report'}
@@ -1532,7 +1532,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           const found = availableReports.find((x) => x.id === id);
                           if (found) setInfoAssetLabel(found.title);
                         }}
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="">
                           — {isPolish ? 'Wybierz raport' : 'Select report'} —
@@ -1556,7 +1556,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={infoAssetUrl}
                         onChange={(e) => setInfoAssetUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   )}
@@ -1573,7 +1573,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         placeholder={
                           isPolish ? 'np. Deck: Sprint Review' : 'e.g. Deck: Sprint Review'
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   )}
@@ -1616,7 +1616,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) =>
                         setNotificationRecipientMode(e.target.value as 'person' | 'group')
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
                       <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
@@ -1640,7 +1640,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                                 | 'custom_group'
                             )
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                             <option key={g.key} value={g.key}>
@@ -1657,7 +1657,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={notificationRecipientUserId}
                           onChange={(e) => setNotificationRecipientUserId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             — {isPolish ? 'Wybierz osobę' : 'Select person'} —
@@ -1682,7 +1682,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) =>
                         setNotificationTriggerMode(e.target.value as 'event_based' | 'cyclical')
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="event_based">
                         {isPolish ? 'Zdarzeniowa' : 'Event-based'}
@@ -1706,7 +1706,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                               | 'manual_gate'
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="on_start">{isPolish ? 'Przy starcie' : 'On start'}</option>
                         <option value="on_complete">
@@ -1732,7 +1732,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           min={0}
                           value={notificationLeadDays}
                           onChange={(e) => setNotificationLeadDays(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                     )}
@@ -1743,7 +1743,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={notificationCadence}
                       onChange={(e) => setNotificationCadence(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
                       <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
@@ -1759,7 +1759,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={notificationChannel}
                       onChange={(e) => setNotificationChannel(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="email">Email</option>
                       <option value="slack">Slack</option>
@@ -1781,7 +1781,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           ? 'np. Co wtorek 09:00 do Steering Committee'
                           : 'e.g. Every Tuesday 09:00 to Steering Committee'
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -1797,7 +1797,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           ? 'Wpisz treść, która ma być wysłana do odbiorcy...'
                           : 'Enter message content to be sent to recipient...'
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
@@ -1811,7 +1811,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         type="button"
                         onClick={() => setNotificationAiAutoSend(!notificationAiAutoSend)}
                         className={`relative w-9 h-5 rounded-full transition-colors ${
-                          notificationAiAutoSend ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-navy-600'
+                          notificationAiAutoSend ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'
                         }`}
                       >
                         <div
@@ -1831,7 +1831,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                             ? 'Instrukcja dla AI: ton, długość, wymagane elementy wiadomości...'
                             : 'AI instruction: tone, length, required message elements...'
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                       />
                     )}
                   </div>
@@ -1848,7 +1848,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={meetingCadence}
                       onChange={(e) => setMeetingCadence(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
                       <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
@@ -1864,7 +1864,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={meetingChannel}
                       onChange={(e) => setMeetingChannel(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="online">{isPolish ? 'Online' : 'Online'}</option>
                       <option value="onsite">{isPolish ? 'Stacjonarnie' : 'Onsite'}</option>
@@ -1884,7 +1884,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           ? 'Krótki cel/agenda spotkania...'
                           : 'Brief meeting purpose/agenda...'
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1903,7 +1903,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={durationDays}
                       onChange={(e) => setDurationDays(e.target.value)}
                       placeholder="—"
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1919,7 +1919,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           ? 'np. okno wdrożeniowe / freeze'
                           : 'e.g. release freeze / maintenance'
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                     <p className="mt-1 text-[10px] text-slate-400">
                       {isPolish
@@ -1939,7 +1939,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <select
                     value={escalationLevel}
                     onChange={(e) => setEscalationLevel(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {isPolish ? 'Wybierz' : 'Select'} —</option>
                     <option value="Sponsor">Sponsor</option>
@@ -1961,7 +1961,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <button
                   onClick={handleSubmit}
                   disabled={!name.trim()}
-                  className="px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-cyan-500 hover:bg-cyan-600 disabled:opacity-40 transition-colors"
+                  className="px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-40 transition-colors"
                 >
                   {isPolish ? 'Dodaj' : 'Add'}
                 </button>
@@ -2244,7 +2244,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
       animate={{ height: 'auto', opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className="overflow-hidden border-b border-cyan-500/20"
+      className="overflow-hidden border-b border-blue-500/20"
     >
       <div className="bg-white/95 dark:bg-navy-900/95 p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -2271,7 +2271,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none"
+            className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
             autoFocus
           />
         </div>
@@ -2293,7 +2293,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   if (t.estimatedHours != null) setEstimatedHours(String(t.estimatedHours));
                 }
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {isPolish ? 'Wybierz zadanie' : 'Select task'} —</option>
               {taskOptions.map((t) => (
@@ -2318,7 +2318,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 const d = decisionOptions.find((x) => x.id === id);
                 if (d) setName(d.title);
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {isPolish ? 'Wybierz decyzję' : 'Select decision'} —</option>
               {decisionOptions.map((d) => (
@@ -2346,7 +2346,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   setFixedDate(toISO(m.date));
                 }
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">
                 — {isPolish ? 'Wybierz kamień milowy' : 'Select milestone'} —
@@ -2373,7 +2373,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               }}
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'dependency'
-                  ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                   : 'border-slate-200 dark:border-navy-600 text-slate-500'
               }`}
             >
@@ -2386,7 +2386,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               }}
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'date'
-                  ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                   : 'border-slate-200 dark:border-navy-600 text-slate-500'
               }`}
             >
@@ -2399,7 +2399,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               }}
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'event'
-                  ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                   : 'border-slate-200 dark:border-navy-600 text-slate-500'
               }`}
             >
@@ -2416,7 +2416,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <select
               value={dependsOnId}
               onChange={(e) => setDependsOnId(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">—</option>
               {depOptions.map((o) => (
@@ -2437,7 +2437,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               type="date"
               value={fixedDate}
               onChange={(e) => setFixedDate(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
         )}
@@ -2456,7 +2456,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   ? 'np. Zatwierdzenie gate / sygnał z systemu'
                   : 'e.g. Gate approval / system signal'
               }
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
             />
           </div>
         )}
@@ -2470,21 +2470,21 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_duration')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
               >
                 {isPolish ? 'Z czasu trwania' : 'From duration'}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('manual_date')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
               >
                 {isPolish ? 'Data ręczna' : 'Manual date'}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_successor')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
               >
                 {isPolish ? 'Z sukcesora' : 'From successor'}
               </button>
@@ -2494,14 +2494,14 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 type="date"
                 value={manualEndDate}
                 onChange={(e) => setManualEndDate(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               />
             )}
             {endSchedulingMode === 'from_successor' && (
               <select
                 value={successorId}
                 onChange={(e) => setSuccessorId(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="">— {isPolish ? 'Wybierz sukcesora' : 'Select successor'} —</option>
                 {successorOptions.map((o) => (
@@ -2528,7 +2528,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={durationDays}
                   onChange={(e) => setDurationDays(e.target.value)}
                   placeholder="—"
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -2542,7 +2542,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
                   placeholder="—"
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -2563,7 +2563,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </label>
               <button
                 onClick={() => setDecisionBlocks(!decisionBlocks)}
-                className={`relative w-9 h-5 rounded-full transition-colors ${decisionBlocks ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                className={`relative w-9 h-5 rounded-full transition-colors ${decisionBlocks ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'}`}
               >
                 <div
                   className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${decisionBlocks ? 'translate-x-4' : 'translate-x-0.5'}`}
@@ -2579,7 +2579,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <button
                     key={val ?? 'pending'}
                     onClick={() => setDecisionOutcome(val)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
                   >
                     {val === null
                       ? isPolish
@@ -2612,7 +2612,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) =>
                     setInfoEventMode(e.target.value as 'cyclical' | 'specific_date' | 'after_event')
                   }
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="cyclical">
                     {isPolish ? 'Spotkanie cykliczne' : 'Cyclical meeting'}
@@ -2631,7 +2631,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventCadence}
                     onChange={(e) => setInfoEventCadence(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
                     <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
@@ -2653,7 +2653,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     placeholder={
                       isPolish ? 'np. Po akceptacji gate GO' : 'e.g. After GO gate approval'
                     }
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                   />
                   {submitAttempted && !infoEventReferenceEventValid && (
                     <p className="mt-1 text-[10px] text-rose-500">
@@ -2681,7 +2681,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
                 placeholder={isPolish ? 'np. Steering Committee' : 'e.g. Steering Committee'}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2694,7 +2694,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) =>
                     setInfoEventParticipantMode(e.target.value as 'person' | 'group')
                   }
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
                   <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
@@ -2705,7 +2705,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventParticipantGroupKey}
                     onChange={(e) => setInfoEventParticipantGroupKey(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
                     {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                       <option key={g.key} value={g.key}>
@@ -2717,7 +2717,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventParticipantUserId}
                     onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {isPolish ? 'Wybierz osobę' : 'Select person'} —</option>
                     {users.map((u) => (
@@ -2743,7 +2743,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={infoAssetType}
                 onChange={(e) => setInfoAssetType(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="internal_report">
                   {isPolish ? 'Raport wewnętrzny' : 'Internal report'}
@@ -2784,7 +2784,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     const found = availableReports.find((x) => x.id === id);
                     if (found) setInfoAssetLabel(found.title);
                   }}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">— {isPolish ? 'Wybierz raport' : 'Select report'} —</option>
                   {availableReports.map((r) => (
@@ -2805,7 +2805,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={infoAssetUrl}
                   onChange={(e) => setInfoAssetUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                 />
               </div>
             )}
@@ -2819,7 +2819,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={infoAssetLabel}
                   onChange={(e) => setInfoAssetLabel(e.target.value)}
                   placeholder={isPolish ? 'np. Deck: Sprint Review' : 'e.g. Deck: Sprint Review'}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                 />
               </div>
             )}
@@ -2859,7 +2859,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={notificationCadence}
                 onChange={(e) => setNotificationCadence(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
                 <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
@@ -2875,7 +2875,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={notificationRecipientMode}
                 onChange={(e) => setNotificationRecipientMode(e.target.value as 'person' | 'group')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
                 <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
@@ -2890,7 +2890,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={notificationRecipientGroupKey}
                     onChange={(e) => setNotificationRecipientGroupKey(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
                     {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                       <option key={g.key} value={g.key}>
@@ -2907,7 +2907,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={notificationRecipientUserId}
                     onChange={(e) => setNotificationRecipientUserId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {isPolish ? 'Wybierz osobę' : 'Select person'} —</option>
                     {users.map((u) => (
@@ -2928,7 +2928,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onChange={(e) =>
                   setNotificationTriggerMode(e.target.value as 'event_based' | 'cyclical')
                 }
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="event_based">{isPolish ? 'Zdarzeniowa' : 'Event-based'}</option>
                 <option value="cyclical">{isPolish ? 'Cykliczna' : 'Cyclical'}</option>
@@ -2942,7 +2942,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 <select
                   value={notificationTriggerEvent}
                   onChange={(e) => setNotificationTriggerEvent(e.target.value as any)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="on_start">{isPolish ? 'Przy starcie' : 'On start'}</option>
                   <option value="on_complete">
@@ -2968,7 +2968,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     min={0}
                     value={notificationLeadDays}
                     onChange={(e) => setNotificationLeadDays(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -2979,7 +2979,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={notificationChannel}
                 onChange={(e) => setNotificationChannel(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="email">Email</option>
                 <option value="slack">Slack</option>
@@ -3001,7 +3001,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     ? 'np. Co wtorek 09:00 do Steering Committee'
                     : 'e.g. Every Tuesday 09:00 to Steering Committee'
                 }
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2">
@@ -3015,7 +3015,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 placeholder={
                   isPolish ? 'Treść, która ma zostać wysłana...' : 'Message content to send...'
                 }
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2 space-y-1.5">
@@ -3026,7 +3026,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => setNotificationAiAutoSend(!notificationAiAutoSend)}
-                  className={`relative w-9 h-5 rounded-full transition-colors ${notificationAiAutoSend ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${notificationAiAutoSend ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'}`}
                 >
                   <div
                     className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${notificationAiAutoSend ? 'translate-x-4' : 'translate-x-0.5'}`}
@@ -3039,7 +3039,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) => setNotificationAiInstruction(e.target.value)}
                   rows={2}
                   placeholder={isPolish ? 'Instrukcja dla AI...' : 'Instruction for AI...'}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                 />
               )}
             </div>
@@ -3055,7 +3055,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={meetingCadence}
                 onChange={(e) => setMeetingCadence(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
                 <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
@@ -3071,7 +3071,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={meetingChannel}
                 onChange={(e) => setMeetingChannel(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="online">{isPolish ? 'Online' : 'Online'}</option>
                 <option value="onsite">{isPolish ? 'Stacjonarnie' : 'Onsite'}</option>
@@ -3089,7 +3089,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 placeholder={
                   isPolish ? 'Krótki cel/agenda spotkania...' : 'Brief meeting purpose/agenda...'
                 }
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
@@ -3107,7 +3107,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={durationDays}
                 onChange={(e) => setDurationDays(e.target.value)}
                 placeholder="—"
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div>
@@ -3119,7 +3119,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={pauseReason}
                 onChange={(e) => setPauseReason(e.target.value)}
                 placeholder={isPolish ? 'np. freeze wdrożeniowy' : 'e.g. deployment freeze'}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
               <p className="mt-1 text-[10px] text-slate-400">
                 {isPolish
@@ -3139,7 +3139,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <select
               value={escalationLevel}
               onChange={(e) => setEscalationLevel(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">—</option>
               <option value="Sponsor">Sponsor</option>
@@ -3160,7 +3160,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-cyan-500 hover:bg-cyan-600 transition-colors"
+            className="px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors"
           >
             {isPolish ? 'Zapisz' : 'Save'}
           </button>
@@ -3327,7 +3327,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             className={`grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 items-center border-b border-slate-200/30 dark:border-navy-700/30 group transition-colors ${
               meta.bgTint || 'hover:bg-slate-50/50 dark:hover:bg-navy-800/30'
             } ${draggingId === row.id ? 'opacity-60' : ''} ${
-              dragOverId === row.id ? 'ring-1 ring-cyan-500/40' : ''
+              dragOverId === row.id ? 'ring-1 ring-blue-500/40' : ''
             } ${row.isCriticalPath ? 'border-l-2 border-fuchsia-400/80 bg-fuchsia-500/5' : ''}`}
           >
             {/* # */}
@@ -3390,7 +3390,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     if (e.key === 'Enter') commitNameEdit(row.id);
                     if (e.key === 'Escape') setEditingName(null);
                   }}
-                  className="flex-1 px-1.5 py-0.5 rounded bg-white dark:bg-navy-900 border border-cyan-500 text-xs text-slate-700 dark:text-slate-300 focus:outline-none"
+                  className="flex-1 px-1.5 py-0.5 rounded bg-white dark:bg-navy-900 border border-blue-500 text-xs text-slate-700 dark:text-slate-300 focus:outline-none"
                 />
               ) : (
                 <span
@@ -3409,12 +3409,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
               {/* Extra info chips */}
               {row.audience && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-500/10 text-cyan-600 truncate max-w-[60px]">
+                <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 truncate max-w-[60px]">
                   {row.audience}
                 </span>
               )}
               {row.type === 'info_event' && row.infoAssetType && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-500/10 text-cyan-600 truncate max-w-[90px]">
+                <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 truncate max-w-[90px]">
                   {row.infoAssetType === 'internal_report'
                     ? isPolish
                       ? 'Raport'
@@ -3433,7 +3433,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 </span>
               )}
               {row.type === 'info_event' && row.infoEventMode && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-500/10 text-cyan-600 truncate max-w-[80px]">
+                <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 truncate max-w-[80px]">
                   {row.infoEventMode === 'cyclical'
                     ? isPolish
                       ? 'Cykliczne'
@@ -3449,7 +3449,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               )}
               {row.type === 'info_event' &&
                 (row.infoEventParticipantUserId || row.infoEventParticipantGroupKey) && (
-                  <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-500/10 text-cyan-600 truncate max-w-[85px]">
+                  <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 truncate max-w-[85px]">
                     {row.infoEventParticipantMode === 'person'
                       ? users.find((u) => u.id === row.infoEventParticipantUserId)?.firstName
                         ? `${users.find((u) => u.id === row.infoEventParticipantUserId)?.firstName} ${
@@ -3481,7 +3481,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   </span>
                 )}
               {row.escalationLevel && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-orange-500/10 text-orange-600 truncate">
+                <span className="text-[8px] px-1 py-0.5 rounded bg-amber-500/10 text-amber-600 truncate">
                   {row.escalationLevel}
                 </span>
               )}
@@ -3557,7 +3557,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   const label = mode === 'dependency' ? 'DEP' : mode === 'event' ? 'EVENT' : 'DATE';
                   const tone =
                     mode === 'dependency'
-                      ? 'bg-cyan-500/10 text-cyan-600'
+                      ? 'bg-blue-500/10 text-blue-600'
                       : mode === 'event'
                         ? 'bg-amber-500/10 text-amber-600'
                         : 'bg-slate-500/10 text-slate-500';
@@ -3587,7 +3587,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     type="date"
                     value={toISO(row.startDate)}
                     onChange={(e) => onUpdateStart(e.target.value || null)}
-                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
                   />
                 ) : row.schedulingMode === 'after_previous' && row.dependsOnId ? (
                   <span className="text-[10px] text-slate-400 italic">
@@ -3598,7 +3598,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     type="date"
                     value={toISO(row.startDate)}
                     onChange={(e) => onUpdateRow(row.id, { startDate: e.target.value || null })}
-                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
                   />
                 ) : (
                   <span className="text-[10px] text-slate-500">
@@ -3638,7 +3638,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'dependency' ||
                         row.schedulingMode === 'after_previous'
-                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600'
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-600'
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
@@ -3656,7 +3656,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       }
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'date'
-                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600'
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-600'
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
@@ -3674,7 +3674,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       }
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'event'
-                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600'
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-600'
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
@@ -3692,7 +3692,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           schedulingMode: 'after_previous',
                         })
                       }
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
                         — {isPolish ? 'Wybierz dependency' : 'Select dependency'} —
@@ -3718,7 +3718,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         })
                       }
                       placeholder={isPolish ? 'Nazwa zdarzenia...' : 'Event name...'}
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   )}
                   {row.startTriggerType === 'date' && (
@@ -3732,7 +3732,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           schedulingMode: 'fixed_date',
                         })
                       }
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   )}
                 </div>
@@ -3752,7 +3752,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   type="date"
                   value={toISO(row.endDate)}
                   onChange={(e) => onUpdateRow(row.id, { endDate: e.target.value || null })}
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
                 />
               ) : (
                 <span className="text-[10px] text-slate-500">
@@ -3773,7 +3773,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       durationDays: e.target.value ? parseInt(e.target.value, 10) : null,
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 focus:border-cyan-500 text-slate-500 text-center focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 text-slate-500 text-center focus:outline-none"
                   placeholder="—"
                 />
               ) : (
@@ -3798,7 +3798,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       estimatedHours: e.target.value ? parseFloat(e.target.value) : null,
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 focus:border-cyan-500 text-slate-500 text-center focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 text-slate-500 text-center focus:outline-none"
                   placeholder="—"
                 />
               ) : (
@@ -3819,7 +3819,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       schedulingMode: e.target.value ? 'after_previous' : 'fixed_date',
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-500 focus:outline-none appearance-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-500 focus:outline-none appearance-none"
                 >
                   <option value="">—</option>
                   {depOptions
@@ -3879,7 +3879,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           onRemoveRow(row.id);
                           setMenuOpenId(null);
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-red-500 hover:bg-red-500/5 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-rose-500 hover:bg-rose-500/5 transition-colors"
                       >
                         <Trash2 size={12} />
                         {isPolish ? 'Usuń' : 'Delete'}
@@ -3978,14 +3978,14 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   // Shape colors per type
   const shapeColor: Record<TimelineRowType, string> = {
     start: 'bg-emerald-500',
-    finish: 'bg-red-500',
-    milestone: 'bg-purple-500',
+    finish: 'bg-rose-500',
+    milestone: 'bg-primary-500',
     decision: 'bg-amber-500',
-    info_event: 'bg-cyan-500',
+    info_event: 'bg-blue-500',
     notification: 'bg-indigo-500',
-    meeting: 'bg-teal-500',
+    meeting: 'bg-blue-500',
     pause: 'bg-slate-500',
-    escalation: 'bg-orange-500',
+    escalation: 'bg-amber-500',
     task: 'bg-blue-500',
   };
 
@@ -4060,7 +4060,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                       d={`M ${srcX}% ${srcY} C ${srcX + 3}% ${srcY}, ${tgtX - 3}% ${tgtY}, ${tgtX}% ${tgtY}`}
                       fill="none"
                       stroke="currentColor"
-                      className="text-purple-400/50 dark:text-purple-500/40"
+                      className="text-primary-400/50 dark:text-primary-500/40"
                       strokeWidth="1.5"
                       strokeDasharray="4 2"
                     />
@@ -4090,14 +4090,14 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                     >
                       {isDecision ? (
                         <div
-                          className={`w-4 h-4 ${row.decisionOutcome === 'GO' ? 'bg-emerald-500' : row.decisionOutcome === 'NO_GO' ? 'bg-red-500' : 'bg-amber-500'} rounded-sm rotate-45 border-2 border-white dark:border-navy-900`}
+                          className={`w-4 h-4 ${row.decisionOutcome === 'GO' ? 'bg-emerald-500' : row.decisionOutcome === 'NO_GO' ? 'bg-rose-500' : 'bg-amber-500'} rounded-sm rotate-45 border-2 border-white dark:border-navy-900`}
                         />
                       ) : isEsc ? (
-                        <AlertTriangle size={14} className="text-orange-500 fill-orange-500/20" />
+                        <AlertTriangle size={14} className="text-amber-500 fill-amber-500/20" />
                       ) : isNotification ? (
                         <Bell size={12} className="text-indigo-500" />
                       ) : isInfo ? (
-                        <Megaphone size={12} className="text-cyan-500" />
+                        <Megaphone size={12} className="text-blue-500" />
                       ) : (
                         <div className={`w-3 h-3 ${color} rounded-sm rotate-45`} />
                       )}
@@ -4114,14 +4114,14 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                 row.type === 'pause'
                   ? 'bg-slate-500/55'
                   : row.type === 'meeting'
-                    ? 'bg-teal-500/55'
+                    ? 'bg-blue-500/55'
                     : row.status === 'done'
                       ? 'bg-emerald-500/70'
                       : row.status === 'in_progress'
                         ? 'bg-blue-500/70'
                         : row.status === 'blocked'
-                          ? 'bg-red-500/70'
-                          : 'bg-cyan-500/50';
+                          ? 'bg-rose-500/70'
+                          : 'bg-blue-500/50';
 
               return (
                 <div key={row.id} className="h-9 flex items-center relative">
@@ -4364,7 +4364,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
         </span>
         {stats.milestones > 0 && (
           <span className="flex items-center gap-1">
-            <Flag size={10} className="text-purple-500" />
+            <Flag size={10} className="text-primary-500" />
             {stats.milestones} {isPolish ? 'kamieni' : 'milestones'}
           </span>
         )}
@@ -4376,7 +4376,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
         )}
         {stats.events > 0 && (
           <span className="flex items-center gap-1">
-            <Megaphone size={10} className="text-cyan-500" />
+            <Megaphone size={10} className="text-blue-500" />
             {stats.events} {isPolish ? 'zdarzeń' : 'events'}
           </span>
         )}

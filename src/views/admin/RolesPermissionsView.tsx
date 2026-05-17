@@ -8,19 +8,15 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
   Briefcase,
   Building2,
   Check,
-  ChevronDown,
-  ChevronRight,
   Crown,
   Edit,
   Eye,
   FolderKanban,
   Info,
   Key,
-  Lock,
   Plus,
   RefreshCw,
   Shield,
@@ -33,9 +29,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
-import { CustomRole, RolePermission, UserRole } from '../../types';
 
 // ============================================
 // ACCOUNT TYPES (Organization Level)
@@ -249,14 +245,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<'account' | 'project'>('project');
-  const [customProjectRoles, setCustomProjectRoles] = useState<any[]>([]);
+  const [customProjectRoles] = useState<any[]>([]);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRole, setEditingRole] = useState<any | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([
-    'View Access',
-    'Tasks & Work',
-  ]);
 
   // Form state for custom project roles
   const [formData, setFormData] = useState({
@@ -266,7 +258,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
     permissions: [] as string[],
   });
 
-  const [saving, setSaving] = useState(false);
+  const saving = false;
 
   useEffect(() => {
     // Simulate loading
@@ -302,42 +294,11 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
       return;
     }
 
-    setSaving(true);
-    try {
-      // API call would go here
-      toast.success(editingRole ? 'Project role updated' : 'Project role created');
-      setShowCreateModal(false);
-
-      if (!editingRole) {
-        const newRole = {
-          id: `custom-${Date.now()}`,
-          name: formData.name,
-          description: formData.description,
-          level: formData.level,
-          defaultPermissions: formData.permissions,
-          isSystem: false,
-          color: 'cyan',
-        };
-        setCustomProjectRoles((prev) => [...prev, newRole]);
-      } else {
-        setCustomProjectRoles((prev) =>
-          prev.map((r) =>
-            r.id === editingRole.id
-              ? { ...r, ...formData, defaultPermissions: formData.permissions }
-              : r
-          )
-        );
-      }
-    } catch (error) {
-      toast.error('Failed to save role');
-    }
-    setSaving(false);
+    toast.error('Custom project roles are read-only until persistence is connected');
   };
 
-  const handleDeleteRole = (roleId: string) => {
-    if (!confirm('Are you sure you want to delete this custom role?')) return;
-    setCustomProjectRoles((prev) => prev.filter((r) => r.id !== roleId));
-    toast.success('Role deleted');
+  const handleDeleteRole = (_roleId: string) => {
+    toast.error('Custom project roles are read-only until persistence is connected');
   };
 
   const togglePermission = (permId: string) => {
@@ -349,12 +310,6 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
     }));
   };
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
-  };
-
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; text: string; light: string }> = {
       amber: {
@@ -363,9 +318,9 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         light: 'bg-amber-100 dark:bg-amber-900/30',
       },
       violet: {
-        bg: 'bg-violet-500',
-        text: 'text-violet-500',
-        light: 'bg-violet-100 dark:bg-violet-900/30',
+        bg: 'bg-primary-500',
+        text: 'text-primary-500',
+        light: 'bg-primary-100 dark:bg-primary-900/30',
       },
       blue: { bg: 'bg-blue-500', text: 'text-blue-500', light: 'bg-blue-100 dark:bg-blue-900/30' },
       indigo: {
@@ -379,16 +334,16 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         light: 'bg-green-100 dark:bg-green-900/30',
       },
       purple: {
-        bg: 'bg-purple-500',
-        text: 'text-purple-500',
-        light: 'bg-purple-100 dark:bg-purple-900/30',
+        bg: 'bg-primary-500',
+        text: 'text-primary-500',
+        light: 'bg-primary-100 dark:bg-primary-900/30',
       },
       slate: {
         bg: 'bg-slate-500',
         text: 'text-slate-500 dark:text-slate-400',
         light: 'bg-slate-100 dark:bg-slate-900/30',
       },
-      cyan: { bg: 'bg-cyan-500', text: 'text-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/30' },
+      cyan: { bg: 'bg-blue-500', text: 'text-blue-500', light: 'bg-blue-100 dark:bg-blue-900/30' },
     };
     return colors[color] || colors.slate;
   };
@@ -407,7 +362,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -437,7 +392,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
           onClick={() => setActiveSection('account')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeSection === 'account'
-              ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -450,7 +405,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
           onClick={() => setActiveSection('project')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeSection === 'project'
-              ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -534,13 +489,13 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         <div className="space-y-4">
           {/* Info Banner + Create Button */}
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg flex items-start gap-3">
-              <Info className="text-purple-500 mt-0.5 flex-shrink-0" size={18} />
-              <div className="text-sm text-purple-800 dark:text-purple-300">
+            <div className="flex-1 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg flex items-start gap-3">
+              <Info className="text-primary-500 mt-0.5 flex-shrink-0" size={18} />
+              <div className="text-sm text-primary-800 dark:text-primary-300">
                 <p className="font-medium">
                   Project Roles define permissions within specific projects
                 </p>
-                <p className="mt-1 text-purple-600 dark:text-purple-400">
+                <p className="mt-1 text-primary-600 dark:text-primary-400">
                   Based on PRINCE2 & PMBOK standards. You can customize permissions for each role or
                   create custom roles.
                 </p>
@@ -548,12 +503,18 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             </div>
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium whitespace-nowrap"
+              disabled
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={18} />
               Create Custom Role
             </button>
           </div>
+
+          <ReadOnlyState
+            title="Custom project roles are read-only"
+            description="Standard project roles are available for reference, but custom role persistence is not connected yet."
+          />
 
           {/* Project Roles by Level */}
           {[0, 1, 2, 3, 4].map((level) => {
@@ -580,7 +541,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                         onClick={() => setSelectedRole(isSelected ? null : role.id)}
                         className={`p-4 bg-white dark:bg-navy-800 rounded-xl border cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-violet-500 ring-2 ring-violet-500/20'
+                            ? 'border-primary-500 ring-2 ring-primary-500/20'
                             : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
                         }`}
                       >
@@ -599,7 +560,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                     STANDARD
                                   </span>
                                 ) : (
-                                  <span className="px-1.5 py-0.5 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 text-[10px] rounded">
+                                  <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] rounded">
                                     CUSTOM
                                   </span>
                                 )}
@@ -621,6 +582,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   e.stopPropagation();
                                   openEditModal(role);
                                 }}
+                                disabled
                                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-400 hover:text-slate-600 dark:text-slate-400"
                               >
                                 <Edit size={14} />
@@ -630,7 +592,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   e.stopPropagation();
                                   handleDeleteRole(role.id);
                                 }}
-                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-red-600"
+                                disabled
+                                className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-rose-600"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -657,7 +620,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     onClick={() =>
                       openEditModal(allProjectRoles.find((r) => r.id === selectedRole))
                     }
-                    className="text-xs text-violet-600 hover:text-violet-500 font-medium"
+                    disabled
+                    className="text-xs text-primary-600 hover:text-primary-500 font-medium"
                   >
                     Edit Permissions
                   </button>
@@ -792,8 +756,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                               onClick={() => togglePermission(perm.id)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                                 formData.permissions.includes(perm.id)
-                                  ? 'bg-violet-600 text-white'
-                                  : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-600 hover:border-violet-300'
+                                  ? 'bg-primary-600 text-white'
+                                  : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-600 hover:border-primary-300'
                               }`}
                             >
                               {perm.label}
@@ -815,7 +779,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                 <button
                   onClick={handleSaveRole}
                   disabled={saving || !formData.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {editingRole ? 'Save Changes' : 'Create Role'}

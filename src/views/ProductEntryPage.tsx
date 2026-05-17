@@ -123,7 +123,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
 
   // Handle Demo Modal Start (signup/login → demo)
   const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
-    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setCurrentUser({ ...user, hasWorkspace: true, isAuthenticated: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
     if (mode === 'demo') {

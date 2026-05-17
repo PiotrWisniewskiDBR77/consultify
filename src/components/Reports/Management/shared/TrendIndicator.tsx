@@ -29,15 +29,15 @@ const getTrendConfig = (trend: TrendDirection, invertColors: boolean) => {
     UP: {
       icon: TrendingUp,
       arrowIcon: ArrowUp,
-      color: invertColors ? 'text-red-500' : 'text-emerald-500',
-      bgColor: invertColors ? 'bg-red-500/10' : 'bg-emerald-500/10',
+      color: invertColors ? 'text-rose-500' : 'text-emerald-500',
+      bgColor: invertColors ? 'bg-rose-500/10' : 'bg-emerald-500/10',
       label: invertColors ? 'Increased' : 'Improved',
     },
     DOWN: {
       icon: TrendingDown,
       arrowIcon: ArrowDown,
-      color: invertColors ? 'text-emerald-500' : 'text-red-500',
-      bgColor: invertColors ? 'bg-emerald-500/10' : 'bg-red-500/10',
+      color: invertColors ? 'text-emerald-500' : 'text-rose-500',
+      bgColor: invertColors ? 'bg-emerald-500/10' : 'bg-rose-500/10',
       label: invertColors ? 'Decreased' : 'Declined',
     },
     STABLE: {

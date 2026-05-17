@@ -848,6 +848,49 @@ export async function recordCompletedExport(
   return record;
 }
 
+export async function recordFailedExport(
+  artifactId: string,
+  organizationId: string,
+  format: OutputExportFormat,
+  requestedBy: string
+): Promise<OutputExportRecord> {
+  if (!OUTPUT_EXPORT_FORMAT_SET.has(format)) {
+    throw new Error(`Invalid export format: ${format}`);
+  }
+
+  const artifact = await getOutputArtifact(artifactId, organizationId);
+  if (!artifact) {
+    throw new Error(`Artifact ${artifactId} not found in organization ${organizationId}`);
+  }
+
+  const exportId = uuidv4();
+  const now = new Date().toISOString();
+
+  const record: OutputExportRecord = {
+    exportId,
+    artifactId,
+    organizationId,
+    format,
+    requestedBy,
+    status: 'failed',
+    createdAt: now,
+    completedAt: now,
+  };
+
+  await dbRun(
+    `INSERT INTO v8_output_exports (
+      export_id, artifact_id, organization_id, format,
+      requested_by, status, created_at, completed_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [exportId, artifactId, organizationId, format, requestedBy, 'failed', now, now]
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Recorded failed ${format} export ${exportId} for artifact ${artifactId}`
+  );
+  return record;
+}
+
 export async function getExportHistory(
   artifactId: string,
   organizationId: string

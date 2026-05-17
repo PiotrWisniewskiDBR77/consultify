@@ -187,7 +187,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-cyan-600" />
+        <Loader2 size={32} className="animate-spin text-blue-600" />
       </div>
     );
   }
@@ -210,7 +210,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Database size={28} className="text-cyan-500" />
+            <Database size={28} className="text-blue-500" />
             {t('settings.ai.context.title', 'AI Context')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -220,7 +220,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save Changes
@@ -230,7 +230,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       {/* Context Window Size */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Settings size={20} className="text-cyan-500" />
+          <Settings size={20} className="text-blue-500" />
           Context Window Size
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -249,8 +249,8 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
               onClick={() => setSettings({ ...settings, contextWindowSize: size.id as any })}
               className={`p-4 rounded-xl border-2 text-center transition-all ${
                 settings.contextWindowSize === size.id
-                  ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-cyan-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-blue-300'
               }`}
             >
               <span className="text-2xl">{size.icon}</span>
@@ -425,7 +425,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       {/* Knowledge Bases */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <BookOpen size={20} className="text-purple-500" />
+          <BookOpen size={20} className="text-primary-500" />
           Knowledge Bases
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -475,7 +475,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   (settings.knowledgeBases as any)[kb.key]
-                    ? 'bg-purple-600'
+                    ? 'bg-primary-600'
                     : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
@@ -505,7 +505,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             />
             <button
               onClick={addCustomSource}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
             >
               <Plus size={18} />
             </button>
@@ -514,12 +514,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             {settings.knowledgeBases.customSources.map((source) => (
               <span
                 key={source}
-                className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-lg text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-lg text-sm"
               >
                 {source}
                 <button
                   onClick={() => removeCustomSource(source)}
-                  className="hover:text-purple-900"
+                  className="hover:text-primary-900"
                 >
                   <X size={14} />
                 </button>

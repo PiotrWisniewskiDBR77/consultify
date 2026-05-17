@@ -8,19 +8,43 @@ export type RuntimeScope = {
   userRole: string | null;
 };
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+};
+
 export function runtimeMeta(contract: string) {
   return { version: 'v10' as const, contract };
 }
 
 export function scopeFromAuthRequest(req: AuthRequest): RuntimeScope {
+  const requestUser = safeRead(() => req?.user, undefined as AuthRequest['user']);
+  const tenantId =
+    normalizeOptionalString(safeRead(() => requestUser?.organizationId, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => req?.organizationId, undefined as unknown)) ||
+    '';
+  const userId =
+    normalizeOptionalString(safeRead(() => requestUser?.id, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => req?.userId, undefined as unknown)) ||
+    '';
+  const userRole =
+    normalizeOptionalString(safeRead(() => requestUser?.role, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => req?.userRole, undefined as unknown)) ||
+    null;
+
   return {
-    tenantId: String(req?.user?.organizationId || req?.organizationId || '').trim(),
-    userId: String(req?.user?.id || req?.userId || '').trim(),
-    userRole: req?.user?.role
-      ? String(req.user.role).trim()
-      : req?.userRole
-        ? String(req.userRole).trim()
-        : null,
+    tenantId,
+    userId,
+    userRole,
   };
 }
 

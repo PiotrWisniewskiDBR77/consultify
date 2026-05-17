@@ -118,11 +118,11 @@ export const ValueJourneySection: React.FC = () => {
             className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-500/15 bg-violet-500/10">
-                <Lightbulb size={20} className="text-violet-400" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary-500/15 bg-primary-500/10">
+                <Lightbulb size={20} className="text-primary-400" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400">
                   {t('landing.valueJourney.layersBadge', 'Value layers')}
                 </p>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
@@ -140,7 +140,7 @@ export const ValueJourneySection: React.FC = () => {
                   key={title}
                   className="flex gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/12 bg-violet-500/10 text-sm font-black text-violet-600 dark:text-violet-300">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary-500/12 bg-primary-500/10 text-sm font-black text-primary-600 dark:text-primary-300">
                     {index + 1}
                   </div>
                   <div>
@@ -164,11 +164,11 @@ export const ValueJourneySection: React.FC = () => {
             className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-8 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/15 bg-cyan-500/10">
-                <ArrowRight size={20} className="text-cyan-400" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-500/15 bg-blue-500/10">
+                <ArrowRight size={20} className="text-blue-400" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-400">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
                   {t('landing.valueJourney.journeyBadge', 'Consulting journey')}
                 </p>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
@@ -186,7 +186,7 @@ export const ValueJourneySection: React.FC = () => {
                   key={title}
                   className="flex gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.045] bg-slate-50 dark:bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.035]"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-500/12 bg-cyan-500/10 text-sm font-black text-cyan-600 dark:text-cyan-300">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-blue-500/12 bg-blue-500/10 text-sm font-black text-blue-600 dark:text-blue-300">
                     {index + 1}
                   </div>
                   <div>

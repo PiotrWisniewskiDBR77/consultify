@@ -238,19 +238,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('report')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-purple-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
                   outputType === 'report'
-                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/20'
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <FileText size={18} className="text-purple-500" />
+                  <FileText size={18} className="text-primary-500" />
                   <span className="font-medium text-slate-900 dark:text-white">
                     {t('finance.export.report', 'Report')}
                   </span>
                   {outputType === 'report' && (
-                    <Check size={16} className="text-purple-500 ml-auto" />
+                    <Check size={16} className="text-primary-500 ml-auto" />
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -261,19 +261,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('presentation')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-purple-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
                   outputType === 'presentation'
-                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/20'
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Presentation size={18} className="text-purple-500" />
+                  <Presentation size={18} className="text-primary-500" />
                   <span className="font-medium text-slate-900 dark:text-white">
                     {t('finance.export.presentation', 'Presentation')}
                   </span>
                   {outputType === 'presentation' && (
-                    <Check size={16} className="text-purple-500 ml-auto" />
+                    <Check size={16} className="text-primary-500 ml-auto" />
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -287,19 +287,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('initiatives')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-purple-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
                   outputType === 'initiatives'
-                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/20'
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2 w-full">
-                  <span className="text-purple-500 font-semibold">+</span>
+                  <span className="text-primary-500 font-semibold">+</span>
                   <span className="font-medium text-slate-900 dark:text-white">
                     {t('finance.export.initiatives', 'Initiatives')}
                   </span>
                   {outputType === 'initiatives' && (
-                    <Check size={16} className="text-purple-500 ml-auto" />
+                    <Check size={16} className="text-primary-500 ml-auto" />
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -323,7 +323,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                   aria-checked={useTemplate}
                   onClick={() => setUseTemplate(!useTemplate)}
                   className={`relative w-10 h-6 rounded-full transition-colors ${
-                    useTemplate ? 'bg-purple-500' : 'bg-slate-300 dark:bg-navy-600'
+                    useTemplate ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'
                   }`}
                 >
                   <span
@@ -346,7 +346,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                     value={templateId}
                     onChange={(e) => setTemplateId(e.target.value)}
                     disabled={loadingTemplates}
-                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
+                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none"
                   >
                     {loadingTemplates ? (
                       <option>{t('finance.export.loadingTemplates', 'Loading...')}</option>
@@ -463,7 +463,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                    className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
                     onClick={() => {
                       const allOn = initiativeProposals.every((p) => selectedProposalIds[p.id]);
                       const next: Record<string, boolean> = {};
@@ -550,7 +550,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             <button
               onClick={handleConfirm}
               disabled={submitting || (outputType !== 'initiatives' && useTemplate && !templateId)}
-              className="px-4 py-2 rounded-full bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 rounded-full bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {submitting ? (
                 <>

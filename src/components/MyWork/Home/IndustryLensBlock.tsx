@@ -31,7 +31,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
           <SignalCard
             icon={<Globe2 size={15} />}
             signal={payload.marketSignal}
-            toneClass="bg-cyan-500/15 text-cyan-200"
+            toneClass="bg-blue-500/15 text-blue-200"
             onAction={onAction}
           />
           <SignalCard

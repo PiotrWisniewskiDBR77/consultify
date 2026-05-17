@@ -127,7 +127,7 @@ export const RolloutChangeTab: React.FC<RolloutChangeTabProps> = ({ data, onUpda
                                                    s.attitude === 'Supportive'
                                                      ? 'bg-green-100 text-green-700 border-green-200'
                                                      : s.attitude === 'Resistant'
-                                                       ? 'bg-red-100 text-red-700 border-red-200'
+                                                       ? 'bg-rose-100 text-rose-700 border-rose-200'
                                                        : 'bg-slate-100 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-navy-700'
                                                  }
                                              `}

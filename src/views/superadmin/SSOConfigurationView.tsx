@@ -34,6 +34,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -60,6 +61,8 @@ export const SSOConfigurationView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [ssoConfigs, setSsoConfigs] = useState<SSOConfig[]>([]);
   const [domainMappings, setDomainMappings] = useState<any[]>([]);
+  const [ssoConfigsLoadError, setSsoConfigsLoadError] = useState<string | null>(null);
+  const [domainMappingsLoadError, setDomainMappingsLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
@@ -267,24 +270,29 @@ export const SSOConfigurationView: React.FC = () => {
 
   const fetchSSOConfigs = useCallback(async () => {
     setLoading(true);
+    setSsoConfigsLoadError(null);
     try {
       // Use SuperAdmin endpoint to get all SSO configs at once
       const result = await (Api as any).getSsoConfigs();
       setSsoConfigs(result.configs || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch SSO configs:', error);
+      setSsoConfigsLoadError(error?.message || 'Failed to fetch SSO configurations');
+      setSsoConfigs([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   const fetchDomainMappings = useCallback(async () => {
+    setDomainMappingsLoadError(null);
     try {
       const res = await Api.get('/sso/domains');
       const payload = res?.data ?? res;
       setDomainMappings(payload?.mappings || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch domain mappings:', error);
+      setDomainMappingsLoadError(error?.message || 'Failed to fetch SSO domain mappings');
       setDomainMappings([]);
     }
   }, []);
@@ -324,8 +332,8 @@ export const SSOConfigurationView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Key className="text-violet-500" size={20} />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+              <Key className="text-primary-500" size={20} />
             </div>
             <div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
@@ -384,7 +392,7 @@ export const SSOConfigurationView: React.FC = () => {
             placeholder="Search organizations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-violet-500/20"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/20"
           />
         </div>
         <select
@@ -398,7 +406,7 @@ export const SSOConfigurationView: React.FC = () => {
         </select>
         <button
           onClick={() => setShowConfigModal(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
         >
           <Key size={18} />
           Configure SSO
@@ -407,154 +415,163 @@ export const SSOConfigurationView: React.FC = () => {
 
       {/* SSO Configs Table */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Organization
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Provider
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Policies
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {filteredConfigs.map((config) => (
-              <tr
-                key={config.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                      {config.organizationName.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white">
-                        {config.organizationName}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        {config.organizationId.slice(0, 8)}...
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {config.providerType === 'google' && (
-                      <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />
-                    )}
-                    {config.providerType === 'saml' && (
-                      <Shield size={18} className="text-blue-500" />
-                    )}
-                    {config.providerType === 'azure_ad' && (
-                      <Shield size={18} className="text-sky-500" />
-                    )}
-                    {config.providerType === 'okta' && (
-                      <Shield size={18} className="text-indigo-500" />
-                    )}
-                    <span className="text-slate-700 dark:text-slate-300 capitalize">
-                      {config.providerName || config.providerType.replace('_', ' ')}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {config.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2 size={12} />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
-                        <XCircle size={12} />
-                        Inactive
-                      </span>
-                    )}
-                    {config.isVerified && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        Verified
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {config.enforceSso && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400">
-                        SSO Only
-                      </span>
-                    )}
-                    {config.autoProvisionUsers && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                        Auto-provision
-                      </span>
-                    )}
-                    {config.allowPasswordLogin && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
-                        Password fallback
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {new Date(config.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => toggleSSOConfig(config.id, config.isActive)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        config.isActive
-                          ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'
-                          : 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
-                      }`}
-                    >
-                      {config.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => deleteSSOConfig(config.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => setEditingConfig(config)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                    >
-                      <MoreVertical size={16} className="text-slate-400 dark:text-slate-500" />
-                    </button>
-                  </div>
-                </td>
+        {ssoConfigsLoadError ? (
+          <div className="p-6">
+            <DegradedState
+              title="SSO configurations unavailable"
+              description={ssoConfigsLoadError}
+            />
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Organization
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Provider
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Policies
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ))}
-            {filteredConfigs.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <div className="text-slate-500 dark:text-slate-400">
-                    <Key size={40} className="mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No SSO configurations found</p>
-                    <p className="text-sm">
-                      Configure SSO for organizations to enable enterprise authentication
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {filteredConfigs.map((config) => (
+                <tr
+                  key={config.id}
+                  className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
+                        {config.organizationName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">
+                          {config.organizationName}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          {config.organizationId.slice(0, 8)}...
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {config.providerType === 'google' && (
+                        <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />
+                      )}
+                      {config.providerType === 'saml' && (
+                        <Shield size={18} className="text-blue-500" />
+                      )}
+                      {config.providerType === 'azure_ad' && (
+                        <Shield size={18} className="text-sky-500" />
+                      )}
+                      {config.providerType === 'okta' && (
+                        <Shield size={18} className="text-indigo-500" />
+                      )}
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">
+                        {config.providerName || config.providerType.replace('_', ' ')}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {config.isActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 size={12} />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
+                          <XCircle size={12} />
+                          Inactive
+                        </span>
+                      )}
+                      {config.isVerified && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {config.enforceSso && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                          SSO Only
+                        </span>
+                      )}
+                      {config.autoProvisionUsers && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                          Auto-provision
+                        </span>
+                      )}
+                      {config.allowPasswordLogin && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
+                          Password fallback
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                    {new Date(config.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => toggleSSOConfig(config.id, config.isActive)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          config.isActive
+                            ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
+                        }`}
+                      >
+                        {config.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => deleteSSOConfig(config.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => setEditingConfig(config)}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                      >
+                        <MoreVertical size={16} className="text-slate-400 dark:text-slate-500" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredConfigs.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <div className="text-slate-500 dark:text-slate-400">
+                      <Key size={40} className="mx-auto mb-3 opacity-30" />
+                      <p className="font-medium">No SSO configurations found</p>
+                      <p className="text-sm">
+                        Configure SSO for organizations to enable enterprise authentication
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
@@ -563,7 +580,7 @@ export const SSOConfigurationView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-red-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-rose-500 flex items-center justify-center">
             <Globe size={24} className="text-white" />
           </div>
           <div className="flex-1">
@@ -581,11 +598,11 @@ export const SSOConfigurationView: React.FC = () => {
             <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 mt-0.5" />
             <div>
               <h4 className="font-medium text-amber-900 dark:text-amber-300">
-                SSO login flow not enabled
+                OIDC login flow is active
               </h4>
               <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-                This panel stores configuration in the database. OIDC callback processing is not
-                implemented in this environment yet.
+                This panel writes to the SSO router used by `/api/sso/oidc/authorize` and
+                `/api/sso/oidc/callback`. Verify the provider before enforcing SSO.
               </p>
             </div>
           </div>
@@ -598,7 +615,7 @@ export const SSOConfigurationView: React.FC = () => {
               className={`p-4 rounded-lg border ${
                 message.type === 'success'
                   ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
+                  : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400'
               }`}
             >
               {message.text}
@@ -689,7 +706,7 @@ export const SSOConfigurationView: React.FC = () => {
             <button
               onClick={saveGoogleConfig}
               disabled={saving || !googleForm.organizationId || !googleForm.clientId}
-              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
             >
               {saving && <Loader2 size={16} className="animate-spin" />}
               {saving ? 'Saving...' : 'Save Configuration'}
@@ -722,11 +739,11 @@ export const SSOConfigurationView: React.FC = () => {
             <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 mt-0.5" />
             <div>
               <h4 className="font-medium text-amber-900 dark:text-amber-300">
-                SSO login flow not enabled
+                SAML login flow is active
               </h4>
               <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-                This panel stores configuration in the database. SAML callback processing is not
-                implemented in this environment yet.
+                This panel writes to the SSO router used by `/api/sso/saml/login` and
+                `/api/sso/saml/callback`. Validate metadata before enforcing SSO.
               </p>
             </div>
           </div>
@@ -791,7 +808,7 @@ export const SSOConfigurationView: React.FC = () => {
               a.click();
               URL.revokeObjectURL(url);
             }}
-            className="mt-3 px-3 py-1.5 text-sm text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors flex items-center gap-2"
+            className="mt-3 px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors flex items-center gap-2"
           >
             <Download size={14} />
             Download SP Metadata XML
@@ -913,7 +930,7 @@ export const SSOConfigurationView: React.FC = () => {
             <button
               onClick={handleSaveSaml}
               disabled={savingSaml || !samlForm.organizationId}
-              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {savingSaml && <Loader2 size={16} className="animate-spin" />}
               Save SAML Configuration
@@ -928,7 +945,7 @@ export const SSOConfigurationView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
             <Globe size={24} className="text-white" />
           </div>
           <div className="flex-1">
@@ -939,7 +956,7 @@ export const SSOConfigurationView: React.FC = () => {
           </div>
           <button
             onClick={() => setShowAddDomainModal(true)}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
             <Globe size={16} />
             Add Domain
@@ -1004,7 +1021,7 @@ export const SSOConfigurationView: React.FC = () => {
                   <button
                     onClick={handleAddDomain}
                     disabled={savingDomain || !newDomain.domain || !newDomain.organizationId}
-                    className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
                   >
                     {savingDomain && <Loader2 size={16} className="animate-spin" />}
                     Save
@@ -1030,80 +1047,89 @@ export const SSOConfigurationView: React.FC = () => {
           </div>
         </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Domain
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Organization
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Added
-              </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {domainMappings.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
-                >
-                  No domain mappings configured yet
-                </td>
+        {domainMappingsLoadError ? (
+          <div className="p-6">
+            <DegradedState
+              title="SSO domain mappings unavailable"
+              description={domainMappingsLoadError}
+            />
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Domain
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Organization
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Added
+                </th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ) : (
-              domainMappings.map((m: any) => (
-                <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-navy-900/40">
-                  <td className="px-4 py-3 text-sm text-slate-900 dark:text-white font-mono">
-                    {m.domain || (Array.isArray(m.domains) ? m.domains[0] : '—')}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                    {m.organizationName || m.organizationId}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        m.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
-                      }`}
-                    >
-                      {m.status || 'active'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                    {m.createdAt ? new Date(m.createdAt).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm('Delete this domain mapping?')) return;
-                        try {
-                          await (Api as any).deleteSsoConfig(m.id);
-                          fetchDomainMappings();
-                        } catch {
-                          toast.error('Failed to delete domain mapping');
-                        }
-                      }}
-                      className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      Delete
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {domainMappings.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
+                  >
+                    No domain mappings configured yet
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                domainMappings.map((m: any) => (
+                  <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-navy-900/40">
+                    <td className="px-4 py-3 text-sm text-slate-900 dark:text-white font-mono">
+                      {m.domain || (Array.isArray(m.domains) ? m.domains[0] : '—')}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                      {m.organizationName || m.organizationId}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          m.status === 'active'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
+                        }`}
+                      >
+                        {m.status || 'active'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                      {m.createdAt ? new Date(m.createdAt).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm('Delete this domain mapping?')) return;
+                          try {
+                            await (Api as any).deleteSsoConfig(m.id);
+                            fetchDomainMappings();
+                          } catch {
+                            toast.error('Failed to delete domain mapping');
+                          }
+                        }}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
@@ -1153,7 +1179,7 @@ export const SSOConfigurationView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1166,7 +1192,7 @@ export const SSOConfigurationView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         <>

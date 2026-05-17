@@ -199,7 +199,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('admin.permissions.searchPlaceholder', 'Filter by name or keyword...')}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
         </div>
 
@@ -207,14 +207,14 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setExpandedCategories(new Set(categories))}
-            className="text-sm text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400"
+            className="text-sm text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
           >
             {t('admin.permissions.expandAll', 'Expand all')}
           </button>
           <span className="text-slate-300">|</span>
           <button
             onClick={() => setExpandedCategories(new Set())}
-            className="text-sm text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400"
+            className="text-sm text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
           >
             {t('admin.permissions.collapseAll', 'Collapse all')}
           </button>
@@ -276,7 +276,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                       <td className="px-4 py-2">
                         <button
                           onClick={() => toggleCategory(category)}
-                          className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400"
+                          className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
                         >
                           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                           {category}
@@ -309,9 +309,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                   className={cn(
                                     'w-6 h-6 rounded flex items-center justify-center transition-all',
                                     allGranted
-                                      ? 'bg-violet-600 text-white'
+                                      ? 'bg-primary-600 text-white'
                                       : someGranted
-                                        ? 'bg-violet-200 dark:bg-violet-900/50 text-violet-600'
+                                        ? 'bg-primary-200 dark:bg-primary-900/50 text-primary-600'
                                         : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-navy-600'
                                   )}
                                 >
@@ -372,11 +372,11 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                   className={cn(
                                     'w-5 h-5 rounded flex items-center justify-center transition-all',
                                     granted
-                                      ? 'bg-violet-600 text-white'
+                                      ? 'bg-primary-600 text-white'
                                       : 'bg-slate-200 dark:bg-navy-700',
                                     !readOnly &&
                                       !isLocked &&
-                                      'cursor-pointer hover:ring-2 hover:ring-violet-500/20',
+                                      'cursor-pointer hover:ring-2 hover:ring-primary-500/20',
                                     (readOnly || isLocked) && 'cursor-not-allowed opacity-60'
                                   )}
                                 >
@@ -398,14 +398,14 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
       {/* Legend */}
       <div className="flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-violet-600 flex items-center justify-center">
+          <div className="w-4 h-4 rounded bg-primary-600 flex items-center justify-center">
             <Check size={10} className="text-white" />
           </div>
           <span>{t('admin.permissions.legend.granted', 'Granted')}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-violet-200 dark:bg-violet-900/50 flex items-center justify-center">
-            <Minus size={10} className="text-violet-600" />
+          <div className="w-4 h-4 rounded bg-primary-200 dark:bg-primary-900/50 flex items-center justify-center">
+            <Minus size={10} className="text-primary-600" />
           </div>
           <span>{t('admin.permissions.legend.partial', 'Partial')}</span>
         </div>

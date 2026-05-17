@@ -222,9 +222,10 @@ function toneClasses(tone: RoleDef['tone']) {
       };
     case 'violet':
       return {
-        icon: 'text-violet-600 dark:text-violet-400',
-        chip: 'bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/30',
-        active: 'border-violet-300 dark:border-violet-500/50 bg-violet-50/80 dark:bg-violet-500/10',
+        icon: 'text-primary-600 dark:text-primary-400',
+        chip: 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30',
+        active:
+          'border-primary-300 dark:border-primary-500/50 bg-primary-50/80 dark:bg-primary-500/10',
       };
     case 'emerald':
       return {
@@ -241,9 +242,9 @@ function toneClasses(tone: RoleDef['tone']) {
       };
     case 'cyan':
       return {
-        icon: 'text-cyan-600 dark:text-cyan-400',
-        chip: 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/30',
-        active: 'border-cyan-300 dark:border-cyan-500/50 bg-cyan-50/80 dark:bg-cyan-500/10',
+        icon: 'text-blue-600 dark:text-blue-400',
+        chip: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30',
+        active: 'border-blue-300 dark:border-blue-500/50 bg-blue-50/80 dark:bg-blue-500/10',
       };
     case 'rose':
       return {
@@ -451,7 +452,7 @@ export function InitiativeTeamComposerModal(props: {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-purple-500 text-white">
+                <div className="p-2 rounded-xl bg-primary-500 text-white">
                   <Users size={16} />
                 </div>
                 <div>
@@ -515,7 +516,7 @@ export function InitiativeTeamComposerModal(props: {
                     type="button"
                     onClick={onAddSelectedUser}
                     disabled={!selectedUserId}
-                    className="h-10 px-3 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                    className="h-10 px-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
                   >
                     <Plus size={16} />
                     {isPl ? 'Dodaj' : 'Add'}
@@ -546,7 +547,7 @@ export function InitiativeTeamComposerModal(props: {
                             onClick={() => setActive({ kind: 'user', id: u.id })}
                             className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl border transition-colors text-left ${
                               isActive
-                                ? 'border-purple-300/70 dark:border-purple-500/40 bg-purple-50/70 dark:bg-purple-500/10'
+                                ? 'border-primary-300/70 dark:border-primary-500/40 bg-primary-50/70 dark:bg-primary-500/10'
                                 : 'border-slate-200/70 dark:border-navy-700/60 hover:bg-slate-50/60 dark:hover:bg-navy-800/40'
                             }`}
                           >
@@ -644,7 +645,7 @@ export function InitiativeTeamComposerModal(props: {
                     <button
                       type="button"
                       onClick={() => setShowInvite((v) => !v)}
-                      className="text-xs font-semibold text-purple-600 dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-200"
+                      className="text-xs font-semibold text-primary-600 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-200"
                     >
                       {showInvite ? (isPl ? 'Zwiń' : 'Hide') : isPl ? 'Dodaj' : 'Add'}
                     </button>
@@ -755,7 +756,7 @@ export function InitiativeTeamComposerModal(props: {
                           type="button"
                           onClick={inviteConsultant}
                           disabled={busy || !inviteEmail}
-                          className="h-10 px-4 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                          className="h-10 px-4 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
                         >
                           {busy ? (
                             <Loader2 size={16} className="animate-spin" />

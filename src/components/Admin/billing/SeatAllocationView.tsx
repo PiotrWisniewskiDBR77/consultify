@@ -122,7 +122,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
       case 'view-only':
         return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
       case 'core':
-        return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300';
+        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300';
       case 'developer':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'sales-pro':
@@ -188,12 +188,12 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
         </div>
 
         {/* Quick Action */}
-        <div className="p-4 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl">
+        <div className="p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-violet-100">
+            <span className="text-sm text-primary-100">
               {t('admin.billing.seats.needMore', 'Need more seats?')}
             </span>
-            <ArrowUpRight size={16} className="text-violet-100" />
+            <ArrowUpRight size={16} className="text-primary-100" />
           </div>
           <Button
             variant="secondary"
@@ -236,8 +236,8 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                 className={cn(
                   'p-4 rounded-xl border text-left transition-all',
                   isSelected
-                    ? 'border-violet-500 ring-2 ring-violet-500/20'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-700'
+                    ? 'border-primary-500 ring-2 ring-primary-500/20'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700'
                 )}
               >
                 <div className="flex items-center justify-between mb-3">

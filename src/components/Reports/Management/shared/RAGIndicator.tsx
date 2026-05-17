@@ -29,10 +29,10 @@ const statusConfig = {
     ring: 'ring-amber-500/30',
   },
   RED: {
-    bg: 'bg-red-500',
-    text: 'text-red-500',
+    bg: 'bg-rose-500',
+    text: 'text-rose-500',
     label: 'Off Track',
-    ring: 'ring-red-500/30',
+    ring: 'ring-rose-500/30',
   },
   GREY: {
     bg: 'bg-slate-400',

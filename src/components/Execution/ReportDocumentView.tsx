@@ -190,7 +190,7 @@ const Section: React.FC<{
 }> = ({ title, subtitle, children, accent = 'violet' }) => {
   const accentBar: Record<string, string> = {
     violet: 'bg-primary-500',
-    cyan: 'bg-cyan-500',
+    cyan: 'bg-blue-500',
     amber: 'bg-amber-500',
     rose: 'bg-rose-500',
     emerald: 'bg-emerald-500',
@@ -532,7 +532,7 @@ const StatusDot: React.FC<{ status?: string }> = ({ status }) => {
       : n === 'DONE' || n === 'APPROVED'
         ? 'bg-emerald-500'
         : n === 'EXECUTING' || n === 'IN_PROGRESS' || n === 'PENDING'
-          ? 'bg-cyan-500'
+          ? 'bg-blue-500'
           : 'bg-slate-400';
   return (
     <span className="inline-flex items-center gap-1.5">
@@ -565,7 +565,7 @@ const IssueTag: React.FC<{ row: InitiativeRow }> = ({ row }) => {
     );
   if (row.overdueDecisions > 0)
     return (
-      <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+      <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-400">
         Decision debt
       </span>
     );
@@ -1835,7 +1835,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
           {/* AI Executive Readout */}
           <GlassCard className="overflow-hidden">
             <div className="flex items-stretch">
-              <div className="w-1 shrink-0 bg-gradient-to-b from-primary-500 to-cyan-500" />
+              <div className="w-1 shrink-0 bg-gradient-to-b from-primary-500 to-blue-500" />
               <div className="flex-1 p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <Sparkles size={14} className="text-primary-400" />
@@ -1890,10 +1890,10 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
           {safeReport.aiRecommendedActions.length > 0 && (
             <GlassCard className="overflow-hidden">
               <div className="flex items-stretch">
-                <div className="w-1 shrink-0 bg-gradient-to-b from-cyan-500 to-emerald-500" />
+                <div className="w-1 shrink-0 bg-gradient-to-b from-blue-500 to-emerald-500" />
                 <div className="flex-1 p-4">
                   <div className="mb-3 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-cyan-400" />
+                    <CheckCircle2 size={14} className="text-blue-400" />
                     <h3 className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
                       AI Recommended Actions
                     </h3>

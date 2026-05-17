@@ -12,13 +12,16 @@ const mockAxios = {
 };
 
 // Mock logger
-vi.mock('../../../server/utils/logger.js', () => ({
-  default: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  },
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  http: vi.fn(),
+};
+
+vi.mock('../../../server/src/utils/Logger.js', () => ({
+  default: mockLogger,
 }));
 
 vi.mock('axios', () => ({
@@ -170,15 +173,12 @@ describe('SiemService', () => {
       const freshService = module.default;
       freshService.setDependencies({ axios: mockAxios, enabled: true });
 
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       mockAxios.post.mockRejectedValueOnce(new Error('Network error'));
 
       await freshService.stream({ action: 'test' });
       await freshService.flush();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[SIEM] Delivery failed:')
-      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('[SIEM] Delivery failed:'));
     });
 
     it('should re-buffer events on failure (limited depth)', async () => {

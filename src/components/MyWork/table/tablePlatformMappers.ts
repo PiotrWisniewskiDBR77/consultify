@@ -94,12 +94,33 @@ export function columnToField(column: ColumnDef): Partial<TablePlatformField> {
   };
 }
 
+/**
+ * Internal `TableNode.data` keys carrying Block B / record-provenance
+ * metadata. The `__` prefix is intentional and protects the keys from
+ * colliding with field IDs (which are UUIDs, never starting with `__`).
+ */
+export const PROVENANCE_DATA_KEYS = {
+  confidenceScore: '__confidence_score',
+  validationStatus: '__validation_status',
+} as const;
+
 /** Convert TablePlatformRecord to legacy TableNode.
  * Data is keyed by fieldId (column.key) for compatibility with CellRenderer/GridView.
+ *
+ * Provenance metadata (`confidence_score`, `validation_status`) is mirrored
+ * onto the node under `__`-prefixed keys so the grid gutter and
+ * RowDetailPanel can read it without touching every consumer of
+ * `node.data`. Keys are listed in `PROVENANCE_DATA_KEYS`.
  */
 export function recordToNode(record: TablePlatformRecord, fields: TablePlatformField[]): TableNode {
   const data: Record<string, unknown> = { ...(record.data ?? {}) };
   data.id = record.id;
+  if (record.confidence_score !== undefined) {
+    data[PROVENANCE_DATA_KEYS.confidenceScore] = record.confidence_score;
+  }
+  if (record.validation_status !== undefined) {
+    data[PROVENANCE_DATA_KEYS.validationStatus] = record.validation_status;
+  }
   return {
     id: record.id,
     type: 'idea',

@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
 import { User } from '../../types';
+import { DegradedState } from '../Admin/AdminState';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -114,28 +115,8 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   ]);
 
   // Feature flags state
-  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([
-    {
-      key: 'ENABLE_ANALYTICS',
-      value: true,
-      type: 'boolean',
-      description: 'Enable analytics tracking',
-    },
-    {
-      key: 'MAX_UPLOAD_SIZE_MB',
-      value: 50,
-      type: 'number',
-      description: 'Maximum file upload size',
-    },
-    { key: 'API_VERSION', value: 'v2', type: 'string', description: 'Current API version' },
-    {
-      key: 'ENABLE_WEBSOCKETS',
-      value: true,
-      type: 'boolean',
-      description: 'Enable real-time updates',
-    },
-    { key: 'DEBUG_MODE', value: false, type: 'boolean', description: 'Enable debug mode' },
-  ]);
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
+  const [featureFlagsLoadError, setFeatureFlagsLoadError] = useState<string | null>(null);
 
   // Debug info
   const debugInfo = {
@@ -152,66 +133,86 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
     apiEndpoint: process.env.NEXT_PUBLIC_API_URL || '/api',
   };
 
+  const applyPersistedSettings = useCallback((settings: Record<string, unknown>) => {
+    const enabledBetaFeatures = Array.isArray(settings.betaFeatures)
+      ? (settings.betaFeatures as string[])
+      : [];
+    setDeveloperMode(Boolean(settings.developerMode));
+    setApiLogging(Boolean(settings.apiLogging));
+    setShowDebugInfo(Boolean(settings.showDebugInfo));
+    setVerboseErrors(Boolean(settings.verboseErrors));
+    setBetaFeatures((prev) =>
+      prev.map((feature) => ({
+        ...feature,
+        enabled: enabledBetaFeatures.includes(feature.id),
+      }))
+    );
+  }, []);
+
+  const refreshDeveloperSettings = useCallback(async () => {
+    const response = await Api.getDeveloperSettings();
+    if (response?.settings) {
+      applyPersistedSettings(response.settings);
+    }
+  }, [applyPersistedSettings]);
+
+  const refreshFeatureFlags = useCallback(async () => {
+    setFeatureFlagsLoadError(null);
+    const response = await Api.getFeatureFlags();
+    const flags = Array.isArray(response) ? response : response?.flags;
+    if (!Array.isArray(flags)) {
+      throw new Error('Feature flags response was invalid');
+    }
+    setFeatureFlags(
+      flags.map((flag: any) => ({
+        key: flag.key || flag.name,
+        value: flag.value ?? flag.enabled,
+        type:
+          flag.type ||
+          (typeof (flag.value ?? flag.enabled) === 'number'
+            ? 'number'
+            : typeof (flag.value ?? flag.enabled) === 'string'
+              ? 'string'
+              : 'boolean'),
+        description: flag.description,
+      }))
+    );
+  }, []);
+
+  const getBetaFeatureName = (feature: BetaFeature) =>
+    t(`settings.beta.features.${feature.id}.name`, feature.name);
+
+  const getBetaFeatureDescription = (feature: BetaFeature) =>
+    t(`settings.beta.features.${feature.id}.description`, feature.description);
+
+  const getFeatureFlagDescription = (flag: FeatureFlag) =>
+    t(`settings.flags.descriptions.${flag.key}`, flag.description || '');
+
   // Load settings from backend API
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = (await Api.getDeveloperSettings()) as
-          | {
-              settings?: {
-                developerMode?: boolean;
-                apiLogging?: boolean;
-                showDebugInfo?: boolean;
-                verboseErrors?: boolean;
-                betaFeatures?: string[];
-              };
-            }
-          | null
-          | undefined;
-        if (response?.settings) {
-          const betaFeatures = response.settings.betaFeatures ?? [];
-          setDeveloperMode(response.settings.developerMode || false);
-          setApiLogging(response.settings.apiLogging || false);
-          setShowDebugInfo(response.settings.showDebugInfo || false);
-          setVerboseErrors(response.settings.verboseErrors || false);
-          if (betaFeatures.length > 0) {
-            setBetaFeatures((prev) =>
-              prev.map((f) => ({
-                ...f,
-                enabled: betaFeatures.includes(f.id),
-              }))
-            );
-          }
-        } else {
-          // Fallback to localStorage for migration
-          const savedSettings = localStorage.getItem('developerSettings');
-          if (savedSettings) {
-            const settings = JSON.parse(savedSettings);
-            setDeveloperMode(settings.developerMode || false);
-            setApiLogging(settings.apiLogging || false);
-            setShowDebugInfo(settings.showDebugInfo || false);
-            setVerboseErrors(settings.verboseErrors || false);
-          }
+        const [developerResult, flagsResult] = await Promise.allSettled([
+          refreshDeveloperSettings(),
+          refreshFeatureFlags(),
+        ]);
+        if (developerResult.status === 'rejected') {
+          throw developerResult.reason;
+        }
+        if (flagsResult.status === 'rejected') {
+          setFeatureFlags([]);
+          setFeatureFlagsLoadError(
+            flagsResult.reason instanceof Error
+              ? flagsResult.reason.message
+              : 'Failed to load feature flags'
+          );
         }
       } catch (e) {
         console.error('Failed to load developer settings:', e);
-        // Fallback to localStorage
-        const savedSettings = localStorage.getItem('developerSettings');
-        if (savedSettings) {
-          try {
-            const settings = JSON.parse(savedSettings);
-            setDeveloperMode(settings.developerMode || false);
-            setApiLogging(settings.apiLogging || false);
-            setShowDebugInfo(settings.showDebugInfo || false);
-            setVerboseErrors(settings.verboseErrors || false);
-          } catch (parseError) {
-            console.error('Failed to parse developer settings:', parseError);
-          }
-        }
       }
     };
     loadSettings();
-  }, []);
+  }, [refreshDeveloperSettings, refreshFeatureFlags]);
 
   // Save settings to backend API
   const saveSettings = useCallback(async () => {
@@ -224,16 +225,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         verboseErrors,
         betaFeatures: enabledBetaIds,
       });
-      // Also save to localStorage for immediate page loads
-      localStorage.setItem(
-        'developerSettings',
-        JSON.stringify({
-          developerMode,
-          apiLogging,
-          showDebugInfo,
-          verboseErrors,
-        })
-      );
+      await refreshDeveloperSettings();
       toast({
         title: t('settings.developer.saved', 'Settings Saved'),
         description: t(
@@ -249,7 +241,16 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         variant: 'destructive',
       });
     }
-  }, [developerMode, apiLogging, showDebugInfo, verboseErrors, betaFeatures, toast, t]);
+  }, [
+    developerMode,
+    apiLogging,
+    showDebugInfo,
+    verboseErrors,
+    betaFeatures,
+    refreshDeveloperSettings,
+    toast,
+    t,
+  ]);
 
   // Toggle beta feature and save to backend
   const toggleBetaFeature = async (featureId: string) => {
@@ -267,6 +268,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         verboseErrors,
         betaFeatures: enabledBetaIds,
       });
+      await refreshDeveloperSettings();
       toast({
         title: t('settings.beta.updated', 'Feature Updated'),
         description: t('settings.beta.updatedDesc', 'Beta feature setting has been saved'),
@@ -299,7 +301,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         return (
           <Badge
             variant="outline"
-            className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+            className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
           >
             Alpha
           </Badge>
@@ -514,7 +516,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                         className={cn(
                           'p-2 rounded-lg',
                           feature.enabled
-                            ? 'bg-violet-100 dark:bg-violet-900/30'
+                            ? 'bg-primary-100 dark:bg-primary-900/30'
                             : 'bg-slate-100 dark:bg-slate-800'
                         )}
                       >
@@ -522,7 +524,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                           className={cn(
                             'w-5 h-5',
                             feature.enabled
-                              ? 'text-violet-600 dark:text-violet-400'
+                              ? 'text-primary-600 dark:text-primary-400'
                               : 'text-slate-400 dark:text-slate-500'
                           )}
                         />
@@ -530,12 +532,12 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium text-slate-900 dark:text-white">
-                            {feature.name}
+                            {getBetaFeatureName(feature)}
                           </h4>
                           {getStatusBadge(feature.status)}
                         </div>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                          {feature.description}
+                          {getBetaFeatureDescription(feature)}
                         </p>
                         {feature.releaseDate && (
                           <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
@@ -576,48 +578,66 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                 <CardTitle className="text-base">
                   {t('settings.flags.current', 'Current Configuration')}
                 </CardTitle>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    refreshFeatureFlags().catch((error) => {
+                      setFeatureFlags([]);
+                      setFeatureFlagsLoadError(
+                        error instanceof Error ? error.message : 'Failed to load feature flags'
+                      );
+                    })
+                  }
+                >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {t('common.refresh', 'Refresh')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {featureFlags.map((flag) => (
-                  <div
-                    key={flag.key}
-                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
-                  >
-                    <div>
-                      <code className="text-sm font-mono text-violet-600 dark:text-violet-400">
-                        {flag.key}
-                      </code>
-                      {flag.description && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {flag.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono">
-                        {flag.type}
-                      </Badge>
-                      {flag.type === 'boolean' ? (
-                        flag.value ? (
-                          <ToggleRight className="w-5 h-5 text-emerald-500" />
+              {featureFlagsLoadError ? (
+                <DegradedState
+                  title="Feature flags unavailable"
+                  description={featureFlagsLoadError}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {featureFlags.map((flag) => (
+                    <div
+                      key={flag.key}
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                    >
+                      <div>
+                        <code className="text-sm font-mono text-primary-600 dark:text-primary-400">
+                          {flag.key}
+                        </code>
+                        {flag.description && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {getFeatureFlagDescription(flag)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="font-mono">
+                          {flag.type}
+                        </Badge>
+                        {flag.type === 'boolean' ? (
+                          flag.value ? (
+                            <ToggleRight className="w-5 h-5 text-emerald-500" />
+                          ) : (
+                            <ToggleLeft className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                          )
                         ) : (
-                          <ToggleLeft className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                        )
-                      ) : (
-                        <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                          {String(flag.value)}
-                        </span>
-                      )}
+                          <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                            {String(flag.value)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -7,6 +7,17 @@ import { ProductEntryPage } from '@/views/ProductEntryPage';
 
 const annaAssistantWidgetSpy = vi.fn();
 
+class MockIntersectionObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
+Object.defineProperty(window, 'IntersectionObserver', {
+  writable: true,
+  value: MockIntersectionObserver,
+});
+
 vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: vi.fn(),
 }));

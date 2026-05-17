@@ -35,6 +35,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { downloadSheetArtifactXlsx } from '@/utils/sheetArtifactOpen';
 
 import type { ArtifactPreview, KimiLane, TaskStep } from './KimiWorkspaceShell';
+import { loadTabelePreviewByTableId } from './tabele/loadTabelePreview';
 
 function deriveEffectiveStatus(
   runStatus: ArtifactRunRecord['runStatus'],
@@ -297,6 +298,49 @@ export interface KimiPipelineState {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isUuidLike = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v.trim());
 
+export function resolveTabeleMaterializedTableId(
+  lane: KimiLane,
+  origin: ArtifactRunRecord['materializationOrigin']
+): string | null {
+  if (lane !== 'tabele') return null;
+  if (origin?.originRuntime !== 'sheet') return null;
+  const tableId = String(origin.originRecordId || '').trim();
+  return tableId || null;
+}
+
+async function resolveAccessibleSheetTableId(candidateId: string): Promise<string | null> {
+  const normalized = String(candidateId || '').trim();
+  if (!normalized) return null;
+  try {
+    await TablePlatformApi.getTable(normalized);
+    return normalized;
+  } catch {
+    let fromArtifact: string | null = null;
+    try {
+      const actionTargetRaw = await Api.get(
+        `/artifacts/${encodeURIComponent(normalized)}/action-target`
+      );
+      const actionTarget = (actionTargetRaw as { data?: any })?.data ?? actionTargetRaw;
+      const originRuntime = String(actionTarget?.originRuntime || '')
+        .trim()
+        .toLowerCase();
+      const originRecordId = String(actionTarget?.originRecordId || '').trim();
+      if (originRuntime === 'sheet' && originRecordId) {
+        fromArtifact = originRecordId;
+      }
+    } catch {
+      fromArtifact = null;
+    }
+    if (!fromArtifact || fromArtifact === normalized) return null;
+    try {
+      await TablePlatformApi.getTable(fromArtifact);
+      return fromArtifact;
+    } catch {
+      return null;
+    }
+  }
+}
+
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const conversationId = useConversationStore((s) => s.activeConversationId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
@@ -304,9 +348,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const currentUser = useAppStore((s) => s.currentUser);
 
   const outputType: ArtifactPlanOutputType =
-    lane === 'wordy' ? 'report' : lane === 'excele' ? 'sheet' : 'presentation';
+    lane === 'wordy' ? 'report' : lane === 'excele' || lane === 'tabele' ? 'sheet' : 'presentation';
   const artifactFamily: ArtifactFamily =
-    lane === 'wordy' ? 'document' : lane === 'excele' ? 'sheet' : 'presentation';
+    lane === 'wordy'
+      ? 'document'
+      : lane === 'excele' || lane === 'tabele'
+        ? 'sheet'
+        : 'presentation';
 
   const { data: snapshots } = useV8Snapshots(conversationId ? conversationId : undefined);
   const captureSnapshot = useV8CaptureSnapshot();
@@ -383,7 +431,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       const origin = currentRun.materializationOrigin;
       const title =
         currentRun.plan.titleHint ||
-        (lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation');
+        (lane === 'wordy'
+          ? 'Document'
+          : lane === 'excele'
+            ? 'Spreadsheet'
+            : lane === 'tabele'
+              ? 'Table'
+              : 'Presentation');
 
       if (lane === 'prezentacje' && origin?.originRecordId) {
         const deckId = origin.originRecordId;
@@ -436,12 +490,35 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               title: string;
               bulletPoints?: string[];
             }> = [];
+            const mapCardsToSlides = (cards: any[]) =>
+              cards.map((card: any, index: number) => {
+                const blocks = Array.isArray(card?.blocks) ? card.blocks : [];
+                const bulletPoints = blocks
+                  .map((block: any) => {
+                    if (typeof block?.content === 'string') return block.content;
+                    if (typeof block?.content?.text === 'string') return block.content.text;
+                    if (Array.isArray(block?.content?.items)) return block.content.items.join(' ');
+                    return '';
+                  })
+                  .map((value: string) => value.trim())
+                  .filter(Boolean)
+                  .slice(0, 4);
+                return {
+                  slideId: card?.card_id || card?.id || String(index + 1),
+                  intent: card?.intent || 'content',
+                  title: card?.title || card?.key_message || `Slide ${index + 1}`,
+                  bulletPoints,
+                };
+              });
             const unifiedJson =
               typeof deckData?.deck_json === 'string'
                 ? JSON.parse(deckData.deck_json)
                 : deckData?.deck_json || deckData?.unified_json;
             const rawSlides =
               unifiedJson?.slides ||
+              (Array.isArray(unifiedJson?.cards) && unifiedJson.cards.length > 0
+                ? mapCardsToSlides(unifiedJson.cards)
+                : null) ||
               (Array.isArray(deckData?.outline_json)
                 ? deckData.outline_json.map((item: any, index: number) => ({
                     id: item?.slideId || String(index + 1),
@@ -607,12 +684,78 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         return;
       }
 
+      const tabeleTableId = resolveTabeleMaterializedTableId(lane, origin);
+      if (tabeleTableId) {
+        const tableId = await resolveAccessibleSheetTableId(tabeleTableId);
+        if (!tableId) {
+          const message =
+            'Table Studio materialization returned an unresolved table reference. Retry generation or reopen from Recent after backend mapping is fixed.';
+          setStartupError(message);
+          setPreview({
+            type: 'tabele',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.csv`,
+            summary: message,
+            kpiItems: [
+              { label: 'Rows', value: '0' },
+              { label: 'Columns', value: '0' },
+              { label: 'Status', value: 'Mapping failed' },
+              { label: 'Format', value: 'Table / CSV' },
+            ],
+            tableData: { columns: [], rows: [] },
+            tabeleSchemaFields: [],
+            tabeleRelations: [],
+          });
+          setContentGenerated(true);
+          return;
+        }
+        const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
+
+        const fullPreview = await loadTabelePreviewByTableId(tableId, {
+          titleFallback: title,
+          ...(workspaceIdForProposals ? { workspaceIdForProposals } : {}),
+        }).catch(() => null);
+
+        if (fullPreview) {
+          setPreview({ ...fullPreview, title: fullPreview.title || title });
+        } else {
+          const message =
+            'Table Studio materialization completed, but the table cannot be loaded from table-platform (404).';
+          setStartupError(message);
+          setPreview({
+            type: 'tabele',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.csv`,
+            summary: message,
+            kpiItems: [
+              { label: 'Rows', value: '0' },
+              { label: 'Columns', value: '0' },
+              { label: 'Status', value: 'Load failed' },
+              { label: 'Format', value: 'Table / CSV' },
+            ],
+            tableId,
+            tableData: { columns: [], rows: [] },
+            tabeleSchemaFields: [],
+            tabeleRelations: [],
+          });
+        }
+        setContentGenerated(true);
+        return;
+      }
+
       if (lane === 'wordy') {
         setPreview({
           type: 'pdf',
           title,
           fileName: `${title.replace(/\s+/g, '_')}.pdf`,
         });
+      } else if (lane === 'tabele') {
+        const message =
+          'Table Studio materialization did not return a Table Platform tableId. Please retry generation.';
+        setStartupError(message);
+        toast.error(message);
+        setContentGenerated(false);
+        return;
       } else {
         setPreview({
           type: 'deck',
@@ -627,10 +770,18 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     };
 
     void runContentGeneration();
-  }, [effectiveStatus, currentRun, lane, lastGoal]);
+  }, [effectiveStatus, currentRun, lane, lastGoal, currentOrganization?.id, currentProjectId]);
 
   const startGeneration = useCallback(
     async (goal: string, templateArtifactId?: string) => {
+      console.info('[KIMI Pipeline] startGeneration invoked', {
+        lane,
+        goalLength: goal.length,
+        hasConversationId: !!conversationId,
+        hasOrgId: !!currentOrganization?.id,
+        hasCurrentUser: !!currentUser,
+        hasTemplate: !!templateArtifactId,
+      });
       setIsStartingPipeline(true);
       setStartupError(null);
       setLastGoal(goal);
@@ -646,7 +797,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       if (!activeConvId) {
         try {
           const laneTitle =
-            lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation';
+            lane === 'wordy'
+              ? 'Document'
+              : lane === 'excele'
+                ? 'Spreadsheet'
+                : lane === 'tabele'
+                  ? 'Table'
+                  : 'Presentation';
           await useConversationStore.getState().createConversation({
             title: `${laneTitle}: ${goal.slice(0, 60)}`,
           });
@@ -657,6 +814,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         if (!activeConvId) {
           setStartupError('Could not create a conversation. Please try again.');
           toast.error('Could not create a conversation. Please try again.');
+          setIsStartingPipeline(false);
           return;
         }
       }
@@ -707,9 +865,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             snapshotId = (snap as { snapshotId?: string })?.snapshotId;
           } catch (snapErr: any) {
             const details = snapErr?.data?.details ?? snapErr?.response?.data?.details;
-            setStartupError(
-              snapErr instanceof Error ? snapErr.message : 'Failed to capture context snapshot.'
-            );
+            const message =
+              snapErr instanceof Error ? snapErr.message : 'Failed to capture context snapshot.';
+            setStartupError(message);
+            toast.error(`Snapshot: ${message}`);
             console.error('[KIMI Pipeline] Snapshot capture failed:', {
               error: snapErr?.message,
               details: JSON.stringify(details, null, 2),
@@ -721,6 +880,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         if (!snapshotId) {
           setStartupError('Failed to capture context snapshot. Try sending a message first.');
           toast.error('Failed to capture context snapshot. Try sending a message first.');
+          setIsStartingPipeline(false);
           return;
         }
 
@@ -739,8 +899,19 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           const preflighted = await preflightRun.mutateAsync(result.run.runId);
           setCurrentRun(preflighted);
           setCurrentPlan(preflighted.plan);
-        } catch {
-          // preflight failures surface via state
+        } catch (preflightErr: any) {
+          const details = preflightErr?.data?.details ?? preflightErr?.response?.data?.details;
+          const message =
+            preflightErr instanceof Error ? preflightErr.message : 'Preflight check failed.';
+          setStartupError(message);
+          toast.error(`Preflight: ${message}`);
+          console.error('[KIMI Pipeline] Preflight failed:', {
+            runId: result.run.runId,
+            error: preflightErr?.message,
+            details: JSON.stringify(details, null, 2),
+          });
+          setIsStartingPipeline(false);
+          return;
         }
 
         try {
@@ -751,17 +922,54 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           if (accepted.executionRunId) {
             try {
               await submitReview.mutateAsync(accepted.executionRunId);
-            } catch {
-              // fallback to interval-driven advance
+            } catch (submitErr: any) {
+              const details = submitErr?.data?.details ?? submitErr?.response?.data?.details;
+              const message =
+                submitErr instanceof Error
+                  ? submitErr.message
+                  : 'Failed to submit execution review.';
+              setStartupError(message);
+              toast.error(`Review: ${message}`);
+              console.error('[KIMI Pipeline] submitReview failed:', {
+                executionRunId: accepted.executionRunId,
+                error: submitErr?.message,
+                details,
+              });
+              setIsStartingPipeline(false);
+              return;
             }
 
             try {
-              await approveRun.mutateAsync({
+              const approved = await approveRun.mutateAsync({
                 runId: accepted.executionRunId,
                 reason: 'KIMI auto-approval for governed artifact generation',
               });
-            } catch {
-              // fallback to interval-driven advance
+              if (approved?.state !== 'approved_for_apply' && approved?.state !== 'applying') {
+                const message = `Execution run is not ready for materialization (state: ${String(approved?.state || 'unknown')})`;
+                setStartupError(message);
+                toast.error(`Approve: ${message}`);
+                console.error('[KIMI Pipeline] approveRun returned non-ready state:', {
+                  executionRunId: accepted.executionRunId,
+                  state: approved?.state,
+                });
+                setIsStartingPipeline(false);
+                return;
+              }
+            } catch (approveErr: any) {
+              const details = approveErr?.data?.details ?? approveErr?.response?.data?.details;
+              const message =
+                approveErr instanceof Error
+                  ? approveErr.message
+                  : 'Failed to approve execution run.';
+              setStartupError(message);
+              toast.error(`Approve: ${message}`);
+              console.error('[KIMI Pipeline] approveRun failed:', {
+                executionRunId: accepted.executionRunId,
+                error: approveErr?.message,
+                details,
+              });
+              setIsStartingPipeline(false);
+              return;
             }
           }
 
@@ -770,16 +978,35 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               runId: accepted.runId,
               params: {
                 title: accepted.plan.titleHint,
-                config: outputType === 'sheet' ? { tableName: accepted.plan.titleHint } : undefined,
+                config:
+                  outputType === 'sheet' ? { tableName: accepted.plan.titleHint, goal } : undefined,
               },
             });
             setCurrentRun(materialized);
             setCurrentPlan(materialized.plan);
-          } catch {
-            // fallback to interval-driven advance
+          } catch (materializeErr: any) {
+            const details =
+              materializeErr?.data?.details ?? materializeErr?.response?.data?.details;
+            const message =
+              materializeErr instanceof Error ? materializeErr.message : 'Materialization failed.';
+            setStartupError(message);
+            toast.error(`Materialize: ${message}`);
+            console.error('[KIMI Pipeline] materializeRun failed:', {
+              runId: accepted.runId,
+              error: materializeErr?.message,
+              details: JSON.stringify(details, null, 2),
+            });
           }
-        } catch {
-          // accept failures surface via state
+        } catch (acceptErr: any) {
+          const details = acceptErr?.data?.details ?? acceptErr?.response?.data?.details;
+          const message = acceptErr instanceof Error ? acceptErr.message : 'Accept plan failed.';
+          setStartupError(message);
+          toast.error(`Accept plan: ${message}`);
+          console.error('[KIMI Pipeline] acceptPlan failed:', {
+            runId: result.run.runId,
+            error: acceptErr?.message,
+            details: JSON.stringify(details, null, 2),
+          });
         }
       } catch (error) {
         setStartupError(
@@ -805,7 +1032,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       outputType,
       currentOrganization?.id,
       currentProjectId,
-      currentUser?.role,
+      currentUser,
     ]
   );
 
@@ -836,7 +1063,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           runId: currentRun.runId,
           params: {
             title: currentRun.plan.titleHint,
-            config: outputType === 'sheet' ? { tableName: currentRun.plan.titleHint } : undefined,
+            config:
+              outputType === 'sheet'
+                ? {
+                    tableName: currentRun.plan.titleHint,
+                    goal: lastGoal || currentRun.plan.titleHint,
+                  }
+                : undefined,
           },
         });
         setCurrentRun(completed);
@@ -847,7 +1080,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       setStartupError(error instanceof Error ? error.message : 'Failed to advance pipeline');
       toast.error(error instanceof Error ? error.message : 'Failed to advance pipeline');
     }
-  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType]);
+  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType, lastGoal]);
 
   const handleReplay = useCallback(() => {
     contentGenerationTriggered.current = false;
@@ -871,6 +1104,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, []);
 
   const handleDownload = useCallback(async () => {
+    // TODO(Sprint 4 / EPIC-4 US-4.4): Wire to
+    //   `tabeleArtifactOpen.downloadTabeleArtifactCsv(tableId)`
+    // once Agent D creates `src/utils/tabeleArtifactOpen.ts`. Until then, this
+    // placeholder prevents Tabele lane from accidentally calling the wrong
+    // sheet/deck download path.
+    if (lane === 'tabele') {
+      console.warn('[Tabele] CSV download wired in Sprint 4');
+      return;
+    }
+
     // P23-ext: Check for workbook download first
     if (lane === 'excele' && preview && (preview as any).workbookId) {
       Api.downloadWorkbook((preview as any).workbookId);
@@ -913,8 +1156,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     myWorkNotified.current = true;
 
     const origin = currentRun.materializationOrigin;
+    const laneSegment =
+      lane === 'wordy'
+        ? 'wordy'
+        : lane === 'prezentacje'
+          ? 'prezentacje'
+          : lane === 'tabele'
+            ? 'tabele'
+            : 'excele';
     const artifactPath = origin?.originRecordId
-      ? `/${lane === 'wordy' ? 'wordy' : lane === 'prezentacje' ? 'prezentacje' : 'excele'}?artifactId=${origin.originRecordId}`
+      ? `/${laneSegment}?artifactId=${origin.originRecordId}`
       : null;
 
     Api.post('/mywork/items', {

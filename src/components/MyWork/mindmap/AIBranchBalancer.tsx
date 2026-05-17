@@ -99,7 +99,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
               <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    b.count === 0 ? 'bg-red-400' : b.count <= 1 ? 'bg-amber-400' : 'bg-emerald-400'
+                    b.count === 0 ? 'bg-rose-400' : b.count <= 1 ? 'bg-amber-400' : 'bg-emerald-400'
                   }`}
                   style={{ width: `${Math.max(5, b.percentage)}%` }}
                 />
@@ -118,7 +118,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
                 <button
                   key={b.branchKey}
                   onClick={() => onFocusBranch(b.branchKey)}
-                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                 >
                   <BarChart3 size={10} />
                   <span className="flex-1 text-left">{b.label}</span>

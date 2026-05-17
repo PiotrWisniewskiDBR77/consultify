@@ -399,7 +399,29 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 - `docs/product/REPORT_GENERATOR_V3.md`
   - **Owner**: Product + Engineering
   - **Scope**: end-to-end Report Generator SSOT (R1-R4 canonical report types, wizard/builder, templates, AI narrative, RAG/escalation mapping, export quality gates PDF/DOCX/PPTX)
-  - **Authority**: Highest for report generator behavior
+  - **Authority**: Superseded for Document runtime doctrine by `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`. Preserved as historical reference per archive-first policy. Report-class semantics (RAG, escalation, traceability) remain valid and are inherited by Document Studio.
+
+### Consultify Document Studio (v1) - canonical document runtime
+
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: productized Document runtime above the V8.1 substrate; three modes (generate without template, plan template, generate from approved template); document type taxonomy; Document Template Architect; Template Registry; Document Schema; Formatting & Style Engine; AI Document Editor with five edit scopes; Document QA Engine with ten categories; governance; lifecycle; MVP roadmap
+  - **Authority**: Highest for Document runtime productization, document templates, document narrative planning, formatting and style governance, AI document editing semantics and document QA contract
+
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_TYPE_TAXONOMY.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: catalog of supported document types in Document Studio, default audience, purpose, required and optional inputs, default sections, formatting class, approval rules, confidentiality defaults
+  - **Authority**: Highest for the document type catalog inside Document Studio
+
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_GAP_MATRIX.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: explicit current-vs-target gap analysis between the V8.1 substrate plus the existing report and presentation runtimes and Document Studio v1
+  - **Authority**: Highest for Reuse / Extend / New labeling of Document Studio capabilities
+
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: wave-by-wave engineering plan (MVP-1 through MVP-5) with file-level boundaries, acceptance criteria and validation method per wave
+  - **Authority**: Highest for Document Studio engineering execution and wave sequencing
 
 ### V8.1 - native artifact runtime and outputs closure
 

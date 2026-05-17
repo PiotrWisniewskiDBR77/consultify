@@ -152,11 +152,11 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
       case 'IN_REVIEW':
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
       case 'AWAITING_APPROVAL':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
       case 'APPROVED':
         return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
       case 'REJECTED':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
       default:
         return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
     }
@@ -165,7 +165,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -193,7 +193,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
             </button>
             <button
               onClick={onNewAssessment}
-              className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
             >
               <Plus size={18} />
               New Assessment
@@ -258,8 +258,8 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Eye className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                  <Eye className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -272,8 +272,8 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+                  <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -291,11 +291,11 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
           <div className="lg:col-span-1 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <Bell className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <h3 className="font-semibold text-navy-900 dark:text-white">Pending Actions</h3>
               </div>
               {pendingActions.length > 0 && (
-                <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">
+                <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-medium rounded-full">
                   {pendingActions.length}
                 </span>
               )}
@@ -313,7 +313,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                   <div
                     key={action.id}
                     className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors ${
-                      action.isOverdue ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                      action.isOverdue ? 'bg-rose-50/50 dark:bg-rose-900/10' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -322,18 +322,18 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                           action.type === 'review'
                             ? 'bg-amber-100 dark:bg-amber-900/30'
                             : action.type === 'approval'
-                              ? 'bg-purple-100 dark:bg-purple-900/30'
-                              : 'bg-red-100 dark:bg-red-900/30'
+                              ? 'bg-primary-100 dark:bg-primary-900/30'
+                              : 'bg-rose-100 dark:bg-rose-900/30'
                         }`}
                       >
                         {action.type === 'review' && (
                           <Eye className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         )}
                         {action.type === 'approval' && (
-                          <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <CheckCircle2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                         )}
                         {action.type === 'revision' && (
-                          <Edit className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          <Edit className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -348,7 +348,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                           {action.requestedBy}
                         </p>
                         {action.isOverdue && (
-                          <span className="text-xs text-red-500 font-medium">Overdue</span>
+                          <span className="text-xs text-rose-500 font-medium">Overdue</span>
                         )}
                       </div>
                       <ArrowRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -361,7 +361,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
               <div className="p-3 border-t border-slate-200 dark:border-navy-700">
                 <button
                   onClick={() => onNavigate(AppView.REVIEWER_DASHBOARD)}
-                  className="w-full text-center text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                  className="w-full text-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
                 >
                   View all ({pendingActions.length})
                 </button>
@@ -373,12 +373,12 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
           <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <Activity className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <h3 className="font-semibold text-navy-900 dark:text-white">Recent Assessments</h3>
               </div>
               <button
                 onClick={() => onNavigate(AppView.MY_ASSESSMENTS)}
-                className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
               >
                 View all
               </button>
@@ -392,7 +392,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                   </p>
                   <button
                     onClick={onNewAssessment}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
                   >
                     <Plus size={16} />
                     New Assessment
@@ -431,7 +431,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                           </div>
                           <div className="h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-purple-500 rounded-full"
+                              className="h-full bg-primary-500 rounded-full"
                               style={{ width: `${assessment.progress}%` }}
                             />
                           </div>
@@ -447,13 +447,13 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold mb-1">
                 Ready to transform your digital maturity?
               </h3>
-              <p className="text-purple-200 text-sm">
+              <p className="text-primary-200 text-sm">
                 Complete your assessment and generate AI-powered initiatives for your transformation
                 roadmap.
               </p>
@@ -468,7 +468,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
               </button>
               <button
                 onClick={() => onNavigate(AppView.INITIATIVE_GENERATOR)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-navy-900 text-purple-600 hover:bg-purple-50 rounded-lg font-semibold transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-navy-900 text-primary-600 hover:bg-primary-50 rounded-lg font-semibold transition-colors"
               >
                 <Sparkles size={18} />
                 Generate Initiatives

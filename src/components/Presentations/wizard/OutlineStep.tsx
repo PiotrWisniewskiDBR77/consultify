@@ -256,7 +256,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
             </div>
 
             {/* Card number */}
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 text-xs font-bold flex-shrink-0">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-500/10 text-primary-500 text-xs font-bold flex-shrink-0">
               {index + 1}
             </div>
 
@@ -307,12 +307,55 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                 className="text-xs text-slate-500 dark:text-slate-400 mt-1 bg-transparent border-none outline-none w-full"
               />
 
+              <input
+                value={item.keyMessage || ''}
+                onChange={(e) => updateSlide(index, { keyMessage: e.target.value })}
+                placeholder={t(
+                  'presentations.outline.keyMessagePlaceholder',
+                  'Key message for this slide...'
+                )}
+                className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none w-full"
+              />
+
               {/* Source references */}
-              {item.sourceRef && (
-                <div className="flex items-center gap-1 mt-1.5">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    {item.sourceRef}
-                  </span>
+              {(item.sourceRef ||
+                item.layoutHint ||
+                item.visualPolicy ||
+                item.confidence !== undefined) && (
+                <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                  {item.sourceRef && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                      source: {item.sourceRef}
+                    </span>
+                  )}
+                  {item.confidence !== undefined && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      confidence: {Math.round(item.confidence * 100)}%
+                    </span>
+                  )}
+                  {item.layoutHint && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+                      {item.layoutHint}
+                    </span>
+                  )}
+                  {item.visualPolicy && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300">
+                      {item.visualPolicy}
+                    </span>
+                  )}
+                </div>
+              )}
+              {Array.isArray(item.warnings) && item.warnings.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {item.warnings.map((warning) => (
+                    <div
+                      key={warning}
+                      className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300"
+                    >
+                      <AlertTriangle size={11} />
+                      {warning}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -331,7 +374,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               </button>
               <button
                 onClick={() => removeSlide(index)}
-                className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10"
+                className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10"
               >
                 <Trash2 size={14} />
               </button>
@@ -342,10 +385,10 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
 
       {/* AI Suggestions Strip */}
       {aiSuggestions.length > 0 && (
-        <div className="bg-purple-50 dark:bg-purple-500/5 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">
+        <div className="bg-primary-50 dark:bg-primary-500/5 border border-primary-200 dark:border-primary-500/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb size={14} className="text-purple-500" />
-            <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
+            <Lightbulb size={14} className="text-primary-500" />
+            <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
               {t('presentations.outline.aiRecommends', 'AI recommends adding:')}
             </p>
           </div>
@@ -354,7 +397,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               <button
                 key={suggestion.intent}
                 onClick={() => addSlide(suggestion.intent)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-purple-200 dark:border-purple-500/30 text-sm text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-500/30 text-sm text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
               >
                 <Plus size={12} />
                 <span className="capitalize">{suggestion.intent.replace(/_/g, ' ')}</span>
@@ -375,7 +418,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
         <button
           onClick={onGenerate}
           disabled={enabledSlides.length < 2}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 shadow-lg shadow-purple-500/25"
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-blue-600 text-white font-medium rounded-xl hover:from-primary-500 hover:to-blue-500 disabled:opacity-50 shadow-lg shadow-primary-500/25"
         >
           <Play size={16} /> {t('presentations.outline.generate', 'Generate Deck')} (
           {enabledSlides.length} {t('presentations.outline.slides', 'slides')})

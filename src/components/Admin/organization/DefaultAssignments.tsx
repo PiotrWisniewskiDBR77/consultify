@@ -113,7 +113,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
       {/* Team Assignment */}
       <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2 mb-4">
-          <Users size={18} className="text-violet-500" />
+          <Users size={18} className="text-primary-500" />
           <h4 className="font-medium text-navy-900 dark:text-white">
             {t('admin.organization.defaults.teamAssignment', 'Team Assignment')}
           </h4>

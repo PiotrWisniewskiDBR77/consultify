@@ -93,15 +93,10 @@ vi.mock('../../../src/hooks/useUniversalVoice', () => ({
 
 vi.mock('../../../src/contexts/TeresaVoiceContext', () => ({
   useTeresaVoiceContext: () => ({
-    isConnected: false,
-    isConnecting: false,
-    isListening: false,
-    transcript: '',
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    sendTextMessage: vi.fn(),
-    startListening: vi.fn(),
-    stopListening: vi.fn(),
+    isVoiceActive: false,
+    isMuted: false,
+    handleVoiceToggle: vi.fn(),
+    toggleMute: vi.fn(),
   }),
 }));
 
@@ -115,27 +110,25 @@ vi.mock('../../../src/hooks/useActionHandler', () => ({
   }),
 }));
 
-let appStoreState: any = {
-  currentUser: {
-    firstName: 'Piotr',
-    role: 'Manager',
-    organizationId: null,
-  },
-  currentProjectId: '11111111-1111-4111-8111-111111111111',
-  aiConfig: {
-    textToSpeech: false,
-    privateMode: true,
-  },
-  currentOrganization: null,
-  setCurrentView: vi.fn(),
-  isChatCollapsed: false,
-  toggleChatCollapse: vi.fn(),
-  setAIConfig: vi.fn(),
-  setChatKickoffMessage: vi.fn(),
-};
-
 vi.mock('../../../src/store/useAppStore', () => ({
-  useAppStore: () => appStoreState,
+  useAppStore: () => ({
+    currentUser: {
+      firstName: 'Piotr',
+      role: 'Manager',
+      organizationId: null,
+    },
+    currentProjectId: '11111111-1111-4111-8111-111111111111',
+    aiConfig: {
+      textToSpeech: false,
+      privateMode: true,
+    },
+    currentOrganization: null,
+    setCurrentView: vi.fn(),
+    isChatCollapsed: false,
+    toggleChatCollapse: vi.fn(),
+    setAIConfig: vi.fn(),
+    setChatKickoffMessage: vi.fn(),
+  }),
 }));
 
 vi.mock('../../../src/store/useConversationStore', () => ({
@@ -210,13 +203,6 @@ describe('AIChatWelcomeView governed V8 controls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     aiStreamOptionsCaptured = null;
-    appStoreState = {
-      ...appStoreState,
-      aiConfig: {
-        textToSpeech: false,
-        privateMode: true,
-      },
-    };
     conversationStoreState.activeConversationId = 'conv-legacy-1';
     conversationStoreState.activeMessages = [
       {
@@ -337,39 +323,6 @@ describe('AIChatWelcomeView governed V8 controls', () => {
             proposalId: 'proposal-123',
             targetModule: 'initiatives',
           }),
-        }),
-      })
-    );
-  });
-
-  it('persists deep thinking report metadata on the legacy Teresa surface', async () => {
-    const { AIChatWelcomeView } = await import('../../../src/views/AIChatWelcomeView');
-    appStoreState = {
-      ...appStoreState,
-      aiConfig: {
-        textToSpeech: false,
-        privateMode: true,
-        deepResearch: true,
-      },
-    };
-
-    render(<AIChatWelcomeView />);
-    expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
-
-    await aiStreamOptionsCaptured.onStreamDone('Legacy DT report', [], [], {
-      sessionId: 'legacy-dt-1',
-    });
-
-    expect(addMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        conversationId: 'conv-legacy-1',
-        role: 'ai',
-        metadata: expect.objectContaining({
-          deepThinking: expect.objectContaining({
-            kind: 'report',
-            streamSessionId: 'legacy-dt-1',
-          }),
-          deepThinkingReport: 'Legacy DT report',
         }),
       })
     );

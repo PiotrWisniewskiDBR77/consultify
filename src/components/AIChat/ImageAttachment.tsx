@@ -168,7 +168,7 @@ export const ImageAttachment: React.FC<ImageAttachmentProps> = ({
         </div>
       ) : attachment.error ? (
         <div className="w-full h-full flex items-center justify-center">
-          <Image size={20} className="text-red-400" />
+          <Image size={20} className="text-rose-400" />
         </div>
       ) : (
         <img
@@ -191,7 +191,7 @@ export const ImageAttachment: React.FC<ImageAttachmentProps> = ({
         )}
         <button
           onClick={() => onRemove(attachment.id)}
-          className="p-1 rounded bg-white/20 hover:bg-red-500/80 text-white transition-colors"
+          className="p-1 rounded bg-white/20 hover:bg-rose-500/80 text-white transition-colors"
           title={t('aiChat.image.remove', 'Remove')}
         >
           <X size={14} />

@@ -65,7 +65,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   ASSESSMENT_DELETED: {
     label: 'Assessment deleted',
     icon: <FileText className="w-4 h-4" />,
-    color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
+    color: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30',
   },
   LEVEL_ACHIEVED: {
     label: 'Level marked as achieved',
@@ -75,7 +75,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   LEVEL_TARGET_SET: {
     label: 'Target level set',
     icon: <Target className="w-4 h-4" />,
-    color: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30',
   },
   LEVEL_SKIPPED: {
     label: 'Level skipped',
@@ -95,12 +95,12 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   LINK_ADDED: {
     label: 'Link added',
     icon: <Link2 className="w-4 h-4" />,
-    color: 'text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/30',
+    color: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30',
   },
   STATUS_CHANGED: {
     label: 'Status changed',
     icon: <FileEdit className="w-4 h-4" />,
-    color: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30',
   },
   REPORT_GENERATED: {
     label: 'Report generated',
@@ -110,7 +110,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   INITIATIVES_GENERATED: {
     label: 'Initiatives generated',
     icon: <Zap className="w-4 h-4" />,
-    color: 'text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30',
+    color: 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30',
   },
   CHAT_CONTEXT_ATTACHED: {
     label: 'Chat context attached',
@@ -120,7 +120,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   TEAM_MEMBER_ADDED: {
     label: 'Team member added',
     icon: <User className="w-4 h-4" />,
-    color: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30',
   },
   TEAM_MEMBER_ROLE_UPDATED: {
     label: 'Team member role updated',
@@ -130,7 +130,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   TEAM_MEMBER_REMOVED: {
     label: 'Team member removed',
     icon: <User className="w-4 h-4" />,
-    color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
+    color: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30',
   },
 };
 
@@ -251,7 +251,7 @@ export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) =
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-12 ${className || ''}`}>
-        <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+        <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -259,11 +259,11 @@ export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) =
   if (error) {
     return (
       <div className={`p-6 ${className || ''}`}>
-        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg text-red-700 dark:text-red-300">
+        <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300">
           <span>{error}</span>
           <button
             onClick={handleRefresh}
-            className="ml-auto px-3 py-1 text-sm font-medium bg-red-100 dark:bg-red-900/30 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50"
+            className="ml-auto px-3 py-1 text-sm font-medium bg-rose-100 dark:bg-rose-900/30 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50"
           >
             Retry
           </button>
@@ -277,8 +277,8 @@ export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) =
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+            <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-navy-900 dark:text-white">Activity Log</h2>

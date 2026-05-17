@@ -174,7 +174,7 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
                 <div className="text-sm text-slate-700 dark:text-slate-200">{a}</div>
                 <button
                   onClick={() => removeAssumption(idx)}
-                  className="text-xs text-slate-500 hover:text-red-600"
+                  className="text-xs text-slate-500 hover:text-rose-600"
                 >
                   {isPolish ? 'Usuń' : 'Remove'}
                 </button>

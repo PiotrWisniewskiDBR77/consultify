@@ -28,7 +28,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
             onClick={() => onChange('brand_kit')}
             className={`relative p-2 rounded-lg border-2 text-center transition-all ${
               value === 'brand_kit'
-                ? 'border-purple-500 shadow-md shadow-purple-500/10'
+                ? 'border-primary-500 shadow-md shadow-primary-500/10'
                 : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
             }`}
           >
@@ -44,7 +44,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
               </p>
             </div>
             {value === 'brand_kit' && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
                 <Check size={10} className="text-white" />
               </div>
             )}
@@ -59,7 +59,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
               onClick={() => onChange(set.id)}
               className={`relative p-2 rounded-lg border-2 text-center transition-all ${
                 selected
-                  ? 'border-purple-500 shadow-md shadow-purple-500/10'
+                  ? 'border-primary-500 shadow-md shadow-primary-500/10'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
               }`}
             >
@@ -73,7 +73,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
                 {set.name}
               </p>
               {selected && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
                   <Check size={10} className="text-white" />
                 </div>
               )}

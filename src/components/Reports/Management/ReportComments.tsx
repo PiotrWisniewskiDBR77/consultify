@@ -60,8 +60,8 @@ const CommentItem: React.FC<{
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-1">
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
-            <User size={16} className="text-violet-600 dark:text-violet-400" />
+          <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+            <User size={16} className="text-primary-600 dark:text-primary-400" />
           </div>
 
           {/* Content */}
@@ -87,7 +87,7 @@ const CommentItem: React.FC<{
 
             {/* Mentions */}
             {comment.mentions && comment.mentions.length > 0 && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-violet-600 dark:text-violet-400">
+              <div className="flex items-center gap-1 mt-2 text-xs text-primary-600 dark:text-primary-400">
                 <AtSign size={12} />
                 {comment.mentions.length} mentioned
               </div>
@@ -138,7 +138,7 @@ const CommentItem: React.FC<{
                         onDelete();
                         setShowMenu(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
                     >
                       <Trash2 size={14} />
                       Delete
@@ -244,7 +244,7 @@ const CommentInput: React.FC<{
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full px-3 py-2 pr-12 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+        className="w-full px-3 py-2 pr-12 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         rows={2}
       />
 
@@ -252,7 +252,7 @@ const CommentInput: React.FC<{
         onClick={handleSubmit}
         disabled={!content.trim()}
         aria-label="Send comment"
-        className="absolute right-2 bottom-2 p-2 bg-violet-500 hover:bg-violet-600 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+        className="absolute right-2 bottom-2 p-2 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
       >
         <Send size={16} />
       </button>
@@ -266,8 +266,8 @@ const CommentInput: React.FC<{
               onClick={() => handleMention(member)}
               className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
             >
-              <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                <User size={12} className="text-violet-600" />
+              <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <User size={12} className="text-primary-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
@@ -368,7 +368,7 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
               <span>Replying to comment</span>
               <button
                 onClick={() => setReplyingTo(null)}
-                className="text-violet-500 hover:text-violet-600"
+                className="text-primary-500 hover:text-primary-600"
               >
                 Cancel
               </button>

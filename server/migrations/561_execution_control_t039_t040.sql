@@ -2,6 +2,30 @@
 -- Extends raid_items with mitigation management fields
 -- Adds execution audit log for date/status changes
 
+CREATE TABLE IF NOT EXISTS raid_items (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    initiative_id TEXT REFERENCES initiatives(id) ON DELETE SET NULL,
+    type TEXT NOT NULL CHECK(type IN ('RISK', 'ASSUMPTION', 'ISSUE', 'DEPENDENCY')),
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'MITIGATED', 'REALIZED', 'CLOSED')),
+    probability TEXT CHECK(probability IN ('LOW', 'MEDIUM', 'HIGH')),
+    impact TEXT CHECK(impact IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+    mitigation_plan TEXT,
+    owner_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    due_date TEXT,
+    linked_items TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_raid_org ON raid_items(organization_id);
+CREATE INDEX IF NOT EXISTS idx_raid_initiative ON raid_items(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_raid_type_status ON raid_items(type, status);
+CREATE INDEX IF NOT EXISTS idx_raid_owner ON raid_items(owner_id);
+CREATE INDEX IF NOT EXISTS idx_raid_due_date ON raid_items(due_date);
+
 -- 1. Add mitigation management columns to raid_items
 DO $$
 BEGIN

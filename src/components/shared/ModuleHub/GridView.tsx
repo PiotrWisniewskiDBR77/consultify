@@ -43,9 +43,9 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
   // Initiative / shared statuses
   DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400', label: 'Draft' },
   PENDING_REVIEW: {
-    bg: 'bg-orange-500/10',
-    text: 'text-orange-400',
-    dot: 'bg-orange-400',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
+    dot: 'bg-amber-400',
     label: 'Pending Review',
   },
   REVIEW: {
@@ -73,23 +73,23 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
     label: 'Approved',
   },
   SCHEDULED: {
-    bg: 'bg-purple-500/10',
-    text: 'text-purple-400',
-    dot: 'bg-purple-400',
+    bg: 'bg-primary-500/10',
+    text: 'text-primary-400',
+    dot: 'bg-primary-400',
     label: 'Scheduled',
   },
   EXECUTING: {
-    bg: 'bg-cyan-500/10',
-    text: 'text-cyan-400',
-    dot: 'bg-cyan-400',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-400',
+    dot: 'bg-blue-400',
     label: 'Executing',
   },
-  BLOCKED: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400', label: 'Blocked' },
+  BLOCKED: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400', label: 'Blocked' },
   DONE: { bg: 'bg-green-500/10', text: 'text-green-400', dot: 'bg-green-400', label: 'Done' },
   TRACKING: {
-    bg: 'bg-teal-500/10',
-    text: 'text-teal-400',
-    dot: 'bg-teal-400',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-400',
+    dot: 'bg-blue-400',
     label: 'Tracking',
   },
   CANCELLED: {
@@ -112,15 +112,15 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
     label: 'In Review',
   },
   AWAITING_APPROVAL: {
-    bg: 'bg-orange-500/10',
-    text: 'text-orange-400',
-    dot: 'bg-orange-400',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
+    dot: 'bg-amber-400',
     label: 'Awaiting Approval',
   },
   REJECTED: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
-    dot: 'bg-red-400',
+    bg: 'bg-rose-500/10',
+    text: 'text-rose-400',
+    dot: 'bg-rose-400',
     label: 'Rejected',
   },
   // Report-specific statuses
@@ -137,15 +137,15 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
     label: 'Final',
   },
   PENDING_APPROVAL: {
-    bg: 'bg-orange-500/10',
-    text: 'text-orange-400',
-    dot: 'bg-orange-400',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
+    dot: 'bg-amber-400',
     label: 'Pending Approval',
   },
   UTILIZED: {
-    bg: 'bg-teal-500/10',
-    text: 'text-teal-400',
-    dot: 'bg-teal-400',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-400',
+    dot: 'bg-blue-400',
     label: 'Utilized',
   },
 };
@@ -154,9 +154,9 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
 const TYPE_ACCENTS: Record<string, { borderLeft: string; pill: string; text: string }> = {
   // Assessment frameworks
   DRD: {
-    borderLeft: 'border-l-purple-500 dark:border-l-purple-400',
-    pill: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300',
-    text: 'text-purple-600 dark:text-purple-300',
+    borderLeft: 'border-l-primary-500 dark:border-l-primary-400',
+    pill: 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300',
+    text: 'text-primary-600 dark:text-primary-300',
   },
   SIRI: {
     borderLeft: 'border-l-blue-500 dark:border-l-blue-400',
@@ -164,14 +164,14 @@ const TYPE_ACCENTS: Record<string, { borderLeft: string; pill: string; text: str
     text: 'text-blue-600 dark:text-blue-300',
   },
   ADMA: {
-    borderLeft: 'border-l-teal-500 dark:border-l-teal-400',
-    pill: 'bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300',
-    text: 'text-teal-600 dark:text-teal-300',
+    borderLeft: 'border-l-blue-500 dark:border-l-blue-400',
+    pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    text: 'text-blue-600 dark:text-blue-300',
   },
   CMMI: {
-    borderLeft: 'border-l-orange-500 dark:border-l-orange-400',
-    pill: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300',
-    text: 'text-orange-600 dark:text-orange-300',
+    borderLeft: 'border-l-amber-500 dark:border-l-amber-400',
+    pill: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+    text: 'text-amber-600 dark:text-amber-300',
   },
   LEAN: {
     borderLeft: 'border-l-emerald-500 dark:border-l-emerald-400',
@@ -190,9 +190,9 @@ const TYPE_ACCENTS: Record<string, { borderLeft: string; pill: string; text: str
     text: 'text-blue-600 dark:text-blue-300',
   },
   digital: {
-    borderLeft: 'border-l-purple-500 dark:border-l-purple-400',
-    pill: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300',
-    text: 'text-purple-600 dark:text-purple-300',
+    borderLeft: 'border-l-primary-500 dark:border-l-primary-400',
+    pill: 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300',
+    text: 'text-primary-600 dark:text-primary-300',
   },
   automation: {
     borderLeft: 'border-l-amber-500 dark:border-l-amber-400',

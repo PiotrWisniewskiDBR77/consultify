@@ -157,9 +157,9 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
         };
       case 'violet':
         return {
-          bg: 'bg-violet-100 dark:bg-violet-900/30',
-          text: 'text-violet-600 dark:text-violet-400',
-          gradient: 'from-violet-500 to-violet-600',
+          bg: 'bg-primary-100 dark:bg-primary-900/30',
+          text: 'text-primary-600 dark:text-primary-400',
+          gradient: 'from-primary-500 to-primary-600',
         };
       case 'blue':
         return {
@@ -259,14 +259,14 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
               className={cn(
                 'relative p-4 bg-white dark:bg-navy-800 rounded-xl border transition-all cursor-pointer',
                 isSelected
-                  ? 'border-violet-500 ring-2 ring-violet-500/20'
+                  ? 'border-primary-500 ring-2 ring-primary-500/20'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               )}
               onClick={() => setSelectedType(isSelected ? null : seatType.id)}
             >
               {/* Default Badge */}
               {seatType.isDefault && (
-                <span className="absolute top-3 right-3 px-2 py-0.5 text-xs font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full">
+                <span className="absolute top-3 right-3 px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
                   {t('admin.billing.seatTypes.default', 'Default')}
                 </span>
               )}

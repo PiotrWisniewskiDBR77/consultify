@@ -602,7 +602,7 @@ export function useFinancePreview({
                   <span className="text-amber-600 dark:text-amber-400">
                     ⚠ {predictionValidations.warning} {t('finance.prediction.warn', 'warn')}
                   </span>
-                  <span className="text-red-600 dark:text-red-400">
+                  <span className="text-rose-600 dark:text-rose-400">
                     ✗ {predictionValidations.fail} {t('finance.prediction.fail', 'fail')}
                   </span>
                 </div>
@@ -671,14 +671,14 @@ export function useFinancePreview({
                 efficiency: {
                   en: 'Efficiency',
                   pl: 'Efektywność',
-                  color: 'text-purple-600 dark:text-purple-400',
+                  color: 'text-primary-600 dark:text-primary-400',
                 },
                 investment: {
                   en: 'Investment',
                   pl: 'Inwestycja',
                   color: 'text-fuchsia-600 dark:text-fuchsia-400',
                 },
-                growth: { en: 'Growth', pl: 'Wzrost', color: 'text-cyan-600 dark:text-cyan-400' },
+                growth: { en: 'Growth', pl: 'Wzrost', color: 'text-blue-600 dark:text-blue-400' },
               };
               const grouped: Record<string, typeof analysisPreviewRatios> = {};
               for (const r of analysisPreviewRatios) {
@@ -765,7 +765,7 @@ export function useFinancePreview({
                       (row as FinanceValuationRow).sourceType === 'financial_model'
                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                         : (row as FinanceValuationRow).sourceType === 'budget'
-                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                          ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                           : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300'
                     }`}
                   >
@@ -823,7 +823,7 @@ export function useFinancePreview({
                                       ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
                                       : norm > 0.33
                                         ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-                                        : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300';
+                                        : 'bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300';
                                   return (
                                     <td
                                       key={ci}
@@ -873,7 +873,7 @@ export function useFinancePreview({
                           <span
                             className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${
                               rec.priority === 'high'
-                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
                                 : rec.priority === 'medium'
                                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                                   : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'

@@ -141,6 +141,23 @@ function buildNotebookPayload() {
   };
 }
 
+function buildInterviewPayload() {
+  return {
+    interview_handoff_context: {
+      action: 'generate_insight' as const,
+      session_ids: ['session-1'],
+      title: 'Discovery Summary',
+    },
+    evidence_pointers: ['session:session-1'],
+  };
+}
+
+function buildExcelePayload() {
+  return {
+    prompt: 'Build a Q3 finance workbook with P&L and cash-flow tabs.',
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -768,6 +785,8 @@ describe('P08-B §11 — Handoff context validation', () => {
         initiatives: buildInitiativesPayload,
         calendar: buildCalendarPayload,
         notebook: buildNotebookPayload,
+        interview: buildInterviewPayload,
+        excele: buildExcelePayload,
       };
       const result = validateTargetPayload(target, payloadMap[target]());
       expect(result.valid).toBe(true);
@@ -789,12 +808,15 @@ describe('P08-B §12 — Error handling', () => {
   });
 
   it('execution failure returns degraded(tool_unavailable) result', async () => {
-    const row = mockProposalRow({ id: 'prop-fail-1', state: 'approved' });
+    const row = mockProposalRow({
+      id: 'prop-fail-1',
+      state: 'approved',
+      target_module: 'unknown_target',
+    });
     mockDbGet.mockResolvedValueOnce(row);
     mockDbRun
       .mockResolvedValueOnce({ changes: 1 }) // state transition to executing
       .mockResolvedValueOnce({ changes: 1 }) // audit entry for execution_started
-      .mockRejectedValueOnce(new Error('DB connection lost')) // handoff result INSERT fails
       .mockResolvedValueOnce({ changes: 1 }) // state transition to rejected
       .mockResolvedValueOnce({ changes: 1 }); // audit entry for execution_failed
 
@@ -805,7 +827,7 @@ describe('P08-B §12 — Error handling', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('DB connection lost');
+    expect(result.error).toContain('Unknown target module');
     expect(result.degraded).toBe('tool_unavailable');
     expect(result.state).toBe('rejected');
   });

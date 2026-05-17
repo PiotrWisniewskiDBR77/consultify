@@ -83,7 +83,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
   return (
     <div className="p-6 space-y-6">
       {/* Overall Score Card */}
-      <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-emerald-100 text-sm">Overall Maturity Score</p>
@@ -238,7 +238,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
       {topGaps.length > 0 && (
         <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-orange-500" size={20} />
+            <AlertTriangle className="text-amber-500" size={20} />
             Biggest Gaps to Address
           </h3>
           <div className="space-y-3">
@@ -247,9 +247,9 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
               return (
                 <div
                   key={axis.id}
-                  className="flex items-center gap-4 p-4 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl"
+                  className="flex items-center gap-4 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl"
                 >
-                  <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600 font-bold">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-600 font-bold">
                     {index + 1}
                   </div>
                   <div
@@ -265,7 +265,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-orange-600">-{axis.gap.toFixed(1)}</p>
+                    <p className="text-2xl font-bold text-amber-600">-{axis.gap.toFixed(1)}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">levels luki</p>
                   </div>
                 </div>
@@ -314,9 +314,9 @@ const StatCard: React.FC<{
 }> = ({ label, value, icon: Icon, color }) => {
   const colors: Record<string, { bg: string; text: string }> = {
     blue: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
-    purple: { bg: 'bg-purple-500/10', text: 'text-purple-500' },
+    purple: { bg: 'bg-primary-500/10', text: 'text-primary-500' },
     green: { bg: 'bg-green-500/10', text: 'text-green-500' },
-    orange: { bg: 'bg-orange-500/10', text: 'text-orange-500' },
+    orange: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
   };
 
   return (

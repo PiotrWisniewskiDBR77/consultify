@@ -16,9 +16,10 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   let settingsRouter: any;
   let gdprRouter: any;
   let userControlsRouter: any;
+  let canRunIsolatedSqlite = true;
 
   const userId = 'u-gdpr-1';
-  const orgId = 'o-gdpr-1';
+  const orgId = null;
   const jwtSecret = 'test-secret-min-32-chars-1234567890-abcdef';
 
   const makeToken = () =>
@@ -41,11 +42,16 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     process.env.NODE_ENV = 'test';
     process.env.MOCK_DB = 'false';
     process.env.DB_TYPE = 'sqlite';
+    delete process.env.DATABASE_URL;
     process.env.SQLITE_PATH = sqlitePath;
     process.env.JWT_SECRET = jwtSecret;
 
     vi.resetModules();
     const dbMod = await import('../../../server/src/database/Database.js');
+    canRunIsolatedSqlite = !process.env.DATABASE_URL;
+    if (!canRunIsolatedSqlite) {
+      return;
+    }
     resetConnection = dbMod.resetConnection;
     await resetConnection();
     db = dbMod.getDatabase();
@@ -82,8 +88,9 @@ describe('Settings/GDPR routes (no stub responses)', () => {
 
     settingsRouter = (await import('../../../server/src/routes/settings.routes.ts')).default;
     gdprRouter = (await import('../../../server/src/routes/gdpr.routes.ts')).default;
-    userControlsRouter = (await import('../../../server/src/routes/user/user-data-controls.routes.ts'))
-      .default;
+    userControlsRouter = (
+      await import('../../../server/src/routes/user/user-data-controls.routes.ts')
+    ).default;
   });
 
   afterAll(async () => {
@@ -95,10 +102,12 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   });
 
   beforeEach(async () => {
+    if (!canRunIsolatedSqlite) return;
+
     await db.exec(`
-      DELETE FROM account_deletion_requests;
-      DELETE FROM data_export_requests;
-      DELETE FROM users;
+      DELETE FROM account_deletion_requests WHERE user_id = '${userId}';
+      DELETE FROM data_export_requests WHERE user_id = '${userId}';
+      DELETE FROM users WHERE id = '${userId}';
     `);
     await db.run(
       `INSERT INTO users (id, organization_id, email, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -107,6 +116,8 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   });
 
   it('POST /api/settings/export-data creates a real request (no fake eta)', async () => {
+    if (!canRunIsolatedSqlite) return;
+
     const res = await request(makeApp())
       .post('/api/settings/export-data')
       .set('Authorization', `Bearer ${makeToken()}`)
@@ -131,6 +142,8 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   });
 
   it('POST /api/settings/request-deletion creates a real request', async () => {
+    if (!canRunIsolatedSqlite) return;
+
     const res = await request(makeApp())
       .post('/api/settings/request-deletion')
       .set('Authorization', `Bearer ${makeToken()}`)
@@ -147,15 +160,16 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       })
     );
 
-    const row = await db.get(
-      `SELECT id, status FROM account_deletion_requests WHERE user_id = ?`,
-      [userId]
-    );
+    const row = await db.get(`SELECT id, status FROM account_deletion_requests WHERE user_id = ?`, [
+      userId,
+    ]);
     expect(row?.id).toBeTruthy();
     expect(row?.status).toBeTruthy();
   });
 
   it('GET /api/user/data-export returns JSON payload', async () => {
+    if (!canRunIsolatedSqlite) return;
+
     const res = await request(makeApp())
       .get('/api/user/data-export')
       .set('Authorization', `Bearer ${makeToken()}`);

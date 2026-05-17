@@ -324,14 +324,17 @@ router.post(
         },
       });
 
-      // TODO: Create Stripe invoice if needed
-      // await createStripeInvoice(id, chargeAmount, description);
-
       logger.info(
         `[SuperAdmin] Charged org ${id} $${chargeAmount} for resource change: ${description}`
       );
 
-      res.json({ success: true, chargedAmount: chargeAmount });
+      res.json({
+        success: true,
+        chargedAmount: chargeAmount,
+        externalInvoiceStatus: 'not_configured',
+        guidance:
+          'Resource charge was recorded in budget tracking. External invoice creation is not configured for this endpoint.',
+      });
     } catch (error) {
       logger.error('[SuperAdmin] Error charging for resource change:', error);
       res.status(500).json({ error: 'Failed to charge for resource change' });

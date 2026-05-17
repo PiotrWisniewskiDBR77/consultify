@@ -53,8 +53,8 @@ const SnapshotRow = React.memo(function SnapshotRow({
 }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.04] last:border-0 group">
-      <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-        <Archive size={14} className="text-violet-500" />
+      <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
+        <Archive size={14} className="text-primary-500" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
@@ -86,7 +86,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
         </button>
         <button
           onClick={() => onDelete(snapshot.id)}
-          className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
+          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
           title={isPl ? 'Usuń' : 'Delete'}
         >
           <Trash2 size={12} />
@@ -196,7 +196,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Camera size={16} className="text-violet-500" />
+          <Camera size={16} className="text-primary-500" />
           <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex-1">
             {isPl ? 'Migawki' : 'Snapshots'}
           </span>
@@ -226,7 +226,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="h-8 px-3 rounded-lg text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors disabled:opacity-40 flex items-center gap-1"
+                className="h-8 px-3 rounded-lg text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-40 flex items-center gap-1"
               >
                 {creating ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
                 {isPl ? 'Utwórz' : 'Create'}
@@ -241,7 +241,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
           ) : (
             <button
               onClick={() => setShowCreateInput(true)}
-              className="w-full py-2 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/5 hover:bg-violet-500/10 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2 rounded-lg text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 transition-colors flex items-center justify-center gap-1.5"
             >
               <Camera size={13} />
               {isPl ? 'Utwórz migawkę' : 'Create snapshot'}
@@ -300,7 +300,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
                 </button>
                 <button
                   onClick={() => handleRestore(confirmRestore)}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 font-semibold flex items-center gap-1"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-rose-500 text-white hover:bg-rose-600 font-semibold flex items-center gap-1"
                 >
                   <RotateCcw size={11} />
                   {isPl ? 'Przywróć' : 'Restore'}

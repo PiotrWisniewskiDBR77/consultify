@@ -349,6 +349,7 @@ export const V8SyncApi = {
     v8Post<{
       integration: V8SyncInitiatedIntegration;
       onboardingStatus: 'pending_external_auth_or_configuration';
+      externalAuth?: V8SyncExternalAuthSession;
     }>(`/sync/connectors/${encodeURIComponent(connectorId)}/connect`, payload ?? {}),
   configureIntegration: (integrationId: string, payload: { config?: Record<string, unknown> }) =>
     v8Post<{

@@ -168,7 +168,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="animate-spin text-purple-500" size={20} />
+        <Loader2 className="animate-spin text-primary-500" size={20} />
       </div>
     );
   }
@@ -177,7 +177,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BookOpen size={16} className="text-purple-500" />
+          <BookOpen size={16} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             {t('competency.requirements.title', 'Competency Requirements')}
           </h3>
@@ -188,7 +188,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
         {!isReadOnly && (
           <button
             onClick={() => setShowAdd(true)}
-            className="text-xs flex items-center gap-1 text-purple-600 hover:text-purple-700 dark:text-purple-400 font-medium"
+            className="text-xs flex items-center gap-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
           >
             <Plus size={14} />
             {t('competency.requirements.add', 'Add Requirement')}
@@ -299,7 +299,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
-              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 font-medium"
+              className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 font-medium"
             >
               {t('competency.requirements.addBtn', 'Add')}
             </button>
@@ -370,7 +370,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                         req.priority === 'required'
-                          ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                          ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
                           : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
                       }`}
                     >
@@ -386,7 +386,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
                     <td className="px-3 py-2">
                       <button
                         onClick={() => handleDelete(req.id)}
-                        className="text-slate-400 hover:text-red-500 transition-colors"
+                        className="text-slate-400 hover:text-rose-500 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>

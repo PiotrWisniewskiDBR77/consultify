@@ -70,7 +70,7 @@ const DEFAULT_BRANDING: BrandingConfig = {
   logoDarkUrl: '',
   logoIconUrl: '',
   faviconUrl: '',
-  primaryColor: '#8B5CF6', // Violet
+  primaryColor: '#6366F1', // Violet
   secondaryColor: '#3B82F6', // Blue
   accentColor: '#10B981', // Emerald
   backgroundColor: '#F8FAFC', // Slate-50
@@ -116,11 +116,11 @@ const loadGoogleFont = (fontFamily: string) => {
 
 // Preset color themes
 const COLOR_PRESETS = [
-  { name: 'Violet', primary: '#8B5CF6', secondary: '#3B82F6', accent: '#10B981' },
+  { name: 'Violet', primary: '#6366F1', secondary: '#3B82F6', accent: '#10B981' },
   { name: 'Blue', primary: '#3B82F6', secondary: '#6366F1', accent: '#F59E0B' },
-  { name: 'Emerald', primary: '#10B981', secondary: '#06B6D4', accent: '#8B5CF6' },
+  { name: 'Emerald', primary: '#10B981', secondary: '#3B82F6', accent: '#6366F1' },
   { name: 'Rose', primary: '#F43F5E', secondary: '#EC4899', accent: '#F59E0B' },
-  { name: 'Orange', primary: '#F97316', secondary: '#FBBF24', accent: '#3B82F6' },
+  { name: 'Orange', primary: '#F59E0B', secondary: '#FBBF24', accent: '#3B82F6' },
   { name: 'Slate', primary: '#475569', secondary: '#64748B', accent: '#3B82F6' },
 ];
 
@@ -322,7 +322,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
           {value && (
             <button
               onClick={() => updateField(field, '')}
-              className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded"
+              className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
             >
               <Trash2 size={14} />
             </button>
@@ -348,7 +348,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
         ) : (
           <button
             onClick={() => triggerUpload(field)}
-            className="w-full p-6 border-2 border-dashed border-slate-200 dark:border-navy-600 rounded-lg hover:border-violet-400 dark:hover:border-violet-500 transition-colors flex flex-col items-center gap-2"
+            className="w-full p-6 border-2 border-dashed border-slate-200 dark:border-navy-600 rounded-lg hover:border-primary-400 dark:hover:border-primary-500 transition-colors flex flex-col items-center gap-2"
           >
             <Upload className="text-slate-400 dark:text-slate-500" size={24} />
             <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -397,7 +397,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
           <button
             onClick={loadBranding}
             disabled={loading}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -405,7 +405,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
           <button
             onClick={saveBranding}
             disabled={!hasChanges || saving}
-            className="px-4 py-2 bg-violet-500 hover:bg-violet-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
             <Save size={18} className={saving ? 'animate-spin' : ''} />
             {t('common.save', 'Save Changes')}
@@ -429,7 +429,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-violet-500" size={32} />
+          <RefreshCw className="animate-spin text-primary-500" size={32} />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -443,7 +443,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                   onClick={() => setActiveSection(section.id as any)}
                   className={`w-full px-4 py-3 rounded-lg flex items-center gap-3 transition-colors ${
                     activeSection === section.id
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -505,7 +505,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                       <button
                         key={preset.name}
                         onClick={() => applyPreset(preset)}
-                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-600 hover:border-violet-400 transition-colors flex items-center gap-2"
+                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-600 hover:border-primary-400 transition-colors flex items-center gap-2"
                       >
                         <div
                           className="w-4 h-4 rounded-full"
@@ -775,7 +775,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                         href={`https://${branding.customDomain}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500"
+                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500"
                       >
                         <ExternalLink size={18} />
                       </a>

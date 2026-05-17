@@ -51,9 +51,10 @@ describe('EntryTopBar mobile navigation continuity', () => {
     const panel = screen.getByTestId('landing-mobile-menu-panel');
     expect(panel).toBeInTheDocument();
     expect(within(panel).getByRole('button', { name: 'Product' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Knowledge Base' })).toBeInTheDocument();
     expect(within(panel).getByRole('button', { name: 'Pricing' })).toBeInTheDocument();
     expect(within(panel).getByRole('button', { name: 'Partners' })).toBeInTheDocument();
-    expect(within(panel).getByRole('button', { name: 'Help' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Security' })).toBeInTheDocument();
     expect(within(panel).getByRole('button', { name: 'Become Partner' })).toBeInTheDocument();
   });
 
@@ -69,13 +70,17 @@ describe('EntryTopBar mobile navigation continuity', () => {
     );
   });
 
-  it('routes help to the canonical docs entry from the mobile menu', async () => {
+  it('routes knowledge base to the canonical public knowledge entry from the mobile menu', async () => {
     renderTopBar();
 
     fireEvent.click(screen.getByTestId('landing-mobile-menu-trigger'));
-    fireEvent.click(within(screen.getByTestId('landing-mobile-menu-panel')).getByRole('button', { name: 'Help' }));
+    fireEvent.click(
+      within(screen.getByTestId('landing-mobile-menu-panel')).getByRole('button', {
+        name: 'Knowledge Base',
+      })
+    );
 
-    expect(navigateMock).toHaveBeenCalledWith('/docs');
+    expect(navigateMock).toHaveBeenCalledWith('/knowledge-base');
     await waitFor(() =>
       expect(screen.queryByTestId('landing-mobile-menu-panel')).not.toBeInTheDocument(),
     );
@@ -103,8 +108,9 @@ describe('EntryTopBar mobile navigation continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
 
     expect(screen.getByRole('button', { name: 'Product' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Knowledge Base' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Pricing' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Partners' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Security' })).toBeInTheDocument();
   });
 });

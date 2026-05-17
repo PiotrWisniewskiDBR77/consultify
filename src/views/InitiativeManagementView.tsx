@@ -74,8 +74,8 @@ type TabType = 'review' | 'approved';
 const PRIORITY_CONFIG = {
   LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
   MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  HIGH: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  CRITICAL: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
 export const InitiativeManagementView: React.FC = () => {
@@ -335,7 +335,7 @@ export const InitiativeManagementView: React.FC = () => {
       <div className="flex-1 overflow-auto p-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           </div>
         ) : filteredInitiatives.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -366,8 +366,8 @@ export const InitiativeManagementView: React.FC = () => {
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl shrink-0">
-                    <Lightbulb className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl shrink-0">
+                    <Lightbulb className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                   </div>
 
                   {/* Content */}
@@ -425,7 +425,7 @@ export const InitiativeManagementView: React.FC = () => {
                       <div className="flex items-center gap-2">
                         {initiative.ownerBusiness ? (
                           <>
-                            <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
+                            <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300 overflow-hidden">
                               {initiative.ownerBusiness.avatarUrl ? (
                                 <img
                                   src={initiative.ownerBusiness.avatarUrl}
@@ -512,7 +512,7 @@ export const InitiativeManagementView: React.FC = () => {
                       {activeTab === 'approved' && (
                         <button
                           onClick={() => handleTransferToRoadmap(initiative)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
                         >
                           <MapPin size={14} />
                           Start Execution
@@ -541,8 +541,8 @@ export const InitiativeManagementView: React.FC = () => {
                   <MessageSquare className="text-amber-600 dark:text-amber-400" size={24} />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <AlertTriangle className="text-red-600 dark:text-red-400" size={24} />
+                <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                  <AlertTriangle className="text-rose-600 dark:text-rose-400" size={24} />
                 </div>
               )}
               <div>
@@ -574,7 +574,7 @@ export const InitiativeManagementView: React.FC = () => {
                       : 'Why is this being rejected?'
                 }
                 rows={4}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -597,7 +597,7 @@ export const InitiativeManagementView: React.FC = () => {
                     ? 'bg-green-600 hover:bg-green-500'
                     : reviewAction === 'changes'
                       ? 'bg-amber-600 hover:bg-amber-500'
-                      : 'bg-red-600 hover:bg-red-500'
+                      : 'bg-rose-600 hover:bg-rose-500'
                 }`}
               >
                 {reviewAction === 'approve'

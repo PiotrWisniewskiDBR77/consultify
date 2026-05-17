@@ -12,14 +12,14 @@ interface ExecutionCurrentBlockProps {
 
 const STATUS_META = {
   accelerating: { icon: <Zap size={14} />, className: 'bg-emerald-500/15 text-emerald-200' },
-  steady: { icon: <Gauge size={14} />, className: 'bg-cyan-500/15 text-cyan-200' },
+  steady: { icon: <Gauge size={14} />, className: 'bg-blue-500/15 text-blue-200' },
   blocked: { icon: <Lock size={14} />, className: 'bg-amber-500/15 text-amber-200' },
 };
 
 const VISIBILITY_META = {
   private: { className: 'border-slate-500/30 bg-slate-500/10 text-slate-200' },
-  project: { className: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200' },
-  organization: { className: 'border-violet-500/30 bg-violet-500/10 text-violet-200' },
+  project: { className: 'border-blue-500/30 bg-blue-500/10 text-blue-200' },
+  organization: { className: 'border-primary-500/30 bg-primary-500/10 text-primary-200' },
   review_shared: { className: 'border-amber-500/30 bg-amber-500/10 text-amber-200' },
   demo: { className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' },
 } as const;
@@ -121,7 +121,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                   }
                   className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
                 >
-                  <div className="rounded-xl bg-violet-500/15 p-2 text-violet-200">
+                  <div className="rounded-xl bg-primary-500/15 p-2 text-primary-200">
                     {artifact.originRuntime === 'presentation' ? (
                       <Zap size={14} />
                     ) : artifact.originRuntime === 'sheet' ? (

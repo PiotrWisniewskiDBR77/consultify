@@ -34,7 +34,7 @@ export const AUDIT_METHODOLOGIES: AuditMethodology[] = [
     image: '/assets/landing/cinematic/industrial_audits.png',
     color: 'blue',
     gradientFrom: 'from-blue-700',
-    gradientTo: 'to-cyan-800',
+    gradientTo: 'to-blue-800',
     externalLink: 'https://incit.org/siri/',
   },
   {
@@ -43,7 +43,7 @@ export const AUDIT_METHODOLOGIES: AuditMethodology[] = [
     image: '/assets/landing/cinematic/industrial_audits.png',
     color: 'emerald',
     gradientFrom: 'from-emerald-600',
-    gradientTo: 'to-teal-700',
+    gradientTo: 'to-blue-700',
     externalLink: 'https://imfactory.eu/adma-scan/',
   },
   {
@@ -52,7 +52,7 @@ export const AUDIT_METHODOLOGIES: AuditMethodology[] = [
     image: '/assets/landing/cinematic/industrial_audits.png',
     color: 'amber',
     gradientFrom: 'from-amber-600',
-    gradientTo: 'to-orange-700',
+    gradientTo: 'to-amber-700',
     externalLink: 'https://dbr77.com/',
   },
 ];

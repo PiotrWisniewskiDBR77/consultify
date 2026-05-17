@@ -38,8 +38,8 @@ const DEFAULT_COLORS = [
   '#3b82f6', // blue
   '#10b981', // emerald
   '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // violet
+  '#f43f5e', // red
+  '#6366f1', // violet
   '#ec4899', // pink
 ];
 

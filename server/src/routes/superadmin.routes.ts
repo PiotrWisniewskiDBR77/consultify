@@ -22,6 +22,7 @@ import {
   requireSuperAdminCapability,
   verifySuperAdmin as requireSuperAdmin,
 } from '../middleware/superAdmin.middleware.js';
+import { superadminAuditMonitor } from '../middleware/superadminAuditMonitor.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
   getAllOrgPolicies,
@@ -55,6 +56,86 @@ interface AtomicAuditEventInput {
 interface AtomicGatedResult {
   auditEvent: AtomicAuditEventInput;
   response: Record<string, unknown>;
+}
+
+function isSchemaMissingError(err: unknown): boolean {
+  const msg = String((err as any)?.message || '').toLowerCase();
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
+}
+
+function respondSchemaUnavailable(res: Response) {
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Invoice service is unavailable because billing tables are not configured',
+  });
+}
+
+function parseInvoiceJsonField<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeInvoiceLineItems(lineItems: any[]) {
+  return lineItems.map((item) => {
+    const quantity = Number(item.quantity ?? 1);
+    const unitPrice = Number(item.unitPrice ?? item.amount);
+    const amount = Number((quantity * unitPrice).toFixed(2));
+    return {
+      description: String(item.description || 'Invoice item').trim(),
+      quantity,
+      unitPrice,
+      amount,
+    };
+  });
+}
+
+function mapInvoiceRow(inv: any) {
+  const lineItems = parseInvoiceJsonField<any[]>(inv.line_items, []);
+  const metadata = parseInvoiceJsonField<Record<string, unknown>>(inv.metadata, {});
+  const subtotal = Number(inv.subtotal ?? inv.amount ?? 0);
+  const taxAmount = Number(inv.tax_amount ?? inv.tax ?? 0);
+  const total = Number(inv.total ?? subtotal + taxAmount);
+
+  return {
+    ...inv,
+    line_items: lineItems,
+    lineItems,
+    items: lineItems,
+    metadata,
+    invoiceNumber: inv.invoice_number,
+    organizationId: inv.organization_id,
+    organizationName: inv.organization_name,
+    amount: subtotal,
+    tax: taxAmount,
+    total,
+    amountDue: Number(inv.amount_due ?? total),
+    amountPaid: Number(inv.amount_paid ?? 0),
+    dueDate: inv.due_date,
+    paidAt: inv.paid_at,
+    createdAt: inv.created_at,
+    updatedAt: inv.updated_at,
+  };
+}
+
+async function getPersistedInvoice(id: string) {
+  const invoice = await dbGet(
+    `
+      SELECT i.*, o.name as organization_name
+      FROM invoices i
+      LEFT JOIN organizations o ON i.organization_id = o.id
+      WHERE i.id = ?
+    `,
+    [id]
+  );
+  return invoice ? mapInvoiceRow(invoice) : null;
 }
 
 async function insertAuditEventAtomic(
@@ -270,6 +351,9 @@ router.use(requireSuperAdmin);
 // Gated actions that already pass requireAudit per-route get a second (harmless)
 // assignment; ungated mutations now have the function available too.
 router.use(requireAudit);
+
+// Monitor 5xx on superadmin audit-log endpoints for SRE alerting.
+router.use(superadminAuditMonitor);
 router.use('/security', requireSuperAdminCapability('security_ops'));
 router.use('/admin/sessions', requireSuperAdminCapability('security_ops'));
 router.use('/admin/approval-workflows', requireSuperAdminCapability('security_ops'));
@@ -1331,8 +1415,45 @@ router.get(
 
 router.get(
   '/invoices',
-  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
-    await SuperAdminController.getInvoices(req, res, next);
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { period = '30d' } = req.query;
+      const periodDays = period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30;
+      const params: any[] = [];
+      let where = `WHERE 1=1`;
+
+      if (period !== 'all') {
+        where += ` AND i.created_at >= ?`;
+        params.push(new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString());
+      }
+
+      const rows = await dbAll(
+        `
+          SELECT i.*, o.name as organization_name
+          FROM invoices i
+          LEFT JOIN organizations o ON i.organization_id = o.id
+          ${where}
+          ORDER BY i.created_at DESC
+          LIMIT 100
+        `,
+        params,
+        { fallback: false }
+      );
+      const total = (await dbGet(`SELECT COUNT(*) as total FROM invoices i ${where}`, params, {
+        fallback: false,
+      })) as { total?: number } | null;
+
+      return res.json({
+        invoices: (rows || []).map(mapInvoiceRow),
+        total: total?.total ?? (rows || []).length,
+      });
+    } catch (error: any) {
+      logger.error('[SuperAdmin] Error fetching invoices:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res);
+      }
+      return res.status(500).json({ error: 'Failed to fetch invoices' });
+    }
   })
 );
 router.get(
@@ -1362,26 +1483,90 @@ router.get(
 router.post(
   '/invoices',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, lineItems, currency, dueDate, description } = req.body;
-    if (!organizationId) {
-      return res.status(400).json({ error: 'organizationId is required' });
-    }
     try {
-      const { createInvoice } = (await import('../services/InvoiceService.js')) as any;
-      const items =
-        Array.isArray(lineItems) && lineItems.length > 0
-          ? lineItems
-          : [{ description: description || 'Invoice item', quantity: 1, unitPrice: 0 }];
-      const invoice = await createInvoice({
-        organizationId,
-        items,
-        currency: currency || 'USD',
-        dueDate:
+      const { organizationId, lineItems, currency, dueDate, description, metadata } = req.body;
+      if (!organizationId || typeof organizationId !== 'string') {
+        return res.status(400).json({ error: 'organizationId is required' });
+      }
+      if (!Array.isArray(lineItems) || lineItems.length === 0) {
+        return res.status(400).json({ error: 'At least one invoice line item is required' });
+      }
+
+      const organization = await dbGet(
+        `SELECT id FROM organizations WHERE id = ?`,
+        [organizationId],
+        { fallback: false }
+      );
+      if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      const items = normalizeInvoiceLineItems(
+        lineItems.map((item: any) => ({
+          ...item,
+          description: item.description || description || 'Invoice item',
+        }))
+      );
+      if (
+        items.some(
+          (item: any) =>
+            !item.description ||
+            !Number.isFinite(item.quantity) ||
+            item.quantity <= 0 ||
+            !Number.isFinite(item.unitPrice) ||
+            item.unitPrice <= 0
+        )
+      ) {
+        return res.status(400).json({ error: 'Invoice line item price must be greater than zero' });
+      }
+
+      const subtotal = items.reduce((sum: number, item: any) => sum + item.amount, 0);
+      const taxAmount = 0;
+      const total = subtotal + taxAmount;
+      const count = (await dbGet(`SELECT COUNT(*) as count FROM invoices`, [], {
+        fallback: false,
+      })) as { count?: number } | null;
+      const invoiceNumber = `INV-${String((count?.count || 0) + 1).padStart(6, '0')}`;
+      const id = randomUUID();
+
+      await dbRun(
+        `
+          INSERT INTO invoices (
+            id, organization_id, invoice_number, status, currency,
+            subtotal, tax_amount, total, amount_due, amount_paid, due_date,
+            line_items, metadata
+          ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, 0, ?, ?, ?)
+        `,
+        [
+          id,
+          organizationId,
+          invoiceNumber,
+          currency || 'USD',
+          subtotal,
+          taxAmount,
+          total,
+          total,
           dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          JSON.stringify(items),
+          JSON.stringify(metadata || {}),
+        ],
+        { fallback: false }
+      );
+
+      const invoice = await getPersistedInvoice(id);
+      return res.status(201).json({
+        success: true,
+        id,
+        invoiceNumber,
+        organizationId,
+        invoice,
       });
-      return res.status(201).json(invoice);
     } catch (error: any) {
-      return res.status(500).json({ error: error.message || 'Failed to create invoice' });
+      logger.error('[SuperAdmin] Error creating invoice:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res);
+      }
+      return res.status(500).json({ error: 'Failed to create invoice' });
     }
   })
 );
@@ -1674,12 +1859,43 @@ const ensureAlertsTable = async () => {
       channels TEXT DEFAULT '[]',
       is_enabled INTEGER DEFAULT 1,
       last_triggered_at TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`,
     [],
     { fallback: false }
   );
+
+  await Promise.all([
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN enabled INTEGER DEFAULT 1`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN frequency TEXT DEFAULT 'daily'`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN retention_days INTEGER DEFAULT 30`, [], {
+      fallback: true,
+    }),
+    dbRun(
+      `ALTER TABLE backup_configurations ADD COLUMN include_attachments INTEGER DEFAULT 1`,
+      [],
+      {
+        fallback: true,
+      }
+    ),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN include_audit_logs INTEGER DEFAULT 1`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN last_backup_at TEXT`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN next_backup_at TEXT`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN updated_at TIMESTAMPTZ`, [], {
+      fallback: true,
+    }),
+  ]);
 };
 
 router.get(
@@ -2059,9 +2275,65 @@ router.post(
 // BACKUP SCHEDULING (backup_configurations table)
 // ==========================================
 
+const ensureBackupConfigurationsTable = async () => {
+  await dbRun(
+    `CREATE TABLE IF NOT EXISTS backup_configurations (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      enabled INTEGER DEFAULT 1,
+      frequency TEXT DEFAULT 'daily',
+      retention_days INTEGER DEFAULT 30,
+      include_attachments INTEGER DEFAULT 1,
+      include_audit_logs INTEGER DEFAULT 1,
+      last_backup_at TEXT,
+      next_backup_at TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`,
+    [],
+    { fallback: false }
+  );
+};
+
+router.post(
+  '/system/backup',
+  requireSuperAdminCapability('platform_ops'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const BackupService = await import('../services/backupService.js').then(
+        (m) => m.default || m
+      );
+      const backup = await BackupService.createBackup(
+        req.body?.type || 'full',
+        req.body?.reason || 'superadmin_manual'
+      );
+      return res.json({ success: true, backup });
+    } catch (error: any) {
+      logger.warn('[SuperAdmin] Manual backup unavailable:', error?.message || error);
+      return res.status(503).json({
+        success: false,
+        error: 'Manual backup is not available.',
+        code: 'BACKUP_SERVICE_UNAVAILABLE',
+        guidance: 'Check backup service configuration before retrying.',
+      });
+    }
+  })
+);
+
 router.get(
   '/backup/schedules',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      await ensureBackupConfigurationsTable();
+    } catch (error: any) {
+      logger.warn('[SuperAdmin] Backup schedule schema unavailable:', error?.message || error);
+      return res.status(503).json({
+        success: false,
+        error: 'Backup schedules are not available.',
+        code: 'BACKUP_SCHEDULES_UNAVAILABLE',
+      });
+    }
+
     // Model schedules as a single platform-level configuration row (organization_id = 'system')
     const cfgId = 'backupcfg-system';
     const existing = await dbGet(
@@ -2072,7 +2344,7 @@ router.get(
     if (!existing) {
       await dbRun(
         `INSERT INTO backup_configurations (id, organization_id, enabled, frequency, retention_days, include_attachments, include_audit_logs, created_at, updated_at)
-         VALUES (?, 'system', 1, 'daily', 30, 1, 1, datetime('now'), datetime('now'))`,
+         VALUES (?, 'system', 1, 'daily', 30, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [cfgId],
         { fallback: false }
       );
@@ -2107,6 +2379,17 @@ router.get(
 router.put(
   '/backup/schedules/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      await ensureBackupConfigurationsTable();
+    } catch (error: any) {
+      logger.warn('[SuperAdmin] Backup schedule schema unavailable:', error?.message || error);
+      return res.status(503).json({
+        success: false,
+        error: 'Backup schedules are not available.',
+        code: 'BACKUP_SCHEDULES_UNAVAILABLE',
+      });
+    }
+
     const { id } = req.params;
     const { enabled, frequency, retention_days } = req.body || {};
     const existing = await dbGet(`SELECT * FROM backup_configurations WHERE id = ?`, [id], {
@@ -2119,7 +2402,7 @@ router.put(
        SET enabled = COALESCE(?, enabled),
            frequency = COALESCE(?, frequency),
            retention_days = COALESCE(?, retention_days),
-           updated_at = datetime('now')
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
       [
         enabled === undefined ? null : enabled ? 1 : 0,
@@ -3127,6 +3410,8 @@ router.get(
 
 router.get('/admin/audit-logs', SuperAdminController.getAdminAuditLogs);
 router.get('/admin/audit-logs/stats', SuperAdminController.getAdminAuditStats);
+// Frontend (Api.exportAdminAuditLogs) calls this; previously unregistered → 404 in UI.
+router.get('/admin/audit-logs/export', SuperAdminController.exportAuditLogs);
 router.put(
   '/admin/audit-logs/:id/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -3162,6 +3447,7 @@ router.put(
   SuperAdminController.toggleRolePermission
 );
 router.post('/admin/permissions/roles/copy', SuperAdminController.copyRolePermissions);
+router.get('/admin/permissions/roles/compare', SuperAdminController.compareRoles);
 
 // Security Permissions endpoints (aliased from /admin/)
 router.get('/security/permissions', SuperAdminController.getAdminPermissions);
@@ -3190,6 +3476,8 @@ router.get(
 
 router.get('/admin/approval-workflows', SuperAdminController.getApprovalWorkflows);
 router.post('/admin/approval-workflows', SuperAdminController.createApprovalWorkflow);
+router.put('/admin/approval-workflows/:id', SuperAdminController.updateApprovalWorkflow);
+router.delete('/admin/approval-workflows/:id', SuperAdminController.deleteApprovalWorkflow);
 router.get('/admin/approval-requests', SuperAdminController.getApprovalRequests);
 router.post('/admin/approval-requests/:id/approve', SuperAdminController.approveRequest);
 router.post('/admin/approval-requests/:id/reject', SuperAdminController.rejectRequest);
@@ -3287,6 +3575,9 @@ router.post(
     try {
       const { run: dbRun } = await import('../utils/DbPromise.js');
       const { name, description, orderIndex, color } = req.body;
+      if (!String(name || '').trim()) {
+        return res.status(400).json({ error: 'Stage name is required' });
+      }
       const id = `stage-${Date.now()}`;
 
       await dbRun(
@@ -3382,10 +3673,21 @@ router.post(
   '/lifecycle/transitions',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     try {
-      const { run: dbRun } = await import('../utils/DbPromise.js');
+      const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
       const { organizationId, fromStageId, toStageId, notes } = req.body;
       const userId = req.user?.id;
       const id = `trans-${Date.now()}`;
+      if (!organizationId || !toStageId) {
+        return res.status(400).json({ error: 'Organization and target stage are required' });
+      }
+      const organization = await dbGet(`SELECT id FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (!organization) return res.status(404).json({ error: 'Organization not found' });
+      const targetStage = await dbGet(`SELECT id FROM customer_lifecycle_stages WHERE id = ?`, [
+        toStageId,
+      ]);
+      if (!targetStage) return res.status(404).json({ error: 'Target lifecycle stage not found' });
 
       // Insert transition record
       await dbRun(
@@ -3522,6 +3824,11 @@ router.post(
     try {
       const { run: dbRun } = await import('../utils/DbPromise.js');
       const { name, description, triggerConditions, actions } = req.body;
+      if (!String(name || '').trim())
+        return res.status(400).json({ error: 'Playbook name is required' });
+      if (!Array.isArray(actions) || actions.length === 0) {
+        return res.status(400).json({ error: 'At least one playbook action is required' });
+      }
       const id = `pb-${Date.now()}`;
 
       await dbRun(
@@ -3541,6 +3848,43 @@ router.post(
       return res.json({ success: true, id });
     } catch (err: any) {
       logger.error('[SuperAdmin] Error creating playbook:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// Update playbook
+router.put(
+  '/playbooks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    try {
+      const { run: dbRun } = await import('../utils/DbPromise.js');
+      const { id } = req.params;
+      const { name, description, triggerConditions, actions, isActive } = req.body;
+      if (!String(name || '').trim())
+        return res.status(400).json({ error: 'Playbook name is required' });
+      if (!Array.isArray(actions) || actions.length === 0) {
+        return res.status(400).json({ error: 'At least one playbook action is required' });
+      }
+      const result = await dbRun(
+        `
+                UPDATE customer_success_playbooks
+                SET name = ?, description = ?, trigger_conditions_json = ?, actions_json = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `,
+        [
+          name,
+          description || '',
+          JSON.stringify(triggerConditions || {}),
+          JSON.stringify(actions || []),
+          isActive === false ? 0 : 1,
+          id,
+        ]
+      );
+      if (result.changes === 0) return res.status(404).json({ error: 'Playbook not found' });
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[SuperAdmin] Error updating playbook:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3696,7 +4040,7 @@ router.post(
   '/contracts',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     try {
-      const { run: dbRun } = await import('../utils/DbPromise.js');
+      const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
       const {
         organizationId,
         contractType,
@@ -3705,15 +4049,26 @@ router.post(
         renewalDate,
         value,
         currency,
+        status,
         terms,
         documentUrl,
       } = req.body;
       const id = `contract-${Date.now()}`;
+      const numericValue = Number(value);
+      if (!organizationId) return res.status(400).json({ error: 'Organization is required' });
+      if (!startDate) return res.status(400).json({ error: 'Start date is required' });
+      if (!Number.isFinite(numericValue) || numericValue < 0) {
+        return res.status(400).json({ error: 'Contract value must be a non-negative number' });
+      }
+      const organization = await dbGet(`SELECT id FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (!organization) return res.status(404).json({ error: 'Organization not found' });
 
       await dbRun(
         `
-                INSERT INTO customer_contracts (id, organization_id, contract_type, start_date, end_date, renewal_date, value, currency, terms_json, document_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO customer_contracts (id, organization_id, contract_type, start_date, end_date, renewal_date, value, currency, status, terms_json, document_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           id,
@@ -3722,8 +4077,9 @@ router.post(
           startDate,
           endDate || null,
           renewalDate || null,
-          value || 0,
+          numericValue,
           currency || 'USD',
+          status || 'active',
           JSON.stringify(terms || {}),
           documentUrl || null,
         ]
@@ -3732,6 +4088,64 @@ router.post(
       return res.json({ success: true, id });
     } catch (err: any) {
       logger.error('[SuperAdmin] Error creating contract:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// Update contract
+router.put(
+  '/contracts/:id',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    try {
+      const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
+      const { id } = req.params;
+      const {
+        organizationId,
+        contractType,
+        startDate,
+        endDate,
+        renewalDate,
+        value,
+        currency,
+        status,
+        terms,
+        documentUrl,
+      } = req.body;
+      const numericValue = Number(value);
+      if (!organizationId) return res.status(400).json({ error: 'Organization is required' });
+      if (!startDate) return res.status(400).json({ error: 'Start date is required' });
+      if (!Number.isFinite(numericValue) || numericValue < 0) {
+        return res.status(400).json({ error: 'Contract value must be a non-negative number' });
+      }
+      const organization = await dbGet(`SELECT id FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (!organization) return res.status(404).json({ error: 'Organization not found' });
+      const result = await dbRun(
+        `
+                UPDATE customer_contracts
+                SET organization_id = ?, contract_type = ?, start_date = ?, end_date = ?, renewal_date = ?, value = ?, currency = ?, status = ?, terms_json = ?, document_url = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `,
+        [
+          organizationId,
+          contractType || 'subscription',
+          startDate,
+          endDate || null,
+          renewalDate || null,
+          numericValue,
+          currency || 'USD',
+          status || 'active',
+          JSON.stringify(terms || {}),
+          documentUrl || null,
+          id,
+        ]
+      );
+      if (result.changes === 0) return res.status(404).json({ error: 'Contract not found' });
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[SuperAdmin] Error updating contract:', err);
       return res.status(500).json({ error: err.message });
     }
   })

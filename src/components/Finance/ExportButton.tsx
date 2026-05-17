@@ -59,7 +59,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                   navigate(outputUrl);
                   toast.dismiss(toastInstance.id);
                 }}
-                className="text-sm font-medium text-purple-500 hover:text-purple-400 transition-colors"
+                className="text-sm font-medium text-primary-500 hover:text-primary-400 transition-colors"
               >
                 {t('finance.export.openOutput', 'Open output')}
               </button>
@@ -68,7 +68,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                   navigate(sourceUrl);
                   toast.dismiss(toastInstance.id);
                 }}
-                className="text-sm font-medium text-purple-500 hover:text-purple-400 transition-colors"
+                className="text-sm font-medium text-primary-500 hover:text-primary-400 transition-colors"
               >
                 {t('finance.export.openSource', 'Open source')}
               </button>

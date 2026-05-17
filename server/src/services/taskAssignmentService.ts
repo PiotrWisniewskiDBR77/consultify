@@ -9,6 +9,7 @@ import { v4 as uuid } from 'uuid';
 import ActivityService from '../services/ActivityService.js';
 import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { normalizeProjectRole } from '../utils/roleNormalization.js';
 import notificationService from './notificationService.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
@@ -171,12 +172,15 @@ export class TaskAssignmentService {
     }
 
     // Check if assignee has permission to be assigned tasks
+    const normalizedAssigneeRole = normalizeProjectRole(member.projectRole);
     const canBeAssigned = [
-      (ProjectMemberService as any).PROJECT_ROLES.TASK_ASSIGNEE,
-      (ProjectMemberService as any).PROJECT_ROLES.INITIATIVE_OWNER,
-      (ProjectMemberService as any).PROJECT_ROLES.WORKSTREAM_OWNER,
-      (ProjectMemberService as any).PROJECT_ROLES.PMO_LEAD,
-    ].includes(member.projectRole);
+      'TASK_ASSIGNEE',
+      'INITIATIVE_OWNER',
+      'WORKSTREAM_OWNER',
+      'PROJECT_LEADER',
+      'PMO',
+      'CONSULTANT',
+    ].includes(String(normalizedAssigneeRole || ''));
 
     if (!canBeAssigned) {
       throw new Error(`User with role ${member.projectRole} cannot be assigned tasks`);

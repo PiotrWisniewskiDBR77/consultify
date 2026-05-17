@@ -144,7 +144,7 @@ export const SuperAdminPlansView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* New Plan Form */}
         {showNewForm && (
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-6 border-2 border-dashed border-indigo-300 dark:border-indigo-600">
+          <div className="bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-indigo-900/20 dark:to-primary-900/20 rounded-xl p-6 border-2 border-dashed border-indigo-300 dark:border-indigo-600">
             <PlanForm
               formData={formData}
               setFormData={setFormData}
@@ -233,7 +233,7 @@ export const SuperAdminPlansView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDelete(plan.id)}
-                    className="px-3 py-2 text-sm text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -102,8 +102,8 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
     },
     risk: {
       icon: AlertTriangle,
-      color: 'text-red-500',
-      bg: 'bg-red-500/10',
+      color: 'text-rose-500',
+      bg: 'bg-rose-500/10',
       label: isPl ? 'Ryzyko' : 'Risk',
     },
     alternative: {
@@ -115,7 +115,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   };
 
   const impactBadge = {
-    high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
     medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     low: 'bg-slate-100 text-slate-600 dark:bg-slate-800/30 dark:text-slate-400',
   };
@@ -127,7 +127,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div>
             <div className="flex items-center gap-2">
-              <GitBranch size={14} className="text-violet-500" />
+              <GitBranch size={14} className="text-primary-500" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">
                 {isPl ? 'Co jeśli...?' : 'What if...?'}
               </h3>
@@ -159,7 +159,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
               <button
                 onClick={generateScenarios}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/15 to-indigo-500/10 text-[11px] font-bold text-violet-700 dark:text-violet-300 hover:from-violet-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-indigo-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Generuj scenariusze' : 'Generate scenarios'}
@@ -169,7 +169,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-violet-500" />
+              <Loader2 size={16} className="animate-spin text-primary-500" />
               <span className="text-[11px] text-slate-500">
                 {isPl ? 'Analizuję...' : 'Analyzing...'}
               </span>
@@ -214,7 +214,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                               });
                             }}
                             disabled={locked}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-40"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40"
                           >
                             <Zap size={9} />
                             {isPl ? 'Dodaj do mapy' : 'Add to map'}

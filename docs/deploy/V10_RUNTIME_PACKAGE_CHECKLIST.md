@@ -54,4 +54,3 @@ Used by the V10 admin panel instrumentation. Default-off.
 - **Server first**, then frontend.
   - Server exposes `/api/v10/*` and `/api/v10/teresa/voice-config`.
   - Frontend depends on those routes; deploying frontend first can surface “voice unavailable” / runtime call errors.
-

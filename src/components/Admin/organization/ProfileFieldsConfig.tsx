@@ -226,7 +226,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                 className={cn(
                   'bg-white dark:bg-navy-800 rounded-lg border transition-all',
                   isEditing
-                    ? 'border-violet-500 ring-2 ring-violet-500/20'
+                    ? 'border-primary-500 ring-2 ring-primary-500/20'
                     : 'border-slate-200 dark:border-navy-700'
                 )}
               >
@@ -429,13 +429,13 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
 
         {/* New Field Form */}
         {newField && (
-          <div className="bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800 p-4 space-y-4">
-            <h4 className="font-medium text-violet-900 dark:text-violet-200">
+          <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800 p-4 space-y-4">
+            <h4 className="font-medium text-primary-900 dark:text-primary-200">
               {t('admin.organization.profileFields.newField', 'New Field')}
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-violet-700 dark:text-violet-300 mb-1">
+                <label className="block text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">
                   {t('admin.organization.profileFields.label', 'Label')}
                 </label>
                 <input
@@ -443,12 +443,12 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                   value={newField.label || ''}
                   onChange={(e) => setNewField({ ...newField, label: e.target.value })}
                   placeholder="e.g., Department, Location"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-violet-200 dark:border-violet-700 rounded-lg text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-700 rounded-lg text-navy-900 dark:text-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-violet-700 dark:text-violet-300 mb-1">
+                <label className="block text-sm font-medium text-primary-700 dark:text-primary-300 mb-1">
                   {t('admin.organization.profileFields.type', 'Type')}
                 </label>
                 <select
@@ -459,7 +459,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                       type: e.target.value as ProfileFieldType,
                     })
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-violet-200 dark:border-violet-700 rounded-lg text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-700 rounded-lg text-navy-900 dark:text-white"
                 >
                   <option value="text">Text</option>
                   <option value="textarea">Text Area</option>

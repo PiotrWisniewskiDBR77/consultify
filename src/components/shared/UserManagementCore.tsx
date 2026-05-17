@@ -15,7 +15,9 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 import { User, UserRole } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
+import { DegradedState, UnavailableState } from '../Admin/AdminState';
 import { UserAssignmentsPanel } from '../Admin/UserAssignmentsPanel';
 
 export interface UserManagementCoreProps {
@@ -36,6 +38,15 @@ export interface UserManagementCoreProps {
 interface ManagedUser extends User {
   organizationName?: string;
 }
+
+const DEFAULT_PROJECT_ROLE_OPTIONS = [
+  'PROJECT_EXECUTIVE',
+  'PROJECT_MANAGER',
+  'TEAM_LEAD',
+  'TEAM_MEMBER',
+  'CONSULTANT',
+  'STAKEHOLDER',
+];
 
 // User Table Row Component
 export const UserTableRow: React.FC<{
@@ -70,8 +81,8 @@ export const UserTableRow: React.FC<{
   mode,
 }) => {
   const getRoleBadgeColor = (role?: string) => {
-    if (isSuperAdminRole(role)) return 'bg-red-500/20 text-red-400';
-    if (role === UserRole.ADMIN) return 'bg-purple-500/20 text-purple-400 border-purple-500/50';
+    if (isSuperAdminRole(role)) return 'bg-rose-500/20 text-rose-400';
+    if (role === UserRole.ADMIN) return 'bg-primary-500/20 text-primary-400 border-primary-500/50';
     return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
   };
 
@@ -103,13 +114,32 @@ export const UserTableRow: React.FC<{
         </span>
       </td>
       <td className="px-6 py-4">
+        <span className="text-xs text-slate-700 dark:text-slate-300">
+          {user.projectRole || (
+            <span className="text-slate-500 dark:text-slate-500 italic">Not set</span>
+          )}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-col">
+          <span className="text-xs text-slate-700 dark:text-slate-300">
+            {user.department || (
+              <span className="text-slate-500 dark:text-slate-500 italic">Department not set</span>
+            )}
+          </span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-500">
+            {user.jobTitle || 'Position not set'}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4">
         <span className="text-xs text-slate-400 dark:text-slate-500">
           {userPlans.find((p) => p.id === user.licensePlanId)?.name || 'Standard'}
         </span>
       </td>
       <td className="px-6 py-4">
         <span
-          className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-red-400'}`}
+          className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-rose-400'}`}
         >
           {user.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
           {user.status || 'active'}
@@ -156,7 +186,7 @@ export const UserTableRow: React.FC<{
           {showImpersonate && onImpersonate && !isSuperAdminRole(user.role) && (
             <button
               onClick={() => onImpersonate(user.id)}
-              className="p-2 hover:bg-purple-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-purple-400 text-xs font-medium"
+              className="p-2 hover:bg-primary-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-400 text-xs font-medium"
               title="Impersonate"
             >
               Impersonate
@@ -167,8 +197,8 @@ export const UserTableRow: React.FC<{
               onClick={() => onBlock(user.id, user.status || 'active')}
               className={`p-2 rounded-lg text-xs font-medium ${
                 user.status === 'active'
-                  ? 'hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400'
-                  : 'hover:bg-green-500/20 text-red-400 hover:text-green-400'
+                  ? 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
+                  : 'hover:bg-green-500/20 text-rose-400 hover:text-green-400'
               }`}
               title={user.status === 'active' ? 'Block' : 'Unblock'}
             >
@@ -178,7 +208,7 @@ export const UserTableRow: React.FC<{
           {onDelete && (
             <button
               onClick={() => onDelete(user.id)}
-              className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-400"
+              className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
               title="Delete"
             >
               <Trash2 size={16} />
@@ -196,15 +226,20 @@ export const UserFormModal: React.FC<{
   editingUser: ManagedUser | null;
   userPlans: any[];
   onClose: () => void;
-  onSave: (formData: any) => void;
-}> = ({ isOpen, editingUser, userPlans, onClose, onSave }) => {
+  onSave: (formData: any) => void | Promise<void>;
+  isSaving?: boolean;
+}> = ({ isOpen, editingUser, userPlans, onClose, onSave, isSaving = false }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    role: UserRole.OTHER,
+    role: UserRole.USER,
+    projectRole: '',
+    department: '',
+    jobTitle: '',
     status: 'active',
     licensePlanId: '',
+    password: '',
   });
 
   useEffect(() => {
@@ -213,18 +248,26 @@ export const UserFormModal: React.FC<{
         firstName: editingUser.firstName || '',
         lastName: editingUser.lastName || '',
         email: editingUser.email || '',
-        role: (editingUser.role as UserRole) || UserRole.OTHER,
+        role: (editingUser.role as UserRole) || UserRole.USER,
+        projectRole: editingUser.projectRole || '',
+        department: editingUser.department || '',
+        jobTitle: editingUser.jobTitle || '',
         status: editingUser.status || 'active',
         licensePlanId: editingUser.licensePlanId || '',
+        password: '',
       });
     } else {
       setFormData({
         firstName: '',
         lastName: '',
         email: '',
-        role: UserRole.OTHER,
+        role: UserRole.USER,
+        projectRole: '',
+        department: '',
+        jobTitle: '',
         status: 'active',
         licensePlanId: '',
+        password: '',
       });
     }
   }, [editingUser]);
@@ -245,6 +288,7 @@ export const UserFormModal: React.FC<{
           </h2>
           <button
             onClick={onClose}
+            disabled={isSaving}
             className="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
             <X size={20} />
@@ -273,6 +317,17 @@ export const UserFormModal: React.FC<{
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
           />
+          {!editingUser && (
+            <input
+              required
+              type="password"
+              minLength={8}
+              placeholder="Initial Password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            />
+          )}
           <select
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
@@ -282,6 +337,30 @@ export const UserFormModal: React.FC<{
             <option value="MANAGER">Manager</option>
             <option value="ADMIN">Admin</option>
           </select>
+          <select
+            value={formData.projectRole}
+            onChange={(e) => setFormData({ ...formData, projectRole: e.target.value })}
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+          >
+            <option value="">Project Role (optional)</option>
+            {DEFAULT_PROJECT_ROLE_OPTIONS.map((projectRole) => (
+              <option key={projectRole} value={projectRole}>
+                {projectRole}
+              </option>
+            ))}
+          </select>
+          <input
+            placeholder="Department (optional)"
+            value={formData.department}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+          />
+          <input
+            placeholder="Position / Job Title (optional)"
+            value={formData.jobTitle}
+            onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+          />
           <select
             value={formData.licensePlanId}
             onChange={(e) => setFormData({ ...formData, licensePlanId: e.target.value })}
@@ -296,9 +375,10 @@ export const UserFormModal: React.FC<{
           </select>
           <button
             type="submit"
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4"
+            disabled={isSaving}
+            className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-semibold mt-4 disabled:opacity-60"
           >
-            Save
+            {isSaving ? 'Saving...' : 'Save'}
           </button>
         </form>
       </div>
@@ -312,8 +392,16 @@ export const InviteUserModal: React.FC<{
   organizations: Array<{ id: string; name: string }>;
   defaultOrganizationId?: string;
   onClose: () => void;
-  onInvite: (email: string, role: string, organizationId: string) => void;
-}> = ({ isOpen, organizations, defaultOrganizationId = '', onClose, onInvite }) => {
+  onInvite: (email: string, role: string, organizationId: string) => void | Promise<void>;
+  isInviting?: boolean;
+}> = ({
+  isOpen,
+  organizations,
+  defaultOrganizationId = '',
+  onClose,
+  onInvite,
+  isInviting = false,
+}) => {
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'USER', organizationId: '' });
 
   useEffect(() => {
@@ -329,7 +417,6 @@ export const InviteUserModal: React.FC<{
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onInvite(inviteForm.email, inviteForm.role, inviteForm.organizationId);
-    setInviteForm({ email: '', role: 'USER', organizationId: '' });
   };
 
   return (
@@ -385,15 +472,17 @@ export const InviteUserModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
+              disabled={isInviting}
               className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium"
+              disabled={isInviting}
+              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium disabled:opacity-60"
             >
-              Send Invitation
+              {isInviting ? 'Sending...' : 'Send Invitation'}
             </button>
           </div>
         </form>
@@ -407,8 +496,9 @@ export const MoveUserModal: React.FC<{
   user: ManagedUser | null;
   organizations: Array<{ id: string; name: string; status: string }>;
   onClose: () => void;
-  onMove: (userId: string, targetOrgId: string) => void;
-}> = ({ user, organizations, onClose, onMove }) => {
+  onMove: (userId: string, targetOrgId: string) => void | Promise<void>;
+  isMoving?: boolean;
+}> = ({ user, organizations, onClose, onMove, isMoving = false }) => {
   const [targetOrgId, setTargetOrgId] = useState('');
 
   if (!user) return null;
@@ -456,15 +546,17 @@ export const MoveUserModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
+              disabled={isMoving}
               className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium"
+              disabled={isMoving}
+              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium disabled:opacity-60"
             >
-              Move User
+              {isMoving ? 'Moving...' : 'Move User'}
             </button>
           </div>
         </form>
@@ -492,8 +584,13 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
+  const [selectedProjectRole, setSelectedProjectRole] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [savingUser, setSavingUser] = useState(false);
+  const [invitingUser, setInvitingUser] = useState(false);
+  const [movingUserId, setMovingUserId] = useState<string | null>(null);
 
   // Modal states
   const [showUserModal, setShowUserModal] = useState(false);
@@ -505,6 +602,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const fetchedUsers =
         mode === 'platform'
           ? await Api.getSuperAdminUsers({
@@ -516,7 +614,9 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       setUsers(fetchedUsers);
     } catch (e) {
       console.error('Failed to load users', e);
-      toast.error('Failed to load users');
+      const message = normalizeApiErrorMessage(e, 'Failed to load users');
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -535,12 +635,19 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     loadData();
   }, [loadUsers]);
 
-  const filteredUsers = users.filter(
-    (u) =>
-      (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.lastName || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((u) => {
+    const normalizedSearch = searchTerm.toLowerCase();
+    const matchesSearch =
+      (u.email || '').toLowerCase().includes(normalizedSearch) ||
+      (u.firstName || '').toLowerCase().includes(normalizedSearch) ||
+      (u.lastName || '').toLowerCase().includes(normalizedSearch) ||
+      (u.department || '').toLowerCase().includes(normalizedSearch) ||
+      (u.jobTitle || '').toLowerCase().includes(normalizedSearch) ||
+      (u.projectRole || '').toLowerCase().includes(normalizedSearch);
+
+    const matchesProjectRole = !selectedProjectRole || u.projectRole === selectedProjectRole;
+    return matchesSearch && matchesProjectRole;
+  });
   const selectedOrganizationName =
     mode === 'platform'
       ? organizations.find((org) => org.id === selectedOrganizationId)?.name || ''
@@ -549,10 +656,16 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     mode === 'platform'
       ? Array.from(
           new Set(
-            [UserRole.OWNER, UserRole.ADMIN, UserRole.USER, UserRole.MANAGER, UserRole.SUPERADMIN]
-              .concat(
-                users.map((user) => String(user.role || '').trim()).filter(Boolean) as UserRole[]
-              )
+            (
+              [
+                UserRole.OWNER,
+                UserRole.ADMIN,
+                UserRole.USER,
+                UserRole.MANAGER,
+                UserRole.SUPERADMIN,
+              ] as string[]
+            )
+              .concat(users.map((user) => String(user.role || '').trim()))
               .filter(Boolean)
           )
         )
@@ -563,19 +676,34 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           new Set(['active', 'blocked', 'pending'].concat(users.map((user) => user.status || '')))
         ).filter(Boolean)
       : [];
+  const projectRoleOptions =
+    mode === 'platform'
+      ? Array.from(
+          new Set(
+            DEFAULT_PROJECT_ROLE_OPTIONS.concat(
+              users.map((user) => String(user.projectRole || '').trim()).filter(Boolean)
+            )
+          )
+        )
+      : [];
 
   const handleSaveUser = async (formData: any) => {
+    setSavingUser(true);
     try {
       if (editingUser) {
+        const { password: _password, ...updates } = formData;
         if (mode === 'platform') {
-          await Api.updateSuperAdminUser(editingUser.id, formData);
+          await Api.updateSuperAdminUser(editingUser.id, updates);
         } else {
-          await Api.updateUser(editingUser.id, formData);
+          await Api.updateUser(editingUser.id, updates);
         }
         toast.success('User updated');
       } else {
         if (mode === 'platform') {
-          await Api.createSuperAdminUser(formData);
+          await Api.createSuperAdminUser({
+            ...formData,
+            organizationId: selectedOrganizationId || undefined,
+          });
           toast.success('User created');
         } else {
           // Org-admin user creation endpoint is not guaranteed in every deployment.
@@ -586,9 +714,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       }
       setShowUserModal(false);
       setEditingUser(null);
-      loadUsers();
+      await loadUsers();
     } catch (err: any) {
-      toast.error(err.message || 'Error saving user');
+      toast.error(normalizeApiErrorMessage(err, 'Error saving user'));
+    } finally {
+      setSavingUser(false);
     }
   };
 
@@ -601,12 +731,12 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
         await Api.deleteUser(id);
       }
       toast.success('User deleted');
-      loadUsers();
+      await loadUsers();
     } catch (e: any) {
       // Feedback #406b042a — surface actual backend reason (e.g. owner
       // protection, unauthorized) instead of masking every failure with a
       // generic "Failed to delete user" toast.
-      toast.error(e?.message || 'Failed to delete user');
+      toast.error(normalizeApiErrorMessage(e, 'Failed to delete user'));
     }
   };
 
@@ -619,35 +749,42 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     try {
       await Api.updateSuperAdminUser(userId, { status: newStatus });
       toast.success(`User ${newStatus === 'blocked' ? 'blocked' : 'unblocked'} successfully`);
-      loadUsers();
+      await loadUsers();
     } catch (e: any) {
       // Feedback #682d4134 — surface the actual backend reason (e.g. Zod
       // validation detail, 404, 403) instead of always showing a generic
       // "Failed to block user".
-      toast.error(e?.message || `Failed to ${action.toLowerCase()} user`);
+      toast.error(normalizeApiErrorMessage(e, `Failed to ${action.toLowerCase()} user`));
     }
   };
 
   const handleMoveUser = async (userId: string, targetOrgId: string) => {
+    setMovingUserId(userId);
     try {
       await Api.updateSuperAdminUser(userId, { organizationId: targetOrgId });
       toast.success('User moved successfully');
       setMovingUser(null);
-      loadUsers();
+      await loadUsers();
     } catch (e: any) {
       // Feedback #76ef6831 — surface e.g. "Target organization not found" so
       // the admin understands why the move didn't go through.
-      toast.error(e?.message || 'Failed to move user');
+      toast.error(normalizeApiErrorMessage(e, 'Failed to move user'));
+    } finally {
+      setMovingUserId(null);
     }
   };
 
   const handleInviteUser = async (email: string, role: string, orgId: string) => {
+    setInvitingUser(true);
     try {
       await Api.inviteUser(email, role, orgId);
       toast.success('Invitation sent successfully');
       setShowInviteModal(false);
+      await loadUsers();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to send invitation');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to send invitation'));
+    } finally {
+      setInvitingUser(false);
     }
   };
 
@@ -672,7 +809,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       localStorage.setItem('token', token);
       window.location.href = '/';
     } catch (err: any) {
-      toast.error(err.message || 'Failed to impersonate user');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to impersonate user'));
     }
   };
 
@@ -689,9 +826,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const clearPlatformFilters = () => {
     onSelectedOrganizationChange?.('');
     setSelectedRole('');
+    setSelectedProjectRole('');
     setSelectedStatus('');
     setSearchTerm('');
   };
+  const canCreateUsersDirectly = mode === 'platform';
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -707,7 +846,8 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none w-full md:w-64"
+              disabled={!!loadError}
+              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none w-full md:w-64"
             />
           </div>
           {mode === 'platform' && (
@@ -715,7 +855,8 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <select
                 value={selectedOrganizationId}
                 onChange={(e) => onSelectedOrganizationChange?.(e.target.value)}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[220px]"
+                disabled={!!loadError}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[220px]"
               >
                 <option value="">All organizations</option>
                 {organizations.map((org) => (
@@ -727,7 +868,8 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
+                disabled={!!loadError}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
               >
                 <option value="">All roles</option>
                 {roleOptions.map((role) => (
@@ -737,9 +879,23 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 ))}
               </select>
               <select
+                value={selectedProjectRole}
+                onChange={(e) => setSelectedProjectRole(e.target.value)}
+                disabled={!!loadError}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[180px]"
+              >
+                <option value="">All project roles</option>
+                {projectRoleOptions.map((projectRole) => (
+                  <option key={projectRole} value={projectRole}>
+                    {projectRole}
+                  </option>
+                ))}
+              </select>
+              <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
+                disabled={!!loadError}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
               >
                 <option value="">All statuses</option>
                 {statusOptions.map((status) => (
@@ -748,7 +904,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                   </option>
                 ))}
               </select>
-              {(selectedOrganizationId || selectedRole || selectedStatus || searchTerm) && (
+              {(selectedOrganizationId ||
+                selectedRole ||
+                selectedProjectRole ||
+                selectedStatus ||
+                searchTerm) && (
                 <button
                   onClick={clearPlatformFilters}
                   className="px-3 py-2 text-sm border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
@@ -763,6 +923,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           {showInvite && mode === 'platform' && (
             <button
               onClick={() => setShowInviteModal(true)}
+              disabled={!!loadError}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium"
             >
               <UserPlus size={16} /> Invite User
@@ -770,12 +931,27 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           )}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
+            disabled={!canCreateUsersDirectly || !!loadError}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-primary-900/20"
           >
             <Plus size={16} /> Add User
           </button>
         </div>
       </div>
+
+      {!canCreateUsersDirectly && (
+        <UnavailableState
+          compact
+          title="Direct user creation unavailable"
+          description="This admin surface can edit existing users, but direct creation is not backed by a reliable tenant-admin endpoint. Use the platform invite flow."
+        />
+      )}
+
+      {loadError && (
+        <div className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
+          {loadError}
+        </div>
+      )}
 
       {mode === 'platform' && (
         <div className="text-sm text-slate-600 dark:text-slate-400">
@@ -790,6 +966,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
             </>
           ) : null}
           {selectedRole ? ` with role ${selectedRole}` : ''}
+          {selectedProjectRole ? ` in project role ${selectedProjectRole}` : ''}
           {selectedStatus ? ` and status ${selectedStatus}` : ''}
         </div>
       )}
@@ -802,6 +979,8 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <th className="px-6 py-4">User</th>
               {mode === 'platform' && <th className="px-6 py-4">Organization</th>}
               <th className="px-6 py-4">Role</th>
+              <th className="px-6 py-4">Project role</th>
+              <th className="px-6 py-4">Department / Position</th>
               <th className="px-6 py-4">License</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-right">Actions</th>
@@ -810,14 +989,20 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-12 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                <td colSpan={mode === 'platform' ? 8 : 7} className="px-6 py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                </td>
+              </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={mode === 'platform' ? 8 : 7} className="px-6 py-6">
+                  <DegradedState title="Users unavailable" description={loadError} />
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={mode === 'platform' ? 6 : 5}
+                  colSpan={mode === 'platform' ? 8 : 7}
                   className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
                 >
                   {selectedOrganizationName
@@ -855,10 +1040,12 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
         editingUser={editingUser}
         userPlans={userPlans}
         onClose={() => {
+          if (savingUser) return;
           setShowUserModal(false);
           setEditingUser(null);
         }}
         onSave={handleSaveUser}
+        isSaving={savingUser}
       />
 
       {showInvite && (
@@ -868,6 +1055,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           defaultOrganizationId={selectedOrganizationId}
           onClose={() => setShowInviteModal(false)}
           onInvite={handleInviteUser}
+          isInviting={invitingUser}
         />
       )}
 
@@ -877,6 +1065,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           organizations={organizations}
           onClose={() => setMovingUser(null)}
           onMove={handleMoveUser}
+          isMoving={movingUserId === movingUser?.id}
         />
       )}
 

@@ -81,7 +81,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       label: t('myWork.timeGroup.overdue', 'Overdue'),
       count: taskCounts.overdue,
       icon: AlertCircle,
-      color: 'text-red-500',
+      color: 'text-rose-500',
     },
     {
       key: 'today' as TaskTimeGroup,
@@ -202,7 +202,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         item.key === 'overdue' && item.count > 0
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                          ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
                           : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -224,7 +224,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
             }}
             className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
               activeSection === 'decisions'
-                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                 : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
             }`}
           >
@@ -248,7 +248,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
             <span
               className={`text-xs px-1.5 py-0.5 rounded-full ${
                 activeSection === 'decisions'
-                  ? 'bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-200'
+                  ? 'bg-primary-100 dark:bg-primary-800/50 text-primary-700 dark:text-primary-200'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
               }`}
             >
@@ -268,7 +268,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                   }}
                   className={`w-full flex items-center justify-between pl-4 pr-4 py-1.5 text-xs transition-colors ${
                     activeSection === 'decisions' && decisionGroup === item.key
-                      ? 'bg-purple-50/50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400'
+                      ? 'bg-primary-50/50 dark:bg-primary-900/10 text-primary-600 dark:text-primary-400'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >

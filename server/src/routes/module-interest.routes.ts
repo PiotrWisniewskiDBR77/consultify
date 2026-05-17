@@ -16,7 +16,17 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-const ALLOWED_MODULES = ['meeting', 'iris', 'marketplace'];
+const ALLOWED_MODULES = [
+  'meeting',
+  'iris',
+  'marketplace',
+  // KIMI lanes (legacy route keys used by the frontend)
+  'wordy',
+  'excele',
+  'prezentacje',
+  // keep canonical english alias for future clients
+  'presentations',
+];
 
 /**
  * POST /api/module-interest
@@ -119,7 +129,7 @@ router.delete(
 );
 
 /**
- * GET /api/superadmin/module-interest
+ * GET /api/module-interest/admin/all
  * List all interest registrations (SuperAdmin only)
  */
 router.get(

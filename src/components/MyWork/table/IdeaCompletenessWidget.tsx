@@ -84,7 +84,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
         labelEn: 'Edges',
         labelPl: 'Połączenia',
         value: edgeCount,
-        color: 'text-violet-500',
+        color: 'text-primary-500',
       },
       {
         icon: Target,
@@ -103,7 +103,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
             ? 'text-emerald-500'
             : completeness >= 50
               ? 'text-amber-500'
-              : 'text-red-500',
+              : 'text-rose-500',
       },
     ];
 
@@ -129,7 +129,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
               ? 'bg-emerald-500'
               : metrics.completeness >= 50
                 ? 'bg-amber-500'
-                : 'bg-red-400'
+                : 'bg-rose-400'
           }`}
           style={{ width: `${metrics.completeness}%` }}
         />

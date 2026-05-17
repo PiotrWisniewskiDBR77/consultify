@@ -165,7 +165,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Sparkles size={16} className="text-violet-500" />
+          <Sparkles size={16} className="text-primary-500" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {isPl ? 'AI Kategoryzacja & Klastry' : 'AI Categorize & Cluster'}
           </span>
@@ -183,7 +183,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           <button
             onClick={handleAnalyze}
             disabled={loading || nodes.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 dark:text-violet-400 hover:from-violet-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-indigo-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
             {loading
@@ -210,14 +210,14 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           <div className="flex items-center gap-1 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
             <button
               onClick={() => setActiveTab('clusters')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
             >
               <Layers size={10} className="inline mr-1" />
               {isPl ? 'Klastry' : 'Clusters'} ({clusters.length})
             </button>
             <button
               onClick={() => setActiveTab('duplicates')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
             >
               <GitMerge size={10} className="inline mr-1" />
               {isPl ? 'Duplikaty' : 'Duplicates'} ({duplicates.length})
@@ -270,7 +270,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                           {cat.suggestedTags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400"
                             >
                               <Tag size={7} className="inline mr-0.5" />
                               {tag}

@@ -17,6 +17,12 @@ import {
 } from '../types/chatExecutionIntegration.js';
 import logger from '../utils/Logger.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
+import {
+  ensureRunForAction,
+  getAIRunByAction,
+  recordAIRunEvent,
+  recordLegacyAuditSafely,
+} from './aiRunLedgerService.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {
@@ -33,8 +39,12 @@ export const ACTION_TYPES = {
 export const ACTION_STATUS = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
+  EXECUTING: 'EXECUTING',
   REJECTED: 'REJECTED',
   EXECUTED: 'EXECUTED',
+  FAILED: 'FAILED',
+  AUDITED: 'AUDITED',
+  CLOSED: 'CLOSED',
 };
 
 /**
@@ -94,6 +104,7 @@ interface EmitChatExecutionMessageInput {
   content: string;
   executionProposal: {
     proposalId: string;
+    runId?: string;
     lifecycleState: V8LifecycleState;
     actionType?: string;
     planSummary?: string;
@@ -104,6 +115,72 @@ interface EmitChatExecutionMessageInput {
     rejectionReason?: string | null;
     expiresAt?: string | null;
     result?: unknown;
+  };
+}
+
+function isGovernedMutationAction(actionType: string): boolean {
+  return ![ACTION_TYPES.EXPLAIN_CONTEXT, ACTION_TYPES.ANALYZE_RISKS].includes(actionType);
+}
+
+function isDestructiveAction(actionType: string): boolean {
+  return /(^|_)(DELETE|REMOVE|ARCHIVE|REVOKE|RESET|ROLLBACK|PURGE)(_|$)/i.test(actionType || '');
+}
+
+function allowsPatternAutoApprovalForGovernedMutation(
+  permission: any,
+  actionType: string
+): boolean {
+  if (isDestructiveAction(actionType)) {
+    return permission?.allowDestructiveAutoApproval === true;
+  }
+  return (
+    permission?.allowLearnedAutoApproval === true ||
+    permission?.learnedAutoApprovalAllowed === true ||
+    permission?.allowGovernedMutationAutoApproval === true ||
+    permission?.currentLevel === 'AUTOPILOT'
+  );
+}
+
+function rollbackStateForResult(result: any): {
+  rollbackStatus: 'rollback_available' | 'rollback_unavailable';
+  rollbackAvailable: boolean;
+  rollbackStrategy?: string;
+} {
+  const hasOutputRef = Boolean(
+    result && Object.entries(result).some(([key, value]) => /id$/i.test(key) && Boolean(value))
+  );
+  if (hasOutputRef) {
+    return {
+      rollbackStatus: 'rollback_available',
+      rollbackAvailable: true,
+      rollbackStrategy: 'delete_created_output_refs',
+    };
+  }
+  return {
+    rollbackStatus: 'rollback_unavailable',
+    rollbackAvailable: false,
+  };
+}
+
+function normalizeActionRow(action: any): any {
+  return {
+    id: action.id,
+    user_id: action.user_id || action.userId,
+    organization_id: action.organization_id || action.organizationId,
+    project_id: action.project_id || action.projectId || null,
+    action_type: action.action_type || action.actionType,
+    payload:
+      typeof action.payload === 'string' ? action.payload : JSON.stringify(action.payload || {}),
+    draft_content:
+      typeof action.draft_content === 'string'
+        ? action.draft_content
+        : JSON.stringify(action.draftContent || action.draft_content || null),
+    status: action.status,
+    current_policy_level: action.current_policy_level || action.currentPolicyLevel || null,
+    created_at: action.created_at || action.createdAt || null,
+    approved_at: action.approved_at || action.approvedAt || null,
+    approved_by: action.approved_by || action.approvedBy || null,
+    executed_at: action.executed_at || action.executedAt || null,
   };
 }
 
@@ -290,7 +367,9 @@ const AIActionExecutor = {
       };
     }
 
-    let requiresApproval = Boolean(permission.requiresApproval || payload._forceApproval);
+    let requiresApproval = Boolean(
+      permission.requiresApproval || payload._forceApproval || isGovernedMutationAction(actionType)
+    );
 
     // HITL Learning System
     let autoDecided = false;
@@ -326,7 +405,20 @@ const AIActionExecutor = {
           };
         }
 
-        requiresApproval = false;
+        if (
+          !isGovernedMutationAction(actionType) ||
+          allowsPatternAutoApprovalForGovernedMutation(permission, actionType)
+        ) {
+          requiresApproval = false;
+        } else {
+          autoDecided = false;
+          autoDecision = null;
+          patternInfo = {
+            ...patternInfo,
+            reason: 'Learned approval pattern requires explicit policy allowance',
+            bypassBlocked: true,
+          };
+        }
       }
     }
 
@@ -358,6 +450,37 @@ const AIActionExecutor = {
       requiresApproval: requiresApproval,
       status: finalStatus,
     };
+
+    const actionRow = normalizeActionRow({
+      id,
+      user_id: userId,
+      organization_id: organizationId,
+      project_id: projectId,
+      action_type: actionType,
+      payload,
+      status: finalStatus,
+      current_policy_level: permission.currentLevel,
+    });
+    const aiRun = await ensureRunForAction(actionRow);
+    await recordAIRunEvent({
+      action: actionRow,
+      eventType: requiresApproval ? 'proposal_pending_review' : 'proposal_approved_by_policy',
+      status: requiresApproval ? 'pending_review' : 'approved',
+      actorUserId: userId,
+      details: {
+        actionType,
+        requiresApproval,
+        noSilentExecution: true,
+        severityPolicy: payload.riskLevel || payload.risk || 'derived',
+      },
+      audit: {
+        approvalRequired: requiresApproval,
+        approvalSeparation: true,
+        executionRequiresApprovedStatus: true,
+      },
+    });
+    result.runId = aiRun?.run_id;
+    result.aiRun = await getAIRunByAction(id);
 
     if (autoDecided) {
       result.autoApproved = true;
@@ -398,6 +521,7 @@ const AIActionExecutor = {
         content: planSummary,
         executionProposal: {
           proposalId: id,
+          runId: aiRun?.run_id,
           lifecycleState,
           actionType,
           planSummary,
@@ -470,6 +594,23 @@ const AIActionExecutor = {
       return { success: false, error: 'Action not found or already processed' };
     }
 
+    const actionRow = normalizeActionRow({ ...action, status: ACTION_STATUS.APPROVED });
+    const aiRun = await recordAIRunEvent({
+      action: actionRow,
+      eventType: 'proposal_approved',
+      status: 'approved',
+      actorUserId: userId,
+      details: {
+        alwaysApprove: Boolean(options.alwaysApprove),
+        conversationId: options?.conversationId || null,
+      },
+      audit: {
+        approvedBy: userId,
+        approvedAt: new Date().toISOString(),
+        approvalSeparation: true,
+      },
+    });
+
     if (options?.conversationId) {
       await emitChatExecutionMessage({
         conversationId: options.conversationId,
@@ -477,6 +618,7 @@ const AIActionExecutor = {
         content: 'Proposal approved — ready to execute.',
         executionProposal: {
           proposalId: actionId,
+          runId: aiRun?.runId || aiRun?.run_id,
           lifecycleState: 'approved',
           actionType: action.action_type,
           reviewer: options?.reviewer || { userId },
@@ -499,8 +641,10 @@ const AIActionExecutor = {
         return {
           success: true,
           actionId,
+          runId: aiRun?.runId || aiRun?.run_id,
           status: ACTION_STATUS.APPROVED,
           lifecycleState: lifecycleStateOf(ACTION_STATUS.APPROVED),
+          aiRun,
           patternLearned: true,
           patternInfo: patternResult,
         };
@@ -512,8 +656,10 @@ const AIActionExecutor = {
     return {
       success: true,
       actionId,
+      runId: aiRun?.runId || aiRun?.run_id,
       status: ACTION_STATUS.APPROVED,
       lifecycleState: lifecycleStateOf(ACTION_STATUS.APPROVED),
+      aiRun,
     };
   },
 
@@ -543,6 +689,24 @@ const AIActionExecutor = {
       return { success: false, error: 'Action not found or already processed' };
     }
 
+    const actionRow = normalizeActionRow({ ...action, status: ACTION_STATUS.REJECTED });
+    const aiRun = await recordAIRunEvent({
+      action: actionRow,
+      eventType: 'proposal_rejected',
+      status: 'rejected',
+      actorUserId: userId,
+      details: {
+        reason: reason || null,
+        alwaysReject: Boolean(options.alwaysReject),
+        sideEffectsApplied: false,
+      },
+      audit: {
+        rejectedBy: userId,
+        rejectedAt: new Date().toISOString(),
+        rejectedProposalExecuted: false,
+      },
+    });
+
     if (options?.conversationId) {
       await emitChatExecutionMessage({
         conversationId: options.conversationId,
@@ -550,6 +714,7 @@ const AIActionExecutor = {
         content: reason ? `Proposal rejected — ${reason}` : 'Proposal rejected.',
         executionProposal: {
           proposalId: actionId,
+          runId: aiRun?.runId || aiRun?.run_id,
           lifecycleState: 'rejected',
           actionType: action.action_type,
           reviewer: options?.reviewer || { userId },
@@ -558,7 +723,13 @@ const AIActionExecutor = {
       });
     }
 
-    AIActionExecutor._logAudit(actionId, userId, 'REJECTED', reason);
+    await recordLegacyAuditSafely(
+      () => AIActionExecutor._logAudit(actionId, userId, 'REJECTED', reason),
+      {
+        actionId,
+        decision: 'REJECTED',
+      }
+    );
 
     if (ApprovalPatternService) {
       try {
@@ -575,8 +746,10 @@ const AIActionExecutor = {
         return {
           success: true,
           actionId,
+          runId: aiRun?.runId || aiRun?.run_id,
           status: ACTION_STATUS.REJECTED,
           lifecycleState: lifecycleStateOf(ACTION_STATUS.REJECTED),
+          aiRun,
           patternLearned: true,
           patternInfo: patternResult,
         };
@@ -588,8 +761,10 @@ const AIActionExecutor = {
     return {
       success: true,
       actionId,
+      runId: aiRun?.runId || aiRun?.run_id,
       status: ACTION_STATUS.REJECTED,
       lifecycleState: lifecycleStateOf(ACTION_STATUS.REJECTED),
+      aiRun,
     };
   },
 
@@ -606,6 +781,40 @@ const AIActionExecutor = {
     if (!action) return { success: false, error: 'Action not found' };
     if (action.status !== ACTION_STATUS.APPROVED)
       return { success: false, error: `Action is ${action.status}, not APPROVED` };
+
+    const actionRow = normalizeActionRow(action);
+    const executingRun = await recordAIRunEvent({
+      action: { ...actionRow, status: ACTION_STATUS.EXECUTING },
+      eventType: 'execution_started',
+      status: 'executing',
+      actorUserId: _userId,
+      details: {
+        conversationId: options?.conversationId || null,
+        explicitExecute: true,
+      },
+      audit: {
+        executedBy: _userId,
+        executionStartedAt: new Date().toISOString(),
+        approvedBeforeExecution: true,
+      },
+    });
+    await dbRun(`UPDATE ai_actions SET status = 'EXECUTING' WHERE id = ? AND status = 'APPROVED'`, [
+      actionId,
+    ]);
+    if (options?.conversationId) {
+      await emitChatExecutionMessage({
+        conversationId: options.conversationId,
+        messageType: 'execution_progress',
+        content: 'Proposal execution started.',
+        executionProposal: {
+          proposalId: actionId,
+          runId: executingRun?.runId || executingRun?.run_id,
+          lifecycleState: 'executing',
+          actionType: action.action_type,
+          reviewer: options?.reviewer || { userId: _userId },
+        },
+      });
+    }
 
     try {
       const draftContent = (action as any).draft_content
@@ -637,6 +846,28 @@ const AIActionExecutor = {
         `UPDATE ai_actions SET status = 'EXECUTED', executed_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [actionId]
       );
+      const outputRefs = result
+        ? Object.entries(result)
+            .filter(([key, value]) => /id$/i.test(key) && value)
+            .map(([key, value]) => ({ type: key.replace(/Id$/i, ''), id: value }))
+        : [];
+      const rollback = rollbackStateForResult(result);
+      const aiRun = await recordAIRunEvent({
+        action: { ...actionRow, status: ACTION_STATUS.EXECUTED },
+        eventType: 'execution_succeeded',
+        status: 'audited',
+        actorUserId: _userId,
+        details: { result, rollbackStatus: rollback.rollbackStatus },
+        outputRefs,
+        audit: {
+          executedBy: _userId,
+          executedAt: new Date().toISOString(),
+          result,
+          rollbackStatus: rollback.rollbackStatus,
+          rollbackAvailable: rollback.rollbackAvailable,
+          rollbackStrategy: rollback.rollbackStrategy || null,
+        },
+      });
 
       if (options?.conversationId) {
         await emitChatExecutionMessage({
@@ -645,6 +876,7 @@ const AIActionExecutor = {
           content: 'Proposal executed successfully.',
           executionProposal: {
             proposalId: actionId,
+            runId: aiRun?.runId || aiRun?.run_id,
             lifecycleState: 'executed',
             actionType: action.action_type,
             reviewer: options?.reviewer || { userId: _userId },
@@ -656,11 +888,35 @@ const AIActionExecutor = {
       return {
         success: true,
         actionId,
+        runId: aiRun?.runId || aiRun?.run_id,
         result,
+        rollbackStatus: rollback.rollbackStatus,
         status: ACTION_STATUS.EXECUTED,
-        lifecycleState: lifecycleStateOf(ACTION_STATUS.EXECUTED),
+        lifecycleState: 'audited',
+        aiRun,
       };
     } catch (err: any) {
+      await dbRun(
+        `UPDATE ai_actions SET status = 'FAILED', executed_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [actionId]
+      );
+      const aiRun = await recordAIRunEvent({
+        action: { ...actionRow, status: ACTION_STATUS.FAILED },
+        eventType: 'execution_failed',
+        status: 'failed',
+        actorUserId: _userId,
+        details: {
+          error: (err as Error).message,
+          rollbackRequired: false,
+          rollbackStatus: 'rollback_unavailable',
+        },
+        audit: {
+          failedAt: new Date().toISOString(),
+          error: (err as Error).message,
+          rollbackStatus: 'rollback_unavailable',
+          rollbackAvailable: false,
+        },
+      });
       if (options?.conversationId) {
         await emitChatExecutionMessage({
           conversationId: options.conversationId,
@@ -668,13 +924,23 @@ const AIActionExecutor = {
           content: `Proposal execution failed — ${(err as Error).message}`,
           executionProposal: {
             proposalId: actionId,
+            runId: aiRun?.runId || aiRun?.run_id,
             lifecycleState: 'failed',
             actionType: action.action_type,
             reviewer: options?.reviewer || { userId: _userId },
           },
         });
       }
-      return { success: false, error: (err as Error).message };
+      return {
+        success: false,
+        actionId,
+        runId: aiRun?.runId || aiRun?.run_id,
+        error: (err as Error).message,
+        rollbackStatus: 'rollback_unavailable',
+        status: ACTION_STATUS.FAILED,
+        lifecycleState: 'failed',
+        aiRun,
+      };
     }
   },
 

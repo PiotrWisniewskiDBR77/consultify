@@ -29,8 +29,8 @@ const NotionItemCard: React.FC<{
       onClick={() => onClick?.(item)}
       className={`w-full text-left group px-4 py-3 rounded-lg border transition-all duration-150 hover:shadow-sm ${
         item.isHighlighted
-          ? 'bg-cyan-50/50 dark:bg-cyan-900/10 border-cyan-200 dark:border-cyan-800/40'
-          : 'bg-white dark:bg-navy-800/60 border-slate-200 dark:border-navy-700 hover:border-cyan-300 dark:hover:border-cyan-700'
+          ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/40'
+          : 'bg-white dark:bg-navy-800/60 border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-700'
       }`}
     >
       {/* Row 1: Title + Status */}
@@ -41,7 +41,7 @@ const NotionItemCard: React.FC<{
             {item.title}
           </span>
           {item.isHighlighted && (
-            <span className="w-2 h-2 rounded-full bg-cyan-500 flex-shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
           )}
         </div>
         <StatusBadge label={item.status} variant={item.statusVariant} />
@@ -60,7 +60,7 @@ const NotionItemCard: React.FC<{
         {item.dueDate && (
           <span
             className={`text-[11px] font-medium ${
-              item.isOverdue ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'
+              item.isOverdue ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {item.dueDate}
@@ -140,12 +140,12 @@ export const NotionListView: React.FC<NotionViewProps> = ({
               onClick={() => setActiveSectionId(section.id)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
                 isActive
-                  ? 'bg-white dark:bg-navy-800 text-cyan-600 dark:text-cyan-400 font-medium shadow-sm border-r-2 border-cyan-500'
+                  ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 font-medium shadow-sm border-r-2 border-blue-500'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {section.icon && (
-                <span className={`flex-shrink-0 ${isActive ? 'text-cyan-500' : 'text-slate-400'}`}>
+                <span className={`flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>
                   {section.icon}
                 </span>
               )}
@@ -153,13 +153,13 @@ export const NotionListView: React.FC<NotionViewProps> = ({
               <span
                 className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                   isActive
-                    ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {section.items.length}
               </span>
-              {isActive && <ChevronRight size={14} className="flex-shrink-0 text-cyan-400" />}
+              {isActive && <ChevronRight size={14} className="flex-shrink-0 text-blue-400" />}
             </button>
           );
         })}
@@ -170,7 +170,7 @@ export const NotionListView: React.FC<NotionViewProps> = ({
         {/* Section header */}
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-navy-700">
           {activeSection?.icon && (
-            <span className={activeSection.accentColor || 'text-cyan-500'}>
+            <span className={activeSection.accentColor || 'text-blue-500'}>
               {activeSection.icon}
             </span>
           )}

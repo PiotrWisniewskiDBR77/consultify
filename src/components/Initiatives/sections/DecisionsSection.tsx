@@ -53,15 +53,15 @@ const DECISION_STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: { en: 'Rejected', pl: 'Odrzucona' },
-    dotColor: 'bg-red-500',
-    bgColor: 'bg-red-100 dark:bg-red-500/20',
-    textColor: 'text-red-600 dark:text-red-400',
+    dotColor: 'bg-rose-500',
+    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
+    textColor: 'text-rose-600 dark:text-rose-400',
   },
   ESCALATED: {
     label: { en: 'Escalated', pl: 'Eskalowana' },
-    dotColor: 'bg-orange-500',
-    bgColor: 'bg-orange-100 dark:bg-orange-500/20',
-    textColor: 'text-orange-600 dark:text-orange-400',
+    dotColor: 'bg-amber-500',
+    bgColor: 'bg-amber-100 dark:bg-amber-500/20',
+    textColor: 'text-amber-600 dark:text-amber-400',
   },
   DEFERRED: {
     label: { en: 'Deferred', pl: 'Odroczona' },
@@ -97,8 +97,8 @@ const DECISION_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
 const PRIORITY_CONFIG: Record<string, { label: { en: string; pl: string }; color: string }> = {
   LOW: { label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
   MEDIUM: { label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
-  HIGH: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-orange-500' },
-  CRITICAL: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-red-600 font-bold' },
+  HIGH: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-amber-500' },
+  CRITICAL: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-rose-600 font-bold' },
 };
 
 // ==========================================
@@ -117,7 +117,7 @@ const SOURCE_CONFIG: Record<
   ai: {
     label: { en: 'AI', pl: 'AI' },
     icon: Sparkles,
-    color: 'text-violet-500 dark:text-violet-400',
+    color: 'text-primary-500 dark:text-primary-400',
   },
 };
 
@@ -1326,7 +1326,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               <button
                 onClick={() => void applyAIProposal()}
                 disabled={isAIProposing}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {isAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
                 {isPolish ? 'Zastosuj' : 'Apply'}
@@ -1380,7 +1380,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                           {decision.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
                         </span>
                         {isGate && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-semibold flex-shrink-0">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-400 font-semibold flex-shrink-0">
                             GATE
                           </span>
                         )}
@@ -1411,12 +1411,12 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     <td className="py-2.5 pr-2 text-xs text-slate-500 dark:text-slate-400">
                       {decision.dueDate ? (
                         <span
-                          className={`inline-flex items-center gap-1 ${decision.isOverdue ? 'text-red-500 font-medium' : ''}`}
+                          className={`inline-flex items-center gap-1 ${decision.isOverdue ? 'text-rose-500 font-medium' : ''}`}
                         >
                           <Calendar size={11} />
                           {formatDueDate(decision.dueDate)}
                           {decision.isOverdue && (
-                            <span className="text-[9px] px-1 py-0.5 rounded bg-red-500/20 text-red-400 font-medium ml-1">
+                            <span className="text-[9px] px-1 py-0.5 rounded bg-rose-500/20 text-rose-400 font-medium ml-1">
                               {isPolish ? 'PRZETERMIN.' : 'OVERDUE'}
                             </span>
                           )}
@@ -1477,7 +1477,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                                   closeMenu();
                                   void handleRemove(decision.id);
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                               >
                                 <Trash2 size={13} />
                                 {isPolish ? 'Usuń' : 'Delete'}

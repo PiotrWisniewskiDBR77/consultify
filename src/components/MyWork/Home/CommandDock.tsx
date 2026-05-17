@@ -38,7 +38,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
     <HomeBlockShell block={block} className="sticky bottom-4 z-20">
       <div className="grid gap-3">
         {primaryAction ? (
-          <div className="rounded-[22px] border border-primary-400/20 bg-gradient-to-r from-primary-500/12 via-violet-500/8 to-cyan-400/10 p-4">
+          <div className="rounded-[22px] border border-primary-400/20 bg-gradient-to-r from-primary-500/12 via-primary-500/8 to-blue-400/10 p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-primary-100/75">
@@ -60,7 +60,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
         ) : null}
         {runtimeSummary ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-cyan-100">
+            <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-blue-100">
               {isPolish
                 ? `Inbox oczekuje ${runtimeSummary.inboxPending}`
                 : `Inbox pending ${runtimeSummary.inboxPending}`}
@@ -70,7 +70,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
                 ? `SLA zagrozone ${runtimeSummary.inboxAtRisk}`
                 : `SLA at risk ${runtimeSummary.inboxAtRisk}`}
             </div>
-            <div className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-violet-100">
+            <div className="rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-primary-100">
               {isPolish
                 ? `Ostatnie outputy ${runtimeSummary.recentOutputs}`
                 : `Recent outputs ${runtimeSummary.recentOutputs}`}

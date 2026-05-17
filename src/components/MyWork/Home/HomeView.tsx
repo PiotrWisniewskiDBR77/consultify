@@ -9,7 +9,8 @@ import {
   Lightbulb,
   Sparkles,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,6 +71,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const triageData = useRadarTriageData(undefined, isV8Enabled);
   const roofSummary = useV8MyWorkRoofSummary(isV8Enabled);
   const [roofMetaOpen, setRoofMetaOpen] = useState(false);
+  const lastErrorToastRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!error || error === lastErrorToastRef.current) return;
+    lastErrorToastRef.current = error;
+    toast.error(t('myWork.radar.loadErrorToast', 'Radar could not load. Showing recovery state.'));
+  }, [error, t]);
 
   const navigate = useNavigate();
   const [recentInsights, setRecentInsights] = useState<V8InterviewInsight[]>([]);
@@ -154,7 +162,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-          className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent dark:border-violet-400"
+          className="h-8 w-8 rounded-full border-2 border-primary-500 border-t-transparent dark:border-primary-400"
         />
       </div>
     );
@@ -302,7 +310,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                 <span
                   className={cn(
                     'h-2 w-2 rounded-full shrink-0',
-                    alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
+                    alert.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500'
                   )}
                 />
                 <div className="min-w-0 flex-1">
@@ -392,7 +400,7 @@ function RadarExecutiveBrief({
 
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2">
-      <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-300/70" />
+      <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-300/70" />
       <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-200">{lead}</p>
       <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
         {t('myWork.radar.pulse')}{' '}
@@ -434,7 +442,7 @@ function RadarExecutiveBrief({
             },
           })
         }
-        className="shrink-0 rounded bg-violet-500/80 px-2 py-1 text-[10px] font-semibold text-white transition hover:bg-violet-500"
+        className="shrink-0 rounded bg-primary-500/80 px-2 py-1 text-[10px] font-semibold text-white transition hover:bg-primary-500"
       >
         AI
         <ArrowRight className="ml-1 inline h-3 w-3" />
@@ -460,7 +468,7 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
       )}
     />
     <motion.div
-      className="pointer-events-none absolute -left-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-violet-400/15 to-cyan-300/12 blur-[160px]"
+      className="pointer-events-none absolute -left-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-primary-400/15 to-blue-300/12 blur-[160px]"
       animate={
         ambientMotion === 'soft'
           ? { x: [0, 12, 0], y: [0, 10, 0], scale: [1, 1.03, 1] }

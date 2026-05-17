@@ -66,7 +66,7 @@ function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () 
   const base =
     'h-8 px-3 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5';
   const variants: Record<string, string> = {
-    primary: `${base} bg-cyan-600 text-white hover:bg-cyan-700`,
+    primary: `${base} bg-blue-600 text-white hover:bg-blue-700`,
     danger: `${base} bg-rose-600 text-white hover:bg-rose-700`,
     default: `${base} bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700`,
   };
@@ -143,7 +143,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
             </div>
             <ExternalLink
               size={12}
-              className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors shrink-0"
+              className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors shrink-0"
             />
           </button>
         </div>
@@ -210,7 +210,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
                   </span>
                   <ChevronRight
                     size={12}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 shrink-0"
+                    className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 shrink-0"
                   />
                 </button>
               ))}

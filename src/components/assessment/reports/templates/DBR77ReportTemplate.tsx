@@ -86,8 +86,8 @@ const WorkstationPage: React.FC<{
       <div className="border-b border-slate-200 dark:border-navy-700 pb-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-navy-900 dark:text-white">
@@ -130,7 +130,7 @@ const WorkstationPage: React.FC<{
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Błędy:</span>
-              <span className="font-bold text-red-600">{workstation.currentState.errorRate}%</span>
+              <span className="font-bold text-rose-600">{workstation.currentState.errorRate}%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Nadgodziny:</span>
@@ -159,7 +159,7 @@ const WorkstationPage: React.FC<{
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Standard Work:</span>
               <span
-                className={`font-bold ${workstation.leanAssessment.standardizedWork ? 'text-green-600' : 'text-red-600'}`}
+                className={`font-bold ${workstation.leanAssessment.standardizedWork ? 'text-green-600' : 'text-rose-600'}`}
               >
                 {workstation.leanAssessment.standardizedWork ? 'TAK' : 'NIE'}
               </span>
@@ -198,15 +198,15 @@ const WorkstationPage: React.FC<{
         </div>
 
         {/* Phase 3: AUTOMATYZUJ */}
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
+        <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Cpu className="w-5 h-5 text-purple-600" />
-            <h3 className="font-bold text-purple-900 dark:text-purple-300">AUTOMATYZUJ</h3>
+            <Cpu className="w-5 h-5 text-primary-600" />
+            <h3 className="font-bold text-primary-900 dark:text-primary-300">AUTOMATYZUJ</h3>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">% do automatyzacji:</span>
-              <span className="font-bold text-purple-600">
+              <span className="font-bold text-primary-600">
                 {workstation.automationPotential.taskAutomationPercent}%
               </span>
             </div>
@@ -234,7 +234,7 @@ const WorkstationPage: React.FC<{
 
           {/* Technologies */}
           {workstation.automationPotential.recommendedTechnologies?.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
+            <div className="mt-3 pt-3 border-t border-primary-200 dark:border-primary-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                 Rekomendowane technologie:
               </p>
@@ -244,7 +244,7 @@ const WorkstationPage: React.FC<{
                   return tech ? (
                     <span
                       key={techId}
-                      className="px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-700"
+                      className="px-2 py-0.5 text-xs rounded bg-primary-100 text-primary-700"
                     >
                       {tech.name}
                     </span>
@@ -319,8 +319,8 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
       {/* Cover Page */}
       <div className="p-8 min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-6">
-            <Zap className="w-10 h-10 text-cyan-600" />
+          <div className="w-20 h-20 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-6">
+            <Zap className="w-10 h-10 text-blue-600" />
           </div>
           <h1 className="text-4xl font-bold text-navy-900 dark:text-white mb-4">
             Lean 4.0 Assessment Report
@@ -337,9 +337,9 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         </div>
 
         {/* Legal Notice */}
-        <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-500/30 rounded-lg p-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
-          <div className="text-sm text-cyan-800 dark:text-cyan-200">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-800 dark:text-blue-200">
             <strong>Metoda DBR77 Lean 4.0</strong> (Pomierz-Zoptymalizuj-Automatyzuj) jest{' '}
             <strong>autorską metodą Consultify</strong>.
           </div>
@@ -360,13 +360,13 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             <div className="text-3xl font-bold text-blue-600">{data.processes.length}</div>
             <div className="text-sm text-blue-600/70">Procesów</div>
           </div>
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-purple-600">{data.workstations.length}</div>
-            <div className="text-sm text-purple-600/70">Stanowisk</div>
+          <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-primary-600">{data.workstations.length}</div>
+            <div className="text-sm text-primary-600/70">Stanowisk</div>
           </div>
-          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-orange-600">{totalHeadcount}</div>
-            <div className="text-sm text-orange-600/70">FTE</div>
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-amber-600">{totalHeadcount}</div>
+            <div className="text-sm text-amber-600/70">FTE</div>
           </div>
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-emerald-600">
@@ -394,8 +394,8 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                   key={ws.id}
                   className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg"
                 >
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                    <span className="font-bold text-purple-600">{idx + 1}</span>
+                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                    <span className="font-bold text-primary-600">{idx + 1}</span>
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-navy-900 dark:text-white">{ws.name}</div>
@@ -453,7 +453,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
       {/* Transformation Roadmap */}
       <div className="bg-white dark:bg-navy-950 p-8">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-          <ArrowRight className="text-cyan-500" /> Transformation Roadmap
+          <ArrowRight className="text-blue-500" /> Transformation Roadmap
         </h2>
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
@@ -514,7 +514,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         </div>
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold text-sm">
+            <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 font-bold text-sm">
               3
             </div>
             <h3 className="font-bold text-slate-800 dark:text-white">
@@ -531,7 +531,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                   key={p.id}
                   className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
                 >
-                  <Cpu className="text-purple-500 flex-shrink-0" size={14} />
+                  <Cpu className="text-primary-500 flex-shrink-0" size={14} />
                   <span>
                     {p.name}: {p.automationPotential.recommendedTechnologies.slice(0, 2).join(', ')}{' '}
                     (ROI: {p.automationPotential.roi}%)
@@ -595,9 +595,9 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             </div>
           </div>
         </div>
-        <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-5 border border-cyan-200 dark:border-cyan-800/30">
-          <h3 className="font-bold text-cyan-900 dark:text-cyan-300 mb-2">Next Steps</h3>
-          <div className="space-y-2 text-sm text-cyan-800 dark:text-cyan-200">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800/30">
+          <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Next Steps</h3>
+          <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
             <div className="flex items-center gap-2">
               <ArrowRight size={14} />
               <span>Approve assessment to unlock initiative generation</span>

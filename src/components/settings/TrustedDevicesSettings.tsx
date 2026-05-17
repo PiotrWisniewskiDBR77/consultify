@@ -217,7 +217,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -250,7 +250,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
             <button
               onClick={handleRevokeAll}
               disabled={revokingAll}
-              className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
             >
               {revokingAll ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -283,7 +283,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
             <button
               onClick={() => setShowDurationDropdown(!showDurationDropdown)}
               disabled={savingDuration}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
             >
               {savingDuration ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -304,7 +304,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                     onClick={() => handleSaveTrustDuration(option.value)}
                     className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg ${
                       trustDuration === option.value
-                        ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10'
+                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
                         : 'text-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -406,7 +406,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                   <button
                     onClick={() => handleRevokeDevice(device.id)}
                     disabled={revoking === device.id}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
                     title={t('security.devices.revoke', 'Remove trusted device')}
                   >
                     {revoking === device.id ? (

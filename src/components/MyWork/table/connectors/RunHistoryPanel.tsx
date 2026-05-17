@@ -82,7 +82,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
       case 'success':
         return <Check size={14} className="text-emerald-500" />;
       case 'failed':
-        return <AlertTriangle size={14} className="text-red-500" />;
+        return <AlertTriangle size={14} className="text-rose-500" />;
       case 'running':
         return <Loader2 size={14} className="animate-spin text-blue-500" />;
     }
@@ -176,7 +176,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                         </span>
                       )}
                       {run.recordsFailed > 0 && (
-                        <span className="text-red-500">
+                        <span className="text-rose-500">
                           {run.recordsFailed} {isPl ? 'błędnych' : 'failed'}
                         </span>
                       )}
@@ -210,11 +210,11 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                 {/* Expanded error details */}
                 {isExpanded && run.error && (
                   <div className="px-4 pb-3">
-                    <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 p-3">
-                      <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">
+                    <div className="rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 p-3">
+                      <p className="text-xs font-medium text-rose-700 dark:text-rose-400 mb-1">
                         {isPl ? 'Szczegóły błędu' : 'Error details'}
                       </p>
-                      <pre className="text-[11px] text-red-600 dark:text-red-300 whitespace-pre-wrap font-mono leading-relaxed">
+                      <pre className="text-[11px] text-rose-600 dark:text-rose-300 whitespace-pre-wrap font-mono leading-relaxed">
                         {run.error}
                       </pre>
                     </div>
@@ -244,7 +244,7 @@ const StatCard: React.FC<{
       : accent === 'yellow'
         ? 'text-amber-600 dark:text-amber-400'
         : accent === 'red'
-          ? 'text-red-600 dark:text-red-400'
+          ? 'text-rose-600 dark:text-rose-400'
           : 'text-slate-800 dark:text-white';
 
   return (

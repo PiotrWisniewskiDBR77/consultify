@@ -18,6 +18,7 @@ export type WorkspaceType =
   | 'artifact'
   | 'document'
   | 'decision'
+  | 'idea'
   | 'report'
   | 'dashboard'
   | 'project'
@@ -26,6 +27,7 @@ export type WorkspaceType =
   | 'insight'
   | 'interview'
   | 'presentation'
+  | 'canvas'
   | 'general'
   // Chat V8 workspace contexts — surfaces added by the unified interview /
   // insight / presentation workflows. Additive on purpose so existing callers
@@ -133,8 +135,9 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
     [AppView.DASHBOARD]: 'dashboard',
     [AppView.USER_DASHBOARD]: 'dashboard',
     [AppView.WORDY]: 'document',
-    [AppView.EXCELE]: 'artifact',
+    [AppView.EXCELE]: 'document',
     [AppView.PREZENTACJE_GEN]: 'artifact',
+    [AppView.TABELE]: 'document',
     [AppView.ECONOMICS]: 'finance',
   };
 

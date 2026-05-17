@@ -249,7 +249,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
             {!locked && (
               <button
                 onClick={() => setShowAddField(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
               >
                 <Plus size={12} />
                 {isPl ? 'Dodaj' : 'Add'}
@@ -275,7 +275,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isPl ? 'Szukaj pola...' : 'Search fields...'}
-              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
             />
           </div>
         </div>
@@ -298,7 +298,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                 onDragEnd={handleDragEnd}
                 className={`mb-0.5 rounded-xl border transition-all ${
                   overIdx === idx && dragIdx !== null
-                    ? 'border-violet-400 bg-violet-50/50 dark:bg-violet-900/10'
+                    ? 'border-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
                     : 'border-transparent hover:border-slate-200 dark:hover:border-navy-700'
                 } ${dragIdx === idx ? 'opacity-40' : ''}`}
               >
@@ -484,7 +484,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
         />
       </div>
 
@@ -499,7 +499,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           disabled={locked}
           rows={2}
           placeholder={isPl ? 'Opcjonalny opis pola...' : 'Optional field description...'}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 resize-none disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 resize-none disabled:opacity-50"
         />
       </div>
 
@@ -512,12 +512,12 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           <>
             {showDeleteConfirm ? (
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-red-500 font-medium">
+                <span className="text-[10px] text-rose-500 font-medium">
                   {isPl ? 'Na pewno?' : 'Are you sure?'}
                 </span>
                 <button
                   onClick={onDelete}
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                  className="px-2 py-0.5 rounded text-[10px] font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors"
                 >
                   {isPl ? 'Tak' : 'Yes'}
                 </button>
@@ -531,7 +531,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
             ) : (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex items-center gap-1 text-[10px] font-medium text-red-500 hover:text-red-600 transition-colors"
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-500 hover:text-rose-600 transition-colors"
               >
                 <Trash2 size={10} />
                 {isPl ? 'Usuń' : 'Delete'}
@@ -713,7 +713,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               autoFocus
             />
           </div>
@@ -734,7 +734,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                     onClick={() => setFieldType(ft)}
                     className={`flex flex-col items-center gap-0.5 px-1.5 py-2 rounded-xl text-[9px] font-medium transition-all ${
                       isActive
-                        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/30'
+                        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/30'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                     }`}
                   >
@@ -756,7 +756,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={selectOptions}
                 onChange={(e) => setSelectOptions(e.target.value)}
                 placeholder="Option 1, Option 2, Option 3"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
             </div>
           )}
@@ -770,7 +770,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={linkedTableId}
                 onChange={(e) => setLinkedTableId(e.target.value)}
                 placeholder="table-uuid..."
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
             </div>
           )}
@@ -784,7 +784,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={formulaExpr}
                 onChange={(e) => setFormulaExpr(e.target.value)}
                 placeholder="IF({Status} = 'Done', 1, 0)"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
             </div>
           )}
@@ -800,7 +800,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 max={10}
                 value={ratingMax}
                 onChange={(e) => setRatingMax(Number(e.target.value))}
-                className="w-20 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-20 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
             </div>
           )}
@@ -813,7 +813,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
               <select
                 value={currencySymbol}
                 onChange={(e) => setCurrencySymbol(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               >
                 {['$', '€', 'zł', '£', '¥', 'CHF'].map((s) => (
                   <option key={s} value={s}>

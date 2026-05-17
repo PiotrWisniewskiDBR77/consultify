@@ -1,26 +1,7 @@
 /**
- * Chat V10 / V10-ART-001 — feature flag for the unified `Artifact` model.
+ * Chat V10 / V10-ART unified artifact model feature flag.
  *
- * What this flag gates
- * --------------------
- * Adoption of `src/models/artifact/Artifact.ts` (the V10 unified
- * Artifact interface) by downstream modules. Wave A seed ships only
- * the schema + this flag; the gate becomes meaningful when modules
- * start writing through `ArtifactStore` (V10-ART-022) and stop using
- * their legacy per-module storage.
- *
- * Default
- * -------
- * **OFF** — every V10 flag defaults off until the corresponding
- * surface is shipped end-to-end. Enforced by V10 registry invariant
- * "every flag defaults to false". See `ADR-V10-002`.
- *
- * Resolution order (highest wins, V10 helper convention)
- * ------------------------------------------------------
- *   1. URL query   `?ff_artifact_unified_model=0|1`  — operator bypass.
- *   2. localStorage `ff.artifact_unified_model`      — per-user override.
- *   3. env          `VITE_ARTIFACT_UNIFIED_MODEL`     — build-time default.
- *   4. Hard default — `false`.
+ * Default OFF while legacy per-module artifact shapes remain the runtime path.
  */
 
 const LS_KEY = 'ff.artifact_unified_model';

@@ -274,8 +274,6 @@ function makeIntegration(
     loadMore: vi.fn(async () => {}),
     hasMore: false,
     totalRecords: FIXTURE_ROWS.length,
-    base: null,
-    table: null,
     platformFields: FIXTURE_FIELDS,
     platformViews: [
       {
@@ -712,7 +710,7 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
     fireEvent.change(input, { target: { value: 'not-a-valid-url' } });
     fireEvent.blur(input);
     expect(onSave).not.toHaveBeenCalled();
-    expect(input.className).toMatch(/border-red-400/);
+    expect(input.className).toMatch(/border-rose-400/);
   });
 
   it('6. network timeout on save — load-retry affordance via EmptyStateInline + Retry', async () => {
@@ -795,7 +793,6 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
 
     const Harness: React.FC = () => {
       const { error, loading, proposal, generateProposal, clearError } = useSchemaProposal();
-      const proposalSummary = (proposal as { summary?: string } | null)?.summary ?? '';
       return (
         <div>
           {loading && <span data-testid="loading">loading</span>}
@@ -807,7 +804,11 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
               </button>
             </div>
           )}
-          {proposal ? <div data-testid="proposal-summary">{proposalSummary}</div> : null}
+          {proposal ? (
+            <div data-testid="proposal-summary">
+              {String((proposal as { summary?: string }).summary ?? '')}
+            </div>
+          ) : null}
           <button
             type="button"
             onClick={() =>

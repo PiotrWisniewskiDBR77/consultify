@@ -89,15 +89,40 @@ const DEFAULT_PREFERENCES: AdvancedPreferences = {
 
 // Common keyboard shortcuts
 const KEYBOARD_SHORTCUTS = [
-  { action: 'New Task', shortcut: 'Ctrl/Cmd + N', category: 'Tasks' },
-  { action: 'Search', shortcut: 'Ctrl/Cmd + K', category: 'Navigation' },
-  { action: 'Quick Switch Project', shortcut: 'Ctrl/Cmd + P', category: 'Navigation' },
-  { action: 'Toggle Sidebar', shortcut: 'Ctrl/Cmd + B', category: 'Navigation' },
-  { action: 'Open Settings', shortcut: 'Ctrl/Cmd + ,', category: 'General' },
-  { action: 'Toggle Dark Mode', shortcut: 'Ctrl/Cmd + D', category: 'General' },
-  { action: 'Mark Task Complete', shortcut: 'Ctrl/Cmd + Enter', category: 'Tasks' },
-  { action: 'Open AI Assistant', shortcut: 'Ctrl/Cmd + J', category: 'AI' },
-  { action: 'Focus Mode', shortcut: 'Ctrl/Cmd + Shift + F', category: 'Focus' },
+  { id: 'newTask', action: 'New Task', shortcut: 'Ctrl/Cmd + N', category: 'tasks' },
+  { id: 'search', action: 'Search', shortcut: 'Ctrl/Cmd + K', category: 'navigation' },
+  {
+    id: 'quickSwitchProject',
+    action: 'Quick Switch Project',
+    shortcut: 'Ctrl/Cmd + P',
+    category: 'navigation',
+  },
+  {
+    id: 'toggleSidebar',
+    action: 'Toggle Sidebar',
+    shortcut: 'Ctrl/Cmd + B',
+    category: 'navigation',
+  },
+  { id: 'openSettings', action: 'Open Settings', shortcut: 'Ctrl/Cmd + ,', category: 'general' },
+  {
+    id: 'toggleDarkMode',
+    action: 'Toggle Dark Mode',
+    shortcut: 'Ctrl/Cmd + D',
+    category: 'general',
+  },
+  {
+    id: 'markTaskComplete',
+    action: 'Mark Task Complete',
+    shortcut: 'Ctrl/Cmd + Enter',
+    category: 'tasks',
+  },
+  { id: 'openAiAssistant', action: 'Open AI Assistant', shortcut: 'Ctrl/Cmd + J', category: 'ai' },
+  {
+    id: 'focusMode',
+    action: 'Focus Mode',
+    shortcut: 'Ctrl/Cmd + Shift + F',
+    category: 'focus',
+  },
 ];
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
@@ -153,6 +178,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
     setSaving(true);
     try {
       await Api.put('/settings/preferences/advanced', { preferences });
+      const persisted = await Api.get('/settings/preferences/advanced').catch(() => null);
+      if (persisted?.preferences) {
+        setPreferences({ ...DEFAULT_PREFERENCES, ...persisted.preferences });
+      }
       toast.success(t('settings.advanced.saved', 'Advanced settings saved'));
     } catch (error) {
       toast.error(t('settings.advanced.error', 'Failed to save settings'));
@@ -388,7 +417,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 </div>
                 <button
                   onClick={() => handleDeleteAPIKey(apiKey.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -401,7 +430,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       {/* Export Preferences */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <FileDown size={20} className="text-cyan-500" />
+          <FileDown size={20} className="text-blue-500" />
           {t('settings.advanced.exportPreferences', 'Export Preferences')}
         </h3>
 
@@ -451,7 +480,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('includeAttachments', !preferences.includeAttachments)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.includeAttachments ? 'bg-cyan-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.includeAttachments ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -493,8 +522,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg">
-              <Keyboard size={20} className="text-purple-600 dark:text-purple-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
+              <Keyboard size={20} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -514,7 +543,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               preferences.keyboardShortcutsEnabled
-                ? 'bg-purple-600'
+                ? 'bg-primary-600'
                 : 'bg-slate-200 dark:bg-slate-700'
             }`}
           >
@@ -533,10 +562,13 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               >
                 <div>
                   <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {shortcut.action}
+                    {t(`settings.advanced.shortcuts.${shortcut.id}`, shortcut.action)}
                   </span>
                   <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
-                    {shortcut.category}
+                    {t(
+                      `settings.advanced.shortcutCategories.${shortcut.category}`,
+                      shortcut.category
+                    )}
                   </span>
                 </div>
                 <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-sm font-mono text-slate-600 dark:text-slate-400">
@@ -664,7 +696,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Shield size={16} className="text-orange-500" />
+                <Shield size={16} className="text-amber-500" />
                 {t('settings.advanced.betaFeatures', 'Beta Features')}
               </label>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -676,7 +708,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('enableBetaFeatures', !preferences.enableBetaFeatures)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableBetaFeatures ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.enableBetaFeatures ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -843,7 +875,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             </span>
             <button
               onClick={() => handleDisconnectAccount(provider)}
-              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
             >
               <Trash2 size={16} />
             </button>

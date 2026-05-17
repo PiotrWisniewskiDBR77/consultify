@@ -391,7 +391,7 @@ const EDITOR_STYLES = `
 .nb-callout[data-variant="info"]     { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #f0f7ff 100%); }
 .nb-callout[data-variant="warning"]  { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
 .nb-callout[data-variant="success"]  { border-color: #22c55e; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
-.nb-callout[data-variant="critical"] { border-color: #ef4444; background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
+.nb-callout[data-variant="critical"] { border-color: #f43f5e; background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
 .nb-callout[data-variant="purple"]   { border-color: #a855f7; background: linear-gradient(135deg, #faf5ff 0%, #f5f0ff 100%); }
 .dark .nb-callout[data-variant="info"]     { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04)); }
 .dark .nb-callout[data-variant="warning"]  { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04)); }
@@ -689,31 +689,36 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     );
   }, [activePage, headingOutline.length]);
   const deliverableGuardMessage = useMemo(() => getDeliverableGuardMessage(isPolish), [isPolish]);
+  const notebookEditorExtensions = useMemo(
+    () =>
+      [
+        StarterKit,
+        TaskList,
+        TaskItem.configure({ nested: true }),
+        Placeholder.configure({
+          placeholder: isPolish
+            ? 'Zacznij pisać… Wpisz / aby wstawić blok'
+            : 'Start writing… Type / to insert a block',
+        }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        UnderlineExt,
+        Highlight.configure({ multicolor: false }),
+        Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
+        EmbeddedRefNode,
+        CalloutNode,
+        DetailsNode,
+        DetailsSummaryNode,
+        DetailsContentNode,
+        Table.configure({ resizable: false }),
+        TableRow,
+        TableHeader,
+        TableCell,
+      ] as any,
+    [isPolish]
+  );
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Placeholder.configure({
-        placeholder: isPolish
-          ? 'Zacznij pisać… Wpisz / aby wstawić blok'
-          : 'Start writing… Type / to insert a block',
-      }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      UnderlineExt,
-      Highlight.configure({ multicolor: false }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
-      EmbeddedRefNode,
-      CalloutNode,
-      DetailsNode,
-      DetailsSummaryNode,
-      DetailsContentNode,
-      Table.configure({ resizable: false }),
-      TableRow,
-      TableHeader,
-      TableCell,
-    ],
+    extensions: notebookEditorExtensions,
     content: activePage?.contentJson || { type: 'doc', content: [] },
     editorProps: {
       attributes: {
@@ -773,16 +778,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Sync editor when switching pages or when the same page gets fresher server content.
   useEffect(() => {
     if (!editor) return;
+    // Tiptap can briefly expose an editor whose command bridge is not ready.
+    // Accessing `editor.commands` may throw in that transition window.
+    const safeSetContent = (content: unknown) => {
+      try {
+        editor.commands.setContent(content as any, { emitUpdate: false });
+        return true;
+      } catch {
+        return false;
+      }
+    };
     if (!activePage) {
-      editor.commands.setContent({ type: 'doc', content: [] }, { emitUpdate: false });
+      if (!safeSetContent({ type: 'doc', content: [] })) return;
       setTitle('');
       setPageProjectId('');
       setPageTags([]);
       return;
     }
-    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, {
-      emitUpdate: false,
-    });
+    if (!safeSetContent(activePage.contentJson || { type: 'doc', content: [] })) return;
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
     setPageTags(activePage.tags || []);
@@ -1290,7 +1303,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       );
                     }
                   }}
-                  className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-500/20 text-purple-700 hover:bg-purple-500/30"
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-primary-500/20 text-primary-700 hover:bg-primary-500/30"
                 >
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
@@ -1723,7 +1736,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800/60">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-sm">
                 <BookOpen size={14} className="text-white" />
               </div>
               <div>
@@ -1896,7 +1909,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     key={p.id}
                     className={`group relative rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-500/10 to-violet-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
+                        ? 'bg-gradient-to-r from-indigo-500/10 to-primary-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
                         : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'
                     }`}
                   >
@@ -2088,7 +2101,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <div className="max-w-lg w-full">
                 {/* Welcome hero */}
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 shadow-lg shadow-indigo-500/20 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-primary-500 to-primary-600 shadow-lg shadow-indigo-500/20 mb-4">
                     <Pen size={28} className="text-white" />
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
@@ -2150,8 +2163,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
 
                 {/* AI suggestion prompt */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-primary-50 dark:from-indigo-950/30 dark:to-primary-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shrink-0">
                     <Sparkles size={14} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -2249,7 +2262,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {tag}
                               <button
                                 onClick={() => handleRemoveTag(tag)}
-                                className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-red-500"
+                                className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-rose-500"
                                 aria-label={`Remove tag ${tag}`}
                               >
                                 <X size={9} />
@@ -2485,14 +2498,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {pendingAIProposals.length > 0 && (
                     <div
                       ref={proposalReviewRef}
-                      className="mb-4 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-3 dark:border-violet-500/20 dark:bg-violet-500/10"
+                      className="mb-4 rounded-xl border border-primary-200/70 bg-primary-50/80 px-3 py-3 dark:border-primary-500/20 dark:bg-primary-500/10"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                          <div className="text-xs font-semibold text-primary-700 dark:text-primary-300">
                             {isPolish ? 'AI propose -> accept' : 'AI propose -> accept'}
                           </div>
-                          <div className="text-[11px] text-violet-600 dark:text-violet-200/80">
+                          <div className="text-[11px] text-primary-600 dark:text-primary-200/80">
                             {isPolish
                               ? `${pendingAIProposals.length} propozycje czekają na review`
                               : `${pendingAIProposals.length} proposals waiting for review`}
@@ -2503,7 +2516,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         {pendingAIProposals.slice(0, 3).map((proposal) => (
                           <div
                             key={proposal.id}
-                            className="rounded-lg border border-violet-200/80 bg-white/80 px-3 py-2 dark:border-violet-400/20 dark:bg-navy-950/40"
+                            className="rounded-lg border border-primary-200/80 bg-white/80 px-3 py-2 dark:border-primary-400/20 dark:bg-navy-950/40"
                           >
                             <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
                               {proposal.rationale || (isPolish ? 'Propozycja AI' : 'AI proposal')}
@@ -2517,7 +2530,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 onClick={() =>
                                   void resolveNotebookAIProposal(proposal.id, 'accepted')
                                 }
-                                className="rounded-md bg-violet-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-violet-500"
+                                className="rounded-md bg-primary-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-primary-500"
                               >
                                 {isPolish ? 'Akceptuj' : 'Accept'}
                               </button>

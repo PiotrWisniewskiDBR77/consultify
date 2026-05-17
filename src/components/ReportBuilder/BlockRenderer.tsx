@@ -53,7 +53,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       className={`group relative bg-white dark:bg-navy-800 rounded-xl border transition-all ${
         block.locked
           ? 'border-amber-200 dark:border-amber-900/30'
-          : 'border-slate-200 dark:border-navy-700 hover:border-purple-200 dark:hover:border-purple-500/30'
+          : 'border-slate-200 dark:border-navy-700 hover:border-primary-200 dark:hover:border-primary-500/30'
       } shadow-sm`}
     >
       {/* Block Header / Controls - Visible on Hover */}
@@ -72,7 +72,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             {/* AI Action */}
             <button
               onClick={handleAiClick}
-              className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-500"
+              className="p-1.5 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-500"
               title="AI Rewrite"
             >
               <Wand2 size={14} />
@@ -81,7 +81,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             {/* Delete */}
             <button
               onClick={onDelete}
-              className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 dark:text-slate-500 hover:text-red-500"
+              className="p-1.5 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 dark:text-slate-500 hover:text-rose-500"
               title="Delete"
             >
               <Trash2 size={14} />

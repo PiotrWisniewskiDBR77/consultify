@@ -400,7 +400,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
     }
     const colors: Record<string, string> = {
       success: 'bg-emerald-600 text-white',
-      failed: 'bg-red-600 text-white',
+      failed: 'bg-rose-600 text-white',
       running: 'bg-blue-600 text-white',
       pending: 'bg-amber-600 text-white',
     };
@@ -420,7 +420,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
       case 'event_triggered':
         return <Zap size={14} className="text-amber-400" />;
       case 'hybrid':
-        return <ScanSearch size={14} className="text-violet-400" />;
+        return <ScanSearch size={14} className="text-primary-400" />;
       default:
         return <CalendarClock size={14} className="text-slate-400" />;
     }
@@ -429,9 +429,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const deliverableIcon = (type: string) => {
     switch (type) {
       case 'presentation':
-        return <Presentation size={14} className="text-orange-400" />;
+        return <Presentation size={14} className="text-amber-400" />;
       case 'both':
-        return <FileText size={14} className="text-violet-400" />;
+        return <FileText size={14} className="text-primary-400" />;
       default:
         return <FileText size={14} className="text-blue-400" />;
     }
@@ -444,7 +444,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -456,12 +456,12 @@ export const ReportingAutomationWorkspace: React.FC = () => {
         <div className="p-4 border-b border-white/5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <CalendarClock size={16} className="text-violet-400" />
+              <CalendarClock size={16} className="text-primary-400" />
               {tp('title')}
             </h2>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="p-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+              className="p-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
               title={tp('newSchedule')}
             >
               <Plus size={14} />
@@ -536,7 +536,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             <p className="text-sm text-slate-400 mb-6 max-w-md">{tp('noSchedulesHint')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors"
             >
               <Plus size={18} />
               {tp('newSchedule')}
@@ -604,7 +604,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDelete(selectedSchedule.id)}
-                    className="p-2 text-slate-400 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                    className="p-2 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -618,7 +618,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 onClick={() => setActiveTab('schedules')}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === 'schedules'
-                    ? 'text-violet-400 border-b-2 border-violet-400'
+                    ? 'text-primary-400 border-b-2 border-primary-400'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -628,7 +628,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 onClick={() => setActiveTab('history')}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === 'history'
-                    ? 'text-violet-400 border-b-2 border-violet-400'
+                    ? 'text-primary-400 border-b-2 border-primary-400'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -713,7 +713,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                       </span>
                       <button
                         onClick={() => handleDeleteTrigger(rule.id)}
-                        className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -856,7 +856,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   {tp('triggerReason')}: {exec.triggerReason}
                 </p>
               )}
-              {exec.error && <p className="text-xs text-red-400 mt-1">{exec.error}</p>}
+              {exec.error && <p className="text-xs text-rose-400 mt-1">{exec.error}</p>}
               <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-600">
                 <span>Started: {new Date(exec.startedAt).toLocaleString()}</span>
                 {exec.completedAt && (
@@ -871,7 +871,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                       className={`px-1.5 py-0.5 text-[10px] rounded ${
                         dr.status === 'success'
                           ? 'bg-emerald-600/20 text-emerald-300'
-                          : 'bg-red-600/20 text-red-300'
+                          : 'bg-rose-600/20 text-rose-300'
                       }`}
                     >
                       {dr.method}: {dr.status}
@@ -1067,7 +1067,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             <button
               onClick={handleCreate}
               disabled={!formName.trim() || actionLoading === 'create'}
-              className="flex items-center gap-2 px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {actionLoading === 'create' ? (
                 <Loader2 size={14} className="animate-spin" />

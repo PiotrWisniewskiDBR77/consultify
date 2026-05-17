@@ -1,0 +1,56 @@
+{
+  "confidence": {
+    "aria": "Pewność AI",
+    "notScoredAria": "Pewność AI: brak oceny",
+    "notScored": "—",
+    "tooltip": "Pewność AI odzwierciedla pochodzenie rekordu i historię walidacji — NIE jakość danych.",
+    "tooltipNotScored": "Pewność AI: brak oceny dla tego rekordu."
+  },
+  "validation": {
+    "label": "Status walidacji",
+    "unverified": "Niezweryfikowany",
+    "verified": "Zweryfikowany",
+    "flagged": "Oznaczony",
+    "tooltip": "Status walidacji rekordu (zmieniany ręcznie przez recenzenta).",
+    "adminOnly": "admin"
+  },
+  "sources": {
+    "title": "Pochodzenie",
+    "subtitleActive": "Aktywne źródła wpływające na pewność AI.",
+    "atCap": "Limit {{max}} aktywnych źródeł osiągnięty.",
+    "raises": "Każde nowe źródło zwiększa pewność AI.",
+    "addedBy": "Dodał",
+    "verified": "zweryfikowano",
+    "freshTag": "✓ świeże",
+    "empty": "Brak aktywnych źródeł — dodaj pierwsze, aby zwiększyć pewność AI.",
+    "loading": "Wczytywanie…",
+    "verifyAction": "Zweryfikuj teraz",
+    "archiveAction": "Archiwizuj",
+    "addAction": "Dodaj",
+    "closeAction": "Zamknij",
+    "errorLoad": "Nie udało się pobrać źródeł.",
+    "type": {
+      "manual": "Ręcznie",
+      "ai_extraction": "Ekstrakcja AI",
+      "import": "Import",
+      "integration": "Integracja",
+      "system": "System"
+    }
+  },
+  "addDialog": {
+    "title": "Dodaj źródło",
+    "field": {
+      "type": "Typ źródła",
+      "uri": "URI / link (opcjonalnie)",
+      "contribution": "Wkład w pewność (0–1, opcjonalnie)",
+      "note": "Notatka (opcjonalnie)"
+    },
+    "error": {
+      "uriTooLong": "Adres URL nie może przekraczać 2048 znaków.",
+      "contributionRange": "Wkład w pewność musi być liczbą między 0 a 1.",
+      "saveFailed": "Nie udało się zapisać źródła."
+    },
+    "submit": "Zapisz",
+    "cancel": "Anuluj"
+  }
+}

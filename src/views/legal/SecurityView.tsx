@@ -55,8 +55,8 @@ const SECURITY_FEATURES = [
     title: 'Deployment Options',
     description:
       'Shared cloud, dedicated API/runtime, or fully on-premise. Every path provides session isolation and Docker containerized inference.',
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
+    color: 'text-primary-500',
+    bgColor: 'bg-primary-500/10',
   },
   {
     icon: Shield,
@@ -128,7 +128,7 @@ const AI_SECURITY_PILLARS = [
 const DEPLOYMENT_MODELS = [
   {
     icon: Building2,
-    accent: 'from-amber-400 to-orange-500',
+    accent: 'from-amber-400 to-amber-500',
     shadow: 'shadow-amber-500/20',
     title: 'On-Premise',
     tag: 'Full control',
@@ -141,8 +141,8 @@ const DEPLOYMENT_MODELS = [
   },
   {
     icon: Server,
-    accent: 'from-violet-400 to-purple-500',
-    shadow: 'shadow-violet-500/20',
+    accent: 'from-primary-400 to-primary-500',
+    shadow: 'shadow-primary-500/20',
     title: 'Private Dedicated API',
     tag: 'Enterprise isolation',
     body: 'Isolated hosted environment exclusively for one client. Full isolation, predictable performance, and no shared infrastructure — without managing the underlying systems.',
@@ -454,7 +454,7 @@ export const SecurityView: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <Database size={20} className="text-violet-500" />
+                  <Database size={20} className="text-primary-500" />
                   <h3 className="text-lg font-black text-navy-950 dark:text-white">
                     {t('security.sovereignty.dataTitle', 'Zero Client Data Training')}
                   </h3>
@@ -514,7 +514,7 @@ export const SecurityView: React.FC = () => {
                   transition={{ duration: 0.4, delay: idx * 0.07 }}
                   className="flex items-center gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-5"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/20">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-500 text-white shadow-lg shadow-blue-500/20">
                     <Icon size={20} />
                   </div>
                   <div>
@@ -725,7 +725,7 @@ export const SecurityView: React.FC = () => {
                   {t('security.disclosure.report', 'Report security issues to:')}{' '}
                   <a
                     href={`mailto:${COMPANY.securityEmail}`}
-                    className="text-purple-600 dark:text-purple-400 font-semibold"
+                    className="text-primary-600 dark:text-primary-400 font-semibold"
                   >
                     {COMPANY.securityEmail}
                   </a>

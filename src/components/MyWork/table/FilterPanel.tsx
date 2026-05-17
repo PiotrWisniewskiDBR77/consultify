@@ -85,7 +85,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filters.rules.length > 1 && (
             <button
               onClick={toggleLogic}
-              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400"
+              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400"
             >
               {filters.logic.toUpperCase()}
             </button>
@@ -95,7 +95,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filters.rules.length > 0 && (
             <button
               onClick={clearAll}
-              className="text-[10px] text-slate-400 hover:text-red-500 transition-colors px-1"
+              className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear'}
             </button>
@@ -155,7 +155,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             )}
             <button
               onClick={() => removeRule(rule.id)}
-              className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
             >
               <Trash2 size={12} />
             </button>
@@ -166,7 +166,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
         <button
           onClick={addRule}
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 px-2 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
           {isPl ? 'Dodaj filtr' : 'Add filter'}

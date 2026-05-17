@@ -2,10 +2,19 @@
 -- Migration 549 handles PostgreSQL; this covers SQLite dev schemas created by 061 (which lacked org_id).
 -- Idempotent: column add is guarded; backfill only touches NULL rows.
 
--- SQLite: ALTER TABLE ADD COLUMN is a no-op if column exists (will error, caught by runner).
--- PostgreSQL: 549 already handled this, but this is safe to re-run.
+CREATE TABLE IF NOT EXISTS initiative_status_history (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    initiative_id TEXT NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+    organization_id TEXT,
+    from_status TEXT,
+    to_status TEXT NOT NULL,
+    changed_by TEXT,
+    reason TEXT,
+    gate_type TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-ALTER TABLE initiative_status_history ADD COLUMN organization_id TEXT;
+ALTER TABLE initiative_status_history ADD COLUMN IF NOT EXISTS organization_id TEXT;
 
 -- Backfill from initiatives table where NULL
 UPDATE initiative_status_history

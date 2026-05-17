@@ -18,12 +18,16 @@ import {
   Presentation,
   Save,
   Sparkles,
+  Table,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
+
 import type { KimiLane } from './KimiWorkspaceShell';
+import { TabeleTemplatesGrid } from './templateLifecycle/TabeleTemplatesGrid';
 import { useModuleRecentArtifacts } from './useModuleRecentArtifacts';
 import { useModuleTemplates } from './useModuleTemplates';
 
@@ -41,12 +45,12 @@ const LANE_META: Record<
   wordy: {
     icon: FileText,
     route: '/wordy',
-    accentBg: 'bg-purple-500/10',
-    accentText: 'text-purple-500',
+    accentBg: 'bg-primary-500/10',
+    accentText: 'text-primary-500',
   },
   excele: {
     icon: FileSpreadsheet,
-    route: '/excele',
+    route: '/tabele',
     accentBg: 'bg-emerald-500/10',
     accentText: 'text-emerald-500',
   },
@@ -56,6 +60,12 @@ const LANE_META: Record<
     accentBg: 'bg-fuchsia-500/10',
     accentText: 'text-fuchsia-500',
   },
+  tabele: {
+    icon: Table,
+    route: '/tabele',
+    accentBg: 'bg-sky-500/10',
+    accentText: 'text-sky-500',
+  },
 };
 
 interface ArtifactModuleHomeProps {
@@ -63,7 +73,7 @@ interface ArtifactModuleHomeProps {
 }
 
 export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const [activeTab, setActiveTab] = useState<HomeTab>('templates');
@@ -73,6 +83,11 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
   const { templates, loading: templatesLoading } = useModuleTemplates(lane);
   const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane);
+  // Block A / A-S5b — when ON, lane=tabele swaps to the
+  // `tp_base_templates` lifecycle endpoint via `<TabeleTemplatesGrid>`
+  // and surfaces the lifecycle filter + dot badge + governance drawer.
+  // OFF preserves the legacy Outputs Library behaviour for every lane.
+  const useTabeleLifecycleGrid = lane === 'tabele' && isTemplateLifecycleEnabled();
 
   const heroText = useMemo(() => {
     if (lane === 'wordy')
@@ -83,6 +98,10 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
       return isPolish
         ? 'Budżety, modele finansowe, harmonogramy, matryce ryzyk'
         : 'Budgets, financial models, timelines, risk matrices';
+    if (lane === 'tabele')
+      return isPolish
+        ? 'Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje'
+        : 'Operational tables, master data, registers, logs, OKRs, decisions';
     return isPolish
       ? 'Decki zarządcze, pitch, status update, prezentacje warsztatowe'
       : 'Executive decks, pitch, status updates, workshop presentations';
@@ -91,6 +110,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const laneLabel = useMemo(() => {
     if (lane === 'wordy') return isPolish ? 'Dokumenty' : 'Documents';
     if (lane === 'excele') return isPolish ? 'Tabele' : 'Tables';
+    if (lane === 'tabele') return isPolish ? 'Tabele Studio' : 'Table Studio';
     return isPolish ? 'Prezentacje' : 'Presentations';
   }, [lane, isPolish]);
 
@@ -164,7 +184,10 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
       {/* Tab content */}
       <div className="px-6 pb-8 flex-1">
-        {activeTab === 'templates' && (
+        {activeTab === 'templates' && useTabeleLifecycleGrid && (
+          <TabeleTemplatesGrid onTemplateClick={(tplId) => handleTemplateClick(tplId)} />
+        )}
+        {activeTab === 'templates' && !useTabeleLifecycleGrid && (
           <TemplatesGrid
             templates={templates}
             loading={templatesLoading}
@@ -383,6 +406,64 @@ const BUILTIN_TEMPLATES: Record<
       descPl: 'Dojrzałość, luki, rekomendacje',
     },
   ],
+  tabele: [
+    {
+      id: 'bt-tab-rolereg',
+      title: 'Role Register',
+      titlePl: 'Rejestr ról',
+      desc: 'Roles, owners, RACI matrix per initiative',
+      descPl: 'Role, właściciele, macierz RACI per inicjatywa',
+    },
+    {
+      id: 'bt-tab-vendor',
+      title: 'Vendor Master Data',
+      titlePl: 'Master danych dostawców',
+      desc: 'Vendor master data, contracts, status, SLAs',
+      descPl: 'Master danych dostawców, umowy, status, SLA',
+    },
+    {
+      id: 'bt-tab-okrset',
+      title: 'OKR Set',
+      titlePl: 'Zestaw OKR',
+      desc: 'Objectives and key results with check-ins',
+      descPl: 'Cele i kluczowe rezultaty z check-inami',
+    },
+    {
+      id: 'bt-tab-incidentlog',
+      title: 'Incident Log',
+      titlePl: 'Log incydentów',
+      desc: 'Operational incidents with severity and owners',
+      descPl: 'Incydenty operacyjne z severity i właścicielami',
+    },
+    {
+      id: 'bt-tab-clientreg',
+      title: 'Client Registry',
+      titlePl: 'Rejestr klientów',
+      desc: 'Customer accounts, segment, lifecycle',
+      descPl: 'Konta klientów, segment, cykl życia',
+    },
+    {
+      id: 'bt-tab-tasktracker',
+      title: 'Task Tracker',
+      titlePl: 'Tracker zadań',
+      desc: 'Cross-team task backlog with owners and due dates',
+      descPl: 'Backlog zadań między zespołami z właścicielami i terminami',
+    },
+    {
+      id: 'bt-tab-meetingbacklog',
+      title: 'Meeting Backlog',
+      titlePl: 'Backlog spotkań',
+      desc: 'Pending meetings, agenda items, follow-ups',
+      descPl: 'Oczekujące spotkania, punkty agendy, follow-upy',
+    },
+    {
+      id: 'bt-tab-decisionlog',
+      title: 'Decision Log',
+      titlePl: 'Log decyzji',
+      desc: 'Captured decisions, owners, rationale, status',
+      descPl: 'Zapisane decyzje, właściciele, uzasadnienie, status',
+    },
+  ],
 };
 
 function TemplatesGrid({
@@ -484,12 +565,14 @@ function ArtifactsList({
   return (
     <div className="space-y-2">
       {artifacts.map((item) => {
-        const id = item.artifactId || item.originRecordId;
+        const id = item.originRecordId || item.artifactId;
         const d = new Date(item.updatedAt);
+        if (!id) return null;
+        const safeId = id;
         return (
           <button
-            key={id}
-            onClick={() => onArtifactClick(id)}
+            key={safeId}
+            onClick={() => onArtifactClick(safeId)}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
           >
             <div className="min-w-0 flex-1">

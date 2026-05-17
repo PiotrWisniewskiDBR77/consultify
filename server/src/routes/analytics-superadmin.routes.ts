@@ -455,6 +455,33 @@ router.get(
 );
 
 /**
+ * Get recent report executions across all reports.
+ */
+router.get(
+  '/executions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
+      const executions = await dbAll(
+        `
+                SELECT are.*, ar.name as report_name, ar.report_type
+                FROM analytics_report_executions are
+                LEFT JOIN analytics_reports ar ON ar.id = are.report_id
+                ORDER BY are.executed_at DESC
+                LIMIT ?
+            `,
+        [limit]
+      );
+
+      return res.json({ executions: executions || [] });
+    } catch (error: any) {
+      logger.error('[Analytics] Get all report executions error:', error);
+      return analyticsFailure(res, 500, 'Failed to fetch report executions', { executions: [] });
+    }
+  })
+);
+
+/**
  * Create a new report
  */
 router.post(
@@ -1062,10 +1089,17 @@ router.post(
         factors = { estimatedChurns: nextMonthChurn, currentBase: params.totalSubscriptions || 0 };
       } else if (modelType === 'revenue') {
         const mrr = params.currentMRR || 0;
-        const growthFactor = 1 + (Math.random() * 0.08 - 0.02);
+        const activeSubs = params.activeSubscriptions || 0;
+        const avgRevenue = params.avgRevenuePerSubscription || 0;
+        const growthFactor = mrr > 0 && activeSubs > 0 ? 1 + Math.min(activeSubs, 100) / 10000 : 1;
         const projectedMRR = Math.round(mrr * growthFactor * 100) / 100;
         predictedValue = `$${projectedMRR.toLocaleString()} projected MRR`;
-        factors = { currentMRR: mrr, projectedMRR, activeSubs: params.activeSubscriptions || 0 };
+        factors = {
+          currentMRR: mrr,
+          projectedMRR,
+          activeSubs,
+          avgRevenuePerSubscription: avgRevenue,
+        };
       } else if (modelType === 'growth') {
         const rate = params.monthlyGrowthRate || 0;
         const currentUsers = params.totalActiveUsers || 0;

@@ -44,9 +44,9 @@ const statusConfig = {
     labelPl: 'Sukces',
   },
   failed: {
-    bgCls: 'bg-red-50 dark:bg-red-500/10',
-    textCls: 'text-red-600 dark:text-red-400',
-    dotCls: 'bg-red-500',
+    bgCls: 'bg-rose-50 dark:bg-rose-500/10',
+    textCls: 'text-rose-600 dark:text-rose-400',
+    dotCls: 'bg-rose-500',
     labelEn: 'Failed',
     labelPl: 'Błąd',
   },
@@ -277,7 +277,7 @@ const MenuBtn: React.FC<{
     onClick={onClick}
     className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
       danger
-        ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+        ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10'
         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
     }`}
   >

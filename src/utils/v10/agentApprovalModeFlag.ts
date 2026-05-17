@@ -1,8 +1,7 @@
 /**
- * Chat V10 / V10-AGT-004 — feature flag for ApprovalMode + upward-override rule.
+ * Chat V10 / V10-AGT approval-mode resolver feature flag.
  *
- * Gates adoption of `resolveEffectiveApprovalMode` (strictest-wins).
- * Default OFF. See `ADR-V10-002`.
+ * Default OFF until strictest-wins approval resolution is wired into runtime.
  */
 
 const LS_KEY = 'ff.agent_approval_mode';

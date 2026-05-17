@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => undefined,
+  },
   useTranslation: () => ({
     i18n: { language: 'en' },
     t: (_key: string, fallback?: string) => fallback || _key,
@@ -25,7 +29,10 @@ describe('CollaborationPresence degraded state', () => {
   });
 
   it('shows degraded readback when the legacy presence poll fails', async () => {
-    vi.mocked(Api.getIdeaPresence).mockRejectedValue(new Error('presence offline'));
+    const err = Object.assign(new Error('presence offline'), {
+      data: { code: 'IDEA_TABLE_PRESENCE_POLL_FAILED' },
+    });
+    vi.mocked(Api.getIdeaPresence).mockRejectedValue(err);
 
     render(
       <CollaborationPresence
@@ -38,7 +45,9 @@ describe('CollaborationPresence degraded state', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Presence degraded')).toBeInTheDocument();
+      expect(
+        screen.getByText('Idea table presence is unavailable. Refresh My Work and retry.')
+      ).toBeInTheDocument();
     });
   });
 });

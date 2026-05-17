@@ -57,7 +57,7 @@
 
 **Kolejność od prawej do lewej (wizualnie):**
 - **Area** (toggle panelu)  
-- **Add** (+ New / CTA)  
+- **Add** (Primary CTA, bez leading `+` w Module Topbar)  
 - **Tool** (jeśli moduł ma)  
 - **View** (przełącznik view modes)  
 - **Filters**
@@ -68,7 +68,7 @@
 
 ### 3. View modes — kolejność ikon
 
-**SSOT:** `docs/ui-standards/03-modules/view-modes-standard.md` sekcja 2.1
+**SSOT:** `docs/ui-standards/03-modules/view-modes-standard.md` sekcja 2.1 oraz `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`
 
 **Kolejność (zawsze ta sama):**
 1. `table`  
@@ -78,7 +78,7 @@
 5. `matrix`  
 6. `grid` (cards)
 
-**Reguła:** Pokazujemy tylko dostępne tryby, ale **kolejność nigdy się nie zmienia**. Nie dodawaj np. "queue" jako 3. ikony między kanban a timeline.
+**Reguła:** Pokazujemy tylko dostępne tryby, ale **kolejność nigdy się nie zmienia**. Nie dodawaj np. "queue" jako 3. ikony między kanban a timeline. View modes są widocznymi segmented/icon buttons, nie dropdownem. Dla prostego układu `Lista/Karty`, `Lista` jest po lewej, `Karty/Grid` po prawej.
 
 ---
 
@@ -103,7 +103,7 @@
 - **Separator:** `border-b border-slate-200/60 dark:border-white/5` pod całym ModuleNavBar
 - **Format chipów:** pill shape `h-8 rounded-full`, ikona kolorowa 14px + label + badge z counterem
 - **Aktywny chip:** fioletowa ramka `border-purple-500/40`, tło `bg-purple-500/10`, tekst `text-purple-700 dark:text-purple-200`
-- **Przyciski AI (prawa strona):** kontekstowe, `h-8 rounded-full`, ikona `Sparkles`, wariant secondary (outline violet) lub primary (gradient violet→cyan)
+- **Przyciski AI (prawa strona):** kontekstowe, `h-8 rounded-full`, ikona `Sparkles`, wspólny format Menu 3; bez dużych fioletowych CTA i bez gradientów w operational chrome
 - **Pełna specyfikacja:** `module-hub-standard.md` §3.2 (tło/separator), §3.3 (chipy), §3.4 (AI buttons)
 
 ---

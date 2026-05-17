@@ -182,6 +182,7 @@ export const FeedbackSidePanel: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   // Context snapshot - captured the moment user opens the panel
   const [capturedCtx, setCapturedCtx] = useState<CapturedContext | null>(null);
@@ -431,6 +432,7 @@ export const FeedbackSidePanel: React.FC = () => {
     setFeatureDescription('');
     setFeatureImpact('medium');
     setUploadedScreenshot(null);
+    setSubmitErrorMessage(null);
   }, []);
 
   // Handle success state
@@ -450,6 +452,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!message.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitErrorMessage(null);
     const ctx = capturedCtx || capturePageContext(t);
     const structuredBlocks: string[] = [];
     if (stepsToReproduce.trim())
@@ -535,6 +538,7 @@ export const FeedbackSidePanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -599,6 +603,7 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const submitPulse = async (rating: PulseRating, comment?: string) => {
     setIsSubmitting(true);
+    setSubmitErrorMessage(null);
     const ctx = capturedCtx || capturePageContext(t);
     try {
       await Api.submitPulseFeedback({
@@ -611,6 +616,7 @@ export const FeedbackSidePanel: React.FC = () => {
       handleSuccess(t('feedback.success.pulse', 'Thanks for your feedback! 🎉'));
     } catch (error) {
       console.error('Error submitting pulse:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -623,6 +629,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!featureName.trim() || !featureDescription.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitErrorMessage(null);
     const ctx = capturedCtx || capturePageContext(t);
     try {
       const data = await Api.submitFeatureFeedback({
@@ -645,6 +652,7 @@ export const FeedbackSidePanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Error submitting feature:', error);
+      setSubmitErrorMessage(t('feedback.error.submit', 'Failed to submit feedback'));
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
@@ -662,10 +670,10 @@ export const FeedbackSidePanel: React.FC = () => {
         <button
           key={id}
           onClick={() => setActiveTab(id as Exclude<FeedbackTab, 'pulse'>)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
             activeTab === id
-              ? 'border-amber-600 text-amber-800 dark:border-amber-500 dark:text-amber-400'
-              : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+              ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
           <Icon size={14} />
@@ -715,7 +723,7 @@ export const FeedbackSidePanel: React.FC = () => {
           onClick={() => setReportType('BUG')}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
             reportType === 'BUG'
-              ? 'bg-white dark:bg-navy-800 text-red-600 shadow-sm'
+              ? 'bg-white dark:bg-navy-800 text-rose-600 shadow-sm'
               : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
           }`}
         >
@@ -757,12 +765,12 @@ export const FeedbackSidePanel: React.FC = () => {
               {
                 value: 'HIGH',
                 label: t('feedback.severity.high', 'Wysoki'),
-                color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20',
+                color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
               },
               {
                 value: 'CRITICAL',
                 label: t('feedback.severity.critical', 'Krytyczny'),
-                color: 'text-red-500 bg-red-50 dark:bg-red-900/20',
+                color: 'text-rose-500 bg-rose-50 dark:bg-rose-900/20',
               },
             ].map(({ value, label, color }) => (
               <button
@@ -951,7 +959,7 @@ export const FeedbackSidePanel: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setUploadedScreenshot(null)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors"
                 title={t('feedback.attach.remove', 'Usuń załączony screenshot')}
               >
                 <X size={12} />
@@ -1016,7 +1024,7 @@ export const FeedbackSidePanel: React.FC = () => {
         disabled={isSubmitting || !message.trim()}
         className={`w-full py-2.5 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm ${
           severity === 'CRITICAL' && reportType === 'BUG'
-            ? 'bg-red-600 hover:bg-red-700 text-white'
+            ? 'bg-rose-600 hover:bg-rose-700 text-white'
             : 'bg-amber-500 hover:bg-amber-600 text-white'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
@@ -1041,22 +1049,22 @@ export const FeedbackSidePanel: React.FC = () => {
 
       {/* AI Insights Section */}
       {aiInsights.length > 0 && (
-        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+        <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
           <div className="flex items-center gap-2 mb-2">
-            <Bot size={14} className="text-purple-600 dark:text-purple-400" />
-            <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+            <Bot size={14} className="text-primary-600 dark:text-primary-400" />
+            <span className="text-xs font-semibold text-primary-700 dark:text-primary-300">
               {t('feedback.ai.insights', 'AI Insights')}
             </span>
           </div>
           <div className="space-y-2">
             {aiInsights.slice(0, 2).map((insight, idx) => (
               <div key={idx} className="flex items-start gap-2 text-xs">
-                <TrendingUp size={12} className="text-purple-500 mt-0.5" />
+                <TrendingUp size={12} className="text-primary-500 mt-0.5" />
                 <div>
-                  <span className="font-medium text-purple-800 dark:text-purple-200">
+                  <span className="font-medium text-primary-800 dark:text-primary-200">
                     {insight.title}
                   </span>
-                  <span className="text-purple-600 dark:text-purple-400">
+                  <span className="text-primary-600 dark:text-primary-400">
                     {' '}
                     - {insight.description}
                   </span>
@@ -1103,7 +1111,7 @@ export const FeedbackSidePanel: React.FC = () => {
               onClick={() => setFeatureCategory(value as FeatureCategory)}
               className={`py-2 px-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
                 featureCategory === value
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                   : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-transparent'
               }`}
             >
@@ -1121,7 +1129,7 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <input
           type="text"
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm"
           placeholder={t('feedback.feature.namePlaceholder', 'e.g., Dark mode, Export to PDF')}
           value={featureName}
           onChange={(e) => setFeatureName(e.target.value)}
@@ -1135,7 +1143,7 @@ export const FeedbackSidePanel: React.FC = () => {
           {t('feedback.feature.description', 'Description')}
         </label>
         <textarea
-          className="flex-1 w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none resize-none text-sm min-h-[80px]"
+          className="flex-1 w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none resize-none text-sm min-h-[80px]"
           placeholder={t(
             'feedback.feature.descPlaceholder',
             'Describe the feature and how it would help you...'
@@ -1163,7 +1171,7 @@ export const FeedbackSidePanel: React.FC = () => {
               onClick={() => setFeatureImpact(value as 'low' | 'medium' | 'high')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                 featureImpact === value
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -1177,7 +1185,7 @@ export const FeedbackSidePanel: React.FC = () => {
       <button
         type="submit"
         disabled={isSubmitting || !featureName.trim() || !featureDescription.trim()}
-        className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <>
@@ -1216,11 +1224,15 @@ export const FeedbackSidePanel: React.FC = () => {
         </span>
       ) : null}
       {[
-        { rating: 1, icon: Frown, color: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' },
+        {
+          rating: 1,
+          icon: Frown,
+          color: 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20',
+        },
         {
           rating: 2,
           icon: ThumbsDown,
-          color: 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20',
+          color: 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
         },
         {
           rating: 3,
@@ -1307,7 +1319,7 @@ export const FeedbackSidePanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
         onClick={closeSidePanel}
       />
 
@@ -1323,7 +1335,7 @@ export const FeedbackSidePanel: React.FC = () => {
             {!showSuccess && renderQuickPulseHeader()}
             <button
               onClick={closeSidePanel}
-              className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
+              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
             >
               <X size={18} />
             </button>
@@ -1339,6 +1351,14 @@ export const FeedbackSidePanel: React.FC = () => {
             renderSuccess()
           ) : (
             <>
+              {submitErrorMessage ? (
+                <div
+                  role="alert"
+                  className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                >
+                  {submitErrorMessage}
+                </div>
+              ) : null}
               {renderQuickPulseComment()}
               {activeTab === 'report' && renderReportTab()}
               {activeTab === 'feature' && renderFeatureTab()}
@@ -1348,8 +1368,8 @@ export const FeedbackSidePanel: React.FC = () => {
 
         {/* Footer */}
         {!showSuccess && (
-          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-            <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center">
+          <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
               {t('feedback.footer', 'Opinia wysyłana jako')}{' '}
               <b>{currentUser?.email || t('feedback.anonymous', 'Anonimowo')}</b>
             </div>

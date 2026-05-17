@@ -43,6 +43,42 @@ Interview outputs should be able to feed:
 - initiatives
 - reports and presentations
 
+### 3.1 Insight action handoff model
+
+`Interview Insight` exposes six primary downstream actions.
+
+Documents:
+
+- `report`
+- `presentation`
+- `table`
+
+Application actions:
+
+- `idea`
+- `note`
+- `initiative`
+
+Document actions do not blindly create final documents. They open the proper generator/builder with:
+
+- source insight context,
+- selected finding/candidate context if applicable,
+- evidence/confidence/limits summary,
+- lineage payload,
+- template picker.
+
+If the user chooses no template, AI may create a new structure from the insight context.
+
+If the user chooses a template, AI fills that template with the insight context.
+
+Application actions create app objects:
+
+- idea goes to `My Work > Ideas`,
+- note goes to Notebook,
+- initiative starts as a draft in `Interview > Initiatives`.
+
+Initiative drafts may use all approved and confirmed organizational knowledge available to the user and organization, not only the selected interview material. The output must preserve provenance and confidence boundaries.
+
 ---
 
 ## 4. Knowledge and vector ingestion doctrine
@@ -94,6 +130,25 @@ It may support:
 - dictated answer refinement
 - Teresa-guided spoken answer capture
 - context completion from already-allowed organization data
+
+For insight generation and initiative drafting, context enrichment has two modes:
+
+- `selected_interview_material_only`
+- `selected_material_plus_approved_org_knowledge`
+
+In the second mode, the system may use:
+
+- approved prior insights,
+- approved knowledge objects,
+- organization documentation,
+- related initiatives,
+- related decisions,
+- approved notes,
+- other governed sources allowed by policy.
+
+Rule:
+
+`Organizational knowledge can enrich an insight or initiative draft, but every added context contribution must remain attributable and must not override interview evidence limits.`
 
 ---
 

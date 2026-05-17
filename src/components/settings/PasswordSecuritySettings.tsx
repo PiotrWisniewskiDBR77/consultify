@@ -29,7 +29,6 @@ import {
   MapPin,
   Monitor,
   Phone,
-  RefreshCw,
   Shield,
   ShieldCheck,
   Smartphone,
@@ -40,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { MFASetup } from '../Profile/MFASetup';
 
 interface PasswordSecuritySettingsProps {
@@ -78,6 +78,20 @@ interface RecoveryOptions {
   lastBackupCodesGenerated?: string;
 }
 
+const normalizeRecoveryOptions = (response: Partial<RecoveryOptions> | null): RecoveryOptions => ({
+  recoveryEmail: response?.recoveryEmail || '',
+  recoveryPhone: response?.recoveryPhone || '',
+  backupCodesCount: response?.backupCodesCount || 0,
+  lastBackupCodesGenerated: response?.lastBackupCodesGenerated,
+});
+
+const recoveryOptionsMatch = (
+  actual: RecoveryOptions,
+  expected: Pick<RecoveryOptions, 'recoveryEmail' | 'recoveryPhone'>
+) =>
+  actual.recoveryEmail === expected.recoveryEmail &&
+  actual.recoveryPhone === expected.recoveryPhone;
+
 export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> = ({
   currentUser,
 }) => {
@@ -108,6 +122,8 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoveryPhone, setRecoveryPhone] = useState('');
   const [savingRecovery, setSavingRecovery] = useState(false);
+  const [recoveryLoadError, setRecoveryLoadError] = useState<string | null>(null);
+  const [recoveryActionError, setRecoveryActionError] = useState<string | null>(null);
 
   // Security events state
   const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
@@ -151,8 +167,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setIsLoadingSessions(true);
       const response = await Api.getActiveSessions();
       setSessions(response.sessions || []);
-    } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+    } catch {
       setSessions([]);
     } finally {
       setIsLoadingSessions(false);
@@ -164,8 +179,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setLoadingEvents(true);
       const response = await Api.get('/api/security/events?limit=10');
       setSecurityEvents(response.events || []);
-    } catch (error) {
-      console.error('Failed to fetch security events:', error);
+    } catch {
       setSecurityEvents([]);
     } finally {
       setLoadingEvents(false);
@@ -174,12 +188,16 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
   const fetchRecoveryOptions = async () => {
     try {
+      setRecoveryLoadError(null);
       const response = await Api.get('/api/settings/recovery');
-      setRecoveryOptions(response);
-      setRecoveryEmail(response.recoveryEmail || '');
-      setRecoveryPhone(response.recoveryPhone || '');
-    } catch (error) {
-      console.error('Failed to fetch recovery options:', error);
+      const snapshot = normalizeRecoveryOptions(response);
+      setRecoveryOptions(snapshot);
+      setRecoveryEmail(snapshot.recoveryEmail);
+      setRecoveryPhone(snapshot.recoveryPhone);
+      return snapshot;
+    } catch (error: unknown) {
+      setRecoveryLoadError(normalizeApiErrorMessage(error, 'Failed to load recovery options'));
+      return null;
     }
   };
 
@@ -203,11 +221,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setConfirmPassword('');
       toast.success(t('settings.security.passwordChanged', 'Password changed successfully!'));
       fetchSessions();
-    } catch (error: any) {
-      setPasswordError(
-        error.message || t('settings.security.passwordChangeFailed', 'Failed to change password')
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.security.passwordChangeFailed', 'Failed to change password')
       );
-      toast.error(error.message || 'Failed to change password');
+      setPasswordError(message);
+      toast.error(message);
     } finally {
       setIsChangingPassword(false);
     }
@@ -219,8 +239,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       await Api.revokeSession(sessionId);
       setSessions(sessions.filter((s) => s.id !== sessionId));
       toast.success(t('settings.security.sessionRevoked', 'Session revoked successfully'));
-    } catch (error) {
-      toast.error(t('settings.security.sessionRevokeFailed', 'Failed to revoke session'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.security.sessionRevokeFailed', 'Failed to revoke session')
+        )
+      );
     } finally {
       setIsRevokingSession(null);
     }
@@ -243,23 +268,35 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       toast.success(
         t('settings.security.allSessionsRevoked', 'All other sessions have been logged out')
       );
-    } catch (error) {
-      toast.error(t('settings.security.revokeAllFailed', 'Failed to revoke sessions'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.security.revokeAllFailed', 'Failed to revoke sessions')
+        )
+      );
     }
   };
 
   const handleSaveRecovery = async () => {
     setSavingRecovery(true);
+    setRecoveryActionError(null);
     try {
+      const expected = { recoveryEmail, recoveryPhone };
       await Api.put('/api/settings/recovery', {
         recoveryEmail,
         recoveryPhone,
       });
-      setRecoveryOptions((prev) => ({ ...prev, recoveryEmail, recoveryPhone }));
+      const persisted = await fetchRecoveryOptions();
+      if (!persisted || !recoveryOptionsMatch(persisted, expected)) {
+        throw new Error('Recovery options were not confirmed by the server');
+      }
       setEditingRecovery(false);
       toast.success('Recovery options updated');
-    } catch (error) {
-      toast.error('Failed to update recovery options');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to update recovery options');
+      setRecoveryActionError(message);
+      toast.error(message);
     } finally {
       setSavingRecovery(false);
     }
@@ -292,13 +329,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
   const sectionHeaderClass =
     'p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors';
   const inputClass =
-    'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all';
+    'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
           <ShieldCheck className="w-6 h-6 text-slate-900 dark:text-white" />
         </div>
         <div>
@@ -315,8 +352,8 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       <div className={sectionClass}>
         <button onClick={() => toggleSection('password')} className={sectionHeaderClass}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg">
-              <Key className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
+              <Key className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
             <div className="text-left">
               <h3 className="font-semibold text-slate-900 dark:text-white">
@@ -397,7 +434,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                         className={`h-1.5 flex-1 rounded-full ${
                           i <= passwordStrength
                             ? passwordStrength <= 2
-                              ? 'bg-red-500'
+                              ? 'bg-rose-500'
                               : passwordStrength <= 4
                                 ? 'bg-yellow-500'
                                 : 'bg-emerald-500'
@@ -455,7 +492,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     {passwordRequirements.passwordsMatch ? (
                       <CheckCircle className="w-5 h-5 text-emerald-500" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <AlertCircle className="w-5 h-5 text-rose-500" />
                     )}
                   </div>
                 )}
@@ -464,7 +501,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
             {/* Error/Success Messages */}
             {passwordError && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {passwordError}
               </div>
@@ -481,7 +518,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             <button
               onClick={handleChangePassword}
               disabled={!isPasswordValid || !currentPassword || isChangingPassword}
-              className="w-full py-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-lg bg-primary-600 hover:bg-primary-500 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isChangingPassword ? (
                 <>
@@ -576,7 +613,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
               <div className="p-4 border-b border-slate-100 dark:border-navy-700 flex justify-end">
                 <button
                   onClick={handleRevokeAllSessions}
-                  className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
                   Log Out All Others
@@ -586,7 +623,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             <div className="divide-y divide-slate-100 dark:divide-white/5">
               {isLoadingSessions ? (
                 <div className="p-8 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -631,7 +668,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                         <button
                           onClick={() => handleRevokeSession(session.id)}
                           disabled={isRevokingSession === session.id}
-                          className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                          className="px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
                         >
                           {isRevokingSession === session.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -674,7 +711,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
         {expandedSections.recovery && (
           <div className="p-6 border-t border-slate-100 dark:border-navy-700 space-y-4">
-            {!editingRecovery ? (
+            {recoveryLoadError ? (
+              <div
+                role="alert"
+                className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+              >
+                Recovery options unavailable: {recoveryLoadError}
+              </div>
+            ) : !editingRecovery ? (
               <>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
@@ -734,13 +778,22 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
                 <button
                   onClick={() => setEditingRecovery(true)}
-                  className="w-full py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
+                  className="w-full py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
                 >
                   Edit Recovery Options
                 </button>
               </>
             ) : (
               <div className="space-y-4">
+                {recoveryActionError && (
+                  <div
+                    role="alert"
+                    className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+                  >
+                    {recoveryActionError}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Recovery Email
@@ -774,7 +827,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   <button
                     onClick={handleSaveRecovery}
                     disabled={savingRecovery}
-                    className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {savingRecovery ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -823,7 +876,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
           <div className="border-t border-slate-100 dark:border-navy-700">
             {loadingEvents ? (
               <div className="p-8 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
               </div>
             ) : securityEvents.length === 0 ? (
               <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -839,7 +892,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                           ? 'bg-emerald-100 dark:bg-emerald-500/20'
                           : event.status === 'warning'
                             ? 'bg-amber-100 dark:bg-amber-500/20'
-                            : 'bg-red-100 dark:bg-red-500/20'
+                            : 'bg-rose-100 dark:bg-rose-500/20'
                       }`}
                     >
                       {event.status === 'success' ? (
@@ -847,7 +900,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                       ) : event.status === 'warning' ? (
                         <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -78,7 +78,7 @@ const ACCURACY_TEXT_CLASS: Record<string, string> = {
   gray: 'text-slate-600 dark:text-slate-400',
   green: 'text-emerald-600 dark:text-emerald-400',
   yellow: 'text-yellow-600 dark:text-yellow-400',
-  red: 'text-red-600 dark:text-red-400',
+  red: 'text-rose-600 dark:text-rose-400',
 };
 
 const PredictiveAnalyticsView: React.FC = () => {
@@ -290,17 +290,17 @@ const PredictiveAnalyticsView: React.FC = () => {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+            <AlertTriangle className="w-5 h-5 text-rose-400" />
+            <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
           </div>
           <button
             onClick={() => {
               setError(null);
               fetchModels();
             }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -353,8 +353,8 @@ const PredictiveAnalyticsView: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-lg">
-                          <TypeIcon className="w-4 h-4 text-purple-400" />
+                        <div className="p-2 bg-primary-500/20 rounded-lg">
+                          <TypeIcon className="w-4 h-4 text-primary-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -411,7 +411,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     <button
                       onClick={handleTrainModel}
                       disabled={isTraining}
-                      className="flex items-center gap-2 text-white px-3 py-2 rounded-lg text-sm transition-colors bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600"
+                      className="flex items-center gap-2 text-white px-3 py-2 rounded-lg text-sm transition-colors bg-primary-600 hover:bg-primary-700 disabled:bg-gray-600"
                     >
                       {isTraining ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -431,7 +431,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteModel(selectedModel.id)}
-                      className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                      className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -564,7 +564,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                           className="flex items-center justify-between p-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
-                            <BarChart3 className="w-4 h-4 text-purple-400" />
+                            <BarChart3 className="w-4 h-4 text-primary-400" />
                             <div>
                               <span className="text-slate-900 dark:text-white text-sm">
                                 {result.predictedValue || 'Prediction'}
@@ -648,12 +648,12 @@ const PredictiveAnalyticsView: React.FC = () => {
                       onClick={() => setNewModel({ ...newModel, modelType: mt.id })}
                       className={`p-3 rounded-lg text-left transition-colors ${
                         newModel.modelType === mt.id
-                          ? 'bg-purple-600/20 border border-purple-500'
+                          ? 'bg-primary-600/20 border border-primary-500'
                           : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <mt.icon className="w-4 h-4 text-purple-400" />
+                        <mt.icon className="w-4 h-4 text-primary-400" />
                         <span className="text-sm font-medium text-slate-900 dark:text-white">
                           {mt.label}
                         </span>
@@ -676,7 +676,7 @@ const PredictiveAnalyticsView: React.FC = () => {
               <button
                 onClick={handleCreateModel}
                 disabled={!newModel.name}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 Create Model
               </button>

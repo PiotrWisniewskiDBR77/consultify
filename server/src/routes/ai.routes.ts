@@ -4,7 +4,6 @@
  */
 
 import * as cheerio from 'cheerio';
-import crypto from 'crypto';
 import { Response, Router } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,8 +17,16 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
+import {
+  buildNoWebSourcesText,
+  buildProductAssistantFallback,
+  isExplicitResearchAsk,
+} from '../services/ai/chatStabilizationPolicy.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
-import type { WorkerWebAccessPolicy } from '../services/ai/virtualWorkerWebAccessService.js';
+import {
+  isDbr77ProductTruthQuery,
+  type WorkerWebAccessPolicy,
+} from '../services/ai/virtualWorkerWebAccessService.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
@@ -89,42 +96,180 @@ import {
 
 const router = Router();
 
-const DEEP_THINKING_CONFIRM_TTL_MS = 30 * 60 * 1000;
-let deepThinkingConfirmTableReady: Promise<void> | null = null;
-
-async function ensureDeepThinkingConfirmTable(): Promise<void> {
-  if (!deepThinkingConfirmTableReady) {
-    deepThinkingConfirmTableReady = (async () => {
-      await dbRun(
-        `CREATE TABLE IF NOT EXISTS ai_deep_thinking_confirms (
-          token TEXT PRIMARY KEY,
-          user_id TEXT NOT NULL,
-          organization_id TEXT,
-          conversation_id TEXT,
-          message_hash TEXT NOT NULL,
-          confirm_payload TEXT,
-          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          expires_at TEXT NOT NULL,
-          consumed_at TEXT
-        )`
-      );
-    })().catch((error) => {
-      deepThinkingConfirmTableReady = null;
-      throw error;
-    });
-  }
-  await deepThinkingConfirmTableReady;
+function isConnectorFreshDataAsk(message: unknown): boolean {
+  const text = String(message || '').toLowerCase();
+  const mentionsConnector =
+    /\b(connector|connectors|integration|integrations|sql|database|db|postgres|mysql|warehouse|crm|salesforce|hubspot|konektor|konektora|integracja|baza|bazie)\b/i.test(
+      text
+    );
+  const asksForFreshFact =
+    /\b(current|latest|fresh|live|actual|active|count|how many|ile|aktualn|bieżąc|biezac|aktywn|rekord|klient|customer|query|sprawd[źz])\b/i.test(
+      text
+    );
+  return mentionsConnector && asksForFreshFact;
 }
 
-function hashDeepThinkingMessage(message: unknown): string {
-  return crypto
-    .createHash('sha256')
-    .update(String(message || '').trim())
-    .digest('hex');
+function hasVerifiedConnectorResult(context: unknown): boolean {
+  const external = (context as any)?.external || {};
+  return Boolean(
+    external?.connectorToolResult?.verified === true ||
+    external?.connectorToolResult?.fresh === true ||
+    external?.connectorQuery?.executed === true ||
+    external?.toolResult?.connector === true
+  );
+}
+
+async function getConnectorStatusSummary(organizationId?: string | null): Promise<string> {
+  let statusSummary = 'No verified connector status was loaded for this answer.';
+  if (!organizationId) return statusSummary;
+
+  try {
+    const rows = await dbAll<any>(
+      `SELECT id, connector_id, connector_type, provider, status, last_sync_at, updated_at
+       FROM integrations
+       WHERE organization_id = ?
+       ORDER BY updated_at DESC
+       LIMIT 25`,
+      [organizationId]
+    );
+    const relevantRows = (rows || []).filter((row) =>
+      /sql|database|postgres|mysql|warehouse|crm|salesforce|hubspot/i.test(
+        [row.connector_id, row.connector_type, row.provider, row.id].filter(Boolean).join(' ')
+      )
+    );
+    const sample = (relevantRows.length > 0 ? relevantRows : rows || []).slice(0, 8).map((row) => {
+      const name = row.connector_id || row.connector_type || row.provider || row.id || 'unknown';
+      return `${name}: status=${row.status || 'unknown'}, lastSync=${row.last_sync_at || 'unknown'}`;
+    });
+    if (sample.length > 0) statusSummary = sample.join('; ');
+  } catch (err: any) {
+    logger.warn('[AI Stream] Connector honesty status lookup failed:', err?.message || err);
+  }
+
+  return statusSummary;
+}
+
+async function buildConnectorHonestyConstraint(params: {
+  organizationId?: string | null;
+  message: unknown;
+  context: unknown;
+}): Promise<string> {
+  if (!isConnectorFreshDataAsk(params.message) || hasVerifiedConnectorResult(params.context)) {
+    return '';
+  }
+
+  const statusSummary = await getConnectorStatusSummary(params.organizationId);
+
+  return [
+    '## HARD CONNECTOR DATA TRUST CONSTRAINT',
+    'The user is asking for fresh/current data from a connector or production database.',
+    `Known connector status snapshot: ${statusSummary}`,
+    'You do NOT have a verified live connector query result in this request.',
+    'Therefore you MUST NOT invent exact counts, records, customer numbers, SQL results, freshness timestamps, or claim that you queried production data.',
+    'Answer with an honest access/freshness limitation, explain that the connector/query result is unavailable or unverified, and propose a governed reconnect/access/check workflow.',
+    'If the user asks for mutation, keep using governed_execution and require approval.',
+  ].join('\n');
+}
+
+async function buildConnectorHonestyBlockResponse(params: {
+  organizationId?: string | null;
+  message: unknown;
+  context: unknown;
+}): Promise<string> {
+  if (!isConnectorFreshDataAsk(params.message) || hasVerifiedConnectorResult(params.context)) {
+    return '';
+  }
+
+  const statusSummary = await getConnectorStatusSummary(params.organizationId);
+  return [
+    'Nie mogę podać aktualnej liczby rekordów klientów z produkcyjnej bazy SQL, bo w tym żądaniu nie mam zweryfikowanego wyniku live query z konektora.',
+    '',
+    `Stan konektorów widoczny dla backendu: ${statusSummary}`,
+    '',
+    'Nie będę zgadywać ani podawać liczby "z kapelusza". Bezpieczna ścieżka to: sprawdzić status konektora, odnowić połączenie/sekrety w trybie governed reconnect, uruchomić jawne read-only query z audytem, a dopiero potem raportować liczbę z timestampem i źródłem.',
+  ].join('\n');
+}
+
+function isAIOpsHealthAsk(message: unknown): boolean {
+  const text = String(message || '').toLowerCase();
+  const mentionsOpsHealth =
+    /\b(ai ops|aiops|provider|providers|model health|health|eval gate|deep research|kosztown|costly|degraded|blocked|awaria|zdrowi|zdrowe|providerzy)\b/i.test(
+      text
+    );
+  const asksForRunDecision =
+    /\b(can i|should i|safe|proceed|run|launch|uruchomi|odpali|bezpiecz|mogę|moge|czy mogę|czy moge)\b/i.test(
+      text
+    );
+  return mentionsOpsHealth && asksForRunDecision;
+}
+
+async function buildAIOpsHealthConstraint(message: unknown): Promise<string> {
+  if (!isAIOpsHealthAsk(message)) return '';
+
+  const { hardBlock, statusSummary } = await getAIOpsHealthSnapshot();
+  if (!hardBlock) return '';
+
+  return [
+    '## HARD AI OPS HEALTH CONSTRAINT',
+    `Internal AI provider health snapshot: ${statusSummary}`,
+    'The user is asking whether it is safe to run an expensive AI operation such as Deep Research.',
+    'You MUST use the internal AI Ops health snapshot above, not public web information about general AI systems.',
+    'Do NOT recommend starting expensive research, agents, or provider-heavy workflows while health is error/degraded/unknown, providers are unavailable, or the health monitor is not running.',
+    'State the degraded/blocked posture plainly, explain the operational risk, and recommend checking provider configuration, eval gate, and AI Ops before proceeding.',
+  ].join('\n');
+}
+
+async function getAIOpsHealthSnapshot(): Promise<{ hardBlock: boolean; statusSummary: string }> {
+  let statusSummary = 'AI health status could not be loaded.';
+  let hardBlock = true;
+  try {
+    const healthMonitor = (await import('../services/ai/healthMonitor.js')).default as any;
+    const status = healthMonitor.getStatus?.() || {};
+    const overall =
+      (status?.lastCheck as { overall?: string } | null)?.overall || status?.status || 'error';
+    const providers =
+      status?.providers && typeof status.providers === 'object' ? status.providers : {};
+    const providerCount = Object.keys(providers).length;
+    const isRunning = Boolean(status?.isRunning);
+    hardBlock = overall !== 'healthy' || providerCount === 0 || !isRunning;
+    statusSummary = `overall=${overall}; providerCount=${providerCount}; isRunning=${isRunning}; consecutiveFailures=${status?.consecutiveFailures ?? 'unknown'}`;
+  } catch (err: any) {
+    logger.warn('[AI Stream] AI Ops health lookup failed:', err?.message || err);
+  }
+
+  return { hardBlock, statusSummary };
+}
+
+async function buildAIOpsHealthBlockResponse(message: unknown): Promise<string> {
+  if (!isAIOpsHealthAsk(message)) return '';
+
+  const { hardBlock, statusSummary } = await getAIOpsHealthSnapshot();
+  if (!hardBlock) return '';
+
+  return [
+    'Nie rekomenduję uruchamiania kosztownego Deep Research ani innych provider-heavy workflow w tym stanie.',
+    '',
+    `Wewnętrzny AI Ops health snapshot: ${statusSummary}`,
+    '',
+    'To oznacza posture degraded/blocked dla kosztownych operacji. Najpierw trzeba naprawić konfigurację providerów, potwierdzić eval gate oraz koszt/budget posture, a dopiero potem uruchamiać Deep Research.',
+  ].join('\n');
 }
 
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
+
+function isGovernedMutationApprovalBypassRequest(message: unknown): boolean {
+  const text = String(message || '').toLowerCase();
+  if (!text.trim()) return false;
+  const mutationIntent =
+    /\b(rename|change|update|edit|modify|create|delete|remove|archive|assign|move|set)\b/.test(
+      text
+    ) || /\b(zmień|zmien|edytuj|utw[oó]rz|usuń|usun|przypisz|przenieś|przenies|ustaw)\b/.test(text);
+  const approvalBypass =
+    /\b(without asking|without approval|do not ask|don't ask|no approval|silently)\b/.test(text) ||
+    /\b(bez pytania|bez zgody|bez akceptacji|nie pytaj|po cichu)\b/.test(text);
+  return mutationIntent && approvalBypass;
+}
 
 // -------------------- Chat attachments ingestion --------------------
 // This is intentionally self-contained (no StorageService / KnowledgeService dependency).
@@ -138,6 +283,7 @@ const attachmentsUpload = multer({
       'text/markdown',
       'text/csv',
       'application/json',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
     if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) return cb(null, true);
     return cb(new Error(`Unsupported file type: ${file.mimetype}`));
@@ -165,6 +311,14 @@ router.post(
         const pdf = pdfParseMod.default || pdfParseMod;
         const out = await pdf(req.file.buffer);
         text = String(out?.text || '');
+      } else if (
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        filename.toLowerCase().endsWith('.docx')
+      ) {
+        const mammothMod = (await import('mammoth')) as any;
+        const mammoth = mammothMod.default || mammothMod;
+        const out = await mammoth.extractRawText({ buffer: req.file.buffer });
+        text = String(out?.value || '');
       } else {
         text = req.file.buffer.toString('utf8');
       }
@@ -174,7 +328,19 @@ router.post(
     }
 
     if (!text || text.trim().length === 0) {
-      return res.status(400).json({ error: 'Could not extract any text from file' });
+      const isPdf = mimeType === 'application/pdf';
+      return res.status(400).json({
+        error: isPdf
+          ? 'Could not extract text from PDF. The file may be scanned, empty, encrypted, or corrupted.'
+          : 'Could not extract any text from file',
+        code: isPdf ? 'PDF_TEXT_EXTRACTION_FAILED' : 'TEXT_EXTRACTION_FAILED',
+        extractionStatus: isPdf ? 'ocr_required_or_unreadable' : 'failed',
+        attachmentState: isPdf ? 'ocr_required' : 'unreadable',
+        sourceClass: 'attachment',
+        recoverable: isPdf,
+        filename,
+        mimeType,
+      });
     }
 
     // Create a knowledge_docs row (schema is minimal across DBs; extra columns are optional)
@@ -298,6 +464,7 @@ router.post(
       docId,
       filename,
       mimeType,
+      extractionStatus: 'extracted',
       totalChunks: chunks.length,
       embeddedChunks,
     });
@@ -816,9 +983,9 @@ router.post(
       const db = dbMod;
 
       const messages = (await db.all(
-        `SELECT content, metadata, role, created_at FROM conversation_messages
+        `SELECT content, metadata, role FROM conversation_messages
          WHERE conversation_id = ? AND role = 'ai'
-         ORDER BY created_at DESC LIMIT 10`,
+         ORDER BY created_at DESC LIMIT 1`,
         [conversationId]
       )) as any[];
 
@@ -826,44 +993,13 @@ router.post(
         return res.status(404).json({ error: 'No AI messages found in conversation' });
       }
 
-      const reportMessage =
-        messages.find((message) => {
-          try {
-            const metadata =
-              typeof message?.metadata === 'string'
-                ? JSON.parse(message.metadata)
-                : message?.metadata || {};
-            return (
-              metadata?.deepThinking?.kind === 'report' ||
-              (typeof metadata?.deepThinkingReport === 'string' &&
-                metadata.deepThinkingReport.trim().length > 0)
-            );
-          } catch {
-            return false;
-          }
-        }) || messages[0];
-      const parsedMetadata =
-        typeof reportMessage?.metadata === 'string'
-          ? JSON.parse(reportMessage.metadata || '{}')
-          : reportMessage?.metadata || {};
-      const expectedOutput =
-        parsedMetadata?.deepThinking?.expectedOutput ||
-        parsedMetadata?.deepThinkingConfirm?.understanding?.expectedOutput ||
-        'FullReport';
-      const content =
-        String(parsedMetadata?.deepThinkingReport || '').trim() ||
-        String(reportMessage?.content || '');
+      const content = messages[0].content || '';
       const exportFormat = format || 'markdown';
 
       return res.json({
         success: true,
         format: exportFormat,
         content,
-        report: {
-          expectedOutput,
-          createdAt: reportMessage?.created_at || null,
-          metadata: parsedMetadata?.deepThinking || null,
-        },
         exportedAt: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -1177,6 +1313,8 @@ router.post(
       'You are running Deep Thinking Mode – Confirm Understanding.',
       'Your ONLY job is to paraphrase the task into a decision-ready framing and list minimal gaps/questions.',
       'Do NOT provide solutions yet. Do NOT start analysis. Be concise.',
+      'Ask clarification questions only when missing information would block any useful analysis. For strategic prompts like "analyze", "compare", or "evaluate", proceed with explicit assumptions instead of asking more questions.',
+      'If the recent history already contains a Deep Thinking confirm/clarification step, do not ask the same clarification again.',
       'Return ONLY valid JSON matching the provided schema.',
     ].join('\n');
 
@@ -1229,35 +1367,19 @@ router.post(
     }
 
     logger.info('[AI Confirm] LLM call succeeded, returning result');
-
-    await ensureDeepThinkingConfirmTable();
-    const confirmToken = uuidv4();
-    const conversationId =
-      typeof body.conversationId === 'string' && body.conversationId.trim().length > 0
-        ? body.conversationId.trim()
-        : typeof (context as any)?.conversationId === 'string' &&
-            String((context as any)?.conversationId).trim().length > 0
-          ? String((context as any)?.conversationId).trim()
-          : null;
-    const expiresAt = new Date(Date.now() + DEEP_THINKING_CONFIRM_TTL_MS).toISOString();
-    await dbRun(
-      `INSERT INTO ai_deep_thinking_confirms
-         (token, user_id, organization_id, conversation_id, message_hash, confirm_payload, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        confirmToken,
-        req.userId as string,
-        req.organizationId || null,
-        conversationId,
-        hashDeepThinkingMessage(message),
-        JSON.stringify(result.object || {}),
-        expiresAt,
-      ]
-    );
+    const confirmObject = result.object || {};
+    const promptLooksActionable =
+      String(message || '').trim().length >= 20 &&
+      /\b(anali[sz]|analyse|analyze|compare|porówn|porown|oceń|ocen|evaluate|strateg|pozycjon|kierunk)\b/i.test(
+        String(message || '')
+      );
+    if (promptLooksActionable || confirmObject.isClearEnoughToProceed === true) {
+      confirmObject.isClearEnoughToProceed = true;
+      confirmObject.missingInfoQuestions = [];
+    }
 
     return res.json({
-      confirm: result.object,
-      confirmToken,
+      confirm: confirmObject,
       metadata: {
         provider: modelCfg.provider,
         model: modelCfg.id,
@@ -1291,6 +1413,8 @@ router.post(
       provider?: string;
       endpoint?: string;
       privateMode?: boolean;
+      assistantScope?: 'anna_public' | 'teresa_tenant';
+      memoryScope?: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
       aiModes?: {
         deepResearch?: boolean;
         webSearch?: boolean;
@@ -1375,9 +1499,6 @@ router.post(
       (aiModes as any).deepResearch = true;
       (context as any).__forceResearchType = 'market_research';
     }
-    if (aiModes?.marketResearch && !aiModes?.webSearch) {
-      (aiModes as any).webSearch = true;
-    }
 
     // Detect "force depth" triggers (user control). These must cause a real structure change.
     const rawMsg = String(message || '').trim();
@@ -1397,65 +1518,13 @@ router.post(
     // Deep Thinking determinism: enforce Confirm gate server-side (not just UI).
     if (aiModes?.deepResearch) {
       const confirmed = Boolean((context as any)?.deepThinkingConfirmed);
-      const confirmTokenRaw = String((context as any)?.deepThinkingConfirmToken || '').trim();
-      if (!confirmed || !confirmTokenRaw) {
+      if (!confirmed) {
         return res.status(400).json({
           error:
-            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and retry with a valid confirm token.',
+            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
           code: 'DEEP_THINKING_CONFIRM_REQUIRED',
         });
       }
-      await ensureDeepThinkingConfirmTable();
-      const tokenRow = (await dbGet(
-        `SELECT token, conversation_id, message_hash, expires_at, consumed_at
-           FROM ai_deep_thinking_confirms
-          WHERE token = ? AND user_id = ?`,
-        [confirmTokenRaw, req.userId as string]
-      )) as
-        | {
-            token: string;
-            conversation_id?: string | null;
-            message_hash: string;
-            expires_at: string;
-            consumed_at?: string | null;
-          }
-        | undefined;
-
-      const requestedConversationId =
-        typeof conversationId === 'string' && conversationId.trim().length > 0
-          ? conversationId.trim()
-          : typeof (context as any)?.conversationId === 'string' &&
-              String((context as any)?.conversationId).trim().length > 0
-            ? String((context as any)?.conversationId).trim()
-            : null;
-
-      const tokenExpired =
-        !tokenRow?.expires_at || Number.isNaN(Date.parse(tokenRow.expires_at))
-          ? true
-          : Date.parse(tokenRow.expires_at) < Date.now();
-      const tokenConversationMismatch =
-        Boolean(tokenRow?.conversation_id) &&
-        Boolean(requestedConversationId) &&
-        tokenRow?.conversation_id !== requestedConversationId;
-      const tokenMessageMismatch =
-        !tokenRow?.message_hash || tokenRow.message_hash !== hashDeepThinkingMessage(message);
-
-      if (
-        !tokenRow ||
-        Boolean(tokenRow.consumed_at) ||
-        tokenExpired ||
-        tokenConversationMismatch ||
-        tokenMessageMismatch
-      ) {
-        return res.status(400).json({
-          error: 'Deep Thinking confirm token is missing, expired, or does not match this request.',
-          code: 'DEEP_THINKING_CONFIRM_INVALID',
-        });
-      }
-      await dbRun(
-        `UPDATE ai_deep_thinking_confirms SET consumed_at = CURRENT_TIMESTAMP WHERE token = ?`,
-        [confirmTokenRaw]
-      );
     }
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
@@ -1473,6 +1542,7 @@ router.post(
     let policyDecision: any = null;
     const policyNotices: any[] = [];
     let collectedCitations: any[] = [];
+    let sourceLedgerSnapshot: any = null;
 
     const mergeCitations = (prev: any[], next: any[]) => {
       const out: any[] = [];
@@ -1503,6 +1573,122 @@ router.post(
       return out;
     };
 
+    const normalizeTrustSourceClass = (value: unknown): string | null => {
+      const raw = String(value || '')
+        .trim()
+        .toLowerCase();
+      if (!raw) return null;
+      if (raw.includes('product') || raw.includes('knowledge') || raw.includes('kb')) {
+        return 'product_knowledge';
+      }
+      if (raw.includes('web') || raw.includes('research') || raw.includes('url')) {
+        return 'web_research';
+      }
+      if (raw.includes('attach') || raw.includes('document') || raw.startsWith('a')) {
+        return 'attachment';
+      }
+      if (raw.includes('workspace') || raw.includes('project') || raw.includes('pmo')) {
+        return 'workspace';
+      }
+      if (raw.includes('memory') || raw.includes('org')) {
+        return 'org_memory';
+      }
+      if (raw.includes('connector') || raw.includes('integration')) {
+        return 'connector';
+      }
+      return 'general';
+    };
+
+    const buildTrustSourceClasses = (citations: any[], sourceLedger: any): string[] => {
+      const classes = new Set<string>();
+      for (const citation of citations || []) {
+        const sourceClass =
+          normalizeTrustSourceClass(citation?.sourceClass) ||
+          normalizeTrustSourceClass(citation?.source_class) ||
+          normalizeTrustSourceClass(citation?.type) ||
+          normalizeTrustSourceClass(citation?.sourceType) ||
+          normalizeTrustSourceClass(citation?.source);
+        if (sourceClass) classes.add(sourceClass);
+      }
+      const usedSources = Array.isArray(sourceLedger?.used_sources)
+        ? sourceLedger.used_sources
+        : [];
+      for (const source of usedSources) {
+        const sourceClass =
+          normalizeTrustSourceClass(source?.category) ||
+          normalizeTrustSourceClass(source?.type) ||
+          normalizeTrustSourceClass(source?.sourceClass);
+        if (sourceClass) classes.add(sourceClass);
+      }
+      if (classes.size > 1) classes.add('mixed');
+      if (classes.size === 0) classes.add('general');
+      return Array.from(classes);
+    };
+
+    const buildSourceLedgerSummary = (sourceLedger: any) => {
+      if (!sourceLedger || typeof sourceLedger !== 'object') return null;
+      const usedSources = Array.isArray(sourceLedger.used_sources) ? sourceLedger.used_sources : [];
+      const blockedSources = Array.isArray(sourceLedger.blocked_sources)
+        ? sourceLedger.blocked_sources
+        : [];
+      return {
+        usedCount: usedSources.length,
+        blockedCount: blockedSources.length,
+        degraded: sourceLedger.degraded || null,
+        scope: {
+          privateMode: Boolean(sourceLedger.scope_resolution?.privateMode),
+          knowledgeSources: sourceLedger.scope_resolution?.knowledgeSources || {},
+        },
+      };
+    };
+
+    const estimateTokenCounts = (outputText: string) => {
+      const inputTokens =
+        typeof pipelineMeta?.inputTokens === 'number'
+          ? pipelineMeta.inputTokens
+          : Math.max(1, Math.ceil(String(message || '').length / 4));
+      const outputTokens =
+        typeof pipelineMeta?.outputTokens === 'number'
+          ? pipelineMeta.outputTokens
+          : Math.max(0, Math.ceil(String(outputText || '').length / 4));
+      return {
+        input: inputTokens,
+        output: outputTokens,
+        total: inputTokens + outputTokens,
+      };
+    };
+
+    const buildGovernedKnowledgeCitations = (sources: unknown, label: string): any[] => {
+      const rawSources = Array.isArray(sources) ? sources : [];
+      return rawSources
+        .map((source, index) => {
+          const sourceId = String(source || '').trim();
+          if (!sourceId) return null;
+          const product = sourceId
+            .replace(/-fallback$/i, '')
+            .replace(/^pill:/i, '')
+            .replace(/^doc:/i, '')
+            .replace(/[_-]+/g, ' ')
+            .trim();
+          const titleProduct = product
+            ? product
+                .split(/\s+/)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ')
+            : 'Product Knowledge';
+          return {
+            id: `governed_${index + 1}_${sourceId.replace(/[^a-z0-9_-]+/gi, '_').slice(0, 48)}`,
+            type: 'document',
+            title: `${label}: ${titleProduct}`,
+            reference: sourceId.endsWith('-fallback')
+              ? 'Governed product knowledge'
+              : 'Assigned worker knowledge',
+            excerpt: `Grounded in ${sourceId.endsWith('-fallback') ? 'curated product context' : 'assigned knowledge'} for ${titleProduct}.`,
+          };
+        })
+        .filter(Boolean);
+    };
+
     const languageMap: Record<string, string> = {
       pl: 'Polish (Polski)',
       en: 'English',
@@ -1514,9 +1700,88 @@ router.post(
     };
     const langCode = (language || 'en').split('-')[0];
     const langName = languageMap[langCode] || 'English';
+    const isPolish = langCode === 'pl';
+    const startTime = Date.now();
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
+    const canvasContextPacket =
+      (context as any)?.canvasContextPacket &&
+      typeof (context as any).canvasContextPacket === 'object'
+        ? ((context as any).canvasContextPacket as Record<string, any>)
+        : null;
+    const canvasContextInstruction = canvasContextPacket
+      ? [
+          '## ACTIVE WORK CANVAS CONTEXT',
+          `Schema: ${String(canvasContextPacket.schemaVersion || 'unknown')}`,
+          `Draft: ${String(canvasContextPacket.activeDraft?.title || 'Untitled')} (${String(canvasContextPacket.activeDraft?.draftId || 'unsaved')})`,
+          `Kind: ${String(canvasContextPacket.activeDraft?.kind || 'document')}`,
+          `Lifecycle: ${String(canvasContextPacket.activeDraft?.lifecycleState || 'draft')}`,
+          canvasContextPacket.selection?.selectedText
+            ? `Selected text: ${String(canvasContextPacket.selection.selectedText).slice(0, 2000)}`
+            : '',
+          canvasContextPacket.memorySnapshot?.summary
+            ? `Memory snapshot: ${String(canvasContextPacket.memorySnapshot.summary)}`
+            : '',
+          Array.isArray(canvasContextPacket.blockSummaries) &&
+          canvasContextPacket.blockSummaries.length > 0
+            ? `Block summaries:\n${canvasContextPacket.blockSummaries
+                .slice(0, 8)
+                .map(
+                  (block: any) =>
+                    `- ${String(block.kind)} ${String(block.blockId)}: ${String(block.title)} (${String(block.projectionStatus)})`
+                )
+                .join('\n')}`
+            : '',
+          Array.isArray(canvasContextPacket.workflowRuns) &&
+          canvasContextPacket.workflowRuns.length > 0
+            ? `Workflow runs:\n${canvasContextPacket.workflowRuns
+                .slice(0, 5)
+                .map(
+                  (run: any) => `- ${String(run.id)}: ${String(run.title)} (${String(run.status)})`
+                )
+                .join('\n')}`
+            : '',
+          Array.isArray(canvasContextPacket.workflowEventSummaries) &&
+          canvasContextPacket.workflowEventSummaries.length > 0
+            ? `Recent workflow timeline:\n${canvasContextPacket.workflowEventSummaries
+                .slice(-10)
+                .map(
+                  (event: any) =>
+                    `- ${String(event.workflowTitle)} ${String(event.eventType)} by ${String(event.actorId)}: ${String(event.summary)}`
+                )
+                .join('\n')}`
+            : '',
+          Array.isArray(canvasContextPacket.workflowOutputSummaries) &&
+          canvasContextPacket.workflowOutputSummaries.length > 0
+            ? `Workflow outputs:\n${canvasContextPacket.workflowOutputSummaries
+                .slice(-10)
+                .map(
+                  (output: any) =>
+                    `- ${String(output.workflowTitle)} -> ${String(output.type)} ${String(output.id)}: ${String(output.title)}${output.url ? ` (${String(output.url)})` : ''}`
+                )
+                .join('\n')}`
+            : '',
+          'Use this Canvas context as working memory. Prefer Markdown projection and summaries; do not assume access to raw native block JSON.',
+          'For state-changing work, propose the next workflow step and wait for approval.',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : '';
 
-    let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
+    const teresaWorkspaceInstruction = [
+      '## ASSISTANT SURFACE: workspace_copilot',
+      'You are Teresa, the authenticated workspace copilot for Consultify.',
+      'You may use only the organization, project, conversation, attachment, and tool context allowed by the authenticated user scope in this request.',
+      'You are not Anna and you must not behave as a public landing-page assistant.',
+      'Never claim access to data outside the current tenant/user permissions.',
+      'For any state-changing work, propose and wait for explicit approval. Do not silently execute mutations.',
+      'For requests like "create a Canvas/document/table/task", do not refuse due to autonomy policy; generate a governed proposal and ask for approval.',
+      'When asked to act without approval, explain that governed_execution requires approval first.',
+    ].join('\n');
+
+    let enhancedSystemInstruction =
+      [teresaWorkspaceInstruction, canvasContextInstruction, systemInstruction || '']
+        .filter((part) => String(part || '').trim().length > 0)
+        .join('\n\n') + languageInstruction;
 
     // Co-Thinker mode: inject persona-specific system prompt
     if (aiModes?.coThinkerMode && typeof aiModes.coThinkerMode === 'string') {
@@ -1577,6 +1842,55 @@ router.post(
       }
     }, 15_000); // Every 15 seconds
 
+    const emitMinimalTrustBundle = (
+      outputText: string,
+      degraded: { mode: string; reason?: string } | null = null
+    ) => {
+      const tokens = estimateTokenCounts(outputText);
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'trust_bundle',
+          bundle: {
+            version: 'TrustBundleV1',
+            answerId: `answer-${streamSessionId}`,
+            conversationId: conversationId || null,
+            messageId: chatRunId || null,
+            decisionId: policyDecision?.id || null,
+            model: pipelineMeta?.model || null,
+            provider: pipelineMeta?.provider || null,
+            tier: selectedTier || null,
+            sourceClasses: ['general'],
+            citationsCount: 0,
+            citations: [],
+            sourceLedgerSummary: null,
+            policyDecision: null,
+            policyNotices: [],
+            generatedAt: new Date().toISOString(),
+            degraded,
+            outputLength: String(outputText || '').length,
+            confidence: degraded ? 0 : 0.5,
+            cost: pipelineMeta?.cost || pipelineMeta?.estimatedCost || null,
+            tokens,
+            routingTrace: pipelineMeta?.routingTrace || pipelineMeta?.routing_trace || null,
+            warnings: degraded ? [degraded.reason || degraded.mode] : [],
+            assistant: 'teresa',
+            assistantSurface: 'workspace_copilot',
+            actionSurface: 'governed_execution',
+          },
+        })}\n\n`
+      );
+    };
+
+    const emitDeterministicBlock = (outputText: string, reason: string) => {
+      accumulatedContent = outputText;
+      res.write(`data: ${JSON.stringify({ text: outputText })}\n\n`);
+      emitMinimalTrustBundle(outputText, { mode: 'blocked', reason });
+      res.write('data: [DONE]\n\n');
+      streamCompleted = true;
+      clearInterval(heartbeatInterval);
+      return res.end();
+    };
+
     // --------------------------------------------------------------------
     // E2E_MODE: deterministic streaming for runtime tests (CI + Playwright)
     // --------------------------------------------------------------------
@@ -1593,6 +1907,7 @@ router.post(
           accumulatedContent += chunk;
         }
 
+        emitMinimalTrustBundle(assistantFull, { mode: 'e2e_mode', reason: 'deterministic_stream' });
         res.write('data: [DONE]\n\n');
 
         return res.end();
@@ -1606,6 +1921,26 @@ router.post(
         res.write('data: [DONE]\n\n');
         return res.end();
       }
+    }
+
+    const connectorHonestyBlock = await buildConnectorHonestyBlockResponse({
+      organizationId: req.organizationId,
+      message,
+      context,
+    });
+    if (connectorHonestyBlock) {
+      return emitDeterministicBlock(
+        connectorHonestyBlock,
+        'fresh_connector_data_without_verified_tool_result'
+      );
+    }
+
+    const aiOpsHealthBlock = await buildAIOpsHealthBlockResponse(message);
+    if (aiOpsHealthBlock) {
+      return emitDeterministicBlock(
+        aiOpsHealthBlock,
+        'expensive_ai_operation_requires_healthy_internal_provider_posture'
+      );
     }
 
     const connectionCleanup = () => {
@@ -1709,6 +2044,7 @@ router.post(
             code: 'NO_LLM_PROVIDER',
           })}\n\n`
         );
+        emitMinimalTrustBundle('', { mode: 'blocked', reason: 'no_llm_provider' });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
@@ -1727,9 +2063,9 @@ router.post(
           `data: ${JSON.stringify({
             error: aiAccessCheck.reason || 'Access blocked',
             code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-            accessContext: aiAccessContext,
           })}\n\n`
         );
+        emitMinimalTrustBundle('', { mode: 'blocked', reason: 'access_policy' });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
@@ -1811,6 +2147,41 @@ router.post(
               .trim()
               .toLowerCase()
           : null;
+      const assistantScope = (() => {
+        const raw =
+          (body as any).assistantScope ??
+          (context as any)?.assistantScope ??
+          (context as any)?.assistant?.scope;
+        if (raw === 'anna_public' || raw === 'teresa_tenant') return raw;
+        return virtualWorkerSlug === 'anna' ? 'anna_public' : 'teresa_tenant';
+      })();
+      const wave6MemoryScope = (() => {
+        const raw = (body as any).memoryScope ?? (context as any)?.memoryScope;
+        if (
+          raw === 'public_product' ||
+          raw === 'tenant' ||
+          raw === 'org' ||
+          raw === 'user' ||
+          raw === 'project'
+        ) {
+          return raw;
+        }
+        if (assistantScope === 'anna_public') return 'public_product';
+        if (projectId) return 'project';
+        if (knowledgeSources?.organizationData) return 'org';
+        return 'user';
+      })();
+      const isGovernedProductTruthQuery = isDbr77ProductTruthQuery(String(message || ''));
+      const mentionsGovernedDbrProduct =
+        /\bdbr77\b|\bdbr\b|\bconsultify\b|\bmarketplace\b|\biris\b|\bvector\b|\bdigital twin\b|\biiot\b/i.test(
+          String(message || '')
+        );
+      const isProductAssistantHowToQuery =
+        Boolean(virtualWorkerSlug) &&
+        isProductOrHowToQuery(String(message || ''), language?.startsWith('pl') ? 'pl' : 'en');
+      const shouldPreferGovernedProductKnowledge =
+        isGovernedProductTruthQuery || isProductAssistantHowToQuery;
+      let hasGovernedGrounding = false;
 
       const screenContext = aiModes?.deepResearch
         ? null
@@ -1820,6 +2191,71 @@ router.post(
           null;
 
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
+      let wave6ProfilePrompt = '';
+      try {
+        if (
+          !privateMode &&
+          req.organizationId &&
+          req.userId &&
+          assistantScope === 'teresa_tenant'
+        ) {
+          const wave6 = await import('../services/wave6ContextLearningService.js');
+          const workProfile = await wave6.buildWave6UserWorkProfile({
+            organizationId: req.organizationId,
+            userId: req.userId,
+            projectId,
+            privateMode: Boolean(privateMode) || Boolean(aiModes?.deepResearch),
+            assistantScope,
+          });
+          wave6ProfilePrompt = wave6.buildWave6UserWorkProfilePrompt(workProfile);
+          await wave6.captureWave6ContextSnapshot({
+            organizationId: req.organizationId,
+            userId: req.userId,
+            snapshotType: projectId
+              ? 'project'
+              : wave6MemoryScope === 'org' || wave6MemoryScope === 'tenant'
+                ? 'org'
+                : 'user',
+            projectId,
+            facts: {
+              conversationId: conversationId || null,
+              focusMode,
+              hasScreenContext: Boolean(screenContext),
+              canvasDraftId: canvasContextPacket?.activeDraft?.draftId || null,
+              canvasTitle: canvasContextPacket?.activeDraft?.title || null,
+              canvasWorkflowRunIds:
+                canvasContextPacket?.memorySnapshot?.anchors?.workflowRunIds || [],
+              canvasWorkflowEventTypes: Array.isArray(canvasContextPacket?.workflowEventSummaries)
+                ? canvasContextPacket.workflowEventSummaries
+                    .slice(-10)
+                    .map((event: any) => String(event.eventType || 'unknown'))
+                : [],
+              canvasWorkflowOutputIds: Array.isArray(canvasContextPacket?.workflowOutputSummaries)
+                ? canvasContextPacket.workflowOutputSummaries
+                    .slice(-10)
+                    .map((output: any) => String(output.id || 'unknown'))
+                : [],
+              canvasBlockIds: canvasContextPacket?.memorySnapshot?.anchors?.blockIds || [],
+              userWorkProfilePreferences: workProfile.preferences.length,
+            },
+            sourceRefs: [
+              {
+                sourceType: 'chat_runtime',
+                sourceTitle: 'AI chat runtime context',
+                sourceId: conversationId || streamSessionId,
+              },
+            ],
+            permissions: {
+              assistantScope,
+              projectId,
+              privateMode: Boolean(privateMode),
+            },
+            privateMode: Boolean(privateMode),
+          });
+        }
+      } catch (wave6Err: any) {
+        logger.warn('[AI Stream] Wave 6 context snapshot skipped:', wave6Err?.message || wave6Err);
+      }
       const attachmentDocIdsForPurpose = Array.isArray((context as any)?.attachmentDocIds)
         ? ((context as any).attachmentDocIds as any[]).map((id: any) => String(id)).filter(Boolean)
         : [];
@@ -1873,7 +2309,9 @@ router.post(
         stream: true,
         options: {
           role: roleName,
-          systemInstruction: enhancedSystemInstruction,
+          systemInstruction: [enhancedSystemInstruction, wave6ProfilePrompt]
+            .filter((part) => String(part || '').trim().length > 0)
+            .join('\n\n'),
           language: language || undefined,
           // Tools & routing options
           aiModes,
@@ -1886,6 +2324,57 @@ router.post(
           privateMode: Boolean(privateMode),
         },
       };
+
+      const connectorHonestyConstraint = await buildConnectorHonestyConstraint({
+        organizationId: req.organizationId,
+        message,
+        context,
+      });
+      if (connectorHonestyConstraint) {
+        pipelineRequest = {
+          ...pipelineRequest,
+          options: {
+            ...(pipelineRequest.options || {}),
+            systemInstruction:
+              String((pipelineRequest.options as any)?.systemInstruction || '') +
+              `\n\n${connectorHonestyConstraint}\n`,
+          },
+          context: {
+            ...((pipelineRequest as any).context || {}),
+            external: {
+              ...(((pipelineRequest as any).context || {}).external || {}),
+              connectorHonesty: {
+                enforced: true,
+                reason: 'fresh_connector_data_without_verified_tool_result',
+              },
+            },
+          },
+        } as any;
+      }
+
+      const aiOpsHealthConstraint = await buildAIOpsHealthConstraint(message);
+      const suppressWebForInternalOpsHealth = Boolean(aiOpsHealthConstraint);
+      if (aiOpsHealthConstraint) {
+        pipelineRequest = {
+          ...pipelineRequest,
+          options: {
+            ...(pipelineRequest.options || {}),
+            systemInstruction:
+              String((pipelineRequest.options as any)?.systemInstruction || '') +
+              `\n\n${aiOpsHealthConstraint}\n`,
+          },
+          context: {
+            ...((pipelineRequest as any).context || {}),
+            external: {
+              ...(((pipelineRequest as any).context || {}).external || {}),
+              aiOpsHealth: {
+                enforced: true,
+                reason: 'expensive_ai_operation_requires_healthy_internal_provider_posture',
+              },
+            },
+          },
+        } as any;
+      }
 
       // --------------------------------------------------------
       // Chat trace: create a persistent run record (admin ops)
@@ -1951,14 +2440,94 @@ router.post(
         }
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
+      const sanitizePolicyDecisionForClient = (decision: any) => {
+        if (!decision || typeof decision !== 'object') return null;
+        const refusal =
+          decision.refusal && typeof decision.refusal === 'object' ? decision.refusal : null;
+        const evidence =
+          decision.evidence && typeof decision.evidence === 'object'
+            ? {
+                required: Boolean(decision.evidence.required),
+                uncertaintyMarkerRequiredIfInsufficientEvidence: Boolean(
+                  decision.evidence.uncertaintyMarkerRequiredIfInsufficientEvidence
+                ),
+              }
+            : undefined;
+        return {
+          id: decision.id || null,
+          allowed: decision.allowed === true,
+          category: decision.category || null,
+          rationale: typeof decision.rationale === 'string' ? decision.rationale : null,
+          ...(evidence ? { evidence } : {}),
+          ...(refusal
+            ? {
+                refusal: {
+                  userMessage:
+                    typeof refusal.userMessage === 'string' ? refusal.userMessage : undefined,
+                  nextSteps: Array.isArray(refusal.nextSteps)
+                    ? refusal.nextSteps.slice(0, 6).map((s: any) => String(s || '').trim())
+                    : [],
+                },
+              }
+            : {}),
+        };
+      };
+      const emitTrustBundle = (outputText: string) => {
+        const citations = Array.isArray(collectedCitations) ? collectedCitations : [];
+        const sourceLedger = sourceLedgerSnapshot;
+        const sourceClasses = buildTrustSourceClasses(citations, sourceLedger);
+        const degraded =
+          sourceLedger?.degraded || (citations.length === 0 ? { mode: 'no_sources' } : null);
+        const tokens = estimateTokenCounts(outputText);
+        emitSSE({
+          type: 'trust_bundle',
+          bundle: {
+            version: 'TrustBundleV1',
+            answerId: `answer-${streamSessionId}`,
+            conversationId: conversationId || null,
+            messageId: chatRunId || null,
+            decisionId: policyDecision?.id || null,
+            model: pipelineMeta?.model || null,
+            provider: pipelineMeta?.provider || null,
+            tier: selectedTier || null,
+            sourceClasses,
+            citationsCount: citations.length,
+            citations: citations.slice(0, 24),
+            sourceLedgerSummary: buildSourceLedgerSummary(sourceLedger),
+            policyDecision: sanitizePolicyDecisionForClient(policyDecision),
+            policyNotices: policyNotices.slice(0, 12),
+            generatedAt: new Date().toISOString(),
+            degraded,
+            outputLength: String(outputText || '').length,
+            confidence:
+              citations.length > 0 || sourceClasses.some((sourceClass) => sourceClass !== 'general')
+                ? 0.86
+                : 0.52,
+            cost: pipelineMeta?.cost || pipelineMeta?.estimatedCost || null,
+            tokens,
+            routingTrace: pipelineMeta?.routingTrace || pipelineMeta?.routing_trace || null,
+            warnings: degraded ? [degraded.reason || degraded.mode] : [],
+            assistant: 'teresa',
+            assistantSurface: 'workspace_copilot',
+            actionSurface: 'governed_execution',
+          },
+        });
+      };
 
       const maybeEmitTeresaProposal = async (assistantText: string) => {
+        const contextFailedAttachments = Array.isArray((context as any)?.failedAttachments)
+          ? (context as any).failedAttachments
+          : [];
+        const contextUsableAttachments = Array.isArray((context as any)?.attachments)
+          ? (context as any).attachments.filter((a: any) => a?.docId)
+          : [];
         if (
           virtualWorkerSlug !== 'teresa' ||
           !req.organizationId ||
           !req.userId ||
           !assistantText ||
-          assistantText.trim().length === 0
+          assistantText.trim().length === 0 ||
+          (contextFailedAttachments.length > 0 && contextUsableAttachments.length === 0)
         ) {
           return null;
         }
@@ -1991,6 +2560,26 @@ router.post(
           return null;
         }
       };
+
+      if (
+        virtualWorkerSlug === 'teresa' &&
+        isGovernedMutationApprovalBypassRequest(message) &&
+        req.organizationId &&
+        req.userId
+      ) {
+        const governedReply = isPolish
+          ? 'Nie mogę wykonać tej zmiany po cichu ani bez Twojej zgody. Każda mutacja w workspace musi przejść przez proposal, osobne zatwierdzenie, wykonanie i audyt AIRun.'
+          : 'I cannot make this change silently or without your approval. Every workspace mutation must go through a proposal, separate approval, execution and AIRun audit.';
+
+        accumulatedContent += governedReply;
+        emitSSE({ text: governedReply });
+        await maybeEmitTeresaProposal(governedReply);
+        emitTrustBundle(governedReply);
+        streamCompleted = true;
+        clearInterval(heartbeatInterval);
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
 
       // --------------------------------------------------------
       // Policy gateway (P34-B): allow/deny + rationale + citations/uncertainty posture
@@ -2050,6 +2639,7 @@ router.post(
         if (isClientConnected && !res.destroyed) {
           try {
             res.write(`data: ${JSON.stringify({ text: degradedMsg })}\n\n`);
+            emitTrustBundle(degradedMsg);
             res.write('data: [DONE]\n\n');
           } catch {
             /* ignore */
@@ -2080,7 +2670,10 @@ router.post(
       }
 
       if (policyDecision) {
-        emitSSE({ type: 'policy_decision', decision: policyDecision });
+        emitSSE({
+          type: 'policy_decision',
+          decision: sanitizePolicyDecisionForClient(policyDecision),
+        });
         if (chatRunId) {
           import('../services/ai/chatTraceService.js')
             .then((m: any) =>
@@ -2127,6 +2720,7 @@ router.post(
         if (isClientConnected && !res.destroyed) {
           try {
             res.write(`data: ${JSON.stringify({ text: refusalText })}\n\n`);
+            emitTrustBundle(refusalText);
             res.write('data: [DONE]\n\n');
           } catch {
             /* ignore */
@@ -2324,6 +2918,7 @@ router.post(
               });
 
               if (workerKnowledge?.contextText?.trim()) {
+                hasGovernedGrounding = true;
                 pipelineRequest = {
                   ...pipelineRequest,
                   options: {
@@ -2350,6 +2945,14 @@ router.post(
                 } as any;
               }
 
+              const governedCitations = buildGovernedKnowledgeCitations(
+                workerKnowledge?.sources || [],
+                `${workerConfig.worker.name} knowledge`
+              );
+              if (governedCitations.length > 0) {
+                emitSSE({ type: 'citations', citations: governedCitations });
+              }
+
               const extractedWorkerWebPolicy = workerWebAccessService.extractWorkerWebAccessPolicy(
                 workerConfig.profile
               );
@@ -2366,6 +2969,26 @@ router.post(
         }
       }
 
+      if (isProductAssistantHowToQuery) {
+        const fallback = buildProductAssistantFallback(
+          String(message || ''),
+          Boolean(language?.startsWith('pl'))
+        );
+        if (fallback) {
+          hasGovernedGrounding = true;
+          emitSSE({ type: 'citations', citations: fallback.citations });
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                fallback.instruction,
+            },
+          } as any;
+        }
+      }
+
       logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
         projectId,
         focusMode,
@@ -2376,86 +2999,78 @@ router.post(
       // --------------------------------------------------------
       // Help / KB documentation grounding (product how-to)
       // --------------------------------------------------------
-      // Only run the heavier help-doc retrieval for explicit product/how-to
-      // prompts or when the current surface already points at help content.
-      const kbModuleId =
-        String((screenContext as any)?.page?.helpModuleId || '').trim() ||
-        String(
-          (screenContext as any)?.moduleId ||
-            (screenContext as any)?.module ||
-            (screenContext as any)?.currentModule ||
-            ''
-        ).trim() ||
-        null;
-      const hasExplicitHelpContext = Boolean(
-        (screenContext as any)?.page?.helpDocumentId || (screenContext as any)?.page?.helpModuleId
-      );
-      const shouldGroundWithHelpDocs =
-        !aiModes?.deepResearch &&
-        (hasExplicitHelpContext || isProductOrHowToQuery(String(message || ''), language as any));
+      // Lightweight retrieval: inject only a few relevant KB articles as snippets.
+      // Also stream KB citations so the UI can show them.
+      emitSSE({
+        type: 'thought',
+        step: 'knowledge',
+        status: 'in_progress',
+        label: 'Searching knowledge base and documentation…',
+      });
+      try {
+        const kbModuleId =
+          String(
+            (screenContext as any)?.page?.helpModuleId ||
+              (screenContext as any)?.moduleId ||
+              (screenContext as any)?.module ||
+              (screenContext as any)?.currentModule ||
+              (screenContext as any)?.screenId ||
+              (screenContext as any)?.currentScreen ||
+              ''
+          ).trim() || null;
 
-      if (shouldGroundWithHelpDocs) {
-        emitSSE({
-          type: 'thought',
-          step: 'knowledge',
-          status: 'in_progress',
-          label: 'Checking relevant help and product documentation…',
+        const kb = await buildHelpDocsContext({
+          query: message,
+          language,
+          moduleId: kbModuleId,
+          surface: 'ai_recommendations',
+          maxArticles: 3,
+          maxCharsPerArticle: 1200,
         });
-        try {
-          const kb = await buildHelpDocsContext({
-            query: message,
-            language,
-            moduleId: kbModuleId,
-            surface: 'ai_recommendations',
-            maxArticles: 3,
-            maxCharsPerArticle: 1200,
-          });
 
-          if (kb?.citations?.length) {
-            emitSSE({ type: 'citations', citations: kb.citations });
-            if (chatRunId) {
-              import('../services/ai/chatTraceService.js')
-                .then((m: any) =>
-                  (m.default || m).addEvent(chatRunId, 'kb_docs', {
-                    moduleId: kbModuleId,
-                    citationsCount: kb.citations.length,
-                  })
-                )
-                .catch(() => {
-                  /* ignore */
-                });
-            }
+        if (kb?.citations?.length) {
+          hasGovernedGrounding = true;
+          emitSSE({ type: 'citations', citations: kb.citations });
+          if (chatRunId) {
+            import('../services/ai/chatTraceService.js')
+              .then((m: any) =>
+                (m.default || m).addEvent(chatRunId, 'kb_docs', {
+                  moduleId: kbModuleId,
+                  citationsCount: kb.citations.length,
+                })
+              )
+              .catch(() => {
+                /* ignore */
+              });
           }
+        }
 
-          if (kb?.systemInstructionAddon?.trim()) {
-            pipelineRequest = {
-              ...pipelineRequest,
-              options: {
-                ...(pipelineRequest.options || {}),
-                systemInstruction:
-                  String((pipelineRequest.options as any)?.systemInstruction || '') +
-                  `\n\n${kb.systemInstructionAddon}\n`,
-              },
-              context: {
-                ...((pipelineRequest as any).context || {}),
-                external: {
-                  ...((pipelineRequest as any).context?.external || {}),
-                  helpDocs: {
-                    query: message,
-                    moduleId: kbModuleId,
-                    articles: kb.articles || [],
-                    citations: kb.citations || [],
-                  },
+        if (kb?.systemInstructionAddon?.trim()) {
+          if (kb.isProductQuestion) hasGovernedGrounding = true;
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n${kb.systemInstructionAddon}\n`,
+            },
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              external: {
+                ...((pipelineRequest as any).context?.external || {}),
+                helpDocs: {
+                  query: message,
+                  moduleId: kbModuleId,
+                  articles: kb.articles || [],
+                  citations: kb.citations || [],
                 },
               },
-            } as any;
-          }
-        } catch (kbErr: any) {
-          logger.warn(
-            '[AI Stream] KB docs retrieval failed, continuing without it:',
-            kbErr?.message
-          );
+            },
+          } as any;
         }
+      } catch (kbErr: any) {
+        logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
       }
 
       // --------------------------------------------------------
@@ -2488,78 +3103,86 @@ router.post(
       // 3. Use optimized search queries (not raw message) for better results
       // 4. Run multiple queries for complex questions
       // 5. Inject results + citations into system instruction for grounded answers
+      if (!aiModes?.deepResearch && (aiModes?.webSearch || message?.trim().length >= 20)) {
+        emitSSE({
+          type: 'thought',
+          step: 'web_search_check',
+          status: 'in_progress',
+          label: 'Checking if web search is needed…',
+        });
+      }
       if (!aiModes?.deepResearch) {
         const userEnabledWebSearch = aiModes?.webSearch === true;
-        const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
+        const explicitExternalWebRequest =
+          /\b(sprawdź w internecie|wyszukaj|znajdź w sieci|web research|search the web|look up|google)\b/i.test(
+            String(message || '')
+          );
+        const explicitResearchRequest = isExplicitResearchAsk(message);
         const orgIdForWeb = req.organizationId || null;
+
+        // T118: unified governance for all web search (policy + SSRF + allow/deny + sanitize + cache)
+        let webPolicy: any = null;
+        let webGov: any = null;
+        try {
+          webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
+          const getEffectiveWebSearchPolicy =
+            webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
+          if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
+            webPolicy = await getEffectiveWebSearchPolicy(
+              String(orgIdForWeb),
+              projectId || undefined
+            );
+          }
+          if (workerWebPolicyOverride) {
+            const mergeWorkerWebAccessPolicy = (
+              await import('../services/ai/virtualWorkerWebAccessService.js')
+            ).mergeWorkerWebAccessPolicy;
+            webPolicy = mergeWorkerWebAccessPolicy({
+              workerPolicy: workerWebPolicyOverride as any,
+              orgPolicy: webPolicy,
+              requireOrgPolicy: true,
+            });
+          }
+        } catch {
+          webPolicy = null;
+          webGov = null;
+        }
 
         // Auto-detect web search intent
         let searchIntent: any = null;
-        if (userEnabledWebSearch || workerAutoSearchRequested || message?.trim().length >= 20) {
-          try {
-            const { detectWebSearchIntent } =
-              await import('../services/ai/webSearchIntentDetector.js');
-            searchIntent = detectWebSearchIntent(message, {
-              userEnabledWebSearch: userEnabledWebSearch || workerAutoSearchRequested,
-              historyLength: Array.isArray(history) ? history.length : 0,
-            });
-          } catch (err: any) {
-            logger.debug('[AI Stream] Intent detector not available:', err?.message);
-            // Fallback: if user enabled webSearch, search with raw message
-            if (userEnabledWebSearch || workerAutoSearchRequested) {
-              searchIntent = {
-                shouldSearch: true,
-                confidence: 0.5,
-                reason: 'user toggle enabled (fallback)',
-                queries: [message.slice(0, 150)],
-                searchDepth: 'basic' as const,
-                maxResults: 5,
-              };
-            }
-          }
-        }
-
-        const shouldAttemptWebSearch = Boolean(
-          searchIntent?.shouldSearch || userEnabledWebSearch || workerAutoSearchRequested
-        );
-        let webPolicy: any = null;
-        let webGov: any = null;
-
-        if (shouldAttemptWebSearch) {
-          emitSSE({
-            type: 'thought',
-            step: 'web_search_check',
-            status: 'in_progress',
-            label: 'Checking live web access for this request…',
+        try {
+          const { detectWebSearchIntent } =
+            await import('../services/ai/webSearchIntentDetector.js');
+          searchIntent = detectWebSearchIntent(message, {
+            userEnabledWebSearch:
+              userEnabledWebSearch || Boolean((workerWebPolicyOverride as any)?.autoSearch),
+            historyLength: Array.isArray(history) ? history.length : 0,
           });
-
-          try {
-            webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
-            const getEffectiveWebSearchPolicy =
-              webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
-            if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
-              webPolicy = await getEffectiveWebSearchPolicy(
-                String(orgIdForWeb),
-                projectId || undefined
-              );
-            }
-            if (workerWebPolicyOverride) {
-              const mergeWorkerWebAccessPolicy = (
-                await import('../services/ai/virtualWorkerWebAccessService.js')
-              ).mergeWorkerWebAccessPolicy;
-              webPolicy = mergeWorkerWebAccessPolicy({
-                workerPolicy: workerWebPolicyOverride as any,
-                orgPolicy: webPolicy,
-                requireOrgPolicy: true,
-              });
-            }
-          } catch {
-            webPolicy = null;
-            webGov = null;
+        } catch (err: any) {
+          logger.debug('[AI Stream] Intent detector not available:', err?.message);
+          // Fallback: if user enabled webSearch, search with raw message
+          if (userEnabledWebSearch) {
+            searchIntent = {
+              shouldSearch: true,
+              confidence: 0.5,
+              reason: 'user toggle enabled (fallback)',
+              queries: [message.slice(0, 150)],
+              searchDepth: 'basic' as const,
+              maxResults: 5,
+            };
           }
         }
 
-        if (shouldAttemptWebSearch && webPolicy?.internetEnabled) {
+        const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
+        const governedKnowledgeSuppressesWeb =
+          (shouldPreferGovernedProductKnowledge || mentionsGovernedDbrProduct) &&
+          !explicitExternalWebRequest;
+        if (
+          !governedKnowledgeSuppressesWeb &&
+          !suppressWebForInternalOpsHealth &&
+          (searchIntent?.shouldSearch || workerAutoSearchRequested) &&
+          webPolicy?.internetEnabled
+        ) {
           try {
             const { RuntimeWebSearchService } =
               await import('../services/ai/runtimeWebSearchService.js');
@@ -2572,7 +3195,6 @@ router.post(
             // Execute search queries (possibly multiple for complex questions)
             const searchQueries: string[] =
               searchIntent.queries?.length > 0 ? searchIntent.queries : [message.slice(0, 150)];
-            const queryLimit = userEnabledWebSearch ? 2 : 1;
 
             emitSSE({
               type: 'research_progress',
@@ -2584,7 +3206,7 @@ router.post(
 
             const allResults: any[] = [];
             const allAnswers: string[] = [];
-            for (const query of searchQueries.slice(0, queryLimit)) {
+            for (const query of searchQueries.slice(0, 3)) {
               try {
                 const cleanQuery =
                   typeof sanitizeQuery === 'function' ? sanitizeQuery(String(query || '')) : query;
@@ -2645,6 +3267,67 @@ router.post(
                 link: String(r.url || ''),
                 excerpt: String(r.snippet || ''),
               }));
+
+            if (citations.length === 0 && (userEnabledWebSearch || explicitResearchRequest)) {
+              const noSourcesText = buildNoWebSourcesText(searchQueries, isPolish);
+              accumulatedContent += noSourcesText;
+              hasGovernedGrounding = true;
+              res.write(`data: ${JSON.stringify({ text: noSourcesText })}\n\n`);
+              emitSSE({
+                type: 'research_progress',
+                topic: message,
+                stage: 'complete',
+                queries: searchQueries,
+                sources: [],
+                error: isPolish
+                  ? 'Nie znaleziono wiarygodnych źródeł web'
+                  : 'No reliable web sources found',
+              });
+              emitSSE({
+                type: 'policy_notice',
+                notice: {
+                  type: 'no_sources',
+                  severity: 'info',
+                  title: isPolish ? 'Brak źródeł web' : 'No web sources',
+                  message: isPolish
+                    ? 'Research został zatrzymany, bo nie znaleziono bezpiecznych źródeł do zacytowania.'
+                    : 'Research was stopped because no safe sources were available to cite.',
+                  displayToUser: false,
+                },
+              });
+              if (chatRunId) {
+                import('../services/ai/chatTraceService.js')
+                  .then((m: any) =>
+                    (m.default || m).addEvent(chatRunId, 'web_search_no_sources', {
+                      queries: searchQueries,
+                      intent: searchIntent.reason,
+                      confidence: searchIntent.confidence,
+                    })
+                  )
+                  .catch(() => {
+                    /* non-critical */
+                  });
+              }
+              emitSSE({
+                type: 'done',
+                responseId: `ai-${Date.now()}`,
+                metadata: {
+                  confidence: 0.45,
+                  processingTime: Date.now() - startTime,
+                  webSearch: {
+                    attempted: true,
+                    queries: searchQueries,
+                    citationsCount: 0,
+                  },
+                },
+              });
+              streamCompleted = true;
+              clearInterval(heartbeatInterval);
+              emitTrustBundle(noSourcesText);
+              res.write('data: [DONE]\n\n');
+              res.end();
+              return;
+            }
 
             if (citations.length > 0) {
               emitSSE({ type: 'citations', citations });
@@ -2713,11 +3396,11 @@ router.post(
               stage: 'complete',
               queries: [],
               sources: [],
-              error: 'Live web search failed for this request',
+              error: 'Web research unavailable',
             });
           }
-        } else if (shouldAttemptWebSearch && !webPolicy?.internetEnabled) {
-          // User/auto-detect wants web search but policy forbids or runtime is unavailable.
+        } else if (searchIntent?.shouldSearch && !webPolicy?.internetEnabled) {
+          // User/auto-detect wants web search but policy forbids or key missing
           logger.info('[AI Stream] Web search intent detected but internet is disabled', {
             reason: webPolicy?.reason || null,
           });
@@ -2747,6 +3430,36 @@ router.post(
       const attachmentDocIds = Array.isArray(attachmentDocIdsRaw)
         ? Array.from(new Set(attachmentDocIdsRaw.map((x: any) => String(x)).filter(Boolean)))
         : [];
+      const failedAttachments = Array.isArray((context as any)?.failedAttachments)
+        ? (context as any).failedAttachments
+            .map((a: any) => ({
+              filename: String(a?.filename || 'attachment'),
+              error: String(a?.error || 'Extraction failed'),
+              code: a?.code ? String(a.code) : null,
+              extractionStatus: a?.extractionStatus ? String(a.extractionStatus) : 'failed',
+            }))
+            .filter((a: any) => a.filename || a.error)
+        : [];
+
+      if (failedAttachments.length > 0) {
+        const failedText = failedAttachments
+          .map(
+            (a: any, index: number) =>
+              `${index + 1}. ${a.filename}: ${a.error}${
+                a.extractionStatus ? ` (status: ${a.extractionStatus})` : ''
+              }`
+          )
+          .join('\n');
+        pipelineRequest = {
+          ...pipelineRequest,
+          options: {
+            ...(pipelineRequest.options || {}),
+            systemInstruction:
+              String((pipelineRequest.options as any)?.systemInstruction || '') +
+              `\n\n## ATTACHMENTS WITH EXTRACTION FAILURES\n${failedText}\n\nRules:\n- If the user asks about these failed attachments, do not invent their contents.\n- Explain the concrete extraction problem and suggest re-uploading a text PDF/TXT/MD/CSV/JSON, or using OCR for scanned PDFs.\n`,
+          },
+        } as any;
+      }
 
       if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
         emitSSE({
@@ -2756,6 +3469,56 @@ router.post(
           label: `Analyzing ${attachmentDocIds.length} attachment(s) — searching for relevant fragments…`,
         });
         let attachmentChunksInjected = false;
+        // Stage 3 (Source Of Truth): use shared ContextRetrievalService for ACL-enforced
+        // retrieval and lineage. Falls back to legacy ragService path on unexpected errors.
+        try {
+          const sharedRetrievalModule =
+            await import('../services/organizationContext/ContextRetrievalService.js');
+          const sharedRetrieval = (sharedRetrievalModule as any).default || sharedRetrievalModule;
+          const requestedWorkflowMode = (() => {
+            const raw = String((context as any)?.contextWorkflowMode || '').trim();
+            return sharedRetrieval.isValidContextWorkflowMode(raw)
+              ? raw
+              : 'selected_material_plus_selected_context';
+          })();
+          const sharedResult = await sharedRetrieval.retrieveContext({
+            organizationId: req.organizationId || '',
+            userId: (req as any).user?.id || (req as any).userId || 'system',
+            workflow: 'ai_chat',
+            workflowMode: requestedWorkflowMode,
+            retrievalQuery: message,
+            retrievalReason: 'ai_chat_attachment_grounding',
+            selectedDocumentIds: attachmentDocIds,
+            perDocumentChunkLimit: 5,
+            totalChunkLimit: 12,
+          });
+
+          if (
+            sharedResult &&
+            Array.isArray(sharedResult.chunks) &&
+            sharedResult.chunks.length > 0
+          ) {
+            await sharedRetrieval.recordContextRetrievalLineage({
+              organizationId: req.organizationId || '',
+              userId: (req as any).user?.id || (req as any).userId || 'system',
+              workflow: 'ai_chat',
+              targetType: 'ai_chat_message',
+              targetId: chatRunId || `chat_${Date.now()}`,
+              eventType: 'ai_chat_context_retrieved',
+              result: sharedResult,
+              metadata: {
+                attachmentSource: 'conversation_attachments',
+                conversationId: (context as any)?.conversationId || null,
+              },
+            });
+          }
+        } catch (sharedErr: any) {
+          logger.warn(
+            '[AI Stream] Shared ContextRetrievalService failed, falling back to legacy ragService:',
+            sharedErr?.message || String(sharedErr)
+          );
+        }
+
         try {
           const ragModule = await import('../services/ragService.js');
           const ragService = (ragModule.default || ragModule) as any;
@@ -2781,6 +3544,20 @@ router.post(
                 return `[A${i + 1}] ${source}\n${content}`;
               })
               .join('\n\n');
+            const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
+              const source = String(c?.source || 'Attachment');
+              return {
+                id: `attachment_${i + 1}`,
+                type: 'document',
+                title: source,
+                reference: source,
+                excerpt: String(c?.content || '')
+                  .trim()
+                  .slice(0, 500),
+              };
+            });
+            emitSSE({ type: 'citations', citations: attachmentCitations });
+            hasGovernedGrounding = true;
 
             pipelineRequest = {
               ...pipelineRequest,
@@ -2826,15 +3603,21 @@ router.post(
         // load raw chunks directly from DB to ensure the AI always sees attachment content.
         if (!attachmentChunksInjected) {
           try {
+            const organizationIdForAttachmentFallback = req.organizationId || '';
+            if (!organizationIdForAttachmentFallback) {
+              throw new Error('organization_id_required_for_attachment_fallback');
+            }
             const placeholders = attachmentDocIds.map(() => '?').join(',');
             const rows = await dbAll(
               `SELECT c.content, d.filename
                FROM knowledge_chunks c
                JOIN knowledge_docs d ON c.doc_id = d.id
                WHERE d.id IN (${placeholders})
+                 AND d.organization_id = ?
+                 AND (d.status IS NULL OR d.status IN ('ready', 'indexed'))
                ORDER BY c.chunk_index ASC
                LIMIT 10`,
-              attachmentDocIds,
+              [...attachmentDocIds, organizationIdForAttachmentFallback],
               { fallback: true } as any
             );
 
@@ -2853,6 +3636,20 @@ router.post(
                   return `[A${i + 1}] ${source}\n${content}`;
                 })
                 .join('\n\n');
+              const attachmentCitations = rows.map((r: any, i: number) => {
+                const source = String(r?.filename || 'Attachment');
+                return {
+                  id: `attachment_direct_${i + 1}`,
+                  type: 'document',
+                  title: source,
+                  reference: source,
+                  excerpt: String(r?.content || '')
+                    .trim()
+                    .slice(0, 500),
+                };
+              });
+              emitSSE({ type: 'citations', citations: attachmentCitations });
+              hasGovernedGrounding = true;
 
               pipelineRequest = {
                 ...pipelineRequest,
@@ -2861,6 +3658,24 @@ router.post(
                   systemInstruction:
                     String((pipelineRequest.options as any)?.systemInstruction || '') +
                     `\n\n## ATTACHMENTS (conversation-scoped sources — direct load)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Refer to this content when the user asks about their attachments.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n`,
+                },
+                context: {
+                  ...((pipelineRequest as any).context || {}),
+                  external: {
+                    ...((pipelineRequest as any).context?.external || {}),
+                    attachmentsRag: {
+                      documentIds: attachmentDocIds,
+                      chunks: rows.map((r: any) => ({
+                        text: String(r?.content || ''),
+                        content: String(r?.content || ''),
+                        source: String(r?.filename || 'Attachment'),
+                        metadata: {
+                          title: String(r?.filename || 'Attachment'),
+                          sourceType: 'document',
+                        },
+                      })),
+                    },
+                  },
                 },
               } as any;
 
@@ -2977,6 +3792,42 @@ router.post(
           clarificationAnswers: (context as any)?.clarificationAnswers || null,
           emit: emitSSE,
         });
+
+        const deepResearchSources = Array.isArray(prelude?.researchOutput?.sources)
+          ? prelude.researchOutput.sources
+          : [];
+        if (deepResearchSources.length > 0) {
+          const deepResearchCitations = deepResearchSources
+            .slice(0, 12)
+            .map((source: any, idx: number) => ({
+              id: `deep_research_${idx + 1}`,
+              type: 'external',
+              title: String(source?.title || source?.domain || `Research source ${idx + 1}`),
+              reference: String(source?.url || source?.domain || ''),
+              link: String(source?.url || ''),
+              excerpt: Array.isArray(source?.snippets)
+                ? String(source.snippets[0] || '')
+                : String(source?.fullContent || '').slice(0, 500),
+            }));
+          collectedCitations = mergeCitations(collectedCitations, deepResearchCitations);
+          hasGovernedGrounding = true;
+          emitSSE({ type: 'citations', citations: deepResearchCitations });
+
+          pipelineRequest = {
+            ...pipelineRequest,
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              external: {
+                ...(((pipelineRequest as any).context || {}).external || {}),
+                citations: deepResearchCitations,
+                deepResearch: {
+                  sources: deepResearchSources,
+                  researchType: prelude?.researchType || null,
+                },
+              },
+            },
+          } as any;
+        }
 
         if (prelude?.systemInstructionAddon) {
           pipelineRequest = {
@@ -3538,7 +4389,7 @@ router.post(
 
               const { runAgentAudit } =
                 await import('../services/ai/agentAudit/orchestratorService.js');
-              const { AgentAuditPersistenceError, createAgentAuditRun, getAgentAuditRun } =
+              const { createAgentAuditRun } =
                 await import('../services/ai/agentAudit/agentAuditStore.js');
 
               const auditOut = await runAgentAudit({
@@ -3558,40 +4409,27 @@ router.post(
                 emit: emitSSE,
               } as any);
 
-              emitSSE({
-                type: 'agent_audit_state',
-                state: 'aggregating',
-                orchestratorRunId: auditOut.orchestratorRunId,
-                agentsTotal: agentIds.length,
-                qualityStatus: auditOut?.verdict?.qualityStatus,
-                gatesTriggered: auditOut?.verdict?.gatesTriggered || [],
-              });
-
-              await createAgentAuditRun({
-                id: auditOut.orchestratorRunId,
-                organizationId: req.organizationId!,
-                userId: req.userId!,
-                conversationId: conversationId || null,
-                dtSessionId: streamSessionId,
-                userIntent: String(agentAudit?.userIntent || 'validate'),
-                loopIteration: Number(agentAudit?.loopIteration || 1),
-                decisionContext: decisionContext || null,
-                selectedAgentIds: agentIds,
-                verdict: auditOut.verdict || null,
-                reviews: (auditOut.reviews || []).map((r: any) => ({
-                  agentId: String(r.agentId || ''),
-                  overreach: r.overreach || null,
-                  review: r,
-                })),
-              } as any);
-              const persistedAuditRun = await getAgentAuditRun({
-                runId: auditOut.orchestratorRunId,
-                organizationId: req.organizationId!,
-              });
-              if (!persistedAuditRun) {
-                throw new AgentAuditPersistenceError(
-                  `Persisted agent audit run ${auditOut.orchestratorRunId} could not be reloaded`
-                );
+              // Persist run (best-effort)
+              try {
+                await createAgentAuditRun({
+                  id: auditOut.orchestratorRunId,
+                  organizationId: req.organizationId!,
+                  userId: req.userId!,
+                  conversationId: conversationId || null,
+                  dtSessionId: streamSessionId,
+                  userIntent: String(agentAudit?.userIntent || 'validate'),
+                  loopIteration: Number(agentAudit?.loopIteration || 1),
+                  decisionContext: decisionContext || null,
+                  selectedAgentIds: agentIds,
+                  verdict: auditOut.verdict || null,
+                  reviews: (auditOut.reviews || []).map((r: any) => ({
+                    agentId: String(r.agentId || ''),
+                    overreach: r.overreach || null,
+                    review: r,
+                  })),
+                } as any);
+              } catch {
+                /* ignore */
               }
 
               emitSSE({
@@ -3603,15 +4441,6 @@ router.post(
                 agentIds,
                 userIntent: agentAudit?.userIntent || 'validate',
                 loopIteration: agentAudit?.loopIteration || 1,
-                persistedRunId: persistedAuditRun.id,
-              });
-              emitSSE({
-                type: 'agent_audit_state',
-                state: 'done',
-                orchestratorRunId: auditOut.orchestratorRunId,
-                agentsTotal: agentIds.length,
-                qualityStatus: auditOut?.verdict?.qualityStatus,
-                gatesTriggered: auditOut?.verdict?.gatesTriggered || [],
               });
             }
           } catch (auditErr: any) {
@@ -3762,7 +4591,7 @@ router.post(
                   ? { mode: 'no_sources', reason: 'no_citations_collected' }
                   : null;
 
-              emitSSE({
+              sourceLedgerSnapshot = {
                 type: 'source_ledger',
                 decisionId: policyDecision?.id || null,
                 used_sources,
@@ -3772,7 +4601,66 @@ router.post(
                   privateMode: Boolean(privateMode),
                   knowledgeSources: knowledgeSources || {},
                 },
-              });
+              };
+              emitSSE(sourceLedgerSnapshot);
+
+              if (req.organizationId && req.userId) {
+                try {
+                  const wave6 = await import('../services/wave6ContextLearningService.js');
+                  if (!privateMode && assistantScope === 'teresa_tenant') {
+                    for (const source of used_sources.slice(0, 12)) {
+                      await wave6.recordWave6ContextLedgerEntry({
+                        organizationId: req.organizationId,
+                        userId: req.userId,
+                        projectId,
+                        sourceType: String(source.type || 'citation'),
+                        sourceId: source.id || source.reference || null,
+                        sourceTitle: source.title || source.reference || null,
+                        sourceUrl: source.link || source.reference || null,
+                        freshnessAt: new Date().toISOString(),
+                        permissionScope: projectId
+                          ? 'project'
+                          : wave6MemoryScope === 'org'
+                            ? 'org'
+                            : 'tenant',
+                      });
+                    }
+                  }
+                  const memoryRequest = wave6.extractWave6MemoryRequest(String(message || ''));
+                  if (memoryRequest) {
+                    const memoryCandidate = await wave6.captureWave6MemoryCandidate({
+                      organizationId: req.organizationId,
+                      userId: req.userId,
+                      assistantScope,
+                      memoryScope: wave6MemoryScope,
+                      key: memoryRequest.key,
+                      value: memoryRequest.value,
+                      projectId,
+                      sourceLabel: 'chat_user_request',
+                      sourceRefs: [
+                        {
+                          sourceType: 'conversation',
+                          sourceId: conversationId || streamSessionId,
+                        },
+                      ],
+                      privateMode: Boolean(privateMode),
+                      retentionDays: 180,
+                    });
+                    emitSSE({
+                      type: 'memory_candidate',
+                      wave: 6,
+                      blocked: Boolean(memoryCandidate.blocked),
+                      reason: memoryCandidate.reason || null,
+                      candidate: memoryCandidate.candidate || null,
+                    });
+                  }
+                } catch (wave6Err: any) {
+                  logger.warn(
+                    '[AI Stream] Wave 6 context ledger/stewardship skipped:',
+                    wave6Err?.message || wave6Err
+                  );
+                }
+              }
 
               if (chatRunId) {
                 import('../services/ai/chatTraceService.js')
@@ -3796,22 +4684,20 @@ router.post(
               if (
                 degraded &&
                 policyDecision?.allowed === true &&
-                policyDecision?.evidence?.required === true
+                policyDecision?.evidence?.required === true &&
+                !hasGovernedGrounding &&
+                !shouldPreferGovernedProductKnowledge
               ) {
                 const isPl = Boolean(language?.startsWith('pl'));
-                const marker = isPl
-                  ? `\n\n---\n**Bez źródeł:** Nie znalazłem w dostępnych źródłach wystarczających materiałów, żeby to zweryfikować. Jeśli dołączysz dokument/link lub wypromujesz wiedzę do organizacji, doprecyzuję.\n`
-                  : `\n\n---\n**No sources:** I couldn't find sufficient evidence in the available sources to verify this. If you attach/paste a document/link or promote knowledge to the organization scope, I can refine.\n`;
                 emitSSE({
                   type: 'policy_notice',
                   kind: 'no_sources',
                   decisionId: policyDecision?.id || null,
+                  displayToUser: false,
                   message: isPl
-                    ? 'Brak źródeł w dozwolonym zakresie — dodano jawny marker.'
-                    : 'No sources in allowed scope — explicit marker added.',
+                    ? 'Brak źródeł w dozwolonym zakresie — zapisano diagnostykę do audytu.'
+                    : 'No sources in allowed scope — audit diagnostic recorded.',
                 });
-                // Emit as a final text chunk for visibility (same semantics as uncertainty marker).
-                res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
               }
             } catch {
               // Non-critical — never break the stream on ledger generation.
@@ -3870,22 +4756,25 @@ router.post(
                     },
                   });
 
-                  if (validation && validation.passesPolicy === false) {
+                  if (
+                    validation &&
+                    validation.passesPolicy === false &&
+                    !hasGovernedGrounding &&
+                    !shouldPreferGovernedProductKnowledge
+                  ) {
                     const isPl = Boolean(language?.startsWith('pl'));
                     const violations = Array.isArray(validation.policyViolations)
                       ? validation.policyViolations
                       : [];
-                    const marker = isPl
-                      ? `\n\n---\n**Niepewność / weryfikacja:** Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających cytowań z dostępnych źródeł. Zweryfikuj proszę kluczowe liczby/datę w podanych źródłach lub dołącz materiał, a doprecyzuję.\n`
-                      : `\n\n---\n**Uncertainty / verification:** This answer contains factual claims without sufficient citations from available sources. Please verify key numbers/dates in the provided sources (or attach/paste evidence) and I will refine.\n`;
 
                     emitSSE({
                       type: 'policy_notice',
                       kind: 'uncertainty',
                       decisionId: policyDecision?.id || null,
+                      displayToUser: false,
                       message: isPl
-                        ? 'Brak wystarczających cytowań — dodano jawny marker niepewności.'
-                        : 'Insufficient citations — explicit uncertainty marker added.',
+                        ? 'Brak wystarczających cytowań — zapisano diagnostykę do audytu.'
+                        : 'Insufficient citations — audit diagnostic recorded.',
                       violations: violations.slice(0, 6),
                     });
 
@@ -3904,14 +4793,6 @@ router.post(
                         .catch(() => {
                           /* ignore */
                         });
-                    }
-
-                    // Append marker as a final visible chunk (bounded, additive)
-                    accumulatedContent += marker;
-                    try {
-                      res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
-                    } catch {
-                      /* ignore */
                     }
                   } else if (chatRunId) {
                     import('../services/ai/chatTraceService.js')
@@ -3968,6 +4849,7 @@ router.post(
           }
 
           await maybeEmitTeresaProposal(accumulatedContent);
+          emitTrustBundle(accumulatedContent);
 
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
@@ -4107,24 +4989,24 @@ router.post(
                     },
                   });
 
-                  if (validation && validation.passesPolicy === false) {
+                  if (
+                    validation &&
+                    validation.passesPolicy === false &&
+                    !hasGovernedGrounding &&
+                    !shouldPreferGovernedProductKnowledge
+                  ) {
                     const isPl = Boolean(language?.startsWith('pl'));
-                    const marker = isPl
-                      ? `\n\n---\n**Niepewność / weryfikacja:** Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających cytowań z dostępnych źródeł. Zweryfikuj proszę kluczowe liczby/datę w podanych źródłach lub dołącz materiał, a doprecyzuję.\n`
-                      : `\n\n---\n**Uncertainty / verification:** This answer contains factual claims without sufficient citations from available sources. Please verify key numbers/dates in the provided sources (or attach/paste evidence) and I will refine.\n`;
 
                     emitSSE({
                       type: 'policy_notice',
                       kind: 'uncertainty',
                       decisionId: policyDecision?.id || null,
+                      displayToUser: false,
                       message: isPl
-                        ? 'Brak wystarczających cytowań — dodano jawny marker niepewności.'
-                        : 'Insufficient citations — explicit uncertainty marker added.',
+                        ? 'Brak wystarczających cytowań — zapisano diagnostykę do audytu.'
+                        : 'Insufficient citations — audit diagnostic recorded.',
                       violations: (validation?.policyViolations || []).slice(0, 6),
                     });
-
-                    // Also emit the marker as a final text chunk for visibility.
-                    res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
                   }
                 }
               } catch {
@@ -4154,6 +5036,7 @@ router.post(
             }
 
             await maybeEmitTeresaProposal(nonStreamContent);
+            emitTrustBundle(nonStreamContent);
           }
 
           streamCompleted = true;
@@ -4268,8 +5151,8 @@ router.get(
     try {
       const row = (await dbGet(
         `
-            SELECT content, updated_at 
-            FROM ai_partial_responses 
+            SELECT content, updated_at
+            FROM ai_partial_responses
             WHERE session_id = ? AND user_id = ?
         `,
         [req.params.sessionId, req.userId]
@@ -4794,6 +5677,128 @@ router.post(
       return res.json(result);
     } catch (err: any) {
       return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.get(
+  '/actions/center',
+  verifyToken,
+  validateQuery(
+    z.object({
+      projectId: z.string().uuid().optional(),
+      status: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(250).optional(),
+      scope: z.enum(['mine', 'org']).optional(),
+    })
+  ),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { listActionCenter } = await import('../services/aiRunLedgerService.js');
+      const { repairTeresaAIRunMirrorsForActionCenter } =
+        await import('../services/v8/teresaCopilotService.js');
+      const adminView =
+        (req.query as any).scope === 'org' &&
+        (req.userRole === 'ADMIN' || req.userRole === 'SUPERADMIN');
+      await repairTeresaAIRunMirrorsForActionCenter({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        adminView,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+      });
+      const actions = await listActionCenter({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        projectId: ((req.query as any).projectId as string | undefined) || null,
+        status: ((req.query as any).status as string | undefined) || null,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+        adminView,
+      });
+      return res.json({
+        success: true,
+        actions,
+        summary: {
+          pending: actions.filter((action: any) => action.status === 'pending_review').length,
+          approved: actions.filter((action: any) => action.status === 'approved').length,
+          executed: actions.filter(
+            (action: any) => action.status === 'executed' || action.status === 'audited'
+          ).length,
+          failed: actions.filter((action: any) => action.status === 'failed').length,
+          rejected: actions.filter((action: any) => action.status === 'rejected').length,
+        },
+      });
+    } catch (err: any) {
+      logger.error('[AI] Action Center error:', err);
+      return res.status(500).json({ success: false, error: (err as Error).message, actions: [] });
+    }
+  })
+);
+
+router.get(
+  '/actions/runs',
+  verifyToken,
+  validateQuery(
+    z.object({
+      projectId: z.string().uuid().optional(),
+      status: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(250).optional(),
+      scope: z.enum(['mine', 'org']).optional(),
+    })
+  ),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const adminView =
+      (req.query as any).scope === 'org' &&
+      (req.userRole === 'ADMIN' || req.userRole === 'SUPERADMIN');
+    if ((req.query as any).scope === 'org' && !adminView) {
+      return res.status(403).json({ success: false, error: 'Admin role required' });
+    }
+    try {
+      const { listAIRuns } = await import('../services/aiRunLedgerService.js');
+      const { repairTeresaAIRunMirrorsForActionCenter } =
+        await import('../services/v8/teresaCopilotService.js');
+      await repairTeresaAIRunMirrorsForActionCenter({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        adminView,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+      });
+      const runs = await listAIRuns({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        projectId: ((req.query as any).projectId as string | undefined) || null,
+        status: ((req.query as any).status as string | undefined) || null,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+        adminView,
+      });
+      return res.json({ success: true, runs });
+    } catch (err: any) {
+      logger.error('[AI] Run Ledger error:', err);
+      return res.status(500).json({ success: false, error: (err as Error).message, runs: [] });
+    }
+  })
+);
+
+router.get(
+  '/actions/:id/audit',
+  verifyToken,
+  validateParams(ActionIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getAIRunByAction } = await import('../services/aiRunLedgerService.js');
+      const audit = await getAIRunByAction(req.params.id);
+      if (!audit) return res.status(404).json({ success: false, error: 'Action not found' });
+      const canView =
+        req.userRole === 'ADMIN' ||
+        req.userRole === 'SUPERADMIN' ||
+        audit.userId === req.userId ||
+        audit.user_id === req.userId;
+      if (!canView) {
+        return res.status(403).json({ success: false, error: 'Permission denied' });
+      }
+      return res.json({ success: true, audit });
+    } catch (err: any) {
+      logger.error('[AI] Action audit error:', err);
+      return res.status(500).json({ success: false, error: (err as Error).message });
     }
   })
 );

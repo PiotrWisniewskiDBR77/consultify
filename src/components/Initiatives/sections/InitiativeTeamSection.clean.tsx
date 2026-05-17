@@ -565,7 +565,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
               <button
                 onClick={applyAiProposal}
                 disabled={isApplyingAiProposal}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {isApplyingAiProposal ? (
                   <Loader2 size={13} className="animate-spin" />

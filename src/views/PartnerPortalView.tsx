@@ -164,13 +164,13 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98]"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98]"
             >
               Startuj partner hub
             </button>
             <button
               onClick={() => onNavigate(AppView.PARTNER_DIRECTORY)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-violet-500/50 active:scale-[0.98]"
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-primary-500/50 active:scale-[0.98]"
             >
               Zobacz katalog partnerów
             </button>
@@ -251,13 +251,13 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-              className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98]"
+              className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-700 active:scale-[0.98]"
             >
               Startuj partner hub
             </button>
             <button
               onClick={() => onNavigate(AppView.PARTNER_RESOURCES)}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-violet-500/50 active:scale-[0.98]"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-primary-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-primary-500/50 active:scale-[0.98]"
             >
               Poznaj zasoby
             </button>
@@ -272,9 +272,9 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
                 key={section.view}
                 className={`rounded-xl border ${
                   isActive
-                    ? 'border-violet-300 bg-white dark:border-violet-600/50 dark:bg-navy-900 ring-2 ring-violet-100 dark:ring-violet-900/30'
+                    ? 'border-primary-300 bg-white dark:border-primary-600/50 dark:bg-navy-900 ring-2 ring-primary-100 dark:ring-primary-900/30'
                     : 'border-slate-200/60 bg-white dark:border-navy-800 dark:bg-navy-900'
-                } p-4 shadow-sm transition-all hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-md active:scale-[0.99]`}
+                } p-4 shadow-sm transition-all hover:border-primary-300 dark:hover:border-primary-600/50 hover:shadow-md active:scale-[0.99]`}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -415,7 +415,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigate(AppView.PARTNER_CLIENT_ACCESS)}
-              className="w-full rounded-lg border border-violet-200 px-3 py-2.5 text-sm font-semibold text-violet-700 transition-all hover:bg-violet-50 active:scale-[0.98] dark:border-violet-700/50 dark:text-violet-400 dark:hover:bg-violet-900/20"
+              className="w-full rounded-lg border border-primary-200 px-3 py-2.5 text-sm font-semibold text-primary-700 transition-all hover:bg-primary-50 active:scale-[0.98] dark:border-primary-700/50 dark:text-primary-400 dark:hover:bg-primary-900/20"
             >
               Get access link
             </button>
@@ -450,7 +450,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigate(AppView.PARTNER_DIRECTORY)}
-              className="mt-6 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] shadow-sm"
+              className="mt-6 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 active:scale-[0.98] shadow-sm"
             >
               Edytuj profil katalogu
             </button>
@@ -467,7 +467,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
                 </span>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                   placeholder="Imię i nazwisko"
                 />
               </label>
@@ -477,7 +477,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
                 </span>
                 <input
                   type="email"
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                   placeholder="partner@consultify.com"
                 />
               </label>
@@ -485,7 +485,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 ml-1">
                   Ticket type
                 </span>
-                <select className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white">
+                <select className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white">
                   <option>Commission inquiry</option>
                   <option>Payment update</option>
                   <option>Other</option>
@@ -494,7 +494,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate(AppView.PARTNER_COMMISSION)}
-                className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] shadow-sm mt-1"
+                className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 active:scale-[0.98] shadow-sm mt-1"
               >
                 Wyślij zgłoszenie
               </button>
@@ -505,7 +505,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
           {resourceCards.map((card) => (
             <article
               key={card.title}
-              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900 flex flex-col hover:border-violet-300 dark:hover:border-violet-600/50 transition-colors"
+              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900 flex flex-col hover:border-primary-300 dark:hover:border-primary-600/50 transition-colors"
             >
               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                 {card.title}
@@ -525,7 +525,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
           ))}
         </div>
 
-        <div className="rounded-xl border border-violet-200 bg-violet-50 p-6 text-slate-800 dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-white flex flex-col md:flex-row items-center gap-4">
+        <div className="rounded-xl border border-primary-200 bg-primary-50 p-6 text-slate-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-white flex flex-col md:flex-row items-center gap-4">
           <div className="flex-1">
             <h3 className="text-xl font-bold">Odkryj poziomy partnerstwa</h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-200 leading-relaxed">
@@ -537,13 +537,13 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({
           <div className="flex flex-wrap gap-3 flex-shrink-0">
             <button
               onClick={() => onNavigate(AppView.PARTNER_PRICING)}
-              className="rounded-lg bg-violet-600 p-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98]"
+              className="rounded-lg bg-primary-600 p-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98]"
             >
               Zobacz cennik partnerski
             </button>
             <button
               onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-              className="rounded-lg border border-slate-200 bg-white p-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:hover:border-violet-500/50 active:scale-[0.98]"
+              className="rounded-lg border border-slate-200 bg-white p-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary-300 dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:hover:border-primary-500/50 active:scale-[0.98]"
             >
               Otwórz hub partnerów
             </button>

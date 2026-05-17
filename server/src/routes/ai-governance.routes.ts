@@ -21,28 +21,37 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+    if (!orgId)
+      return res.status(400).json({ error: 'Organization required', code: 'ORG_CONTEXT_REQUIRED' });
 
-    const { default: AIPolicyEngine } = await import('../services/aiPolicyEngine.js');
-    const [effective, summary] = await Promise.all([
-      AIPolicyEngine.getEffectivePolicy(orgId, null, req.user?.id || null),
-      AIPolicyEngine.getPolicySummary(orgId),
-    ]);
+    try {
+      const { default: AIPolicyEngine } = await import('../services/aiPolicyEngine.js');
+      const [effective, summary] = await Promise.all([
+        AIPolicyEngine.getEffectivePolicy(orgId, null, req.user?.id || null),
+        AIPolicyEngine.getPolicySummary(orgId),
+      ]);
 
-    const { getRuntimeWebSearchStatus } = await import('../services/ai/runtimeWebSearchService.js');
-    const runtimeStatus = getRuntimeWebSearchStatus();
-    res.json({
-      success: true,
-      data: {
-        effective,
-        summary,
-        runtime: {
-          ...runtimeStatus,
-          webSearchAvailable:
-            Boolean((effective as any)?.internetEnabled) && runtimeStatus.available,
+      const { getRuntimeWebSearchStatus } =
+        await import('../services/ai/runtimeWebSearchService.js');
+      const runtimeStatus = getRuntimeWebSearchStatus();
+      res.json({
+        success: true,
+        data: {
+          effective,
+          summary,
+          runtime: {
+            ...runtimeStatus,
+            webSearchAvailable:
+              Boolean((effective as any)?.internetEnabled) && runtimeStatus.available,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      res.status(500).json({
+        error: 'AI governance policy could not be loaded',
+        code: 'AI_GOVERNANCE_ORG_POLICY_READ_FAILED',
+      });
+    }
   })
 );
 
@@ -52,13 +61,21 @@ router.put(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+    if (!orgId)
+      return res.status(400).json({ error: 'Organization required', code: 'ORG_CONTEXT_REQUIRED' });
 
-    const { default: AIPolicyEngine } = await import('../services/aiPolicyEngine.js');
-    await AIPolicyEngine.updatePolicy(orgId, req.body || {});
+    try {
+      const { default: AIPolicyEngine } = await import('../services/aiPolicyEngine.js');
+      await AIPolicyEngine.updatePolicy(orgId, req.body || {});
 
-    logger.info(`[AIGov] Policy updated for org ${orgId} by ${req.user?.id}`);
-    res.json({ success: true, message: 'Policy updated' });
+      logger.info(`[AIGov] Policy updated for org ${orgId} by ${req.user?.id}`);
+      res.json({ success: true, message: 'Policy updated' });
+    } catch {
+      res.status(500).json({
+        error: 'AI governance policy could not be updated',
+        code: 'AI_GOVERNANCE_ORG_POLICY_UPDATE_FAILED',
+      });
+    }
   })
 );
 
@@ -68,10 +85,18 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+    if (!orgId)
+      return res.status(400).json({ error: 'Organization required', code: 'ORG_CONTEXT_REQUIRED' });
     const { getOrgContextPolicy } = await import('../services/ai/contextGovernance.js');
-    const policy = await getOrgContextPolicy(orgId);
-    res.json({ success: true, data: policy });
+    try {
+      const policy = await getOrgContextPolicy(orgId);
+      res.json({ success: true, data: policy });
+    } catch {
+      res.status(500).json({
+        error: 'Context policy store is invalid',
+        code: 'CONTEXT_POLICY_INVALID_STORE',
+      });
+    }
   })
 );
 
@@ -81,11 +106,19 @@ router.put(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+    if (!orgId)
+      return res.status(400).json({ error: 'Organization required', code: 'ORG_CONTEXT_REQUIRED' });
     const { updateOrgContextPolicy } = await import('../services/ai/contextGovernance.js');
-    await updateOrgContextPolicy(orgId, req.body);
-    logger.info(`[AIGov] Context policy updated for org ${orgId} by ${req.user?.id}`);
-    res.json({ success: true, message: 'Context policy updated' });
+    try {
+      await updateOrgContextPolicy(orgId, req.body);
+      logger.info(`[AIGov] Context policy updated for org ${orgId} by ${req.user?.id}`);
+      res.json({ success: true, message: 'Context policy updated' });
+    } catch {
+      res.status(500).json({
+        error: 'Context policy could not be saved',
+        code: 'CONTEXT_POLICY_PERSIST_FAILED',
+      });
+    }
   })
 );
 
@@ -96,10 +129,17 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-    const { getUserPrivacySettings } = await import('../services/ai/userPrivacyService.js');
-    const settings = await getUserPrivacySettings(userId);
-    res.json({ success: true, data: settings });
+    if (!userId) return res.status(401).json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' });
+    try {
+      const { getUserPrivacySettings } = await import('../services/ai/userPrivacyService.js');
+      const settings = await getUserPrivacySettings(userId);
+      res.json({ success: true, data: settings });
+    } catch {
+      res.status(500).json({
+        error: 'AI governance privacy settings could not be loaded',
+        code: 'AI_GOVERNANCE_PRIVACY_READ_FAILED',
+      });
+    }
   })
 );
 
@@ -108,10 +148,17 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-    const { updateUserPrivacySettings } = await import('../services/ai/userPrivacyService.js');
-    await updateUserPrivacySettings(userId, req.body);
-    res.json({ success: true, message: 'Privacy settings updated' });
+    if (!userId) return res.status(401).json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' });
+    try {
+      const { updateUserPrivacySettings } = await import('../services/ai/userPrivacyService.js');
+      await updateUserPrivacySettings(userId, req.body);
+      res.json({ success: true, message: 'Privacy settings updated' });
+    } catch {
+      res.status(500).json({
+        error: 'AI governance privacy settings could not be updated',
+        code: 'AI_GOVERNANCE_PRIVACY_UPDATE_FAILED',
+      });
+    }
   })
 );
 
@@ -120,10 +167,16 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) return res.status(401).json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' });
     const { previewMemory } = await import('../services/ai/userPrivacyService.js');
-    const memory = await previewMemory(userId);
-    res.json({ success: true, data: memory });
+    try {
+      const memory = await previewMemory(userId);
+      res.json({ success: true, data: memory });
+    } catch {
+      res
+        .status(500)
+        .json({ error: 'Memory store is invalid', code: 'AI_GOVERNANCE_MEMORY_INVALID_STORE' });
+    }
   })
 );
 
@@ -132,10 +185,16 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) return res.status(401).json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' });
     const { exportMemory } = await import('../services/ai/userPrivacyService.js');
-    const memory = await exportMemory(userId);
-    res.json({ success: true, data: memory });
+    try {
+      const memory = await exportMemory(userId);
+      res.json({ success: true, data: memory });
+    } catch {
+      res
+        .status(500)
+        .json({ error: 'Memory store is invalid', code: 'AI_GOVERNANCE_MEMORY_INVALID_STORE' });
+    }
   })
 );
 
@@ -144,10 +203,22 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) return res.status(401).json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' });
     const { deleteMemory } = await import('../services/ai/userPrivacyService.js');
-    const result = await deleteMemory(userId);
-    res.json({ ...result });
+    try {
+      const result = await deleteMemory(userId);
+      if (!result.success) {
+        return res.status(500).json({
+          error: 'Memory could not be deleted',
+          code: 'AI_GOVERNANCE_MEMORY_DELETE_FAILED',
+        });
+      }
+      res.json({ ...result });
+    } catch {
+      res
+        .status(500)
+        .json({ error: 'Memory could not be deleted', code: 'AI_GOVERNANCE_MEMORY_DELETE_FAILED' });
+    }
   })
 );
 

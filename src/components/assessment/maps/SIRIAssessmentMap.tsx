@@ -88,17 +88,17 @@ const COLOR_CLASSES: Record<ColorKey, ColorClasses> = {
     shadow: 'shadow-green-500/10',
   },
   purple: {
-    bg100: 'bg-purple-100 dark:bg-purple-900/30',
-    bg200: 'bg-purple-200 dark:bg-purple-900/50',
-    bg300: 'bg-purple-300 dark:bg-purple-700',
-    bg500: 'bg-purple-500',
-    bg700: 'bg-purple-700',
-    bg900_30: 'bg-purple-900/30',
-    text400: 'text-purple-400',
-    text600: 'text-purple-600 dark:text-purple-400',
-    text900: 'text-purple-900 dark:text-white',
-    border500: 'border-purple-500',
-    shadow: 'shadow-purple-500/10',
+    bg100: 'bg-primary-100 dark:bg-primary-900/30',
+    bg200: 'bg-primary-200 dark:bg-primary-900/50',
+    bg300: 'bg-primary-300 dark:bg-primary-700',
+    bg500: 'bg-primary-500',
+    bg700: 'bg-primary-700',
+    bg900_30: 'bg-primary-900/30',
+    text400: 'text-primary-400',
+    text600: 'text-primary-600 dark:text-primary-400',
+    text900: 'text-primary-900 dark:text-white',
+    border500: 'border-primary-500',
+    shadow: 'shadow-primary-500/10',
   },
 };
 
@@ -320,7 +320,7 @@ const SIRIDimensionCard: React.FC<{
         {gap > 0 && (
           <div className="w-16 text-center">
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Gap</div>
-            <div className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded font-bold text-sm">
+            <div className="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-2 py-1 rounded font-bold text-sm">
               {gap}
             </div>
           </div>
@@ -360,8 +360,8 @@ const SIRIPrioritisationHeatmap: React.FC<{
 }> = ({ areas, scores, onChange, readOnly }) => {
   const getColorClass = (score: number): string => {
     if (score === 0) return 'bg-slate-200 dark:bg-navy-800';
-    if (score <= 1) return 'bg-red-400';
-    if (score <= 2) return 'bg-orange-400';
+    if (score <= 1) return 'bg-rose-400';
+    if (score <= 2) return 'bg-amber-400';
     if (score <= 3) return 'bg-yellow-400';
     if (score <= 4) return 'bg-green-400';
     return 'bg-emerald-500';
@@ -604,11 +604,11 @@ export const SIRIAssessmentMap: React.FC<SIRIAssessmentMapProps> = ({
               </div>
             </div>
             {/* Total Gap */}
-            <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-xl text-center">
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+            <div className="bg-rose-100 dark:bg-rose-900/30 px-4 py-2 rounded-xl text-center">
+              <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
                 {stats.totalGap}
               </div>
-              <div className="text-xs text-red-600/70 dark:text-red-400/70">Total Gap</div>
+              <div className="text-xs text-rose-600/70 dark:text-rose-400/70">Total Gap</div>
             </div>
           </div>
         </div>

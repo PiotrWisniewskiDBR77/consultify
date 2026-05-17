@@ -98,11 +98,11 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   color,
 }) => {
   const colorClasses = {
-    cyan: 'bg-cyan-500/20 text-cyan-400',
+    cyan: 'bg-blue-500/20 text-blue-400',
     green: 'bg-green-500/20 text-green-400',
-    purple: 'bg-purple-500/20 text-purple-400',
+    purple: 'bg-primary-500/20 text-primary-400',
     amber: 'bg-amber-500/20 text-amber-400',
-    red: 'bg-red-500/20 text-red-400',
+    red: 'bg-rose-500/20 text-rose-400',
   };
 
   return (
@@ -115,7 +115,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
               trend === 'up'
                 ? 'text-green-400'
                 : trend === 'down'
-                  ? 'text-red-400'
+                  ? 'text-rose-400'
                   : 'text-slate-400'
             }`}
           >
@@ -162,11 +162,11 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
             className="w-full text-left group"
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-white truncate max-w-[60%] group-hover:text-cyan-400 transition-colors">
+              <span className="text-sm text-white truncate max-w-[60%] group-hover:text-blue-400 transition-colors">
                 {metric.initiativeName}
               </span>
               <span
-                className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}
+                className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-rose-400'}`}
               >
                 {isPositive ? '+' : ''}
                 {metric.roi.toFixed(0)}%
@@ -175,7 +175,7 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
             <div className="h-6 bg-navy-700 rounded-lg overflow-hidden relative">
               <div
                 className={`h-full rounded-lg transition-all ${
-                  isPositive ? 'bg-green-500/50' : 'bg-red-500/50'
+                  isPositive ? 'bg-green-500/50' : 'bg-rose-500/50'
                 } group-hover:opacity-80`}
                 style={{ width: `${barWidth}%` }}
               />
@@ -185,7 +185,7 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
                     metric.status === InitiativeStatus.DONE
                       ? 'text-green-400'
                       : metric.status === InitiativeStatus.BLOCKED
-                        ? 'text-red-400'
+                        ? 'text-rose-400'
                         : 'text-slate-400'
                   }`}
                 >
@@ -277,7 +277,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
                       metric.status === InitiativeStatus.DONE
                         ? 'bg-green-400'
                         : metric.status === InitiativeStatus.BLOCKED
-                          ? 'bg-red-400'
+                          ? 'bg-rose-400'
                           : 'bg-slate-400'
                     }`}
                   />
@@ -298,7 +298,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
               <td className="py-3">
                 <div
                   className={`flex items-center gap-1 text-sm font-medium ${
-                    metric.variance >= 0 ? 'text-green-400' : 'text-red-400'
+                    metric.variance >= 0 ? 'text-green-400' : 'text-rose-400'
                   }`}
                 >
                   {metric.variance >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -309,7 +309,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
               <td className="py-3">
                 <span
                   className={`text-sm font-bold ${
-                    metric.roi >= 0 ? 'text-green-400' : 'text-red-400'
+                    metric.roi >= 0 ? 'text-green-400' : 'text-rose-400'
                   }`}
                 >
                   {metric.roi >= 0 ? '+' : ''}
@@ -457,7 +457,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
           <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <BarChart3 size={16} className="text-cyan-400" />
+            <BarChart3 size={16} className="text-blue-400" />
             ROI by Initiative
           </h3>
           <ROIBarChart metrics={roiMetrics.slice(0, 8)} onBarClick={handleInitiativeClick} />
@@ -465,7 +465,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
 
         <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
           <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <Calculator size={16} className="text-purple-400" />
+            <Calculator size={16} className="text-primary-400" />
             Initiative Status
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -480,10 +480,10 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
             </div>
             <div className="bg-navy-800 rounded-xl p-4 border border-navy-700">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-rose-500" />
                 <span className="text-sm text-slate-400">Below Target</span>
               </div>
-              <span className="text-3xl font-bold text-red-400">
+              <span className="text-3xl font-bold text-rose-400">
                 {summary.initiativesBelowTarget}
               </span>
             </div>

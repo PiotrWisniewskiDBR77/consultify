@@ -37,7 +37,7 @@ const PriorityBadge: React.FC<{ gap: number }> = ({ gap }) => {
 
   if (gap >= 3) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-full">
         <AlertTriangle className="w-3 h-3" />
         {t('reports.highPriority', 'High')}
       </span>
@@ -70,7 +70,7 @@ const PriorityBadge: React.FC<{ gap: number }> = ({ gap }) => {
 // Gap indicator component
 const GapIndicator: React.FC<{ gap: number }> = ({ gap }) => {
   if (gap > 0) {
-    return <TrendingUp className="w-4 h-4 text-red-500" />;
+    return <TrendingUp className="w-4 h-4 text-rose-500" />;
   }
   if (gap < 0) {
     return <TrendingDown className="w-4 h-4 text-green-500" />;
@@ -102,7 +102,7 @@ const ProgressBar: React.FC<{ actual: number; target: number; maxLevel: number }
             ? 'bg-green-500'
             : actual >= target * 0.7
               ? 'bg-yellow-500'
-              : 'bg-red-500'
+              : 'bg-rose-500'
         }`}
         style={{ width: `${actualPercent}%` }}
       />
@@ -180,7 +180,7 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
                         ? 'text-green-600 dark:text-green-400'
                         : axis.actual >= axis.maxLevel * 0.4
                           ? 'text-yellow-600 dark:text-yellow-400'
-                          : 'text-red-600 dark:text-red-400'
+                          : 'text-rose-600 dark:text-rose-400'
                     }`}
                   >
                     {axis.actual || '-'}
@@ -197,7 +197,7 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
                     <span
                       className={`font-mono font-medium ${
                         axis.gap > 0
-                          ? 'text-red-600 dark:text-red-400'
+                          ? 'text-rose-600 dark:text-rose-400'
                           : 'text-green-600 dark:text-green-400'
                       }`}
                     >
@@ -293,7 +293,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
           <div
             className={`text-2xl font-bold ${
               gap > 0
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-rose-600 dark:text-rose-400'
                 : gap < 0
                   ? 'text-green-600 dark:text-green-400'
                   : 'text-slate-600 dark:text-slate-400'
@@ -381,7 +381,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
                       <span
                         className={`font-mono ${
                           area.gap > 0
-                            ? 'text-red-600 dark:text-red-400'
+                            ? 'text-rose-600 dark:text-rose-400'
                             : 'text-green-600 dark:text-green-400'
                         }`}
                       >
@@ -443,11 +443,11 @@ const GapAnalysisMatrix: React.FC<{ axisData: Record<string, AxisData> }> = ({ a
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-3 text-center">
-          <div className="text-xs text-red-600 dark:text-red-400 mb-1">
+        <div className="bg-rose-50 dark:bg-rose-500/10 rounded-lg p-3 text-center">
+          <div className="text-xs text-rose-600 dark:text-rose-400 mb-1">
             {t('reports.criticalGaps', 'Critical Gaps')}
           </div>
-          <div className="text-2xl font-bold text-red-700 dark:text-red-400">{critical}</div>
+          <div className="text-2xl font-bold text-rose-700 dark:text-rose-400">{critical}</div>
         </div>
         <div className="bg-yellow-50 dark:bg-yellow-500/10 rounded-lg p-3 text-center">
           <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-1">
@@ -500,7 +500,7 @@ const GapAnalysisMatrix: React.FC<{ axisData: Record<string, AxisData> }> = ({ a
                   <span
                     className={`inline-block px-2 py-0.5 text-xs rounded ${
                       axis.complexity === 'High'
-                        ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400'
                         : axis.complexity === 'Medium'
                           ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
                           : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'

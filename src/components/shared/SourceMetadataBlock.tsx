@@ -22,7 +22,7 @@ export interface SourceMetadataBlockProps {
 
 const BADGE_STYLES: Record<SourceType, string> = {
   tool_session: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  mywork: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  mywork: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
   assessment: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   financial_analysis: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   interview: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
@@ -73,13 +73,13 @@ export const SourceMetadataBlock: React.FC<SourceMetadataBlockProps> = ({
   if (!source) {
     return (
       <div
-        className={`rounded-lg border border-red-500/30 bg-red-500/10 ${
+        className={`rounded-lg border border-rose-500/30 bg-rose-500/10 ${
           compact ? 'px-2 py-1' : 'px-3 py-2'
         }`}
       >
         <div className="flex items-center gap-2">
-          <AlertTriangle size={compact ? 12 : 14} className="text-red-400 shrink-0" />
-          <span className="text-xs font-medium text-red-400">
+          <AlertTriangle size={compact ? 12 : 14} className="text-rose-400 shrink-0" />
+          <span className="text-xs font-medium text-rose-400">
             {t('traceability.noSource', 'No source')}
           </span>
         </div>

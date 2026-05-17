@@ -98,7 +98,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               }}
               className={`relative group cursor-pointer rounded-lg transition-all ${
                 index === activeIndex
-                  ? 'ring-2 ring-purple-500'
+                  ? 'ring-2 ring-primary-500'
                   : 'hover:ring-1 hover:ring-slate-300 dark:hover:ring-navy-600'
               } ${dragIndex === index ? 'opacity-50' : ''}`}
             >
@@ -146,7 +146,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                 <div
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${
                     index === activeIndex
-                      ? 'bg-purple-50 dark:bg-purple-500/10'
+                      ? 'bg-primary-50 dark:bg-primary-500/10'
                       : 'hover:bg-slate-50 dark:hover:bg-navy-800'
                   }`}
                 >
@@ -190,7 +190,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       onDelete(index);
                       setContextMenuIndex(null);
                     }}
-                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500"
+                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500"
                   >
                     <Trash2 size={12} /> Delete
                   </button>
@@ -205,7 +205,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
       <div className="p-2 border-t border-slate-100 dark:border-navy-800">
         <button
           onClick={onAddCard}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:border-purple-400 hover:text-purple-500 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:border-primary-400 hover:text-primary-500 transition-colors"
         >
           <Plus size={12} /> {t('presentations.builder.addBlank', 'New slide')}
         </button>

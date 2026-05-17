@@ -12,11 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { type ActionHandlerDeps, handleChatAction } from '@/services/chatActionHandler';
 import { executeChatNavigate, type NavigateAction } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import {
-  ACTION_SCHEMA_VERSION,
-  type ChatActionPayload,
-  type ChatActionType,
-} from '@/types/domain/chatActions';
+import { type ChatActionPayload } from '@/types/domain/chatActions';
 
 export type ChatAction = NavigateAction | ChatActionPayload;
 
@@ -62,14 +58,7 @@ export function useChatActions() {
         return;
       }
 
-      const payload: ChatActionPayload =
-        'version' in action
-          ? (action as ChatActionPayload)
-          : {
-              type: 'NAVIGATE' as ChatActionType,
-              version: ACTION_SCHEMA_VERSION,
-              params: (action as NavigateAction).params ?? {},
-            };
+      const payload = action as ChatActionPayload;
 
       const deps: ActionHandlerDeps = { navigate, context: {} };
       const result = await handleChatAction(payload, deps);

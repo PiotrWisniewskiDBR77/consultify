@@ -86,6 +86,14 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
         content,
         format,
       } as DigestPreferences);
+      const persisted = (await Api.get('/settings/notifications/digest').catch(
+        () => null
+      )) as Partial<DigestPreferences> | null;
+      if (persisted && typeof persisted === 'object') {
+        setFrequency((persisted.frequency as DigestFrequency) || frequency);
+        setContent((persisted.content as DigestContent) || content);
+        setFormat((persisted.format as DigestFormat) || format);
+      }
 
       setSaveStatus('success');
       toast.success(t('settings.notifications.digest.saved', 'Digest preferences saved'));
@@ -129,21 +137,21 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
               onClick={() => setFrequency(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 frequency === option.value
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   frequency === option.value
-                    ? 'text-purple-700 dark:text-purple-300'
+                    ? 'text-primary-700 dark:text-primary-300'
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                {option.label}
+                {t(`settings.notifications.digest.freq_${option.value}`, option.label)}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {option.description}
+                {t(`settings.notifications.digest.freq_${option.value}_desc`, option.description)}
               </div>
             </button>
           ))}
@@ -162,21 +170,24 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
               onClick={() => setContent(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 content === option.value
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   content === option.value
-                    ? 'text-purple-700 dark:text-purple-300'
+                    ? 'text-primary-700 dark:text-primary-300'
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                {option.label}
+                {t(`settings.notifications.digest.content_${option.value}`, option.label)}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {option.description}
+                {t(
+                  `settings.notifications.digest.content_${option.value}_desc`,
+                  option.description
+                )}
               </div>
             </button>
           ))}
@@ -195,21 +206,21 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
               onClick={() => setFormat(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 format === option.value
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   format === option.value
-                    ? 'text-purple-700 dark:text-purple-300'
+                    ? 'text-primary-700 dark:text-primary-300'
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                {option.label}
+                {t(`settings.notifications.digest.format_${option.value}`, option.label)}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {option.description}
+                {t(`settings.notifications.digest.format_${option.value}_desc`, option.description)}
               </div>
             </button>
           ))}
@@ -221,7 +232,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -245,7 +256,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.notifications.digest.error', 'Failed to save digest preferences')}
         </div>

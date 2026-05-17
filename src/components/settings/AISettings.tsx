@@ -117,15 +117,22 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
   // New Provider Form
   const [showAddProvider, setShowAddProvider] = useState(false);
-  const [newProvider, setNewProvider] = useState<Partial<UserAIProvider>>({
-    provider: 'openai',
+  const createEmptyProviderForm = (
+    provider: UserAIProvider['provider'] = 'openai'
+  ): Partial<UserAIProvider> => ({
+    name: '',
+    provider,
+    apiKey: '',
+    endpoint: provider === 'ollama' ? 'http://localhost:11434' : '',
     isEnabled: true,
-    isLocal: false,
+    isLocal: provider === 'ollama',
   });
+  const [newProvider, setNewProvider] =
+    useState<Partial<UserAIProvider>>(createEmptyProviderForm());
 
   useEffect(() => {
     setShowAddProvider(false);
-    setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
+    setNewProvider(createEmptyProviderForm());
   }, [activeTab]);
 
   // Health Check State
@@ -134,6 +141,109 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
   // Proactivity Mode State
   const [proactivityMode, setProactivityMode] = useState<AIProactivityMode>('BALANCED');
   const [maxProactivity, setMaxProactivity] = useState<AIProactivityMode>('PROACTIVE');
+
+  const getUserAISetting = <T,>(settings: any, snakeKey: string, camelKey: string): T | undefined =>
+    settings?.[snakeKey] ?? settings?.[camelKey];
+
+  const applyPersistedUserAISettings = (settings: any) => {
+    if (!settings) return;
+
+    setPreferences((prev: any) => ({
+      ...prev,
+      responseStyle:
+        getUserAISetting(settings, 'response_style', 'responseStyle') ?? prev.responseStyle,
+      writingTone: getUserAISetting(settings, 'writing_tone', 'writingTone') ?? prev.writingTone,
+      preferredLanguage:
+        getUserAISetting(settings, 'preferred_language', 'preferredLanguage') ??
+        prev.preferredLanguage,
+      codeExplanations:
+        getUserAISetting(settings, 'code_explanations', 'codeExplanations') ??
+        prev.codeExplanations,
+      showSources: getUserAISetting(settings, 'show_sources', 'showSources') ?? prev.showSources,
+      modelTemperature:
+        getUserAISetting(settings, 'model_temperature', 'modelTemperature') ??
+        prev.modelTemperature,
+      maxTokens: getUserAISetting(settings, 'max_tokens', 'maxTokens') ?? prev.maxTokens,
+      topP: getUserAISetting(settings, 'top_p', 'topP') ?? prev.topP,
+      frequencyPenalty:
+        getUserAISetting(settings, 'frequency_penalty', 'frequencyPenalty') ??
+        prev.frequencyPenalty,
+      presencePenalty:
+        getUserAISetting(settings, 'presence_penalty', 'presencePenalty') ?? prev.presencePenalty,
+      systemInstructions:
+        getUserAISetting(settings, 'system_instructions', 'systemInstructions') ??
+        prev.systemInstructions,
+      enablePiiRedaction:
+        getUserAISetting(settings, 'enable_pii_redaction', 'enablePiiRedaction') ??
+        prev.enablePiiRedaction,
+      dataRetentionPolicy:
+        getUserAISetting(settings, 'data_retention_policy', 'dataRetentionPolicy') ??
+        prev.dataRetentionPolicy,
+      contextRetention:
+        getUserAISetting(settings, 'context_retention', 'contextRetention') ??
+        prev.contextRetention,
+      autoSuggestions:
+        getUserAISetting(settings, 'auto_suggestions', 'autoSuggestions') ?? prev.autoSuggestions,
+    }));
+
+    const persistedProactivity = getUserAISetting<AIProactivityMode>(
+      settings,
+      'proactivity_mode',
+      'proactivityMode'
+    );
+    const persistedVisibleModels = getUserAISetting<string[]>(
+      settings,
+      'visible_model_ids',
+      'visibleModelIds'
+    );
+    if (persistedProactivity) {
+      setProactivityMode(persistedProactivity);
+    }
+    if (Array.isArray(persistedVisibleModels)) {
+      setSelectedOrgModels(persistedVisibleModels);
+    }
+  };
+
+  const loadPersonalProviders = async () => {
+    const response = await Api.get('/settings/preferences/ai-providers').catch(() => null);
+    const serverProviders = Array.isArray(response?.providers) ? response.providers : [];
+    if (serverProviders.length > 0) {
+      setLocalProviders(serverProviders);
+      return serverProviders;
+    }
+
+    const perUserKey = `user_ai_providers:${currentUser.id}`;
+    const storedPerUser = localStorage.getItem(perUserKey);
+    const legacy = localStorage.getItem('user_ai_providers');
+    const raw = storedPerUser || legacy;
+    if (!raw) {
+      setLocalProviders([]);
+      return [];
+    }
+
+    try {
+      const migratedProviders = JSON.parse(raw);
+      if (Array.isArray(migratedProviders)) {
+        const persisted = await savePersonalProviders(migratedProviders);
+        localStorage.removeItem(perUserKey);
+        localStorage.removeItem('user_ai_providers');
+        return persisted;
+      }
+    } catch {
+      localStorage.removeItem(perUserKey);
+      localStorage.removeItem('user_ai_providers');
+    }
+
+    setLocalProviders([]);
+    return [];
+  };
+
+  const savePersonalProviders = async (providers: UserAIProvider[]) => {
+    const response = await Api.put('/settings/preferences/ai-providers', { providers });
+    const persisted = Array.isArray(response?.providers) ? response.providers : providers;
+    setLocalProviders(persisted);
+    return persisted;
+  };
 
   // Real-time Cost Tracking
   const {
@@ -151,11 +261,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     const initData = async () => {
       setLoadingModels(true);
       try {
-        // 1. Load Preferences
-        const prefRes = await Api.get('/settings/preferences');
-        if (prefRes.data?.ai) {
-          setPreferences((prev: any) => ({ ...prev, ...prefRes.data.ai }));
-        }
+        // 1. Load User AI Settings from the canonical server-backed API.
+        const initialUserSettings = await Api.getAIUserSettings().catch(() => null);
+        applyPersistedUserAISettings(initialUserSettings);
 
         // 2. Load Organization Providers
         const providers = await Api.getLLMProviders(true); // adminContext=true to get is_enabled_for_org
@@ -173,23 +281,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         }
 
         // 4. Load Local/Personal Providers
-        const perUserKey = `user_ai_providers:${currentUser.id}`;
-        const storedPerUser = localStorage.getItem(perUserKey);
-        if (storedPerUser) {
-          setLocalProviders(JSON.parse(storedPerUser));
-        } else {
-          // Back-compat: migrate legacy global key into per-user key once.
-          const legacy = localStorage.getItem('user_ai_providers');
-          if (legacy) {
-            try {
-              localStorage.setItem(perUserKey, legacy);
-              localStorage.removeItem('user_ai_providers');
-            } catch {
-              // ignore
-            }
-            setLocalProviders(JSON.parse(legacy));
-          }
-        }
+        await loadPersonalProviders();
 
         // 5. Fetch Real-time Health
         try {
@@ -201,21 +293,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
         // 6. Load User AI Settings (proactivity)
         try {
-          const userSettings = await fetch('/api/ai-settings/user', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }).then((r) => r.json());
-          if (userSettings.proactivityMode) {
-            setProactivityMode(userSettings.proactivityMode);
-          }
+          const userSettings = await Api.getAIUserSettings();
+          applyPersistedUserAISettings(userSettings);
         } catch (e) {
           console.error('Failed to load user AI settings', e);
         }
 
         // 7. Load Org Settings (for max proactivity)
         try {
-          const orgSettings = await fetch('/api/ai-settings/org/' + currentUser.organizationId, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }).then((r) => r.json());
+          const orgSettings = await Api.get(`/ai-settings/org/${currentUser.organizationId}`);
           if (orgSettings.defaultProactivityMode) {
             setMaxProactivity(orgSettings.defaultProactivityMode);
           }
@@ -224,42 +310,64 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         }
       } catch (e) {
         console.error('Failed to load AI settings', e);
-        toast.error('Failed to load settings');
+        toast.error(t('settings.ai.loadError', 'Failed to load settings'));
       } finally {
         setLoadingModels(false);
       }
     };
     initData();
-  }, [currentUser.aiConfig]);
+  }, [currentUser.aiConfig, t]);
 
   const savePreferences = async () => {
     setSaving(true);
     try {
-      await Api.put('/settings/preferences/ai', preferences);
-
-      // Save user AI settings (proactivity)
-      await fetch('/api/ai-settings/user', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ proactivityMode }),
+      // Save all user-editable AI settings through the canonical server-backed API.
+      await Api.updateAIUserSettings({
+        response_style: preferences.responseStyle,
+        writing_tone: preferences.writingTone,
+        preferred_language: preferences.preferredLanguage,
+        code_explanations: preferences.codeExplanations,
+        show_sources: preferences.showSources,
+        proactivity_mode: proactivityMode,
+        model_temperature: preferences.modelTemperature,
+        max_tokens: preferences.maxTokens,
+        top_p: preferences.topP,
+        frequency_penalty: preferences.frequencyPenalty,
+        presence_penalty: preferences.presencePenalty,
+        system_instructions: preferences.systemInstructions,
+        visible_model_ids: selectedOrgModels,
+        enable_pii_redaction: preferences.enablePiiRedaction,
+        data_retention_policy: preferences.dataRetentionPolicy,
+        context_retention: preferences.contextRetention,
+        auto_suggestions: preferences.autoSuggestions,
       });
+      await savePersonalProviders(localProviders);
+      const persistedUserSettings = await Api.getAIUserSettings().catch(() => null);
+      const persistedProactivity =
+        getUserAISetting<AIProactivityMode>(
+          persistedUserSettings,
+          'proactivity_mode',
+          'proactivityMode'
+        ) || proactivityMode;
+      const persistedVisibleModels =
+        getUserAISetting<string[]>(persistedUserSettings, 'visible_model_ids', 'visibleModelIds') ||
+        selectedOrgModels;
+      setProactivityMode(persistedProactivity);
+      setSelectedOrgModels(persistedVisibleModels);
+      applyPersistedUserAISettings(persistedUserSettings);
 
       const updatedAiConfig = {
         ...currentUser.aiConfig,
-        visibleModelIds: selectedOrgModels,
+        visibleModelIds: persistedVisibleModels,
       };
 
       onUpdateUser({ aiConfig: updatedAiConfig as any });
-      localStorage.setItem(`user_ai_providers:${currentUser.id}`, JSON.stringify(localProviders));
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-      toast.success('Configuration Saved');
+      toast.success(t('settings.ai.configurationSaved', 'Configuration saved'));
     } catch (e) {
-      toast.error('Failed to save configuration');
+      toast.error(t('settings.ai.configurationSaveError', 'Failed to save configuration'));
     } finally {
       setSaving(false);
     }
@@ -272,7 +380,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     setSaved(false);
   };
 
-  const handleAddProvider = () => {
+  const handleAddProvider = async () => {
     if (!newProvider.name || (!newProvider.apiKey && !newProvider.endpoint)) {
       toast.error('Please fill in required fields');
       return;
@@ -291,18 +399,26 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     };
 
     const updated = [...localProviders, provider];
-    setLocalProviders(updated);
-    localStorage.setItem(`user_ai_providers:${currentUser.id}`, JSON.stringify(updated));
+    try {
+      await savePersonalProviders(updated);
+    } catch {
+      toast.error(t('settings.ai.providerSaveError', 'Failed to save provider'));
+      return;
+    }
 
     setShowAddProvider(false);
-    setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
+    setNewProvider(createEmptyProviderForm());
     toast.success(isLocal ? 'Local provider added' : 'API key added');
   };
 
-  const removeLocalProvider = (id: string) => {
+  const removeLocalProvider = async (id: string) => {
     const updated = localProviders.filter((p) => p.id !== id);
-    setLocalProviders(updated);
-    localStorage.setItem(`user_ai_providers:${currentUser.id}`, JSON.stringify(updated));
+    try {
+      await savePersonalProviders(updated);
+    } catch {
+      toast.error(t('settings.ai.providerSaveError', 'Failed to save provider'));
+      return;
+    }
     toast.success('Provider removed');
   };
 
@@ -460,7 +576,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   id: 'PREMIUM',
                   label: 'Premium Tier',
                   desc: 'Highest quality output. Best for complex analysis and creativity.',
-                  icon: <Sparkles size={24} className="text-purple-400" />,
+                  icon: <Sparkles size={24} className="text-primary-400" />,
                   color: 'purple',
                   example: 'GPT-4-Turbo, Opus',
                 },
@@ -572,7 +688,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText size={16} className="text-purple-400" />
+                    <FileText size={16} className="text-primary-400" />
                     <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
                       Tokens
                     </span>
@@ -609,7 +725,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               {/* Usage by Tier */}
               <div className="bg-black/20 border border-white/10 rounded-xl p-6">
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <BarChart2 size={16} className="text-violet-400" />
+                  <BarChart2 size={16} className="text-primary-400" />
                   Usage by Tier
                 </h4>
                 <div className="space-y-3">
@@ -641,7 +757,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     Period: Jan 1 - Jan 31, 2026
                   </span>
-                  <button className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                  <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
                     View Full History <ChevronRight size={12} />
                   </button>
                 </div>
@@ -660,7 +776,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               />
               <button
                 onClick={() => {
-                  setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
+                  setNewProvider(createEmptyProviderForm('openai'));
                   setShowAddProvider(true);
                 }}
                 className="text-xs uppercase tracking-wider font-bold text-blue-400 hover:text-blue-300 border border-blue-500/30 px-4 py-2 rounded hover:bg-blue-500/10 transition-colors flex items-center gap-2"
@@ -784,7 +900,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => removeLocalProvider(p.id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-2 rounded hover:bg-rose-500/10 transition-colors"
                           title="Remove Key"
                         >
                           <Trash2 size={16} />
@@ -820,7 +936,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               {!showAddProvider && (
                 <button
                   onClick={() => {
-                    setNewProvider({ provider: 'ollama', isEnabled: true, isLocal: true });
+                    setNewProvider(createEmptyProviderForm('ollama'));
                     setShowAddProvider(true);
                   }}
                   className="text-xs uppercase tracking-wider font-bold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 px-4 py-2 rounded hover:bg-emerald-500/10 transition-colors flex items-center gap-2"
@@ -851,7 +967,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   {(currentUser.aiConfig as any)?.provider === 'ollama' ? (
                     <button
                       onClick={disableLocalInference}
-                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors"
+                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30 rounded-lg hover:bg-rose-500/10 transition-colors"
                     >
                       Disable
                     </button>
@@ -975,7 +1091,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                           )}
                           <button
                             onClick={() => removeLocalProvider(p.id)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                            className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-2 rounded hover:bg-rose-500/10 transition-colors"
                             title="Disconnect"
                           >
                             <Trash2 size={16} />
@@ -1062,10 +1178,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <label className="text-sm font-medium text-white flex items-center gap-2">
-                    <HardDrive size={16} className="text-purple-400" />
+                    <HardDrive size={16} className="text-primary-400" />
                     Max Output Tokens
                   </label>
-                  <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-purple-400">
+                  <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-primary-400">
                     {preferences.maxTokens ?? 4096}
                   </span>
                 </div>
@@ -1075,7 +1191,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })
                   }
-                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500/50 outline-none transition-all font-mono"
+                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none transition-all font-mono"
                 />
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
                   Maximum length of generated response.
@@ -1157,7 +1273,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   label: 'Deep Study',
                   desc: 'Kompleksowa analiza',
                   tokens: '1000-4000',
-                  icon: <Brain size={24} className="text-purple-400" />,
+                  icon: <Brain size={24} className="text-primary-400" />,
                   color: 'purple',
                 },
               ].map((mode) => (
@@ -1289,7 +1405,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     <span className="text-xs text-slate-400 dark:text-slate-500">
                       Deep Study Mode
                     </span>
-                    <span className="text-xs font-mono text-purple-400">
+                    <span className="text-xs font-mono text-primary-400">
                       {preferences.responseLength?.deepStudy || 'long'}
                     </span>
                   </div>
@@ -1297,7 +1413,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     type="range"
                     min="0"
                     max="2"
-                    className="w-full accent-purple-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                    className="w-full accent-primary-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                     value={['medium', 'long', 'comprehensive'].indexOf(
                       preferences.responseLength?.deepStudy || 'long'
                     )}
@@ -1528,12 +1644,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div
                 className={`p-4 rounded-xl border transition-all ${
                   proactivityMode === 'BALANCED'
-                    ? 'bg-violet-600/20 border-violet-500/50'
+                    ? 'bg-primary-600/20 border-primary-500/50'
                     : 'bg-white/5 border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Scale size={18} className="text-violet-400" />
+                  <Scale size={18} className="text-primary-400" />
                   <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
@@ -1612,7 +1728,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div className="p-6 rounded-xl border border-white/5 bg-slate-50/30 dark:bg-navy-950/20 hover:border-white/10 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
+                    <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400">
                       <Fingerprint size={20} />
                     </div>
                     <div>

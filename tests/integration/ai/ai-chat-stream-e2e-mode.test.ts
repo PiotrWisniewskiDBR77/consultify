@@ -33,6 +33,15 @@ vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', async () =>
 
 const { default: aiRouter } = await import('../../../server/src/routes/ai.routes.ts');
 
+function parseSseData(text: string): any[] {
+  return String(text || '')
+    .split('\n')
+    .filter((line) => line.startsWith('data: '))
+    .map((line) => line.slice('data: '.length).trim())
+    .filter((line) => line && line !== '[DONE]')
+    .map((line) => JSON.parse(line));
+}
+
 describe('AI chat stream (E2E_MODE deterministic)', () => {
   const origE2eMode = process.env.E2E_MODE;
   const origNodeEnv = process.env.NODE_ENV;
@@ -80,5 +89,31 @@ describe('AI chat stream (E2E_MODE deterministic)', () => {
     expect(res.text).toContain('data:');
     expect(res.text).toContain('E2E_OK:');
     expect(res.text).toContain('[DONE]');
+
+    const events = parseSseData(res.text);
+    const trustEvent = events.find((event) => event?.type === 'trust_bundle');
+    expect(trustEvent?.bundle).toEqual(
+      expect.objectContaining({
+        version: 'TrustBundleV1',
+        answerId: expect.any(String),
+        conversationId: null,
+        messageId: null,
+        assistant: 'teresa',
+        assistantSurface: 'workspace_copilot',
+        actionSurface: 'governed_execution',
+        sourceClasses: ['general'],
+        citationsCount: 0,
+        sourceLedgerSummary: null,
+        confidence: expect.any(Number),
+        tokens: expect.objectContaining({
+          input: expect.any(Number),
+          output: expect.any(Number),
+          total: expect.any(Number),
+        }),
+        warnings: expect.arrayContaining(['deterministic_stream']),
+        degraded: expect.objectContaining({ mode: 'e2e_mode' }),
+      })
+    );
+    expect(trustEvent?.bundle).not.toHaveProperty('sourceLedger');
   });
 });

@@ -66,7 +66,7 @@ export const ExecutionView: React.FC = () => {
       </div>
 
       {/* Executive Summary */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl p-6 text-white">
         <h4 className="text-lg font-bold mb-4">Executive Summary</h4>
         <div className="grid grid-cols-4 gap-6">
           <div>
@@ -136,8 +136,8 @@ export const ExecutionView: React.FC = () => {
               Budget variance at 8% - mitigation required
             </li>
             <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mt-0.5 shrink-0">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
+              <div className="w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-900/20 flex items-center justify-center mt-0.5 shrink-0">
+                <div className="w-2 h-2 rounded-full bg-rose-500" />
               </div>
               1 corrective action overdue
             </li>

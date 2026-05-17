@@ -33,35 +33,40 @@ router.get(
     }
 
     try {
-      // Get organization with owner info
+      // Get organization first. Some live schemas do not expose legacy owner_id,
+      // so ownership is resolved from organization_members below.
       const org = await dbGet<{
         id: string;
         name: string;
-        owner_id: string;
         created_at: string;
-      }>(`SELECT id, name, owner_id, created_at FROM organizations WHERE id = ?`, [orgId]);
+      }>(`SELECT id, name, created_at FROM organizations WHERE id = ?`, [orgId], {
+        fallback: false,
+      });
 
       if (!org) {
         return res.status(404).json({ error: 'Organization not found' });
       }
 
-      // Get owner user details
-      let owner = null;
-      if (org.owner_id) {
-        owner = await dbGet<{
-          id: string;
-          email: string;
-          first_name: string;
-          last_name: string;
-          created_at: string;
-        }>(
-          `SELECT id, email, first_name, last_name, created_at 
-                     FROM users WHERE id = ?`,
-          [org.owner_id]
-        );
-      }
+      // Resolve owner from canonical organization membership.
+      let owner = await dbGet<{
+        id: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+        created_at: string;
+      }>(
+        `SELECT u.id, u.email, u.first_name, u.last_name, COALESCE(m.created_at, u.created_at) AS created_at
+         FROM organization_members m
+         JOIN users u ON u.id = m.user_id
+         WHERE m.organization_id = ?
+           AND UPPER(COALESCE(m.role, '')) = 'OWNER'
+           AND UPPER(COALESCE(m.status, 'ACTIVE')) = 'ACTIVE'
+         ORDER BY COALESCE(m.created_at, u.created_at) ASC
+         LIMIT 1`,
+        [orgId]
+      );
 
-      // If no owner set, get the first ADMIN
+      // If no owner membership exists, get the first admin-like member.
       if (!owner) {
         owner = await dbGet<{
           id: string;
@@ -70,9 +75,14 @@ router.get(
           last_name: string;
           created_at: string;
         }>(
-          `SELECT id, email, first_name, last_name, created_at 
-                     FROM users WHERE organization_id = ? AND role = 'ADMIN' 
-                     ORDER BY created_at ASC LIMIT 1`,
+          `SELECT u.id, u.email, u.first_name, u.last_name, COALESCE(m.created_at, u.created_at) AS created_at
+           FROM organization_members m
+           JOIN users u ON u.id = m.user_id
+           WHERE m.organization_id = ?
+             AND UPPER(COALESCE(m.role, '')) IN ('ADMIN', 'OWNER')
+             AND UPPER(COALESCE(m.status, 'ACTIVE')) = 'ACTIVE'
+           ORDER BY COALESCE(m.created_at, u.created_at) ASC
+           LIMIT 1`,
           [orgId]
         );
       }

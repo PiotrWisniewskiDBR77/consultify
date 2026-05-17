@@ -251,7 +251,7 @@ export const WebhooksPanel: React.FC = () => {
 
     if (webhook.last_delivery_status === 'failed') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/20 text-rose-400">
           <AlertTriangle size={14} />
           Failing
         </span>
@@ -281,14 +281,14 @@ export const WebhooksPanel: React.FC = () => {
               placeholder="Search webhooks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
           <select
             value={filterOrgId}
             onChange={(e) => setFilterOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -315,7 +315,7 @@ export const WebhooksPanel: React.FC = () => {
               setEditingWebhook(null);
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium transition-colors"
           >
             <Plus size={18} />
             Create Webhook
@@ -326,7 +326,7 @@ export const WebhooksPanel: React.FC = () => {
       {/* Webhooks List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredWebhooks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
@@ -365,7 +365,7 @@ export const WebhooksPanel: React.FC = () => {
                     {webhook.events?.map((event) => (
                       <span
                         key={event}
-                        className="px-2 py-1 bg-violet-500/10 text-violet-400 rounded text-xs"
+                        className="px-2 py-1 bg-primary-500/10 text-primary-400 rounded text-xs"
                       >
                         {event}
                       </span>
@@ -420,7 +420,7 @@ export const WebhooksPanel: React.FC = () => {
                   <button
                     onClick={() => handleDeleteWebhook(webhook.id)}
                     disabled={deletingIds.has(webhook.id)}
-                    className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 hover:bg-rose-500/10 text-rose-400 rounded-lg transition-colors disabled:opacity-50"
                     title="Delete"
                   >
                     {deletingIds.has(webhook.id) ? (
@@ -454,7 +454,7 @@ export const WebhooksPanel: React.FC = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -472,7 +472,7 @@ export const WebhooksPanel: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="My Webhook"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                 />
               </div>
 
@@ -483,7 +483,7 @@ export const WebhooksPanel: React.FC = () => {
                   value={formData.url}
                   onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
                   placeholder="https://example.com/webhook"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none font-mono text-sm"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none font-mono text-sm"
                 />
               </div>
 
@@ -496,7 +496,7 @@ export const WebhooksPanel: React.FC = () => {
                   value={formData.secret}
                   onChange={(e) => setFormData((prev) => ({ ...prev, secret: e.target.value }))}
                   placeholder="Signing secret for verification"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                 />
               </div>
 
@@ -521,7 +521,7 @@ export const WebhooksPanel: React.FC = () => {
                             }));
                           }
                         }}
-                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500"
+                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-primary-500"
                       />
                       <span className="text-sm text-slate-300 group-hover:text-white">
                         {event.label}
@@ -547,7 +547,7 @@ export const WebhooksPanel: React.FC = () => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, retryCount: parseInt(e.target.value) }))
                     }
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                   />
                 </div>
                 <div>
@@ -563,7 +563,7 @@ export const WebhooksPanel: React.FC = () => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, timeoutMs: parseInt(e.target.value) }))
                     }
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                   />
                 </div>
               </div>
@@ -583,7 +583,7 @@ export const WebhooksPanel: React.FC = () => {
               <button
                 onClick={handleCreateWebhook}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
               >
                 {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                 {editingWebhook ? 'Update' : 'Create'}

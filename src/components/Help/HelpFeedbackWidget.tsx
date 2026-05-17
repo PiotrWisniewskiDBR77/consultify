@@ -142,7 +142,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
         <button
           onClick={() => handleClick(false)}
           disabled={isSubmitting}
-          className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
           title={tTrans.no}
         >
           <ThumbsDown size={16} />
@@ -192,11 +192,11 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={tTrans.commentPlaceholder}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               rows={3}
             />
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-sm text-rose-500">{error}</p>}
 
             <div className="flex justify-end gap-2">
               <button
@@ -209,7 +209,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               <button
                 onClick={handleCommentSubmit}
                 disabled={isSubmitting || !comment.trim()}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 <Send size={14} />
                 {tTrans.submit}
@@ -241,14 +241,14 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               <button
                 onClick={() => handleClick(false)}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-all disabled:opacity-50"
               >
                 <ThumbsDown size={18} />
                 <span>{tTrans.no}</span>
               </button>
             </div>
 
-            {error && <p className="text-center text-sm text-red-500">{error}</p>}
+            {error && <p className="text-center text-sm text-rose-500">{error}</p>}
           </motion.div>
         )}
       </AnimatePresence>

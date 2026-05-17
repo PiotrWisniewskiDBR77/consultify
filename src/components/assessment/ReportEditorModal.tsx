@@ -507,7 +507,7 @@ The assessment reveals a total gap of [X] points between current state and targe
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-red-700 dark:text-red-400">
+          <div className="mx-6 mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg flex items-center gap-2 text-rose-700 dark:text-rose-400">
             <AlertCircle size={16} />
             <span className="text-sm">{error}</span>
           </div>
@@ -560,7 +560,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                 <button
                   onClick={generateAllSections}
                   disabled={!!isGeneratingAI}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-blue-600 text-white rounded-lg hover:from-primary-700 hover:to-blue-700 transition-all disabled:opacity-50"
                 >
                   <Sparkles size={16} />
                   Generate All with AI
@@ -584,7 +584,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                           {section.title}
                         </span>
                         {section.aiGenerated && (
-                          <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full">
+                          <span className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full">
                             AI Generated
                           </span>
                         )}
@@ -615,7 +615,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                           <button
                             onClick={() => generateAIContent(section.id)}
                             disabled={isGeneratingAI === section.id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors disabled:opacity-50"
                           >
                             {isGeneratingAI === section.id ? (
                               <Loader2 size={14} className="animate-spin" />

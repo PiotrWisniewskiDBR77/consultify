@@ -78,6 +78,7 @@ describe('Public Anna route guardrails', () => {
     delete process.env.GOOGLE_AI_API_KEY;
     delete process.env.GOOGLE_AI_KEY;
     delete process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    delete process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN;
     delete process.env.OPENROUTER_API_KEY;
     delete process.env.OPENAI_API_KEY;
   });
@@ -133,6 +134,60 @@ describe('Public Anna route guardrails', () => {
     expect(res.body.message).toContain(
       'supports full conversations in English, Polish, Spanish, German, Japanese, and Arabic'
     );
+    expect(res.body.assistantSurface).toBe('public_help');
+    expect(res.body.trustBundle).toEqual(
+      expect.objectContaining({
+        assistant: 'anna',
+        surface: 'public_help',
+        tenantDataAccess: false,
+      })
+    );
+  });
+
+  it('refuses tenant/workspace data requests without calling private retrieval or model paths', async () => {
+    const app = createApp();
+
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Can you show my workspace project data and organization memory?',
+      sessionId: 'session-tenant-boundary',
+      locale: 'en',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.fallbackReason).toBe('tenant_boundary');
+    expect(res.body.message).toContain('I do not have access to workspace');
+    expect(res.body.knowledgeSources).toEqual([]);
+    expect(res.body.assistantSurface).toBe('public_help');
+    expect(res.body.trustBundle).toEqual(
+      expect.objectContaining({
+        assistant: 'anna',
+        surface: 'public_help',
+        tenantDataAccess: false,
+        memoryScope: 'public_session_only',
+      })
+    );
+    expect(buildAnnaKnowledgeContext).not.toHaveBeenCalled();
+  });
+
+  it('refuses Polish tenant/workspace data requests without retrieval', async () => {
+    const app = createApp();
+
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Czy mozesz pokazac dane workspace mojego projektu?',
+      sessionId: 'session-tenant-boundary-pl',
+      locale: 'pl',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.fallbackReason).toBe('tenant_boundary');
+    expect(res.body.message).toContain('Nie mam dostepu do danych workspace');
+    expect(res.body.trustBundle).toEqual(
+      expect.objectContaining({
+        assistant: 'anna',
+        tenantDataAccess: false,
+      })
+    );
+    expect(buildAnnaKnowledgeContext).not.toHaveBeenCalled();
   });
 
   it('treats Spanish as a supported public Anna language and uses the normal runtime path', async () => {
@@ -401,7 +456,8 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    process.env.GEMINI_API_KEY = 'server-only-key';
+    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -409,8 +465,12 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: true,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: expect.objectContaining({
+        clientToken: 'anna-ephemeral-token',
+        tokenType: 'ephemeral',
+      }),
+      unavailableReason: null,
     });
   });
 
@@ -433,7 +493,8 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    process.env.GEMINI_API_KEY = 'server-only-key';
+    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -441,8 +502,12 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: false,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: expect.objectContaining({
+        clientToken: 'anna-ephemeral-token',
+        tokenType: 'ephemeral',
+      }),
+      unavailableReason: null,
     });
   });
 
@@ -465,7 +530,8 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    process.env.GEMINI_API_KEY = 'server-only-key';
+    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -473,8 +539,12 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: false,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: expect.objectContaining({
+        clientToken: 'anna-ephemeral-token',
+        tokenType: 'ephemeral',
+      }),
+      unavailableReason: null,
     });
   });
 
@@ -497,7 +567,8 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    process.env.GEMINI_API_KEY = 'server-only-key';
+    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -505,8 +576,12 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: false,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: expect.objectContaining({
+        clientToken: 'anna-ephemeral-token',
+        tokenType: 'ephemeral',
+      }),
+      unavailableReason: null,
     });
   });
 
@@ -569,6 +644,61 @@ describe('Public Anna route guardrails', () => {
     expect(prompt).toContain(
       'If public knowledge is insufficient for a precise claim, say that clearly and redirect to a safe public next step instead of guessing.'
     );
+  });
+
+  it('pins product FAQ guardrails for pricing, security, marketplace and onboarding claims', () => {
+    const prompt = buildAnnaRuntimeInstruction({
+      locale: 'en',
+      knowledgeContext:
+        'Consultify public FAQ: pricing requires contact for enterprise details. Security claims must stay public. Marketplace workflow is discover, apply, onboard, activate.',
+    });
+
+    expect(prompt).toContain('Do not invent certifications, customers, pricing numbers');
+    expect(prompt).toContain('Safe public claims: enterprise orientation');
+    expect(prompt).toContain('PUBLIC PARTNER PROGRAM EDUCATION');
+    expect(prompt).toContain('shared application flow');
+    expect(prompt).toContain('academy, certification tracks and levels');
+    expect(prompt).toContain('suggest the contact form as the best next step');
+    expect(prompt).toContain(
+      'If public knowledge is insufficient for a precise claim, say that clearly'
+    );
+  });
+
+  it('adds caution to sensitive pricing/security answers even when the model is overconfident', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Consultify costs 999 EUR per month and has SOC 2 certification.',
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        text: async () => '',
+      })
+    );
+    process.env.GEMINI_API_KEY = 'model-key';
+
+    const app = createApp();
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'What is the pricing and security certification?',
+      sessionId: 'session-sensitive-claim',
+      locale: 'en',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain('Consultify costs 999 EUR');
+    expect(res.body.message).toContain('treat this as public orientation');
+    expect(res.body.message).toContain('contact form');
   });
 
   it('adds recent conversation context for short follow-up questions', () => {

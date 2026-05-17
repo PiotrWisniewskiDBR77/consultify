@@ -34,12 +34,12 @@ interface AuditLogViewerProps {
 const actionColors: Record<string, string> = {
   CREATE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   UPDATE: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  DELETE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  PUBLISH: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  DELETE: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
+  PUBLISH: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400',
   TOGGLE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
   GRANT_PERMISSION: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-  REVOKE_PERMISSION: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  BREAK_GLASS_START: 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300',
+  REVOKE_PERMISSION: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  BREAK_GLASS_START: 'bg-rose-200 text-rose-900 dark:bg-rose-900/50 dark:text-rose-300',
   BREAK_GLASS_CLOSE: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
 };
 
@@ -240,7 +240,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400">
           {error}
         </div>
       )}

@@ -52,23 +52,22 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
           className={`
             fixed bottom-6 left-1/2 -translate-x-1/2 z-50
             flex items-center gap-3 px-4 py-2.5
-            bg-primary-600 dark:bg-navy-800
-            border border-primary-700 dark:border-navy-600
+            bg-white dark:bg-navy-800
+            border border-slate-200 dark:border-navy-600
             rounded-xl shadow-xl
-            text-white
             ${className}
           `}
           style={mobileBottomOffset ? { bottom: `${mobileBottomOffset}px` } : undefined}
         >
           {/* Selection Count */}
-          <div className="flex items-center gap-2 pr-3 border-r border-primary-500/60 dark:border-navy-600">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-primary-700 dark:bg-primary-500 dark:text-white text-xs font-bold">
+          <div className="flex items-center gap-2 pr-3 border-r border-slate-200 dark:border-navy-600">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500 text-white text-xs font-medium">
               {selectedCount}
             </span>
-            <span className="text-sm font-medium text-white dark:text-slate-300">selected</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">selected</span>
             <button
               onClick={onClearSelection}
-              className="p-1 rounded text-white/80 hover:text-white hover:bg-white/10 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-navy-700"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               title="Clear selection"
             >
               <X size={14} />
@@ -85,11 +84,10 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                 className={`
                   flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
                   transition-colors
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-600
                   ${
                     action.variant === 'danger'
-                      ? 'text-red-100 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/10'
-                      : 'text-white hover:bg-white/10 dark:text-slate-300 dark:hover:bg-navy-700'
+                      ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }
                   ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
@@ -105,7 +103,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
               <div className="relative">
                 <button
                   onClick={() => setShowMoreActions(!showMoreActions)}
-                  className="p-2 rounded-lg text-white/90 hover:bg-white/10 dark:text-slate-500 dark:hover:bg-navy-700"
+                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700"
                 >
                   <MoreHorizontal size={16} />
                 </button>
@@ -135,7 +133,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                               w-full flex items-center gap-2 px-3 py-2 text-sm text-left
                               ${
                                 action.variant === 'danger'
-                                  ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+                                  ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10'
                                   : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
                               }
                               ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}

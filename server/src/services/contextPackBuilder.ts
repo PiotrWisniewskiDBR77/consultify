@@ -46,6 +46,8 @@ export interface ContextPack {
     total_source_artifacts: number;
     confidence_score: number;
     extraction_warnings: string[];
+    source_coverage_map?: Record<string, { extracted: boolean; warnings: string[] }>;
+    data_gap_register?: Array<{ artifact_id: string; artifact_type: string; issue: string }>;
   };
 }
 
@@ -73,6 +75,8 @@ export async function buildContextPack(
       total_source_artifacts: sourceRefs.length,
       confidence_score: 1.0,
       extraction_warnings: [],
+      source_coverage_map: {},
+      data_gap_register: [],
     },
   };
 
@@ -90,15 +94,33 @@ export async function buildContextPack(
   }
 
   for (const ref of sourceRefs) {
+    if (pack.metadata.source_coverage_map) {
+      pack.metadata.source_coverage_map[`${ref.artifact_type}:${ref.artifact_id}`] = {
+        extracted: false,
+        warnings: [],
+      };
+    }
     try {
       await extractFromSource(pack, ref, organizationId);
+      const key = `${ref.artifact_type}:${ref.artifact_id}`;
+      if (pack.metadata.source_coverage_map?.[key]) {
+        pack.metadata.source_coverage_map[key].extracted = true;
+      }
     } catch (error) {
       logger.warn(`[ContextPack] Failed to extract from ${ref.artifact_type}:${ref.artifact_id}`, {
         error,
       });
-      pack.metadata.extraction_warnings.push(
-        `Failed to extract data from ${ref.artifact_name} (${ref.artifact_type})`
-      );
+      const warning = `Failed to extract data from ${ref.artifact_name} (${ref.artifact_type})`;
+      pack.metadata.extraction_warnings.push(warning);
+      const key = `${ref.artifact_type}:${ref.artifact_id}`;
+      if (pack.metadata.source_coverage_map?.[key]) {
+        pack.metadata.source_coverage_map[key].warnings.push(warning);
+      }
+      pack.metadata.data_gap_register?.push({
+        artifact_id: ref.artifact_id,
+        artifact_type: ref.artifact_type,
+        issue: warning,
+      });
       pack.metadata.confidence_score -= 0.1;
     }
   }

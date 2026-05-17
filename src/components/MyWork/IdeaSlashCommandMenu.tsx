@@ -294,7 +294,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
     >
       <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
         <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-violet-500 shrink-0" />
+          <Sparkles size={14} className="text-primary-500 shrink-0" />
           <input
             ref={inputRef}
             value={query}
@@ -327,11 +327,11 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
                   onMouseEnter={() => setSelectedIdx(idx)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
                     isSelected
-                      ? 'bg-violet-50 dark:bg-violet-900/20'
+                      ? 'bg-primary-50 dark:bg-primary-900/20'
                       : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                   }`}
                 >
-                  <Icon size={14} className={isSelected ? 'text-violet-500' : 'text-slate-400'} />
+                  <Icon size={14} className={isSelected ? 'text-primary-500' : 'text-slate-400'} />
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
                       {isPl ? cmd.labelPl : cmd.labelEn}

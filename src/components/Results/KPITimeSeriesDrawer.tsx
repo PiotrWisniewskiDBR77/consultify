@@ -613,12 +613,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         label: t('results.columns.current', 'Current'),
         value:
           kpi.latestValue != null ? `${kpi.latestValue}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
-        color: kpi.isOnTarget ? 'text-emerald-400' : 'text-red-400',
+        color: kpi.isOnTarget ? 'text-emerald-400' : 'text-rose-400',
       },
       {
         label: t('results.drawer.gap', 'Gap'),
         value: gap != null ? `${gap > 0 ? '+' : ''}${gap}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
-        color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-red-400') : undefined,
+        color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-rose-400') : undefined,
       },
     ];
   }, [kpi, t]);
@@ -810,7 +810,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         hint: previous
           ? `${measurementLabel(previous)} -> ${measurementLabel(latest!)}`
           : t('results.drawer.periodOnPeriodHint', 'Need at least two measurements'),
-        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-red-400',
+        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-rose-400',
         icon: <GitBranch size={14} className="text-sky-400" />,
       },
       {
@@ -823,7 +823,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             : achievement >= 100
               ? 'text-emerald-400'
               : 'text-amber-400',
-        icon: <Target size={14} className="text-violet-400" />,
+        icon: <Target size={14} className="text-primary-400" />,
       },
       {
         label: t('results.drawer.projection', 'Projection'),
@@ -837,7 +837,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             ? undefined
             : projection >= Number(kpi.targetValue)
               ? 'text-emerald-400'
-              : 'text-red-400',
+              : 'text-rose-400',
         icon: <TrendingUp size={14} className="text-emerald-400" />,
       },
     ] satisfies MetricStat[];
@@ -896,11 +896,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color:
           kpi.status === 'below'
-            ? 'text-red-400'
+            ? 'text-rose-400'
             : kpi.status === 'on-target'
               ? 'text-emerald-400'
               : 'text-slate-400',
-        icon: <AlertTriangle size={14} className="text-red-400" />,
+        icon: <AlertTriangle size={14} className="text-rose-400" />,
       },
       {
         label: t('results.drawer.alertReconciliation', 'Reconciliation'),
@@ -913,10 +913,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color: openCase
           ? openCase.severity === 'RED'
-            ? 'text-red-400'
+            ? 'text-rose-400'
             : 'text-amber-400'
           : 'text-emerald-400',
-        icon: <ShieldAlert size={14} className="text-cyan-400" />,
+        icon: <ShieldAlert size={14} className="text-blue-400" />,
       },
       {
         label: t('results.drawer.alertActionAgeing', 'Action ageing'),
@@ -930,9 +930,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color:
           actionAgeing != null && actionAgeing > 7
-            ? 'text-red-400'
+            ? 'text-rose-400'
             : 'text-slate-900 dark:text-white',
-        icon: <Calendar size={14} className="text-violet-400" />,
+        icon: <Calendar size={14} className="text-primary-400" />,
       },
     ] satisfies MetricStat[];
   }, [kpi, openCase, t]);
@@ -997,7 +997,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
   const caseBadgeCls =
     openCase?.severity === 'RED'
-      ? 'bg-red-500/10 text-red-400 border-red-500/30'
+      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
       : openCase?.severity === 'AMBER'
         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
         : 'bg-slate-500/10 text-slate-400 border-slate-500/30';
@@ -1148,7 +1148,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       kpi.isOnTarget
                         ? 'bg-emerald-500/10 text-emerald-400'
                         : kpi.latestValue != null
-                          ? 'bg-red-500/10 text-red-400'
+                          ? 'bg-rose-500/10 text-rose-400'
                           : 'bg-slate-500/10 text-slate-400'
                     }`}
                   >
@@ -1157,7 +1157,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         kpi.isOnTarget
                           ? 'bg-emerald-500'
                           : kpi.latestValue != null
-                            ? 'bg-red-500'
+                            ? 'bg-rose-500'
                             : 'bg-slate-400'
                       }`}
                     />
@@ -1334,7 +1334,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'}`}
+                          className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500'}`}
                         />
                         {openCase.severity} · {openCase.status}
                       </span>
@@ -1562,7 +1562,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           >
                             <div
                               className={`w-full rounded-t transition-all ${
-                                isAboveTarget ? 'bg-emerald-500/60' : 'bg-red-500/40'
+                                isAboveTarget ? 'bg-emerald-500/60' : 'bg-rose-500/40'
                               } group-hover/bar:opacity-80`}
                               style={{ height: `${Math.max(pct, 2)}%` }}
                             />
@@ -1722,7 +1722,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                     kpi?.targetValue != null &&
                                     Number(m.value) >= Number(kpi.targetValue)
                                       ? 'text-emerald-400'
-                                      : 'text-red-400'
+                                      : 'text-rose-400'
                                   }
                                 >
                                   {kpi?.targetValue != null
@@ -2145,13 +2145,13 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   {normalizedSection === 'definition' && (
                     <div
                       id="kpi-drawer-danger"
-                      className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 scroll-mt-4"
+                      className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 scroll-mt-4"
                     >
                       <button
                         type="button"
                         disabled={deleting}
                         onClick={() => void handleDeleteKpi()}
-                        className="w-full h-9 text-sm font-medium rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="w-full h-9 text-sm font-medium rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-300 hover:bg-rose-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                       >
                         <Trash2 size={16} />
                         {deleting
@@ -2230,7 +2230,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                               type="button"
                               disabled={mappingBusy}
                               onClick={() => void handleUnlinkMapping(m.id)}
-                              className="text-slate-400 hover:text-red-400 transition-colors disabled:opacity-60"
+                              className="text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-60"
                               title={t('common.remove', 'Remove')}
                             >
                               <X size={12} />

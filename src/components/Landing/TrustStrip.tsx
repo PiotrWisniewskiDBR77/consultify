@@ -17,7 +17,7 @@ export const TrustStrip: React.FC = () => {
     {
       icon: Lock,
       label: t('landing.compliance.badges.encryption', 'AES-256 encryption'),
-      color: 'text-cyan-600 dark:text-cyan-400',
+      color: 'text-blue-600 dark:text-blue-400',
       glowColor: 'rgba(34,211,238,0.20)',
       borderColor: 'rgba(34,211,238,0.20)',
     },
@@ -41,7 +41,7 @@ export const TrustStrip: React.FC = () => {
     {
       icon: Server,
       label: t('landing.compliance.badges.dedicated', 'Dedicated API'),
-      color: 'text-violet-600 dark:text-violet-400',
+      color: 'text-primary-600 dark:text-primary-400',
       glowColor: 'rgba(168,85,247,0.18)',
       borderColor: 'rgba(168,85,247,0.18)',
     },

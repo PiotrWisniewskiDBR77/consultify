@@ -87,7 +87,7 @@
 }
 
 .progress-fill.exceeded {
-    background: linear-gradient(90deg, #dc2626, #ef4444);
+    background: linear-gradient(90deg, #dc2626, #f43f5e);
 }
 
 .percentage {

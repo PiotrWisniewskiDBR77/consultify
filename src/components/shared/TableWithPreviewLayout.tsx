@@ -297,7 +297,12 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden gap-1.5" tabIndex={0}>
       {/* Table area */}
-      <div className="flex-1 min-w-0 overflow-auto">{children}</div>
+      <div
+        className="app-table-scrollbar flex-1 min-w-0 overflow-auto pr-2 [scrollbar-gutter:stable]"
+        style={{ scrollbarGutter: 'stable' }}
+      >
+        {children}
+      </div>
 
       {/* Pinned preview pane (comparison mode) */}
       {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode && !isMobile ? (

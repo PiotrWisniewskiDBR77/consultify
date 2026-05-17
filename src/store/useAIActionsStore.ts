@@ -89,7 +89,8 @@ export const useAIActionsStore = create<AIActionsState>()(
         set({ isLoading: true, error: null });
         try {
           const result = await Api.getPendingAIActions(projectId);
-          const actions = result.actions?.map(mapApiAction) || [];
+          const rawActions = Array.isArray(result) ? result : result.actions || [];
+          const actions = rawActions.map(mapApiAction);
           const pendingCount = actions.filter((a: any) => a.status === 'proposed').length;
 
           set({
@@ -143,10 +144,8 @@ export const useAIActionsStore = create<AIActionsState>()(
           pendingCount: state.pendingCount + 1,
         }));
 
-        // If no confirmation required, auto-execute
-        if (!action.requiresConfirmation) {
-          get().executeAction(action.id);
-        }
+        // Wave 3: local proposals are never executed by background shortcut. Even low-risk work
+        // must move through explicit review and execution in the AIRun ledger.
       },
 
       approveAction: async (actionId: string) => {
@@ -155,15 +154,20 @@ export const useAIActionsStore = create<AIActionsState>()(
           return { success: false, error: 'Action not found' };
         }
 
+        const result = await Api.approveAIAction(actionId, action.conversationId);
+        if (result?.success === false) {
+          return { success: false, error: result.error || 'Approval failed' };
+        }
+
         set((state) => ({
           actions: state.actions.map((a) =>
             a.id === actionId
-              ? { ...a, status: 'approved' as AIActionStatus, decidedAt: new Date() }
+              ? { ...a, status: 'approved' as AIActionStatus, decidedAt: new Date(), result }
               : a
           ),
         }));
 
-        return get().executeAction(actionId);
+        return result;
       },
 
       editAction: async (actionId: string, editedPayload: AIActionPayload) => {
@@ -187,8 +191,8 @@ export const useAIActionsStore = create<AIActionsState>()(
           selectedActionId: null,
         }));
 
-        // Execute with edited payload
-        await get().executeAction(actionId);
+        // Wave 3: editing/revising a proposal updates the preview only. The
+        // user must still explicitly approve and execute the final version.
       },
 
       dismissAction: async (actionId: string, reason?: string) => {
@@ -236,7 +240,7 @@ export const useAIActionsStore = create<AIActionsState>()(
         }
 
         try {
-          const result = await Api.executeAIAction(actionId, action.payload);
+          const result = await Api.executeAIAction(actionId, action.payload, action.conversationId);
 
           set((state) => ({
             actions: state.actions.map((a) =>
@@ -359,10 +363,23 @@ export const useAIActionsStore = create<AIActionsState>()(
 // ============================================================================
 
 function mapApiAction(api: any): AIAction {
+  const lifecycle = String(api.status || '').toLowerCase();
+  const status: AIActionStatus =
+    lifecycle === 'pending_review' || lifecycle === 'pending' || lifecycle === 'proposed'
+      ? 'proposed'
+      : lifecycle === 'rejected'
+        ? 'dismissed'
+        : lifecycle === 'audited' || lifecycle === 'executed'
+          ? 'executed'
+          : lifecycle === 'approved'
+            ? 'approved'
+            : lifecycle === 'failed'
+              ? 'failed'
+              : (lifecycle as AIActionStatus);
   return {
     id: api.id,
-    type: api.type as AIActionType,
-    status: api.status as AIActionStatus,
+    type: (api.type || api.actionType || '').toLowerCase() as AIActionType,
+    status,
     title: api.title,
     description: api.description,
     icon: api.icon,

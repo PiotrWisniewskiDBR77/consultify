@@ -34,7 +34,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
       return (
         <div className="flex items-center gap-2 min-w-0">
           {item.isHighlighted && (
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 flex-shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
           )}
           {item.icon && <span className="flex-shrink-0 text-slate-400">{item.icon}</span>}
           <span className="text-sm text-slate-900 dark:text-white truncate font-medium">
@@ -66,7 +66,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
       return item.dueDate ? (
         <span
           className={`text-xs font-medium ${
-            item.isOverdue ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'
+            item.isOverdue ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'
           }`}
         >
           {item.dueDate}
@@ -150,7 +150,7 @@ const SectionGroup: React.FC<{
               key={item.id}
               onClick={() => onItemClick?.(item)}
               className={`w-full flex items-center gap-0 px-3 py-1.5 text-left border-b border-slate-100 dark:border-navy-800 transition-colors hover:bg-slate-50 dark:hover:bg-navy-800/40 ${
-                item.isHighlighted ? 'bg-cyan-50/30 dark:bg-cyan-900/5' : ''
+                item.isHighlighted ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''
               }`}
             >
               {columns.map((col) => (
@@ -227,7 +227,7 @@ export const ClickUpListView: React.FC<ClickUpViewProps> = ({
                   key={item.id}
                   onClick={() => onItemClick?.(item)}
                   className={`w-full flex items-center gap-0 px-3 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-navy-800/40 ${
-                    item.isHighlighted ? 'bg-cyan-50/30 dark:bg-cyan-900/5' : ''
+                    item.isHighlighted ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''
                   }`}
                 >
                   {cols.map((col) => (

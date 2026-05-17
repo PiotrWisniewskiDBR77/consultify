@@ -45,15 +45,15 @@ const TransformationTypeCard: React.FC<{
   }
 
   const typeIcons: Record<TransformationType, React.ReactNode> = {
-    strategic: <Target className="text-purple-500" size={24} />,
+    strategic: <Target className="text-primary-500" size={24} />,
     operational: <Wrench className="text-blue-500" size={24} />,
-    digital: <Sparkles className="text-cyan-500" size={24} />,
+    digital: <Sparkles className="text-blue-500" size={24} />,
   };
 
   const typeColors: Record<TransformationType, string> = {
-    strategic: 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20',
+    strategic: 'border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20',
     operational: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20',
-    digital: 'border-cyan-200 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-900/20',
+    digital: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20',
   };
 
   return (
@@ -100,7 +100,7 @@ const AssessmentItem: React.FC<{ frameworkId: string }> = ({ frameworkId }) => {
 
   return (
     <div className="flex items-center gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-      <ClipboardList size={16} className="text-cyan-500" />
+      <ClipboardList size={16} className="text-blue-500" />
       <div className="flex-1 min-w-0">
         <span className="text-sm font-medium text-navy-900 dark:text-white truncate block">
           {framework.id}
@@ -121,7 +121,7 @@ const ToolItem: React.FC<{ toolId: string }> = ({ toolId }) => {
 
   return (
     <div className="flex items-center gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-      <Wrench size={16} className="text-purple-500" />
+      <Wrench size={16} className="text-primary-500" />
       <div className="flex-1 min-w-0">
         <span className="text-sm font-medium text-navy-900 dark:text-white truncate block">
           {tool.name}
@@ -188,11 +188,11 @@ export const RecommendationPanel: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+          <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
               {painPointsCount}
             </div>
-            <div className="text-xs text-red-500 dark:text-red-400">
+            <div className="text-xs text-rose-500 dark:text-rose-400">
               {t('discovery.conversion.painPointsCount', { count: painPointsCount })}
             </div>
           </div>

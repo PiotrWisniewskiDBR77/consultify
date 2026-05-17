@@ -390,11 +390,12 @@ describe('settings integrations authority continuity', () => {
         status: 'pending',
         config: {
           site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },
-        configuredFields: ['site_url', 'client_id', 'client_secret'],
-        requiredFields: ['site_url', 'client_id', 'client_secret'],
+        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+        requiredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
       })
     );
     expect(
@@ -405,6 +406,7 @@ describe('settings integrations authority continuity', () => {
             JSON.stringify([
               JSON.stringify({
                 site_url: 'https://acme.atlassian.net',
+                cloud_id: 'cloud-1',
                 client_id: 'jira-client-id',
                 client_secret: 'jira-client-secret',
               }),
@@ -429,6 +431,7 @@ describe('settings integrations authority continuity', () => {
         mode: 'connect',
         config: {
           site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },
@@ -651,6 +654,48 @@ describe('settings preferences and advanced flows', () => {
     );
   });
 
+  it('GET /api/settings/notifications/email returns the default email category contract', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/notifications/email');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        taskUpdates: true,
+        projectAlerts: true,
+        weeklyDigest: true,
+        marketing: false,
+      })
+    );
+  });
+
+  it('PUT /api/settings/notifications/email persists email category preferences', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .put('/api/settings/notifications/email')
+      .send({ taskUpdates: false, marketing: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.preferences).toEqual(
+      expect.objectContaining({ taskUpdates: false, marketing: true })
+    );
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('INSERT INTO user_preferences') &&
+          String(call[0]).includes('ON CONFLICT (user_id, key) DO UPDATE') &&
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[])[0] === 'user-1' &&
+          (call[1] as unknown[])[1] === 'settings:notification-email'
+      )
+    ).toBe(true);
+  });
+
   it('POST /api/settings/templates/:id/apply persists applied template values into user preferences', async () => {
     const app = express();
     app.use(express.json());
@@ -663,7 +708,8 @@ describe('settings preferences and advanced flows', () => {
     expect(
       mockDbRun.mock.calls.some(
         (call) =>
-          String(call[0]).includes('INSERT OR REPLACE INTO user_preferences') &&
+          String(call[0]).includes('INSERT INTO user_preferences') &&
+          String(call[0]).includes('ON CONFLICT (user_id, key) DO UPDATE') &&
           Array.isArray(call[1]) &&
           (call[1] as unknown[])[0] === 'user-1' &&
           (call[1] as unknown[])[1] === 'settings:shortcuts'
@@ -672,7 +718,8 @@ describe('settings preferences and advanced flows', () => {
     expect(
       mockDbRun.mock.calls.some(
         (call) =>
-          String(call[0]).includes('INSERT OR REPLACE INTO user_preferences') &&
+          String(call[0]).includes('INSERT INTO user_preferences') &&
+          String(call[0]).includes('ON CONFLICT (user_id, key) DO UPDATE') &&
           Array.isArray(call[1]) &&
           (call[1] as unknown[])[1] === 'settings:aiAutoComplete'
       )
@@ -697,10 +744,72 @@ describe('settings preferences and advanced flows', () => {
     expect(
       mockDbRun.mock.calls.some(
         (call) =>
-          String(call[0]).includes('INSERT OR REPLACE INTO user_preferences') &&
+          String(call[0]).includes('INSERT INTO user_preferences') &&
+          String(call[0]).includes('ON CONFLICT (user_id, key) DO UPDATE') &&
           Array.isArray(call[1]) &&
           (call[1] as unknown[])[0] === 'user-1' &&
           (call[1] as unknown[])[1] === 'settings:appearance'
+      )
+    ).toBe(true);
+  });
+
+  it('POST /api/settings/export includes profile data from the users table', async () => {
+    mockGetTableColumns.mockResolvedValueOnce(new Set(['id', 'email', 'first_name', 'last_name']));
+    mockDbGet.mockResolvedValueOnce({
+      id: 'user-1',
+      email: 'owner@example.com',
+      first_name: 'Piotr',
+      last_name: 'Wiśniewski',
+    });
+    mockDbAll.mockResolvedValueOnce([]);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .post('/api/settings/export')
+      .send({ categories: ['profile'] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.settings.profile).toEqual(
+      expect.objectContaining({
+        id: 'user-1',
+        email: 'owner@example.com',
+        firstName: 'Piotr',
+        lastName: 'Wiśniewski',
+      })
+    );
+  });
+
+  it('POST /api/settings/import applies profile fields back to the users table', async () => {
+    mockGetTableColumns.mockResolvedValueOnce(new Set(['first_name', 'last_name', 'updated_at']));
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .post('/api/settings/import')
+      .send({
+        overwrite: true,
+        data: {
+          version: '1.0.0',
+          settings: {
+            profile: { firstName: 'Piotr', lastName: 'Wiśniewski' },
+          },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.imported).toEqual(['profile']);
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('UPDATE users SET first_name = ?, last_name = ?') &&
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[]).includes('Piotr') &&
+          (call[1] as unknown[]).includes('Wiśniewski')
       )
     ).toBe(true);
   });
@@ -836,7 +945,7 @@ describe('settings registry contract endpoints', () => {
       })
     );
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT OR REPLACE INTO settings'),
+      expect.stringContaining('ON CONFLICT (key) DO UPDATE'),
       ['tenant:org-1:default_currency', 'EUR'],
       { fallback: false }
     );
@@ -865,7 +974,7 @@ describe('settings registry contract endpoints', () => {
       })
     );
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT OR REPLACE INTO settings'),
+      expect.stringContaining('ON CONFLICT (key) DO UPDATE'),
       ['module:org-1:interview:recording_auto_start', 'true'],
       { fallback: false }
     );

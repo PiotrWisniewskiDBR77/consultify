@@ -111,8 +111,8 @@ const QUADRANT_COLORS = [
     emoji: '📋',
   },
   {
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-red-200 dark:border-red-800',
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    border: 'border-rose-200 dark:border-rose-800',
     label: 'Avoid',
     labelPl: 'Unikaj',
     emoji: '⚠️',
@@ -121,11 +121,11 @@ const QUADRANT_COLORS = [
 
 const ITEM_COLORS = [
   'bg-blue-500',
-  'bg-purple-500',
+  'bg-primary-500',
   'bg-emerald-500',
   'bg-amber-500',
   'bg-rose-500',
-  'bg-cyan-500',
+  'bg-blue-500',
   'bg-indigo-500',
   'bg-pink-500',
 ];
@@ -233,7 +233,7 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({ cont
             <div
               className={`relative p-3 rounded-br-xl ${QUADRANT_COLORS[3].bg} ${QUADRANT_COLORS[3].border} border`}
             >
-              <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 mb-2">
+              <div className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 mb-2">
                 {QUADRANT_COLORS[3].emoji} {QUADRANT_COLORS[3].label}
               </div>
               <div className="flex flex-wrap gap-1">

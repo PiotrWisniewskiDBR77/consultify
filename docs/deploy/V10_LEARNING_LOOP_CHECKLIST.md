@@ -67,4 +67,3 @@ Key endpoints:
 - Flip telemetry off: unset `VITE_LEARNING_TELEMETRY` (or set to `0`).
 - Hide admin UI: unset `VITE_PIPELINES_LEARNING_FEEDBACK_PIPELINE`.
 - Data remains in DB tables (no destructive rollback required).
-

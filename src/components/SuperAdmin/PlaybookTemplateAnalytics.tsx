@@ -62,7 +62,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       VIEW: <Eye size={14} className="text-blue-400" />,
       EDIT: <Edit size={14} className="text-amber-400" />,
       USE: <Play size={14} className="text-emerald-400" />,
-      EXPORT: <Download size={14} className="text-purple-400" />,
+      EXPORT: <Download size={14} className="text-primary-400" />,
       CLONE: <Copy size={14} className="text-pink-400" />,
       PUBLISH: <CheckCircle2 size={14} className="text-emerald-400" />,
       DEPRECATE: <AlertCircle size={14} className="text-slate-400 dark:text-slate-500" />,
@@ -101,13 +101,13 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BarChart2 className="w-5 h-5 text-violet-400" />
+          <BarChart2 className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Analytics</h3>
         </div>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
         >
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
@@ -134,7 +134,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             {stats.successRate && stats.successRate >= 70 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
-              <TrendingDown size={16} className="text-red-400" />
+              <TrendingDown size={16} className="text-rose-400" />
             )}
             <span className="text-sm text-slate-400 dark:text-slate-500">Success Rate</span>
           </div>
@@ -144,7 +144,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                 ? 'text-emerald-400'
                 : stats.successRate && stats.successRate >= 40
                   ? 'text-amber-400'
-                  : 'text-red-400'
+                  : 'text-rose-400'
             }`}
           >
             {stats.successRate !== null ? `${stats.successRate}%` : 'N/A'}
@@ -171,7 +171,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         {/* Usage Count */}
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Users size={16} className="text-violet-400" />
+            <Users size={16} className="text-primary-400" />
             <span className="text-sm text-slate-400 dark:text-slate-500">Usage Count</span>
           </div>
           <div className="text-2xl font-bold text-white">{stats.usageCount}</div>
@@ -207,7 +207,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
               )}
               {failedRuns > 0 && (
                 <div
-                  className="bg-red-500"
+                  className="bg-rose-500"
                   style={{ width: `${(failedRuns / totalRuns) * 100}%` }}
                   title={`Failed: ${failedRuns}`}
                 />
@@ -232,7 +232,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                 <span className="text-sm text-slate-300">In Progress ({inProgressRuns})</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-rose-500" />
                 <span className="text-sm text-slate-300">Failed ({failedRuns})</span>
               </div>
               <div className="flex items-center gap-2">

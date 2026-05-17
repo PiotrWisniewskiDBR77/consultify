@@ -3,9 +3,11 @@
  * Wrapper for AdminKnowledgeView strategies tab
  */
 
-import { Edit2, FileText, Lightbulb, Plus, Power, RefreshCw, Target, X } from 'lucide-react';
+import { Edit2, Plus, Power, RefreshCw, Target, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { DegradedState } from '@/components/Admin/AdminState';
 
 import { Api } from '../../../../services/api';
 
@@ -22,9 +24,119 @@ interface Strategy {
   related_idea_ids?: string[];
 }
 
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toBool = (value: unknown, fallback = false) =>
+  typeof value === 'boolean'
+    ? value
+    : value === undefined || value === null
+      ? fallback
+      : value === 1 || value === '1' || value === 'true';
+
+const normalizeStrategies = (value: unknown): Strategy[] => {
+  if (!hasListShape(value, ['strategies', 'items'])) {
+    throw new Error('Strategic directions response was not a list');
+  }
+  return getListPayload<Record<string, unknown>>(value, ['strategies', 'items'])
+    .map((strategy) => {
+      const priority: Strategy['priority'] =
+        strategy.priority === 'low' ||
+        strategy.priority === 'medium' ||
+        strategy.priority === 'high'
+          ? strategy.priority
+          : 'medium';
+
+      return {
+        id: asText(strategy.id, ''),
+        title: asText(strategy.title, 'Untitled strategy'),
+        description: asText(strategy.description, ''),
+        is_active: toBool(strategy.is_active, false),
+        priority,
+        target_date:
+          strategy.target_date === null || strategy.target_date === undefined
+            ? undefined
+            : asText(strategy.target_date, ''),
+        progress_percentage: Number.isFinite(Number(strategy.progress_percentage))
+          ? Number(strategy.progress_percentage)
+          : 0,
+        success_metrics: Array.isArray(strategy.success_metrics)
+          ? strategy.success_metrics.map((item) => asText(item, '')).filter(Boolean)
+          : [],
+        related_document_ids: Array.isArray(strategy.related_document_ids)
+          ? strategy.related_document_ids.map((item) => asText(item, '')).filter(Boolean)
+          : [],
+        related_idea_ids: Array.isArray(strategy.related_idea_ids)
+          ? strategy.related_idea_ids.map((item) => asText(item, '')).filter(Boolean)
+          : [],
+      };
+    })
+    .filter((strategy) => strategy.id);
+};
+
+const getStrategyId = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload)) return '';
+  return (
+    asText(payload.id, '') || (isRecord(payload.strategy) ? asText(payload.strategy.id, '') : '')
+  );
+};
+
 export const StrategicDirectionsTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null);
   const [strategyForm, setStrategyForm] = useState({
@@ -40,43 +152,67 @@ export const StrategicDirectionsTab: React.FC = () => {
     loadStrategies();
   }, []);
 
-  const loadStrategies = async () => {
-    setLoading(true);
+  const loadStrategies = async (options: { showLoading?: boolean } = {}) => {
+    if (options.showLoading !== false) setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.getAllGlobalStrategies();
-      setStrategies(Array.isArray(data) ? data : []);
-    } catch (err) {
-      toast.error('Failed to load strategies');
+      const nextStrategies = normalizeStrategies(data);
+      setStrategies(nextStrategies);
+      return nextStrategies;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load strategies';
+      setLoadError(message);
+      setStrategies([]);
+      toast.error(message);
+      return null;
     } finally {
-      setLoading(false);
+      if (options.showLoading !== false) setLoading(false);
     }
   };
 
   const handleToggleStrategy = async (id: string, currentStatus: boolean) => {
     try {
+      setActionError(null);
       await Api.toggleGlobalStrategy(id, !currentStatus);
+      const refreshed = await loadStrategies({ showLoading: false });
+      const strategy = refreshed?.find((item) => item.id === id);
+      if (!strategy || strategy.is_active !== !currentStatus) {
+        throw new Error('Strategy update was not confirmed by the server');
+      }
       toast.success('Strategy updated');
-      loadStrategies();
-    } catch (err) {
-      toast.error('Update failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleAddStrategy = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await Api.createGlobalStrategy(strategyForm.title, strategyForm.description, {
+      setActionError(null);
+      const result = await Api.createGlobalStrategy(strategyForm.title, strategyForm.description, {
         success_metrics: strategyForm.success_metrics,
         priority: strategyForm.priority,
         target_date: strategyForm.target_date || undefined,
         progress_percentage: strategyForm.progress_percentage,
       });
+      const createdId = getStrategyId(result);
+      const refreshed = await loadStrategies({ showLoading: false });
+      const confirmed = refreshed?.some((strategy) =>
+        createdId ? strategy.id === createdId : strategy.title === strategyForm.title
+      );
+      if (!confirmed) {
+        throw new Error('Strategy create was not confirmed by the server');
+      }
       toast.success('Strategy added');
       setShowModal(false);
       resetForm();
-      loadStrategies();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add strategy');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to add strategy';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -84,13 +220,25 @@ export const StrategicDirectionsTab: React.FC = () => {
     e.preventDefault();
     if (!editingStrategy) return;
     try {
+      setActionError(null);
       await Api.updateGlobalStrategy(editingStrategy.id, strategyForm);
+      const refreshed = await loadStrategies({ showLoading: false });
+      const confirmed = refreshed?.some(
+        (strategy) =>
+          strategy.id === editingStrategy.id &&
+          strategy.title === strategyForm.title &&
+          strategy.description === strategyForm.description
+      );
+      if (!confirmed) {
+        throw new Error('Strategy update was not confirmed by the server');
+      }
       toast.success('Strategy updated');
       setEditingStrategy(null);
       resetForm();
-      loadStrategies();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update strategy');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update strategy';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -108,7 +256,7 @@ export const StrategicDirectionsTab: React.FC = () => {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-700';
+        return 'bg-rose-100 text-rose-700';
       case 'medium':
         return 'bg-amber-100 text-amber-700';
       case 'low':
@@ -122,6 +270,16 @@ export const StrategicDirectionsTab: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-6">
+        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+          <DegradedState title="Strategic directions unavailable" description={loadError} />
+        </div>
       </div>
     );
   }
@@ -147,6 +305,15 @@ export const StrategicDirectionsTab: React.FC = () => {
           Add Strategic Direction
         </button>
       </div>
+
+      {actionError ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+        >
+          {actionError}
+        </div>
+      ) : null}
 
       {/* Strategies Grid */}
       {strategies.length === 0 ? (
@@ -203,7 +370,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                     onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
                     className={`p-2 rounded-lg transition-colors ${
                       s.is_active
-                        ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-700'
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-700'
                         : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
                     }`}
                     title={s.is_active ? 'Deactivate' : 'Activate'}

@@ -69,31 +69,23 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const hasError = Boolean(error);
     const hasSuccess = success && !hasError;
 
-    /**
-     * Light Mode System v3.2 — Input borders.
-     * SSOT: docs/ui-standards/00-foundation/light-mode-readability.md §7
-     *
-     * Input default must have a VISIBLE border in light mode (slate-300).
-     * Focus: ring-2 primary-500 with offset for WCAG 2.2 SC 2.4.13.
-     * Error/Success: semantic border + tinted ring.
-     */
     const borderColor = hasError
-      ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/30'
+      ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20'
       : hasSuccess
-        ? 'border-success-500 focus:border-success-500 focus:ring-success-500/30'
-        : 'border-slate-300 dark:border-navy-700 focus:border-primary-500 focus:ring-primary-500/30 dark:focus:ring-primary-400/30';
+        ? 'border-success-500 focus:border-success-500 focus:ring-success-500/20'
+        : 'border-transparent focus:border-primary-500 focus:ring-primary-500/20';
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''} ${containerClassName}`}>
         {label && (
-          <label className="block mb-2 text-sm font-medium text-slate-900 dark:text-white">
+          <label className="block mb-2 text-sm font-medium text-navy-900 dark:text-white">
             {label}
           </label>
         )}
         <div className="relative">
           {/* Left icon */}
           {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-500 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
               {React.isValidElement(icon)
                 ? React.cloneElement(icon as React.ReactElement<{ size?: number }>, {
                     size: iconSize,
@@ -108,8 +100,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             className={`
               w-full
-              bg-white dark:bg-navy-900
-              text-slate-900 dark:text-white
+              bg-slate-50 dark:bg-navy-900
+              text-navy-900 dark:text-white
               placeholder-slate-400 dark:placeholder-slate-500
               rounded-xl
               border
@@ -117,9 +109,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               transition-all duration-150 ease-out
               outline-none
               focus:ring-2
-              hover:border-slate-400 dark:hover:border-navy-600
-              disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed
-              dark:disabled:bg-navy-900/50 dark:disabled:text-slate-500 dark:disabled:border-navy-800
+              focus:bg-white dark:focus:bg-navy-900
+              hover:bg-slate-100 dark:hover:bg-navy-800
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-50 dark:hover:bg-navy-800/20
               ${sizeClass}
               ${icon ? 'pl-10' : ''}
               ${iconRight || isPassword || hasError || hasSuccess ? 'pr-10' : ''}
@@ -163,13 +155,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           </div>
         </div>
 
-        {/* Helper/Error text — §2 supportive level, §9 min 4.5:1 */}
+        {/* Helper/Error text */}
         {(error || helperText) && (
           <p
             className={`mt-2 text-sm ${
-              hasError
-                ? 'text-danger-700 dark:text-danger-400'
-                : 'text-slate-600 dark:text-slate-400'
+              hasError ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {error || helperText}

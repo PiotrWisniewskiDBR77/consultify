@@ -287,7 +287,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-white dark:bg-navy-900">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -296,9 +296,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-white dark:bg-navy-900">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+          <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400">Nie znaleziono raportu</p>
-          <button onClick={onClose} className="mt-4 text-purple-600 hover:underline">
+          <button onClick={onClose} className="mt-4 text-primary-600 hover:underline">
             Wróć
           </button>
         </div>
@@ -328,7 +328,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isReadOnly}
-                  className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-purple-500 rounded px-1 -ml-1"
+                  className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-primary-500 rounded px-1 -ml-1"
                 />
                 <span
                   className={`px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -360,7 +360,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
-            {error && <span className="text-xs text-red-500">{error}</span>}
+            {error && <span className="text-xs text-rose-500">{error}</span>}
 
             {!isReadOnly && (
               <>
@@ -379,7 +379,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={handleFinalize}
                   disabled={finalizing}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium text-sm transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium text-sm transition-colors"
                 >
                   {finalizing ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -401,7 +401,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           {gapSummary.length > 0 && (
             <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                <Target size={20} className="text-purple-500" />
+                <Target size={20} className="text-primary-500" />
                 Podsumowanie Gap Analysis
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -415,8 +415,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                       <span className="text-2xl font-bold text-navy-900 dark:text-white">
                         {item.actual}
                       </span>
-                      <TrendingUp size={16} className="text-purple-500" />
-                      <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      <TrendingUp size={16} className="text-primary-500" />
+                      <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                         {item.target}
                       </span>
                     </div>
@@ -432,7 +432,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           {/* Executive Summary */}
           <div>
             <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <FileText size={16} className="text-purple-500" />
+              <FileText size={16} className="text-primary-500" />
               Executive Summary
             </label>
             <textarea
@@ -441,7 +441,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               disabled={isReadOnly}
               placeholder="Podsumowanie wykonawcze raportu..."
               rows={6}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
@@ -464,7 +464,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   {!isReadOnly && (
                     <button
                       onClick={() => removeFinding(index)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -513,7 +513,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   {!isReadOnly && (
                     <button
                       onClick={() => removeRecommendation(index)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -554,7 +554,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               disabled={isReadOnly}
               placeholder="Dodatkowe uwagi i notatki..."
               rows={4}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>

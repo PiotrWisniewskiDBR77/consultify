@@ -114,7 +114,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
     if (/[0-9]/.test(password)) strength += 15;
     if (/[^A-Za-z0-9]/.test(password)) strength += 15;
 
-    if (strength < 40) return { strength, label: 'Weak', color: 'bg-red-500' };
+    if (strength < 40) return { strength, label: 'Weak', color: 'bg-rose-500' };
     if (strength < 70) return { strength, label: 'Medium', color: 'bg-yellow-500' };
     return { strength, label: 'Strong', color: 'bg-green-500' };
   };
@@ -146,7 +146,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
               type={showCurrentPassword ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
             <button
               type="button"
@@ -168,7 +168,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
               type={showNewPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
             <button
               type="button"
@@ -191,7 +191,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                 <span
                   className={`text-xs font-medium ${
                     passwordStrength.label === 'Weak'
-                      ? 'text-red-500'
+                      ? 'text-rose-500'
                       : passwordStrength.label === 'Medium'
                         ? 'text-yellow-500'
                         : 'text-green-500'
@@ -213,17 +213,17 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
           />
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+            <p className="text-xs text-rose-500 mt-1">Passwords do not match</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={loading || !currentPassword || !newPassword || newPassword !== confirmPassword}
-          className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Updating...' : t('settings.password.update', 'Update Password')}
         </button>
@@ -341,7 +341,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             <div>
               <p className="text-slate-500 dark:text-slate-400">2FA Status</p>
               <p
-                className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-orange-500'}`}
+                className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-amber-500'}`}
               >
                 {currentUser.mfaEnabled ? 'Enabled' : 'Disabled'}
               </p>
@@ -374,13 +374,13 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
         </div>
 
         {/* Delete Account */}
-        <div className="p-4 bg-red-50 dark:bg-red-500/10 rounded-lg border border-red-200 dark:border-red-500/20">
+        <div className="p-4 bg-rose-50 dark:bg-rose-500/10 rounded-lg border border-rose-200 dark:border-rose-500/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-red-700 dark:text-red-400">
+              <p className="font-medium text-rose-700 dark:text-rose-400">
                 {t('settings.account.deleteAccount', 'Delete Account')}
               </p>
-              <p className="text-sm text-red-600 dark:text-red-300">
+              <p className="text-sm text-rose-600 dark:text-rose-300">
                 {t(
                   'settings.account.deleteDesc',
                   'Permanently delete your account and all associated data'
@@ -389,7 +389,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             </div>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors"
             >
               {t('settings.account.delete', 'Delete')}
             </button>
@@ -397,8 +397,8 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
-            <div className="mt-4 p-4 bg-white dark:bg-navy-900 rounded-lg border border-red-300 dark:border-red-500/30">
-              <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+            <div className="mt-4 p-4 bg-white dark:bg-navy-900 rounded-lg border border-rose-300 dark:border-rose-500/30">
+              <p className="text-sm text-rose-700 dark:text-rose-300 mb-3">
                 This action cannot be undone. Type <strong>DELETE</strong> to confirm:
               </p>
               <input
@@ -406,7 +406,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 placeholder="Type DELETE"
-                className="w-full px-3 py-2 border border-red-300 dark:border-red-500/30 rounded-lg mb-3"
+                className="w-full px-3 py-2 border border-rose-300 dark:border-rose-500/30 rounded-lg mb-3"
               />
               <div className="flex gap-2">
                 <button
@@ -421,7 +421,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleteConfirmText !== 'DELETE'}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
+                  className="px-4 py-2 bg-rose-600 text-white rounded-lg disabled:opacity-50"
                 >
                   Delete Forever
                 </button>

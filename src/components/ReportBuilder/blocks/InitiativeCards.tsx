@@ -163,7 +163,7 @@ function getIntentColor(intent?: string): string {
     case 'Grow':
       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
     case 'Fix':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
+      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800';
     case 'Stabilize':
       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
     case 'De-risk':
@@ -199,7 +199,7 @@ function getRoleColor(role?: string): string {
     case 'Accelerator':
       return 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800';
     case 'Scaling':
-      return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
+      return 'text-primary-600 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800';
     default:
       return 'hidden';
   }
@@ -210,7 +210,7 @@ function getPriorityBadge(priority?: string): { color: string; label: string } {
     case 'high':
     case 'critical':
       return {
-        color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+        color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
         label: priority.charAt(0).toUpperCase() + priority.slice(1),
       };
     case 'medium':
@@ -232,7 +232,7 @@ function getConfidenceDot(confidence?: string | number): { color: string; label:
   if (typeof confidence === 'number') {
     if (confidence >= 70) return { color: 'bg-emerald-500', label: 'High' };
     if (confidence >= 40) return { color: 'bg-amber-500', label: 'Medium' };
-    if (confidence > 0) return { color: 'bg-red-500', label: 'Low' };
+    if (confidence > 0) return { color: 'bg-rose-500', label: 'Low' };
     return { color: 'bg-slate-300', label: '' };
   }
   switch (confidence) {
@@ -241,7 +241,7 @@ function getConfidenceDot(confidence?: string | number): { color: string; label:
     case 'Medium':
       return { color: 'bg-amber-500', label: 'Medium' };
     case 'Low':
-      return { color: 'bg-red-500', label: 'Low' };
+      return { color: 'bg-rose-500', label: 'Low' };
     default:
       return { color: 'bg-slate-300', label: '' };
   }
@@ -352,7 +352,7 @@ const InitiativeCardItem: React.FC<{
       `}
     >
       {/* Top color accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 opacity-60" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-primary-500 to-indigo-500 opacity-60" />
 
       {/* Index badge */}
       <div
@@ -419,9 +419,9 @@ const InitiativeCardItem: React.FC<{
         {/* Related Gap */}
         {item.relatedGap && (
           <div className="flex gap-2 mb-3">
-            <div className="min-w-[3px] w-[3px] bg-purple-400/50 rounded-full" />
+            <div className="min-w-[3px] w-[3px] bg-primary-400/50 rounded-full" />
             <div>
-              <span className="text-[9px] font-bold text-purple-500 uppercase">Gap</span>
+              <span className="text-[9px] font-bold text-primary-500 uppercase">Gap</span>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">
                 {item.relatedGap}
               </p>
@@ -432,9 +432,9 @@ const InitiativeCardItem: React.FC<{
         {/* Problem Statement */}
         {item.problemStatement && !item.relatedGap && (
           <div className="flex gap-2 mb-3">
-            <div className="min-w-[3px] w-[3px] bg-red-400/50 rounded-full" />
+            <div className="min-w-[3px] w-[3px] bg-rose-400/50 rounded-full" />
             <div>
-              <span className="text-[9px] font-bold text-red-500 uppercase flex items-center gap-1">
+              <span className="text-[9px] font-bold text-rose-500 uppercase flex items-center gap-1">
                 <AlertTriangle className="w-2.5 h-2.5" />
                 Problem
               </span>
@@ -577,7 +577,7 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
         <div className="flex items-center gap-3 text-[10px] text-slate-400">
           {data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length >
             0 && (
-            <span className="flex items-center gap-1 text-red-500">
+            <span className="flex items-center gap-1 text-rose-500">
               <AlertTriangle className="w-3 h-3" />
               {
                 data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length
@@ -591,7 +591,7 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
             </span>
           )}
           {data.items.filter((i) => i.strategicIntent === 'Fix').length > 0 && (
-            <span className="text-red-500">
+            <span className="text-rose-500">
               {data.items.filter((i) => i.strategicIntent === 'Fix').length} fix
             </span>
           )}

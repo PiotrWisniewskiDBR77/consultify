@@ -53,14 +53,14 @@ const BRANCH_COLORS: Record<string, { bg: string; text: string; accent: string }
     accent: 'bg-sky-500',
   },
   risks: {
-    bg: 'from-purple-500/20 to-purple-600/10',
-    text: 'text-purple-700 dark:text-purple-300',
-    accent: 'bg-purple-500',
+    bg: 'from-primary-500/20 to-primary-600/10',
+    text: 'text-primary-700 dark:text-primary-300',
+    accent: 'bg-primary-500',
   },
   experiments: {
-    bg: 'from-cyan-500/20 to-cyan-600/10',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    accent: 'bg-cyan-500',
+    bg: 'from-blue-500/20 to-blue-600/10',
+    text: 'text-blue-700 dark:text-blue-300',
+    accent: 'bg-blue-500',
   },
 };
 
@@ -162,7 +162,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       {/* Progress bar */}
       <div className="h-1 bg-slate-200 dark:bg-navy-800">
         <div
-          className="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>

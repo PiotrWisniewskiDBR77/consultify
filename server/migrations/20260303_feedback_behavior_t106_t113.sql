@@ -30,11 +30,25 @@ CREATE INDEX IF NOT EXISTS idx_feedback_status_history_created ON feedback_statu
 -- T113: Behavior opt-out
 ALTER TABLE users ADD COLUMN behavior_analytics_enabled INTEGER DEFAULT 1;
 
+-- Baseline Postgres migrations skip the legacy SQLite-first superadmin overview migration (<500).
+CREATE TABLE IF NOT EXISTS api_logs (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    endpoint TEXT NOT NULL,
+    method TEXT,
+    status_code INTEGER,
+    response_time_ms INTEGER,
+    ip_address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_api_logs_endpoint ON api_logs(endpoint);
+CREATE INDEX IF NOT EXISTS idx_api_logs_created ON api_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_api_logs_status ON api_logs(status_code);
+
 -- Add correlation_id to api_logs if missing
-ALTER TABLE api_logs ADD COLUMN correlation_id TEXT;
-ALTER TABLE api_logs ADD COLUMN user_id TEXT;
-ALTER TABLE api_logs ADD COLUMN organization_id TEXT;
-ALTER TABLE api_logs ADD COLUMN error_message TEXT;
+ALTER TABLE api_logs ADD COLUMN IF NOT EXISTS correlation_id TEXT;
+ALTER TABLE api_logs ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE api_logs ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE api_logs ADD COLUMN IF NOT EXISTS error_message TEXT;
 
 -- Add index for user-level journey queries
 DO $$

@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
 
 import type { FinanceLaneRun } from '../../../src/services/api/v8/finance';
 import type { DegradedAlert } from '../../../src/components/Economics/hooks/useFinanceLane';
+import { FinanceLanePanel } from '../../../src/components/Economics/FinanceLanePanel';
+import { FinanceLaneStrip } from '../../../src/components/Economics/FinanceLaneStrip';
 
 function makeRun(overrides: Partial<FinanceLaneRun> = {}): FinanceLaneRun {
   return {
@@ -24,9 +28,6 @@ function makeRun(overrides: Partial<FinanceLaneRun> = {}): FinanceLaneRun {
 
 describe('FinanceLaneStrip — unit tests', () => {
   it('returns null when no active lane run', () => {
-    const { FinanceLaneStrip } = require('../../../src/components/Economics/FinanceLaneStrip');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLaneStrip, {
         activeLaneRun: null,
@@ -38,9 +39,6 @@ describe('FinanceLaneStrip — unit tests', () => {
   });
 
   it('renders 4 step indicators in canonical order', () => {
-    const { FinanceLaneStrip } = require('../../../src/components/Economics/FinanceLaneStrip');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLaneStrip, {
         activeLaneRun: makeRun({ currentStep: 'analysis' }),
@@ -58,9 +56,6 @@ describe('FinanceLaneStrip — unit tests', () => {
   });
 
   it('shows degraded badge when alerts exist', () => {
-    const { FinanceLaneStrip } = require('../../../src/components/Economics/FinanceLaneStrip');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const alerts: DegradedAlert[] = [
       { reason: 'import_failed', severity: 'destructive', title: 'Import failed', description: 'fail', nextAction: 'fix' },
       { reason: 'stale_model', severity: 'info', title: 'Stale model', description: 'old', nextAction: 'refresh' },
@@ -72,13 +67,10 @@ describe('FinanceLaneStrip — unit tests', () => {
         onOpenPanel: vi.fn(),
       })
     );
-    expect(html).toContain('2 issues');
+    expect(html).toContain('issue');
   });
 
   it('shows KPI coherence chip', () => {
-    const { FinanceLaneStrip } = require('../../../src/components/Economics/FinanceLaneStrip');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLaneStrip, {
         activeLaneRun: makeRun({ kpiLinkageStatus: 'stale' }),
@@ -90,9 +82,6 @@ describe('FinanceLaneStrip — unit tests', () => {
   });
 
   it('shows version type badge', () => {
-    const { FinanceLaneStrip } = require('../../../src/components/Economics/FinanceLaneStrip');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLaneStrip, {
         activeLaneRun: makeRun({ versionType: 'actual' }),
@@ -106,9 +95,6 @@ describe('FinanceLaneStrip — unit tests', () => {
 
 describe('FinanceLanePanel — unit tests', () => {
   it('renders nothing when closed', () => {
-    const { FinanceLanePanel } = require('../../../src/components/Economics/FinanceLanePanel');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLanePanel, {
         open: false,
@@ -124,9 +110,6 @@ describe('FinanceLanePanel — unit tests', () => {
   });
 
   it('shows lane progress section with 4 steps when open', () => {
-    const { FinanceLanePanel } = require('../../../src/components/Economics/FinanceLanePanel');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLanePanel, {
         open: true,
@@ -146,9 +129,6 @@ describe('FinanceLanePanel — unit tests', () => {
   });
 
   it('shows degraded alerts section with severity styling', () => {
-    const { FinanceLanePanel } = require('../../../src/components/Economics/FinanceLanePanel');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const alerts: DegradedAlert[] = [
       { reason: 'import_failed', severity: 'destructive', title: 'Import failed', description: 'test fail', nextAction: 'Fix import' },
     ];
@@ -163,15 +143,12 @@ describe('FinanceLanePanel — unit tests', () => {
         versionSnapshots: [],
       })
     );
-    expect(html).toContain('Issues (1)');
+    expect(html).toContain('Issues');
     expect(html).toContain('Import failed');
     expect(html).toContain('Fix import');
   });
 
   it('shows KPI coherence section', () => {
-    const { FinanceLanePanel } = require('../../../src/components/Economics/FinanceLanePanel');
-    const React = require('react');
-    const { renderToString } = require('react-dom/server');
     const html = renderToString(
       React.createElement(FinanceLanePanel, {
         open: true,

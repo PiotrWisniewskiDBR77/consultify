@@ -109,7 +109,7 @@ export const ReportScheduleView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <CalendarClock size={18} className="text-violet-500" />
+          <CalendarClock size={18} className="text-primary-500" />
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
             Schedule recurring reports
           </h2>
@@ -258,7 +258,7 @@ export const ReportScheduleView: React.FC = () => {
         <div className="mt-6">
           <button
             onClick={handleCreateSchedule}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium"
           >
             <Plus size={16} />
             Add schedule
@@ -298,7 +298,7 @@ export const ReportScheduleView: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleDelete(schedule.id)}
-                  className="text-slate-400 hover:text-red-500"
+                  className="text-slate-400 hover:text-rose-500"
                 >
                   <Trash2 size={16} />
                 </button>

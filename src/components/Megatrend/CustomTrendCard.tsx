@@ -48,7 +48,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
         {!isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
           >
             <Plus size={16} /> Add Custom Trend
           </button>
@@ -63,7 +63,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             I'm monitoring news sources for "Carbon Tax Legislation" as it seems relevant to your
             sector.
-            <button className="text-purple-600 dark:text-purple-400 font-bold ml-1 hover:underline">
+            <button className="text-primary-600 dark:text-primary-400 font-bold ml-1 hover:underline">
               Add to list?
             </button>
           </p>
@@ -92,8 +92,8 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                                       trend.type === 'Technology'
                                         ? 'bg-blue-100 text-blue-700'
                                         : trend.type === 'Business'
-                                          ? 'bg-purple-100 text-purple-700'
-                                          : 'bg-orange-100 text-orange-700'
+                                          ? 'bg-primary-100 text-primary-700'
+                                          : 'bg-amber-100 text-amber-700'
                                     }`}
                 >
                   {trend.type}
@@ -106,7 +106,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
             </div>
             <button
               onClick={() => onDelete(trend.id)}
-              className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-red-500 transition p-1"
+              className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 transition p-1"
             >
               <Trash2 size={16} />
             </button>
@@ -118,7 +118,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
       {isAdding && (
         <form
           onSubmit={handleSubmit}
-          className="bg-slate-50 dark:bg-navy-800 p-4 rounded-lg border border-purple-200 dark:border-purple-800 animate-in fade-in slide-in-from-top-2"
+          className="bg-slate-50 dark:bg-navy-800 p-4 rounded-lg border border-primary-200 dark:border-primary-800 animate-in fade-in slide-in-from-top-2"
         >
           <h3 className="font-bold text-gray-900 dark:text-white mb-4">New Custom Trend</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -191,7 +191,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
+              className="px-4 py-2 text-sm bg-primary-600 text-white rounded hover:bg-primary-700"
             >
               Save Trend
             </button>

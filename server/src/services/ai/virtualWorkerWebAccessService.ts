@@ -166,6 +166,20 @@ function shouldAutoSearchForWorker(
   );
 }
 
+export function isDbr77ProductTruthQuery(message: string): boolean {
+  const q = String(message || '').toLowerCase();
+  const mentionsDbrProduct =
+    /\bdbr77\b|\bdbr\b|\bconsultify\b|\bmarketplace\b|\biris\b|\bvector\b|\bdigital twin\b|\biiot\b/.test(
+      q
+    );
+  if (!mentionsDbrProduct) return false;
+  const externalResearchIntent =
+    /\b(konkurenc|competitor|competition|rynek|market|trend|aktualn|bieżąc|current|latest|najnowsz|news|raport|report|usa|polsk|poland|benchmark)\b/i.test(
+      q
+    );
+  return !externalResearchIntent;
+}
+
 export async function buildWorkerWebAccessResult(args: {
   message: string;
   locale?: string;
@@ -191,7 +205,9 @@ export async function buildWorkerWebAccessResult(args: {
     userEnabledWebSearch: userRequestedSearch,
     historyLength: args.historyLength ?? 0,
   });
+  const productTruthQuery = isDbr77ProductTruthQuery(args.message);
   const shouldSearch =
+    !productTruthQuery &&
     effectivePolicy.internetEnabled &&
     (shouldAutoSearchForWorker(args.message, effectivePolicy, userRequestedSearch) ||
       (searchIntent.shouldSearch && (userRequestedSearch || effectivePolicy.autoSearch)));
@@ -202,7 +218,9 @@ export async function buildWorkerWebAccessResult(args: {
       intent: searchIntent,
       used: false,
       reason: effectivePolicy.internetEnabled
-        ? 'No worker web-search trigger for this message'
+        ? productTruthQuery
+          ? 'DBR77 product truth uses governed knowledge, not web research'
+          : 'No worker web-search trigger for this message'
         : effectivePolicy.reason || 'Internet disabled',
       queries: [],
       citations: [],

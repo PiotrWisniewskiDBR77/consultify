@@ -54,7 +54,7 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
 
   return (
     <div className={`min-w-0 items-center gap-2 ${className}`}>
-      <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-3 py-1 text-xs text-violet-200">
+      <div className="inline-flex items-center gap-2 rounded-full border border-primary-500/25 bg-primary-500/10 px-3 py-1 text-xs text-primary-200">
         <FlaskConical className="h-3.5 w-3.5" />
         <span className="font-semibold uppercase tracking-wide">
           {isWorkspaceDemo

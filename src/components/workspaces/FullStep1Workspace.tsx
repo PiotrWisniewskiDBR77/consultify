@@ -217,7 +217,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                               e.stopPropagation();
                               setInterviewAxis(axis);
                             }}
-                            className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded flex items-center gap-1 transition-colors"
+                            className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 px-2 py-1 rounded flex items-center gap-1 transition-colors"
                           >
                             <Bot size={12} /> Interview
                           </button>

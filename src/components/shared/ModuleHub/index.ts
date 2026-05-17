@@ -9,6 +9,8 @@ export type { TableColumn, TableRow } from './FilterableTable';
 export { FilterableTable } from './FilterableTable';
 export type { GridItem } from './GridView';
 export { GridView } from './GridView';
+export { HubWorkAreaLoadError } from './HubWorkAreaLoadError';
+export { HubWorkAreaLoading } from './HubWorkAreaLoading';
 export { ModuleHub } from './ModuleHub';
 export type { StatusFilter } from './ModuleNavBar';
 export { ModuleNavBar } from './ModuleNavBar';
@@ -28,3 +30,4 @@ export {
   StatusDropdown,
 } from './StatusDropdown';
 export * from './types';
+export { useModuleOpenDocuments } from './useModuleOpenDocuments';

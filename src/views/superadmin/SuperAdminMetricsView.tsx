@@ -124,7 +124,7 @@ export const SuperAdminMetricsView: React.FC = () => {
                   <span
                     className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
                       warning.severity === 'CRITICAL'
-                        ? 'bg-red-400'
+                        ? 'bg-rose-400'
                         : warning.severity === 'HIGH'
                           ? 'bg-amber-400'
                           : 'bg-yellow-400'

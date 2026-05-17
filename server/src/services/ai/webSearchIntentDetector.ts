@@ -212,7 +212,7 @@ export function detectWebSearchIntent(
  */
 export function buildSearchQueries(message: string): string[] {
   const queries: string[] = [];
-  const cleaned = message.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleaned = rewriteConversationalSearchQuery(message);
 
   // If message is already short enough to be a good query, use it directly
   if (cleaned.length <= 120) {
@@ -254,6 +254,29 @@ export function buildSearchQueries(message: string): string[] {
   return [...new Set(queries)].slice(0, 3);
 }
 
+export function rewriteConversationalSearchQuery(message: string): string {
+  let cleaned = String(message || '')
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  cleaned = cleaned
+    .replace(/^(proszę|prosze|hej|cześć|czesc|anna|teresa)[,\s:;-]+/i, '')
+    .replace(
+      /^(opowiedz mi o|powiedz mi o|powiedz coś więcej o|powiedz cos wiecej o|podsumuj czym jest|wyjaśnij czym jest|wyjasnij czym jest)\s+/i,
+      ''
+    )
+    .replace(/^(tell me about|summarize what|explain what)\s+/i, '')
+    .replace(/\b(proszę|prosze)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return (
+    cleaned ||
+    String(message || '')
+      .slice(0, 150)
+      .trim()
+  );
+}
+
 /**
  * Extract key entities (proper nouns, technical terms, acronyms) from text.
  */
@@ -283,4 +306,4 @@ function extractKeyEntities(text: string): string[] {
 // Exports
 // ---------------------------------------------------------------------------
 
-export default { detectWebSearchIntent, buildSearchQueries };
+export default { detectWebSearchIntent, buildSearchQueries, rewriteConversationalSearchQuery };

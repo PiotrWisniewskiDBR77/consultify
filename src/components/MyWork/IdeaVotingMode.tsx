@@ -170,7 +170,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
     <div className="absolute bottom-4 left-4 z-[85] w-[280px]">
       <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-slate-200/60 dark:border-navy-700/60">
+        <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-amber-50 dark:from-amber-900/20 dark:to-amber-900/20 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy size={14} className="text-amber-500" />
@@ -194,9 +194,9 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             </div>
             {timerSeconds != null && timerSeconds > 0 && (
               <div className="flex items-center gap-1">
-                <Clock size={10} className={timeLeft > 10 ? 'text-slate-400' : 'text-red-500'} />
+                <Clock size={10} className={timeLeft > 10 ? 'text-slate-400' : 'text-rose-500'} />
                 <span
-                  className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-red-500'}`}
+                  className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-rose-500'}`}
                 >
                   {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
                 </span>
@@ -239,7 +239,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                     {!persistent && myVotes > 0 && (
                       <button
                         onClick={() => handleUnvote(node.id)}
-                        className="p-1 rounded text-primary-500 hover:text-red-500"
+                        className="p-1 rounded text-primary-500 hover:text-rose-500"
                       >
                         <ThumbsUp size={10} className="fill-current" />
                       </button>

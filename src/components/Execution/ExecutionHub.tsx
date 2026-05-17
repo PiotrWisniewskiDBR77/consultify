@@ -41,10 +41,10 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -63,12 +63,12 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
-import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -78,12 +78,22 @@ import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterableTable,
   FilterChip,
+  HubWorkAreaLoadError,
+  HubWorkAreaLoading,
   ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -97,7 +107,14 @@ import {
   type ReportDef,
 } from './executionReports';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
+
+const ExecutionInitiativeDocumentView = React.lazy(() =>
+  import('../Initiatives/InitiativeDocumentView').then((module) => ({
+    default: module.InitiativeDocumentView,
+  }))
+);
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -236,8 +253,8 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-cyan-500/40 transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? 'shadow-lg ring-2 ring-cyan-500/50' : ''
+      className={`p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-500/40 transition-colors cursor-grab active:cursor-grabbing ${
+        isDragging ? 'shadow-lg ring-2 ring-primary-500/50' : ''
       }`}
       {...attributes}
       {...listeners}
@@ -301,7 +318,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     <div
       ref={setNodeRef}
       className={`flex-1 min-w-[260px] bg-white/80 dark:bg-navy-900/50 rounded-xl border transition-colors ${
-        isOver ? 'border-cyan-500 bg-cyan-500/5' : 'border-slate-200 dark:border-navy-700'
+        isOver ? 'border-primary-500 bg-primary-500/5' : 'border-slate-200 dark:border-navy-700'
       }`}
       data-testid={`kanban-column-${id}`}
     >
@@ -326,7 +343,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           <div
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
               isOver
-                ? 'border-cyan-500/50 text-cyan-400'
+                ? 'border-primary-500/50 text-primary-400'
                 : 'border-slate-300 dark:border-navy-700 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -523,6 +540,7 @@ interface ExecutionHubProps {
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
@@ -545,6 +563,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [managerCommandRowContent, setManagerCommandRowContent] = useState<React.ReactNode>(null);
+  const [managerCommandRowRightContent, setManagerCommandRowRightContent] =
+    useState<React.ReactNode>(null);
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
@@ -558,6 +579,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const initRetryRef = React.useRef(0);
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
+  const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [decisions, setDecisions] = useState<ExecutionDecision[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -608,6 +631,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }>
   >([]);
   const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
 
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
@@ -643,6 +667,95 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const queueExecutionTruthRefresh = useCallback(() => {
     setExecutionTruthRefreshKey((prev) => prev + 1);
   }, []);
+
+  useEffect(() => {
+    if (deepLinkHandled) return;
+    const openId = String(searchParams.get('open') || '').trim();
+    const mode = String(searchParams.get('mode') || '')
+      .trim()
+      .toLowerCase();
+    const targetTab = String(searchParams.get('tab') || '')
+      .trim()
+      .toLowerCase();
+    const targetView = String(searchParams.get('view') || '')
+      .trim()
+      .toLowerCase();
+
+    if (targetTab === 'reports') {
+      setActiveTab('reports');
+      setViewMode(targetView === 'grid' ? 'grid' : 'table');
+      setDeepLinkHandled(true);
+      return;
+    }
+
+    if (openId && (mode === 'doc' || mode === 'initiative')) {
+      setActiveTab('list');
+      setViewMode('table');
+      setActiveDocumentId(openId);
+      setIsSidePanelOpen(false);
+      setDeepLinkHandled(true);
+    }
+  }, [deepLinkHandled, searchParams]);
+
+  useEffect(() => {
+    if (!deepLinkHandled) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has('open')) {
+      next.delete('open');
+      changed = true;
+    }
+    if (next.has('mode')) {
+      next.delete('mode');
+      changed = true;
+    }
+    if (next.has('view')) {
+      next.delete('view');
+      changed = true;
+    }
+    if (changed) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [deepLinkHandled, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    const currentTab = String(next.get('tab') || '')
+      .trim()
+      .toLowerCase();
+    const desiredTab = String(activeTab || '')
+      .trim()
+      .toLowerCase();
+    if (desiredTab && currentTab !== desiredTab) {
+      next.set('tab', desiredTab);
+      changed = true;
+    }
+    const currentView = String(next.get('view') || '')
+      .trim()
+      .toLowerCase();
+    const desiredView = String(viewMode || '')
+      .trim()
+      .toLowerCase();
+    if (desiredView && currentView !== desiredView) {
+      next.set('view', desiredView);
+      changed = true;
+    }
+    const currentInitiativeScope = String(next.get('initiativeId') || '').trim();
+    const desiredInitiativeScope =
+      activeDocumentId && !activeDocumentId.startsWith('report:') ? activeDocumentId : '';
+    if (desiredInitiativeScope) {
+      if (currentInitiativeScope !== desiredInitiativeScope) {
+        next.set('initiativeId', desiredInitiativeScope);
+        changed = true;
+      }
+    } else if (currentInitiativeScope) {
+      next.delete('initiativeId');
+      changed = true;
+    }
+    if (!changed) return;
+    setSearchParams(next, { replace: true });
+  }, [activeDocumentId, activeTab, searchParams, setSearchParams, viewMode]);
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -838,6 +951,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     initRetryRef.current = 0;
     const loadInitiatives = async () => {
       setIsLoading(true);
+      setInitiativesLoadError(null);
+      setInitiativesLoadErrorCode(null);
       try {
         const response = await Api.getInitiatives(currentProjectId || undefined);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
@@ -867,12 +982,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );
         setInitiatives(executionInitiatives);
+        const { message, code } = mapHubLoadFailureToPresentation(
+          err,
+          t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
+        );
+        setInitiativesLoadError(message);
+        setInitiativesLoadErrorCode(code);
       } finally {
         setIsLoading(false);
       }
     };
     loadInitiatives();
-  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives]);
+  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -1380,10 +1501,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         result = result.filter((i) => i.status === filter.value);
       }
       if (filter.column === 'attention') {
+        const isMissingDatesFilter = filter.value === 'missing_dates';
         result = result.filter((i) =>
           matchesAttentionPreset(
             i,
-            filter.value as
+            (isMissingDatesFilter ? 'missing_dates' : filter.value) as
               | 'blocked'
               | 'missing_dates'
               | 'overdue'
@@ -1437,7 +1559,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           entityType: 'initiative',
           entityId: initiative.id,
           entityName: initiative.name,
-          contextData: initiative as unknown as Record<string, unknown>,
+          contextData: {
+            ...(initiative as unknown as Record<string, unknown>),
+            p11Handoff: {
+              source: 'execution_hub',
+              lane: activeTab === 'reports' ? 'execution_reports' : 'execution_portfolio',
+              initiativeId: initiative.id,
+              initiativeIds: [initiative.id],
+            },
+          },
           pmoContext: { initiativeIds: [initiative.id] },
         });
         await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
@@ -1453,14 +1583,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
-        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+        const query = new URLSearchParams();
+        query.set('open', encodeURIComponent(id));
+        query.set('mode', 'doc');
+        query.set('initiativeId', encodeURIComponent(id));
+        query.set('tab', String(activeTab || 'list'));
+        query.set('view', String(viewMode || 'table'));
+        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?${query.toString()}`;
         await navigator.clipboard.writeText(url);
         toast.success(t('common.copied', 'Copied'));
       } catch {
         toast.error(t('common.copyFailed', 'Copy failed'));
       }
     },
-    [t]
+    [activeTab, t, viewMode]
   );
 
   // Tab configuration
@@ -1537,7 +1673,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const code = getTypeCode(row.axis);
           return (
             <div className="flex items-center gap-2">
-              <Target size={14} className="text-cyan-400" />
+              <Target size={14} className="text-blue-400" />
               <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                 {code}
               </span>
@@ -1638,12 +1774,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             new Date(row.plannedEndDate) < new Date() &&
             row.status !== InitiativeStatus.DONE;
           const color = isBlocked
-            ? 'bg-red-500'
+            ? 'bg-rose-500'
             : isOverdue
               ? 'bg-amber-500'
               : progress >= 100
                 ? 'bg-emerald-500'
-                : 'bg-cyan-500';
+                : 'bg-blue-500';
           return (
             <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -1740,7 +1876,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             badges.push(
               <span
                 key="blocked"
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400"
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-400"
               >
                 <AlertTriangle size={10} />
                 {t('execution.badges.blocked')}
@@ -1829,7 +1965,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const isOverdue = new Date(deadline) < new Date() && row.status !== InitiativeStatus.DONE;
           return (
             <span
-              className={`text-sm ${isOverdue ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}`}
+              className={`text-sm ${isOverdue ? 'text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}
             >
               {new Date(deadline).toLocaleDateString()}
             </span>
@@ -1904,7 +2040,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <span className="text-[11px] font-semibold tabular-nums text-amber-500">
             {execTopline.pendingDecisions}
           </span>
-          <span className="text-[11px] font-semibold tabular-nums text-violet-500">
+          <span className="text-[11px] font-semibold tabular-nums text-primary-500">
             {execTopline.overdueTasks}
           </span>
         </button>
@@ -2241,7 +2377,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -2257,7 +2393,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {
           id: 'in_progress',
           label: t('execution.kanban.inProgress'),
-          accent: 'text-cyan-300',
+          accent: 'text-blue-300',
           icon: <Target size={14} />,
         },
         {
@@ -2307,10 +2443,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {/* Drag overlay for smooth dragging experience */}
         <DragOverlay>
           {activeTask ? (
-            <div className="p-3 bg-white dark:bg-navy-800 border-2 border-cyan-500 rounded-lg shadow-xl w-[240px]">
+            <div className="p-3 bg-white dark:bg-navy-800 border-2 border-primary-500 rounded-lg shadow-xl w-[240px]">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <GripVertical size={14} className="text-cyan-400" />
+                  <GripVertical size={14} className="text-primary-400" />
                   <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
                     {activeTask.title}
                   </h4>
@@ -2569,7 +2705,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {portfolioMetrics.avgProgress}%
               </p>
             </div>
-            <Target className="text-cyan-400" />
+            <Target className="text-blue-400" />
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
@@ -2582,7 +2718,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
               </p>
             </div>
-            <LayoutDashboard className="text-violet-400" />
+            <LayoutDashboard className="text-primary-400" />
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
@@ -2710,7 +2846,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -2730,7 +2866,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.tasks.openInitiative', 'Open related initiative')}
         >
           <div className="min-w-0">
@@ -2824,7 +2960,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <BucketColumn
             title={t('execution.tasks.upcoming', 'Upcoming (8–30d)')}
-            accent="text-cyan-400"
+            accent="text-blue-400"
             tasks={taskBuckets.upcoming}
           />
         </div>
@@ -2886,7 +3022,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingDecisions) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -2908,7 +3044,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.decisionsBuckets.openInitiative', 'Open related initiative')}
         >
           <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
@@ -2981,7 +3117,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <Bucket
             title={t('execution.decisionsBuckets.due30', 'Due 15–30d')}
-            accent="text-cyan-400"
+            accent="text-blue-400"
             items={decisionBuckets.due30}
           />
           <Bucket
@@ -3027,7 +3163,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               : attention === 'overdue_decisions'
                 ? 'text-rose-500'
                 : attention === 'due_soon_tasks'
-                  ? 'text-cyan-500'
+                  ? 'text-blue-500'
                   : 'text-slate-500',
         },
       ]);
@@ -3036,11 +3172,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const commandRowContent = useMemo(() => {
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-    const badgeBase =
-      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
-
     if (activeTab === 'reports') {
       const reportPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
@@ -3051,7 +3182,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         { id: 'sponsor' as const, label: 'Sponsor', count: 5 },
       ];
       return (
-        <div className="flex items-center gap-2">
+        <div className={MENU_3_LEFT_CLASS}>
           {reportPresets.map((preset) => {
             const active = reportPreset === preset.id;
             return (
@@ -3059,25 +3190,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 key={preset.id}
                 type="button"
                 onClick={() => setReportPreset((prev) => (prev === preset.id ? 'all' : preset.id))}
-                className={`${chipBase} ${
-                  active
-                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-                }`}
+                className={active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
                 {preset.id === 'all' ? (
-                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  <span className={MENU_3_ALL_DOT_CLASS} />
                 ) : (
-                  <FileText size={14} className="text-cyan-400" />
+                  <FileText size={14} className="text-blue-400" />
                 )}
                 <span>{preset.label}</span>
-                <span
-                  className={`${badgeBase} ${
-                    active
-                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
+                <span className={active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                   {preset.count}
                 </span>
               </button>
@@ -3107,7 +3228,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: allCount,
         active: allActive,
         disabled: false,
-        icon: <span className="w-2 h-2 rounded-full bg-slate-400" />,
+        icon: <span className={MENU_3_ALL_DOT_CLASS} />,
         onClick: resetExecutionCommandRow,
       },
       {
@@ -3161,7 +3282,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: dueSoonTasksCount,
         active: isAttentionActive('due_soon_tasks'),
         disabled: dueSoonTasksCount === 0,
-        icon: <Clock size={14} className="text-cyan-400" />,
+        icon: <Clock size={14} className="text-blue-400" />,
         onClick: () => {
           if (isAttentionActive('due_soon_tasks')) {
             resetExecutionCommandRow();
@@ -3173,31 +3294,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     ] as const;
 
     return (
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         {executionPresets.map((preset) => (
           <button
             key={preset.id}
             type="button"
             onClick={preset.onClick}
             disabled={preset.disabled}
-            className={`${chipBase} ${
-              preset.active
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : preset.disabled
-                  ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            className={`${preset.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE} ${
+              preset.disabled ? 'cursor-not-allowed opacity-55' : ''
             }`}
             title={preset.label}
           >
             {preset.icon}
             <span>{preset.label}</span>
-            <span
-              className={`${badgeBase} ${
-                preset.active
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
+            <span className={preset.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
               {preset.count}
             </span>
           </button>
@@ -3205,6 +3316,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
     );
   }, [
+    activeDocumentId,
     activeTab,
     actionCenter,
     actionQueueItems.length,
@@ -3217,7 +3329,72 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     riskSignals.length,
     t,
     tasks.length,
+    navigate,
   ]);
+
+  const renderActionCenter = () => {
+    const kpiDeviationItems = actionQueueItems.filter(
+      (item) => item.type === 'kpi_deviation_no_plan'
+    );
+    const missingPlanItems = actionCenter.missingDates;
+    const rows = [
+      {
+        id: 'action-queue',
+        label: t('execution.actionCenter.actionQueue', 'Action queue'),
+        count: actionQueueItems.length,
+        description: t(
+          'execution.actionCenter.actionQueueDesc',
+          'Overdue decisions, risks, communications, and KPI deviations that need owner action.'
+        ),
+        onClick: () => openInitiativesWithAttention('overdue_decisions'),
+      },
+      {
+        id: 'missing-plan-handling',
+        label: t('execution.actionCenter.missingPlan', 'Missing-plan handling'),
+        count: missingPlanItems.length,
+        description: t(
+          'execution.actionCenter.missingPlanDesc',
+          'Initiatives without start/end dates stay visible as degraded planning state instead of disappearing from reports.'
+        ),
+        onClick: () => openInitiativesWithAttention('missing_dates'),
+      },
+      {
+        id: 'kpi-deviation-no-plan',
+        label: t('execution.actionCenter.kpiNoPlan', 'KPI deviation without plan'),
+        count: kpiDeviationItems.length,
+        description: t(
+          'execution.actionCenter.kpiNoPlanDesc',
+          'KPI deviations without recovery plans are tracked in the same action queue.'
+        ),
+        onClick: () => setActiveTab('people_change' as ModuleTab),
+      },
+    ];
+
+    return (
+      <div className="grid gap-3 md:grid-cols-3">
+        {rows.map((row) => (
+          <button
+            key={row.id}
+            type="button"
+            onClick={row.onClick}
+            className="text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 hover:border-primary-500/40 transition-colors"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {row.label}
+              </div>
+              <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 px-2 py-0.5">
+                {row.count}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              {row.description}
+            </p>
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   // ---------------------------------------------------------------------------
   // RAPORTY — pre-defined report catalog (§5 of EXECUTION_SURFACES spec)
@@ -3268,7 +3445,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Update missing dates',
           'Reassign stale tasks',
         ],
-        icon: <CalendarDays size={18} className="text-cyan-500" />,
+        icon: <CalendarDays size={18} className="text-blue-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3418,7 +3595,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Redistribute idle capacity',
           'Flag resource gaps to hiring',
         ],
-        icon: <Users size={18} className="text-violet-500" />,
+        icon: <Users size={18} className="text-primary-500" />,
         highlights: [{ label: 'Tasks', value: totalTasks }],
       },
       {
@@ -3521,7 +3698,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Approve recovery plans',
           'Communicate revised timelines',
         ],
-        icon: <Sparkles size={18} className="text-cyan-500" />,
+        icon: <Sparkles size={18} className="text-blue-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3748,7 +3925,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'execution.manager.suggestions.replanExpected',
           'Timeline becomes credible; slippage detection activates.'
         ),
-        icon: <Clock size={14} className="text-cyan-500" />,
+        icon: <Clock size={14} className="text-blue-500" />,
         severity: 'medium',
       });
     }
@@ -3787,7 +3964,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'execution.manager.suggestions.smoothExpected',
           'Workload spread evenly; no single-point overload.'
         ),
-        icon: <Users size={14} className="text-violet-500" />,
+        icon: <Users size={14} className="text-primary-500" />,
         severity: 'low',
       });
     }
@@ -4049,7 +4226,7 @@ Please return:
             {report.followUpActions.map((a) => (
               <span
                 key={a}
-                className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300"
+                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
               >
                 {a}
               </span>
@@ -4068,7 +4245,7 @@ Please return:
             {report.degradedFlags.map((flag) => (
               <span
                 key={flag}
-                className="inline-block px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-[10px] text-violet-700 dark:text-violet-300"
+                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
               >
                 {flag}
               </span>
@@ -4094,7 +4271,7 @@ Please return:
           <button
             type="button"
             onClick={() => handleGenerateReport(report)}
-            className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+            className="h-8 px-4 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-500 transition-colors"
           >
             {t('execution.reportPanel.generateAI', 'Generate with AI')}
           </button>
@@ -4203,7 +4380,7 @@ Please return:
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              {t('execution.reportCatalog.heading', 'Execution Reports')}
+              {t('execution.reports.title', 'Execution reports')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               {t(
@@ -4221,6 +4398,22 @@ Please return:
           </button>
         </div>
 
+        {renderActionCenter()}
+
+        <details className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+          <summary className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('execution.reports.workloadPreview', 'Workload preview')}
+          </summary>
+          <div className="border-t border-slate-200 dark:border-navy-700">
+            <ExecutionWorkloadView
+              initiatives={dashboardBaseInitiatives as FullInitiative[]}
+              onInitiativeClick={handleOpenSidePanel}
+              projectId={currentProjectId || undefined}
+              showControls={false}
+            />
+          </div>
+        </details>
+
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filteredReportCatalog.map((report) => {
             return (
@@ -4228,12 +4421,12 @@ Please return:
                 key={report.id}
                 type="button"
                 onClick={() => handleOpenReport(report)}
-                className="group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30"
+                className="group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:shadow-sm dark:hover:border-primary-400/30"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
                         {report.icon}
                       </div>
                       <div>
@@ -4253,7 +4446,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500"
+                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-primary-500"
                     />
                   </div>
 
@@ -4291,12 +4484,16 @@ Please return:
 
   // Render content
   const renderContent = () => {
-    if (isLoading) {
+    if (initiativesLoadError) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
+    }
+
+    if (isLoading) {
+      return <HubWorkAreaLoading />;
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
@@ -4306,6 +4503,8 @@ Please return:
           projectId={currentProjectId || undefined}
           searchQuery={searchQuery}
           hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}
+          onRegisterCommandRowContent={setManagerCommandRowContent}
+          onRegisterCommandRowRightContent={setManagerCommandRowRightContent}
           onOpenEntity={
             handleOpenSidePanel
               ? (type, id) => handleOpenSidePanel({ id, name: id } as any)
@@ -4331,12 +4530,14 @@ Please return:
         }
       }
       return (
-        <InitiativeDocumentView
-          initiativeId={activeDocumentId}
-          onBack={handleShowList}
-          onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
-          sourceModule="execution"
-        />
+        <Suspense fallback={<HubWorkAreaLoading />}>
+          <ExecutionInitiativeDocumentView
+            initiativeId={activeDocumentId}
+            onBack={handleShowList}
+            onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
+            sourceModule="execution"
+          />
+        </Suspense>
       );
     }
 
@@ -4508,7 +4709,14 @@ Please return:
         onStatusFilterChange={setActiveStatusFilter}
         rightControls={rightControls}
         availableViewModes={availableViewModes}
-        commandRowContent={activeTab === ('people_change' as ModuleTab) ? null : commandRowContent}
+        commandRowContent={
+          activeTab === ('people_change' as ModuleTab)
+            ? managerCommandRowContent
+            : commandRowContent
+        }
+        commandRowRightContent={
+          activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
+        }
       >
         {renderContent()}
       </ModuleHub>

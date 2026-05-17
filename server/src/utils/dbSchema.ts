@@ -45,6 +45,22 @@ const MOCK_TABLE_FALLBACK_COLUMNS: Record<string, string[]> = {
     'extensions_json',
     'schema_version',
   ],
+  my_ideas: [
+    'id',
+    'user_id',
+    'organization_id',
+    'title',
+    'body',
+    'tags',
+    'source_type',
+    'source_conversation_id',
+    'source_message_id',
+    'created_at',
+    'updated_at',
+    'action_contract_json',
+    'source_pack_json',
+    'evidence_refs_json',
+  ],
 };
 
 function isMockDbEnabled(): boolean {

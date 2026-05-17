@@ -2,8 +2,9 @@ import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucid
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -12,11 +13,20 @@ import {
 } from '@/services/api/v8/results';
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
 import { useAppStore } from '@/store/useAppStore';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
+import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ACTION_NEUTRAL,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { KPICreateModal } from './KPICreateModal';
 import {
   filterKpisByLifecycle,
@@ -63,12 +73,10 @@ interface ResultsRuntimeChipProps {
 }
 
 const ResultsRuntimeChip: React.FC<ResultsRuntimeChipProps> = ({ label, value, dotClassName }) => (
-  <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+  <div className={MENU_3_CHIP_INACTIVE}>
     <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
     <span>{label}</span>
-    <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-      {value}
-    </span>
+    <span className={MENU_3_BADGE_INACTIVE}>{value}</span>
   </div>
 );
 
@@ -83,12 +91,10 @@ const ResultsInfoChip: React.FC<ResultsInfoChipProps> = ({
   value,
   dotClassName = 'bg-slate-400',
 }) => (
-  <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60">
+  <div className={MENU_3_CHIP_INACTIVE}>
     <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
     <span>{label}</span>
-    <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200">
-      {value}
-    </span>
+    <span className={MENU_3_BADGE_INACTIVE}>{value}</span>
   </div>
 );
 
@@ -133,8 +139,10 @@ const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'co
 
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const currentUser = useAppStore((state) => state.currentUser);
   const [searchParams, setSearchParams] = useSearchParams();
+  const scopedInitiativeId = String(searchParams.get('initiativeId') || '').trim() || undefined;
 
   const [activeTab, setActiveTabRaw] = useState<ModuleTab>(
     (VALID_TABS.includes(searchParams.get('tab') as ModuleTab)
@@ -192,11 +200,14 @@ export const ResultsHub: React.FC = () => {
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kpiLoadError, setKpiLoadError] = useState<string | null>(null);
+  const [kpiLoadErrorCode, setKpiLoadErrorCode] = useState<string | null>(null);
   const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
   const [resultsSource, setResultsSource] = useState<'v8' | 'legacy' | 'empty' | 'showcase'>(
     'empty'
   );
   const [watchedKpiIds, setWatchedKpiIds] = useState<Set<string>>(new Set());
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('results');
@@ -264,17 +275,50 @@ export const ResultsHub: React.FC = () => {
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (deepLinkHandled) return;
+    const openId = String(searchParams.get('open') || '').trim();
+    const mode = String(searchParams.get('mode') || '')
+      .trim()
+      .toLowerCase();
+    if (!openId || (mode !== 'initiative' && mode !== 'doc')) return;
+
+    setActiveTabRaw('results_initiatives');
+    setActiveDocumentId(openId);
+    setDeepLinkHandled(true);
+  }, [deepLinkHandled, searchParams, setActiveDocumentId]);
+
+  useEffect(() => {
+    if (!deepLinkHandled) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has('open')) {
+      next.delete('open');
+      changed = true;
+    }
+    if (next.has('mode')) {
+      next.delete('mode');
+      changed = true;
+    }
+    if (changed) setSearchParams(next, { replace: true });
+  }, [deepLinkHandled, searchParams, setSearchParams]);
+
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
+    setKpiLoadError(null);
+    setKpiLoadErrorCode(null);
     try {
       const result = await loadResultsKpis();
       setTrackedInitiatives(result.initiatives);
       setKpis(result.kpis);
       setResultsSource(result.source);
-    } catch {
-      setTrackedInitiatives([]);
-      setKpis([]);
-      setResultsSource('empty');
+    } catch (error: any) {
+      const { message, code } = mapHubLoadFailureToPresentation(
+        error,
+        'Failed to load KPI catalog.'
+      );
+      setKpiLoadError(message);
+      setKpiLoadErrorCode(code);
     } finally {
       setLoading(false);
     }
@@ -282,12 +326,12 @@ export const ResultsHub: React.FC = () => {
 
   const loadV8Snapshot = useCallback(async () => {
     try {
-      const response = await V8ResultsApi.getDashboard();
+      const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
       setV8Snapshot(response.snapshot);
     } catch {
       setV8Snapshot(null);
     }
-  }, []);
+  }, [scopedInitiativeId]);
 
   useEffect(() => {
     fetchKPIs();
@@ -645,6 +689,22 @@ export const ResultsHub: React.FC = () => {
     });
   }, []);
 
+  useEffect(() => {
+    const initiativeId = String(searchParams.get('initiativeId') || '').trim();
+    if (!initiativeId || activeTab !== 'results_reports') return;
+    const targetInitiative = trackedInitiatives.find((item) => item.initiativeId === initiativeId);
+    if (!targetInitiative) return;
+    replaceResultsFilters(
+      {
+        id: `initiativeName:${targetInitiative.initiativeName}`,
+        column: 'initiativeName',
+        value: targetInitiative.initiativeName,
+        label: targetInitiative.initiativeName,
+      },
+      ['initiativeName']
+    );
+  }, [activeTab, replaceResultsFilters, searchParams, trackedInitiatives]);
+
   const openInitiativeKpiLane = useCallback(
     (initiative: ResultsTrackedInitiative) => {
       setActiveTab('results_kpi');
@@ -663,10 +723,29 @@ export const ResultsHub: React.FC = () => {
     [replaceResultsFilters]
   );
 
-  const openInitiativeReportsLane = useCallback(() => {
-    setActiveTab('results_reports');
-    setReportWorkspaceMode('tracked');
-  }, []);
+  const openInitiativeReportsLane = useCallback(
+    (initiative?: ResultsTrackedInitiative) => {
+      setActiveTab('results_reports');
+      setReportWorkspaceMode('reports');
+      if (initiative?.initiativeId) {
+        const next = new URLSearchParams(searchParams);
+        next.set('initiativeId', initiative.initiativeId);
+        setSearchParams(next, { replace: true });
+      }
+    },
+    [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]
+  );
+
+  const openScopedExecutionLane = useCallback(() => {
+    if (!scopedInitiativeId) return;
+    const query = new URLSearchParams();
+    query.set('initiativeId', scopedInitiativeId);
+    query.set('open', scopedInitiativeId);
+    query.set('mode', 'doc');
+    query.set('tab', 'list');
+    query.set('view', 'table');
+    navigate(`${ROUTES.IMPLEMENTATION}?${query.toString()}`);
+  }, [navigate, scopedInitiativeId]);
 
   const openInitiativeDocument = useCallback(
     (initiative: ResultsTrackedInitiative) => {
@@ -847,12 +926,12 @@ export const ResultsHub: React.FC = () => {
         <ResultsRuntimeChip
           label={t('results.runtime.realizedRoi', 'Realized ROI')}
           value={runtimeSnapshot.roiDashboard.totalRealized.toLocaleString()}
-          dotClassName="bg-violet-400"
+          dotClassName="bg-primary-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.reconciliation', 'Reconciliation')}
           value={String(runtimeSnapshot.reconciliationHealth.unresolvedCount || 0)}
-          dotClassName="bg-cyan-400"
+          dotClassName="bg-blue-400"
         />
       </>
     );
@@ -1018,22 +1097,17 @@ export const ResultsHub: React.FC = () => {
     kpiWorkspaceMode,
     lifecycleFilter,
     observationPhaseFilter,
+    scopedInitiativeId,
     t,
     trackedInitiatives,
   ]);
 
   const commandRowContent = useMemo(() => {
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
     const actionButton = (label: string, onClick: () => void, active = false) => (
       <button
         type="button"
         onClick={onClick}
-        className={`${chipBase} ${
-          active
-            ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-        }`}
+        className={active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
       >
         {label}
       </button>
@@ -1041,60 +1115,48 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'results_initiatives') {
       return governedRuntimeStrip ? (
-        <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+        <div className={MENU_3_LEFT_CLASS}>{governedRuntimeStrip}</div>
       ) : null;
     }
 
     if (activeTab === 'results_kpi') {
       return (
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {actionButton(
-              t('results.kpi.workspace.catalog', 'KPI List'),
-              () => setKpiWorkspaceMode('catalog'),
-              kpiWorkspaceMode === 'catalog'
-            )}
-            {actionButton(
-              t('results.kpi.workspace.queue', 'Data / Signals'),
-              () => setKpiWorkspaceMode('queue'),
-              kpiWorkspaceMode === 'queue'
-            )}
-            {actionButton(
-              t('results.kpi.workspace.overview', 'Overview'),
-              () => setKpiWorkspaceMode('overview'),
-              kpiWorkspaceMode === 'overview'
-            )}
-            {actionButton(
-              t('results.kpi.workspace.scorecards', 'Goals'),
-              () => setKpiWorkspaceMode('scorecards'),
-              kpiWorkspaceMode === 'scorecards'
-            )}
-            {actionButton(
-              t('results.actions.recordValue', 'Record value'),
-              openFirstFilteredKpiRecord
-            )}
-          </div>
-          {kpiWorkspaceMode === 'queue' ? (
-            <button
-              type="button"
-              onClick={() => setSignalSheetCreateNonce(Date.now())}
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-400 transition-colors"
-            >
-              <Plus size={14} />
-              <span>{t('results.kpi.signals.addSheet', '+ Add sheet')}</span>
-            </button>
-          ) : null}
+        <div className={MENU_3_LEFT_CLASS}>
+          {actionButton(
+            t('results.kpi.workspace.catalog', 'KPI List'),
+            () => setKpiWorkspaceMode('catalog'),
+            kpiWorkspaceMode === 'catalog'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.queue', 'Data / Signals'),
+            () => setKpiWorkspaceMode('queue'),
+            kpiWorkspaceMode === 'queue'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.overview', 'Overview'),
+            () => setKpiWorkspaceMode('overview'),
+            kpiWorkspaceMode === 'overview'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.scorecards', 'Goals'),
+            () => setKpiWorkspaceMode('scorecards'),
+            kpiWorkspaceMode === 'scorecards'
+          )}
+          {actionButton(
+            t('results.actions.recordValue', 'Record value'),
+            openFirstFilteredKpiRecord
+          )}
         </div>
       );
     }
 
     if (activeTab === 'roi') {
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
             onClick={openRoiPicker}
-            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            className={MENU_3_ACTION_NEUTRAL}
             title={t('results.roi.actions.recordActual', 'Record actual')}
           >
             <Plus size={14} />
@@ -1103,7 +1165,7 @@ export const ResultsHub: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('roi_analysis')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            className={MENU_3_CHIP_INACTIVE}
             title={t('results.tabs.roiAnalysis', 'ROI Analysis')}
           >
             <DollarSign size={14} className="text-amber-400" />
@@ -1116,11 +1178,11 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'roi_analysis') {
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
             onClick={() => setActiveTab('roi')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            className={MENU_3_CHIP_INACTIVE}
             title={t('results.tabs.roi', 'ROI')}
           >
             <DollarSign size={14} className="text-amber-400" />
@@ -1133,7 +1195,7 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'results_reports') {
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className={MENU_3_LEFT_CLASS}>
           {actionButton(
             t('results.reporting.workspace.trackedKpis', 'Tracked KPI'),
             () => {
@@ -1180,19 +1242,47 @@ export const ResultsHub: React.FC = () => {
     }
 
     return governedRuntimeStrip ? (
-      <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+      <div className={MENU_3_LEFT_CLASS}>{governedRuntimeStrip}</div>
     ) : null;
   }, [
     activeTab,
     governedRuntimeStrip,
     kpiWorkspaceMode,
+    openScopedExecutionLane,
     openFirstFilteredKpiRecord,
     observationPhaseFilter,
+    scopedInitiativeId,
     openRoiPicker,
     reportWorkspaceMode,
     setQueueFilter,
     t,
   ]);
+
+  const commandRowRightContent = useMemo(() => {
+    const scopedExecutionButton = scopedInitiativeId ? (
+      <button type="button" onClick={openScopedExecutionLane} className={MENU_3_ACTION_NEUTRAL}>
+        <span>{t('results.actions.openInExecution', 'Open in Execution')}</span>
+      </button>
+    ) : null;
+
+    if (activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue') {
+      return (
+        <div className="inline-flex items-center gap-2">
+          {scopedExecutionButton}
+          <button
+            type="button"
+            onClick={() => setSignalSheetCreateNonce(Date.now())}
+            className={MENU_3_ACTION_NEUTRAL}
+          >
+            <Plus size={14} />
+            <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    return scopedExecutionButton;
+  }, [activeTab, kpiWorkspaceMode, openScopedExecutionLane, scopedInitiativeId, t]);
 
   return (
     <>
@@ -1250,19 +1340,19 @@ export const ResultsHub: React.FC = () => {
         }
         newItemLabel={
           activeTab === 'results_initiatives' || activeTab === 'results_kpi'
-            ? t('results.addKpi', '+ Add KPI')
+            ? t('results.addKpi', 'Add KPI')
             : activeTab === 'results_reports'
               ? reportWorkspaceMode === 'tracked'
-                ? t('results.addKpi', '+ Add KPI')
+                ? t('results.addKpi', 'Add KPI')
                 : reportWorkspaceMode === 'reports'
-                  ? t('results.kpiReports.new', '+ New report')
+                  ? t('results.kpiReports.new', 'New report')
                   : reportWorkspaceMode === 'schedules'
-                    ? t('results.reporting.addSchedule', '+ Add schedule')
+                    ? t('results.reporting.addSchedule', 'Add schedule')
                     : reportWorkspaceMode === 'wallboards'
-                      ? t('results.reporting.addWallboard', '+ Add wallboard')
-                      : t('results.reporting.addConnector', '+ Add connector')
+                      ? t('results.reporting.addWallboard', 'Add wallboard')
+                      : t('results.reporting.addConnector', 'Add connector')
               : activeTab === 'roi'
-                ? t('results.roi.add', '+ Record ROI')
+                ? t('results.roi.add', 'Record ROI')
                 : undefined
         }
         availableViewModes={
@@ -1272,6 +1362,7 @@ export const ResultsHub: React.FC = () => {
         }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
       >
         {activeDocumentId ? (
           <Suspense
@@ -1279,7 +1370,9 @@ export const ResultsHub: React.FC = () => {
               <div className="flex items-center justify-center py-24">
                 <div className="flex items-center gap-3 text-slate-400">
                   <BarChart3 size={20} className="animate-pulse" />
-                  <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-300">
+                    {t('common.loading', 'Loading...')}
+                  </span>
                 </div>
               </div>
             }
@@ -1297,6 +1390,21 @@ export const ResultsHub: React.FC = () => {
             onBack={() => setActiveSignalSheet(null)}
             onRecorded={() => void refreshResultsTruth()}
             onOpenKpi={openKpiDrawer}
+          />
+        ) : kpiLoadError ? (
+          <HubWorkAreaLoadError
+            title={t('results.hub.failedToLoadKpis', 'Failed to load KPI catalog.')}
+            message={kpiLoadError}
+            errorCode={kpiLoadErrorCode}
+            retryLabel={t('results.hub.retry', 'Retry')}
+            dismissLabel={t('results.hub.dismiss', 'Dismiss')}
+            onRetry={() => {
+              void fetchKPIs();
+            }}
+            onDismiss={() => {
+              setKpiLoadError(null);
+              setKpiLoadErrorCode(null);
+            }}
           />
         ) : activeTab === 'results_initiatives' ? (
           <ResultsInitiativesView
@@ -1356,7 +1464,9 @@ export const ResultsHub: React.FC = () => {
           <div className="flex items-center justify-center py-24">
             <div className="flex items-center gap-3 text-slate-400">
               <BarChart3 size={20} className="animate-pulse" />
-              <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+              <span className="text-sm text-slate-500 dark:text-slate-300">
+                {t('common.loading', 'Loading...')}
+              </span>
             </div>
           </div>
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'overview' ? (

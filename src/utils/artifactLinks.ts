@@ -290,7 +290,7 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'presentation':
       return `/prezentacje?artifactId=${id}`;
     case 'sheet':
-      return `/excele?artifactId=${id}`;
+      return `/tabele?artifactId=${id}`;
     case 'meeting':
       return '/meeting';
     // V5-IDEA-34: Finance artifact parity
@@ -317,12 +317,11 @@ export function getV8SheetArtifactXlsxExportPath(tableId: string): string {
 }
 
 /**
- * Deep-link into My Work → Ideas → workspace Table tool for a canonical `tp_tables` row.
- * `workspaceId` is `tp_bases.workspace_id` (idea id). Requires `tablePlatformMetadataFirst`
- * + bridge support for the grid to load that table id.
+ * Deep-link into My Work Sheets lane (Option A path) for a canonical `tp_tables` row.
+ * `workspaceId` is `tp_bases.workspace_id` (idea id).
  */
 export function buildMyWorkSheetTableOpenPath(workspaceId: string, tableId: string): string {
-  return `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table?tpTable=${encodeURIComponent(tableId)}`;
+  return `/my-work/sheets/${encodeURIComponent(workspaceId)}/tables/${encodeURIComponent(tableId)}`;
 }
 
 export function getArtifactPath(type: ArtifactType, id: string): string {

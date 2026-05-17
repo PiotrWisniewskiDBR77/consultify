@@ -122,10 +122,14 @@ router.post(
 
       const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
-      await dbRun('UPDATE users SET avatar_url = ?, updated_at = datetime("now") WHERE id = ?', [
-        avatarUrl,
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [avatarUrl, id],
+        { fallback: false }
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to persist avatar');
+      }
 
       if (oldUser?.avatar_url && oldUser.avatar_url.startsWith('/uploads/')) {
         const oldPath = path.join(process.cwd(), oldUser.avatar_url);
@@ -180,9 +184,14 @@ router.delete(
         }
       }
 
-      await dbRun('UPDATE users SET avatar_url = NULL, updated_at = datetime("now") WHERE id = ?', [
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [id],
+        { fallback: false }
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to remove avatar');
+      }
 
       logger.info(`[users] Avatar removed for user ${id}`);
       return res.json({ success: true });

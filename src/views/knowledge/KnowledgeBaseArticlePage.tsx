@@ -548,10 +548,10 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {/* Deprecation banner */}
           {redirectInfo?.deprecationReason && (
-            <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3 text-sm text-red-900 dark:text-red-200 flex items-start gap-3">
+            <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-200 flex items-start gap-3">
               <AlertTriangle
                 size={18}
-                className="flex-shrink-0 mt-0.5 text-red-500 dark:text-red-400"
+                className="flex-shrink-0 mt-0.5 text-rose-500 dark:text-rose-400"
               />
               <div>
                 <p className="font-bold">
@@ -561,14 +561,14 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 {redirectInfo.redirectSlug ? (
                   <Link
                     to={`/knowledge-base/${categorySlug}/${redirectInfo.redirectSlug}`}
-                    className="mt-2 inline-block text-red-700 dark:text-red-300 font-semibold underline hover:no-underline"
+                    className="mt-2 inline-block text-rose-700 dark:text-rose-300 font-semibold underline hover:no-underline"
                   >
                     {t('kb.article.viewReplacement', 'View replacement article')} →
                   </Link>
                 ) : (
                   <Link
                     to="/knowledge-base"
-                    className="mt-2 inline-block text-red-700 dark:text-red-300 font-semibold underline hover:no-underline"
+                    className="mt-2 inline-block text-rose-700 dark:text-rose-300 font-semibold underline hover:no-underline"
                   >
                     {t('kb.article.browseKb', 'Browse Knowledge Base')} →
                   </Link>
@@ -882,8 +882,8 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all',
                       feedback === 'down'
-                        ? 'bg-red-500/15 border-red-500/30 text-red-400'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-red-500/40 hover:text-red-600 dark:border-white/[0.08] dark:bg-transparent dark:text-white/40 dark:hover:text-red-400'
+                        ? 'bg-rose-500/15 border-rose-500/30 text-rose-400'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-rose-500/40 hover:text-rose-600 dark:border-white/[0.08] dark:bg-transparent dark:text-white/40 dark:hover:text-rose-400'
                     )}
                   >
                     <ThumbsDown size={14} />

@@ -180,10 +180,10 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
         };
       case 'violet':
         return {
-          bg: 'bg-violet-100 dark:bg-violet-900/30',
-          text: 'text-violet-600 dark:text-violet-400',
-          border: 'border-violet-200 dark:border-violet-800',
-          gradient: 'from-violet-500 to-violet-600',
+          bg: 'bg-primary-100 dark:bg-primary-900/30',
+          text: 'text-primary-600 dark:text-primary-400',
+          border: 'border-primary-200 dark:border-primary-800',
+          gradient: 'from-primary-500 to-primary-600',
         };
       case 'amber':
         return {

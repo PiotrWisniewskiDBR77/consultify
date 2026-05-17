@@ -1,0 +1,44 @@
+{
+  "status": {
+    "draft": "Szkic",
+    "approved": "Zatwierdzony",
+    "deprecated": "Wycofany"
+  },
+  "filter": {
+    "ariaLabel": "Filtr statusu szablonów",
+    "approved": "Zatwierdzone",
+    "draft": "Szkice",
+    "deprecated": "Wycofane"
+  },
+  "badge": {
+    "ariaPrefix": "Status szablonu"
+  },
+  "actions": {
+    "approve": "Zatwierdź",
+    "deprecate": "Wycofaj",
+    "approveTitle": "Zatwierdź szablon",
+    "deprecateTitle": "Wycofaj szablon",
+    "approveBody": "Zatwierdzenie sprawia, że szablon staje się widoczny dla wszystkich użytkowników. Operacja zapisuje wpis w historii zatwierdzeń.",
+    "deprecateBody": "Wycofanie ukrywa szablon przed nowymi użytkownikami. Istniejące bazy korzystające z szablonu pozostają nienaruszone. Operacja jest zapisywana w historii zatwierdzeń.",
+    "noteLabel": "Notatka (opcjonalnie)",
+    "submitApprove": "Zatwierdź",
+    "submitDeprecate": "Wycofaj",
+    "cancel": "Anuluj",
+    "errorGeneric": "Operacja nieudana."
+  },
+  "governance": {
+    "drawerTitle": "Governance szablonu",
+    "approvalHistory": "Historia zatwierdzeń",
+    "approvalHistoryEmpty": "Brak wpisów.",
+    "rules": "Reguły governance",
+    "actor": "Aktor",
+    "previousStatus": "Poprzedni status",
+    "loading": "Wczytywanie…",
+    "event": {
+      "approved": "Zatwierdzono",
+      "deprecated": "Wycofano",
+      "reverted_to_draft": "Cofnięto do szkicu",
+      "auto_promoted_from_legacy_featured": "Auto-promocja (legacy featured)"
+    }
+  }
+}

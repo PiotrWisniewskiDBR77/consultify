@@ -145,8 +145,8 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'BLOCKED',
     label: 'Blocked',
     labelPL: 'Zablokowana',
-    color: 'text-red-500',
-    bgColor: 'bg-red-500',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500',
     order: 9,
   },
   DONE: {
@@ -221,8 +221,8 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'REJECTED',
     label: 'Rejected',
     labelPL: 'Odrzucony',
-    color: 'text-red-500',
-    bgColor: 'bg-red-500',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500',
     order: 5,
   },
   ARCHIVED: {
@@ -281,8 +281,8 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'REJECTED',
     label: 'Rejected',
     labelPL: 'Odrzucony',
-    color: 'text-red-500',
-    bgColor: 'bg-red-500',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500',
     order: 6,
   },
   UTILIZED: {

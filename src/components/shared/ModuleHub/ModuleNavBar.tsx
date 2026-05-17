@@ -61,6 +61,7 @@ interface ModuleNavBarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSearch: (query: string) => void;
+  searchValue?: string;
   // Command Row inputs (V3: one row; modes swap in place)
   openDocuments: OpenDocument[];
   activeDocumentId: string | null;
@@ -72,6 +73,8 @@ interface ModuleNavBarProps {
   onClearFilters: () => void;
   // Optional: module-provided "counters / chips / bulk bar" for the command row
   commandRowContent?: React.ReactNode;
+  // Optional right-side command row slot for contextual AI/actions.
+  commandRowRightContent?: React.ReactNode;
   // For Assessment: single "New Assessment" button
   onNewItem?: () => void;
   newItemLabel?: string;
@@ -156,6 +159,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
+  searchValue,
   openDocuments,
   activeDocumentId,
   onSelectDocument,
@@ -165,6 +169,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   onRemoveFilter,
   onClearFilters,
   commandRowContent,
+  commandRowRightContent,
   onNewItem,
   newItemLabel = 'New Item',
   primaryCta,
@@ -180,9 +185,16 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   aiControl,
   forceCommandRow = false,
 }) => {
+  void commandRowRightContent;
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchValue !== undefined) {
+      setSearchQuery(searchValue);
+    }
+  }, [searchValue]);
 
   // Debounce search query (300ms)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -250,11 +262,13 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
             />
             <input
+              id="modulehub-command-search"
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search..."
+              aria-label="Search"
               className="
                 w-full pl-10 pr-10 py-2 rounded-lg
                 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
@@ -265,6 +279,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={handleCloseSearch}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
@@ -313,6 +328,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     <div className="flex items-center gap-2">
       {categoryButtons.map((btn) => (
         <button
+          type="button"
           key={btn.id}
           onClick={btn.onClick}
           data-testid={`category-button-${btn.id}`}
@@ -336,6 +352,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         <div className="flex items-center gap-3">
           {/* Search Toggle */}
           <button
+            type="button"
             onClick={() => {
               if (forceCommandRow) return;
               setShowSearch(!showSearch);
@@ -347,19 +364,24 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             }`}
             title={forceCommandRow ? 'Bulk mode active' : 'Search'}
             aria-disabled={forceCommandRow}
+            aria-expanded={showSearch}
+            aria-controls={showSearch ? 'modulehub-command-search' : undefined}
           >
             <Search size={18} />
           </button>
 
           {/* Main Tabs — V3-A03: Level A pill (rounded-full) */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" role="tablist" aria-label="Module sections">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
+                  type="button"
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
                   className={isActive ? TAB_ACTIVE : TAB_INACTIVE}
+                  role="tab"
+                  aria-selected={isActive}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
@@ -407,6 +429,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                   activeStatusFilter === filter.id || (filter.id === 'all' && !activeStatusFilter);
                 return (
                   <button
+                    type="button"
                     key={filter.id}
                     onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
                     data-testid={`status-filter-${filter.id}`}
@@ -439,6 +462,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 const isActive = viewMode === mode;
                 return (
                   <button
+                    type="button"
                     key={mode}
                     onClick={() => onViewModeChange(mode)}
                     data-testid={`view-mode-${mode}`}
@@ -464,6 +488,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             primaryCta
           ) : onNewItem ? (
             <button
+              type="button"
               onClick={onNewItem}
               className="
                 inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium

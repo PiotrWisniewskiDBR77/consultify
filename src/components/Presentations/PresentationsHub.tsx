@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 
 import {
   FilterableTable,
@@ -38,6 +39,7 @@ import {
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { DeckTemplateGallery } from './DeckTemplateGallery';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,7 +58,7 @@ export interface PresentationDeck {
   [key: string]: unknown;
 }
 
-type PresentationTab = 'all_decks' | 'recent';
+type PresentationTab = 'all_decks' | 'recent' | 'templates';
 
 // ---------------------------------------------------------------------------
 // Source type metadata
@@ -73,8 +75,8 @@ const SOURCE_TYPE_META: Record<
   },
   assessment: {
     labelKey: 'presentations.sourceType.assessment',
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/20',
+    color: 'text-primary-400',
+    bgColor: 'bg-primary-500/20',
   },
   finance: {
     labelKey: 'presentations.sourceType.finance',
@@ -204,6 +206,12 @@ export const PresentationsHub: React.FC = () => {
         label: t('presentations.tabs.recent', 'Recent') as string,
         icon: <Clock size={16} />,
         count: recentDecks.length,
+      },
+      {
+        id: 'templates' as PresentationTab,
+        label: t('presentations.tabs.templates', 'Templates') as string,
+        icon: <LayoutGrid size={16} />,
+        count: 0,
       },
     ],
     [allDecks.length, recentDecks.length, t]
@@ -373,11 +381,20 @@ export const PresentationsHub: React.FC = () => {
   const handleExport = useCallback(
     async (deck: PresentationDeck) => {
       try {
-        await Api.post(`/presentations/decks/${deck.id}/export`, { format: 'pptx' });
-        toast.success(t('presentations.exportSuccess', 'Export started'));
+        await exportPresentationDeck({ deckId: deck.id, title: deck.title, format: 'pptx' });
+        toast.success(t('presentations.exportSuccess', 'Exported'));
         trackFunnelEvent('presentation_exported', { deckId: deck.id });
         fetchDecks();
       } catch (err: any) {
+        if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
+          toast.error(
+            t(
+              'presentations.exportBlocked',
+              'Export blocked by quality gates. Open the deck to review blockers.'
+            )
+          );
+          return;
+        }
         const message =
           err?.message || t('presentations.exportFailed', 'Export failed. Please try again.');
         toast.error(message);
@@ -518,6 +535,18 @@ export const PresentationsHub: React.FC = () => {
 
   // Render content
   const renderContent = () => {
+    if (activeTab === 'templates') {
+      return (
+        <div className="h-full overflow-auto p-6">
+          <DeckTemplateGallery
+            onSelectTemplate={(templateId) =>
+              navigate(`/presentations/wizard?templateId=${encodeURIComponent(templateId)}`)
+            }
+          />
+        </div>
+      );
+    }
+
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full min-h-[200px]">
@@ -608,7 +637,7 @@ export const PresentationsHub: React.FC = () => {
                   </p>
                   <button
                     onClick={() => navigate(`/presentations/builder/${activeDocumentId}`)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition-colors font-medium mb-4"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white hover:bg-primary-500 transition-colors font-medium mb-4"
                   >
                     <Presentation size={16} />
                     {t('presentations.openEditor', 'Open Editor')}

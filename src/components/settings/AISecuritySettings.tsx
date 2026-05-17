@@ -194,7 +194,7 @@ export function AISecuritySettings() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-700 flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>
@@ -245,7 +245,7 @@ export function AISecuritySettings() {
           {/* Models Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-purple-500" />
+              <Settings className="w-5 h-5 text-primary-500" />
               Dozwolone modele
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -257,7 +257,7 @@ export function AISecuritySettings() {
                   key={model.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${
                     settings.disabled_models.includes(model.id)
-                      ? 'border-red-300 bg-red-50 dark:bg-red-900/20'
+                      ? 'border-rose-300 bg-rose-50 dark:bg-rose-900/20'
                       : 'border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -277,7 +277,7 @@ export function AISecuritySettings() {
                       model.tier === 'premium'
                         ? 'bg-yellow-100 text-yellow-700'
                         : model.tier === 'reasoning'
-                          ? 'bg-purple-100 text-purple-700'
+                          ? 'bg-primary-100 text-primary-700'
                           : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-400'
                     }`}
                   >
@@ -358,7 +358,7 @@ export function AISecuritySettings() {
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => deleteRateLimit(limit.id)}>
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      <Trash2 className="w-4 h-4 text-rose-500" />
                     </Button>
                   </div>
                 ))}

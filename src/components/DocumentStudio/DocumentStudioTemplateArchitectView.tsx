@@ -1,0 +1,403 @@
+/**
+ * Consultify Document Studio — Template Architect view (MVP-2, Mode 2).
+ *
+ * Implements the AI Document Template Architect workflow:
+ *   - Draft a new template from a brief.
+ *   - Review the draft (section blueprint, formatting summary).
+ *   - Approve or deprecate; approval gates Mode 3 usage.
+ *
+ * Governance contract is enforced server-side. This view is a thin client.
+ */
+
+import { CheckCircle2, ChevronRight, Loader2, Plus, ShieldAlert } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import Button from '@/components/ui/primitives/Button';
+
+import {
+  approveDocumentStudioTemplate,
+  deprecateDocumentStudioTemplate,
+  listDocumentStudioTemplates,
+  planDocumentStudioTemplate,
+} from './api';
+import type {
+  DocumentTemplate,
+  DocumentTypeKey,
+  TemplateDraftInput,
+  TemplateStatus,
+} from './types';
+
+const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey; label: string }[] = [
+  { value: 'executive_memo', label: 'Executive Memo' },
+  { value: 'project_status_report', label: 'Project Status Report' },
+  { value: 'steering_committee_report', label: 'Steering Committee Report' },
+  { value: 'ai_audit_report', label: 'AI Audit Report' },
+  { value: 'interview_summary_report', label: 'Interview Summary Report' },
+  { value: 'workshop_summary', label: 'Workshop Summary' },
+  { value: 'business_case', label: 'Business Case' },
+  { value: 'risk_register_report', label: 'Risk Register Report' },
+  { value: 'sop_document', label: 'SOP Document' },
+  { value: 'implementation_plan', label: 'Implementation Plan' },
+  { value: 'board_report', label: 'Board Report' },
+  { value: 'sales_proposal', label: 'Sales Proposal' },
+  { value: 'client_final_report', label: 'Client Final Report' },
+  { value: 'generic_document', label: 'Generic document' },
+];
+
+const STATUS_BADGE_CLASS: Record<TemplateStatus, string> = {
+  draft: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  approved: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  deprecated: 'bg-slate-400/10 text-slate-600 dark:text-slate-400 border-slate-400/30',
+};
+
+interface DocumentStudioTemplateArchitectViewProps {
+  onTemplateApproved?: (template: DocumentTemplate) => void;
+}
+
+export const DocumentStudioTemplateArchitectView: React.FC<
+  DocumentStudioTemplateArchitectViewProps
+> = ({ onTemplateApproved }) => {
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [name, setName] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [documentType, setDocumentType] = useState<DocumentTypeKey>('executive_memo');
+  const [audience, setAudience] = useState('');
+  const [language, setLanguage] = useState<'pl' | 'en'>('pl');
+  const [useLlm, setUseLlm] = useState(false);
+  const [lastDraftRefined, setLastDraftRefined] = useState<boolean | null>(null);
+
+  const selectedTemplate = useMemo(
+    () => templates.find((t) => t.templateId === selectedTemplateId) ?? null,
+    [templates, selectedTemplateId]
+  );
+
+  const refresh = async (): Promise<void> => {
+    setLoadingList(true);
+    setError(null);
+    try {
+      const list = await listDocumentStudioTemplates();
+      setTemplates(list);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load templates');
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const handleDraft = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    if (purpose.trim().length < 8) return;
+    setDrafting(true);
+    setError(null);
+    setLastDraftRefined(null);
+    try {
+      const input: TemplateDraftInput = {
+        name: name.trim() || undefined,
+        purpose: purpose.trim(),
+        documentType,
+        language,
+        audience: audience
+          .split(',')
+          .map((a) => a.trim())
+          .filter((a) => a.length > 0),
+      };
+      const result = await planDocumentStudioTemplate(input, { useLlm });
+      setName('');
+      setPurpose('');
+      setAudience('');
+      setSelectedTemplateId(result.template.templateId);
+      setLastDraftRefined(useLlm ? result.llmRefined : null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to draft template');
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  const handleApprove = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const approved = await approveDocumentStudioTemplate(templateId);
+      onTemplateApproved?.(approved);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to approve template');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleDeprecate = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      await deprecateDocumentStudioTemplate(templateId);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to deprecate template');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
+      <header>
+        <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
+          Document Template Architect
+        </h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Design a reusable, governed Word/PDF template. Drafts must be approved before they can
+          drive Mode 3 generation.
+        </p>
+      </header>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+        <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
+          Draft a new template
+        </h3>
+        <form onSubmit={handleDraft} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-200">Template name</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Quarterly Board Memo template"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-200">Document type</span>
+            <select
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+            >
+              {DOCUMENT_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
+            <span className="font-medium text-slate-700 dark:text-slate-200">
+              Purpose <span className="text-danger-500">*</span>
+            </span>
+            <textarea
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              rows={3}
+              placeholder="What kind of documents will this template produce, and for whom?"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+              minLength={8}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-200">
+              Audience (comma-separated)
+            </span>
+            <input
+              type="text"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              placeholder="e.g., Board, CEO, CFO"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-200">Language</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+            >
+              <option value="pl">Polish</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label className="col-span-1 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={useLlm}
+              onChange={(e) => setUseLlm(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                Refine with AI Template Architect (optional)
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                Allows AI to rewrite section purposes and propose a refined template name. Falls
+                back silently to the deterministic blueprint if AI is unavailable. New / removed /
+                renamed sections are rejected.
+              </span>
+            </span>
+          </label>
+          <div className="col-span-1 flex items-center justify-between gap-3 sm:col-span-2">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {lastDraftRefined === true
+                ? 'Last draft was refined by AI.'
+                : lastDraftRefined === false
+                  ? 'Last AI refinement returned no changes; deterministic draft used.'
+                  : null}
+            </div>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={drafting || purpose.trim().length < 8}
+            >
+              {drafting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Drafting…
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <Plus className="h-4 w-4" /> Draft template
+                </span>
+              )}
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      {error ? (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-3 py-2 text-sm text-danger-700 dark:text-danger-400"
+        >
+          <ShieldAlert className="mt-0.5 h-4 w-4" />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-navy-900 dark:text-white">Template registry</h3>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void refresh()}
+            disabled={loadingList}
+          >
+            {loadingList ? 'Refreshing…' : 'Refresh'}
+          </Button>
+        </div>
+        <ul className="mt-3 divide-y divide-slate-200 text-sm dark:divide-navy-700">
+          {templates.length === 0 ? (
+            <li className="py-3 text-slate-500 dark:text-slate-400">No templates yet.</li>
+          ) : (
+            templates.map((template) => {
+              const isSelected = template.templateId === selectedTemplateId;
+              const isBusy = busyTemplateId === template.templateId;
+              return (
+                <li
+                  key={template.templateId}
+                  className={`flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between ${
+                    isSelected ? 'bg-primary-500/5 px-2 rounded' : ''
+                  }`}
+                >
+                  <div className="flex flex-1 items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTemplateId(template.templateId)}
+                      className="mt-1"
+                      aria-label="Select template"
+                    >
+                      <ChevronRight
+                        className={`h-4 w-4 ${
+                          isSelected ? 'rotate-90 text-primary-600' : 'text-slate-400'
+                        }`}
+                      />
+                    </button>
+                    <div>
+                      <div className="font-medium text-navy-900 dark:text-white">
+                        {template.name}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {template.documentType.replace(/_/g, ' ')} · v{template.version} ·{' '}
+                        {template.sectionBlueprint.length} sections
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${
+                        STATUS_BADGE_CLASS[template.status]
+                      }`}
+                    >
+                      {template.status}
+                    </span>
+                    {template.status === 'draft' ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        onClick={() => void handleApprove(template.templateId)}
+                        disabled={isBusy}
+                      >
+                        {isBusy ? (
+                          'Approving…'
+                        ) : (
+                          <span className="inline-flex items-center gap-1">
+                            <CheckCircle2 className="h-4 w-4" /> Approve
+                          </span>
+                        )}
+                      </Button>
+                    ) : null}
+                    {template.status !== 'deprecated' ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void handleDeprecate(template.templateId)}
+                        disabled={isBusy}
+                      >
+                        {isBusy ? 'Working…' : 'Deprecate'}
+                      </Button>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })
+          )}
+        </ul>
+
+        {selectedTemplate ? (
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-navy-700 dark:bg-navy-950">
+            <div className="font-semibold text-navy-900 dark:text-white">
+              Section blueprint — {selectedTemplate.name}
+            </div>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-slate-700 dark:text-slate-300">
+              {selectedTemplate.sectionBlueprint.map((section, idx) => (
+                <li key={`${selectedTemplate.templateId}-section-${idx}`}>
+                  <span className="font-medium">{section.title}</span>
+                  {section.purpose ? (
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {' '}
+                      — {section.purpose}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+};
+
+export default DocumentStudioTemplateArchitectView;

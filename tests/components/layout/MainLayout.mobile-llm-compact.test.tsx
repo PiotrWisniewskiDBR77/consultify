@@ -152,6 +152,7 @@ describe('MainLayout mobile LLM selector compact continuity', () => {
   beforeEach(() => {
     deviceState.isMobile = true;
     deviceState.safeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+    appState.isChatCollapsed = true;
     llmSelectorMock.mockClear();
     appState.setIsSidebarOpen.mockReset();
     appState.toggleChatCollapse.mockReset();
@@ -202,5 +203,31 @@ describe('MainLayout mobile LLM selector compact continuity', () => {
     renderMainLayout();
 
     expect(screen.getByTestId('global-fab-rail').style.bottom).toBe('');
+  });
+
+  it('uses translated label for split chat close button', () => {
+    appState.isChatCollapsed = false;
+
+    renderMainLayout();
+
+    expect(screen.getAllByRole('button', { name: 'Close AI panel', hidden: true })).toHaveLength(2);
+  });
+
+  it('uses explicit button semantics for mobile menu trigger', () => {
+    render(
+      <form>
+        <MemoryRouter>
+          <MainLayout breadcrumbs={['Home']}>
+            <div>content</div>
+          </MainLayout>
+        </MemoryRouter>
+      </form>
+    );
+
+    const menuButton = screen.getByRole('button', { name: 'Open menu', hidden: true });
+    expect(menuButton).toHaveAttribute('type', 'button');
+
+    menuButton.click();
+    expect(appState.setIsSidebarOpen).toHaveBeenCalledWith(true);
   });
 });

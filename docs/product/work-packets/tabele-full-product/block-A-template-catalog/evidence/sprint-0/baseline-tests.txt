@@ -1,0 +1,62 @@
+Block A Sprint 0 — Baseline test inventory (static; no live run executed in S0)
+Captured: 2026-05-08 by Cursor agent (Orchestrator).
+
+--- Backend Table Platform unit + integration tests ---
+Path: DRD/consultify/server/src/services/tablePlatform/__tests__/
+
+  Lines  File
+  -----  ----
+    472  AutomationService.test.ts
+    142  DateDependencyEngine.test.ts
+    230  ExportService.test.ts
+    221  ExtensionService.test.ts
+    213  InterfaceService.test.ts
+    376  MetadataService.test.ts
+     62  ModuleSyncService.test.ts
+    281  ProjectionService.test.ts
+    174  RecordsService.test.ts
+    455  RelationExplainabilityService.test.ts
+    205  SSOService.test.ts
+    151  ScheduledAutomationExecutor.test.ts
+    218  SchemaValidationService.test.ts
+    197  ServiceAccountService.test.ts
+    222  ViewQueryEngine.test.ts
+    365  WebhookDispatcherService.test.ts
+     99  dependencyGraph.test.ts
+    226  formulaEngine.test.ts
+     58  migrationRunner.test.ts
+    132  migrations.test.ts
+    508  smoke.test.ts
+  -----
+  5 007  total
+
+--- Direct TemplateService coverage ---
+TemplateService.test.ts:                    DOES NOT EXIST (0 lines, 0 tests)
+Implicit coverage (smoke + migrations):     ~10 assertions
+
+--- Test runner discovery ---
+DRD/consultify/server/package.json:
+  "test":      "vitest run"
+  "typecheck": "tsc --noEmit"
+
+DRD/consultify/package.json:
+  "lint":       "eslint . --quiet"
+  "type-check": "tsc --noEmit"
+
+--- Live execution requirement ---
+Live runs deferred to S6 (QA Gate) per matrix L1.1, L1.2, L1.3, L2.x.
+Reason: S0 is read-only; live run requires DB connection + ~10 minutes.
+
+--- Static commands available for live run later ---
+Backend tests:    cd DRD/consultify/server && npm run test
+Backend tc:       cd DRD/consultify/server && npm run typecheck
+Frontend lint:    cd DRD/consultify && npm run lint
+Frontend tc:      cd DRD/consultify && npm run type-check
+Frontend tests:   cd DRD/consultify && npm run test:unit
+
+--- Regression baseline file ---
+At S1 start, Agent A captures `npm test` output to:
+  evidence/sprint-1/baseline-tests-pre-changes.txt
+At S6 close, Agent D captures `npm test` output to:
+  evidence/sprint-6/post-changes-tests.txt
+Diff of two files = block test impact.

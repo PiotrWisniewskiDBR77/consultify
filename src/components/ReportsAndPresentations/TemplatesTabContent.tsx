@@ -15,7 +15,7 @@ import {
   Play,
   Presentation,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,6 +50,7 @@ interface TemplatesTabContentProps {
   actions?: {
     startArtifactReview?: (artifactId: string) => Promise<boolean>;
   };
+  initialArtifactId?: string | null;
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
@@ -62,6 +63,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -69,6 +71,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
+  const deepLinkConsumed = useRef(false);
 
   const filteredData = useMemo(() => {
     let data = templates;
@@ -101,7 +104,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ) : row.type === 'sheet' ? (
               <FileSpreadsheet size={14} className="text-emerald-400 shrink-0" />
             ) : (
-              <Presentation size={14} className="text-purple-400 shrink-0" />
+              <Presentation size={14} className="text-blue-400 shrink-0" />
             )}
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
               {row.title}
@@ -120,7 +123,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           {
             value: 'presentation',
             label: isPolish ? 'Prezentacja' : 'Presentation',
-            color: 'bg-purple-400',
+            color: 'bg-blue-400',
           },
         ],
         render: (row: TemplateItem) => {
@@ -142,7 +145,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'R1', label: 'R1 — Weekly', color: 'bg-blue-400' },
-          { value: 'R2', label: 'R2 — Steering', color: 'bg-purple-400' },
+          { value: 'R2', label: 'R2 — Steering', color: 'bg-blue-400' },
           { value: 'R3', label: 'R3 — Benefits', color: 'bg-emerald-400' },
           { value: 'R4', label: 'R4 — Portfolio', color: 'bg-amber-400' },
           { value: 'executive_update', label: 'Executive Update' },
@@ -297,6 +300,15 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       onClick: () => navigate(resolveTemplateEditPath(row.id, row.type)),
     },
   ];
+
+  useEffect(() => {
+    if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
+    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    if (match) {
+      setSelectedId(match.id);
+      deepLinkConsumed.current = true;
+    }
+  }, [initialArtifactId, filteredData]);
 
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
   const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;

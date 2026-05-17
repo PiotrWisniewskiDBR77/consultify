@@ -21,6 +21,10 @@ function requireTablePlatform(req: Request, res: Response, next: () => void) {
   next();
 }
 
+function getOrganizationId(req: Request): string | null {
+  return (req as AuthRequest).organizationId || null;
+}
+
 // ==========================================
 // WEBHOOK RECEIVE (no auth middleware — uses shared secret)
 // ==========================================
@@ -179,8 +183,13 @@ router.get('/connectors/scheduled', async (_req: Request, res: Response) => {
 router.get('/connectors/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const db = getDatabase();
-    const result = await db.query('SELECT * FROM tp_connectors WHERE id = $1', [id]);
+    const result = await db.query(
+      'SELECT * FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     if (!result.rows[0]) {
       return res.status(404).json({ error: 'Connector not found' });
     }
@@ -194,10 +203,15 @@ router.get('/connectors/:id', async (req: Request, res: Response) => {
 router.patch('/connectors/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const { name, config, targetTableId, fieldMapping, schedule } = req.body ?? {};
     const db = getDatabase();
 
-    const existing = await db.query('SELECT * FROM tp_connectors WHERE id = $1', [id]);
+    const existing = await db.query(
+      'SELECT * FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     if (!existing.rows[0]) {
       return res.status(404).json({ error: 'Connector not found' });
     }
@@ -232,10 +246,12 @@ router.patch('/connectors/:id', async (req: Request, res: Response) => {
     }
 
     sets.push(`updated_at = NOW()`);
-    params.push(id);
+    params.push(id, orgId);
 
     const result = await db.query(
-      `UPDATE tp_connectors SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+      `UPDATE tp_connectors SET ${sets.join(', ')} WHERE id = $${idx} AND organization_id = $${
+        idx + 1
+      } RETURNING *`,
       params
     );
 
@@ -251,8 +267,13 @@ router.patch('/connectors/:id', async (req: Request, res: Response) => {
 router.delete('/connectors/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const db = getDatabase();
-    const result = await db.query('DELETE FROM tp_connectors WHERE id = $1 RETURNING id', [id]);
+    const result = await db.query(
+      'DELETE FROM tp_connectors WHERE id = $1 AND organization_id = $2 RETURNING id',
+      [id, orgId]
+    );
     if (!result.rows[0]) {
       return res.status(404).json({ error: 'Connector not found' });
     }
@@ -270,8 +291,13 @@ router.delete('/connectors/:id', async (req: Request, res: Response) => {
 router.post('/connectors/:id/test', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const db = getDatabase();
-    const connResult = await db.query('SELECT * FROM tp_connectors WHERE id = $1', [id]);
+    const connResult = await db.query(
+      'SELECT * FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     const connector = connResult.rows[0] as Record<string, unknown> | undefined;
     if (!connector) {
       return res.status(404).json({ error: 'Connector not found' });
@@ -290,8 +316,13 @@ router.post('/connectors/:id/test', async (req: Request, res: Response) => {
 router.post('/connectors/:id/run', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const db = getDatabase();
-    const connResult = await db.query('SELECT id FROM tp_connectors WHERE id = $1', [id]);
+    const connResult = await db.query(
+      'SELECT id FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     if (!connResult.rows[0]) {
       return res.status(404).json({ error: 'Connector not found' });
     }
@@ -308,21 +339,26 @@ router.post('/connectors/:id/run', async (req: Request, res: Response) => {
 router.get('/connectors/:id/runs', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const offset = Number(req.query.offset) || 0;
     const db = getDatabase();
 
     const result = await db.query(
-      `SELECT * FROM tp_connector_runs
-       WHERE connector_id = $1
+      `SELECT r.* FROM tp_connector_runs r
+       JOIN tp_connectors c ON c.id = r.connector_id
+       WHERE r.connector_id = $1 AND c.organization_id = $2
        ORDER BY started_at DESC
-       LIMIT $2 OFFSET $3`,
-      [id, limit, offset]
+       LIMIT $3 OFFSET $4`,
+      [id, orgId, limit, offset]
     );
 
     const countResult = await db.query(
-      'SELECT COUNT(*) as total FROM tp_connector_runs WHERE connector_id = $1',
-      [id]
+      `SELECT COUNT(*) as total FROM tp_connector_runs r
+       JOIN tp_connectors c ON c.id = r.connector_id
+       WHERE r.connector_id = $1 AND c.organization_id = $2`,
+      [id, orgId]
     );
 
     const countRow = countResult.rows[0] as { total?: string } | undefined;
@@ -345,6 +381,8 @@ router.get('/connectors/:id/runs', async (req: Request, res: Response) => {
 router.post('/connectors/:id/schedule', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const { intervalMinutes, enabled } = req.body ?? {};
 
     if (typeof intervalMinutes !== 'number' || intervalMinutes <= 0) {
@@ -352,17 +390,20 @@ router.post('/connectors/:id/schedule', async (req: Request, res: Response) => {
     }
 
     const db = getDatabase();
-    const connResult = await db.query('SELECT id, schedule FROM tp_connectors WHERE id = $1', [id]);
+    const connResult = await db.query(
+      'SELECT id, schedule FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     if (!connResult.rows[0]) {
       return res.status(404).json({ error: 'Connector not found' });
     }
 
     const schedule = { enabled: enabled !== false, intervalMinutes };
 
-    await db.query(`UPDATE tp_connectors SET schedule = $2, updated_at = NOW() WHERE id = $1`, [
-      id,
-      JSON.stringify(schedule),
-    ]);
+    await db.query(
+      `UPDATE tp_connectors SET schedule = $2, updated_at = NOW() WHERE id = $1 AND organization_id = $3`,
+      [id, JSON.stringify(schedule), orgId]
+    );
 
     const { syncScheduler } = await import('../services/dataCollection/index.js');
     if (schedule.enabled) {
@@ -381,16 +422,22 @@ router.post('/connectors/:id/schedule', async (req: Request, res: Response) => {
 router.delete('/connectors/:id/schedule', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const db = getDatabase();
 
-    const connResult = await db.query('SELECT id FROM tp_connectors WHERE id = $1', [id]);
+    const connResult = await db.query(
+      'SELECT id FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     if (!connResult.rows[0]) {
       return res.status(404).json({ error: 'Connector not found' });
     }
 
-    await db.query(`UPDATE tp_connectors SET schedule = NULL, updated_at = NOW() WHERE id = $1`, [
-      id,
-    ]);
+    await db.query(
+      `UPDATE tp_connectors SET schedule = NULL, updated_at = NOW() WHERE id = $1 AND organization_id = $2`,
+      [id, orgId]
+    );
 
     const { syncScheduler } = await import('../services/dataCollection/index.js');
     syncScheduler.unscheduleConnector(id);
@@ -411,9 +458,14 @@ router.delete('/connectors/:id/schedule', async (req: Request, res: Response) =>
 router.post('/connectors/:id/auto-map', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
+    if (!orgId) return res.status(403).json({ error: 'Organization context required' });
     const db = getDatabase();
 
-    const connResult = await db.query('SELECT * FROM tp_connectors WHERE id = $1', [id]);
+    const connResult = await db.query(
+      'SELECT * FROM tp_connectors WHERE id = $1 AND organization_id = $2',
+      [id, orgId]
+    );
     const connector = connResult.rows[0] as Record<string, unknown> | undefined;
     if (!connector) {
       return res.status(404).json({ error: 'Connector not found' });

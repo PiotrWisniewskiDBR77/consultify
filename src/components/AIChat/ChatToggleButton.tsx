@@ -9,7 +9,7 @@ import { AIRoleBadge } from './AIRoleBadge';
 const chatAnimationStyle = `
 @keyframes chatColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
         box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
     }
     50% {
@@ -19,10 +19,10 @@ const chatAnimationStyle = `
 }
 
 @keyframes chatIconGlow {
-    0%, 100% { 
+    0%, 100% {
         filter: drop-shadow(0 0 1px rgba(255,255,255,0.3));
     }
-    50% { 
+    50% {
         filter: drop-shadow(0 0 5px rgba(255,255,255,0.6));
     }
 }
@@ -67,10 +67,10 @@ export const ChatToggleButton: React.FC = () => {
           {/* Tooltip */}
           <div
             className={`
-                        absolute right-full mr-3 
-                        px-3 py-1.5 
-                        bg-slate-900 dark:bg-slate-800 
-                        text-white text-xs font-medium 
+                        absolute right-full mr-3
+                        px-3 py-1.5
+                        bg-slate-900 dark:bg-slate-800
+                        text-white text-xs font-medium
                         rounded-lg
                         whitespace-nowrap
                         opacity-0 group-hover:opacity-100

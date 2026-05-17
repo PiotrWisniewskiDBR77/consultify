@@ -1824,7 +1824,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 }}
                 className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
                   leftWorkspace === 'manage'
-                    ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
+                    ? 'border-primary-200/60 dark:border-primary-900/30 bg-primary-50/70 dark:bg-primary-900/10 text-primary-700 dark:text-primary-200'
                     : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
                 }`}
                 title="Manage assessment"
@@ -1850,7 +1850,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                     ? 'border-slate-200/80 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/30 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 cursor-pointer'
                     : isLocked
                       ? 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
-                      : 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200 hover:bg-purple-100/60 dark:hover:bg-purple-900/20'
+                      : 'border-primary-200/60 dark:border-primary-900/30 bg-primary-50/70 dark:bg-primary-900/10 text-primary-700 dark:text-primary-200 hover:bg-primary-100/60 dark:hover:bg-primary-900/20'
                 }`}
                 title={
                   !canEditEffective
@@ -1877,7 +1877,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             <button
               onClick={handleExitClick}
               disabled={isExiting}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors"
               title="Save and exit"
               type="button"
             >
@@ -1912,7 +1912,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-36 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 transition-all duration-300"
+                      className="h-full bg-primary-500 transition-all duration-300"
                       style={{ width: `${overallProgress}%` }}
                     />
                   </div>
@@ -2094,9 +2094,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
                             : String(status).toUpperCase() === 'IN_REVIEW'
                               ? 'bg-amber-500/20 text-amber-300'
                               : String(status).toUpperCase() === 'AWAITING_APPROVAL'
-                                ? 'bg-orange-500/20 text-orange-300'
+                                ? 'bg-amber-500/20 text-amber-300'
                                 : String(status).toUpperCase() === 'REJECTED'
-                                  ? 'bg-red-500/20 text-red-300'
+                                  ? 'bg-rose-500/20 text-rose-300'
                                   : 'bg-slate-500/20 text-slate-300'
                         }`}
                       >
@@ -2107,9 +2107,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
                               : String(status).toUpperCase() === 'IN_REVIEW'
                                 ? 'bg-amber-400'
                                 : String(status).toUpperCase() === 'AWAITING_APPROVAL'
-                                  ? 'bg-orange-400'
+                                  ? 'bg-amber-400'
                                   : String(status).toUpperCase() === 'REJECTED'
-                                    ? 'bg-red-400'
+                                    ? 'bg-rose-400'
                                     : 'bg-slate-400'
                           }`}
                         />
@@ -2312,7 +2312,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       setChatAttaching(false);
                     }
                   }}
-                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
                 >
                   {chatAttaching ? 'Attaching…' : 'Attach'}
                 </button>
@@ -2338,7 +2338,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                             onClick={() => setSelectedConversationId(id)}
                             className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-900/60 ${
                               isSelected
-                                ? 'bg-purple-50 dark:bg-purple-900/10'
+                                ? 'bg-primary-50 dark:bg-primary-900/10'
                                 : 'bg-white dark:bg-navy-950'
                             }`}
                           >
@@ -2407,7 +2407,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   type="button"
                   onClick={handleSaveAndExit}
                   disabled={isExiting}
-                  className="flex-1 h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2"
+                  className="flex-1 h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2"
                 >
                   {isExiting ? (
                     <>

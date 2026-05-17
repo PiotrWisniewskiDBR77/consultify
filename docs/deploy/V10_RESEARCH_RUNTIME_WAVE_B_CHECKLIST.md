@@ -34,4 +34,3 @@ This checklist covers the “Research runtime - 2” increment:
 - **Contract**: `docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md` includes the 4 Wave B research events.
 - **Feature flags**: `src/utils/chatV10FeatureFlags.ts` `research-telemetry` lists those events.
 - **Analytics union**: `src/services/funnelAnalytics.ts` includes those event names.
-

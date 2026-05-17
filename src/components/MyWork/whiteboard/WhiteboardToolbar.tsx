@@ -46,24 +46,7 @@ export interface WhiteboardToolbarProps {
   canRedo: boolean;
   whiteboardModeCopy: { toggleLabel: string; modeLabel: string; exitHint: string; helper: string };
 
-  onAddElement: (
-    kind:
-      | 'sticky'
-      | 'text'
-      | 'group'
-      | 'shape_rectangle'
-      | 'shape_circle'
-      | 'shape_diamond'
-      | 'shape_hexagon'
-      | 'frame'
-      | 'image'
-      | 'link'
-      | 'kpi_badge'
-      | 'score'
-      | 'progress'
-      | 'summary',
-    extraData?: Record<string, unknown>
-  ) => void;
+  onAddElement: (kind: string, extraData?: Record<string, unknown>) => void;
   onSetBoardMode: (mode: 'board' | 'draw') => void;
   onClearDrawings: () => void;
   onToggleVoting: () => void;

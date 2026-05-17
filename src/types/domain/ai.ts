@@ -1229,7 +1229,7 @@ export type AIActionStatus = 'pending' | 'approved' | 'rejected' | 'executed' | 
  * Mirrors the server-side `V8LifecycleState` union from
  * `server/src/types/chatExecutionIntegration.ts`. This is the single user-
  * visible vocabulary for `proposed → pending_review → approved/rejected →
- * executing → executed/failed → audited` that chat proposal messages display.
+ * executing → executed/failed → audited/closed` that chat proposal messages display.
  */
 export type V8LifecycleState =
   | 'proposed'
@@ -1239,7 +1239,8 @@ export type V8LifecycleState =
   | 'executing'
   | 'executed'
   | 'failed'
-  | 'audited';
+  | 'audited'
+  | 'closed';
 
 /**
  * Governance source of a `ChatProposalView` — mirrors the backend

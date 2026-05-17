@@ -3,6 +3,22 @@
 -- error, user_id, tokens_used work against the existing schema (which uses timestamp,
 -- tokens_in/tokens_out, error_message).
 
+CREATE TABLE IF NOT EXISTS llm_logs (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+  provider TEXT,
+  model TEXT,
+  prompt_tokens INTEGER,
+  completion_tokens INTEGER,
+  tokens_in INTEGER DEFAULT 0,
+  tokens_out INTEGER DEFAULT 0,
+  cost NUMERIC,
+  latency_ms INTEGER,
+  status TEXT,
+  error_message TEXT,
+  "timestamp" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE llm_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ;
 ALTER TABLE llm_logs ADD COLUMN IF NOT EXISTS total_tokens INTEGER;
 ALTER TABLE llm_logs ADD COLUMN IF NOT EXISTS error TEXT;

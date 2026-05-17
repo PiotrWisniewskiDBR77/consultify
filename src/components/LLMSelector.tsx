@@ -48,8 +48,8 @@ const TIERS: Tier[] = [
     nameKey: 'llm.premiumTier',
     descKey: 'llm.premiumTierDesc',
     icon: <Crown size={16} />,
-    color: 'bg-purple-500',
-    darkColor: 'bg-purple-400',
+    color: 'bg-primary-500',
+    darkColor: 'bg-primary-400',
   },
   {
     id: 'REASONING',
@@ -230,13 +230,13 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           type="button"
           disabled
           title={t('llm.demoTitle', 'Demo AI workspace')}
-          className="inline-flex items-center gap-2 h-9 px-2 rounded-full border border-violet-400/30 bg-violet-500/10 text-xs font-medium text-violet-700 dark:text-violet-200 cursor-default"
+          className="inline-flex items-center gap-2 h-9 px-2 rounded-full border border-primary-400/30 bg-primary-500/10 text-xs font-medium text-primary-700 dark:text-primary-200 cursor-default"
         >
-          <div className="w-2 h-2 rounded-full bg-violet-500" />
+          <div className="w-2 h-2 rounded-full bg-primary-500" />
           <span className={compact ? 'max-w-[72px] truncate' : ''}>
             {t('llm.demoLabel', 'Demo AI')}
           </span>
-          <ChevronDown size={compact ? 10 : 12} className="text-violet-300/80" />
+          <ChevronDown size={compact ? 10 : 12} className="text-primary-300/80" />
         </button>
       </div>
     );
@@ -248,9 +248,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
         title={buttonTitle}
-        className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${
+        className={`inline-flex h-9 items-center gap-2 rounded-full border ${compact ? 'px-2' : 'px-3'} transition-colors duration-150 ${
           isUnavailable
-            ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
+            ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-400/50 dark:border-rose-500/40 hover:bg-rose-100/70 dark:hover:bg-rose-500/15'
             : isDegraded
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : isOpen
@@ -261,7 +261,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         {/* Status Dot / Icon */}
         <div
           className={`w-2 h-2 rounded-full animate-pulse ${
-            isUnavailable ? 'bg-red-500' : isDegraded ? 'bg-amber-500' : activeTier.color
+            isUnavailable ? 'bg-rose-500' : isDegraded ? 'bg-amber-500' : activeTier.color
           }`}
         />
 
@@ -285,7 +285,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
               <div
                 className={`mb-2 flex items-center gap-1.5 text-[10px] ${
                   isUnavailable
-                    ? 'text-red-600 dark:text-red-400'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-amber-700 dark:text-amber-400'
                 }`}
               >
@@ -323,7 +323,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                 onClick={() => handleTierSelect(tier.id)}
                 className={`w-full text-left px-3 py-3 flex items-center justify-between rounded-lg transition-colors group ${
                   aiConfig.selectedTier === tier.id
-                    ? 'bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500/20'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500/20'
                     : 'hover:bg-slate-100 dark:hover:bg-white/5'
                 }`}
               >
@@ -334,7 +334,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                     <div
                       className={
                         tier.id === aiConfig.selectedTier
-                          ? 'text-purple-600 dark:text-purple-400'
+                          ? 'text-primary-600 dark:text-primary-400'
                           : 'text-slate-500 dark:text-slate-400'
                       }
                     >
@@ -353,7 +353,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                   </div>
                 </div>
                 {aiConfig.selectedTier === tier.id && (
-                  <div className="text-xs font-mono text-purple-600 dark:text-purple-400 bg-white dark:bg-black/20 px-1.5 py-0.5 rounded border border-purple-100 dark:border-purple-500/20">
+                  <div className="text-xs font-mono text-primary-600 dark:text-primary-400 bg-white dark:bg-black/20 px-1.5 py-0.5 rounded border border-primary-100 dark:border-primary-500/20">
                     {t('llm.active', 'Active')}
                   </div>
                 )}

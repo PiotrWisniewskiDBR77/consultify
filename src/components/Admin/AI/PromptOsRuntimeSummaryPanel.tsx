@@ -7,7 +7,52 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { V8PromptOsApi, type V8PromptOsRuntimeSummary } from '../../../services/api/v8/prompt-os';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Button } from '../../ui/primitives/Button';
+import { DegradedState } from '../AdminState';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toNumber = (value: unknown, fallback = 0) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const normalizeRuntimeSummary = (value: unknown): V8PromptOsRuntimeSummary => {
+  const payload = getObjectPayload(value);
+  if (
+    !isRecord(payload) ||
+    !('contract' in payload) ||
+    !Array.isArray(payload.purposeFamiliesSupported) ||
+    !('presetCount' in payload) ||
+    !('bundleCount' in payload) ||
+    !('activeBundleCount' in payload)
+  ) {
+    throw new Error('Prompt OS runtime summary response was incomplete');
+  }
+
+  return {
+    contract: asText(payload.contract, ''),
+    purposeFamiliesSupported: payload.purposeFamiliesSupported
+      .map((item) => asText(item, ''))
+      .filter(Boolean),
+    presetCount: toNumber(payload.presetCount, 0),
+    bundleCount: toNumber(payload.bundleCount, 0),
+    activeBundleCount: toNumber(payload.activeBundleCount, 0),
+  };
+};
 
 export const PromptOsRuntimeSummaryPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -20,9 +65,9 @@ export const PromptOsRuntimeSummaryPanel: React.FC = () => {
     setError(null);
     try {
       const data = await V8PromptOsApi.getRuntimeSummary();
-      setSummary(data);
+      setSummary(normalizeRuntimeSummary(data));
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : String(e);
+      const message = normalizeApiErrorMessage(e, 'Could not load Prompt OS runtime summary');
       setError(message);
       setSummary(null);
     } finally {
@@ -62,14 +107,8 @@ export const PromptOsRuntimeSummaryPanel: React.FC = () => {
       </div>
 
       {error && (
-        <div
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
-          role="alert"
-        >
-          {t('superadmin.promptOsRuntime.loadError', {
-            defaultValue: 'Could not load summary: {{message}}',
-            message: error,
-          })}
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+          <DegradedState title="Prompt OS runtime unavailable" description={error} />
         </div>
       )}
 

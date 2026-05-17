@@ -15,49 +15,15 @@ export interface PromptAssistantBlock {
   usageCount?: number;
 }
 
-export interface PromptAssistantBlockCategory {
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-}
-
-export interface PromptAssistantSuggestion {
-  title: string;
-  description: string;
-}
-
-export interface PromptAssistantCodeBlock {
-  language: string;
-  content: string;
-}
-
 export interface PromptAssistantBlocksResponse {
   data: PromptAssistantBlock[];
-  categories: Record<string, PromptAssistantBlockCategory>;
-}
-
-export interface PromptAssistantTestResult {
-  language: string;
-  success: boolean;
-  expectedLanguage: string;
-  detectedLanguage: string;
-  languageMatch: boolean;
-  response?: string;
-  tokenCount?: number;
-  error?: string;
-}
-
-export interface PromptAssistantTestSummary {
-  tested: number;
-  passed: number;
-  languageAccuracy: number;
+  categories: Record<string, unknown>;
 }
 
 export interface PromptAssistantTestResponse {
   data?: {
-    results?: PromptAssistantTestResult[];
-    summary?: PromptAssistantTestSummary;
+    results?: unknown[];
+    summary?: unknown;
   };
 }
 
@@ -65,8 +31,8 @@ export interface PromptAssistantChatResponse {
   data?: {
     conversationId?: string;
     message?: string;
-    suggestions?: PromptAssistantSuggestion[];
-    codeBlocks?: PromptAssistantCodeBlock[];
+    suggestions?: string[];
+    codeBlocks?: string[];
   };
 }
 

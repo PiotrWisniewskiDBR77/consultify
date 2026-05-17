@@ -192,7 +192,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                 onClick={() => setFilter(tab.id as any)}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   activeFilter === tab.id
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
@@ -206,7 +206,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
-                <Loader2 size={24} className="animate-spin text-purple-500" />
+                <Loader2 size={24} className="animate-spin text-primary-500" />
               </div>
             )}
 
@@ -224,7 +224,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                       onClick={() => handleResultClick(result)}
                       className={`w-full flex items-start gap-3 p-4 py-3 text-left transition-colors ${
                         isSelected
-                          ? 'bg-purple-50 dark:bg-purple-900/20'
+                          ? 'bg-primary-50 dark:bg-primary-900/20'
                           : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                       }`}
                     >
@@ -232,7 +232,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                       <div
                         className={`p-2 rounded-lg flex-shrink-0 ${
                           isSelected
-                            ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400'
+                            ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                         }`}
                       >
@@ -275,7 +275,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 
                       {/* Arrow */}
                       {isSelected && (
-                        <ArrowRight size={16} className="text-purple-500 flex-shrink-0 mt-1" />
+                        <ArrowRight size={16} className="text-primary-500 flex-shrink-0 mt-1" />
                       )}
                     </button>
                   );
@@ -310,7 +310,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                         <button
                           key={i}
                           onClick={() => handleQuickSearch(s)}
-                          className="px-3 py-1.5 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                          className="px-3 py-1.5 text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-full hover:bg-primary-100 dark:hover:bg-primary-900/30"
                         >
                           {s}
                         </button>
@@ -345,7 +345,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                     window.history.pushState({}, '', overviewLink);
                     window.dispatchEvent(new PopStateEvent('popstate'));
                   }}
-                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   {t('help.search.openOverview', 'Open Help overview')} →
                 </button>

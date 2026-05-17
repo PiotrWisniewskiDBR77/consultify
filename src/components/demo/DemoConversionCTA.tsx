@@ -16,10 +16,10 @@ const VALUE_MOMENT_CONFIG: Record<
   ValueMomentType,
   { icon: React.ElementType; colorClass: string }
 > = {
-  report_generated: { icon: FileText, colorClass: 'from-emerald-500 to-teal-500' },
-  initiative_created: { icon: Rocket, colorClass: 'from-purple-500 to-indigo-500' },
-  tool_session_completed: { icon: Lightbulb, colorClass: 'from-amber-500 to-orange-500' },
-  execution_signal_viewed: { icon: Zap, colorClass: 'from-blue-500 to-cyan-500' },
+  report_generated: { icon: FileText, colorClass: 'from-emerald-500 to-blue-500' },
+  initiative_created: { icon: Rocket, colorClass: 'from-primary-500 to-indigo-500' },
+  tool_session_completed: { icon: Lightbulb, colorClass: 'from-amber-500 to-amber-500' },
+  execution_signal_viewed: { icon: Zap, colorClass: 'from-blue-500 to-blue-500' },
   deck_exported: { icon: BarChart3, colorClass: 'from-rose-500 to-pink-500' },
 };
 
@@ -85,7 +85,7 @@ export const DemoConversionCTA: React.FC<DemoConversionCTAProps> = ({
                   </p>
                   <button
                     onClick={handleStartTrial}
-                    className="mt-3 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 transition-colors"
+                    className="mt-3 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 transition-colors"
                   >
                     {t('demo.conversion.startTrial', 'Start Free Trial')}
                     <ArrowRight size={12} />

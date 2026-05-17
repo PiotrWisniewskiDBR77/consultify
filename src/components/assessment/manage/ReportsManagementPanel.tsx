@@ -118,16 +118,16 @@ const STATUS_CONFIG: Record<
   },
   GENERATED: {
     label: 'Generated',
-    color: 'text-purple-700 dark:text-purple-300',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
-    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    color: 'text-primary-700 dark:text-primary-300',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     icon: Sparkles,
   },
   IN_REVIEW: {
     label: 'In review',
-    color: 'text-purple-700 dark:text-purple-300',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
-    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    color: 'text-primary-700 dark:text-primary-300',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     icon: Eye,
   },
   APPROVED: {
@@ -250,13 +250,13 @@ const ReportRow: FC<{
       {/* Report Name */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+            <FileText className="w-4 h-4 text-primary-600 dark:text-primary-400" />
           </div>
           <div className="min-w-0">
             <button
               onClick={() => onOpen(report.id, report.name, report.status)}
-              className="text-sm font-medium text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left truncate block max-w-[200px]"
+              className="text-sm font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left truncate block max-w-[200px]"
             >
               {report.name}
             </button>
@@ -280,7 +280,7 @@ const ReportRow: FC<{
       {/* Author */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
             {(report.createdByName || report.createdBy || '?')
               .split(' ')
               .map((n) => n[0])
@@ -333,7 +333,7 @@ const ReportRow: FC<{
               <button
                 onClick={handleFinalize}
                 disabled={busy}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg transition-colors"
               >
                 {busy ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
                 Submit Review
@@ -350,7 +350,7 @@ const ReportRow: FC<{
           ) : report.status === 'IN_REVIEW' ? (
             <button
               onClick={() => onOpen(report.id, report.name, report.status)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
             >
               <Eye size={12} />
               Review
@@ -366,7 +366,7 @@ const ReportRow: FC<{
           ) : (
             <button
               onClick={() => onOpen(report.id, report.name, report.status)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
             >
               <Eye size={12} />
               View
@@ -458,7 +458,7 @@ const ReportRow: FC<{
                           handleDelete();
                           setShowActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10"
                       >
                         <Trash2 size={14} />
                         Delete
@@ -689,7 +689,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-primary-600 text-white rounded-lg">
                 <FileText size={18} />
               </div>
               <div>
@@ -724,7 +724,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   disabled={!onCreateReport}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     onCreateReport
-                      ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                      ? 'bg-primary-500 hover:bg-primary-600 text-white'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   }`}
                   title={!onCreateReport ? 'Report creation not available' : undefined}
@@ -765,9 +765,9 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 {stats.draft} In Progress
               </span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30">
-              <Eye size={14} className="text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30">
+              <Eye size={14} className="text-primary-600 dark:text-primary-400" />
+              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
                 {stats.inReview} In Review
               </span>
             </div>
@@ -792,7 +792,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search reports..."
-              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
             />
           </div>
         </div>
@@ -801,7 +801,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -820,7 +820,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 <button
                   onClick={handleCreateReport}
                   disabled={creatingReport || !onCreateReport}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
                 >
                   {creatingReport ? (
                     <Loader2 size={16} className="animate-spin" />

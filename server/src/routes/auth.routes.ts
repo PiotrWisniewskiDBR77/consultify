@@ -37,7 +37,9 @@ import {
   setAuthCookies,
 } from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { isForcedSuperAdminEmail, resolveAuthEffectiveRole } from '../utils/platformRoles.js';
 import {
   ChangePasswordRequestSchema,
   ForgotPasswordRequestSchema,
@@ -312,6 +314,10 @@ router.get(
         phone: string | null;
         timezone: string | null;
         location: string | null;
+        company_name: string | null;
+        date_format: string | null;
+        time_format: string | null;
+        out_of_office_message: string | null;
         // VTS metrics
         seniority_level: string | null;
         site_location: string | null;
@@ -324,23 +330,96 @@ router.get(
         profile_survey_completed_at: string | null;
         profile_survey_dismissed_count: number | null;
         profile_survey_last_dismissed_at: string | null;
+        profile_department: string | null;
+        profile_job_title: string | null;
+        profile_extended_department: string | null;
+        profile_extended_job_title: string | null;
+        profile_extended_title: string | null;
       } | null = null;
 
-      const ME_SELECT_COLS = `u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name,
-                   u.avatar_url, u.impersonator_id,
-                   u.display_name, u.pronouns, u.department, u.job_title,
-                   u.status_message, u.out_of_office, u.vacation_end,
-                   u.linkedin_id, u.phone, u.timezone, u.location,
-                   u.seniority_level, u.site_location, u.tenure_years,
-                   u.manages_team, u.team_size, u.expertise_tags,
-                   u.engagement_level, u.profile_survey_completed_at,
-                   u.profile_survey_dismissed_count, u.profile_survey_last_dismissed_at,
-                   o.name as organization_name, o.plan as organization_plan, o.status as organization_status`;
+      // Build a schema-aware select to avoid noisy "column does not exist" errors
+      // on legacy databases (e.g., staging snapshots used for local dev).
+      const userCols = await getTableColumns('users');
+      const userProfileCols = await getTableColumns('user_profiles');
+      const userProfileExtendedCols = await getTableColumns('user_profile_extended');
+      const hasUserProfiles = userProfileCols.size > 0 && userProfileCols.has('user_id');
+      const hasUserProfileExtended =
+        userProfileExtendedCols.size > 0 && userProfileExtendedCols.has('user_id');
+      let profileFallbackPreferences: Record<string, unknown> = {};
+      try {
+        const fallbackPreference = await dbGet<{ value?: string }>(
+          `SELECT value FROM user_preferences WHERE user_id = ? AND key = ? LIMIT 1`,
+          [req.user!.id, 'settings:profile-fallback']
+        );
+        if (fallbackPreference?.value) {
+          profileFallbackPreferences = JSON.parse(fallbackPreference.value);
+        }
+      } catch {
+        profileFallbackPreferences = {};
+      }
+      const ucol = (col: string, fallbackSql: string) =>
+        userCols.has(col) ? `u.${col}` : `${fallbackSql} as ${col}`;
+
+      const ME_SELECT_COLS = [
+        'u.id',
+        'u.email',
+        'u.role',
+        'u.organization_id',
+        'u.first_name',
+        'u.last_name',
+        ucol('avatar_url', 'NULL'),
+        ucol('impersonator_id', 'NULL'),
+        ucol('display_name', 'NULL'),
+        ucol('pronouns', 'NULL'),
+        ucol('department', 'NULL'),
+        ucol('job_title', 'NULL'),
+        ucol('status_message', 'NULL'),
+        ucol('out_of_office', 'NULL'),
+        ucol('vacation_end', 'NULL'),
+        ucol('linkedin_id', 'NULL'),
+        ucol('phone', 'NULL'),
+        ucol('timezone', 'NULL'),
+        ucol('location', 'NULL'),
+        ucol('company_name', 'NULL'),
+        ucol('date_format', 'NULL'),
+        ucol('time_format', 'NULL'),
+        ucol('out_of_office_message', 'NULL'),
+        ucol('seniority_level', 'NULL'),
+        ucol('site_location', 'NULL'),
+        ucol('tenure_years', 'NULL'),
+        ucol('manages_team', 'NULL'),
+        ucol('team_size', 'NULL'),
+        ucol('expertise_tags', 'NULL'),
+        ucol('engagement_level', 'NULL'),
+        ucol('profile_survey_completed_at', 'NULL'),
+        ucol('profile_survey_dismissed_count', '0'),
+        ucol('profile_survey_last_dismissed_at', 'NULL'),
+        hasUserProfiles && userProfileCols.has('department')
+          ? 'up.department as profile_department'
+          : 'NULL as profile_department',
+        hasUserProfiles && userProfileCols.has('job_title')
+          ? 'up.job_title as profile_job_title'
+          : 'NULL as profile_job_title',
+        hasUserProfileExtended && userProfileExtendedCols.has('department')
+          ? 'upe.department as profile_extended_department'
+          : 'NULL as profile_extended_department',
+        hasUserProfileExtended && userProfileExtendedCols.has('job_title')
+          ? 'upe.job_title as profile_extended_job_title'
+          : 'NULL as profile_extended_job_title',
+        hasUserProfileExtended && userProfileExtendedCols.has('title')
+          ? 'upe.title as profile_extended_title'
+          : 'NULL as profile_extended_title',
+        'o.name as organization_name',
+        'o.plan as organization_plan',
+        'o.status as organization_status',
+      ].join(', ');
 
       try {
         user = await dbGet(
           `SELECT ${ME_SELECT_COLS}
                    FROM users u
+                   ${hasUserProfiles ? 'LEFT JOIN user_profiles up ON up.user_id = u.id' : ''}
+                   ${hasUserProfileExtended ? 'LEFT JOIN user_profile_extended upe ON upe.user_id = u.id' : ''}
                    LEFT JOIN organizations o ON u.organization_id = o.id
                    WHERE u.id = ?`,
           [req.user!.id]
@@ -410,13 +489,15 @@ router.get(
 
       // Permanent role fix for selected internal accounts.
       // Ensure DB is updated so future tokens stay consistent.
-      if (
+      const isForcedPlatformSuperAdmin =
+        isForcedSuperAdminEmail(user.email) ||
         FORCED_SUPERADMIN_EMAILS.has(
           String(user.email || '')
             .trim()
             .toLowerCase()
-        )
-      ) {
+        );
+
+      if (isForcedPlatformSuperAdmin) {
         if (user.role !== 'SUPERADMIN') {
           try {
             await dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', user.id]);
@@ -429,21 +510,28 @@ router.get(
 
       // Resolve effective role: prefer organization_members.role for the
       // user's current org so that switch-organization is not silently undone.
-      let effectiveRole = user.role;
+      let membershipRole: string | null = null;
       if (user.organization_id) {
         try {
           const orgMembership = await dbGet<{ role: string }>(
             `SELECT role FROM organization_members
-             WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+             WHERE user_id = ? AND organization_id = ?
+               AND UPPER(COALESCE(status, '')) = 'ACTIVE'`,
             [user.id, user.organization_id]
           );
           if (orgMembership?.role) {
-            effectiveRole = orgMembership.role;
+            membershipRole = orgMembership.role;
           }
         } catch {
           // If table/column missing, fall back to users.role
         }
       }
+
+      const effectiveRole = resolveAuthEffectiveRole({
+        email: user.email,
+        userRole: user.role,
+        membershipRole,
+      });
 
       // Check if effective role changed vs JWT - if so, generate new token
       let newToken: string | null = null;
@@ -499,7 +587,6 @@ router.get(
           lastName: user.last_name,
           avatarUrl: user.avatar_url,
           impersonatorId: user.impersonator_id,
-          companyName: user.organization_name,
           isAuthenticated: true,
           accessLevel:
             user.organization_status === 'active' &&
@@ -507,17 +594,54 @@ router.get(
               ? 'full'
               : 'free',
           // Extended profile fields
-          displayName: user.display_name || null,
-          pronouns: user.pronouns || null,
-          department: user.department || null,
-          jobTitle: user.job_title || null,
-          statusMessage: user.status_message || null,
-          isOutOfOffice: user.out_of_office === 1,
-          outOfOfficeUntil: user.vacation_end || null,
-          linkedinId: user.linkedin_id || null,
+          displayName:
+            user.display_name ||
+            (profileFallbackPreferences.displayName as string | undefined) ||
+            null,
+          pronouns:
+            user.pronouns || (profileFallbackPreferences.pronouns as string | undefined) || null,
+          department:
+            user.department || user.profile_department || user.profile_extended_department || null,
+          jobTitle:
+            user.job_title ||
+            user.profile_job_title ||
+            user.profile_extended_job_title ||
+            user.profile_extended_title ||
+            null,
+          statusMessage:
+            user.status_message ||
+            (profileFallbackPreferences.statusMessage as string | undefined) ||
+            null,
+          isOutOfOffice:
+            user.out_of_office === 1 || Boolean(profileFallbackPreferences.isOutOfOffice || false),
+          outOfOfficeUntil:
+            user.vacation_end ||
+            (profileFallbackPreferences.outOfOfficeUntil as string | undefined) ||
+            null,
+          outOfOfficeMessage:
+            user.out_of_office_message ||
+            (profileFallbackPreferences.outOfOfficeMessage as string | undefined) ||
+            null,
+          linkedinId:
+            user.linkedin_id ||
+            (profileFallbackPreferences.linkedinId as string | undefined) ||
+            null,
           phone: user.phone || null,
-          timezone: user.timezone || null,
+          timezone:
+            user.timezone || (profileFallbackPreferences.timezone as string | undefined) || null,
+          dateFormat:
+            user.date_format ||
+            (profileFallbackPreferences.dateFormat as string | undefined) ||
+            null,
+          timeFormat:
+            user.time_format ||
+            (profileFallbackPreferences.timeFormat as string | undefined) ||
+            null,
           location: user.location || null,
+          companyName:
+            user.company_name ||
+            (profileFallbackPreferences.companyName as string | undefined) ||
+            user.organization_name,
           // VTS metrics
           seniorityLevel: user.seniority_level || null,
           siteLocation: user.site_location || null,
@@ -605,7 +729,12 @@ router.post(
         [userId, organizationId]
       );
 
-      if (!membership || membership.status !== 'ACTIVE') {
+      if (
+        !membership ||
+        String(membership.status || '')
+          .trim()
+          .toUpperCase() !== 'ACTIVE'
+      ) {
         return res.status(403).json({
           error: 'You do not have access to this organization',
           code: 'ORG_ACCESS_DENIED',
@@ -629,11 +758,17 @@ router.post(
       await dbRun('UPDATE users SET organization_id = ? WHERE id = ?', [organizationId, userId]);
 
       const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
+      const effectiveRole = resolveAuthEffectiveRole({
+        email: req.user!.email || '',
+        userRole: req.user!.role,
+        membershipRole: membership.role,
+      });
+
       const tokenPair = await refreshTokenService.generateTokenPair(
         {
           id: userId,
           email: req.user!.email || '',
-          role: membership.role,
+          role: effectiveRole,
           organization_id: organizationId,
           isDemo,
         },

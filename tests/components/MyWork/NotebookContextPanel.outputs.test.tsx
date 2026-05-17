@@ -133,17 +133,13 @@ describe('NotebookContextPanel linked outputs', () => {
     expect(screen.getByText('Linked outputs')).toBeInTheDocument();
     expect(screen.getByText('Board deck')).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByText('Open')[1]!);
+    fireEvent.click(screen.getAllByText('Open').at(-1)!);
 
-    expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        detail: {
-          type: 'presentation',
-          id: 'deck-1',
-          name: 'Board deck',
-        },
-      }),
-    );
+    expect((dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent).detail).toEqual({
+      type: 'presentation',
+      id: 'deck-1',
+      name: 'Board deck',
+    });
   });
 
   it('renders direct converted outputs from the active note on the linked outputs surface', async () => {
@@ -194,15 +190,11 @@ describe('NotebookContextPanel linked outputs', () => {
 
     fireEvent.click(screen.getByText('Open'));
 
-    expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        detail: {
-          type: 'report',
-          id: 'report-1',
-          name: 'Notebook source report',
-        },
-      })
-    );
+    expect((dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent).detail).toEqual({
+      type: 'report',
+      id: 'report-1',
+      name: 'Notebook source report',
+    });
   });
 
   it('renders direct converted assessments from the active note on the linked outputs surface', async () => {
@@ -257,14 +249,10 @@ describe('NotebookContextPanel linked outputs', () => {
 
     fireEvent.click(screen.getByText('Open'));
 
-    expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        detail: {
-          type: 'assessment',
-          id: 'assessment-1',
-          name: 'Digital readiness assessment',
-        },
-      })
-    );
+    expect((dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent).detail).toEqual({
+      type: 'assessment',
+      id: 'assessment-1',
+      name: 'Digital readiness assessment',
+    });
   });
 });

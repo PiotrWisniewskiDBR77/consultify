@@ -76,12 +76,12 @@ export const PartnerApplicationView: React.FC = () => {
     <MarketingLayout>
       <section className="relative overflow-hidden px-6 py-20">
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,#0D0828,#0A0A1F,#12082E)]" />
-        <div className="absolute left-[10%] top-[0%] -z-10 h-80 w-80 rounded-full bg-violet-500/20 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[8%] -z-10 h-96 w-96 rounded-full bg-cyan-500/10 blur-[120px]" />
+        <div className="absolute left-[10%] top-[0%] -z-10 h-80 w-80 rounded-full bg-primary-500/20 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[8%] -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-[120px]" />
 
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div className="text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-violet-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary-500/25 bg-primary-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-primary-200">
               <Handshake size={14} />
               {t('partner.apply.badge', 'Partner qualification')}
             </div>
@@ -131,7 +131,7 @@ export const PartnerApplicationView: React.FC = () => {
                 </p>
                 <a
                   href={ROUTES.BECOME_PARTNER}
-                  className="mt-8 inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-3 text-sm font-black text-white transition hover:bg-violet-500"
+                  className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-3 text-sm font-black text-white transition hover:bg-primary-500"
                 >
                   {t('partner.apply.backToProgram', 'Back to partner page')}
                   <ArrowRight size={16} />
@@ -140,11 +140,11 @@ export const PartnerApplicationView: React.FC = () => {
             ) : (
               <>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                     <Sparkles size={22} />
                   </div>
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-500">
                       Public lead form
                     </p>
                     <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
@@ -218,13 +218,13 @@ export const PartnerApplicationView: React.FC = () => {
                       value={form.message}
                       onChange={(event) => updateField('message', event.target.value)}
                       rows={5}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white dark:border-navy-700 dark:bg-navy-950/50 dark:text-white"
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 focus:bg-white dark:border-navy-700 dark:bg-navy-950/50 dark:text-white"
                       placeholder="Tell us about your market, clients, or rollout ambitions."
                     />
                   </label>
 
                   {error && (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
                       {error}
                     </div>
                   )}
@@ -232,7 +232,7 @@ export const PartnerApplicationView: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-violet-600 px-6 py-3 text-sm font-black text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-6 py-3 text-sm font-black text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSubmitting
                       ? t('partner.apply.submitting', 'Submitting...')
@@ -263,7 +263,7 @@ const Input: React.FC<{
       value={value}
       onChange={(event) => onChange(event.target.value)}
       required={required}
-      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white dark:border-navy-700 dark:bg-navy-950/50 dark:text-white"
+      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 focus:bg-white dark:border-navy-700 dark:bg-navy-950/50 dark:text-white"
     />
   </label>
 );

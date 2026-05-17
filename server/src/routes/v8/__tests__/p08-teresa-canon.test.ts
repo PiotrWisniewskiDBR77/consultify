@@ -34,9 +34,16 @@ import {
 // ────────────────────────────────────────────────────────────────
 
 describe('P08 §2.3.1 — Handoff targets', () => {
-  it('has exactly 4 P0 targets: radar, initiatives, calendar, notebook', () => {
-    expect(P08_HANDOFF_TARGET_MODULES).toEqual(['radar', 'initiatives', 'calendar', 'notebook']);
-    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(4);
+  it('includes required target modules for Teresa handoff', () => {
+    expect(P08_HANDOFF_TARGET_MODULES).toEqual([
+      'radar',
+      'initiatives',
+      'calendar',
+      'notebook',
+      'interview',
+      'excele',
+    ]);
+    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(6);
   });
 
   it('radar target references P06 and requires correct extra fields', () => {

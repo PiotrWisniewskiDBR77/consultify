@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import net from 'node:net';
@@ -33,6 +33,12 @@ const { default: settingsRouter } = await import('../../../server/src/routes/set
 
 describe('Settings regional preferences (REAL integration)', () => {
   let canListen = true;
+
+  beforeEach(() => {
+    mockDbGet.mockResolvedValue(null);
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ success: true });
+  });
 
   beforeAll(async () => {
     canListen = await new Promise<boolean>((resolve) => {
@@ -101,7 +107,7 @@ describe('Settings regional preferences (REAL integration)', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true });
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT OR REPLACE INTO user_preferences'),
+      expect.stringContaining('INSERT INTO user_preferences'),
       expect.any(Array),
       expect.any(Object)
     );

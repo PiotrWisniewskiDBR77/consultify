@@ -11,7 +11,6 @@
  */
 
 import {
-  AlertCircle,
   Archive,
   BarChart3,
   CheckCircle,
@@ -37,6 +36,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import api from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from './AdminState';
 
 interface ExperimentVariant {
   id: string;
@@ -137,9 +138,11 @@ export function ABTestingDashboard() {
       } else {
         throw new Error(payload?.error || 'Failed to fetch experiments');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch experiments');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch experiments');
+      setError(message);
       setExperiments([]);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -152,6 +155,10 @@ export function ABTestingDashboard() {
   const handleCreateExperiment = async () => {
     if (!newExperiment.name) {
       toast.error('Please enter a name');
+      return;
+    }
+    if (error) {
+      toast.error('Experiments are unavailable');
       return;
     }
 
@@ -185,8 +192,8 @@ export function ABTestingDashboard() {
       } else {
         throw new Error(payload?.error || 'Failed to create experiment');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create experiment');
+    } catch (err: unknown) {
+      toast.error(normalizeApiErrorMessage(err, 'Failed to create experiment'));
     } finally {
       setCreating(false);
     }
@@ -194,8 +201,12 @@ export function ABTestingDashboard() {
 
   const handleAction = async (
     experimentId: string,
-    action: 'start' | 'pause' | 'complete' | 'archive'
+    action: 'start' | 'pause' | 'resume' | 'complete' | 'archive'
   ) => {
+    if (error) {
+      toast.error('Experiments are unavailable');
+      return;
+    }
     try {
       const endpointAction = action === 'complete' ? 'stop' : action;
       const response = await api.post(
@@ -210,12 +221,16 @@ export function ABTestingDashboard() {
       } else {
         throw new Error(payload?.error || `Failed to ${action} experiment`);
       }
-    } catch (err: any) {
-      toast.error(err.message || `Failed to ${action} experiment`);
+    } catch (err: unknown) {
+      toast.error(normalizeApiErrorMessage(err, `Failed to ${action} experiment`));
     }
   };
 
   const handleDeclareWinner = async (experimentId: string, variantId: string) => {
+    if (error) {
+      toast.error('Experiments are unavailable');
+      return;
+    }
     if (!confirm('Are you sure you want to declare this variant as the winner?')) return;
 
     try {
@@ -230,8 +245,8 @@ export function ABTestingDashboard() {
       } else {
         throw new Error(payload?.error || 'Failed to declare winner');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to declare winner');
+    } catch (err: unknown) {
+      toast.error(normalizeApiErrorMessage(err, 'Failed to declare winner'));
     }
   };
 
@@ -264,6 +279,8 @@ export function ABTestingDashboard() {
   };
 
   const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'Unknown date';
     return new Date(dateStr).toLocaleDateString('pl-PL', {
       month: 'short',
       day: 'numeric',
@@ -306,8 +323,8 @@ export function ABTestingDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-xl">
-              <FlaskConical size={24} className="text-purple-500" />
+            <div className="p-3 bg-primary-500/10 rounded-xl">
+              <FlaskConical size={24} className="text-primary-500" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">A/B Testing</h1>
@@ -319,13 +336,17 @@ export function ABTestingDashboard() {
           <div className="flex items-center gap-3">
             <button
               onClick={fetchExperiments}
+              disabled={loading || creating}
               className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+              title="Refresh experiments"
             >
               <RefreshCw size={20} />
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+              disabled={!!error}
+              title={error || undefined}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               <Plus size={16} />
               New Experiment
@@ -339,9 +360,10 @@ export function ABTestingDashboard() {
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
+              disabled={!!error}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === status
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -354,12 +376,11 @@ export function ABTestingDashboard() {
         <div className="space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-20 bg-white dark:bg-navy-800 rounded-xl">
-              <Loader2 size={32} className="animate-spin text-purple-500" />
+              <Loader2 size={32} className="animate-spin text-primary-500" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-navy-800 rounded-xl text-red-500">
-              <AlertCircle size={32} className="mb-2" />
-              <p>{error}</p>
+            <div className="bg-white dark:bg-navy-800 rounded-xl p-6">
+              <DegradedState title="A/B experiments unavailable" description={error} />
             </div>
           ) : experiments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-navy-800 rounded-xl text-slate-500 dark:text-slate-400">
@@ -367,7 +388,8 @@ export function ABTestingDashboard() {
               <p>No experiments found</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                disabled={!!error}
+                className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 Create First Experiment
               </button>
@@ -431,6 +453,7 @@ export function ABTestingDashboard() {
                             e.stopPropagation();
                             handleAction(experiment.id, 'start');
                           }}
+                          disabled={!!error}
                           className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                           title="Start"
                         >
@@ -443,6 +466,7 @@ export function ABTestingDashboard() {
                             e.stopPropagation();
                             handleAction(experiment.id, 'pause');
                           }}
+                          disabled={!!error}
                           className="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
                           title="Pause"
                         >
@@ -453,8 +477,9 @@ export function ABTestingDashboard() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAction(experiment.id, 'start');
+                            handleAction(experiment.id, 'resume');
                           }}
+                          disabled={!!error}
                           className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                           title="Resume"
                         >
@@ -467,6 +492,7 @@ export function ABTestingDashboard() {
                             e.stopPropagation();
                             handleAction(experiment.id, 'complete');
                           }}
+                          disabled={!!error}
                           className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                           title="Complete"
                         >
@@ -587,6 +613,7 @@ export function ABTestingDashboard() {
                                   !experiment.winningVariantId && (
                                     <button
                                       onClick={() => handleDeclareWinner(experiment.id, variant.id)}
+                                      disabled={!!error}
                                       className="px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
                                     >
                                       Declare Winner
@@ -740,7 +767,7 @@ export function ABTestingDashboard() {
                   </label>
                   <button
                     onClick={addVariant}
-                    className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                    className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
                   >
                     <Plus size={14} />
                     Add Variant
@@ -784,7 +811,7 @@ export function ABTestingDashboard() {
                       {newExperiment.variants.length > 2 && (
                         <button
                           onClick={() => removeVariant(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                         >
                           <X size={16} />
                         </button>
@@ -795,7 +822,7 @@ export function ABTestingDashboard() {
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   Total traffic: {newExperiment.variants.reduce((sum, v) => sum + v.traffic, 0)}%
                   {newExperiment.variants.reduce((sum, v) => sum + v.traffic, 0) !== 100 && (
-                    <span className="text-red-500 ml-2">(must be 100%)</span>
+                    <span className="text-rose-500 ml-2">(must be 100%)</span>
                   )}
                 </p>
               </div>
@@ -809,8 +836,8 @@ export function ABTestingDashboard() {
               </button>
               <button
                 onClick={handleCreateExperiment}
-                disabled={creating}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                disabled={creating || !!error}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
                 {creating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 Create Experiment

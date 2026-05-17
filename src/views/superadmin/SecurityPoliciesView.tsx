@@ -12,7 +12,6 @@
  */
 
 import {
-  AlertTriangle,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -20,10 +19,8 @@ import {
   Database,
   Globe,
   Info,
-  Key,
   Loader2,
   Lock,
-  MapPin,
   Plus,
   RefreshCw,
   Save,
@@ -32,11 +29,10 @@ import {
   ShieldCheck,
   Smartphone,
   Trash2,
-  Users,
-  XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -106,11 +102,12 @@ export const SecurityPoliciesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('global');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [dataGovLoadError, setDataGovLoadError] = useState<string | null>(null);
   const [globalPolicy, setGlobalPolicy] = useState<SecurityPolicy | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<SecurityPolicy | null>(null);
-  const [lockouts, setLockouts] = useState<any[]>([]);
 
   // IP input states
   const [newAllowlistIP, setNewAllowlistIP] = useState('');
@@ -129,6 +126,8 @@ export const SecurityPoliciesView: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
+    setDataGovLoadError(null);
     try {
       const globalResult = await Api.get('/security-policies/defaults');
       setGlobalPolicy(globalResult.policy);
@@ -148,18 +147,24 @@ export const SecurityPoliciesView: React.FC = () => {
       }));
       setOrganizations(orgsWithPolicy);
 
-      setLockouts([]);
-
       // V4-ENT-04: Data governance (org policies)
       try {
         const { policies } = await Api.getOrgPolicies();
         setDataGovPolicies(policies || []);
       } catch (error) {
         console.warn('[SecurityPoliciesView] Failed to fetch org data governance policies', error);
+        setDataGovLoadError(
+          error instanceof Error ? error.message : 'Failed to fetch org data governance policies'
+        );
         setDataGovPolicies([]);
       }
     } catch (error) {
       console.error('Failed to fetch security data:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to fetch security policies');
+      setGlobalPolicy(null);
+      setOrganizations([]);
+      setOrgPoliciesMap(new Map());
+      setDataGovPolicies([]);
     } finally {
       setLoading(false);
     }
@@ -202,15 +207,6 @@ export const SecurityPoliciesView: React.FC = () => {
     }
   };
 
-  const handleUnlockAccount = async (email: string) => {
-    try {
-      await Api.post('/security-policies/unlock-account', { email });
-      await fetchData();
-    } catch (error) {
-      console.error('Failed to unlock account:', error);
-    }
-  };
-
   const PolicyEditor: React.FC<{ policy: SecurityPolicy; onSave: (p: SecurityPolicy) => void }> = ({
     policy,
     onSave,
@@ -239,8 +235,8 @@ export const SecurityPoliciesView: React.FC = () => {
         {/* Password Policy */}
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Lock className="text-violet-500" size={20} />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+              <Lock className="text-primary-500" size={20} />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -286,7 +282,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireUppercase}
                 onChange={(e) => updateField('passwordRequireUppercase', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Uppercase</span>
             </label>
@@ -295,7 +291,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireLowercase}
                 onChange={(e) => updateField('passwordRequireLowercase', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Lowercase</span>
             </label>
@@ -304,7 +300,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireNumbers}
                 onChange={(e) => updateField('passwordRequireNumbers', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Numbers</span>
             </label>
@@ -313,7 +309,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireSpecial}
                 onChange={(e) => updateField('passwordRequireSpecial', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Special chars</span>
             </label>
@@ -396,7 +392,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.requireSessionBinding}
                 onChange={(e) => updateField('requireSessionBinding', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">
                 Bind sessions to IP/device (stricter security)
@@ -425,7 +421,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.mfaRequired}
                 onChange={(e) => updateField('mfaRequired', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Require MFA for all users
@@ -522,7 +518,7 @@ export const SecurityPoliciesView: React.FC = () => {
                     addToList('ipBlocklist', newBlocklistIP);
                     setNewBlocklistIP('');
                   }}
-                  className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                  className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"
                 >
                   <Plus size={16} />
                 </button>
@@ -531,12 +527,12 @@ export const SecurityPoliciesView: React.FC = () => {
                 {editedPolicy.ipBlocklist.map((ip, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between px-3 py-1.5 bg-red-50 dark:bg-red-500/10 rounded text-sm"
+                    className="flex items-center justify-between px-3 py-1.5 bg-rose-50 dark:bg-rose-500/10 rounded text-sm"
                   >
-                    <span className="text-red-700 dark:text-red-400 font-mono">{ip}</span>
+                    <span className="text-rose-700 dark:text-rose-400 font-mono">{ip}</span>
                     <button
                       onClick={() => removeFromList('ipBlocklist', idx)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-rose-600 hover:text-rose-800"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -552,7 +548,7 @@ export const SecurityPoliciesView: React.FC = () => {
           <button
             onClick={() => onSave(editedPolicy)}
             disabled={saving}
-            className="px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save Policy
@@ -602,13 +598,13 @@ export const SecurityPoliciesView: React.FC = () => {
             }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
               selectedOrg === org.id
-                ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30'
-                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-500/30'
+                ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-500/30'
+                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -619,7 +615,7 @@ export const SecurityPoliciesView: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               {org.hasCustomPolicy ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400">
                   <Settings size={12} />
                   Custom Policy
                 </span>
@@ -798,43 +794,52 @@ export const SecurityPoliciesView: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Organization
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Retention (days)
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Legal Hold
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Residency Region
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {organizations.map((org) => {
-              const policy = dataGovPolicies.find((p) => p.organization_id === org.id);
-              return (
-                <DataGovRow
-                  key={org.id}
-                  org={org}
-                  policy={policy ?? null}
-                  saving={saving}
-                  onSave={handleSaveDataGovPolicy}
-                />
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {dataGovLoadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState
+            title="Data governance policies unavailable"
+            description={dataGovLoadError}
+          />
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Organization
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Retention (days)
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Legal Hold
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Residency Region
+                </th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {organizations.map((org) => {
+                const policy = dataGovPolicies.find((p) => p.organization_id === org.id);
+                return (
+                  <DataGovRow
+                    key={org.id}
+                    org={org}
+                    policy={policy ?? null}
+                    saving={saving}
+                    onSave={handleSaveDataGovPolicy}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 
@@ -942,7 +947,7 @@ export const SecurityPoliciesView: React.FC = () => {
           <button
             onClick={handleSave}
             disabled={saving || !dirty}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2 ml-auto transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2 ml-auto transition-colors"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             Save
@@ -954,77 +959,11 @@ export const SecurityPoliciesView: React.FC = () => {
 
   const renderLockoutsTab = () => (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                User
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Reason
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                IP Address
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Locked At
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Expires
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {lockouts.map((lockout) => (
-              <tr key={lockout.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                <td className="px-6 py-4">
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {lockout.user_email}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
-                    {lockout.reason}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-mono">
-                  {lockout.ip_address}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {new Date(lockout.locked_at).toLocaleString()}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {lockout.expires_at
-                    ? new Date(lockout.expires_at).toLocaleString()
-                    : 'Manual unlock required'}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleUnlockAccount(lockout.user_email)}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
-                  >
-                    Unlock
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {lockouts.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <div className="text-slate-500 dark:text-slate-400">
-                    <Lock size={40} className="mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No locked accounts</p>
-                    <p className="text-sm">All accounts are accessible</p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <ReadOnlyState
+          title="Account lockout list unavailable"
+          description="The unlock endpoint exists, but this view does not currently load an audited account-lockout list. Showing 'No locked accounts' here would be misleading."
+        />
       </div>
     </div>
   );
@@ -1075,7 +1014,7 @@ export const SecurityPoliciesView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1088,7 +1027,11 @@ export const SecurityPoliciesView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
+        </div>
+      ) : loadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState title="Security policies unavailable" description={loadError} />
         </div>
       ) : (
         <>

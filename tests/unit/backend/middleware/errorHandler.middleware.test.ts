@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   errorHandler,
@@ -126,6 +126,83 @@ describe('errorHandler middleware (L1)', () => {
     );
   });
 
+  it('sanitizes invalid statusCode from custom errors to 500', () => {
+    const err: any = new Error('bad status');
+    err.statusCode = 999;
+    err.code = 'BAD_STATUS';
+    const req: any = { method: 'GET', path: '/x' };
+    const res = makeRes();
+
+    errorHandler(err, req, res as any, (() => {}) as any);
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: false,
+        code: 'BAD_STATUS',
+      })
+    );
+  });
+
+  it('does not attempt to write when headers are already sent', () => {
+    const err: any = new Error('late');
+    const req: any = { method: 'GET', path: '/x' };
+    const res = makeRes();
+    res.headersSent = true;
+    const statusSpy = vi.fn(res.status);
+    const jsonSpy = vi.fn(res.json);
+    res.status = statusSpy;
+    res.json = jsonSpy;
+
+    expect(() => errorHandler(err, req, res as any, (() => {}) as any)).not.toThrow();
+    expect(statusSpy).not.toHaveBeenCalled();
+    expect(jsonSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not attempt to write when response is already writableEnded', () => {
+    const err: any = new Error('late');
+    const req: any = { method: 'GET', path: '/x' };
+    const res = makeRes();
+    res.writableEnded = true;
+    const statusSpy = vi.fn(res.status);
+    const jsonSpy = vi.fn(res.json);
+    res.status = statusSpy;
+    res.json = jsonSpy;
+
+    expect(() => errorHandler(err, req, res as any, (() => {}) as any)).not.toThrow();
+    expect(statusSpy).not.toHaveBeenCalled();
+    expect(jsonSpy).not.toHaveBeenCalled();
+  });
+
+  it('classifies safely when error name/message accessors throw', () => {
+    const err: any = new Error('boom');
+    Object.defineProperty(err, 'name', {
+      configurable: true,
+      get: () => {
+        throw new Error('name getter failed');
+      },
+    });
+    Object.defineProperty(err, 'message', {
+      configurable: true,
+      get: () => {
+        throw new Error('message getter failed');
+      },
+    });
+
+    const req: any = { method: 'GET', path: '/x' };
+    const res = makeRes();
+
+    expect(() => errorHandler(err, req, res as any, (() => {}) as any)).not.toThrow();
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      })
+    );
+  });
+
   it('includes stack when not in production', () => {
     const prev = process.env.NODE_ENV;
     try {
@@ -155,6 +232,71 @@ describe('notFoundHandler (L1)', () => {
         code: 'ROUTE_NOT_FOUND',
       })
     );
+  });
+
+  it('handles throwing request method/path accessors', () => {
+    const req: any = {};
+    Object.defineProperty(req, 'method', {
+      configurable: true,
+      get: () => {
+        throw new Error('method getter failed');
+      },
+    });
+    Object.defineProperty(req, 'path', {
+      configurable: true,
+      get: () => {
+        throw new Error('path getter failed');
+      },
+    });
+    Object.defineProperty(req, 'originalUrl', {
+      configurable: true,
+      get: () => '/fallback-url',
+    });
+    const res = makeRes();
+
+    expect(() => notFoundHandler(req, res as any)).not.toThrow();
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toContain('UNKNOWN');
+    expect(res.body.error).toContain('/fallback-url');
+  });
+
+  it('does not attempt 404 write when headers are already sent', () => {
+    const req: any = { method: 'GET', path: '/missing' };
+    const res = makeRes();
+    res.headersSent = true;
+    const statusSpy = vi.fn(res.status);
+    const jsonSpy = vi.fn(res.json);
+    res.status = statusSpy;
+    res.json = jsonSpy;
+
+    expect(() => notFoundHandler(req, res as any)).not.toThrow();
+    expect(statusSpy).not.toHaveBeenCalled();
+    expect(jsonSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not attempt 404 write when response is writableEnded', () => {
+    const req: any = { method: 'GET', path: '/missing' };
+    const res = makeRes();
+    res.writableEnded = true;
+    const statusSpy = vi.fn(res.status);
+    const jsonSpy = vi.fn(res.json);
+    res.status = statusSpy;
+    res.json = jsonSpy;
+
+    expect(() => notFoundHandler(req, res as any)).not.toThrow();
+    expect(statusSpy).not.toHaveBeenCalled();
+    expect(jsonSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when notFoundHandler response json writer throws', () => {
+    const req: any = { method: 'GET', path: '/missing' };
+    const res = makeRes();
+    res.json = vi.fn(() => {
+      throw new Error('json failed');
+    });
+
+    expect(() => notFoundHandler(req, res as any)).not.toThrow();
+    expect(res.statusCode).toBe(404);
   });
 });
 

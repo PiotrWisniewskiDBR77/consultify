@@ -64,8 +64,8 @@ const STATUS_CONFIG: Record<BenefitStatus, { color: string; bgColor: string; lab
     label: 'Achieved',
   },
   NOT_ACHIEVED: {
-    color: 'text-red-600',
-    bgColor: 'bg-red-100 dark:bg-red-900/20',
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/20',
     label: 'Not Achieved',
   },
 };
@@ -73,9 +73,9 @@ const STATUS_CONFIG: Record<BenefitStatus, { color: string; bgColor: string; lab
 const TYPE_CONFIG: Record<BenefitType, { icon: React.ElementType; color: string }> = {
   FINANCIAL: { icon: DollarSign, color: 'text-green-500' },
   EFFICIENCY: { icon: Clock, color: 'text-blue-500' },
-  QUALITY: { icon: CheckCircle2, color: 'text-purple-500' },
+  QUALITY: { icon: CheckCircle2, color: 'text-primary-500' },
   STRATEGIC: { icon: Target, color: 'text-amber-500' },
-  COMPLIANCE: { icon: Users, color: 'text-cyan-500' },
+  COMPLIANCE: { icon: Users, color: 'text-blue-500' },
 };
 
 export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, benefits = [] }) => {
@@ -166,7 +166,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
           </h3>
         </div>
         <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <p className="text-sm text-red-500 dark:text-red-400">{fetchError}</p>
+          <p className="text-sm text-rose-500 dark:text-rose-400">{fetchError}</p>
           <button
             onClick={fetchBenefits}
             className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-500 rounded-lg transition-colors"
@@ -229,7 +229,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Avg. Realization</div>
-          <div className="text-2xl font-bold text-purple-400">{stats.avgRealization}%</div>
+          <div className="text-2xl font-bold text-primary-400">{stats.avgRealization}%</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Benefits Achieved</div>
@@ -254,7 +254,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                 onClick={() => setSelectedType(type)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                   selectedType === type
-                    ? 'bg-purple-900/30 text-purple-400'
+                    ? 'bg-primary-900/30 text-primary-400'
                     : 'text-slate-500 dark:text-slate-400 hover:bg-navy-800'
                 }`}
               >
@@ -348,7 +348,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                             ? 'bg-green-500'
                             : realizationPercent >= 50
                               ? 'bg-amber-500'
-                              : 'bg-red-500'
+                              : 'bg-rose-500'
                       }`}
                       style={{ width: `${Math.min(realizationPercent, 100)}%` }}
                     />
@@ -382,7 +382,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                             ? 'text-green-500'
                             : realizationPercent >= 50
                               ? 'text-amber-500'
-                              : 'text-red-500'
+                              : 'text-rose-500'
                       }
                     />
                   </svg>
@@ -395,7 +395,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                             ? 'text-green-600'
                             : realizationPercent >= 50
                               ? 'text-amber-600'
-                              : 'text-red-600'
+                              : 'text-rose-600'
                       }`}
                     >
                       {realizationPercent}%
@@ -410,7 +410,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                   <strong>Measurement:</strong> {benefit.measurementCriteria}
                 </div>
                 {benefit.linkedInitiativeName && (
-                  <span className="text-xs text-purple-500">
+                  <span className="text-xs text-primary-500">
                     Initiative: {benefit.linkedInitiativeName}
                   </span>
                 )}

@@ -32,41 +32,30 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
 }
 
-/**
- * Light Mode System v3.2 — Badge variants.
- * SSOT: docs/ui-standards/00-foundation/light-mode-readability.md §5
- *
- * Contract (light):
- *   bg-*-100 + border-*-200 + text-*-800  (WCAG AA for small text)
- *   amber is intentionally text-900 due to its physics.
- *
- * Contract (dark):
- *   bg-*-900/40 + border-*-800 + text-*-200
- */
 const variantStyles: Record<BadgeVariant, string> = {
   primary: `
-    bg-primary-100 border border-primary-200 text-primary-800
-    dark:bg-primary-900/40 dark:border-primary-800 dark:text-primary-200
+    bg-primary-100 text-primary-700
+    dark:bg-primary-900/30 dark:text-primary-300
   `,
   secondary: `
-    bg-secondary-100 border border-secondary-200 text-secondary-800
-    dark:bg-secondary-900/40 dark:border-secondary-800 dark:text-secondary-200
+    bg-secondary-100 text-secondary-700
+    dark:bg-secondary-900/30 dark:text-secondary-300
   `,
   success: `
-    bg-success-100 border border-success-200 text-success-800
-    dark:bg-success-900/40 dark:border-success-800 dark:text-success-200
+    bg-success-100 text-success-700
+    dark:bg-success-900/30 dark:text-success-300
   `,
   danger: `
-    bg-danger-100 border border-danger-200 text-danger-800
-    dark:bg-danger-900/40 dark:border-danger-800 dark:text-danger-200
+    bg-danger-100 text-danger-700
+    dark:bg-danger-900/30 dark:text-danger-300
   `,
   warning: `
-    bg-amber-100 border border-amber-300 text-amber-900
-    dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-200
+    bg-amber-100 text-amber-700
+    dark:bg-amber-900/30 dark:text-amber-300
   `,
   neutral: `
-    bg-slate-100 border border-slate-200 text-slate-800
-    dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-200
+    bg-slate-100 dark:bg-navy-800/40 text-slate-700 dark:text-slate-300
+    dark:bg-slate-800 dark:text-slate-300
   `,
 };
 

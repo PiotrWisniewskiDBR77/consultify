@@ -71,8 +71,8 @@ const EXECUTION_STAGES: Column[] = [
     id: 'IN_PROGRESS',
     title: 'In Progress',
     icon: <Timer size={16} />,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-900/20',
   },
   {
     id: 'REVIEW',
@@ -102,7 +102,7 @@ const DroppableColumn: React.FC<{
     <div
       ref={setNodeRef}
       className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${
-        isOver ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-slate-50 dark:bg-navy-950/50'
+        isOver ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-slate-50 dark:bg-navy-950/50'
       }`}
     >
       {children}
@@ -140,8 +140,8 @@ const SortableInitiativeCard: React.FC<{
       {...listeners}
       className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${
         isDragging
-          ? 'shadow-lg border-purple-400 dark:border-purple-500 rotate-2'
-          : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+          ? 'shadow-lg border-primary-400 dark:border-primary-500 rotate-2'
+          : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
       }`}
       onClick={() => !isDragging && onInitiativeClick?.(initiative)}
     >
@@ -161,13 +161,13 @@ const SortableInitiativeCard: React.FC<{
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs text-slate-500 dark:text-slate-400">Overall Progress</span>
-          <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
+          <span className="text-xs font-bold text-primary-600 dark:text-primary-400">
             {initiative.progress || 0}%
           </span>
         </div>
         <div className="h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-purple-500 rounded-full transition-all"
+            className="h-full bg-primary-500 rounded-full transition-all"
             style={{ width: `${initiative.progress || 0}%` }}
           />
         </div>
@@ -193,7 +193,7 @@ const SortableInitiativeCard: React.FC<{
       <div
         className={`flex items-center gap-2 p-2 rounded-lg text-xs ${
           slaStatus === 'overdue'
-            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+            ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
             : slaStatus === 'warning'
               ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
               : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
@@ -218,8 +218,8 @@ const SortableInitiativeCard: React.FC<{
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
         {/* Owner */}
         <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-          <div className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-            <User size={10} className="text-purple-600 dark:text-purple-400" />
+          <div className="w-5 h-5 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+            <User size={10} className="text-primary-600 dark:text-primary-400" />
           </div>
           <span>
             {typeof initiative.ownerExecution === 'object' && initiative.ownerExecution
@@ -233,7 +233,7 @@ const SortableInitiativeCard: React.FC<{
           <span
             className={`text-xs font-medium px-2 py-0.5 rounded ${
               initiative.priority === 'Critical'
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
                 : initiative.priority === 'High'
                   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -387,7 +387,7 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
       </div>
       <DragOverlay dropAnimation={dropAnimation}>
         {activeInitiative ? (
-          <div className="bg-white dark:bg-navy-900 rounded-lg border border-purple-400 dark:border-purple-500 shadow-lg p-4 w-[280px] rotate-2">
+          <div className="bg-white dark:bg-navy-900 rounded-lg border border-primary-400 dark:border-primary-500 shadow-lg p-4 w-[280px] rotate-2">
             <h4 className="font-medium text-navy-900 dark:text-white text-sm line-clamp-2 mb-2">
               {activeInitiative.name}
             </h4>

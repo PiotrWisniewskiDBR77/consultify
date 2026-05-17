@@ -246,10 +246,10 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
           text: 'text-emerald-400',
           icon: <CheckCircle2 size={12} />,
         },
-        REJECTED: { bg: 'bg-red-500/10', text: 'text-red-400', icon: <XCircle size={12} /> },
+        REJECTED: { bg: 'bg-rose-500/10', text: 'text-rose-400', icon: <XCircle size={12} /> },
         CHANGES_REQUESTED: {
-          bg: 'bg-orange-500/10',
-          text: 'text-orange-400',
+          bg: 'bg-amber-500/10',
+          text: 'text-amber-400',
           icon: <AlertCircle size={12} />,
         },
       };
@@ -269,8 +269,8 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
     const styles: Record<ContentReviewPriority, string> = {
       LOW: 'bg-slate-500/10 text-slate-400 dark:text-slate-500',
       NORMAL: 'bg-blue-500/10 text-blue-400',
-      HIGH: 'bg-orange-500/10 text-orange-400',
-      URGENT: 'bg-red-500/10 text-red-400',
+      HIGH: 'bg-amber-500/10 text-amber-400',
+      URGENT: 'bg-rose-500/10 text-rose-400',
     };
 
     return (
@@ -293,7 +293,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ClipboardCheck className="w-5 h-5 text-violet-400" />
+          <ClipboardCheck className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Reviews</h3>
           <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
             {reviews.length}
@@ -301,7 +301,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
         </div>
         <button
           onClick={() => setShowNewReview(!showNewReview)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded-lg text-sm hover:bg-violet-500/20"
+          className="flex items-center gap-2 px-3 py-1.5 bg-primary-500/10 text-primary-400 border border-primary-500/30 rounded-lg text-sm hover:bg-primary-500/20"
         >
           <Plus size={14} />
           Request Review
@@ -319,7 +319,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
               <select
                 value={newReview.reviewerId}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, reviewerId: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="">Select reviewer...</option>
                 {users.map((user) => (
@@ -340,7 +340,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     priority: e.target.value as ContentReviewPriority,
                   }))
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="LOW">Low</option>
                 <option value="NORMAL">Normal</option>
@@ -355,7 +355,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 type="date"
                 value={newReview.dueDate}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, dueDate: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
           </div>
@@ -366,7 +366,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
               <label className="text-sm font-medium text-slate-300">Review Checklist</label>
               <button
                 onClick={addChecklistItem}
-                className="text-xs text-violet-400 hover:text-violet-300"
+                className="text-xs text-primary-400 hover:text-primary-300"
               >
                 + Add Item
               </button>
@@ -379,11 +379,11 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     value={item.label}
                     onChange={(e) => updateChecklistItem(item.id, e.target.value)}
                     placeholder="Checklist item..."
-                    className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                    className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                   />
                   <button
                     onClick={() => removeChecklistItem(item.id)}
-                    className="px-2 text-red-400 hover:text-red-300"
+                    className="px-2 text-rose-400 hover:text-rose-300"
                   >
                     ×
                   </button>
@@ -402,7 +402,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
             <button
               onClick={handleCreateReview}
               disabled={submitting || !newReview.reviewerId}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 disabled:opacity-50"
             >
               {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
               Send Request
@@ -437,7 +437,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                   className="w-full flex items-center justify-between p-4 hover:bg-slate-700/30 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
                       {review.reviewer ? (
                         <span className="text-xs font-medium text-white">
                           {review.reviewer.firstName?.[0]}
@@ -552,7 +552,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             onChange={(e) => setReviewNotes(e.target.value)}
                             placeholder="Add review notes..."
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                           />
                           <div className="flex gap-2">
                             <button
@@ -566,7 +566,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             <button
                               onClick={() => handleRequestChanges(review.id)}
                               disabled={submitting}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-orange-500/10 text-orange-400 border border-orange-500/30 rounded-lg text-sm hover:bg-orange-500/20 disabled:opacity-50"
+                              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg text-sm hover:bg-amber-500/20 disabled:opacity-50"
                             >
                               <AlertCircle size={14} />
                               Request Changes
@@ -574,7 +574,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             <button
                               onClick={() => handleReject(review.id)}
                               disabled={submitting}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/30 rounded-lg text-sm hover:bg-red-500/20 disabled:opacity-50"
+                              className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-lg text-sm hover:bg-rose-500/20 disabled:opacity-50"
                             >
                               <XCircle size={14} />
                               Reject

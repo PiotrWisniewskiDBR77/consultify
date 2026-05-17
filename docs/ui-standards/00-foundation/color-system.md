@@ -1,8 +1,8 @@
 # DBR77 Color System Standard
 
-> **Wersja**: 2.0 — "Tech Sexy" Edition  
-> **Data**: 2026-02-15  
-> **Autor**: Consultinity Design System  
+> **Wersja**: 2.1 — "DBR77 Tech Sexy 2027" Edition  
+> **Data**: 2026-05-01  
+> **Autor**: Consultify Design System  
 > **Lokalizacja:** `docs/ui-standards/00-foundation/color-system.md`
 >
 > **Changelog v2.0:** Doprecyzowanie neutralnych kolorów (nigdy pure black/white), dodanie zasady monochromatycznego UI chrome, refinement tekstu w dark mode.
@@ -210,6 +210,123 @@ MINIMALNE WYMAGANIA (WCAG 2.1 AA):
 2. **Zawsze z kontekstem** - ikona lub etykieta obok
 3. **Nie tylko kolor** - dla dostępności dodaj ikony (✓, ✕, ⚠️)
 4. **Spójność** - ten sam status = ten sam kolor wszędzie
+
+### 2.6a Table Chip Color Usage
+
+Chipy w tabelach są częścią warstwy danych, nie chrome ani CTA. Kolor w chipie służy do szybkiego skanowania znaczenia.
+
+Typy chipów:
+
+- `StatusChip` - status / etap / stan workflow. Kolor dozwolony, ale jako subtelny sygnał. Ikona lub dot może nieść kolor; tekst musi mieć wysoki kontrast.
+- `PriorityChip` - priorytet. Jeden wzorzec per moduł: dot/ikona + label. Nie mieszamy dot-only, text-only i pill-only w jednej rodzinie tabel.
+- `MetaChip` - tagi, typy, źródła, skróty właścicieli. Zawsze neutralny: `slate/navy`, bez `primary`, `success`, `warning` ani `danger`.
+- `ToolChip` - narzędzie / artefakt / tryb pracy. Prawie neutralny; ikona może użyć delikatnego `primary` lub `info`, ale tło nie może wyglądać jak CTA.
+- `SlaChip` / `DueChip` - termin, SLA, overdue. Kolor tylko dla ryzyka, overdue i breach. Normalna data jest neutralna.
+
+MUST:
+
+- text contrast: minimum WCAG AA; praktycznie `text-slate-700/800` w light i `text-slate-200/300` w dark,
+- light mode: zero “jasne tło + jasny tekst tego samego koloru”,
+- dark mode: zero neonowych dużych plam; preferuj `bg-*/10` albo neutralne tło + kolorowa ikona,
+- `primary/violet` nie dominuje stale w kolumnie tabeli, chyba że oznacza aktywny stan, focus lub link,
+- kolor chipów jest spójny między table, preview i list/card wariantem tego samego modułu.
+
+MUST NOT:
+
+- nie używamy `primary` jako dekoracyjnego koloru metadata,
+- nie robimy tagów kolorowych bez semantyki,
+- nie używamy wielu lokalnych map kolorów dla tej samej encji w jednym module.
+
+### 2.6b Accepted App Table Color Grid
+
+Status: `APPROVED / ENFORCED`
+
+Ta siatka kolorów została zaakceptowana jako docelowy standard dla referencyjnych tabel App Table. Stosuj ją przy nowych tabelach i przy migracji istniejących tabel po zakończeniu odbioru pozostałych aspektów UI/UX.
+
+Kierunek: ClickUp High Contrast + DBR77 Tech Sexy 2027. Stan ma być widoczny natychmiast, ale nadal premium: mocny kontrast, brandowy akcent, bez neonów i bez szarych legacy belek.
+
+#### Table Surface
+
+| Element | Light mode | Dark mode |
+|---|---|---|
+| Table scroll surface | `bg-slate-50/40` | `dark:bg-navy-950` |
+| Default row | `bg-white` | `dark:bg-navy-950` |
+| Row hover | `hover:bg-slate-100/80` | `dark:hover:bg-white/[0.04]` |
+| Header | `bg-slate-100/95` + `shadow-[0_1px_0_rgba(15,23,42,0.08)]` | `dark:bg-navy-900` + `dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]` |
+| Row separator | `border-slate-200/95` | `dark:border-white/[0.085]` |
+| Header separator | `border-slate-300/70` | `dark:border-white/[0.10]` |
+
+#### Row State Grid
+
+| State | Light mode | Dark mode | Accent |
+|---|---|---|---|
+| Selected / preview | `bg-primary-200/70` + `shadow-[inset_0_0_0_1px_rgba(124,58,237,0.28),inset_4px_0_0_rgba(124,58,237,0.95)]` | `dark:bg-primary-500/[0.20]` + `dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.30),inset_4px_0_0_rgba(196,181,253,0.95)]` | `bg-primary-600 dark:bg-primary-300` |
+| Focused row | `bg-primary-100/95` + `shadow-[inset_0_0_0_1px_rgba(124,58,237,0.24),inset_4px_0_0_rgba(124,58,237,0.82)]` | `dark:bg-primary-500/[0.16]` + `dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.24),inset_4px_0_0_rgba(196,181,253,0.80)]` | `bg-primary-500 dark:bg-primary-300` |
+| Checked / multi-select | `bg-primary-100/85` + `shadow-[inset_0_0_0_1px_rgba(124,58,237,0.18),inset_4px_0_0_rgba(124,58,237,0.75)]` | `dark:bg-primary-500/[0.13]` + `dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.20),inset_4px_0_0_rgba(196,181,253,0.70)]` | `bg-primary-500 dark:bg-primary-300` |
+
+MUST:
+
+- Selected/focused row uses `primary/violet-blue`, never random cyan/amber/gray.
+- The left accent is `4px` for reference App Tables.
+- A state that is only technically present but invisible on a screenshot is not accepted.
+- Do not replace this grid with local module colors. If a table needs a new state, document it here first.
+
+#### Table Text
+
+| Element | Light mode | Dark mode |
+|---|---|---|
+| Row primary title | `text-slate-950` | `dark:text-slate-100` |
+| Row secondary text | `text-slate-600` | `dark:text-slate-400` |
+| Row secondary hover | `group-hover:text-slate-700` | `dark:group-hover:text-slate-300` |
+| Header label | `text-slate-600` | `dark:text-slate-300` |
+| Date / quiet metadata | `text-slate-600` | `dark:text-slate-400` |
+
+#### Table Chip Grid
+
+| Chip type | Light mode | Dark mode |
+|---|---|---|
+| Tool / neutral chip | `border-slate-300/80 bg-slate-100 text-slate-800` | `dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100` |
+| Meta tag chip | `border-slate-300/80 bg-slate-100 text-slate-800` | `dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200` |
+| Amber status | `border-amber-300/80 bg-amber-50 text-amber-900` | `dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100` |
+| Emerald status | `border-emerald-300/80 bg-emerald-50 text-emerald-900` | `dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100` |
+| Blue status | `border-blue-300/80 bg-blue-50 text-blue-900` | `dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100` |
+| Violet status | `border-violet-300/80 bg-violet-50 text-violet-900` | `dark:border-violet-300/[0.25] dark:bg-violet-300/[0.12] dark:text-violet-100` |
+| Rose status | `border-rose-300/80 bg-rose-50 text-rose-900` | `dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100` |
+
+MUST NOT:
+
+- Do not use unstable shorthand opacity when it is not generated reliably by Tailwind. Prefer explicit arbitrary opacity like `dark:bg-primary-500/[0.20]`.
+- Do not use bright full-row fills for non-selected states.
+- Do not use `primary/violet` as decorative metadata chip background.
+
+### 2.6c DBR77 2027 canonical semantic status map (global)
+
+Status: `APPROVED / ENFORCED`
+
+This is the only allowed semantic status map for Consultify App Tables.
+
+| Semantic bucket | Palette | Examples |
+|---|---|---|
+| Neutral state | `slate` | `draft`, `paused`, `archived`, neutral informational statuses |
+| Active execution | `blue` | `assigned`, `in_progress`, `working`, `started` |
+| Pending attention/review | `amber` | `submitted`, `in_review`, `pending_review`, `generating`, near due |
+| Positive completion | `emerald` | `approved`, `completed`, `accepted`, `promoted` |
+| Risk/failure | `rose` | `failed`, `rejected`, `sent_back`, `blocked`, overdue |
+| Selection/focus only | `primary/violet` | selected/focused/checked row state, focus ring, primary CTA |
+
+MUST:
+
+- Map every table status to one of the buckets above.
+- Keep the same mapping for table rows, preview pane, and list/card variants in the same module.
+- Keep `MetaChip` and `ToolChip` neutral by default.
+
+MUST NOT:
+
+- Do not create module-local seventh/eighth status palettes.
+- Do not use `primary/violet` as decorative status or metadata fill.
+- Do not keep conflicting old color maps after migration.
+
+If any older section in this file conflicts with this map for App Tables, this section wins.
 
 ### 2.7 Przykłady poprawnego użycia
 

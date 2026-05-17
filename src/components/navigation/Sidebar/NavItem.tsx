@@ -92,18 +92,21 @@ export const NavItem: React.FC<NavItemProps> = ({
       <motion.button
         type="button"
         data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
-        onClick={() => onClick(item)}
+        aria-disabled={isLocked ? 'true' : undefined}
+        onClick={() => {
+          if (isLocked) return;
+          onClick(item);
+        }}
         whileTap={{ scale: 0.98 }}
         className={[
           'w-full flex items-center text-sm transition-all duration-150 ease-out relative group rounded-lg',
           isTouchDevice ? 'py-2.5 min-h-[44px]' : 'py-[7px]',
           showFull ? 'px-2.5 gap-2.5' : 'px-0 justify-center',
           isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-navy-950',
           isHighlighted
-            ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium ring-1 ring-inset ring-primary-200 dark:ring-transparent'
+            ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium'
             : isParentActive
-              ? 'text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-white/[0.04]'
+              ? 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/[0.04]'
               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-slate-100',
         ].join(' ')}
         title={getTooltip()}
@@ -115,10 +118,10 @@ export const NavItem: React.FC<NavItemProps> = ({
             className={[
               'shrink-0 transition-colors',
               isHighlighted
-                ? 'text-primary-600 dark:text-primary-400'
+                ? 'text-primary-500 dark:text-primary-400'
                 : isParentActive
-                  ? 'text-slate-600 dark:text-slate-400'
-                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300',
+                  ? 'text-slate-500 dark:text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300',
             ].join(' ')}
           >
             {React.cloneElement(
@@ -147,7 +150,7 @@ export const NavItem: React.FC<NavItemProps> = ({
                     ? 'bg-amber-500/10 text-amber-400'
                     : item.badge === 'new'
                       ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-purple-500/10 text-purple-400',
+                      : 'bg-primary-500/10 text-primary-400',
                 ].join(' ')}
               >
                 {badgeLabel}

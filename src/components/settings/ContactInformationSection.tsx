@@ -251,7 +251,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -264,7 +264,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Mail size={28} className="text-purple-500" />
+            <Mail size={28} className="text-primary-500" />
             {t('settings.contact.title', 'Contact Information')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -274,7 +274,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
@@ -293,8 +293,8 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
               onClick={() => setPreferredContactMethod(method)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                 preferredContactMethod === method
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               }`}
             >
               {method === 'email' && <Mail size={18} />}
@@ -317,7 +317,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
           </h3>
           <button
             onClick={addEmail}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.contact.addEmail', 'Add Email')}
@@ -357,7 +357,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
           </h3>
           <button
             onClick={addPhone}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.contact.addPhone', 'Add Phone')}
@@ -397,7 +397,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
           </h3>
           <button
             onClick={addAddress}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.contact.addAddress', 'Add Address')}
@@ -431,12 +431,12 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <UserPlus size={20} className="text-red-500" />
+            <UserPlus size={20} className="text-rose-500" />
             {t('settings.contact.emergency', 'Emergency Contacts')}
           </h3>
           <button
             onClick={addEmergencyContact}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.contact.addEmergency', 'Add Contact')}
@@ -495,7 +495,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="email"
@@ -526,7 +526,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             {t('common.save', 'Save')}
           </button>
@@ -538,7 +538,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -558,7 +558,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
             {email.isVerified ? (
               <CheckCircle size={16} className="text-green-500" />
             ) : (
-              <AlertCircle size={16} className="text-orange-500" />
+              <AlertCircle size={16} className="text-amber-500" />
             )}
           </div>
           <div className="flex gap-4 mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -610,7 +610,7 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="tel"
@@ -649,7 +649,7 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             {t('common.save', 'Save')}
           </button>
@@ -661,7 +661,7 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -719,7 +719,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <select
             value={address.type || 'office'}
@@ -771,7 +771,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             {t('common.save', 'Save')}
           </button>
@@ -783,7 +783,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -853,7 +853,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
@@ -887,7 +887,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             {t('common.save', 'Save')}
           </button>
@@ -899,7 +899,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -913,7 +913,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <UserPlus size={18} className="text-red-500" />
+            <UserPlus size={18} className="text-rose-500" />
             <span className="font-medium text-slate-900 dark:text-white">{contact.name}</span>
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">

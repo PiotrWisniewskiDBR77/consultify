@@ -26,6 +26,8 @@ interface TaskCounts {
   overdue: number;
   today: number;
   week: number;
+  urgent?: number;
+  newUntriaged?: number;
   later: number;
   noDate: number;
 }
@@ -69,6 +71,8 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
     overdue: 0,
     today: 0,
     week: 0,
+    urgent: 0,
+    newUntriaged: 0,
     later: 0,
     noDate: 0,
   });
@@ -93,8 +97,7 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
   // Handle task counts update
   const handleTaskCountsChange = useCallback((counts: TaskCounts) => {
     setTaskCounts(counts);
-    // TODO: Calculate urgent count from task priorities
-    setUrgentCount(counts.overdue); // For now, overdue = urgent
+    setUrgentCount(counts.urgent || 0);
   }, []);
 
   // Handle decision counts update

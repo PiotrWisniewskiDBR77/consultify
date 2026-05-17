@@ -45,8 +45,8 @@ const FUNNEL_STAGES = [
     key: 'converted',
     labelPl: 'Skonwertowany',
     labelEn: 'Converted',
-    color: '#8b5cf6',
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    color: '#6366f1',
+    bg: 'bg-primary-100 dark:bg-primary-900/30',
   },
 ];
 
