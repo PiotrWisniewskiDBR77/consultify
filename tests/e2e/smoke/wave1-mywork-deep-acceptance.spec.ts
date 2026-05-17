@@ -1,6 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 
 import { readTestSupportState } from '../_helpers/testSupportState';
+import { loginAsOwner } from './work-canvas-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
@@ -53,24 +54,28 @@ async function openNewNotebookPageModal(page: Page) {
   }
   await page.waitForTimeout(400);
 
-  const candidates = [
+  const openers = [
     page.getByTestId('mywork-action-button').first(),
     page.getByTestId('notebook-new-page-button').first(),
-    page.getByRole('button', { name: /New page|Nowa strona/i }).first(),
-    page.getByTitle(/New page|Nowa strona/i).first(),
-    page.locator('button').filter({ has: page.locator('svg') }).first(),
+    page.getByRole('button', { name: /New note|Nowa notatka|New page|Nowa strona/i }).first(),
+    page.getByTitle(/New note|Nowa notatka|New page|Nowa strona/i).first(),
   ];
 
-  for (const candidate of candidates) {
-    const visible = await candidate.isVisible().catch(() => false);
+  for (const opener of openers) {
+    const visible = await opener.isVisible().catch(() => false);
     if (!visible) continue;
-    await candidate.click({ timeout: 5000 }).catch(() => {});
-    const modalVisible = await page
-      .getByRole('heading', { name: /New Note|Nowa notatka|Nowa strona/i })
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (modalVisible) return;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await opener.click({ timeout: 5000 }).catch(() => {});
+      const modalVisible = await page
+        .getByRole('heading', { name: /New Note|Nowa notatka|Nowa strona/i })
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (modalVisible) return;
+      await page.keyboard.press('Escape').catch(() => {});
+      await page.waitForTimeout(300);
+    }
   }
 
   throw new Error('Notebook create-page modal did not open');
@@ -111,6 +116,10 @@ async function gotoWorkspaceRoute(page: Page, route: string) {
 
 test.describe('Wave 1 deep My Work acceptance', () => {
   test.describe.configure({ mode: 'serial' });
+
+  test.beforeEach(async ({ page }) => {
+    await loginAsOwner(page);
+  });
 
   test('notebook persists tag changes across note switches through the real UI flow', async ({
     page,

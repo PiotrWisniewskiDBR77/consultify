@@ -471,7 +471,7 @@ export async function getTriageSignals(
     score DESC,
     created_at DESC`;
 
-  const rows = await dbAll<any>(sql, params, { fallback: true });
+  const rows = await dbAll<any>(sql, params, { fallback: false });
   return (rows || []).map(rowToTriageSignal);
 }
 

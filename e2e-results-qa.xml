@@ -1,6 +1,6 @@
-<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="50.238710000000005">
-<testsuite name="radar-go-gate.spec.ts" timestamp="2026-05-17T17:11:38.541Z" hostname="chromium" tests="1" failures="1" skipped="0" time="17.882" errors="0">
-<testcase name="Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" classname="radar-go-gate.spec.ts" time="17.882">
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="65.700804">
+<testsuite name="radar-go-gate.spec.ts" timestamp="2026-05-17T17:23:09.518Z" hostname="chromium" tests="1" failures="1" skipped="0" time="30.28" errors="0">
+<testcase name="Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" classname="radar-go-gate.spec.ts" time="30.28">
 <failure message="radar-go-gate.spec.ts:86:3 covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" type="FAILURE">
 <![CDATA[  [chromium] › radar-go-gate.spec.ts:86:3 › Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states 
 

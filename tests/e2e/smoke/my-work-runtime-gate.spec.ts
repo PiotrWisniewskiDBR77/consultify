@@ -2,6 +2,15 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { loginAsOwner } from './work-canvas-helpers';
 
+async function ensureMyWorkSession(page: Page) {
+  const loginHeading = page.getByRole('heading', { name: /Welcome back|Witamy ponownie/i }).first();
+  const loginVisible = await loginHeading.isVisible().catch(() => false);
+  if (!loginVisible) return;
+
+  await loginAsOwner(page);
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+}
+
 async function dismissTourModal(page: Page) {
   for (let attempt = 0; attempt < 12; attempt += 1) {
     const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
@@ -65,7 +74,17 @@ async function expectMyWorkRoute(
   expectedText: RegExp,
   options?: { refresh?: boolean }
 ) {
-  await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await ensureMyWorkSession(page);
+    const stillLoading = await page
+      .locator('[role="status"]', { hasText: /Loading/i })
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!stillLoading) break;
+    await page.waitForTimeout(1200);
+  }
   await dismissTourModal(page);
   const routeError = page.getByRole('heading', { name: /Coś poszło nie tak|Something went wrong/i });
   const hasRouteError = await routeError.isVisible().catch(() => false);
@@ -81,12 +100,21 @@ async function expectMyWorkRoute(
   const loadingIndicator = page.getByText(/^Loading…$|^Ładowanie…$/i).first();
   const indicatorVisible = await loadingIndicator.isVisible().catch(() => false);
   if (indicatorVisible) {
-    await page.waitForTimeout(1500);
-    await expect(loadingIndicator).toBeHidden({ timeout: 15000 });
+    const hasExpectedContent = await page
+      .locator('body')
+      .getByText(expectedText)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!hasExpectedContent) {
+      await page.waitForTimeout(1500);
+      await expect(loadingIndicator).toBeHidden({ timeout: 15000 });
+    }
   }
 
   if (options?.refresh) {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+    await ensureMyWorkSession(page);
     await dismissTourModal(page);
     const hasRouteErrorAfterReload = await routeError.isVisible().catch(() => false);
     if (hasRouteErrorAfterReload) {
