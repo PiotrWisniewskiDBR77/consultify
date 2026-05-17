@@ -37,6 +37,27 @@ function isStrictCanvasGate(): boolean {
   return process.env.E2E_STRICT_CANVAS === 'true' || Boolean(process.env.CI);
 }
 
+function isTransientConnectionError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return /ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|connect/i.test(msg);
+}
+
+async function retryRequest<T>(attempts: number, fn: () => Promise<T>) {
+  let lastError: unknown = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientConnectionError(error) || i === attempts - 1) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  throw lastError;
+}
+
 async function seedSessionStorage(page: Page, token: string, authUser: Record<string, unknown>) {
   await page.addInitScript(({ authToken, user }) => {
     window.localStorage.setItem('token', String(authToken));
@@ -77,12 +98,15 @@ async function seedSessionStorage(page: Page, token: string, authUser: Record<st
 async function loginViaBootstrap(page: Page, role: 'ADMIN' | 'USER', label: string): Promise<string> {
   const issues: string[] = [];
   const runId = `work-canvas-${label}-${Date.now().toString(36)}`;
+  const registerDemoPassword = `E2E-${Date.now()}-Pass1`;
 
   try {
-    const bootstrapResponse = await page.request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
-      data: { runId, role },
-    });
+    const bootstrapResponse = await retryRequest(5, () =>
+      page.request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
+        headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+        data: { runId, role },
+      })
+    );
     if (bootstrapResponse.ok()) {
       const payload = await bootstrapResponse.json();
       const token = String(payload?.token || '').trim();
@@ -112,7 +136,9 @@ async function loginViaBootstrap(page: Page, role: 'ADMIN' | 'USER', label: stri
   }
 
   try {
-    const demoLoginResponse = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`, { data: {} });
+    const demoLoginResponse = await retryRequest(5, () =>
+      page.request.post(`${API_BASE_URL}/api/auth/demo-login`, { data: {} })
+    );
     if (demoLoginResponse.ok()) {
       const login = await demoLoginResponse.json();
       const token = String(login?.token || login?.accessToken || '').trim();
@@ -138,6 +164,41 @@ async function loginViaBootstrap(page: Page, role: 'ADMIN' | 'USER', label: stri
     );
   } catch (error) {
     issues.push(`auth/demo-login failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    const registerDemoResponse = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
+      data: {
+        email: `e2e+${runId}@local.test`,
+        password: registerDemoPassword,
+        firstName: 'E2E',
+      },
+    });
+    if (registerDemoResponse.ok()) {
+      const register = await registerDemoResponse.json();
+      const token = String(register?.token || register?.accessToken || '').trim();
+      if (!token) throw new Error('register-demo payload is missing token');
+      const user = (register?.user || {}) as LoginUserShape;
+      const authUser = {
+        id: String(user.id || `register-${label}`),
+        email: String(user.email || `e2e+${runId}@local.test`),
+        role: String(user.role || role),
+        organizationId: String(user.organizationId || 'demo-org'),
+        organizationName: String(user.organizationName || user.companyName || 'Demo Organization'),
+        firstName: String(user.firstName || 'E2E'),
+        lastName: String(user.lastName || (label === 'owner' ? 'Owner' : 'Member')),
+        companyName: String(user.companyName || user.organizationName || 'Demo Organization'),
+        isAuthenticated: true,
+        accessLevel: 'full',
+      };
+      await seedSessionStorage(page, token, authUser);
+      return token;
+    }
+    issues.push(
+      `auth/register-demo ${registerDemoResponse.status()}: ${await registerDemoResponse.text().catch(() => '<no-body>')}`
+    );
+  } catch (error) {
+    issues.push(`auth/register-demo failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   if (isStrictCanvasGate()) {

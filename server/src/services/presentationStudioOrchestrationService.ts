@@ -694,7 +694,8 @@ export interface PresentationStudioGenerateAuditPayload {
 /** Real generator dependency type. Match the signature of `generateOutline`. */
 export type PresentationStudioGenerateOutlineFn = (
   setup: DeckSetup,
-  organizationId: string
+  organizationId: string,
+  actorUserId?: string | null
 ) => Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }>;
 
 export type PresentationStudioAuditFn = (
@@ -715,12 +716,13 @@ let _studioGenerateDeps: StudioGenerateDependencies | null = null;
 
 async function defaultGenerateOutline(
   setup: DeckSetup,
-  organizationId: string
+  organizationId: string,
+  actorUserId?: string | null
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   // Lazy import to keep the hot orchestration path free of generator
   // dependencies and to make dependency injection in tests trivial.
   const mod = await import('./presentationGeneratorService.js');
-  return mod.generateOutline(setup, organizationId);
+  return mod.generateOutline(setup, organizationId, actorUserId);
 }
 
 async function defaultRecordAudit(payload: PresentationStudioGenerateAuditPayload): Promise<void> {
@@ -792,7 +794,7 @@ export async function executePresentationStudioGenerate(
   }
 
   const deps = getStudioGenerateDeps();
-  const generated = await deps.generateOutline(input.setup, input.organizationId);
+  const generated = await deps.generateOutline(input.setup, input.organizationId, input.userId);
 
   // Sprint S10: run the layout audit on the actual generator output (not
   // the preview). Findings merge into `validationWarnings` so the API

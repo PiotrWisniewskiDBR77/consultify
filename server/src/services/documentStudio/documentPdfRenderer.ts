@@ -320,7 +320,18 @@ function drawCover(
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
-  const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
+  const audienceRaw = (schema as { audience?: unknown }).audience;
+  const audienceList = Array.isArray(audienceRaw)
+    ? audienceRaw
+        .map((entry) => String(entry || '').trim())
+        .filter((entry) => entry.length > 0)
+    : typeof audienceRaw === 'string'
+      ? audienceRaw
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter((entry) => entry.length > 0)
+      : [];
+  const audience = audienceList.length > 0 ? audienceList.join(', ') : 'Internal';
   const subtitleParts: string[] = [];
   subtitleParts.push(schema.documentType.replace(/_/g, ' '));
   subtitleParts.push(schema.language.toUpperCase());

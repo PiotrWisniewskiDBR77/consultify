@@ -98,6 +98,23 @@ export const handleResponse = async <T = unknown>(
   defaultError: string
 ): Promise<T> => {
   if (res.ok) {
+    // Keep chat UI recoverable: clear stale AI freeze when AI/chat calls succeed.
+    try {
+      const path = new URL(res.url || '', window.location.origin).pathname;
+      if (path.includes('/api/ai') || path.includes('/api/chat')) {
+        const { useAppStore } = await import('../../store/useAppStore');
+        const store = useAppStore.getState();
+        if (store.aiFreezeStatus?.isFrozen) {
+          store.setAiFreezeStatus({
+            isFrozen: false,
+            reason: null,
+            scope: null,
+          });
+        }
+      }
+    } catch {
+      // no-op
+    }
     // Some endpoints return 204 No Content
     if (res.status === 204) return null as T;
     return res.json();

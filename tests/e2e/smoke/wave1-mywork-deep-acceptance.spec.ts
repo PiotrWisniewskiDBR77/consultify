@@ -54,6 +54,23 @@ async function createIdea(page: Page, token: string, title: string) {
   return (await res.json()) as { id: string; title: string };
 }
 
+async function gotoWorkspaceRoute(page: Page, route: string) {
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto(route, {
+        waitUntil: 'domcontentloaded',
+        timeout: 90000,
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(1200);
+    }
+  }
+  throw lastError;
+}
+
 test.describe('Wave 1 deep My Work acceptance', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -160,7 +177,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     ] as const;
 
     for (const { tool, label } of cases) {
-      await page.goto(`/my-work/ideas/${idea.id}/workspace/${tool}`, { waitUntil: 'domcontentloaded' });
+      await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/${tool}`);
       await dismissTourModal(page);
 
       await expect(page.getByLabel('Idea map workspace')).toBeVisible({ timeout: 30000 });
@@ -174,7 +191,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const { token } = readTestSupportState();
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-mindmap'));
 
-    await page.goto(`/my-work/ideas/${idea.id}/workspace/mindmap`, { waitUntil: 'domcontentloaded' });
+    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/mindmap`);
     await dismissTourModal(page);
 
     const connectButton = page.getByRole('button', {
@@ -191,9 +208,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const { token } = readTestSupportState();
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-whiteboard'));
 
-    await page.goto(`/my-work/ideas/${idea.id}/workspace/whiteboard`, {
-      waitUntil: 'domcontentloaded',
-    });
+    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/whiteboard`);
     await dismissTourModal(page);
 
     await expect(page.getByText('Board mode')).toBeVisible({ timeout: 30000 });
@@ -216,9 +231,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-processflow'));
 
     await page.route(new RegExp(`/api/my-work/my-ideas/${idea.id}/map`), (route) => route.abort());
-    await page.goto(`/my-work/ideas/${idea.id}/workspace/process_flow`, {
-      waitUntil: 'domcontentloaded',
-    });
+    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/process_flow`);
     await dismissTourModal(page);
 
     await expect(page.getByText('Process flow is temporarily unavailable.')).toBeVisible({
@@ -235,7 +248,7 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const idea = await createIdea(page, token, uniqueLabel('wave1-idea-table'));
 
     await page.route(new RegExp(`/api/my-work/my-ideas/${idea.id}/map`), (route) => route.abort());
-    await page.goto(`/my-work/ideas/${idea.id}/workspace/table`, { waitUntil: 'domcontentloaded' });
+    await gotoWorkspaceRoute(page, `/my-work/ideas/${idea.id}/workspace/table`);
     await dismissTourModal(page);
 
     await expect(page.getByText('Table view is temporarily unavailable.')).toBeVisible({

@@ -33,6 +33,15 @@ interface CalendarConflictResponse {
   suggestion?: string | null;
 }
 
+interface CalendarEventMovePayload {
+  source: string;
+  sourceId: string;
+  start: string;
+  end?: string;
+  allDay?: boolean;
+  etag?: string;
+}
+
 interface CalendarViewProps {
   refreshTrigger?: number;
   createRequestId?: number;
@@ -77,6 +86,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
   const [dayLoadLoading, setDayLoadLoading] = useState(false);
   const [dayLoadError, setDayLoadError] = useState<string | null>(null);
+
+  const toLocalDateKey = useCallback((value: Date) => {
+    const year = value.getFullYear();
+    const month = `${value.getMonth() + 1}`.padStart(2, '0');
+    const day = `${value.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
 
   const { events, loading, error, filter, setFilter, refetch } = useCalendarData(
     dateRange,
@@ -275,7 +291,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   useEffect(() => {
     let cancelled = false;
-    const dateKey = currentDate.toISOString().slice(0, 10);
+    const dateKey = toLocalDateKey(currentDate);
 
     const loadDayLoad = async () => {
       try {
@@ -310,7 +326,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [currentDate, isPolish]);
+  }, [currentDate, isPolish, toLocalDateKey]);
 
   const handleEventClick = useCallback(
     (eventId: string, source: string) => {
@@ -328,6 +344,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const handleCreated = useCallback(() => {
     refetch();
   }, [refetch]);
+
+  const handleEventMove = useCallback(
+    async (payload: CalendarEventMovePayload) => {
+      if (!payload.source || !payload.sourceId || !payload.start) return false;
+
+      try {
+        await Api.updateMyWorkCalendarEvent(payload);
+        refetch();
+        return true;
+      } catch (error) {
+        console.error('Failed to reschedule calendar event', error);
+        return false;
+      }
+    },
+    [refetch]
+  );
 
   useEffect(() => {
     if (!createRequestId) return;
@@ -381,6 +413,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onViewModeChange={setViewMode}
           onEventClick={handleEventClick}
           onDateRangeChange={handleDateRangeChange}
+          onEventMove={handleEventMove}
         />
       </div>
       <CalendarCreateEventModal

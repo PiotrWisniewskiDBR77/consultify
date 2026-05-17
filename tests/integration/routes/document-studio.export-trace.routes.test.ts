@@ -110,6 +110,7 @@ vi.mock('../../../server/src/services/v8/reportsPresModelService.js', () => ({
 
 vi.mock('../../../server/src/services/documentStudio/documentQaService.js', () => ({
   runDocumentQa: vi.fn(),
+  canOverrideQa: vi.fn().mockReturnValue(false),
 }));
 
 import documentStudioRouter from '../../../server/src/routes/document-studio.routes.js';
@@ -141,4 +142,5 @@ describe('document-studio export trace parity', () => {
     expect(res.status).toBe(500);
     expect(recordFailedExportMock).toHaveBeenCalledWith('artifact-1', 'org-1', 'pdf', 'u-1');
   });
+
 });

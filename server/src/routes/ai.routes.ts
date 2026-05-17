@@ -2573,7 +2573,13 @@ router.post(
 
         accumulatedContent += governedReply;
         emitSSE({ text: governedReply });
-        await maybeEmitTeresaProposal(governedReply);
+        // Synthesize proposal from the original user command; using the refusal text
+        // as "assistantMessage" breaks intent extraction and causes no proposal bubble.
+        await maybeEmitTeresaProposal(
+          isPolish
+            ? 'Przygotowuję proposal tej zmiany. Potwierdź, aby uruchomić wykonanie zgodnie z governance.'
+            : 'I will prepare a governed proposal for this change. Please approve to execute.'
+        );
         emitTrustBundle(governedReply);
         streamCompleted = true;
         clearInterval(heartbeatInterval);

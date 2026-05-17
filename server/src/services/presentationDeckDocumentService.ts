@@ -513,14 +513,33 @@ export function deckDocumentFromUnifiedJson(params: {
 
 export function normalizeDeckDocument(row: any): DeckDocument | null {
   const deckJson = safeJsonParse<any>(row?.deck_json, null);
+  const unifiedJson = safeJsonParse<UnifiedReportJSON | null>(row?.unified_json, null);
+  const unifiedSlides = Array.isArray(unifiedJson?.slides) ? unifiedJson.slides : [];
   if (deckJson?.schemaVersion === 1 && Array.isArray(deckJson.cards)) {
+    const cards = Array.isArray(deckJson.cards) ? deckJson.cards : [];
+    if (cards.length === 0 && unifiedSlides.length > 0) {
+      return deckDocumentFromUnifiedJson({
+        deckId: String(row?.id || ''),
+        organizationId: String(row?.organization_id || ''),
+        title: String(row?.title || unifiedJson?.meta?.project || 'Untitled'),
+        unifiedJson: unifiedJson as UnifiedReportJSON,
+        outline: safeJsonParse(row?.outline_json, []),
+        sourceArtifacts: safeJsonParse(row?.source_artifacts, []),
+        sourceRefs: sourceRefsFromUnknown(safeJsonParse(row?.source_refs_json, [])),
+        status: (row?.status || 'generated') as DeckStatus,
+        exportPath: row?.export_path || null,
+        createdBy: row?.generated_by || row?.created_by || 'system',
+        createdAt: row?.created_at || null,
+        updatedAt: row?.updated_at || null,
+      });
+    }
     return {
       ...deckJson,
       deck_id: deckJson.deck_id || deckJson.deckId || row?.id,
       deckId: deckJson.deckId || deckJson.deck_id || row?.id,
       title: row?.title || deckJson.title || deckJson?.meta?.title || 'Untitled',
       status: row?.status || deckJson.status || deckJson?.lifecycle?.status || 'draft',
-      cards: deckJson.cards,
+      cards,
       source_refs: Array.isArray(deckJson.source_refs)
         ? deckJson.source_refs
         : sourceRefsFromUnknown(deckJson?.traceability?.sourceRefs),
@@ -529,13 +548,12 @@ export function normalizeDeckDocument(row: any): DeckDocument | null {
   if (deckJson && Array.isArray(deckJson.cards)) {
     return deckDocumentFromLegacyDeckJson(row, deckJson);
   }
-  const unifiedJson = safeJsonParse<UnifiedReportJSON | null>(row?.unified_json, null);
-  if (unifiedJson?.slides && Array.isArray(unifiedJson.slides)) {
+  if (unifiedSlides.length > 0) {
     return deckDocumentFromUnifiedJson({
       deckId: String(row?.id || ''),
       organizationId: String(row?.organization_id || ''),
-      title: String(row?.title || unifiedJson.meta?.project || 'Untitled'),
-      unifiedJson,
+      title: String(row?.title || unifiedJson?.meta?.project || 'Untitled'),
+      unifiedJson: unifiedJson as UnifiedReportJSON,
       outline: safeJsonParse(row?.outline_json, []),
       sourceArtifacts: safeJsonParse(row?.source_artifacts, []),
       sourceRefs: sourceRefsFromUnknown(safeJsonParse(row?.source_refs_json, [])),

@@ -293,6 +293,7 @@ export const DeckBuilder: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
+  const serverVersionRef = useRef<number>(1);
 
   const [teresaOpen, setTeresaOpen] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
@@ -430,6 +431,9 @@ export const DeckBuilder: React.FC = () => {
         const payload = res?.data;
         const row =
           payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+        if (typeof row?.version === 'number' && Number.isFinite(row.version)) {
+          serverVersionRef.current = row.version;
+        }
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
         const title = row?.title ? String(row.title) : undefined;
@@ -554,10 +558,48 @@ export const DeckBuilder: React.FC = () => {
 
     autosaveTimerRef.current = setTimeout(async () => {
       try {
-        await Api.put(
-          `/presentations/decks/${deckForAutosave.deckId}/autosave`,
-          deckForAutosave.deck
-        );
+        const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'X-Deck-Version': String(serverVersionRef.current),
+          },
+          body: JSON.stringify(deckForAutosave.deck),
+        });
+        if (res.status === 409) {
+          const conflictPayload = await res.json().catch(() => ({}));
+          if (typeof conflictPayload?.serverVersion === 'number') {
+            serverVersionRef.current = conflictPayload.serverVersion;
+          }
+          toast.error(
+            isPolish
+              ? 'Wykryto konflikt wersji. Odświeżam deck do najnowszej wersji.'
+              : 'Version conflict detected. Refreshing deck to latest version.'
+          );
+          const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
+          const latestPayload =
+            latest?.data && typeof latest.data === 'object' && 'data' in latest.data
+              ? latest.data.data
+              : latest?.data;
+          if (typeof latestPayload?.version === 'number') {
+            serverVersionRef.current = latestPayload.version;
+          }
+          const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
+          if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
+            setDeck((prev) => ({
+              ...(prev || {}),
+              ...latestDeckJson,
+              deck_id: deckForAutosave.deckId,
+              title: String(latestPayload?.title || latestDeckJson.title || prev?.title || 'Untitled'),
+            }));
+          }
+          return;
+        }
+        const payload = await res.json().catch(() => ({}));
+        if (typeof payload?.version === 'number') {
+          serverVersionRef.current = payload.version;
+        }
       } catch {
         // Non-blocking; builder remains usable offline-ish.
       }

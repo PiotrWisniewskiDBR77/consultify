@@ -187,4 +187,20 @@ describe('presentationStudioSlideAuditDecoratorService', () => {
     // Caller's flag passes through unchanged.
     expect(result.slides[0].auditFlags).toEqual(['operator_set_flag']);
   });
+
+  it('returns safe passthrough when enabled outline count mismatches slides count', () => {
+    const outline = [outlineEntry({ intent: 'cover' }), outlineEntry({ intent: 'next_steps' })];
+    const slides = [unifiedSlide('cover')];
+    const audit: PresentationStudioOutlineLayoutAudit = {
+      warnings: [],
+      slideAudits: [{ index: 1, intent: 'next_steps', flags: ['layout_overflow_title'] }],
+      flagCounts: { ...emptyFlagCounts(), layout_overflow_title: 1 },
+    };
+    const result = decorateSlidesWithAuditFlags({ outline, slides, audit });
+    expect(result.cardinalityMismatch).toBe(true);
+    expect(result.decoratedCount).toBe(0);
+    expect(result.slides).toHaveLength(1);
+    expect(result.slides[0].intent).toBe('cover');
+    expect(result.slides[0].auditFlags).toBeUndefined();
+  });
 });

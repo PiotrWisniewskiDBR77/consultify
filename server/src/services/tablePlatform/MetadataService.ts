@@ -124,6 +124,25 @@ const metadataService = {
       const row = (await db.query('SELECT * FROM tp_bases WHERE id = $1', [id])).rows[0];
       await auditService.logEvent('create', 'base', id, createdBy, undefined, row, undefined);
 
+      // Ensure the creator can write schema/data immediately after base creation.
+      if (createdBy) {
+        await db
+          .query(
+            `INSERT INTO tp_base_members (base_id, user_id, role)
+             VALUES ($1, $2, 'base_owner')
+             ON CONFLICT (base_id, user_id)
+             DO UPDATE SET role = 'base_owner', updated_at = NOW()`,
+            [id, createdBy]
+          )
+          .catch((err) =>
+            logger.warn('[MetadataService] Failed to grant base_owner to creator', {
+              baseId: id,
+              userId: createdBy,
+              error: (err as Error).message,
+            })
+          );
+      }
+
       await OrgMemberSyncService.syncOrgMembersToBase(id, orgId).catch((err) =>
         logger.warn('[MetadataService] Org member sync failed after createBase', {
           error: (err as Error).message,

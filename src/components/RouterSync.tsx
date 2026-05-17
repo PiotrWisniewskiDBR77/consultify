@@ -239,6 +239,9 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/settings') ||
       path.startsWith('/my-work') ||
       path.startsWith('/initiatives') ||
+      path.startsWith('/portfolio') ||
+      path.startsWith('/roadmap') ||
+      path.startsWith('/roi') ||
       path.startsWith('/execution') ||
       path.startsWith('/implementation') ||
       path.startsWith('/rollout') ||

@@ -819,6 +819,8 @@ export class InitiativeController {
         valueDriver: 'value_driver',
         confidenceLevel: 'confidence_level',
         valueTiming: 'value_timing',
+        status: 'status',
+        progress: 'progress',
         plannedStartDate: plannedStartCol,
         plannedEndDate: plannedEndCol,
         // UI aliases

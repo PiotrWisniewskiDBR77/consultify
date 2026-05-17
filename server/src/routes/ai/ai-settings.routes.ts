@@ -8,11 +8,11 @@
  * Fully migrated to TypeScript ES modules
  */
 
-import { Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import { requireRole } from '../../middleware/rbac.middleware.js';
+import { normalizePlatformRole } from '../../utils/roleNormalization.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
@@ -105,6 +105,19 @@ const respondServiceNotConfigured = (
   });
 };
 
+const requirePlatformSuperAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  const role = req.userRole || req.user?.role;
+  if (normalizePlatformRole(role) !== 'SUPERADMIN') {
+    res.status(403).json({
+      error: 'Requires Super Admin privileges',
+      code: 'INSUFFICIENT_PLATFORM_ROLE',
+      guidance: 'Use a platform superadmin session to access this control plane.',
+    });
+    return;
+  }
+  next();
+};
+
 /**
  * GET /api/ai-settings/superadmin
  * Get global SuperAdmin AI settings
@@ -113,7 +126,7 @@ const respondServiceNotConfigured = (
 router.get(
   '/superadmin',
   verifyToken,
-  requireRole('superadmin'),
+  requirePlatformSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getSuperAdminSettings) {
       return respondServiceNotConfigured(req, res, 'ai-settings', { settings: {} });
@@ -138,7 +151,7 @@ router.get(
 router.put(
   '/superadmin',
   verifyToken,
-  requireRole('superadmin'),
+  requirePlatformSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const settingsCamelCase = req.body;
     const actorId = req.user?.id;
@@ -598,7 +611,6 @@ router.get(
         limit: parseInt(limit as string),
         offset: parseInt(offset as string),
       });
-      return;
 
       return res.json(auditLog);
     } catch (error: any) {

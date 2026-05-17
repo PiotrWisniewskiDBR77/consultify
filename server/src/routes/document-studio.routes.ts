@@ -3220,6 +3220,27 @@ router.get(
   })
 );
 
+// Lightweight policy lookup so the frontend can hide / disable
+// privilege-only actions (currently: the QA export-gate override) before
+// the user attempts them. Cheap enough to call on every Document Studio
+// session bootstrap.
+router.get(
+  '/policy',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    res.json({
+      policy: {
+        canOverrideQa: canOverrideQa(userRole),
+        role: userRole || null,
+      },
+    });
+  })
+);
+
 router.get(
   '/:artifactId',
   asyncHandler(async (req: Request, res: Response) => {
@@ -3299,27 +3320,6 @@ router.get(
       const status = message.toLowerCase().includes('not found') ? 404 : 500;
       res.status(status).json({ error: 'export_failed', message });
     }
-  })
-);
-
-// Lightweight policy lookup so the frontend can hide / disable
-// privilege-only actions (currently: the QA export-gate override) before
-// the user attempts them. Cheap enough to call on every Document Studio
-// session bootstrap.
-router.get(
-  '/policy',
-  asyncHandler(async (req: Request, res: Response) => {
-    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
-    if (!userId || !organizationId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    res.json({
-      policy: {
-        canOverrideQa: canOverrideQa(userRole),
-        role: userRole || null,
-      },
-    });
   })
 );
 

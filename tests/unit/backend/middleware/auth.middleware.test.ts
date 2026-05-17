@@ -284,6 +284,21 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('should accept legacy user_id claim and attach req.userId', async () => {
+      mockReq.headers!['authorization'] = 'Bearer legacy-user-claim';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { user_id: 'user-legacy-id', organization_id: 'org-legacy', role: 'admin' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.userId).toBe('user-legacy-id');
+      expect(mockReq.user?.id).toBe('user-legacy-id');
+      expect(mockReq.organizationId).toBe('org-legacy');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
     it.each([
       { raw: 'admin', expected: 'administrator' },
       { raw: 'super_admin', expected: 'superadmin' },

@@ -89,6 +89,12 @@ export interface AuthenticatedUser extends GlobalUser {
   impersonationSessionId?: string;
 }
 
+const resolveJwtUserId = (decoded: JWTPayload): string => {
+  const candidate =
+    decoded.id || (decoded as any).userId || (decoded as any).user_id || (decoded as any).sub;
+  return typeof candidate === 'string' ? candidate : '';
+};
+
 export interface AuthRequest extends AuthenticatedRequest {
   userId?: string;
   userRole?: string;
@@ -233,6 +239,10 @@ const attachUser = async (
   next: NextFunction,
   res?: Response
 ): Promise<void> => {
+  const resolvedUserId = resolveJwtUserId(decoded);
+  if (!resolvedUserId) {
+    throw new Error('Token payload missing user identifier');
+  }
   const { PermissionService, dbGet } = await getDeps();
   const requestedDemoSessionOrgId = String(req.get?.(DEMO_SESSION_ORG_HEADER) || '').trim();
   const isDemoHeader = String(req.get?.('X-Demo-Mode') || '').toLowerCase() === 'true';
@@ -253,7 +263,7 @@ const attachUser = async (
          FROM organization_members
          WHERE user_id = ? AND organization_id = ?
          LIMIT 1`,
-        [decoded.id, requestedOrgContextId]
+        [resolvedUserId, requestedOrgContextId]
       );
       if (membership && String(membership.status || '').toUpperCase() === 'ACTIVE') {
         resolvedOrganizationId = requestedOrgContextId;
@@ -266,7 +276,7 @@ const attachUser = async (
     }
   }
 
-  req.userId = decoded.id;
+  req.userId = resolvedUserId;
   req.userRole = resolvedUserRole;
   req.organizationId = resolvedOrganizationId;
 
@@ -290,7 +300,7 @@ const attachUser = async (
   }
 
   const user: AuthenticatedUser = {
-    id: decoded.id,
+    id: resolvedUserId,
     email: decoded.email || '',
     name: decoded.name || 'User',
     ...splitDisplayName(decoded.name || 'User'),
@@ -455,25 +465,31 @@ const checkTokenRevocation = async (
     }
 
     // Check for "revoke-all" marker for this user (with cache + in-flight dedup)
-    let revokeAllEntry = getCachedRevokeAll(decoded.id);
+    const resolvedUserId = resolveJwtUserId(decoded);
+    if (!resolvedUserId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    let revokeAllEntry = getCachedRevokeAll(resolvedUserId);
     if (revokeAllEntry === undefined) {
-      let inflight = _revokeAllInflight.get(decoded.id);
+      let inflight = _revokeAllInflight.get(resolvedUserId);
       if (!inflight) {
         inflight = dbGet<{ jti: string }>(
           "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > NOW()",
-          [decoded.id]
+          [resolvedUserId]
         )
           .then((row) => {
             const entry = { jti: row?.jti ?? null };
-            _revokeAllCache.set(decoded.id, { jti: entry.jti, ts: Date.now() });
-            _revokeAllInflight.delete(decoded.id);
+            _revokeAllCache.set(resolvedUserId, { jti: entry.jti, ts: Date.now() });
+            _revokeAllInflight.delete(resolvedUserId);
             return entry;
           })
           .catch((err) => {
-            _revokeAllInflight.delete(decoded.id);
+            _revokeAllInflight.delete(resolvedUserId);
             throw err;
           });
-        _revokeAllInflight.set(decoded.id, inflight);
+        _revokeAllInflight.set(resolvedUserId, inflight);
       }
       revokeAllEntry = await inflight;
     }
@@ -550,7 +566,7 @@ export const verifyToken = asyncHandler(
     if (!isProductionEnv && process.env.E2E_MODE === 'true') {
       try {
         const decoded = jwtLib.decode(token) as JWTPayload | null;
-        if (decoded && (decoded as any).e2e === true && decoded.id) {
+        if (decoded && (decoded as any).e2e === true && resolveJwtUserId(decoded)) {
           // Best-effort: ensure the E2E user/org exist in DB so that
           // downstream routes that rely on FK / joins (e.g. conversations)
           // can operate normally during runtime tests.
@@ -574,7 +590,7 @@ export const verifyToken = asyncHandler(
                 ON CONFLICT(id) DO NOTHING
               `,
               [
-                decoded.id,
+                resolveJwtUserId(decoded),
                 orgId,
                 decoded.email || 'e2e@local.test',
                 // Not used in E2E token mode (no login), but keep schema happy.

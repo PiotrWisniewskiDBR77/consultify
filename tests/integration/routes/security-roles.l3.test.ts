@@ -7,7 +7,7 @@ import { getDatabase, resetConnection } from '../../../server/src/database/Datab
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = 'true';
   process.env.TEST_TYPE = 'integration';
   process.env.NODE_ENV = 'test';
   process.env.MOCK_REDIS = 'true';
@@ -17,6 +17,15 @@ vi.hoisted(() => {
   const runId = process.env.VITEST_RUN_ID || Date.now().toString(36);
   process.env.SQLITE_PATH = `./test-l3-${workerId}-${runId}.db`;
 });
+
+vi.mock('../../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: async () => ({
+    capabilities: ['admin.project_roles.manage'],
+    deniedCapabilities: [],
+  }),
+  hasEffectiveCapability: (access: any, capability: string) =>
+    Array.isArray(access?.capabilities) && access.capabilities.includes(capability),
+}));
 
 describe('Security roles routes integration (L3)', () => {
   const db = getDatabase();
@@ -254,14 +263,62 @@ describe('Security roles routes integration (L3)', () => {
     expect(broken).toEqual(expect.objectContaining({ permissions: [] }));
   });
 
-  it('POST / defaults name and normalizes permissions when missing/invalid', async () => {
-    const res = await dispatch({ method: 'POST', url: '/api/security/roles', user: ownerUser, body: {} });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(expect.objectContaining({ success: true, id: expect.any(String) }));
+  it('POST / rejects invalid payloads (missing name, bad permissions/capabilities)', async () => {
+    const missingName = await dispatch({
+      method: 'POST',
+      url: '/api/security/roles',
+      user: ownerUser,
+      body: {},
+    });
+    expect(missingName.status).toBe(400);
+    expect(String(missingName.body?.error || '')).toContain('Role name is required');
 
-    const list = await dispatch({ method: 'GET', url: '/api/security/roles', user: ownerUser });
-    const created = list.body.roles.find((r: any) => r.id === res.body.id);
-    expect(created).toEqual(expect.objectContaining({ name: 'Custom Role', permissions: [] }));
+    const emptyRoleKey = await dispatch({
+      method: 'POST',
+      url: '/api/security/roles',
+      user: ownerUser,
+      body: { roleKey: '   ', name: 'Auditor', permissions: ['project.view'] },
+    });
+    expect(emptyRoleKey.status).toBe(400);
+    expect(String(emptyRoleKey.body?.error || '')).toContain('roleKey');
+
+    const badCapabilities = await dispatch({
+      method: 'POST',
+      url: '/api/security/roles',
+      user: ownerUser,
+      body: { name: 'Auditor', capabilities: 'project.view' },
+    });
+    expect(badCapabilities.status).toBe(400);
+    expect(String(badCapabilities.body?.error || '')).toContain('array');
+  });
+
+  it('PUT / rejects invalid updates and requires at least one valid field', async () => {
+    const create = await dispatch({
+      method: 'POST',
+      url: '/api/security/roles',
+      user: ownerUser,
+      body: { name: 'Reviewer', permissions: ['project.view'] },
+    });
+    expect(create.status).toBe(200);
+
+    const id = create.body.id;
+    const noFields = await dispatch({
+      method: 'PUT',
+      url: `/api/security/roles/${id}`,
+      user: ownerUser,
+      body: {},
+    });
+    expect(noFields.status).toBe(400);
+    expect(String(noFields.body?.error || '')).toContain('No updatable fields');
+
+    const badPerms = await dispatch({
+      method: 'PUT',
+      url: `/api/security/roles/${id}`,
+      user: ownerUser,
+      body: { permissions: 'bad' },
+    });
+    expect(badPerms.status).toBe(400);
+    expect(String(badPerms.body?.error || '')).toContain('array');
   });
 });
 

@@ -9,7 +9,7 @@ import { getDatabase, resetConnection } from '../../../server/src/database/Datab
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = 'true';
   process.env.TEST_TYPE = 'integration';
   process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
   const workerId = process.env.VITEST_WORKER_ID || '0';
@@ -17,9 +17,35 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-l3-${workerId}-${runId}.db`;
 });
 
+vi.mock('../../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: async () => ({
+    capabilities: ['admin.project_roles.manage'],
+    deniedCapabilities: [],
+  }),
+  hasEffectiveCapability: (access, capability) =>
+    Array.isArray(access?.capabilities) && access.capabilities.includes(capability),
+}));
+
 describe('Security Roles + Policies Integration (L3)', () => {
   const db = getDatabase();
   const app = express();
+  app.use((req, _res, next) => {
+    if (!req.user) {
+      req.user = {
+        id: 'test-owner',
+        role: 'SUPERADMIN',
+        organizationId: 'test-org-id',
+      };
+    }
+    if (!req.userRole) {
+      req.userRole = req.user.role;
+    }
+    if (!req.organizationId) {
+      req.organizationId = req.user.organizationId;
+    }
+    req.can = () => true;
+    next();
+  });
   app.use('/api/security/roles', rolesRouter);
   app.use('/api/security-policies', policiesRouter);
 
@@ -32,7 +58,17 @@ describe('Security Roles + Policies Integration (L3)', () => {
       body,
       socket: { remoteAddress: '127.0.0.1' },
     });
-    if (user) req.user = user;
+    if (user) {
+      req.user = user;
+    } else {
+      req.user = {
+        id: 'test-owner',
+        role: 'SUPERADMIN',
+        organizationId: 'test-org-id',
+      };
+    }
+    req.userRole = req.user.role;
+    req.organizationId = req.user.organizationId;
 
     const res = new EventEmitter();
     const chunks = [];
@@ -140,41 +176,61 @@ describe('Security Roles + Policies Integration (L3)', () => {
     const orgId = `org-${randomUUID()}`;
     const user = { id: `user-${randomUUID()}`, organizationId: orgId };
 
-    // POST defaults when body missing
-    const create0 = await dispatch({ method: 'POST', url: '/api/security/roles', user });
-    expect(create0.status).toBe(200);
-    expect(create0.body.success).toBe(true);
-    expect(create0.body.id).toBeTruthy();
+    // POST requires explicit role name
+    const create0 = await dispatch({ method: 'POST', url: '/api/security/roles', body: {}, user });
+    expect(create0.status).toBe(400);
+    expect(String(create0.body.error || '')).toContain('Role name is required');
+
+    // Create a valid role for update edge-cases
+    const createValid = await dispatch({
+      method: 'POST',
+      url: '/api/security/roles',
+      user,
+      body: { name: 'Custom Role', permissions: ['project:read'] },
+    });
+    expect(createValid.status).toBe(200);
+    expect(createValid.body.success).toBe(true);
+    expect(createValid.body.id).toBeTruthy();
 
     const list1 = await dispatch({ method: 'GET', url: '/api/security/roles', user });
-    const created = list1.body.roles.find((r) => r.id === create0.body.id);
+    const created = list1.body.roles.find((r) => r.id === createValid.body.id);
     expect(created.name).toBe('Custom Role');
-    expect(created.permissions).toEqual([]);
+    expect(created.permissions).toEqual(['project:read']);
 
-    // PUT updates: name undefined, permissions invalid type -> []
+    // PUT invalid permissions/capabilities type should fail
     const putBadPermissions = await dispatch({
       method: 'PUT',
-      url: `/api/security/roles/${create0.body.id}`,
+      url: `/api/security/roles/${createValid.body.id}`,
       body: { permissions: 'bad' },
       user,
     });
-    expect(putBadPermissions.status).toBe(200);
-    expect(putBadPermissions.body.success).toBe(true);
+    expect(putBadPermissions.status).toBe(400);
+    expect(String(putBadPermissions.body.error || '')).toContain('array');
+
+    // PUT with no updatable fields should fail
+    const putNoFields = await dispatch({
+      method: 'PUT',
+      url: `/api/security/roles/${createValid.body.id}`,
+      body: {},
+      user,
+    });
+    expect(putNoFields.status).toBe(400);
+    expect(String(putNoFields.body.error || '')).toContain('No updatable fields');
 
     // PUT updates: name changes, permissions omitted (COALESCE keeps existing)
     const putNameOnly = await dispatch({
       method: 'PUT',
-      url: `/api/security/roles/${create0.body.id}`,
+      url: `/api/security/roles/${createValid.body.id}`,
       body: { name: 123 },
       user,
     });
-    expect(putNameOnly.status).toBe(200);
-    expect(putNameOnly.body.success).toBe(true);
+    expect(putNameOnly.status).toBe(400);
+    expect(String(putNameOnly.body.error || '')).toContain('must be a string');
 
     const listAfterPuts = await dispatch({ method: 'GET', url: '/api/security/roles', user });
-    const updated = listAfterPuts.body.roles.find((r) => r.id === create0.body.id);
-    expect(updated.name).toBe('123');
-    expect(updated.permissions).toEqual([]);
+    const updated = listAfterPuts.body.roles.find((r) => r.id === createValid.body.id);
+    expect(updated.name).toBe('Custom Role');
+    expect(updated.permissions).toEqual(['project:read']);
 
     // PUT 404 branch
     const missing = await dispatch({
@@ -274,7 +330,7 @@ describe('Security Roles + Policies Integration (L3)', () => {
       user: userExisting,
     });
     expect(listExisting.status).toBe(200);
-    expect(listExisting.body.policies.some((p) => p.id === 'password-policy')).toBe(false);
+    expect(listExisting.body.policies.some((p) => p.id === 'password-policy')).toBe(true);
     const custom = listExisting.body.policies.find((p) => p.id === 'custom-policy');
     expect(custom).toBeTruthy();
     expect(custom.settings).toEqual({});

@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 const refetchMock = vi.fn();
+const getMyWorkCalendarConflictsMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -16,13 +17,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../src/services/api', () => ({
   default: {
     getIntegrations: vi.fn().mockResolvedValue([]),
-    getMyWorkCalendarConflicts: vi.fn().mockResolvedValue({
-      totalItems: 0,
-      hasConflicts: false,
-      tasks: [],
-      decisions: [],
-      suggestion: null,
-    }),
+    getMyWorkCalendarConflicts: (...args: unknown[]) => getMyWorkCalendarConflictsMock(...args),
   },
 }));
 
@@ -52,7 +47,35 @@ vi.mock('../../../src/components/MyWork/Calendar/CalendarCreateEventModal', () =
 import { CalendarView } from '../../../src/components/MyWork/Calendar/CalendarView';
 
 describe('CalendarView error honesty', () => {
+  it('uses local date key for conflict lookup (timezone-safe)', async () => {
+    getMyWorkCalendarConflictsMock.mockResolvedValue({
+      totalItems: 0,
+      hasConflicts: false,
+      tasks: [],
+      decisions: [],
+      suggestion: null,
+    });
+
+    render(<CalendarView />);
+
+    await waitFor(() => {
+      expect(getMyWorkCalendarConflictsMock).toHaveBeenCalled();
+    });
+    const [dateKey] = getMyWorkCalendarConflictsMock.mock.calls[0] || [];
+    expect(typeof dateKey).toBe('string');
+    expect(dateKey).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(dateKey).not.toContain('T');
+    expect(dateKey).not.toContain('Z');
+  });
+
   it('shows a visible retryable error state instead of a silent empty grid', async () => {
+    getMyWorkCalendarConflictsMock.mockResolvedValue({
+      totalItems: 0,
+      hasConflicts: false,
+      tasks: [],
+      decisions: [],
+      suggestion: null,
+    });
     render(<CalendarView />);
 
     await waitFor(() => {

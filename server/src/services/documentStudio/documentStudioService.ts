@@ -168,6 +168,13 @@ function schemaOverlayKey(artifactId: string, organizationId: string): string {
   return `${artifactId}::${organizationId}`;
 }
 
+function readArtifactField(artifact: Record<string, unknown>, key: string): unknown {
+  if (key in artifact) return artifact[key];
+  const snake = key.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`);
+  if (snake in artifact) return artifact[snake];
+  return undefined;
+}
+
 export interface PlanDocumentParams {
   intake: DocumentIntake;
 }
@@ -482,13 +489,17 @@ export async function getDocumentArtifact(
   const artifact = await getWave5Artifact(artifactId, organizationId);
   if (!artifact) return null;
 
-  const metadata = parseMetadata(artifact.metadata_json ?? artifact.metadata);
+  const row = artifact as Record<string, unknown>;
+  const metadata = parseMetadata(
+    readArtifactField(row, 'metadata') ??
+      (readArtifactField(row, 'provenance') as Record<string, unknown> | undefined)?.metadata
+  );
   const schemaCandidate = metadata?.[SCHEMA_METADATA_KEY];
   let schema: DocumentSchema | null = null;
   if (schemaCandidate && typeof schemaCandidate === 'object') {
     schema = schemaCandidate as DocumentSchema;
   } else {
-    const contentJson = parseMetadata(artifact.content_json);
+    const contentJson = parseMetadata(readArtifactField(row, 'contentJson'));
     if (contentJson && typeof contentJson === 'object') {
       schema = contentJson as unknown as DocumentSchema;
     }

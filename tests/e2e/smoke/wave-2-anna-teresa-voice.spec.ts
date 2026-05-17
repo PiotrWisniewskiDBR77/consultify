@@ -7,8 +7,12 @@ import {
   collectRuntimeGateIssues,
   expectAppMounted,
   expectNoRuntimeGateIssues,
-  seedE2EAuth,
+  seedE2EAuthWithBootstrap,
 } from './runtime-gate-helpers';
+
+// This suite seeds its own auth and includes a public-flow check.
+// It must not depend on shared smoke storage state file availability.
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Wave 2 — Anna, Teresa and voice retro Playwright gate [@wave:2]', () => {
   test.setTimeout(120000);
@@ -45,7 +49,7 @@ test.describe('Wave 2 — Anna, Teresa and voice retro Playwright gate [@wave:2]
     page,
   }) => {
     const issues = collectRuntimeGateIssues(page);
-    await seedE2EAuth(page);
+    await seedE2EAuthWithBootstrap(page);
 
     await page.goto('/chat', { waitUntil: 'domcontentloaded' });
     await expectAppMounted(page);

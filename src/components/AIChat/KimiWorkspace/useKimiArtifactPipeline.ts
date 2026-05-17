@@ -383,6 +383,22 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
   const executionRun = useV8ExecutionRun(currentRun?.executionRunId || undefined);
 
+  const reportMaterializationSource = useMemo(() => {
+    const preferredSourceId =
+      String(currentProjectId || '').trim() ||
+      String(currentOrganization?.id || '').trim() ||
+      String(conversationId || '').trim();
+    if (!preferredSourceId) return null;
+    return {
+      sourceType: 'TOOL' as const,
+      sourceId: preferredSourceId,
+      sourceName:
+        String(currentOrganization?.name || '').trim() ||
+        String(currentProjectId || '').trim() ||
+        'Workspace',
+    };
+  }, [currentProjectId, currentOrganization?.id, currentOrganization?.name, conversationId]);
+
   const effectiveStatus = currentRun
     ? deriveEffectiveStatus(currentRun.runStatus, executionRun.data?.state)
     : null;
@@ -978,6 +994,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               runId: accepted.runId,
               params: {
                 title: accepted.plan.titleHint,
+                ...(outputType === 'report' && reportMaterializationSource
+                  ? reportMaterializationSource
+                  : {}),
                 config:
                   outputType === 'sheet' ? { tableName: accepted.plan.titleHint, goal } : undefined,
               },
@@ -1030,6 +1049,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       materializeRun,
       artifactFamily,
       outputType,
+      reportMaterializationSource,
       currentOrganization?.id,
       currentProjectId,
       currentUser,
@@ -1063,6 +1083,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           runId: currentRun.runId,
           params: {
             title: currentRun.plan.titleHint,
+            ...(currentRun.plan.outputType === 'report' && reportMaterializationSource
+              ? reportMaterializationSource
+              : {}),
             config:
               outputType === 'sheet'
                 ? {
@@ -1080,7 +1103,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       setStartupError(error instanceof Error ? error.message : 'Failed to advance pipeline');
       toast.error(error instanceof Error ? error.message : 'Failed to advance pipeline');
     }
-  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType, lastGoal]);
+  }, [
+    currentRun,
+    effectiveStatus,
+    submitReview,
+    approveRun,
+    materializeRun,
+    outputType,
+    lastGoal,
+    reportMaterializationSource,
+  ]);
 
   const handleReplay = useCallback(() => {
     contentGenerationTriggered.current = false;
