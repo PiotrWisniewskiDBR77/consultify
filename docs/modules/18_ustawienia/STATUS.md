@@ -1,29 +1,31 @@
 ---
 module_id: MODULE_SETTINGS
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-15
+last_updated: 2026-05-09
 ---
 
-# Status — Ustawienia (Settings)
+# Status — Ustawienia
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: shipped (mixed: real/partial/stub per section)
+- Runtime class: `real`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: Canonical user/workspace preference surface is `/settings/*`.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Inventory zawiera wiele sekcji oznaczonych jako `stub` (np. theme, accessibility, shortcuts, import/export, templates, history, część AI privacy/voice) — to jest jawny dług i **nie może** być maskowane jako “real”.
-- “Ownership panels” (tenant defaults/branding/security) muszą zachować granice: writes kierowane do Admin/Organization, nie do Settings.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Utrzymywanie stubbed settings w produkcyjnych mounted surfaces → ryzyko “fake success” i utraty zaufania.
-- Niespójny podział ownership P30/P31/P32 → ryzyko błędnych zmian governance.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
-## Primary evidence / inventory
+## Function Coverage Status
 
-- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
-
+- Required functions documented: `2/2`.
+- Covered: `SET_SETTINGS_WORKSPACE`, `SET_POLICY_BOUNDARY_LINKS`.

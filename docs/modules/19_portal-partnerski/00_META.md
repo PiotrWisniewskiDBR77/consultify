@@ -1,32 +1,42 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: META
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# META — Portal partnerski
-
-## Purpose
-
-Ten plik definiuje metadane kontraktu modułu `Portal partnerski` i jego miejsce w systemie.
+# META — Portal Partnerski
 
 ## Identity
 
-- **Sidebar label**: Portal partnerski
-- **Folder**: `19_portal-partnerski`
-- **Module id**: `MODULE_PARTNER_PORTAL`
+- Module id: `MODULE_PARTNER_PORTAL`
+- Sidebar label: `Portal Partnerski`
+- Folder: `19_portal-partnerski`
+- Route: `/partner/*`
+- AppView: `AppView.PARTNER_LANDING`
+- Owner: user
 
 ## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Open questions (max 3)
+## Source Package
 
-1. Jakie API jest kanoniczne dla ledger/payouts (P29 opisuje semantykę, ale nie widzimy tu listy endpointów w repo)?
-2. Jak wygląda model “partner roles” w kodzie (Partner member/admin) i jak jest mapowany na `currentUser`?
-3. Jakie elementy operator tower dla partner program są już zamontowane w `/superadmin/*` i gdzie jest ich SSOT w repo (w `SUPERADMIN_V8_SSOT.md` brakuje plików)?
+- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md`
+- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_PARTNER_PROGRAM_2026-03-29.md`
+- `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_PARTNER_PROGRAM.md`
+- `DRD/consultify/docs/product/PARTNER_PROGRAM_V8_MASTER_SUMMARY.md`
+- `DRD/consultify/docs/product/modules/partner/PARTNER_PORTAL_MODULE.md`
 
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
+
+## Open Questions
+
+1. Does the active code route still match the contract route above?
+2. Are there tenant-specific variants that require a separate permission matrix?
+3. Which acceptance evidence should be attached first when this module is next tested?

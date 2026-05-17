@@ -1,40 +1,39 @@
 ---
 module_id: MODULE_DOCUMENTS
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Dokumenty (Document Studio)
+# Permissions & Security — Dokumenty / Document Studio
 
 ## Purpose
 
-Uprawnienia i bezpieczeństwo dla dokumentów jako artefaktów (visibility scopes, review/publish, tenant safety).
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- MUST: używać istniejącego auth middleware (brak nowego auth surface).
-- MUST: visibility scopes i ACL są egzekwowane tak samo jak w v8.1 Outputs Library.
-- MUST: deny-by-default gdy capabilities/ACL niepewne.
+- Confidential documents require scoped access and export controls.
+- Sources must not leak beyond allowed users.
 
-## Must Not
+Function-level enforcement applies uniformly to: `DOC_WORDY_PLACEHOLDER`, `DOC_STUDIO_RUNTIME_TARGET`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: ujawnianie treści dokumentu użytkownikom bez scope/ACL (również przez deep link).
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- SHOULD: governance approval dla template registry i publish/review (inherited from v8.1).
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`
-- `DRD/consultify/docs/product/ROLES_MODEL.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

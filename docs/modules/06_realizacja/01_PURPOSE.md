@@ -1,39 +1,49 @@
 ---
 module_id: MODULE_EXECUTION
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Realizacja (Execution)
+# Purpose — Realizacja / Implementation & PMO
 
 ## Purpose
 
-Zdefiniować po co istnieje moduł `Realizacja`: kontrola dostarczania w czasie wykonywania, z warstwą operatora (PMO/manager) nad kanonicznymi obiektami delivery.
+Operacyjne dowodzenie realizacją: portfolio, PMO reports, manager/control tower, task-decision runtime, ryzyka, baseline i interwencje.
+
+Cel jest realizowany przez zestaw funkcji: operacje wykonawcze, raporty, lane managerski oraz dedykowane powierzchnie tras `/execution` i `/rollout`.
 
 ## Must
 
-- MUST: odpowiadać na pytania operatora: co jest on-track/late/overloaded/blocked, jaka decyzja brakuje, gdzie potrzebna interwencja.
-- MUST: działać jako jeden runtime w 3 powierzchniach (`Portfolio/Raporty/Manager`), bez równoległych prawd.
-- MUST: pozostać uczciwy przy brakach danych (missing baseline/estimate/stale data) — żadnego “fake confidence”.
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- MUST NOT: tworzyć osobnej “planning” prawdy konkurującej z `Inicjatywy`.
-- MUST NOT: wprowadzać ukrytych AI mutacji (np. ciche replan/reassign).
+- Initial initiative planning ownership.
+- Final KPI/ROI truth ownership after handoff to Results.
 
 ## Should
 
-- SHOULD: wspierać interwencje bounded i weryfikowalne (detect → intervene → verify).
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z `EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md` i nie dubluje Inicjatyw/Outputs.
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
-- `DRD/consultify/docs/product/EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
 - `DRD/consultify/docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
-
+- `DRD/consultify/docs/product/EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
+- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
+- `DRD/consultify/docs/product/DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
+- `DRD/consultify/docs/product/EXECUTION_ON_TIME_DELIVERY_FORECASTING_AND_BASELINE_CONTROL_V8.md`
+- `DRD/consultify/docs/product/EXECUTION_RESOURCE_BALANCING_AND_CAPACITY_OPERATIONS_V8.md`
+- `DRD/consultify/docs/UI_UX/107_RAW_IMPLEMENTATION_PMO_ENGINE_2026-05-09.md`
+- `DRD/consultify/docs/UI_UX/103_RAW_EXECUTION_HUB_AI_EXECUTION_MANAGEMENT_ENGINE_2026-05-09.md`

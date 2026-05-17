@@ -1,38 +1,50 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: DATA
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Data & Integrations — MCP Marketplace (DBR77)
+# Data & Integrations — MCP Marketplace / DBR77
 
 ## Purpose
 
-Obiekty danych: marketplace assets/collections, provider config, audit logs, mapping importów do artefaktów aplikacji.
+Define module objects, integrations and lineage responsibilities.
+
+## Core Objects
+
+- Marketplace asset, collection, provider config, import mapping and audit log.
+
+## Function Data Responsibility Map
+
+- `MCPM_PLACEHOLDER_SURFACE`: route-level placeholder state only; no active catalog/install mutation runtime.
+- `MCPM_RUNTIME_TARGET`: target-state marketplace catalog, recommendation, install/config and audit flows.
 
 ## Must
 
-- MUST: asset ma stabilne `id` i metadane (type, version, license, owner/publisher).
-- MUST: import tworzy jawne mapowanie “asset → local object” (traceability).
-- MUST: MCP audit logs istnieją dla wywołań narzędzi.
+- MUST keep stable identifiers for durable objects.
+- MUST preserve source/provenance when objects are generated, imported, exported or converted.
+- MUST record integration calls and important transformations with enough metadata for audit.
 
 ## Must Not
 
-- MUST NOT: trzymać sekretów providera w plain text ani pokazywać ich w UI.
+- MUST NOT duplicate another module's canonical object as an independent source of truth.
+- MUST NOT expose raw sensitive payloads where summaries/source links are sufficient.
 
 ## Should
 
-- TBD
+- SHOULD prefer links and ownership references over copied data.
+- SHOULD make stale or partial data visible to the UI layer.
 
 ## Acceptance Criteria
 
-- [ ] Brak wycieku raw payloadów/PII w UI/logach.
-- [ ] Źródła i lineage są jawne tam, gdzie odpowiedź wpływa na decyzję.
+- [ ] Every durable object has owner module, source/provenance and lifecycle state where applicable.
+- [ ] Cross-module handoff preserves lineage.
+- [ ] Integration failures do not corrupt local canonical state.
 
 ## Related Sources
 
 - `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-
+- `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`

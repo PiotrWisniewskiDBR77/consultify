@@ -1,37 +1,43 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — MCP Marketplace (DBR77)
+# Purpose — MCP Marketplace / DBR77
 
 ## Purpose
 
-Zdefiniować po co istnieje MCP Marketplace: dostarczać katalog gotowych zasobów (templates, playbooki, prompty, komponenty PMO) do użycia w aplikacji oraz kontrolowany publish zasobów przez DBR77.
+Marketplace asset provider: katalog/search/get/recommendations dla template, playbooków, promptów i komponentów, z importem do Consultify i jawnością licencji/proweniencji.
+
+As-Is realizacja jest placeholderowa (`MCPM_PLACEHOLDER_SURFACE`) przy zachowanym kontrakcie funkcji docelowej (`MCPM_RUNTIME_TARGET`).
 
 ## Must
 
-- MUST: wspierać narzędzia READ: `marketplace.catalog.search`, `marketplace.asset.get`, `marketplace.recommendations.get`.
-- MUST: wspierać ścieżki użycia: Tools (“Get template from Marketplace”), Presentations (“Assets/Visuals”), My Work (“Publish as template”).
-- MUST: provenance/licensing jest jawne (źródło assetu, zakres użycia).
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- MUST NOT: wprowadzać ukrytych mutacji przez marketplace (publish/licensing) bez audytu i uprawnień.
+- Canonical storage for local Consultify objects.
+- Hidden publish/order/license mutations.
 
 ## Should
 
-- TBD
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z `INTEGRATIONS_SYNC_MCP_PLAN_V3.md` (sekcja MCP‑Marketplace).
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
 - `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-
+- `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`

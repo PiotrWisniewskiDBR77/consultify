@@ -1,9 +1,9 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
@@ -11,28 +11,28 @@ last_updated: 2026-05-09
 
 ## Purpose
 
-Uprawnienia i bezpieczeństwo Meeting: notatki i decyzje mogą zawierać wrażliwe treści, więc ACL/tenant to non-negotiable.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- MUST: tenant isolation + deny-by-default.
-- MUST: brak public share domyślnie (jeśli pojawi się share, musi być jawnie zaprojektowany i audytowalny).
+- Meeting content follows project/client confidentiality and participant permissions.
 
-## Must Not
+Function-level enforcement applies uniformly to: `ME_MEETING_PLACEHOLDER`, `ME_MEETING_RUNTIME_TARGET`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: pokazywać meeting notes w search/list poza scope usera.
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- TBD
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/ROLES_MODEL.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

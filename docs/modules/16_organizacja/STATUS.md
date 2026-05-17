@@ -1,24 +1,31 @@
 ---
 module_id: MODULE_ORGANIZATION
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Status — Organizacja (Organization Context)
+# Status — Organizacja
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: in_progress (staged rollout; gates)
+- Runtime class: `real + partial`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: Canonical ownership is `/organization` and org context. `/context/*` remains transitional/legacy context-builder surface.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Release gates wymagają PASS na ośmiu gate’ach + smoke/loadtest, zanim promujemy na prod.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- P0: cross-tenant leakage / unauthorized context in AI output.
-- P0: brak jawnego “partial/blocked/degraded” (fake success).
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `ORG_CONTEXT_WORKSPACE`, `ORG_LEGACY_CONTEXT_BUILDER`.

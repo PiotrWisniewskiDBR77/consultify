@@ -1,24 +1,46 @@
 ---
 module_id: MODULE_RESULTS
 doc_kind: ENTRYPOINT
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Rezultaty
+# Rezultaty / Results & Value Realization
 
 ## Purpose
 
-Moduł `Rezultaty` (Results / KPI / ROI + benefits tracking) jest warstwą mierzalnych efektów: definiuje KPI, scorecards/OKR, deviation i corrective loop, ROI i evidence. To nie jest pasywna półka raportów – to “evidence and intervention layer”.
+System odpowiedzialności za wartość: KPI, baseline, target, actual, deviation, corrective action, ROI reconciliation, evidence and verified result.
 
-W routingu aplikacji entry jest kanonicznie pod `/benefits`, a `/kpi-okr` jest tylko aliasem kompatybilności.
+## Contract Layers
 
-## Where is the contract?
+- `SSOT.md` — priority and source map.
+- `00_META.md` — identity, route, owner and canonicality.
+- `01_PURPOSE.md` — why this module exists.
+- `02_SCOPE.md` — in-scope and out-of-scope boundaries.
+- `03_BEHAVIOR.md` — required runtime behavior.
+- `04_UI_UX.md` — required user experience and visual/interaction rules.
+- `05_DATA_AND_INTEGRATIONS.md` — objects, integrations and lineage.
+- `06_PERMISSIONS_AND_SECURITY.md` — roles, tenant boundaries and security.
+- `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
+- `RAW_INPUT.md` — raw author notes before normalization.
+- `CHANGELOG.md` — contract changes.
 
-- Kontrakt zachowania: `03_BEHAVIOR.md`
-- Kontrakt UI/UX: `04_UI_UX.md`
-- Zakres i granice: `02_SCOPE.md`
-- Źródła prawdy: `SSOT.md`
+## Function Inventory (Function-First)
 
+- `RZ_INITIATIVES_TRACKING`
+- `RZ_KPI_WORKSPACE`
+- `RZ_REPORTS_WORKSPACE`
+- `RZ_ROI_TRACKING`
+- `RZ_ROI_ANALYSIS`
+- `RZ_KPI_OKR_ROUTE`
+
+## Primary Sources
+
+- `DRD/consultify/docs/product/RESULTS_V8_SSOT.md`
+- `DRD/consultify/docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+- `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `DRD/consultify/docs/product/REPORTING_CANONICAL_TEMPLATES.md`
+- `DRD/consultify/docs/product/work-packets/T2_RESULTS_KPI_ROI_CHARTER.md`
+- `DRD/consultify/docs/UI_UX/105_RAW_RESULTS_VALUE_REALIZATION_ENGINE_2026-05-09.md`

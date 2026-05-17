@@ -1,36 +1,42 @@
 ---
 module_id: MODULE_INTERVIEW
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Wywiad
+# Permissions & Security — Wywiad / Interview
 
 ## Purpose
 
-Prywatność, dostęp do programów/sesji, role, governance AI dla treści wywiadu.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- TBD
+- Sensitive responses require explicit access control and audit.
+- AI processing must respect privacy/governance settings.
 
-## Must Not
+Function-level enforcement:
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: pokazywanie raw internals.
+- Managed/review tabs (`WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`) MUST stay permission-gated.
+- Insight finalization (`WY_INSIGHTS` / review lanes) MUST remain explicit and auditable.
+
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- TBD
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Zgodność z privacy + AI governance dla wywiadu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

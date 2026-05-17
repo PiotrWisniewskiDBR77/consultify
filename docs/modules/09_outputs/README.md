@@ -1,24 +1,46 @@
 ---
 module_id: MODULE_OUTPUTS
 doc_kind: ENTRYPOINT
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Outputy (Outputs Library)
+# Outputs Library
 
 ## Purpose
 
-Moduł `Outputy` jest **kanonicznym domem** dla wszystkich wygenerowanych artefaktów: dokumentów, prezentacji i arkuszy. To nie jest “export folder” – to trwała biblioteka (registry) z widocznością, statusem, review i możliwością ponownego użycia.
+Kanoniczna biblioteka artefaktów wyjściowych: reports, presentations, documents, sheets/templates and review-ready packages. Chat creates; Outputs stores and governs.
 
-Tworzenie może startować z czatu i kontekstu, ale **każdy artefakt MUSI wylądować w Outputs Library**.
+## Contract Layers
 
-## Where is the contract?
+- `SSOT.md` — priority and source map.
+- `00_META.md` — identity, route, owner and canonicality.
+- `01_PURPOSE.md` — why this module exists.
+- `02_SCOPE.md` — in-scope and out-of-scope boundaries.
+- `03_BEHAVIOR.md` — required runtime behavior.
+- `04_UI_UX.md` — required user experience and visual/interaction rules.
+- `05_DATA_AND_INTEGRATIONS.md` — objects, integrations and lineage.
+- `06_PERMISSIONS_AND_SECURITY.md` — roles, tenant boundaries and security.
+- `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
+- `RAW_INPUT.md` — raw author notes before normalization.
+- `CHANGELOG.md` — contract changes.
 
-- Kontrakt zachowania: `03_BEHAVIOR.md`
-- Kontrakt UI/UX: `04_UI_UX.md`
-- Zakres i granice: `02_SCOPE.md`
-- Źródła prawdy: `SSOT.md`
+## Function Inventory (Function-First)
 
+- `OUT_LIBRARY_HUB`
+- `OUT_REPORT_BUILDER`
+- `OUT_PRESENTATION_WIZARD`
+- `OUT_DECK_BUILDER`
+- `OUT_SHARED_PRESENTATION`
+- `OUT_LEGACY_REPORT_REDIRECT`
+
+## Primary Sources
+
+- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
+- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_IMPLEMENTATION_PLAN.md`
+- `DRD/consultify/docs/product/REPORTS_AND_PRESENTATIONS_OUTPUT_OPERATING_MODEL_V8.md`
+- `DRD/consultify/docs/product/REPORTING_CANONICAL_TEMPLATES.md`
+- `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
+- `DRD/consultify/docs/UI_UX/96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`

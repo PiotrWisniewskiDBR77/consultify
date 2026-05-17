@@ -1,41 +1,42 @@
 ---
 module_id: MODULE_MCP_IRIS
 doc_kind: TESTS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # Acceptance & Tests — MCP IRIS
 
-## Purpose
+## Scope Of Verification (As-Is)
 
-Zdefiniować weryfikowalne kryteria akceptacji oraz minimalny plan testów.
+- Verify sidebar -> AppView -> route -> rendered component chain.
+- Verify ownership/alias statements against `menuConfig.ts`, `routeConfig.ts`, `AppRoutes.tsx`.
+- Verify role/guard behavior where module is protected.
 
-## Must
+## Required Checks
 
-- MUST: provider health check jest jawny (healthy/degraded/down) i nie maskuje błędów.
-- MUST: tool allowlist działa (brak wywołań narzędzi spoza listy).
-- MUST: tenant/ACL deny-by-default (negatywne testy cross-tenant).
-- MUST: audit log powstaje dla każdego tool call.
+- [ ] Route opens documented runtime (`workspace` or `placeholder`) exactly as specified.
+- [ ] AppView enum and route mapping are consistent in `src/types/core.ts` and `routeConfig.ts`.
+- [ ] No contradiction with global ownership decisions in module docs and global docs.
+- [ ] If module is placeholder, UI communicates not-ready state explicitly.
 
-## Must Not
+## Current Gate Expectation
 
-- MUST NOT: “fake success” dla krytycznych akcji.
-- MUST NOT: infinite spinner bez recovery.
+- Expected gate result today: `BLOCKED_P1 for executable MCP IRIS user flow.`
+- This is As-Is readiness, not target-state implementation readiness.
 
-## Should
+## Function-Level Acceptance Matrix
 
-- SHOULD: smoke test “test connection” bez side-effectów (dry run tool).
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `IRIS_PLACEHOLDER_SURFACE` | `/mcp/iris` mounts honest placeholder runtime | `AppRoutes.tsx` -> `V4ComingSoonView` | pass |
+| `IRIS_RUNTIME_TARGET` | Target runtime remains documented as not mounted | codemap confirms no dedicated mounted IRIS runtime component | pass (`partial`) |
 
-## Acceptance Criteria
+## Evidence Pointers
 
-- [ ] PASS/BLOCKED językiem z `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
-- [ ] Checklisty obejmują: loading/success/error/empty/degraded + refresh resistance.
-
-## Related Sources
-
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md`
-- `DRD/testy_antygravity/TESTING_OPERATING_SYSTEM.md` (jeśli dotyczy)
-
+- `src/components/navigation/Sidebar/menuConfig.ts`
+- `src/routes/routeConfig.ts`
+- `src/routes/AppRoutes.tsx`
+- `src/types/core.ts`

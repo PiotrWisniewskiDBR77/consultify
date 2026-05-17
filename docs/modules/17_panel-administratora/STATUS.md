@@ -1,30 +1,31 @@
 ---
 module_id: MODULE_ADMIN_PANEL
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-15
+last_updated: 2026-05-09
 ---
 
 # Status — Panel Administratora
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: shipped (core) / iterating (enterprise hardening)
+- Runtime class: `real + security_critical`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: Admin ownership is `/admin/*` tenant control plane; `/superadmin/*` is separate plane and not this module.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- `NAVIGATION_STRUCTURE.md` (Admin/SuperAdmin) brak w repo mimo referencji w `MODULE_ROUTING_ARCHITECTURE.md`.
-- `Admin / operations` w inventory jest `partial` (zależnie od podsekcji).
-- Jeśli jakiekolwiek admin‑mounted powierzchnie są oznaczone jako `stub` w inventory → **NO‑GO** dla “enterprise-ready” claim.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Rozjazd ownership P30/P31/P32/P33 (równoległe “admin truth”) → ryzyko błędów governance i UX.
-- Brak spójnego audytu dla zmian adminowych → ryzyko compliance i braku traceability.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
-## Primary evidence / inventory
+## Function Coverage Status
 
-- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
-
+- Required functions documented: `2/2`.
+- Covered: `ADM_ADMIN_WORKSPACE`, `ADM_SUPERADMIN_BOUNDARY`.

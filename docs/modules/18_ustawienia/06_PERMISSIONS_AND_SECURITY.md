@@ -1,39 +1,54 @@
 ---
 module_id: MODULE_SETTINGS
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Ustawienia (Settings)
+# Permissions & Security — Ustawienia
 
 ## Purpose
 
-Opisać kontrakt uprawnień i security dla Settings: user‑scoped vs org/tenant‑scoped; bezpieczne obchodzenie się z sekretami; deny‑by‑default.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- **MUST**: Settings nie pokazuje sekcji/akcji bez uprawnień (deny-by-default).
-- **MUST**: Sekrety (API keys) mają redakcję i ograniczenia ekspozycji (minimum necessary).
-- **MUST**: Dla tenant‑critical write surfaces Settings jest read‑only i kieruje do Admin/Organization.
+- User can edit own settings; admin/tenant settings require admin route and role.
+- Settings must remain user/workspace preference hub and must not mutate admin/superadmin policy domains directly.
 
-## Must Not
+Function-level enforcement applies uniformly to: `SET_SETTINGS_WORKSPACE`, `SET_POLICY_BOUNDARY_LINKS`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: ujawnianie ukrytych modułów/akcji użytkownikom bez uprawnień.
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
+- MUST keep cross-links to admin/superadmin explicit and ownership-safe (no hidden capability hints for unauthorized roles).
 
 ## Should
 
-- TBD
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
+- SHOULD disclose ownership reason when a setting is read-only due to policy.
+
+## As-Is Permission Evidence (source -> decision -> evidence)
+
+| Source | Decision | Evidence / NOT_DONE |
+| --- | --- | --- |
+| `AppRoutes.tsx` + `ProtectedRoute.tsx` | KEEP: settings is auth-protected; admin/superadmin are role-protected | `/settings/*` (`requireAuth`), `/admin/*` (`ADMIN`), `/superadmin/*` (`SUPERADMIN`) |
+| `SettingsOwnershipPanels.tsx` | KEEP/ENHANCE: policy-owned controls are read-only with handoff to owner route | organization/admin handoff exists; superadmin handoff contract not explicit (`NOT_DONE`) |
+| `routeConfig.ts` + `SettingsView.tsx` | KEEP: settings stays in one route family and does not mount admin/superadmin runtime internally | all settings sections render inside `SettingsView`; no admin route mount inside settings |
+| `USER_AND_ADMIN_MEMORY_CONTROLS_V8.md` + settings memory/privacy components | ENHANCE: privacy posture must avoid over-claiming user memory control scope | full V8 user/admin/operator split still partial in runtime (`NOT_DONE`) |
+| `server/src/routes/settings.routes.ts` | KEEP: legacy root settings API is not a user settings policy bypass | non-superadmin requests to `/api/settings` root receive `LEGACY_SETTINGS_SCOPE_BLOCKED`; PASS |
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
-
+- [x] Unauthorized users cannot view/mutate protected admin and superadmin routes.
+- [ ] High-impact settings changes have complete approval/audit evidence across all settings subdomains (`NOT_DONE`).
+- [x] Sensitive data stays scoped by route role guards and settings ownership boundaries.
+- [x] Legacy system settings root is blocked for non-superadmin users.
+- [ ] Explicit superadmin ownership handoff pattern is documented and validated in settings UX (`NOT_DONE`).
+- [ ] E2E audit confirms settings cannot directly mutate admin/superadmin policy controls (`NOT_DONE`).

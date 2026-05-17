@@ -1,40 +1,39 @@
 ---
 module_id: MODULE_TABLES
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Tabele (Table Studio)
+# Permissions & Security — Tabele / Table Studio
 
 ## Purpose
 
-Uprawnienia i bezpieczeństwo Table Platform: tenant isolation, public intake, AI scope gating, auditability.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- MUST: tenant isolation (cross-tenant probes odmawiają z `TENANT_VIOLATION`).
-- MUST: public JWT intake ma rate limits i allow-list pól; token jest per-recipient.
-- MUST: AI operator wyższych scope’ów (methodological/source) może być super-admin only.
+- Row/cell edits and imports respect artifact permissions and audit.
+- Public/intake forms require explicit scoped write rules.
 
-## Must Not
+Function-level enforcement applies uniformly to: `TB_EXCELE_PLACEHOLDER`, `TB_TABLE_RUNTIME_TARGET`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: ujawnianie danych intake poza allow-list.
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- SHOULD: każda mutacja i AI call jest audytowana (ledger + ai_usage).
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/TABLE_STUDIO_FULL_PRODUCT_CLOSEOUT_2026-05-08.md`
-- `DRD/consultify/docs/product/ROLES_MODEL.md`
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

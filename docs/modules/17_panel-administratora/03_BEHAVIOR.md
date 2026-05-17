@@ -1,52 +1,55 @@
 ---
 module_id: MODULE_ADMIN_PANEL
 doc_kind: BEHAVIOR
-version: 0.1
+version: 2.0
 owner: user
-status: draft
-last_updated: 2026-05-09
+status: canonical
+last_updated: 2026-05-11
 ---
 
-# Behavior — Panel Administratora (Admin + SuperAdmin)
+# Behavior — Panel Administratora
 
-## Purpose
+## As-Is Runtime Behavior
 
-Opisać kontrakt zachowania paneli governance: nawigacja, mutacje, audyt, błędy/denials, degraded states, oraz “handoff” między Settings ↔ Admin ↔ Organization ↔ SuperAdmin.
+- `/admin/*` is mounted and rendered through `AdminView` -> `AdminSettingsModule` in `MainLayout`.
+- `/settings/*` is mounted separately and renders `SettingsView`.
+- `/superadmin/*` is mounted separately and renders `SuperAdminView` (dedicated shell).
+- Role guard is hierarchical in `ProtectedRoute`: `SUPERADMIN` level is higher than `ADMIN`; this means superadmin can satisfy admin guard today.
+
+## Function Runtime Breakdown
+
+- `ADM_ADMIN_WORKSPACE`: canonical admin runtime function on `/admin/*`.
+- `ADM_SUPERADMIN_BOUNDARY`: boundary function between tenant admin and platform superadmin planes.
 
 ## Must
 
-- **MUST**: Każda operacja zapisu o znaczeniu governance (IAM/security/billing/integrations/policies) jest:
-  - jawna w UI (co się zmieni i dlaczego),
-  - wykonywana po stronie backendu (source of truth),
-  - zakończona wynikiem w UI (success/error) bez “fake success”.
-- **MUST**: Mutacje emitują zdarzenie audytu adminowego (actor, target, timestamp, before/after summary; reason jeśli wymagane).
-- **MUST**: Denial taxonomy jest czytelna:
-  - 403 “insufficient role” + guidance (“Only owner…”, “Managed in Organization/Settings/Admin/SuperAdmin”),
-  - 409/validation errors dla nielegalnych przejść (np. self‑lockout / last owner).
-- **MUST**: Degraded posture dla integracji i danych:
-  - per‑row status + zbiorczy banner,
-  - brak maskowania stale/outdated jako “OK”.
-- **MUST**: SuperAdmin jest osobnym root i przy kontach SUPERADMIN landing prowadzi do `/superadmin` (stabilny login → superadmin).
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve hard ownership split:
+  - module 17 = tenant admin ownership
+  - module 18 = user preferences ownership
+  - superadmin = platform ownership
+- MUST expose unresolved boundary contradictions as `NOT_DONE` or `NEEDS_OWNER_DECISION` (no silent PASS).
 
 ## Must Not
 
-- **MUST NOT**: Silent execution / ukryte mutacje.
-- **MUST NOT**: Ukrywać błędu pod spinnerem bez recovery.
-- **MUST NOT**: Wykonywać cross‑tenant operacji z powierzchni Admin.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or guard hierarchy side effects from contract narrative.
+- MUST NOT claim role-boundary closure while `ADM-RAW-P0-001` remains open.
 
-## Should
+## Critical Chain Ledger (source -> decision -> evidence)
 
-- **SHOULD**: Settings (P31) deep‑linkuje do Admin dla tenant‑enforced write keys (np. security/collaboration).
-- **SHOULD**: UI pokazuje “ownership hint” przy próbie wejścia w niewłaściwy obszar (link do właściwej powierzchni).
+| Claim | Source | Decision | Evidence / Status |
+| --- | --- | --- | --- |
+| Admin workspace is mounted on `/admin/*` | route tree and admin view | `KEEP` | `AppRoutes.tsx`, `AdminView.tsx`, `AdminSettingsModule.tsx` |
+| Settings is separate from Admin | route tree and settings view | `KEEP` | `AppRoutes.tsx`, `SettingsView.tsx` |
+| Superadmin is a separate platform route root | route tree + superadmin view | `KEEP` | `AppRoutes.tsx`, `SuperAdminView.tsx` |
+| Hard plane split is currently enforced by guards | security doctrine | `DEFER` | `NOT_DONE` due `ProtectedRoute` hierarchy (`SUPERADMIN >= ADMIN`) |
+| Admin aliases are explicit and documented | route config mappings | `ENHANCE` | `routeConfig.ts` admin appview mappings (`ADMIN_WORKSPACE` aliases) |
 
-## Acceptance Criteria
+## Acceptance Criteria (Behavior)
 
-- [ ] Opisuje audyt i denial/degraded bez sprzeczności z P32/P33 kontraktami.
-- [ ] Nie ma “fake success / infinite spinner” dla krytycznych mutacji.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_ENTERPRISE_2026-04-11.md`
-- `DRD/consultify/docs/product/SUPERADMIN_V8_SSOT.md`
-
+- [x] Direct navigation to launch route resolves to documented current runtime (`/admin/*` -> admin module).
+- [x] AppView-to-route mapping remains aligned for launcher and aliases.
+- [x] Cross-module ownership statements are explicit across admin/settings/superadmin docs.
+- [ ] Boundary enforcement claim is closed by runtime proof (`NOT_DONE` while `ADM-RAW-P0-001` is open).

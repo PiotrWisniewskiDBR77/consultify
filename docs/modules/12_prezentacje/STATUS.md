@@ -1,25 +1,31 @@
 ---
 module_id: MODULE_PRESENTATIONS
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-15
+last_updated: 2026-05-09
 ---
 
-# Status — Prezentacje (Presentation Studio)
+# Status — Prezentacje / Generator Lane
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: mixed (as-is shipped; hardening in progress via sprint plan)
+- Runtime class: `partial + duplicate_boundary_resolved`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: Standalone generator lane is `/prezentacje` (placeholder). Canonical `/presentations` ownership belongs to `09_outputs`.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- “100% readiness” wymaga dostarczenia 3 mode’ów end-to-end + enterprise governance (wg implementation contract).
-- Sprint 1: uczciwy, restartowalny flow `/prezentacje` (bez infinite spinner) + reopen + builder handoff.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Ryzyko “governed but ugly” — beauty jest wymaganiem, nie opcją.
-- Ryzyko silent failures w pipeline — muszą być jawne kroki i toasty (evidence w testy_antygravity).
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `3/3`.
+- Covered: `PR_GEN_PLACEHOLDER`, `PR_GEN_RUNTIME_TARGET`, `PR_OUTPUTS_OWNERSHIP_BOUNDARY`.

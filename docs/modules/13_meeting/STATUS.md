@@ -1,24 +1,31 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # Status — Meeting
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: soon (wkrótce / thin contract)
+- Runtime class: `soon + code_gap`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: As-Is route and menu are active; current runtime is placeholder.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Brak znalezionego `MEETING_TOOL_V3.md` w repo (jest tylko referencja w v3 index).
-- Brak route/AppView w `MODULE_ROUTING_ARCHITECTURE.md`.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Ryzyko “zgadywania produktu” – wymagania muszą wejść przez `RAW_INPUT.md` albo brakujący SSOT.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `ME_MEETING_PLACEHOLDER`, `ME_MEETING_RUNTIME_TARGET`.

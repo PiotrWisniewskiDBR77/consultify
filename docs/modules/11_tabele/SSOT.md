@@ -1,32 +1,37 @@
 ---
 module_id: MODULE_TABLES
 doc_kind: SSOT_MAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# SSOT — Tabele (Table Studio)
+# SSOT — Tabele / Table Studio
 
-## Priority order (when sources conflict)
+## Priority Order
 
-1. `DRD/consultify/docs/modules/11_tabele/00_META.md` … `07_ACCEPTANCE_AND_TESTS.md` (ten kontrakt)
-2. `DRD/consultify/docs/product/TABLE_STUDIO_FULL_PRODUCT_CLOSEOUT_2026-05-08.md`
-3. `DRD/consultify/docs/product/work-packets/tabele-full-product/` (blok A–D, evidence, audyty)
-4. `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
-4. Źródła modułowe (poniżej)
+1. This module contract: `00_META.md` through `07_ACCEPTANCE_AND_TESTS.md`.
+2. Author raw input in `RAW_INPUT.md` and linked raw author files in `DRD/consultify/docs/UI_UX/` or `DRD/consultify/docs/RAW/`.
+3. Real source documents listed below.
+4. Routing and global governance: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`, `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`, `DRD/UI_UX_SOURCE_OF_TRUTH.md`, `DRD/consultify/docs/ui-standards/`.
 
-## Primary module sources (to migrate into contract)
+## Primary Sources Migrated Into This Contract
 
-- `DRD/consultify/docs/product/TABLE_STUDIO_FULL_PRODUCT_CLOSEOUT_2026-05-08.md`
-- `DRD/consultify/docs/product/work-packets/tabele-full-product/block-A-template-catalog/03_BLOCK_CLOSEOUT.md`
-- `DRD/consultify/docs/product/work-packets/tabele-full-product/block-B-record-provenance/03_BLOCK_CLOSEOUT.md`
-- `DRD/consultify/docs/product/work-packets/tabele-full-product/block-C-ai-operator/03_BLOCK_CLOSEOUT.md`
-- `DRD/consultify/docs/product/work-packets/tabele-full-product/block-D-integration-evidence/03_BLOCK_CLOSEOUT.md`
+- `DRD/consultify/docs/product/TABLE_V8_SSOT.md`
+- `DRD/consultify/docs/product/TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+- `DRD/consultify/docs/product/TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+- `DRD/consultify/docs/product/TABLE_V8_READINESS_AUDIT.md`
+- `DRD/consultify/docs/strategy/TABELE_V8_SSOT.md`
+- `DRD/consultify/docs/UI_UX/101_RAW_IDEAS_TABLES_STRUCTURED_THINKING_TABLE_ENGINE_2026-05-09.md`
 
-## Related cross-cutting sources
+## Superseded Or Removed References
 
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md` (global UI/UX invariants)
-- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
+- This SSOT intentionally removes references to filenames that are not present in the repo at audit time.
+- If an older plan references a missing file, use the nearest existing source above and record the gap in `CHANGELOG.md` before changing behavior.
 
+## Coverage Status
+
+- Status: `canonical baseline`.
+- Meaning: the module now has a coherent author-level contract based on verified repo sources and raw author inputs.
+- Remaining work: deepen each requirement by reading every linked source line-by-line during implementation sprints.

@@ -1,9 +1,9 @@
 ---
 module_id: MODULE_MCP_IRIS
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
@@ -11,29 +11,31 @@ last_updated: 2026-05-09
 
 ## Purpose
 
-Ustalić granice odpowiedzialności MCP IRIS jako providera MCP: konfiguracja, governance i bezpieczne wywołania narzędzi.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: org-level “MCP providers” i konfiguracja (URL, auth, namespace, tool allowlist).
-- MUST: health / test connection / status.
-- MUST: audyt wywołań i idempotencja tam gdzie outbound actions istnieją.
+- Org-level provider configuration.
+- MCP transport, tool allowlist, health/test and audited calls.
+- Read-first KPI/evidence/execution integration paths.
+- Function set: `IRIS_PLACEHOLDER_SURFACE`, `IRIS_RUNTIME_TARGET`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: przejąć roli klasycznych integracji sync engine (to osobna warstwa integracji).
-- MUST NOT: expose raw tool payloads w UI/logach.
+- Raw database tunnel.
+- Unbounded tool execution or hidden mutations.
 
-## Should
+## Inputs
 
-- TBD
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres jest spójny z `INTEGRATIONS_SYNC_MCP_PLAN_V3.md`.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

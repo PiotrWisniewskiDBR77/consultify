@@ -1,38 +1,41 @@
 ---
 module_id: MODULE_FINANCE
 doc_kind: META
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# META — Finanse
-
-## Purpose
-
-Metadane kontraktu modułu `Finanse` i jego miejsce w systemie.
+# META — Finanse / Finance & Intelligence
 
 ## Identity
 
-- **Sidebar label**: Finanse
-- **Folder**: `08_finanse`
-- **Module id**: `MODULE_FINANCE`
+- Module id: `MODULE_FINANCE`
+- Sidebar label: `Finanse`
+- Folder: `08_finanse`
+- Route: `/economics`
+- AppView: `AppView.ECONOMICS`
+- Owner: user
 
 ## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Doctrine
+## Source Package
 
-- **Modeled truth** lives here (Finance).
-- **Metric truth** lives in `Rezultaty` (Results).
-- Linkage KPI↔Finance jest opcjonalne i jawne (`RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`).
+- `DRD/consultify/docs/product/FINANCIAL_ANALYSIS_V3.md`
+- `DRD/consultify/docs/modules/ECONOMICS_MODULE.md`
+- `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `DRD/consultify/docs/UI_UX/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09.md`
 
-## Open questions (max 3)
+## Function Coverage
 
-1. Czy “Finanse” w sidebarze zostaje na `/economics`, czy pojawi się osobna trasa dla Financial Analysis v3?
-2. Jak dokładnie mapujemy 6 zakładek v3 na widoki i ich uprawnienia w roli/ACL?
-3. Kiedy i gdzie jest dopuszczone “create initiative from analysis” i jaki gate to kontroluje?
+- Required functions documented: `7/7`.
+- Function contracts are stored in `functions/`.
 
+## Open Questions
+
+1. Does the active code route still match the contract route above?
+2. Are there tenant-specific variants that require a separate permission matrix?
+3. Which acceptance evidence should be attached first when this module is next tested?

@@ -1,39 +1,39 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Behavior — MCP Marketplace (DBR77)
+# Behavior — MCP Marketplace
 
-## Purpose
+## As-Is Runtime Behavior
 
-Kontrakt zachowania MCP Marketplace: wyszukiwanie katalogu, pobieranie assetów, rekomendacje, import do produktu i (opcjonalnie) publish.
+- Sidebar + route + AppView mapping are present for discovery/navigation.
+- Route renders placeholder and does not expose active marketplace interaction runtime.
+- Ownership boundary remains: Marketplace lists capabilities; IRIS is execution lane.
+
+## Function Runtime Breakdown
+
+- `MCPM_PLACEHOLDER_SURFACE`: active placeholder function on `/mcp/marketplace`.
+- `MCPM_RUNTIME_TARGET`: documented target marketplace runtime function, currently not mounted.
 
 ## Must
 
-- MUST: implementować READ tools: search/get/recommendations z jawnością błędów i rate limits.
-- MUST: import do Tools/Presentations zachowuje provenance (źródło/licencja) i nie tworzy “ghost assets”.
-- MUST: jeśli narzędzia MUTATION są dostępne (publish/order/license), wymagają uprawnień + audytu + approval gdzie potrzebne.
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- MUST NOT: wywoływać narzędzi spoza allowlist.
-- MUST NOT: wykonywać ukrytych writes (publish) bez jawnej akcji i logu audytu.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- SHOULD: mieć “recommendations” zależne od kontekstu (np. initiative type) bez ujawniania prywatnych danych do providera ponad potrzebę.
-
-## Acceptance Criteria
-
-- [ ] Zawiera jawne reguły `proposal -> approval -> execution -> audit` tam, gdzie czat inicjuje działania.
-- [ ] Definiuje “uczciwe” stany błędów i degradacji (bez fake success / infinite spinner).
-
-## Related Sources
-
-- `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.
