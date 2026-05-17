@@ -1,0 +1,48 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="50.238710000000005">
+<testsuite name="radar-go-gate.spec.ts" timestamp="2026-05-17T17:11:38.541Z" hostname="chromium" tests="1" failures="1" skipped="0" time="17.882" errors="0">
+<testcase name="Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" classname="radar-go-gate.spec.ts" time="17.882">
+<failure message="radar-go-gate.spec.ts:86:3 covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" type="FAILURE">
+<![CDATA[  [chromium] › radar-go-gate.spec.ts:86:3 › Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      109 |
+      110 |     const byPriority = await fetchSignals(token, { priorityLevel: 'P0' });
+    > 111 |     expect(byPriority.some((s) => s.signalId === created.signalId)).toBeTruthy();
+          |                                                                     ^
+      112 |     const byCategory = await fetchSignals(token, { category: 'finance_kpi' });
+      113 |     expect(byCategory.some((s) => s.signalId === created.signalId)).toBeTruthy();
+      114 |
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/smoke/radar-go-gate.spec.ts:111:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/video.webm]]
+
+[[ATTACHMENT|test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
