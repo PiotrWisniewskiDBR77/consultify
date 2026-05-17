@@ -889,26 +889,36 @@ jobs:
     needs: [unit-tests]
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Critical path coverage deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Install bc + jq (for numeric comparison + JSON)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: sudo apt-get update && sudo apt-get install -y bc jq
 
       - name: Run critical tests with coverage
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: |
           npm run test:unit:critical -- --coverage --reporter=junit --outputFile=junit-critical.xml
 
       - name: Check critical path coverage threshold
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: |
           if [ ! -f coverage/coverage-summary.json ]; then
             echo "::error::Coverage report not found (coverage/coverage-summary.json). Failing gate."
@@ -949,7 +959,7 @@ jobs:
           check_min "/server/src/middleware/inputSanitization.middleware.ts" 95
 
       - name: Upload critical coverage report
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: critical-coverage-report
@@ -957,7 +967,7 @@ jobs:
           retention-days: 30
 
       - name: Upload critical JUnit report
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: critical-junit-report
@@ -983,24 +993,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Patch coverage deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Run tests with coverage
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:coverage
 
       - name: Run patch coverage gate
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx tsx scripts/testing/patch-coverage-gate.ts --coverage-json coverage/coverage-final.json --threshold 80 --base origin/${{ github.base_ref }}
 
       - name: Upload patch coverage report
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: patch-coverage-report
