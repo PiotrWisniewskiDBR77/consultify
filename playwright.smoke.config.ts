@@ -20,8 +20,9 @@ export default defineConfig({
   webServer: Array.isArray((base as any).webServer)
     ? (base as any).webServer.map((server: any) => ({
         ...server,
-        reuseExistingServer: true,
-        timeout: Math.max(Number(server?.timeout || 0), 240000),
+        // For GO gates we want deterministic fresh servers, not potentially stale listeners.
+        reuseExistingServer: false,
+        timeout: Math.max(Number(server?.timeout || 0), 300000),
       }))
     : (base as any).webServer,
 });

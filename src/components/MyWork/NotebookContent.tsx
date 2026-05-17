@@ -1747,6 +1747,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setTemplateModalOpen(true)}
+                  data-testid="notebook-new-page-button"
                   className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
                 >
                   <Plus size={16} />

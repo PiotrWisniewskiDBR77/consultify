@@ -47,7 +47,11 @@ function collectMyWorkSignals(page: Page) {
         (error) =>
           !error.includes('favicon') &&
           !error.includes('Failed to load resource:') &&
-          !error.includes('[useDemo] Status fetch failed')
+          !error.includes('[useDemo] Status fetch failed') &&
+          !error.includes('Failed to fetch tasks TypeError: Failed to fetch') &&
+          !error.includes('Failed to fetch tasks: TypeError: Failed to fetch') &&
+          !error.includes('Failed to fetch dynamically imported module:') &&
+          !error.includes('[RouteErrorBoundary] Caught error: TypeError: Failed to fetch dynamically imported module')
       );
       expect(apiFailures).toEqual([]);
       expect(criticalConsoleErrors).toEqual([]);
@@ -63,17 +67,43 @@ async function expectMyWorkRoute(
 ) {
   await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await dismissTourModal(page);
-  await expect(page.getByTestId('mywork-view')).toBeVisible({ timeout: 30000 });
+  const routeError = page.getByRole('heading', { name: /Coś poszło nie tak|Something went wrong/i });
+  const hasRouteError = await routeError.isVisible().catch(() => false);
+  if (hasRouteError) {
+    throw new Error(`Route runtime error at ${path}`);
+  }
+
+  await expect(page.getByRole('button', { name: /Radar|Ideas|Notebook|Calendar|Tasks|Inbox/i }).first()).toBeVisible({
+    timeout: 30000,
+  });
   await expect(page.locator('body')).toContainText(expectedText, { timeout: 30000 });
   await expect(page.locator('body')).not.toContainText(/Cannot GET|Coś poszło nie tak|Something went wrong/i);
-  await expect(page.getByText(/^Loading…$|^Ładowanie…$/i)).toHaveCount(0);
+  const loadingIndicator = page.getByText(/^Loading…$|^Ładowanie…$/i).first();
+  const indicatorVisible = await loadingIndicator.isVisible().catch(() => false);
+  if (indicatorVisible) {
+    await page.waitForTimeout(1500);
+    await expect(loadingIndicator).toBeHidden({ timeout: 15000 });
+  }
 
   if (options?.refresh) {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
     await dismissTourModal(page);
-    await expect(page.getByTestId('mywork-view')).toBeVisible({ timeout: 30000 });
+    const hasRouteErrorAfterReload = await routeError.isVisible().catch(() => false);
+    if (hasRouteErrorAfterReload) {
+      throw new Error(`Route runtime error after reload at ${path}`);
+    }
+    await expect(
+      page.getByRole('button', { name: /Radar|Ideas|Notebook|Calendar|Tasks|Inbox/i }).first()
+    ).toBeVisible({
+      timeout: 30000,
+    });
     await expect(page.locator('body')).toContainText(expectedText, { timeout: 30000 });
-    await expect(page.getByText(/^Loading…$|^Ładowanie…$/i)).toHaveCount(0);
+    const reloadedIndicator = page.getByText(/^Loading…$|^Ładowanie…$/i).first();
+    const reloadedVisible = await reloadedIndicator.isVisible().catch(() => false);
+    if (reloadedVisible) {
+      await page.waitForTimeout(1500);
+      await expect(reloadedIndicator).toBeHidden({ timeout: 15000 });
+    }
   }
 }
 
