@@ -119,6 +119,22 @@ export interface V8InterviewAssignment {
   };
 }
 
+export interface V8InterviewManageAssignmentPayload {
+  assigneeUserId: string;
+  templateId: string;
+  dueAt?: string | null;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  notes?: string | null;
+  mode: 'update' | 'restart' | 'assign_again';
+  reason?: string;
+}
+
+export interface V8InterviewManageAssignmentResponse {
+  action: 'updated' | 'restarted' | 'assigned_again' | string;
+  assignment?: V8InterviewAssignment;
+  newAssignment?: V8InterviewAssignment;
+}
+
 export interface V8InterviewInsight {
   id: string;
   organizationId: string;
@@ -584,6 +600,12 @@ export const V8InterviewApi = {
 
   getOverdueAssignments: () =>
     v8Get<{ assignments: V8InterviewAssignment[] }>('/interview/assignments/overdue'),
+
+  manageAssignment: (id: string, payload: V8InterviewManageAssignmentPayload) =>
+    v8Patch<V8InterviewManageAssignmentResponse>(
+      `/interview/assignments/${encodeURIComponent(id)}/manage`,
+      payload
+    ),
 
   startAssignment: (id: string, payload?: { projectId?: string; name?: string }) =>
     v8Post<{ assignmentId: string; session: V8InterviewSession }>(

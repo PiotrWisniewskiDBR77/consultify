@@ -34,6 +34,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<FeedbackBacklogTask[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<string>('ALL');
   const [drafts, setDrafts] = useState<Record<string, BacklogTaskDraft>>({});
@@ -42,6 +43,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const loadTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setErrorCode(null);
     try {
       const data = await Api.getFeedbackBacklogTasks(300);
       setTasks((data || []) as FeedbackBacklogTask[]);
@@ -49,6 +51,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
       console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
       setTasks([]);
       setError(e?.message || 'Feedback backlog is temporarily unavailable.');
+      setErrorCode(e?.code || e?.errorCode || e?.response?.data?.code || null);
       toast.error(e?.message || 'Failed to load feedback backlog');
     } finally {
       setLoading(false);

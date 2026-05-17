@@ -6,6 +6,8 @@ import './i18n';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { bootstrapClientWebVitals } from './bootstrap/clientWebVitals';
+import { installDocumentLifecycleWebPerf } from './bootstrap/documentLifecycleWebPerf';
 import { RuntimeDiagnosticPanel } from './components/RuntimeDiagnosticPanel';
 import { installFeedbackCollector } from './services/feedbackCollector';
 import { getRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from './utils/runtimeDiagnostics';

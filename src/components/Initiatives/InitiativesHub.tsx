@@ -58,7 +58,14 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
-import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
+import {
+  FilterChip,
+  HubWorkAreaLoading,
+  ModuleHub,
+  ModuleTab,
+  OpenDocument,
+  ViewMode,
+} from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ACTION_NEUTRAL,

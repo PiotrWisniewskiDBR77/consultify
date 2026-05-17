@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, componentStack: null };
+    return { hasError: true, error, componentStack: null, telemetryDelivery: 'idle' };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {

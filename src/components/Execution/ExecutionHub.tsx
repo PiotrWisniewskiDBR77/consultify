@@ -32,6 +32,7 @@ import {
   FileText,
   GripVertical,
   LayoutDashboard,
+  Loader2,
   MessageSquare,
   Scale,
   Shield,

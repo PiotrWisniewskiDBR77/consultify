@@ -7916,7 +7916,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         onRetry={() => {
           void fetchAll();
         }}
-        onDismiss={onBack}
+        onDismiss={onBack || (() => {})}
       />
     );
   }

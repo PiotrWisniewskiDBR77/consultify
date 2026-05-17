@@ -798,6 +798,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
   users,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   if (!initiative) return null;
   const init = initiative as any;
 
