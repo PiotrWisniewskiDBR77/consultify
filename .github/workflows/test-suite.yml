@@ -196,12 +196,17 @@ jobs:
               }
             }
 
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: out,
-            });
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: out,
+              });
+            } catch (error) {
+              core.warning(`Unable to create PR quality summary comment: ${error.message}`);
+              core.summary.addRaw(out).write();
+            }
 
   # ═══════════════════════════════════════════════════════════════
   # LEVEL GATES (L1–L3 coverage)
@@ -744,6 +749,7 @@ jobs:
         env:
           CI: true
           NODE_ENV: test
+          PLAYWRIGHT_NO_GIT_INFO: 1
           TEST_SUPPORT_KEY: local-test-support-key-change-me
 
       - name: Upload readiness smoke artifacts
