@@ -473,11 +473,17 @@ export interface V8ResultsCreateRoiRealizedResponse {
 }
 
 export const V8ResultsApi = {
-  getDashboard: () => v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard'),
-  getKpiCatalog: (params?: { kpiId?: string }) =>
+  getDashboard: (options?: { initiativeId?: string }) =>
+    v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard', options),
+  getKpiCatalog: (params?: { kpiId?: string; initiativeId?: string }) =>
     v8Get<V8ResultsKpiCatalog>(
       '/results/kpis/catalog',
-      params?.kpiId ? { kpiId: params.kpiId } : undefined
+      params?.kpiId || params?.initiativeId
+        ? {
+            ...(params?.kpiId ? { kpiId: params.kpiId } : {}),
+            ...(params?.initiativeId ? { initiativeId: params.initiativeId } : {}),
+          }
+        : undefined
     ),
   getKpiDrawerDetail: (kpiId: string) =>
     v8Get<V8ResultsKpiDrawerDetail>(`/results/kpis/${encodeURIComponent(kpiId)}/drawer-detail`),
@@ -486,8 +492,8 @@ export const V8ResultsApi = {
       `/results/kpis/${encodeURIComponent(kpiId)}/time-series`,
       payload
     ),
-  getRoiPortfolioSummary: () =>
-    v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary'),
+  getRoiPortfolioSummary: (options?: { initiativeId?: string }) =>
+    v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary', options),
   getRoiInitiativeDetail: (initiativeId: string) =>
     v8Get<V8ResultsRoiInitiativeDetail>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/detail`

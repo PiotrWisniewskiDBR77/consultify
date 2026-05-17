@@ -1,37 +1,41 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: META
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # META — Meeting
 
-## Purpose
-
-Metadane kontraktu modułu `Meeting` i jego miejsce w systemie.
-
 ## Identity
 
-- **Sidebar label**: Meeting
-- **Folder**: `13_meeting`
-- **Module id**: `MODULE_MEETING`
+- Module id: `MODULE_MEETING`
+- Sidebar label: `Meeting`
+- Folder: `13_meeting`
+- Route: `/meeting`
+- AppView: `AppView.MEETING`
+- Owner: user
 
 ## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Contract posture
+## Source Package
 
-- Ten moduł ma mało istniejącego SoT w repo; kontrakt jest minimalny.
-- Preferujemy “TBD + link do brakującego SSOT” zamiast zgadywania zachowań.
+- `DRD/consultify/docs/product/MEETING_TOOL_V3.md`
+- `DRD/consultify/docs/product/REQUIREMENTS_V3_SSOT.md`
+- `DRD/consultify/docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
+- `DRD/consultify/docs/product/V3_MODULE_VERIFICATION_MATRIX.md`
 
-## Open questions (max 3)
+## Function Coverage
 
-1. Czy i gdzie istnieje kanoniczny dokument `MEETING_TOOL_V3.md` (wskazany w `REQUIREMENTS_V3_SSOT.md`)?
-2. Jaki jest kanoniczny routing (route/AppView) i czy Meeting jest osobnym modułem czy częścią My Work/Notebook?
-3. Jakie są minimalne obiekty: MeetingNote / ActionItem / Decision i ich relacje do Initiative?
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
+## Open Questions
+
+1. Does the active code route still match the contract route above?
+2. Are there tenant-specific variants that require a separate permission matrix?
+3. Which acceptance evidence should be attached first when this module is next tested?

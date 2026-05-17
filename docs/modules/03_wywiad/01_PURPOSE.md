@@ -1,36 +1,48 @@
 ---
 module_id: MODULE_INTERVIEW
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Wywiad
+# Purpose — Wywiad / Interview
 
 ## Purpose
 
-Zdefiniować: po co istnieje Wywiad, dla kogo, jaki jest rezultat (insights) i jak jest używany w kolejnych modułach.
+Moduł pozyskiwania jakościowych informacji: szablony wywiadów, odpowiedzi, zgody, prywatność, eksport i przekazanie insightów do dalszej pracy.
+
+Function-level realization:
+
+- Assignment and governance lanes: `WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`.
+- Delivery lanes: `WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`.
 
 ## Must
 
-- TBD
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- TBD
+- Direct creation of initiatives without governed review.
+- Analytics dashboards beyond interview evidence unless defined in source docs.
 
 ## Should
 
-- TBD
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z `MODULE_ROUTING_ARCHITECTURE.md` (Interview produkuje Insights artefact).
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- `DRD/consultify/docs/modules/DISCOVERY_CONSULTANT_MODULE.md`
 - `DRD/consultify/docs/product/INTERVIEW_FORM_ENGINE_V3.md`
-
+- `DRD/consultify/docs/product/INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
+- `DRD/consultify/docs/product/INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`

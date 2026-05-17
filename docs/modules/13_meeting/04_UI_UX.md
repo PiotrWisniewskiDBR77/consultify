@@ -1,39 +1,69 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: UI_UX
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # UI/UX — Meeting
 
-## Purpose
+## 1. Main Screen
 
-UI/UX kontrakt Meeting: proste capture + strukturyzacja + linkowanie, z globalnymi invariantami i placement AI actions w Menu 3.
+As-Is: `/meeting` exists in router/sidebar ownership but current runtime is placeholder-only with no active meeting workspace screen. Future runtime must preserve meeting prep, execution, follow-up and decision ownership.
 
-## Must
+## 2. Runtime States
 
-- MUST: uczciwe stany empty/error/degraded (np. brak integracji calendar).
-- MUST: AI actions tylko w Menu 3 / command row (bez osobnego paska w canvase).
-- MUST: “propose → accept” dla AI zmian (np. ekstrakcja action items).
+- Loading: placeholder does not load meeting data; future workspace must show agenda/calendar/context loading.
+- Empty: placeholder must say the module is coming soon; future empty state must guide scheduling/importing/preparing a meeting.
+- Error: placeholder must avoid raw internals; future errors must offer retry or permission guidance.
+- Degraded: current degraded state is placeholder/blocked; future missing transcript/calendar/context must be visible.
+- Success: no active meeting success state exists as-is; future prep/follow-up/action extraction must confirm outcome and next step.
 
-## Must Not
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST NOT: infinite spinner / fake success.
+As-Is: no active meeting command system beyond the placeholder route. Future Menu 3 must be the active meeting command row/right-side contextual action slot for agenda, transcript, decisions and follow-ups.
 
-## Should
+## 4. AI Actions Placement
 
-- SHOULD: table+preview dla listy meetingów/notatek, jeśli moduł dostanie hub.
+No active meeting AI actions are implemented as-is. Future AI actions for agenda, summary, decisions or follow-ups must live in Menu 3/Dynamic Tabs/local command row right-side slot and must not be duplicated in meeting canvas.
 
-## Acceptance Criteria
+## 5. Next Action Guidance
 
-- [ ] UI/UX nie łamie invariantów z `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
-- [ ] Kontekstowe akcje AI są w “Menu 3 / command row” zgodnie z regułami globalnymi.
+The placeholder must tell the user that the module is coming soon. Future runtime must guide connect calendar, prepare agenda, start meeting, review transcript, approve decisions, assign follow-ups or retry.
 
-## Related Sources
+## 6. Source / Evidence / Provenance
 
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md`
-- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
+As-Is: no meeting claims are generated. Future summaries, decisions and follow-ups must show transcript/calendar/source context and explicit missing-evidence states.
 
+## 7. Approval / Diff / Review
+
+As-Is: no active meeting mutations exist. Future decisions, action items and external sends require review/approval before finalization or dispatch.
+
+## 8. Anti-Patterns
+
+- Presenting placeholder as active meeting runtime.
+- Hidden creation of action items/decisions from AI summary.
+- Meeting AI actions duplicated in canvas and Menu 3.
+- Transcript-free decisions presented as sourced.
+- Sending follow-ups without review.
+
+## 9. As-Is Gaps
+
+- Main screen is placeholder-only.
+- No active meeting workspace, transcript/provenance UI, decision review UI or follow-up success flow are validated as implemented.
+
+## 10. Acceptance Criteria
+
+- Sidebar/route lands on `/meeting`.
+- Current UI honestly renders placeholder/coming-soon.
+- Future meeting runtime preserves Menu 3 AI placement, source/provenance visibility and approval/review gates.
+- Placeholder status remains documented as an As-Is gap until active runtime exists.
+
+## 11. Function Annex — Meeting Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `ME_MEETING_PLACEHOLDER` | Meeting Placeholder Runtime | `/meeting` | soon | `V4ComingSoonView` | `functions/ME_MEETING_PLACEHOLDER.md` |
+| `ME_MEETING_RUNTIME_TARGET` | Meeting Runtime Target | planned `/meeting` workspace | partial | target `MeetingHub` runtime (not currently mounted) | `functions/ME_MEETING_RUNTIME_TARGET.md` |

@@ -18,6 +18,7 @@ export { InterviewWorkspace } from './InterviewWorkspace';
 
 // Assignment Modal
 export { AssignInterviewModal } from './AssignInterviewModal';
+export { ManageAssignmentModal } from './ManageAssignmentModal';
 
 // Template Builder
 export { TemplateBuilder } from './TemplateBuilder';

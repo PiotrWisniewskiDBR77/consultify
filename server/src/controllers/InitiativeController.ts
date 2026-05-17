@@ -295,7 +295,7 @@ export class InitiativeController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
         return;
       }
 
@@ -413,7 +413,15 @@ export class InitiativeController {
       }
       sql += ` ORDER BY i.created_at DESC`;
 
-      const rows = await queryHelpers.queryAll(sql, params);
+      let rows: Record<string, unknown>[] = [];
+      try {
+        rows = await queryHelpers.queryAll(sql, params);
+      } catch {
+        res
+          .status(500)
+          .json({ error: 'Failed to load initiatives', code: 'INITIATIVES_LIST_FAILED' });
+        return;
+      }
 
       const initiatives = rows.map((i: Record<string, unknown>) => ({
         id: i.id,
@@ -494,7 +502,7 @@ export class InitiativeController {
       const { id } = req.params;
       const orgId = req.user?.organizationId;
       if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
         return;
       }
 
@@ -508,7 +516,7 @@ export class InitiativeController {
 
       const initiative = await getInitiativeDetailRead(id, orgId, lang);
       if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
+        res.status(404).json({ error: 'Initiative not found', code: 'INITIATIVE_NOT_FOUND' });
         return;
       }
       res.json(initiative);

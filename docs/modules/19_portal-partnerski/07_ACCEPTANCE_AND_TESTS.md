@@ -1,42 +1,42 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: TESTS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Acceptance & Tests — Portal partnerski
+# Acceptance & Tests — Portal Partnerski
 
-## Purpose
+## Scope Of Verification (As-Is)
 
-Zdefiniować weryfikowalne kryteria akceptacji oraz minimalny plan testów.
+- Verify sidebar -> AppView -> route -> rendered component chain.
+- Verify ownership/alias statements against `menuConfig.ts`, `routeConfig.ts`, `AppRoutes.tsx`.
+- Verify role/guard behavior where module is protected.
 
-## Must
+## Required Checks
 
-- **MUST**:
-  - lifecycle state machine jest jawna i spójna (onboard/activate/earn/payout),
-  - portal i operator tower nie pokazują sprzecznych statusów,
-  - payout request jest idempotent i audytowalny,
-  - degraded states są uczciwe (hold/review, missing payout settings, provider failure, ledger outage).
+- [ ] Route opens documented runtime (`workspace` or `placeholder`) exactly as specified.
+- [ ] AppView enum and route mapping are consistent in `src/types/core.ts` and `routeConfig.ts`.
+- [ ] No contradiction with global ownership decisions in module docs and global docs.
+- [ ] If module is placeholder, UI communicates not-ready state explicitly.
 
-## Must Not
+## Current Gate Expectation
 
-- MUST NOT: “fake success” dla krytycznych akcji.
-- MUST NOT: infinite spinner bez recovery.
+- Expected gate result today: `PASS_WITH_P2 (public/protected boundary requires ongoing consistency checks).`
+- This is As-Is readiness, not target-state implementation readiness.
 
-## Should
+## Function-Level Acceptance Matrix
 
-- TBD
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `PART_PORTAL_WORKSPACE` | Protected partner portal runtime is mounted | `AppRoutes.tsx` + `PartnerPortalViewNew` + `ProtectedRoute` | pass |
+| `PART_PUBLIC_ACQUISITION_BOUNDARY` | Public vs protected partner boundary is explicit | codemap route ownership notes | pass (`partial`) |
 
-## Acceptance Criteria
+## Evidence Pointers
 
-- [ ] PASS/BLOCKED językiem z `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
-- [ ] Checklisty obejmują: loading/success/error/empty/degraded + refresh resistance.
-
-## Related Sources
-
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md`
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` (§2.3.7 acceptance checklist)
-
+- `src/components/navigation/Sidebar/menuConfig.ts`
+- `src/routes/routeConfig.ts`
+- `src/routes/AppRoutes.tsx`
+- `src/types/core.ts`

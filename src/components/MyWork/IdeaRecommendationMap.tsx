@@ -147,6 +147,10 @@ import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 
+type IdeaNodeData = NodeDetailData & {
+  _depth?: number;
+};
+
 type AIMapProposal = {
   add: { nodes: Node[]; edges: Edge[] };
   remove: { nodeIds: string[]; edgeIds: string[] };

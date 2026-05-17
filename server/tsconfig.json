@@ -30,8 +30,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     // Output settings
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
     "inlineSources": true,
     // Performance optimizations

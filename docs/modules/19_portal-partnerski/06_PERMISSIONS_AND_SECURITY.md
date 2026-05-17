@@ -1,41 +1,39 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: PERMISSIONS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Permissions & Security — Portal partnerski
+# Permissions & Security — Portal Partnerski
 
 ## Purpose
 
-Opisać role i uprawnienia partner‑facing vs operator‑facing (P29), oraz bezpieczeństwo danych finansowych i directory.
+Define security, tenancy, ACL and approval rules for this module.
 
 ## Must
 
-- **MUST**: Role partner-program są jawne (P29) i nie dublują ról tenantowych:
-  - Partner member/admin w portalu (partner org scope),
-  - Partner ops (platform) w SuperAdmin dla payout/hold/adjustment.
-- **MUST**: Payout/hold/adjustment są operator-only; portal może jedynie requestować payout (jeśli policy pozwala).
+- Partner sees own data; operator/admin sees scoped review data.
+- Payout actions require explicit authorization and audit.
 
-## Must Not
+Function-level enforcement applies uniformly to: `PART_PORTAL_WORKSPACE`, `PART_PUBLIC_ACQUISITION_BOUNDARY`.
 
-- MUST NOT: cross-tenant leakage.
-- MUST NOT: ujawnianie ukrytych modułów/akcji użytkownikom bez uprawnień.
- - MUST NOT: ujawniać operator‑sensitive fraud/compliance detali partnerowi.
+## Global Security Rules
+
+- MUST enforce tenant and project boundaries.
+- MUST use deny-by-default when authorization is uncertain.
+- MUST audit high-impact mutations and governance transitions.
+- MUST NOT expose secrets, raw internals, stack traces or sensitive payloads to business users.
 
 ## Should
 
-- TBD
+- SHOULD show locked/unauthorized states with safe explanation and no sensitive leakage.
+- SHOULD separate read permissions from mutation/approval permissions.
 
 ## Acceptance Criteria
 
-- [ ] Brak sposobu na obejście ACL przez UI (deny-by-default przy niepewności).
-- [ ] UI nie pokazuje raw internals ani stack trace użytkownikowi biznesowemu.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` (§2.3.3 roles)
-
+- [ ] Unauthorized users cannot view or mutate protected objects.
+- [ ] High-impact actions require explicit approval and produce audit evidence.
+- [ ] Sensitive data remains scoped to allowed tenant/project/user context.

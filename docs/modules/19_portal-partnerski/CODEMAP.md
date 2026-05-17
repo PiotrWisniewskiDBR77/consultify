@@ -1,28 +1,42 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: CODEMAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — Portal partnerski
+# Codemap — Portal Partnerski
 
-## Route / AppView / Entry component
+## Route / AppView / Sidebar (As-Is evidence)
 
-Źródło routingowe: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`.
+- Sidebar entry: `PARTNER_PORTAL` global menu item
+- Launch AppView: `AppView.PARTNER_LANDING`
+- Launch route: `/partner/*`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: Canonical portal ownership is protected `/partner/*`; public partner acquisition routes remain related but not portal-internal ownership.
 
-- **Partner portal root**: `/partner/*`
-  - **Entry component**: `PartnerPortalViewNew` (`src/views/partner/PartnerPortalView`)
-- **Public recruitment / apply**:
-  - `/become-partner` → `BecomePartnerView`
-  - `/become-partner/apply` → `PartnerApplicationView`
-- **Route config**: `src/routes/routeConfig.ts` (`ROUTES.PARTNER`, `ROUTES.BECOME_PARTNER`)
-- **Router mount**: `src/routes/AppRoutes.tsx`
-- **AppView enum**: `src/types/core.ts` (`PARTNER_*`)
+## Routed Components
 
-## Implementation notes
+- `src/routes/AppRoutes.tsx` -> `ROUTES.PARTNER.LANDING` renders `PartnerPortalViewNew` under `ProtectedRoute`
+- `src/views/partner/PartnerPortalView.tsx` is active portal root
+- Public related surfaces: `/become-partner`, `/become-partner/apply`, `/partner/pricing`
 
-Kontrakt produktowy P29 jest kanoniczny dla lifecycle/ledger/roles, nawet jeśli bieżący routing UI jest węższy niż doc‑scope.
+## Function Map (As-Is)
 
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `PART_PORTAL_WORKSPACE` | `PartnerPortalViewNew` on `/partner/*` | protected portal ownership surface. |
+| `PART_PUBLIC_ACQUISITION_BOUNDARY` | public/protected route boundary | acquisition routes remain outside protected portal ownership. |
+
+## Relevant Services / Types
+
+- `src/services/funnelAnalytics.ts` (public-to-portal journey analytics)
+- `src/types/core.ts` (partner AppView family)
+- `src/types/core.ts` keeps enum identity for `AppView.PARTNER_LANDING`.
+
+## Current Runtime Status
+
+- Classification: `real + partial`
+- This codemap is As-Is only and reflects currently mounted route behavior.

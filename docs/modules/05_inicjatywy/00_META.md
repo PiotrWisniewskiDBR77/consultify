@@ -1,32 +1,61 @@
 ---
 module_id: MODULE_INITIATIVES
 doc_kind: META
-version: 0.1
+version: 2.0
 owner: user
-status: draft
-last_updated: 2026-05-09
+status: review
+last_updated: 2026-05-10
 ---
 
 # META — Inicjatywy
 
-## Purpose
-
-Metadane kontraktu modułu `Inicjatywy` i jego miejsce w lifecycle.
-
 ## Identity
 
-- **Sidebar label**: Inicjatywy
-- **Folder**: `05_inicjatywy`
-- **Module id**: `MODULE_INITIATIVES`
+- Module id: `MODULE_INITIATIVES`
+- Sidebar label: `Inicjatywy`
+- Folder: `05_inicjatywy`
+- Route: `/initiatives`
+- AppView: `AppView.FULL_STEP2_INITIATIVES`
+- Owner: user
 
-## Canonicality & governance anchors
+## Canonicality
 
-- **Contract status**: draft (w trakcie migracji z istniejących SoT)
-- **Primary SSOT map**: `SSOT.md`
+This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
-## Open questions (max 3)
+Contract 2.0 packet: `RAW_TARGET_STATE_2_0_PACKET.md`.
 
-1. Status vocabulary: czy utrzymujemy `PENDING_REVIEW` jako osobny status, czy łączymy w `REVIEW`? (rozbieżność między SoT)
-2. Gate reprezentacja: minimalny zestaw pól/decision types wymaganych do egzekwowania gate’ów w UI.
-3. `ARCHIVED`: czy jest częścią Initiatives, czy Benefits/Results domyka archiwizację?
+Current delivery gate:
 
+- Documentation contract: `DONE_DOC`.
+- Runtime readiness: `NOT_DONE`.
+- Reason: dedicated initiative UI lifecycle/card regression evidence is not bound, source-envelope taxonomy remains open, and owner acceptance is not recorded.
+
+## Source Package
+
+- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
+- `DRD/consultify/docs/product/INITIATIVE_STATUS_ROLE_CTA_MATRIX.md`
+- `DRD/consultify/docs/product/INITIATIVE_CAPABILITIES_SYSTEM.md`
+- `DRD/consultify/docs/product/GATE_DEFINITION_OF_DONE.md`
+- `DRD/consultify/docs/product/SOURCE_TRACEABILITY_SPEC.md`
+- `DRD/consultify/docs/product/ROLES_MODEL.md`
+- `DRD/consultify/docs/product/PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
+- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
+
+## Function Coverage
+
+- Required functions documented: `5/5`.
+- Function contracts are stored in `functions/`.
+
+| Function | Owner business | Owner tech | Route / entry | Current gate |
+| --- | --- | --- | --- | --- |
+| `IN_PORTFOLIO_HUB` | user | user | `/initiatives` | `NOT_DONE` until UI transition/card tests are bound |
+| `IN_ANALYSIS_WORKSPACE` | user | user | `InitiativesHub` analysis tab | `NOT_DONE` until analysis UI evidence is bound |
+| `IN_ROADMAP_VIEW` | user | user | `/roadmap` | `NOT_DONE` until route/lane smoke evidence is bound |
+| `IN_PORTFOLIO_VIEW` | user | user | `/portfolio` | `NOT_DONE` until route/lane smoke evidence is bound |
+| `IN_ROI_VIEW` | user | user | `/roi` | `NOT_DONE` until route/lane smoke evidence is bound |
+
+## Open Questions
+
+1. What is the canonical source-envelope taxonomy that replaces the current ToolSession/AssessmentReport-only traceability doctrine?
+2. Should interview become a true multi-initiative smart generator, or is finding-level create/link sufficient for v1?
+3. Should KPI/results be allowed to generate new initiatives directly, or only recommend/create proposals for user approval?

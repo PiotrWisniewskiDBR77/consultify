@@ -13,6 +13,47 @@ interface AcceptInvitationViewProps {
   onError?: (error: string) => void;
 }
 
+const INVITE_PUBLIC_ERROR_COPY = {
+  invalidLink: 'Invalid invitation link',
+  validateFailed: 'We could not validate this invitation. Please request a new invite link.',
+  acceptFailed: 'We could not complete invitation acceptance. Please try again.',
+} as const;
+
+function mapPublicInvitationError(input: unknown, context: 'validate' | 'accept'): string {
+  const payload = input as
+    | {
+        message?: unknown;
+        code?: unknown;
+        error?: unknown;
+      }
+    | null;
+
+  const nestedError = payload?.error as { message?: unknown; code?: unknown } | undefined;
+  const codeCandidates = [payload?.code, nestedError?.code].filter(
+    (candidate): candidate is string => typeof candidate === 'string'
+  );
+  const code = codeCandidates[0] || null;
+
+  if (code === 'INVITATION_TOKEN_INVALID' || code === 'INVITATION_TOKEN_EXPIRED') {
+    return INVITE_PUBLIC_ERROR_COPY.validateFailed;
+  }
+  if (code === 'INVITATION_ACCEPTANCE_FAILED') {
+    return INVITE_PUBLIC_ERROR_COPY.acceptFailed;
+  }
+
+  return context === 'validate'
+    ? INVITE_PUBLIC_ERROR_COPY.validateFailed
+    : INVITE_PUBLIC_ERROR_COPY.acceptFailed;
+}
+
+async function readSafeResponsePayload(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   token,
   onAccepted,
@@ -30,6 +71,9 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [department, setDepartment] = useState('');
+  const [siteLocation, setSiteLocation] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -40,7 +84,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   useEffect(() => {
     const validateToken = async () => {
       if (!token.trim()) {
-        const message = 'Invalid invitation link';
+        const message = INVITE_PUBLIC_ERROR_COPY.invalidLink;
         setError(message);
         onError?.(message);
         setValidating(false);
@@ -50,20 +94,23 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
       try {
         const res = await fetch(`${API_URL}/invitations/validate/${token}`);
-        const data = await res.json();
+        const data = await readSafeResponsePayload(res);
 
         if (!res.ok) {
-          throw new Error(data.error || 'Invalid invitation');
+          const mappedMessage = mapPublicInvitationError(data, 'validate');
+          throw new Error(mappedMessage);
         }
 
-        setInvitation(data);
+        setInvitation(data as InvitationValidation);
         const loggedEmail = currentUser?.email?.trim().toLowerCase();
-        const invitedEmail = data?.email?.trim().toLowerCase();
-        setEmailMismatch(
-          Boolean(currentUser?.isAuthenticated && loggedEmail && invitedEmail && loggedEmail !== invitedEmail)
+        const invitedEmail = (data as InvitationValidation | null)?.email?.trim().toLowerCase();
+        const shouldBlockMismatch = Boolean(
+          currentUser?.isAuthenticated && loggedEmail && invitedEmail && loggedEmail !== invitedEmail
         );
+        setEmailMismatch(shouldBlockMismatch);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to validate invitation';
+        const message =
+          err instanceof Error ? err.message : mapPublicInvitationError(err, 'validate');
         setError(message);
         onError?.(message);
       } finally {
@@ -94,6 +141,11 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
       return;
     }
 
+    if (!jobTitle.trim() || !department.trim()) {
+      setError('Please provide your function and department in the organization');
+      return;
+    }
+
     if (!acceptedTerms) {
       setError('You must accept the terms and conditions');
       return;
@@ -113,20 +165,28 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           email: invitation?.email,
           firstName,
           lastName,
+          jobTitle: jobTitle.trim(),
+          department: department.trim(),
+          siteLocation: siteLocation.trim() || undefined,
           password,
         }),
       });
 
-      const data = await res.json();
+      const data = await readSafeResponsePayload(res);
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to accept invitation');
+        throw new Error(mapPublicInvitationError(data, 'accept'));
       }
 
       setSuccess(true);
-      onAccepted?.(data.user);
+      onAccepted?.(
+        (data as any)?.user || {
+          id: (data as any)?.userId || '',
+          email: invitation?.email || '',
+        }
+      );
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to accept invitation';
+      const message = err instanceof Error ? err.message : mapPublicInvitationError(err, 'accept');
       setError(message);
     } finally {
       setSubmitting(false);
@@ -146,11 +206,13 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
   if (error && !invitation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-white flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
-          <XCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Invitation</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6" role="alert" aria-live="assertive">
+            {error}
+          </p>
           <a
             href="/"
             className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -245,7 +307,11 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           )}
 
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+            <div
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
+              role="alert"
+              aria-live="assertive"
+            >
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
@@ -289,6 +355,60 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 required
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="jobTitle"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Function / Job Title *
+              </label>
+              <input
+                type="text"
+                id="jobTitle"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Production Manager"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="department"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Department *
+              </label>
+              <input
+                type="text"
+                id="department"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                placeholder="e.g. Operations"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="siteLocation"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Site / Location
+            </label>
+            <input
+              type="text"
+              id="siteLocation"
+              value={siteLocation}
+              onChange={(e) => setSiteLocation(e.target.value)}
+              placeholder="Optional"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
           </div>
 
           <div>
@@ -359,7 +479,14 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             <button
               type="submit"
               disabled={
-                emailMismatch || submitting || !firstName || !lastName || !password || !acceptedTerms
+                emailMismatch ||
+                submitting ||
+                !firstName ||
+                !lastName ||
+                !jobTitle ||
+                !department ||
+                !password ||
+                !acceptedTerms
               }
               className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >

@@ -1,25 +1,37 @@
 ---
 module_id: MODULE_DOCUMENTS
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-15
+last_updated: 2026-05-11
 ---
 
-# Status — Dokumenty (Document Studio)
+# Status — Dokumenty / Wordy
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: soon (wkrótce; doc runtime w budowie)
+- Runtime class: `soon + code_gap`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: As-Is route is active in router and sidebar, but current runtime is placeholder (coming-soon).
+- Docs integration decision (`2026-05-11`): `APPROVED_FOR_DOCS`.
+- Runtime readiness decision (`2026-05-11`): `BLOCKED_P1` (pending runtime evidence rows).
+- Deep-audit decision (`2026-05-11`): `NEEDS_OWNER_DECISION` for `/wordy` runtime strategy vs active upstream chat/template handoffs.
+- Deep-RAW-audit decision (`2026-05-11`): `NEEDS_OWNER_DECISION` (hard-rule compliance is documented; runtime strategy remains unresolved).
+- Stage 1.5 decision (`2026-05-11`): `NEEDS_OWNER_DECISION` for `/wordy` mount strategy; chat/template handoff is rerouted to active Outputs runtime surfaces in Wave 1.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Brakuje dopiętego, user-facing Document Studio flow (Mode 1 end-to-end) wg planu.
-- Musi reuse’ować v8.1 substrate (zero nowych tabel / zero równoległego registry).
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
+- `/wordy` remains placeholder as standalone lane; Teresa/chat and template-use runtime entry now targets active Outputs delivery surfaces, not `/wordy`.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Ryzyko split-brain: osobny “Documents module” vs “Documents tab w Outputs” – kanoniczny dom artefaktów zostaje w Outputs.
-- Ryzyko jakości: DOCX jest historycznie kruche (MVP-4 w planie jest high risk) — wymaga QA gates.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `DOC_WORDY_PLACEHOLDER`, `DOC_STUDIO_RUNTIME_TARGET`.

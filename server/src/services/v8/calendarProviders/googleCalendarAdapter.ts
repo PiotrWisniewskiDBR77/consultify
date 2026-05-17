@@ -6,8 +6,6 @@
  * and ETag-based optimistic concurrency on writes.
  */
 
-// @ts-ignore — optional dependency, may not have type declarations
-import { type calendar_v3, google } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../../../utils/Logger.js';
@@ -24,14 +22,83 @@ import type {
 
 const LOG_PREFIX = '[P02-GoogleCalendar]';
 
+type GoogleAuthClient = {
+  setCredentials: (credentials: { access_token: string }) => void;
+};
+type GoogleCalendarEvent = {
+  id?: string;
+  summary?: string | null;
+  recurrence?: string[];
+  start?: { dateTime?: string | null; date?: string | null; timeZone?: string | null };
+  end?: { dateTime?: string | null; date?: string | null };
+  etag?: string | null;
+  status?: string | null;
+  organizer?: { email?: string | null; self?: boolean | null };
+  attendees?: Array<{ email?: string | null; responseStatus?: string | null }>;
+  iCalUID?: string | null;
+  htmlLink?: string | null;
+  recurringEventId?: string | null;
+  originalStartTime?: { dateTime?: string | null; date?: string | null };
+};
+type GoogleCalendarClient = {
+  calendarList: {
+    list: (params: { maxResults: number }) => Promise<{ data: { items?: Array<any> } }>;
+  };
+  events: {
+    list: (params: Record<string, unknown>) => Promise<{
+      data: {
+        items?: GoogleCalendarEvent[];
+        nextPageToken?: string | null;
+        nextSyncToken?: string | null;
+      };
+    }>;
+    insert: (params: {
+      calendarId: string;
+      requestBody: GoogleCalendarEvent;
+    }) => Promise<{ data: GoogleCalendarEvent }>;
+    update: Function;
+    delete: Function;
+    watch: (params: {
+      calendarId: string;
+      requestBody: { id: string; type: 'web_hook'; address: string };
+    }) => Promise<{ data: { resourceId?: string | null; expiration?: string | null } }>;
+  };
+};
+type GoogleApi = {
+  auth: { OAuth2: new () => GoogleAuthClient };
+  calendar: (options: { version: 'v3'; auth: GoogleAuthClient }) => GoogleCalendarClient;
+};
+
+let googleApiModule: GoogleApi | null | undefined;
+
+async function getGoogleApi(): Promise<GoogleApi | null> {
+  if (googleApiModule !== undefined) return googleApiModule;
+  try {
+    const optionalModule = 'googleapis';
+    const mod = (await import(optionalModule)) as {
+      google?: GoogleApi;
+      default?: { google?: GoogleApi };
+    };
+    googleApiModule = mod.google ?? mod.default?.google ?? null;
+    return googleApiModule;
+  } catch {
+    googleApiModule = null;
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildAuth(connection: ConnectionRef) {
+async function buildCalendarClient(connection: ConnectionRef): Promise<GoogleCalendarClient> {
+  const google = await getGoogleApi();
+  if (!google) {
+    throw new Error(`${LOG_PREFIX} googleapis dependency is required for Google Calendar`);
+  }
   const oauth2 = new google.auth.OAuth2();
   oauth2.setCredentials({ access_token: connection.accessToken });
-  return oauth2;
+  return google.calendar({ version: 'v3', auth: oauth2 });
 }
 
 function parseCursorMap(cursor: string): Record<string, string> {
@@ -61,7 +128,7 @@ function mapEventStatus(status: string | undefined | null): ProviderEvent['statu
   return 'confirmed';
 }
 
-function extractRecurrence(event: calendar_v3.Schema$Event) {
+function extractRecurrence(event: GoogleCalendarEvent) {
   const lines = event.recurrence;
   if (!lines || lines.length === 0) return undefined;
 
@@ -93,7 +160,7 @@ function extractRecurrence(event: calendar_v3.Schema$Event) {
   };
 }
 
-function mapGoogleEvent(event: calendar_v3.Schema$Event, calendarId: string): ProviderEvent {
+function mapGoogleEvent(event: GoogleCalendarEvent, calendarId: string): ProviderEvent {
   const isAllDay = !event.start?.dateTime;
   const startAt = event.start?.dateTime ?? event.start?.date ?? '';
   const endAt = event.end?.dateTime ?? event.end?.date ?? null;
@@ -147,8 +214,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   // -----------------------------------------------------------------------
   async listCalendars(connection: ConnectionRef): Promise<ProviderCalendarRef[]> {
     logger.info(`${LOG_PREFIX} listCalendars for account=${connection.accountRef}`);
-    const auth = buildAuth(connection);
-    const cal = google.calendar({ version: 'v3', auth });
+    const cal = await buildCalendarClient(connection);
 
     try {
       const res = await cal.calendarList.list({ maxResults: 250 });
@@ -175,8 +241,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     window: { startAt: string; endAt: string },
     cursor?: string | null
   ): Promise<FetchEventsResult> {
-    const auth = buildAuth(connection);
-    const cal = google.calendar({ version: 'v3', auth });
+    const cal = await buildCalendarClient(connection);
     const allEvents: ProviderEvent[] = [];
     const nextCursorMap: Record<string, string> = {};
 
@@ -193,7 +258,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
         let nextSyncToken: string | null = null;
 
         do {
-          const params: calendar_v3.Params$Resource$Events$List = {
+          const params: Record<string, unknown> = {
             calendarId,
             maxResults: 2500,
             pageToken,
@@ -243,10 +308,9 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   // -----------------------------------------------------------------------
   async createEvent(connection: ConnectionRef, item: CalendarItemPayload): Promise<ProviderEvent> {
     logger.info(`${LOG_PREFIX} createEvent on calendar=${item.calendarId}`);
-    const auth = buildAuth(connection);
-    const cal = google.calendar({ version: 'v3', auth });
+    const cal = await buildCalendarClient(connection);
 
-    const body: calendar_v3.Schema$Event = {
+    const body: GoogleCalendarEvent = {
       summary: item.title ?? undefined,
       start: item.allDay
         ? { date: item.startAt.slice(0, 10) }
@@ -282,10 +346,9 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     logger.info(
       `${LOG_PREFIX} updateEvent id=${item.providerEventId} on calendar=${item.calendarId}`
     );
-    const auth = buildAuth(connection);
-    const cal = google.calendar({ version: 'v3', auth });
+    const cal = await buildCalendarClient(connection);
 
-    const body: calendar_v3.Schema$Event = {
+    const body: GoogleCalendarEvent = {
       summary: item.title ?? undefined,
       start: item.allDay
         ? { date: item.startAt.slice(0, 10) }
@@ -331,8 +394,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     providerEtag: string
   ): Promise<void | ProviderConflictError> {
     logger.info(`${LOG_PREFIX} deleteEvent id=${providerEventId}`);
-    const auth = buildAuth(connection);
-    const cal = google.calendar({ version: 'v3', auth });
+    const cal = await buildCalendarClient(connection);
 
     try {
       await (cal.events.delete as Function)({
@@ -361,8 +423,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   // -----------------------------------------------------------------------
   async watchChanges(connection: ConnectionRef, callbackUrl: string): Promise<WatchSubscription> {
     logger.info(`${LOG_PREFIX} watchChanges callback=${callbackUrl}`);
-    const auth = buildAuth(connection);
-    const cal = google.calendar({ version: 'v3', auth });
+    const cal = await buildCalendarClient(connection);
 
     const channelId = uuidv4();
     const calendarId = connection.selectedCalendars[0];

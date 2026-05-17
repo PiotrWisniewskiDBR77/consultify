@@ -1,41 +1,55 @@
 ---
 module_id: MODULE_OUTPUTS
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Behavior — Outputy (Outputs Library)
+# Behavior — Outputs Library
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Kontrakt zachowania biblioteki artefaktów: jak artefakty powstają, jak trafiają do registry, jak działa open/reopen/builder handoff, review i traceability.
+- Outputs lane centers on `/presentations` with `ReportsAndPresentationsHub` handling aggregate, mine, review, documents, presentations, sheets, and templates tabs.
+- Legacy reports entry points redirect into outputs tab contexts instead of separate module ownership.
+- Artifact-level create/edit operations route users to specialized builders (`/reports/builder`, presentation wizard/deck builder) while library identity stays in outputs lane.
+- `AppView.PRESENTATIONS` resolves to `/presentations` (library shell), while `AppView.FULL_STEP6_REPORTS` still resolves to `/reports/builder` as a report-builder-first legacy signal.
 
-## Must
+## Function Runtime Breakdown
 
-- MUST: każdy artefakt utworzony przez AI/człowieka jest rejestrowany w jednym registry i widoczny w Outputs Library (w granicach visibility scope).
-- MUST: artefakty nie są “tymczasowe exporty”; mają trwałą tożsamość i metadane.
-- MUST: gdy generation pipeline pada, UI musi pokazać błąd (toast + detale), bez infinite spinner.
-- MUST: reopen/open-in-builder używa poprawnych, kanonicznych endpointów (np. origin path dla presentations).
+- `OUT_LIBRARY_HUB`: primary outputs library runtime.
+- `OUT_REPORT_BUILDER`: report editing/building route.
+- `OUT_PRESENTATION_WIZARD` and `OUT_DECK_BUILDER`: presentation create/edit route functions.
+- `OUT_SHARED_PRESENTATION`: shared/embed viewing function.
+- `OUT_LEGACY_REPORT_REDIRECT`: legacy route bridge into canonical outputs lane.
 
-## Must Not
+## Route Ownership Map (Deep Audit Snapshot)
 
-- MUST NOT: ukrywać failure w pipeline przez ciche `catch {}`.
-- MUST NOT: łamać visibility scopes (private/project/org/review_shared/demo).
+| Route | Runtime shell | Module owner | Evidence |
+| --- | --- | --- | --- |
+| `/presentations` | `ReportsAndPresentationsHub` | `09_outputs` | `src/routes/AppRoutes.tsx`, `src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx` |
+| `/reports`, `/reports/management` | redirect -> `/presentations?tab=documents` | `09_outputs` | `src/routes/AppRoutes.tsx` |
+| `/reports/builder*` | `ReportBuilderView` | `09_outputs` | `src/routes/AppRoutes.tsx` |
+| `/presentations/wizard` | `PresentationWizard` | `09_outputs` | `src/routes/AppRoutes.tsx` |
+| `/presentations/builder/:deckId` | `DeckBuilder` | `09_outputs` | `src/routes/AppRoutes.tsx` |
+| `/wordy` | `V4ComingSoonView` | `10_dokumenty` | `src/routes/AppRoutes.tsx` |
+| `/excele` | `V4ComingSoonView` | `11_tabele` | `src/routes/AppRoutes.tsx` |
+| `/prezentacje` | `V4ComingSoonView` | `12_prezentacje` | `src/routes/AppRoutes.tsx` |
 
-## Should
+## Cross-Module As-Is Risks
 
-- SHOULD: wspierać review workflow (needs review) jako first-class, a nie “folder w nazwie”.
+- `builder_entry_watch`: Stage 1.5 resolved docs wording by separating `AppView.PRESENTATIONS` (`/presentations` shell) from `AppView.FULL_STEP6_REPORTS` (`/reports/builder`); owner/runtime evidence is still needed to confirm the direct builder entry does not create a second canonical shell.
+- `dormant_runtime_gap`: `WordyView` / `ExceleView` / `PrezentacjeView` are imported in routing layer but not mounted on lane routes, so docs must keep placeholder truth explicit.
 
-## Acceptance Criteria
+## State Handling (As-Is)
 
-- [ ] Artefakt po generacji zawsze ląduje w Outputs Library, a nie znika po eksporcie.
-- [ ] UI nie wchodzi w “Postęp zadania 0/8” bez sygnału błędu.
+- Active tab can be route/query driven (`tab` parsing in outputs hub).
+- Hub maintains filters, search, view mode, open documents, and contextual help state.
+- Data loading is split by artifact family (`useReports`, `usePresentations`, `useTemplates`, `useArtifactOutputsList`, `useSheetOutputs`).
 
-## Related Sources
+## Security / Tenant / Governance (As-Is)
 
-- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
-- `DRD/testy_antygravity/ANYGRAVITY_PRESENTATIONS_FIX_RETEST_2026-05-08_PROMPT.md` (evidence: honest errors)
-
+- Artifact action targets and governance summaries are fetched through explicit API calls in `useRapData`.
+- Review/access actions are explicit user-triggered operations; no hidden route-level artifact mutation branch.
+- Outputs lane runs inside authenticated app shell and module production gating.

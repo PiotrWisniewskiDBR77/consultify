@@ -1,40 +1,93 @@
 ---
 module_id: MODULE_RESULTS
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
-last_updated: 2026-05-09
+status: canonical
+last_updated: 2026-05-11
 ---
 
-# Behavior — Rezultaty (Results)
+# Behavior — Rezultaty / Results & Value Realization
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Kontrakt zachowania Results: KPI jako system operacyjny, deviation → corrective action, ROI/evidence oraz linkage do Finance gdy potrzebne.
+- `/benefits` runs `ResultsHub`, which manages KPI, tracked-initiative, reporting, and ROI views in one runtime.
+- Results runtime consumes V8 results dashboard/catalog structures and can fall back to legacy paths when configured.
+- `/kpi-okr` remains an active route surface tied to KPI-focused view.
 
-## Must
+## Function Runtime Breakdown
 
-- MUST: Results ma powierzchnie: Initiatives(scope), KPI(operator workspace), Reporting(narrative), ROI, ROI Analysis.
-- MUST: deviation cases istnieją i prowadzą do działań (nie tylko insight).
-- MUST: truth doctrine: jedna metryka ma jedno znaczenie i jest re-używana w raportach.
+- `RZ_INITIATIVES_TRACKING`: initiative realization tracking lane in results runtime.
+- `RZ_KPI_WORKSPACE`: KPI operations lane (`catalog`, `overview`, `queue`, `scorecards` modes).
+- `RZ_REPORTS_WORKSPACE`: results reporting lane.
+- `RZ_ROI_TRACKING` and `RZ_ROI_ANALYSIS`: ROI tracking and analysis lanes.
+- `RZ_KPI_OKR_ROUTE`: route-level KPI-focused parallel surface.
 
-## Must Not
+## State Handling (As-Is)
 
-- MUST NOT: dublować metryk między Results i Finance bez jawnego linkage.
-- MUST NOT: ukrywać braków danych (freshness/quality) ani “backfill fake demo data”.
+- `ResultsHub` manages active tab/mode/filter/search state with URL query synchronization.
+- Runtime maintains KPI and ROI drawer/modal states, watched KPI state, and manual signal sheet context.
+- Loading and source-state (`v8`/`legacy`/`empty`/`showcase`) are explicit runtime flags.
 
-## Should
+## Security / Tenant / Governance (As-Is)
 
-- SHOULD: wspierać linkage KPI↔Finance w trybach: interpretation/driver/review/realization (opcjonalnie).
+- Results entities are organization-scoped in V8 API contracts.
+- Updates/handoffs to initiative status use explicit helper calls (`initiativeWriteTruth`) and user-triggered interactions.
+- No hidden route-level mutation branch exists for results lane.
 
-## Acceptance Criteria
+## Function Focus Delta — `RZ_INITIATIVES_TRACKING`
 
-- [ ] Użytkownik może przejść od KPI deviation → corrective action / follow-up (bez utraty traceability).
-- [ ] “Route truth” nie jest split-brain (benefits/results).
+### As-Is behavior anchor
+- `results_initiatives` is a live branch inside `ResultsHub` under `/benefits`.
+- Initiative status change is explicit and read-back refreshed.
+- Tracked initiatives are loaded from governed results dashboard contracts with bounded fallback posture.
 
-## Related Sources
+### RAW target behavior (world-class intent)
+- Function acts as value-realization observation layer, not only table rendering.
+- Initiative lifecycle should preserve stage/health/benefit confidence and corrective-loop continuity.
+- Function should expose governance risk signals (`without KPI`, `without evidence`) as first-class operational states.
 
-- `DRD/consultify/docs/product/RESULTS_V8_SSOT.md`
-- `DRD/consultify/docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+### Delta contract (this docs cycle)
+- P0: behavior doctrine and evidence binding locked in function/acceptance contracts.
+- P1: client-uplift behavior contract (`review cadence`, `risk states`) prepared as queued initiative.
+- P2: premium closed-loop behavior depth (`deviation -> action -> verified result`) captured as differentiator backlog.
 
+## Function Focus Delta — `RZ_KPI_WORKSPACE`
+
+### As-Is behavior anchor
+- `results_kpi` is a live branch in `ResultsHub` under `/benefits` with explicit mode transitions (`catalog`, `queue`, `overview`, `scorecards`).
+- KPI reads and writes are V8-first with compatibility fallback only for bounded error classes.
+- Runtime preserves explicit user-triggered mutation and read-back refresh behavior.
+
+### RAW target behavior (world-class intent)
+- KPI workspace should behave as an operating system for metric truth, not a static dashboard lane.
+- KPI lifecycle continuity should be explicit: `definition -> expectation -> measurement -> interpretation -> actionability`.
+- Source quality, trust posture, and approval-readiness should be visible in operator flow before KPI claims are treated as approved.
+
+### Delta contract (this docs cycle)
+- P0: gap map + raw uplift + one unified plan locked with mandatory `route + component + API + test` evidence.
+- P1: direct scorecards/lifecycle branch evidence and regression depth closure.
+- P2: trust hardening for lineage/degraded/approval evidence posture to premium quality bar.
+
+## Function Focus Full-Cycle — `RZ_ROI_ANALYSIS` (`gap -> raw -> initiatives -> plan -> approval`)
+
+### As-Is behavior anchor
+- `roi_analysis` is a live branch inside `ResultsHub` under `/benefits`.
+- Analysis lane is read-first, with explicit drill-in to assumptions and realized entries through ROI detail surfaces.
+- V8-first reads and bounded compatibility fallback are active for ROI portfolio/detail contracts.
+
+### Gap summary
+- `P0`: assumptions/deviation model is visible, but full-cycle contract was not frozen as one coherent roadmap artifact.
+- `P1`: explainability quality is not yet standardized as a required acceptance bar for every major deviation insight.
+- `P2`: explicit approval semantics (`review` vs `approved/locked`) for ROI analysis claims are not yet proven as first-class runtime contract.
+
+### RAW target behavior (client expectation)
+- ROI analysis works as governed value loop, not only dashboard:
+  `assumptions -> scenario/confidence -> deviation -> explanation -> corrective action -> review -> approval`.
+- Explainability must include source references, confidence posture, and impact rationale for every high-impact insight.
+- Verified ROI claims require explicit evidence and approval semantics before being treated as approved truth.
+
+### Delta contract for this cycle
+- `RZ-RAN-P0-001`: lock full-cycle doctrine and evidence matrix for ROI analysis.
+- `RZ-RAN-P1-001`: uplift explainability quality and review readiness criteria.
+- `RZ-RAN-P2-001`: harden approval/lock semantics and premium governance posture.

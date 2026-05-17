@@ -356,6 +356,51 @@ describe('recordFailedExport', () => {
   });
 });
 
+describe('recordFailedExport', () => {
+  it('inserts failed export row', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordFailedExport(ARTIFACT_ID, ORG_ID, 'pdf', USER_ID);
+
+    expect(rec.format).toBe('pdf');
+    expect(rec.status).toBe('failed');
+    expect(rec.completedAt).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledOnce();
+    const params = mockDbRun.mock.calls[0][1] as unknown[];
+    expect(params[5]).toBe('failed');
+  });
+
+  it('accepts png as valid failed export format', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordFailedExport(ARTIFACT_ID, ORG_ID, 'png' as any, USER_ID);
+
+    expect(rec.format).toBe('png');
+    expect(rec.status).toBe('failed');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
+
+  it('accepts docx as valid failed export format', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordFailedExport(ARTIFACT_ID, ORG_ID, 'docx' as any, USER_ID);
+
+    expect(rec.format).toBe('docx');
+    expect(rec.status).toBe('failed');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
+
+  it('accepts csv as valid failed export format', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordFailedExport(ARTIFACT_ID, ORG_ID, 'csv' as any, USER_ID);
+
+    expect(rec.format).toBe('csv');
+    expect(rec.status).toBe('failed');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
+});
+
 describe('getExportHistory', () => {
   it('lists exports newest first', async () => {
     mockDbAll.mockResolvedValueOnce([

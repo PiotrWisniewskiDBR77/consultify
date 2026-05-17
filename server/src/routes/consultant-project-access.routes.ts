@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -197,6 +198,7 @@ const ensureTableExists = async () => {
 
 // Apply auth middleware
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 /**
  * GET /api/consultant-project-access

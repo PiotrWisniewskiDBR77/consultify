@@ -180,7 +180,7 @@ export const ExecutiveSummaryExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ExecutiveSummaryComponent as any);
+    return ReactNodeViewRenderer(ExecutiveSummaryComponent as any) as any;
   },
 });
 

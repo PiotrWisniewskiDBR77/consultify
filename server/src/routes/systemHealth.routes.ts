@@ -62,10 +62,9 @@ const serviceFallback = (
   _readPayload?: Record<string, unknown>
 ) => {
   return res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
+    success: false,
+    error: 'System health service not available',
+    code: 'SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED',
   });
 };
 
@@ -85,7 +84,11 @@ router.get(
       return res.json(health);
     } catch (error: unknown) {
       logger.error('[SystemHealth] Error:', error);
-      return res.status(500).json({ error: 'Health check failed' });
+      return res.status(503).json({
+        success: false,
+        error: 'Health check failed',
+        code: 'SYSTEM_HEALTH_SUMMARY_READ_FAILED',
+      });
     }
   })
 );
@@ -107,7 +110,11 @@ router.get(
       return res.json(health);
     } catch (error: unknown) {
       logger.error('[SystemHealth] Error:', error);
-      return res.status(500).json({ error: 'Health check failed' });
+      return res.status(503).json({
+        success: false,
+        error: 'Health check failed',
+        code: 'SYSTEM_HEALTH_DETAILED_READ_FAILED',
+      });
     }
   })
 );
@@ -129,7 +136,11 @@ router.get(
       return res.json(metrics);
     } catch (error: unknown) {
       logger.error('[SystemHealth] Error fetching metrics:', error);
-      return res.status(500).json({ error: 'Failed to fetch system metrics' });
+      return res.status(503).json({
+        success: false,
+        error: 'Failed to fetch system metrics',
+        code: 'SYSTEM_HEALTH_METRICS_READ_FAILED',
+      });
     }
   })
 );
@@ -151,7 +162,11 @@ router.get(
       return res.json(status);
     } catch (error: unknown) {
       logger.error('[SystemHealth] Error fetching service status:', error);
-      return res.status(500).json({ error: 'Failed to fetch service status' });
+      return res.status(503).json({
+        success: false,
+        error: 'Failed to fetch service status',
+        code: 'SYSTEM_HEALTH_SERVICES_READ_FAILED',
+      });
     }
   })
 );
@@ -173,7 +188,11 @@ router.post(
       return res.json(health);
     } catch (error: unknown) {
       logger.error('[SystemHealth] Error refreshing:', error);
-      return res.status(500).json({ error: 'Failed to refresh health data' });
+      return res.status(503).json({
+        success: false,
+        error: 'Failed to refresh health data',
+        code: 'SYSTEM_HEALTH_REFRESH_FAILED',
+      });
     }
   })
 );

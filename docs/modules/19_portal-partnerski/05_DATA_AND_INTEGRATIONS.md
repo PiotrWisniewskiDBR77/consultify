@@ -1,37 +1,53 @@
 ---
 module_id: MODULE_PARTNER_PORTAL
 doc_kind: DATA
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Data & Integrations — Portal partnerski
+# Data & Integrations — Portal Partnerski
 
 ## Purpose
 
-Opisać: dane programu partnerskiego widoczne w portalu (lifecycle status, earnings ledger summary, payout requests/history, directory profile) oraz ich pochodzenie i integracje (billing/subscriptions jako źródła accrual).
+Define module objects, integrations and lineage responsibilities.
+
+## Core Objects
+
+- Partner, onboarding state, referral/earning event, ledger entry, balance, payout request and operator decision.
+
+## Function Data Responsibility Map
+
+- `PART_PORTAL_WORKSPACE`: protected partner workflow/deliverable/ledger state.
+- `PART_PUBLIC_ACQUISITION_BOUNDARY`: public acquisition vs protected portal boundary context.
 
 ## Must
 
-- **MUST**: Earnings/payout “truth” opiera się na ledger modelu (append-only entries) i derived balances.
-- **MUST**: Idempotency i correlation_id dla zdarzeń finansowych (payout request, adjustments) zapobiega duplikatom.
+- MUST keep stable identifiers for durable objects.
+- MUST preserve source/provenance when objects are generated, imported, exported or converted.
+- MUST record integration calls and important transformations with enough metadata for audit.
 
 ## Must Not
 
-- **MUST NOT**: Pozwalać na edycję historycznych wpisów ledger; korekty to nowe wpisy.
+- MUST NOT duplicate another module's canonical object as an independent source of truth.
+- MUST NOT expose raw sensitive payloads where summaries/source links are sufficient.
 
 ## Should
 
-- **SHOULD**: W portalu pokazać partnerowi “source_ref” w formie bezpiecznej (np. odwołanie do klienta/kampanii) tam gdzie to wspiera zaufanie.
+- SHOULD prefer links and ownership references over copied data.
+- SHOULD make stale or partial data visible to the UI layer.
 
 ## Acceptance Criteria
 
-- [ ] Brak wycieku raw payloadów/PII w UI/logach.
-- [ ] Źródła i lineage są jawne tam, gdzie odpowiedź wpływa na decyzję.
+- [ ] Every durable object has owner module, source/provenance and lifecycle state where applicable.
+- [ ] Cross-module handoff preserves lineage.
+- [ ] Integration failures do not corrupt local canonical state.
 
 ## Related Sources
 
-- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md` (§2.3.2 ledger semantics)
-
+- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_29_PROGRAM_PARTNERSKI_2026-03-29.md`
+- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_PARTNER_PROGRAM_2026-03-29.md`
+- `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_PARTNER_PROGRAM.md`
+- `DRD/consultify/docs/product/PARTNER_PROGRAM_V8_MASTER_SUMMARY.md`
+- `DRD/consultify/docs/product/modules/partner/PARTNER_PORTAL_MODULE.md`

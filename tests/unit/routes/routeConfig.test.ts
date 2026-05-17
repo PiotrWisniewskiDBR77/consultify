@@ -82,6 +82,19 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/partner/resources')).toBe(AppView.PARTNER_RESOURCES);
   });
 
+  it('maps pack-02 guarded nested module routes to stable AppViews', () => {
+    expect(getAppViewFromPath('/roi/plan-1')).toBe(AppView.FULL_STEP4_ROI);
+    expect(getAppViewFromPath('/project-intelligence/session-77')).toBe(AppView.PROJECT_INTELLIGENCE);
+    expect(getAppViewFromPath('/ai-actions/queue')).toBe(AppView.AI_ACTION_PROPOSALS);
+    expect(getAppViewFromPath('/consultant/panel/team')).toBe(AppView.CONSULTANT_PANEL);
+    expect(getAppViewFromPath('/consultant/invites')).toBe(AppView.CONSULTANT_INVITES);
+    expect(getAppViewFromPath('/affiliate/overview')).toBe(AppView.AFFILIATE_DASHBOARD);
+    expect(getAppViewFromPath('/setup/organization')).toBe(AppView.ORG_SETUP_WIZARD);
+    expect(getAppViewFromPath('/setup/onboarding/admin')).toBe(AppView.ONBOARDING_WIZARD);
+    expect(getAppViewFromPath('/setup/onboarding/seed/persona-a')).toBe(AppView.ONBOARDING_WIZARD);
+    expect(getAppViewFromPath('/partner/onboarding')).toBe(AppView.PARTNER_LANDING);
+  });
+
   it('getAppViewFromPath: resolves both /finance and /economics to ECONOMICS', () => {
     expect(getAppViewFromPath('/finance')).toBe(AppView.ECONOMICS);
     expect(getAppViewFromPath('/finance/models')).toBe(AppView.ECONOMICS);

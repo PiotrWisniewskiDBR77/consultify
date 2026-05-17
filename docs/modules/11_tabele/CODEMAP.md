@@ -1,26 +1,41 @@
 ---
 module_id: MODULE_TABLES
 doc_kind: CODEMAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — Tabele (Table Studio)
+# Codemap — Tabele / Excele
 
-## Route / AppView / Entry component
+## Route / AppView / Sidebar (As-Is evidence)
 
-Routing jest mieszany (lane + surfaces), więc mapujemy przez “code anchors” z closeout.
+- Sidebar entry: `MODULE_EXCELE` (label `Tables`, badge `soon`)
+- Launch AppView: `AppView.EXCELE`
+- Launch route: `/excele`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: As-Is route is active in router and sidebar, with placeholder runtime.
 
-- **Shell UI (lane)**: `src/components/AIChat/KimiWorkspace/tabeleShell/` (MELS shell + right rail)
-- **Forms intake UI**: `src/components/MyWork/table/forms/`
-- **Frontend flags**: `src/utils/tabele*Flag.ts`
-- **API client**: `src/services/api/tablePlatform.api.ts`
-- **Backend services (core)**: `server/src/services/tablePlatform/*` (AI editor, QA, source pack, conversions, intake)
-- **Public JWT intake route**: `/api/table-platform/public/forms/jwt/:token`
+## Routed Components
 
-## Implementation notes
+- `src/routes/AppRoutes.tsx` -> route `ROUTES.EXCELE` renders `V4ComingSoonView`
+- `src/components/AIChat/KimiWorkspace/ExceleView.tsx` is imported but not mounted on current route
 
-Kontrakty Tables są ostro “security + audit”-driven: każda mutacja ma ledger; cross-tenant probes odmawiają (`TENANT_VIOLATION`).
+## Function Map (As-Is)
 
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `TB_EXCELE_PLACEHOLDER` | `V4ComingSoonView` on `/excele` | active placeholder runtime. |
+| `TB_TABLE_RUNTIME_TARGET` | `ExceleView` (imported only) | target runtime contract, not mounted. |
+
+## Relevant Services / Types
+
+- `src/services/api.ts` (shared API client)
+- `src/store/useAppStore.ts` (cross-module state and route transitions)
+- `src/types/core.ts` keeps enum identity for `AppView.EXCELE`.
+
+## Current Runtime Status
+
+- Classification: `soon + code_gap`
+- This codemap is As-Is only and reflects currently mounted route behavior.

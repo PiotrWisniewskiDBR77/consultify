@@ -7,11 +7,6 @@
  * tokens for incremental polling.
  */
 
-import type { DateWithTimeZone, ParameterValue, VEvent } from 'node-ical';
-import * as ical from 'node-ical';
-import type { DAVCalendar, DAVObject } from 'tsdav';
-import { DAVClient, DAVNamespaceShort } from 'tsdav';
-
 import logger from '../../../utils/Logger.js';
 import type {
   CalendarProviderAdapter,
@@ -23,16 +18,113 @@ import type {
 
 const LOG_PREFIX = '[P02-CalDAV]';
 
+type DAVCalendar = {
+  url: string;
+  displayName?: string | Record<string, unknown>;
+  calendarColor?: string;
+  syncToken?: string;
+};
+type DAVObject = {
+  url: string;
+  etag?: string;
+  data?: unknown;
+};
+type DAVClientInstance = {
+  login: () => Promise<void>;
+  fetchCalendars: () => Promise<DAVCalendar[]>;
+  syncCollection: (options: {
+    url: string;
+    props: Record<string, unknown>;
+    syncToken: string;
+    syncLevel: number;
+  }) => Promise<Array<{ ok?: boolean; href?: string; props?: Record<string, any> }>>;
+  fetchCalendarObjects: (options: {
+    calendar: DAVCalendar;
+    timeRange: { start: string; end: string };
+  }) => Promise<DAVObject[]>;
+};
+type DAVClientCtor = new (options: {
+  serverUrl: string;
+  credentials: { username: string; password: string };
+  authMethod: 'Basic';
+  defaultAccountType: 'caldav';
+}) => DAVClientInstance;
+
+const DAV_NAMESPACE_SHORT = {
+  CALDAV: 'caldav',
+  DAV: 'DAV',
+} as const;
+
+type DateWithTimeZone = Date & { tz?: string };
+type ParameterValue = string | { val?: string | null };
+type VEvent = {
+  type?: string;
+  uid?: string;
+  datetype?: string;
+  status?: string;
+  rrule?: { toString: () => string };
+  exdate?: Record<string, DateWithTimeZone>;
+  recurrenceid?: DateWithTimeZone;
+  summary?: ParameterValue;
+  start?: DateWithTimeZone;
+  end?: DateWithTimeZone;
+};
+type CalendarResponse = Record<string, unknown>;
+
+let nodeIcalModule: { sync: { parseICS: (icsData: string) => CalendarResponse } } | null | undefined;
+let tsdavModule: { DAVClient: DAVClientCtor } | null | undefined;
+
+async function getNodeIcalModule(): Promise<{
+  sync: { parseICS: (icsData: string) => CalendarResponse };
+} | null> {
+  if (nodeIcalModule !== undefined) return nodeIcalModule;
+  try {
+    const optionalModule = 'node-ical';
+    const mod = (await import(optionalModule)) as {
+      sync?: { parseICS?: (icsData: string) => CalendarResponse };
+      default?: { sync?: { parseICS?: (icsData: string) => CalendarResponse } };
+    };
+    const resolved = mod.sync?.parseICS ? mod : mod.default;
+    nodeIcalModule = resolved?.sync?.parseICS ? (resolved as NonNullable<typeof nodeIcalModule>) : null;
+    return nodeIcalModule;
+  } catch {
+    nodeIcalModule = null;
+    return null;
+  }
+}
+
+async function getTsdavModule(): Promise<{ DAVClient: DAVClientCtor } | null> {
+  if (tsdavModule !== undefined) return tsdavModule;
+  try {
+    const optionalModule = 'tsdav';
+    const mod = (await import(optionalModule)) as {
+      DAVClient?: DAVClientCtor;
+      default?: { DAVClient?: DAVClientCtor };
+    };
+    const DAVClient = mod.DAVClient ?? mod.default?.DAVClient;
+    tsdavModule = DAVClient ? { DAVClient } : null;
+    return tsdavModule;
+  } catch {
+    tsdavModule = null;
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function buildDAVClient(connection: ConnectionRef): Promise<DAVClient> {
+async function buildDAVClient(connection: ConnectionRef): Promise<DAVClientInstance> {
   if (!connection.serverUrl) {
     throw new Error(`${LOG_PREFIX} serverUrl is required for CalDAV connections`);
   }
 
-  const client = new DAVClient({
+  const tsdav = await getTsdavModule();
+  if (!tsdav) {
+    throw new Error(`${LOG_PREFIX} tsdav dependency is required for CalDAV connections`);
+  }
+
+  const client = new tsdav.DAVClient({
     serverUrl: connection.serverUrl,
     credentials: {
       username: connection.accountRef,
@@ -130,15 +222,19 @@ interface ParsedVEvents {
   exceptions: Map<string, Array<{ event: VEvent; calObj: DAVObject }>>;
 }
 
-function collectVEvents(calendarObjects: DAVObject[], calendarId: string): ParsedVEvents {
+async function collectVEvents(calendarObjects: DAVObject[], calendarId: string): Promise<ParsedVEvents> {
   const masters = new Map<string, { event: VEvent; calObj: DAVObject }>();
   const exceptions = new Map<string, Array<{ event: VEvent; calObj: DAVObject }>>();
+  const ical = await getNodeIcalModule();
+  if (!ical) {
+    throw new Error(`${LOG_PREFIX} node-ical dependency is required to parse CalDAV events`);
+  }
 
   for (const calObj of calendarObjects) {
     if (!calObj.data) continue;
 
     const icsData = typeof calObj.data === 'string' ? calObj.data : String(calObj.data);
-    let parsed: ical.CalendarResponse;
+    let parsed: CalendarResponse;
     try {
       parsed = ical.sync.parseICS(icsData);
     } catch (err) {
@@ -225,8 +321,8 @@ function buildProviderEvent(
   return pe;
 }
 
-function mapCalendarObjects(calendarObjects: DAVObject[], calendarId: string): ProviderEvent[] {
-  const { masters, exceptions } = collectVEvents(calendarObjects, calendarId);
+async function mapCalendarObjects(calendarObjects: DAVObject[], calendarId: string): Promise<ProviderEvent[]> {
+  const { masters, exceptions } = await collectVEvents(calendarObjects, calendarId);
   const events: ProviderEvent[] = [];
 
   for (const [uid, { event, calObj }] of masters) {
@@ -342,8 +438,8 @@ export const caldavAdapter: CalendarProviderAdapter = {
             const syncResponses = await client.syncCollection({
               url: calendarId,
               props: {
-                [`${DAVNamespaceShort.CALDAV}:calendar-data`]: {},
-                [`${DAVNamespaceShort.DAV}:getetag`]: {},
+                [`${DAV_NAMESPACE_SHORT.CALDAV}:calendar-data`]: {},
+                [`${DAV_NAMESPACE_SHORT.DAV}:getetag`]: {},
               },
               syncToken: cursor,
               syncLevel: 1,
@@ -360,7 +456,7 @@ export const caldavAdapter: CalendarProviderAdapter = {
                 data: r.props?.['calendar-data']?.value ?? r.props?.['calendar-data'] ?? '',
               }));
 
-            allEvents.push(...mapCalendarObjects(calObjects, calendarId));
+            allEvents.push(...(await mapCalendarObjects(calObjects, calendarId)));
           } catch (syncErr) {
             if (isSyncTokenInvalid(syncErr)) {
               logger.warn(
@@ -380,7 +476,7 @@ export const caldavAdapter: CalendarProviderAdapter = {
             },
           });
 
-          allEvents.push(...mapCalendarObjects(calObjects, calendarId));
+          allEvents.push(...(await mapCalendarObjects(calObjects, calendarId)));
 
           if (cal.syncToken) {
             latestSyncToken = cal.syncToken;

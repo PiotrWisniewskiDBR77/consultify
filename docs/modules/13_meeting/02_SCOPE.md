@@ -1,9 +1,9 @@
 ---
 module_id: MODULE_MEETING
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
@@ -11,27 +11,30 @@ last_updated: 2026-05-09
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Meeting: capture + strukturyzacja, integracje zależne od dostępnych źródeł.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: notatki ze spotkań + action items + decisions jako obiekty, które można powiązać z Initiative / My Work.
-- MUST: jasne stany “empty/partial/degraded” gdy integracje (np. calendar) nie istnieją.
+- Meeting record, participants, agenda, pre-read, notes, decisions, tasks and follow-up.
+- Conversion from meeting outcomes to relevant modules.
+- Function set: `ME_MEETING_PLACEHOLDER`, `ME_MEETING_RUNTIME_TARGET`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: pełna synchronizacja kalendarzy i wideokonferencji bez jawnie opisanego SoT i integracji.
+- Calendar replacement as full scheduling system unless Calendar contract says so.
+- Hidden task/decision creation without user approval.
 
-## Should
+## Inputs
 
-- SHOULD: pozwolić konwertować notatki do artefaktów (Tasks/Decisions/Outputs) z traceability.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres nie dubluje Notebook (Notebook = living knowledge; Meeting = capture event).
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

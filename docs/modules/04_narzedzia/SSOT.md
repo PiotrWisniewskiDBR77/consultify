@@ -1,38 +1,38 @@
 ---
 module_id: MODULE_TOOLS
 doc_kind: SSOT_MAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# SSOT — Narzędzia
+# SSOT — Narzędzia / Tools
 
-## Priority order (when sources conflict)
+## Priority Order
 
-1. `DRD/consultify/docs/modules/04_narzedzia/00_META.md` … `07_ACCEPTANCE_AND_TESTS.md` (ten kontrakt)
-2. `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-3. `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
-4. Źródła modułowe (poniżej)
+1. This module contract: `00_META.md` through `07_ACCEPTANCE_AND_TESTS.md`.
+2. Author raw input in `RAW_INPUT.md` and linked raw author files in `DRD/consultify/docs/UI_UX/` or `DRD/consultify/docs/RAW/`.
+3. Real source documents listed below.
+4. Routing and global governance: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`, `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`, `DRD/UI_UX_SOURCE_OF_TRUTH.md`, `DRD/consultify/docs/ui-standards/`.
 
-## Primary module sources (to migrate into contract)
+## Primary Sources Migrated Into This Contract
 
-- `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md` (as-is kod + routing + integracje)
-- `DRD/consultify/docs/product/TOOLS_CATALOG_V3.md` (SSOT: definicje narzędzi + standardy UI + v3 model)
+- `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md`
+- `DRD/consultify/docs/product/TOOLS_CATALOG_V3.md`
+- `DRD/consultify/docs/product/TOOLS_V8_SSOT.md`
 - `DRD/consultify/docs/product/OPERATING_MODEL_V3.md`
-- `DRD/consultify/docs/product/TOOLS_AND_ASSESSMENT_AGENT_ADAPTERS_V8.md`
-
-## UI/UX standards
-
 - `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
 - `DRD/consultify/docs/ui-standards/03-modules/tools-library-detail-standard.md`
+- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
 
-## Downstream integrations (contract references)
+## Superseded Or Removed References
 
-- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md` (handoff do Inicjatyw)
+- This SSOT intentionally removes references to filenames that are not present in the repo at audit time.
+- If an older plan references a missing file, use the nearest existing source above and record the gap in `CHANGELOG.md` before changing behavior.
 
-## Notes: Assessment
+## Coverage Status
 
-`MODULE_ROUTING_ARCHITECTURE.md` traktuje `Assessment` jako osobny sidebar moduł w as-is. W tej dokumentacji `Narzędzia` opisują relację `Tools ↔ Assessment` i linkowanie do assessment workspace, ale nie dublują pełnego kontraktu assessmentów (chyba że autor zdecyduje inaczej).
-
+- Status: `canonical baseline`.
+- Meaning: the module now has a coherent author-level contract based on verified repo sources and raw author inputs.
+- Remaining work: deepen each requirement by reading every linked source line-by-line during implementation sprints.

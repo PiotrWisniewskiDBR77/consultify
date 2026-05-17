@@ -84,11 +84,18 @@ router.get(
       });
     }
 
-    const mapping = await getResourceTypeMapping(resourceType, organizationId);
-    return res.json({
-      data: { mapping, resourceType },
-      meta: multiplayerMeta(),
-    });
+    try {
+      const mapping = await getResourceTypeMapping(resourceType, organizationId);
+      return res.json({
+        data: { mapping, resourceType },
+        meta: multiplayerMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Multiplayer resource mapping unavailable',
+        code: 'MULTIPLAYER_RESOURCE_MAPPING_READ_FAILED',
+      });
+    }
   })
 );
 
@@ -116,17 +123,24 @@ router.get(
       });
     }
 
-    const binding = await resolveRoomBinding(
-      resourceType,
-      resourceId,
-      organizationId,
-      parentResourceId || undefined
-    );
+    try {
+      const binding = await resolveRoomBinding(
+        resourceType,
+        resourceId,
+        organizationId,
+        parentResourceId || undefined
+      );
 
-    return res.json({
-      data: { binding, resourceType, resourceId, parentResourceId: parentResourceId || null },
-      meta: multiplayerMeta(),
-    });
+      return res.json({
+        data: { binding, resourceType, resourceId, parentResourceId: parentResourceId || null },
+        meta: multiplayerMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Multiplayer room binding unavailable',
+        code: 'MULTIPLAYER_ROOM_BINDING_READ_FAILED',
+      });
+    }
   })
 );
 
@@ -145,11 +159,18 @@ router.get(
       });
     }
 
-    const presence = await getWorkspacePresence(roomId, organizationId);
-    return res.json({
-      data: { roomId, presence, count: presence.length },
-      meta: multiplayerMeta(),
-    });
+    try {
+      const presence = await getWorkspacePresence(roomId, organizationId);
+      return res.json({
+        data: { roomId, presence, count: presence.length },
+        meta: multiplayerMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Multiplayer presence unavailable',
+        code: 'MULTIPLAYER_PRESENCE_READ_FAILED',
+      });
+    }
   })
 );
 
@@ -176,11 +197,18 @@ router.get(
       });
     }
 
-    const presence = await getPresenceBySurface(roomId, surface, organizationId);
-    return res.json({
-      data: { roomId, surface, presence, count: presence.length },
-      meta: multiplayerMeta(),
-    });
+    try {
+      const presence = await getPresenceBySurface(roomId, surface, organizationId);
+      return res.json({
+        data: { roomId, surface, presence, count: presence.length },
+        meta: multiplayerMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Multiplayer surface presence unavailable',
+        code: 'MULTIPLAYER_PRESENCE_READ_FAILED',
+      });
+    }
   })
 );
 
@@ -199,11 +227,18 @@ router.get(
       });
     }
 
-    const locks = await getActiveLocks(roomId, organizationId);
-    return res.json({
-      data: { roomId, locks, count: locks.length },
-      meta: multiplayerMeta(),
-    });
+    try {
+      const locks = await getActiveLocks(roomId, organizationId);
+      return res.json({
+        data: { roomId, locks, count: locks.length },
+        meta: multiplayerMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Multiplayer locks unavailable',
+        code: 'MULTIPLAYER_LOCKS_READ_FAILED',
+      });
+    }
   })
 );
 

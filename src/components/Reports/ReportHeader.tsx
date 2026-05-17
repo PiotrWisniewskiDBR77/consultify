@@ -149,7 +149,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
     if (st === 'INITIATIVE')
       return {
         label: t('reports.openSourceInitiative', 'Open Initiative'),
-        url: `/initiatives?id=${sourceId}`,
+        url: `/initiatives?open=${encodeURIComponent(sourceId)}&mode=doc`,
       };
     if (st === 'TOOL' || st === 'TOOL_SESSION')
       return {

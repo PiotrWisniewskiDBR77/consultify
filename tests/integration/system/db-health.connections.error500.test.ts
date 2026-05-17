@@ -10,7 +10,7 @@ vi.mock('../../../server/src/database/index.js', () => ({
   getHealthMonitor: () => null,
 }));
 
-describe('DB health: connections returns 500 on exception (REAL integration)', () => {
+describe('DB health: connections returns 503 on exception (REAL integration)', () => {
   let canListen = true;
   let router: any;
 
@@ -30,10 +30,15 @@ describe('DB health: connections returns 500 on exception (REAL integration)', (
 
   const makeApp = () => makeTestApp({ mountPath: '/api/health', router });
 
-  it('GET /api/health/connections returns 500 with status error', async function () {
+  it('GET /api/health/connections returns 503 with coded status error', async function () {
     if (!canListen) this.skip();
     const res = await request(makeApp()).get('/api/health/connections');
-    expect(res.status).toBe(500);
-    expect(res.body).toEqual(expect.objectContaining({ status: 'error' }));
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        code: 'HEALTH_CONNECTION_POOL_STATUS_FAILED',
+      })
+    );
   });
 });

@@ -1,15 +1,29 @@
 ---
 module_id: MODULE_MY_WORK
 doc_kind: CHANGELOG
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Changelog — Moja Praca
+# Changelog — Moja Praca / My Work
 
-## Unreleased
+## 2026-05-09
 
-- 2026-05-09: scaffold plików kontraktowych (start migracji SoT).
+- Rebuilt module contract as author-level canonical baseline.
+- Replaced empty/template placeholders with structured requirements from verified repo sources and raw author canon where available.
+- Normalized source map in `SSOT.md` to avoid missing-file references.
 
+## 2026-05-10
+
+- Added complete function contracts for module coverage:
+  - core functions (`MW_HOME_RADAR`, `MW_IDEAS`, `MW_NOTEBOOK`, `MW_INBOX`, `MW_CALENDAR`, `MW_TASKS`, `MW_DECISIONS`, `MW_MANAGER`)
+  - ideas subfunctions (`MW_IDEAS_MINDMAP`, `MW_IDEAS_TABLE`, `MW_IDEAS_PROCESS_FLOW`, `MW_IDEAS_WHITEBOARD`)
+- Expanded `04_UI_UX.md` with full function annex and component mapping.
+- Deepened `CODEMAP.md`, `03_BEHAVIOR.md`, `07_ACCEPTANCE_AND_TESTS.md`, `STATUS.md` with function-level matrices and evidence paths.
+- Completed function-first updates in `README.md`, `00_META.md`, `01_PURPOSE.md`, `02_SCOPE.md`, `05_DATA_AND_INTEGRATIONS.md`, `06_PERMISSIONS_AND_SECURITY.md`.
+- Added implementation-ready stabilization/completion document:
+  - `IMPLEMENTATION_PLAN_STABILIZATION_AND_COMPLETION.md` (priority waves `P0/P1/P2`, gates, KPI, rollout and DoD).
+- Added Whiteboard RAW gap analysis and completion roadmap:
+  - `WHITEBOARD_RAW_GAP_ANALYSIS_AND_ROADMAP.md` (capability gaps and priority plan `P0-P2`).

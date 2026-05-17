@@ -1,40 +1,39 @@
 ---
 module_id: MODULE_MCP_IRIS
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # Behavior — MCP IRIS
 
-## Purpose
+## As-Is Runtime Behavior
 
-Kontrakt zachowania providera MCP IRIS: rejestracja providera, polityki narzędzi, wykonywanie tool calls, audyt i błędy.
+- Navigation identity is present in sidebar, route constants and AppView mapping.
+- Current implementation is intentionally non-functional from UI perspective (placeholder).
+- No routed execution panel is mounted under `/mcp/iris` in As-Is tree.
+
+## Function Runtime Breakdown
+
+- `IRIS_PLACEHOLDER_SURFACE`: active placeholder function on `/mcp/iris`.
+- `IRIS_RUNTIME_TARGET`: target integration runtime function, currently not mounted.
 
 ## Must
 
-- MUST: provider ma statusy (configured/healthy/degraded/down) i jawne komunikaty w UI.
-- MUST: narzędzia są allowlisted i przypisane do polityk (read-only / write).
-- MUST: write tool calls (jeśli dopuszczone) stosują `proposal → approval → execution → audit`.
-- MUST: wszystkie wywołania są audytowane (korelacja z user/tenant/run).
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- MUST NOT: wykonywać narzędzi spoza allowlist.
-- MUST NOT: przekraczać tenant boundaries.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- SHOULD: mieć dry-run / test tool do walidacji łączności bez skutków ubocznych.
-
-## Acceptance Criteria
-
-- [ ] Zawiera jawne reguły `proposal -> approval -> execution -> audit` tam, gdzie czat inicjuje działania.
-- [ ] Definiuje “uczciwe” stany błędów i degradacji (bez fake success / infinite spinner).
-
-## Related Sources
-
-- `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.

@@ -177,6 +177,8 @@ export const handleResponse = async <T = unknown>(
   throw err;
 };
 
+export const handleDataResponse = handleResponse;
+
 /**
  * HTTP method helpers
  */

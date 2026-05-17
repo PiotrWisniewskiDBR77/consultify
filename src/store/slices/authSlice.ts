@@ -68,6 +68,8 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
       sessionStorage.removeItem('isDemo');
       sessionStorage.removeItem('demo_session_id');
       sessionStorage.removeItem('demo_events');
+      sessionStorage.removeItem('attribution_ref');
+      sessionStorage.removeItem('attribution_invite');
     } catch {
       // ignore
     }

@@ -1,16 +1,28 @@
 ---
 module_id: MODULE_OUTPUTS
 doc_kind: CHANGELOG
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Changelog — Outputy (Outputs Library)
+# Changelog — Outputs Library
 
-## Unreleased
+## 2026-05-11
 
-- 2026-05-09: scaffold plików kontraktowych (start migracji SoT).
-- 2026-05-09: migracja SoT → kontrakt (v8.1 native artifact runtime + route truth `/presentations`).
+- Added Stage 1.5 ultra-deep integration audit for `09_outputs` vs `10/11/12`.
+- Corrected module meta semantics: canonical shell is `AppView.PRESENTATIONS` on `/presentations`; `AppView.FULL_STEP6_REPORTS` is retained as `/reports/builder` entry evidence.
+- Reconfirmed `NO_NEW_EDGE` and `NO_NEW_ARTIFACT` for graph/lineage in this docs-only pass.
 
+## 2026-05-10
+
+- Added function-first contract layer for module 09 (`6/6` functions).
+- Added function annex in `04_UI_UX.md` and linked function contracts in `functions/`.
+- Updated codemap, behavior, acceptance and status with function coverage evidence.
+
+## 2026-05-09
+
+- Rebuilt module contract as author-level canonical baseline.
+- Replaced empty/template placeholders with structured requirements from verified repo sources and raw author canon where available.
+- Normalized source map in `SSOT.md` to avoid missing-file references.

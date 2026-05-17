@@ -1,39 +1,44 @@
 ---
 module_id: MODULE_SETTINGS
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Ustawienia (Settings)
+# Purpose — Ustawienia
 
 ## Purpose
 
-Zdefiniować po co istnieje moduł `Ustawienia`: jako **user‑scoped preference hub** (profil, notyfikacje, personal AI behavior/memory, work preferences) + wybrane **ownership panels** (tenant‑defaults/branding/security) działające głównie jako “resolver view” z handoff do właściwej powierzchni write.
+User and workspace settings hub: preferences, account/profile, memory controls and links to admin-owned settings where user lacks ownership.
+
+Cel jest realizowany przez funkcję kanoniczną settings workspace oraz funkcję graniczną polityk/admin links.
 
 ## Must
 
-- **MUST**: Być kanonicznym miejscem dla preferencji użytkownika (user scope), które nie wymagają tenant‑governance.
-- **MUST**: Dla tenant‑enforced ustawień, które nie są edytowalne w Settings: pokazać aktualny stan + **deep‑link** do Admin/Organization.
-- **MUST**: Nie udawać zapisu: jeśli sekcja jest `stub`, musi to być traktowane jako dług (nie “production ready”).
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- **MUST NOT**: Stać się równoległym “Admin root” dla krytycznych polityk tenantowych.
-- **MUST NOT**: Maskować błędów i deny (fail‑closed przy niepewności).
+- Second admin root.
+- Silent changes to org-level policies.
 
 ## Should
 
-- **SHOULD**: Zapewnić spójne UX dla ustawień: sekcje, nawigacja, konsekwentne komunikaty i powtarzalne stany (loading/empty/error/degraded).
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z ownership: Settings = user preferences; Admin = tenant critical writes; Organization = profile/context; SuperAdmin = platform.
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
 - `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
 - `DRD/consultify/docs/product/USER_AND_ADMIN_MEMORY_CONTROLS_V8.md`
-
+- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_ENTERPRISE_2026-04-11.md`

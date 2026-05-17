@@ -154,6 +154,7 @@ import { type Request, type Response, Router } from 'express';
 import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
   cancelApproval,
@@ -375,6 +376,7 @@ function logoUploadSingleMiddleware(
 }
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 function getAuthContext(req: AuthRequest): {
   userId: string;

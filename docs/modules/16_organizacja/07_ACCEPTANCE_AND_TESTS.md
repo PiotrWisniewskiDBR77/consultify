@@ -1,42 +1,42 @@
 ---
 module_id: MODULE_ORGANIZATION
 doc_kind: TESTS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Acceptance & Tests — Organizacja (Organization Context)
+# Acceptance & Tests — Organizacja
 
-## Purpose
+## Scope Of Verification (As-Is)
 
-Zdefiniować weryfikowalne kryteria akceptacji oraz minimalny plan testów.
+- Verify sidebar -> AppView -> route -> rendered component chain.
+- Verify ownership/alias statements against `menuConfig.ts`, `routeConfig.ts`, `AppRoutes.tsx`.
+- Verify role/guard behavior where module is protected.
 
-## Must
+## Required Checks
 
-- MUST: cross-tenant leakage = P0; negatywne testy muszą to łapać.
-- MUST: “honest degraded” statusy: upload/processing/partial/ready/unreadable/policy_blocked/quota_blocked.
-- MUST: lineage event jest zapisany dla AI outputów używających kontekstu.
-- MUST: release gate runbook prerequisites są spełnione przed promocją (smoke + audit + loadtest + env keys).
+- [ ] Route opens documented runtime (`workspace` or `placeholder`) exactly as specified.
+- [ ] AppView enum and route mapping are consistent in `src/types/core.ts` and `routeConfig.ts`.
+- [ ] No contradiction with global ownership decisions in module docs and global docs.
+- [ ] If module is placeholder, UI communicates not-ready state explicitly.
 
-## Must Not
+## Current Gate Expectation
 
-- MUST NOT: “fake success” dla krytycznych akcji.
-- MUST NOT: infinite spinner bez recovery.
+- Expected gate result today: `PASS_WITH_P2 (legacy/transitional overlap still present).`
+- This is As-Is readiness, not target-state implementation readiness.
 
-## Should
+## Function-Level Acceptance Matrix
 
-- TBD
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `ORG_CONTEXT_WORKSPACE` | Canonical organization runtime is mounted | `AppRoutes.tsx` + `OrganizationView.tsx` | pass |
+| `ORG_LEGACY_CONTEXT_BUILDER` | Transitional `/context/*` runtime remains mounted | `AppRoutes.tsx` + `ContextBuilderView` mapping | pass (`partial`) |
 
-## Acceptance Criteria
+## Evidence Pointers
 
-- [ ] PASS/BLOCKED językiem z `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
-- [ ] Checklisty obejmują: loading/success/error/empty/degraded + refresh resistance.
-
-## Related Sources
-
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md`
-- `DRD/testy_antygravity/TESTING_OPERATING_SYSTEM.md` (jeśli dotyczy)
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_RELEASE_GATE_RUNBOOK.md`
-
+- `src/components/navigation/Sidebar/menuConfig.ts`
+- `src/routes/routeConfig.ts`
+- `src/routes/AppRoutes.tsx`
+- `src/types/core.ts`

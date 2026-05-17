@@ -62,7 +62,7 @@ describe('InsightCreatorModal load honesty', () => {
     fireEvent.click(screen.getByRole('button', { name: /\+ Retry/i }));
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledTimes(4);
+      expect(apiGetMock).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -138,7 +138,7 @@ describe('InsightCreatorModal load honesty', () => {
     await waitFor(() => {
       expect(screen.getByText('Customer Discovery')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText('Customer Discovery'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Customer Discovery/i }));
     fireEvent.click(screen.getByText('Context'));
     fireEvent.click(screen.getByRole('button', { name: 'Run' }));
 

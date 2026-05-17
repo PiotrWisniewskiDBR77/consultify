@@ -1,25 +1,24 @@
 ---
 module_id: MODULE_FINANCE
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-15
+last_updated: 2026-05-09
 ---
 
-# Status — Finanse
+# Status — Finanse / Finance & Intelligence
 
-## Shipping status
+## Status Tags (As-Is)
 
-- **Status**: mixed (as-is economics shipped; Financial Analysis v3 in progress)
+- `real`: `/economics` and `/finance` routes are active and map to `EconomicsView`.
+- `real`: sidebar mapping to `AppView.ECONOMICS` is active.
+- `partial`: finance runtime includes V8 mode with legacy fallback toggles.
+- `real`: finance detail routes (`/finance/statements/:id`, `/finance/models/:id`, `/finance/analyses/:id`) are wired.
+- `code_gap`: no dedicated automated tests for `FinanceHub`/`EconomicsView`.
+- `doc_gap`: prior baseline did not include alias/detail route evidence.
 
-## Known gaps (from existing SoT)
+## Function Coverage Status
 
-- W kodzie jest `EconomicsView` pod `/economics` (supporting capability).
-- Pełny “Financial Analysis v3” (6 zakładek + AI orchestration) wymaga mapowania do realnych routes/views.
-
-## Risks
-
-- Ryzyko split-brain: Results vs Finance (duplikaty definicji liczb). Linkage musi pozostać opcjonalny i jawny.
-- Ryzyko “AI halucynuje liczby” – Finanse mają twardy kontrakt “numerical anchor”.
-
+- Required functions documented: `7/7`.
+- Covered: `FN_STATEMENTS_WORKSPACE`, `FN_MODELS_WORKSPACE`, `FN_ANALYSIS_WORKSPACE`, `FN_PREDICTION_WORKSPACE`, `FN_VALUATION_WORKSPACE`, `FN_INVESTMENT_WORKSPACE`, `FN_FINANCE_DETAIL_ROUTES`.

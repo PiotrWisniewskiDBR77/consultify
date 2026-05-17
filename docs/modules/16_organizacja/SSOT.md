@@ -1,33 +1,36 @@
 ---
 module_id: MODULE_ORGANIZATION
 doc_kind: SSOT_MAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# SSOT — Organizacja (Organization Context Engine)
+# SSOT — Organizacja / Organization Context
 
-## Priority order (when sources conflict)
+## Priority Order
 
-1. `DRD/consultify/docs/modules/16_organizacja/00_META.md` … `07_ACCEPTANCE_AND_TESTS.md` (ten kontrakt)
-2. `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_SOURCE_OF_TRUTH.md`
-3. `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_IMPLEMENTATION_PLAN.md`
-4. `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_RELEASE_GATE_RUNBOOK.md`
-5. `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
+1. This module contract: `00_META.md` through `07_ACCEPTANCE_AND_TESTS.md`.
+2. Author raw input in `RAW_INPUT.md` and linked raw author files in `DRD/consultify/docs/UI_UX/` or `DRD/consultify/docs/RAW/`.
+3. Real source documents listed below.
+4. Routing and global governance: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`, `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`, `DRD/UI_UX_SOURCE_OF_TRUTH.md`, `DRD/consultify/docs/ui-standards/`.
 
-## Primary module sources (to migrate into contract)
+## Primary Sources Migrated Into This Contract
 
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_SOURCE_OF_TRUTH.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_IMPLEMENTATION_PLAN.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_RELEASE_GATE_RUNBOOK.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_STAGE_0_BASELINE_AUDIT.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_STAGE_1_SECURITY_HARDENING.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_STAGE_2_DOCUMENT_UNDERSTANDING.md`
+- `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_30_ORGANIZATION_2026-03-29.md`
+- `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_ORGANIZATION.md`
+- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_ORGANIZATION_2026-03-29.md`
+- `DRD/consultify/docs/product/modules/admin/ADMIN_ORGANIZATION_MODULE_ANALYSIS.md`
+- `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
 
-## Related cross-cutting sources
+## Superseded Or Removed References
 
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md` (global UI/UX invariants)
-- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
+- This SSOT intentionally removes references to filenames that are not present in the repo at audit time.
+- If an older plan references a missing file, use the nearest existing source above and record the gap in `CHANGELOG.md` before changing behavior.
 
+## Coverage Status
+
+- Status: `canonical baseline`.
+- Meaning: the module now has a coherent author-level contract based on verified repo sources and raw author inputs.
+- Remaining work: deepen each requirement by reading every linked source line-by-line during implementation sprints.

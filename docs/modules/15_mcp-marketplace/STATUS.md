@@ -1,25 +1,31 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Status — MCP Marketplace (DBR77)
+# Status — MCP Marketplace
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: planned (v3 integrations/MCP plan)
+- Runtime class: `stub + planned`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: As-Is UI entry exists as a coming-soon catalog surface.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Brak jawnego routingu (route/AppView) w `MODULE_ROUTING_ARCHITECTURE.md` na dziś.
-- Docelowo: co najmniej 3 narzędzia READ działają end-to-end i jedno realne użycie w UI (Tools/Presentations).
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Ryzyko bezpieczeństwa: publish/mutation tools wymagają gatingu i audytu.
-- Ryzyko: import assetów do produktu bez provenance – musi być jawne źródło/licencja.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `MCPM_PLACEHOLDER_SURFACE`, `MCPM_RUNTIME_TARGET`.

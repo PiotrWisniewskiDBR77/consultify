@@ -1,43 +1,39 @@
 ---
 module_id: MODULE_ORGANIZATION
 doc_kind: BEHAVIOR
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Behavior — Organizacja (Organization Context)
+# Behavior — Organizacja
 
-## Purpose
+## As-Is Runtime Behavior
 
-Kontrakt zachowania engine: ingest → async processing → retrieval → citations → lineage, z bezpieczeństwem i honest degraded states.
+- Organization route family is active, authenticated and module-owned.
+- Context-builder routes remain operational for compatibility but are not separate ownership domain for organization context.
+- Global sidebar launches organization via dedicated menu item and AppView mapping.
+
+## Function Runtime Breakdown
+
+- `ORG_CONTEXT_WORKSPACE`: canonical organization context runtime function.
+- `ORG_LEGACY_CONTEXT_BUILDER`: transitional compatibility function for `/context/*`.
 
 ## Must
 
-- MUST: każde upload tworzy asset record + processing job; ciężka ekstrakcja jest async.
-- MUST: statusy rozróżniają: uploaded/processing/partial/ready/unreadable/policy_blocked/quota_blocked.
-- MUST: retrieval filtruje tenant/org/project/user/role/workflow przed użyciem chunków.
-- MUST: każdy AI output, który użył kontekstu, zapisuje lineage (asset/version/chunk ids + quality).
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- MUST NOT: używać raw plików bez retrieval/chunking.
-- MUST NOT: pokazywać fake “ready” gdy tylko metadata została zapisana.
-- MUST NOT: wycieki raw content w logach/telemetry bez governance.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- SHOULD: mieć bezpieczne cache hot context per tenant/scope.
-- SHOULD: wspierać tryby explicit context use (`selected_material_only`, `...approved_org_context`) zależnie od workflow.
-
-## Acceptance Criteria
-
-- [ ] Zawiera jawne reguły `proposal -> approval -> execution -> audit` tam, gdzie czat inicjuje działania.
-- [ ] Definiuje “uczciwe” stany błędów i degradacji (bez fake success / infinite spinner).
-
-## Related Sources
-
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_SOURCE_OF_TRUTH.md`
-- `DRD/consultify/docs/product/ORGANIZATION_CONTEXT_ENGINE_IMPLEMENTATION_PLAN.md`
-
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.

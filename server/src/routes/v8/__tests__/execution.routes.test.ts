@@ -140,4 +140,24 @@ describe('V8 execution routes', () => {
     expect(mockGetRunsByOrg).not.toHaveBeenCalled();
     expect(mockGetActiveRuns).not.toHaveBeenCalled();
   });
+
+  it('GET /api/v8/execution/runs returns 500 with code when list service rejects', async () => {
+    mockGetRunsByOrg.mockRejectedValueOnce(new Error('runs down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/execution/runs').query({ state: 'drafting' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('EXECUTION_RUNS_READ_FAILED');
+    expect(res.body.error).toBe('Failed to load execution runs');
+  });
+
+  it('GET /api/v8/execution/runs active=true returns 500 with code when active service rejects', async () => {
+    mockGetActiveRuns.mockRejectedValueOnce(new Error('active runs down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/execution/runs').query({ active: 'true' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('EXECUTION_RUNS_READ_FAILED');
+    expect(res.body.error).toBe('Failed to load execution runs');
+  });
 });

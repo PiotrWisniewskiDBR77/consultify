@@ -89,6 +89,14 @@ const MAX_CONTEXT_FILES = 5;
 const MAX_CONTEXT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const CONTEXT_FILE_ACCEPT =
   '.txt,.md,.markdown,.csv,.json,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const INSIGHT_LOAD_ERROR_COPY = {
+  pl: 'Generator insightów jest tymczasowo niedostępny.',
+  en: 'Insight generator is temporarily unavailable.',
+} as const;
+const INSIGHT_LOAD_ERROR_HINT = {
+  pl: 'To nie oznacza, że nie ma zakończonych sesji. Ponów wczytywanie danych.',
+  en: 'This does not mean there are no completed sessions. Retry loading the data.',
+} as const;
 
 // ==========================================
 // ANALYSIS TYPE DEFINITIONS
@@ -669,7 +677,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           if (stillValid.length > 0 || sessionSelectionTouchedRef.current) {
             return stillValid;
           }
-          return nextSessions.map((session) => session.id);
+          return [];
         });
 
         if (sessionsResult.status === 'rejected') {
@@ -678,28 +686,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             | Error
             | undefined;
           const status = (reason as { status?: number } | undefined)?.status;
-          if (status === 401 || status === 403) {
-            setLoadError(
-              isPolish
-                ? 'Brak uprawnień do listy zakończonych sesji wywiadów. Poproś admina o capability INTERVIEW_VIEW.'
-                : 'No permission to list completed interview sessions. Ask admin for INTERVIEW_VIEW capability.'
-            );
-          } else {
-            setLoadError(
-              isPolish
-                ? 'Nie udało się wczytać zakończonych sesji wywiadów. Generowanie nadal może nie zadziałać, jeżeli model LLM nie jest dostępny.'
-                : 'Failed to load completed interview sessions. Generation may still fail if the LLM model is unavailable.'
-            );
-          }
+          setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
         }
         await fetchContextDocuments();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
-        setLoadError(
-          isPolish
-            ? 'Nie udało się wczytać zakończonych sesji wywiadów. Generowanie nadal może nie zadziałać, jeżeli model LLM nie jest dostępny.'
-            : 'Failed to load completed interview sessions. Generation may still fail if the LLM model is unavailable.'
-        );
+        setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
       } finally {
         setIsLoading(false);
       }
@@ -849,7 +841,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       if (visibleSelected.length > 0 || sessionSelectionTouchedRef.current) {
         return visibleSelected;
       }
-      return filteredSessions.map((session) => session.id);
+      return [];
     });
   }, [filteredSessions]);
 
@@ -1093,19 +1085,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         if (sessionsResult.status === 'rejected') {
           const reason = sessionsResult.reason as { status?: number } | undefined;
           const status = reason?.status;
-          if (status === 401 || status === 403) {
-            setLoadError(
-              isPolish
-                ? 'Brak uprawnień do listy zakończonych sesji wywiadów. Poproś admina o capability INTERVIEW_VIEW.'
-                : 'No permission to list completed interview sessions. Ask admin for INTERVIEW_VIEW capability.'
-            );
-          } else {
-            setLoadError(
-              isPolish
-                ? 'Nie udało się wczytać zakończonych sesji wywiadów. Generowanie nadal może nie zadziałać, jeżeli model LLM nie jest dostępny.'
-                : 'Failed to load completed interview sessions. Generation may still fail if the LLM model is unavailable.'
-            );
-          }
+          setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
         }
         await fetchContextDocuments();
       } finally {
@@ -1266,9 +1246,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         dashed={false}
         message={loadError}
         hint={
-          isPolish
-            ? 'Sprawdź uprawnienia do modułu Wywiad oraz dostępność modelu LLM (capability AI_LLM_USE / klucz API). Po naprawie kliknij Ponów.'
-            : 'Check Interview module permissions and LLM model availability (capability AI_LLM_USE / API key). Retry once fixed.'
+          isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en
         }
         action={{
           label: isPolish ? 'Ponów' : 'Retry',
@@ -1598,9 +1576,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             dashed={false}
             message={loadError}
             hint={
-              isPolish
-                ? 'Sprawdź uprawnienia do modułu Wywiad oraz dostępność modelu LLM (capability AI_LLM_USE / klucz API). Po naprawie kliknij Ponów.'
-                : 'Check Interview module permissions and LLM model availability (capability AI_LLM_USE / API key). Retry once fixed.'
+              isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en
             }
             action={{
               label: isPolish ? 'Ponów' : 'Retry',

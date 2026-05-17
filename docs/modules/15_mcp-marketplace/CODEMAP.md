@@ -1,23 +1,41 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: CODEMAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — MCP Marketplace (DBR77)
+# Codemap — MCP Marketplace
 
-## Route / AppView / Entry component
+## Route / AppView / Sidebar (As-Is evidence)
 
-Źródło routingowe: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`.
+- Sidebar entry: `MCP_MARKETPLACE` (badge `soon`)
+- Launch AppView: `AppView.MCP_MARKETPLACE_COMING_SOON`
+- Launch route: `/mcp/marketplace`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: As-Is UI entry exists as a coming-soon catalog surface.
 
-- **Route**: TBD (brak wpisu w `MODULE_ROUTING_ARCHITECTURE.md` na dziś)
-- **AppView**: TBD
-- **Entry component**: TBD
+## Routed Components
 
-## Implementation notes
+- `src/routes/AppRoutes.tsx` -> `ROUTES.MCP_MARKETPLACE` renders `V4ComingSoonView`
+- No dedicated mounted marketplace runtime component on current route tree
 
-Źródło architektoniczne: `INTEGRATIONS_SYNC_MCP_PLAN_V3.md` opisuje docelowe tool namespaces (np. `marketplace.catalog.search`, `marketplace.asset.get`) i ścieżki użycia w UI (Tools/Presentations/MyWork).
+## Function Map (As-Is)
 
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `MCPM_PLACEHOLDER_SURFACE` | `V4ComingSoonView` on `/mcp/marketplace` | active placeholder surface. |
+| `MCPM_RUNTIME_TARGET` | planned marketplace runtime panel | target runtime contract, not mounted. |
+
+## Relevant Services / Types
+
+- `src/types/core.ts` (`AppView.MCP_MARKETPLACE_COMING_SOON`)
+- `src/services/api.ts` (shared services only; no routed marketplace runtime confirmed)
+- `src/types/core.ts` keeps enum identity for `AppView.MCP_MARKETPLACE_COMING_SOON`.
+
+## Current Runtime Status
+
+- Classification: `stub + planned`
+- This codemap is As-Is only and reflects currently mounted route behavior.

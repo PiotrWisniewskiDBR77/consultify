@@ -874,13 +874,55 @@ global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, init?: Requ
 
 // Mock multer globally
 vi.mock('multer', () => {
+  const inferMimeType = (filename: string | undefined): string => {
+    const lower = String(filename ?? '').toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.txt')) return 'text/plain';
+    return 'application/octet-stream';
+  };
+
+  const readRequestBody = (req: any): Promise<Buffer> => {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer | string) => {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+      });
+      req.on('end', () => resolve(Buffer.concat(chunks)));
+      req.on('error', reject);
+    });
+  };
+
+  const buildMockFile = (fieldName: string, req: any, body: Buffer) => {
+    const contentType = String(req?.headers?.['content-type'] ?? '');
+    if (!contentType.includes('multipart/form-data')) return undefined;
+
+    const bodyText = body.toString('binary');
+    const filenameMatch = bodyText.match(/filename="([^"]+)"/i);
+    const contentTypeMatch = bodyText.match(/Content-Type:\s*([^\r\n]+)/i);
+    if (!filenameMatch) return undefined;
+    const originalname = filenameMatch?.[1] ?? 'upload.bin';
+    const mimetype = contentTypeMatch?.[1]?.trim() || inferMimeType(originalname);
+
+    return {
+      fieldname: fieldName,
+      originalname,
+      encoding: '7bit',
+      mimetype,
+      size: body.length,
+      buffer: body,
+    };
+  };
+
   const mock = vi.fn().mockReturnValue({
     array: vi.fn().mockReturnValue((req: any, res: any, next: any) => {
       req.files = [];
       next();
     }),
-    single: vi.fn().mockReturnValue((req: any, res: any, next: any) => {
-      req.file = {};
+    single: vi.fn((fieldName = 'file') => async (req: any, res: any, next: any) => {
+      const body = await readRequestBody(req);
+      const file = buildMockFile(fieldName, req, body);
+      if (file) req.file = file;
       next();
     }),
     fields: vi.fn().mockReturnValue((req: any, res: any, next: any) => {

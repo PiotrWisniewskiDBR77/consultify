@@ -61,6 +61,72 @@ type InviteCodeInfo = {
   role?: string;
 } | null;
 
+const AUTH_PUBLIC_ERROR_COPY = {
+  quickAccessFailed: 'Quick access is temporarily unavailable. Please sign in with your account.',
+  inviteVerifyFailed: 'Failed to verify access code. Please try again.',
+  demoSignupFailed: 'Demo signup is temporarily unavailable. Please try again.',
+  registrationFailed: 'Registration failed. Please try again.',
+  loginFailed: 'Login failed. Please try again.',
+  loginRetryFailed: 'Login failed. Please check your connection and try again.',
+} as const;
+
+type PublicAuthErrorContext =
+  | 'quickAccess'
+  | 'inviteVerify'
+  | 'demoSignup'
+  | 'registration'
+  | 'login'
+  | 'loginRetry';
+
+function mapPublicAuthError(error: unknown, context: PublicAuthErrorContext): string {
+  const raw = error as { code?: unknown; error?: { code?: unknown } } | null;
+  const code =
+    typeof raw?.code === 'string'
+      ? raw.code
+      : typeof raw?.error?.code === 'string'
+        ? raw.error.code
+        : null;
+
+  if (code === 'AUTH_LOGIN_INVALID_CREDENTIALS' || code === 'AUTH_INVALID_CREDENTIALS') {
+    return 'Invalid email or password.';
+  }
+  if (code === 'AUTH_PENDING_APPROVAL') {
+    return 'Your account is pending approval.';
+  }
+
+  switch (context) {
+    case 'quickAccess':
+      return AUTH_PUBLIC_ERROR_COPY.quickAccessFailed;
+    case 'inviteVerify':
+      return AUTH_PUBLIC_ERROR_COPY.inviteVerifyFailed;
+    case 'demoSignup':
+      return AUTH_PUBLIC_ERROR_COPY.demoSignupFailed;
+    case 'registration':
+      return AUTH_PUBLIC_ERROR_COPY.registrationFailed;
+    case 'login':
+      return AUTH_PUBLIC_ERROR_COPY.loginFailed;
+    case 'loginRetry':
+      return AUTH_PUBLIC_ERROR_COPY.loginRetryFailed;
+    default:
+      return AUTH_PUBLIC_ERROR_COPY.loginFailed;
+  }
+}
+
+function getSafeAuthErrorLogMeta(error: unknown): { name?: string; code?: string; context: string } {
+  const raw = error as { name?: unknown; code?: unknown; error?: { code?: unknown } } | null;
+  const code =
+    typeof raw?.code === 'string'
+      ? raw.code
+      : typeof raw?.error?.code === 'string'
+        ? raw.error.code
+        : undefined;
+  return {
+    name: typeof raw?.name === 'string' ? raw.name : undefined,
+    code,
+    context: 'login',
+  };
+}
+
 /**
  * Hosts where the hidden quick-access PIN panel (Ctrl/Cmd+Shift+K) may appear.
  * Production is limited to the public marketing domain — PINs are filtered in
@@ -251,7 +317,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         onAuthSuccess(user);
       } catch (err: any) {
-        setError('Quick access failed: ' + err.message);
+        setError(mapPublicAuthError(err, 'quickAccess'));
       } finally {
         setIsDemoLoading(false);
       }
@@ -358,7 +424,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setStep(AuthStep.REGISTER);
     } catch (err: any) {
       setInviteCodeInfo(null);
-      setError(err?.message || 'Failed to verify access code');
+      setError(mapPublicAuthError(err, 'inviteVerify'));
     } finally {
       setIsVerifyingInviteCode(false);
     }
@@ -418,7 +484,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         }
         onAuthSuccess({ ...user, hasWorkspace: true } as any);
       } catch (err: any) {
-        setError(err?.message || 'Demo signup failed');
+        setError(mapPublicAuthError(err, 'demoSignup'));
 
         const ctx = readAnnaLpCtaContext();
         if (ctx && ctx.cta_type === 'demo') {
@@ -485,7 +551,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setIsPending(true);
         return;
       }
-      setError(err.message || 'Registration failed');
+      setError(mapPublicAuthError(err, 'registration'));
     }
   };
 
@@ -542,7 +608,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         await Api.enterDemo();
         onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
-        setError(err?.message || 'Login failed');
+        setError(mapPublicAuthError(err, 'login'));
       } finally {
         setIsDemoLoading(false);
       }
@@ -576,7 +642,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         return; // Success - exit function
       } catch (err: any) {
         lastError = err;
-        console.error('Login error:', err);
+        console.error('Login error:', getSafeAuthErrorLogMeta(err));
 
         // Don't retry on authentication errors (wrong password, etc.)
         if (
@@ -594,7 +660,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             setIsPending(true);
             return;
           }
-          setError(err.message || 'Login failed');
+          setError(mapPublicAuthError(err, 'login'));
           return; // Don't retry auth errors
         }
 
@@ -609,9 +675,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
     // All retries failed
     if (lastError) {
-      setError(lastError.message || 'Login failed. Please check your connection and try again.');
+      setError(mapPublicAuthError(lastError, 'loginRetry'));
     } else {
-      setError('Login failed. Please try again.');
+      setError(mapPublicAuthError(null, 'login'));
     }
   };
 
@@ -736,7 +802,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20">
+        <div
+          className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20"
+          role="alert"
+          aria-live="assertive"
+        >
           <AlertCircle size={16} />
           {error}
         </div>
@@ -898,7 +968,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20 mt-4">
+          <div
+            className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20 mt-4"
+            role="alert"
+            aria-live="assertive"
+          >
             <AlertCircle size={16} />
             {error}
           </div>
@@ -1077,7 +1151,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20">
+          <div
+            className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20"
+            role="alert"
+            aria-live="assertive"
+          >
             <AlertCircle size={16} />
             {error}
           </div>

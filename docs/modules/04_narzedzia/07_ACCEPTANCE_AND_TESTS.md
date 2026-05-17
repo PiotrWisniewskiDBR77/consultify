@@ -1,40 +1,45 @@
 ---
 module_id: MODULE_TOOLS
 doc_kind: TESTS
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Acceptance & Tests — Narzędzia
+# Acceptance & Tests — Narzędzia / Tools
 
-## Purpose
+## Acceptance Matrix (As-Is Runtime Paths)
 
-Zdefiniować weryfikowalne kryteria akceptacji oraz minimalny plan testów dla Tools (biblioteka + sesje + handoff).
+| Path / flow | Current runtime evidence | Status |
+| --- | --- | --- |
+| Sidebar Tools -> `/discovery-tools` | `menuConfig.ts` + `AppRoutes.tsx` (`DiscoveryToolsHub`) | pass |
+| Assessment entry via sidebar sub-item | `AppView.ASSESSMENT_OVERVIEW` + `/assessment/*` routes | pass |
+| Legacy `/licensed-tools/*` alias | explicit redirect component in routes | pass (`duplicate` alias path) |
+| Megatrends canonical path | `/discovery-tools/strategic/megatrends` -> `MegatrendsWorkspace` | pass |
+| Module-local frontend tests for tools/assessment hubs | not found in component folders | gap (`code_gap`) |
 
-## Must
+## Function-Level Acceptance Matrix
 
-- MUST: wejście do `/discovery-tools` działa i renderuje 4 kategorie.
-- MUST: uruchomienie narzędzia tworzy sesję i pokazuje wynik (bez crash).
-- MUST: “Generate initiative” prowadzi do flow inicjatyw (wizard) z zachowaniem treści/rationale.
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `NZ_DISCOVERY_LIBRARY` | tool/framework library browse and selection behavior | `DiscoveryToolsHub.tsx` library tab | pass |
+| `NZ_DISCOVERY_SESSIONS` | combined discovery+assessment sessions lane | `DiscoveryToolsHub.tsx` sessions tab/runtime loaders | pass |
+| `NZ_DISCOVERY_OUTPUTS` | merged outputs lane and owner-route handoffs | `DiscoveryToolsHub.tsx` outputs tab | pass |
+| `NZ_DISCOVERY_INITIATIVES` | initiatives sourced from tools/assessment with traceability | `DiscoveryToolsHub.tsx`, initiative lifecycle helpers | pass |
+| `NZ_ASSESSMENT_HUB` | assessment/report/initiative tabbed runtime under `/assessment/*` | `AssessmentHub.tsx`, `AppRoutes.tsx` | pass |
+| `NZ_MEGATRENDS_WORKSPACE` | canonical megatrends strategic workspace route | `AppRoutes.tsx`, `MegatrendsWorkspace.tsx` | pass |
 
-## Must Not
+## Confirmed Automated Evidence (As-Is)
 
-- MUST NOT: “fake success” dla krytycznych akcji.
-- MUST NOT: infinite spinner bez recovery.
+- No dedicated automated test file found for `DiscoveryToolsHub` or `AssessmentHub`.
 
-## Should
+## Known Gaps / Blockers
 
-- SHOULD: szybkie testy ścieżek kategorii (strategic/operational/digital/process-automation).
+- `code_gap`: missing hub-level regression tests for routing + tab/filter behavior.
+- `doc_gap`: no in-file screenshots/recordings linked yet for tools and assessment runtime states.
+- `code_gap`: no consolidated end-to-end suite that validates all six documented Tools functions.
 
-## Acceptance Criteria
+## Gate Vocabulary (Used For Reporting)
 
-- [ ] PASS/BLOCKED językiem z `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
-- [ ] Checklisty obejmują: loading/success/error/empty + refresh resistance (sesje).
-
-## Related Sources
-
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md`
-- `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md`
-
+- `PASS`, `PASS_WITH_P2`, `BLOCKED_P1`, `INCONCLUSIVE`.

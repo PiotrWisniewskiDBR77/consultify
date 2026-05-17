@@ -1,39 +1,47 @@
 ---
 module_id: MODULE_DOCUMENTS
 doc_kind: PURPOSE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Purpose — Dokumenty (Document Studio)
+# Purpose — Dokumenty / Document Studio
 
 ## Purpose
 
-Zdefiniować po co istnieje Document Studio: consulting-grade runtime dla dokumentów Word/PDF jako artefaktów v8.1 (trwałe, z lineage i review), z template-first podejściem i QA przed eksportem.
+Format runtime dla profesjonalnych dokumentów Word/PDF jako żywych, wersjonowanych, źródłowych artefaktów konsultingowych.
+
+As-Is realizacja celu jest obecnie ograniczona do funkcji placeholder (`DOC_WORDY_PLACEHOLDER`), z osobno utrzymanym kontraktem funkcji docelowej (`DOC_STUDIO_RUNTIME_TARGET`).
 
 ## Must
 
-- MUST: pracować na v8.1 artifact substrate (bez nowego registry, bez nowych tabel).
-- MUST: mieć 3 mode’y: Mode 1 (generate), Mode 2 (template architect), Mode 3 (generate from approved template).
-- MUST: wymuszać source-grounding dla analytical claims i “honest failure” gdy brakuje źródeł.
+- MUST solve the job described above for the user-visible module, not only expose implementation internals.
+- MUST keep its ownership boundary clear against adjacent modules.
+- MUST preserve traceability from source input to output, decision, task or report when work leaves the module.
 
 ## Must Not
 
-- MUST NOT: tworzyć równoległego model-routing surface dla AI ani omijać istniejących governance flow.
-- MUST NOT: udawać, że dokument to tylko “export file” — to procesowy artefakt z lifecycle.
+- Competing with MS Word as a generic editor.
+- One-shot AI text generation without structure, sources and lifecycle.
 
 ## Should
 
-- SHOULD: traktować reporty R1–R4 jako rodzinę dokumentów wewnątrz Template Registry.
+- SHOULD expose the next useful action rather than forcing users to infer workflow state.
+- SHOULD reuse global UI, security and evidence standards instead of inventing module-local variants.
 
 ## Acceptance Criteria
 
-- [ ] Purpose jest spójny z `CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md` i v8.1 substrate.
+- [ ] A new contributor can explain why this module exists from this file alone.
+- [ ] The purpose does not conflict with any out-of-scope boundary in `02_SCOPE.md`.
+- [ ] Primary source docs listed in `SSOT.md` are linked and readable.
 
 ## Related Sources
 
-- `DRD/consultify/docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`
-- `DRD/consultify/docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md`
-
+- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
+- `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_DOCUMENTS.md`
+- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_DOCUMENTS_2026-03-29.md`
+- `DRD/consultify/docs/UI_UX/92_RAW_DOCUMENT_STUDIO_RESEARCH_2026-05-08.md`
+- `DRD/consultify/docs/UI_UX/93_RAW_DOCUMENT_STUDIO_ANALYSIS_2026-05-09.md`
+- `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`

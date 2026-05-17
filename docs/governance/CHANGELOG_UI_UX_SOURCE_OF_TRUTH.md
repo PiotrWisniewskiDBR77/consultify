@@ -9,6 +9,29 @@ Use `docs/governance/DOC_CHANGE_TEMPLATE.md` as the seed for new entries.
 
 ---
 
+## 2026-05-17 — Recovery Final Gate Parity Baseline
+
+**Doc:** DRD/UI_UX_SOURCE_OF_TRUTH.md
+**Risk tier:** P1
+**Rationale:**
+Recorded the current global UI/UX source-of-truth state for the recovery final PR
+gate after the weekly module integration pass. This keeps the controlled-doc parity
+gate current before deciding whether the recovery branch can merge into staging.
+
+**Impact note:**
+- Code: none
+- Docs: changelog entry only
+- Tests: `npm run docs:check`, `npm run docs:parity`
+
+**Reviewer:** `<Design Lead>` (Design owner per `DOC_OWNER_REGISTRY.md`)
+**Linked PR / ticket:** Recovery final PR gate — weekly feature and UI/UX integration
+
+**Diff summary:**
+- Refreshed the controlled-doc changelog baseline for `DRD/UI_UX_SOURCE_OF_TRUTH.md`.
+- The UI/UX source of truth itself was NOT modified by this change.
+
+---
+
 ## 2026-05-16 — Final Global Gate Parity Refresh
 
 **Doc:** DRD/UI_UX_SOURCE_OF_TRUTH.md

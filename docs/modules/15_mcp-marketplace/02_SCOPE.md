@@ -1,39 +1,40 @@
 ---
 module_id: MODULE_MCP_MARKETPLACE
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — MCP Marketplace (DBR77)
+# Scope — MCP Marketplace / DBR77
 
 ## Purpose
 
-Ustalić granice odpowiedzialności MCP Marketplace jako providera i katalogu assetów.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: provider konfiguracja + health + allowlist tools (org-level).
-- MUST: katalog/search + fetch asset + recommendations (read-only minimal P0).
-- MUST: import assetów do Tools/Presentations z traceability.
+- Provider config, catalog search, asset fetch, recommendations and governed import.
+- Tools and Presentations import paths.
+- Function set: `MCPM_PLACEHOLDER_SURFACE`, `MCPM_RUNTIME_TARGET`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: wykonywać mutacji bez jawnych uprawnień (publish/order/license).
-- MUST NOT: udawać, że marketplace jest kanonicznym storage artefaktów Consultify (to tylko zewnętrzny provider).
+- Canonical storage for local Consultify objects.
+- Hidden publish/order/license mutations.
 
-## Should
+## Inputs
 
-- TBD
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres jest spójny z `INTEGRATIONS_SYNC_MCP_PLAN_V3.md`.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

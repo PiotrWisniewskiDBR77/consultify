@@ -1,24 +1,31 @@
 ---
 module_id: MODULE_TABLES
 doc_kind: STATUS
-version: 0.1
+version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-15
+last_updated: 2026-05-09
 ---
 
-# Status — Tabele (Table Studio)
+# Status — Tabele / Excele
 
-## Shipping status
+## Shipping Status (As-Is)
 
-- **Status**: shipped (surface exists) + dark-by-default (kill switches)
+- Runtime class: `soon + code_gap`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: As-Is route is active in router and sidebar, with placeholder runtime.
 
-## Known gaps (from existing SoT)
+## Current Risks
 
-- Program closeout = `RESIDUAL_FOLLOW_UPS` (Anygravity P0 trial #2 + demo pack + localization + wiring live providers).
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Risks
+## Next Contract Work (without changing scope)
 
-- Ryzyko: włączenie surface bez kill switch governance (musi być kontrolowane per workspace).
-- Ryzyko: konwersje (table → doc/deck) wymagają twardego audytu i brak silent failures.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
 
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `TB_EXCELE_PLACEHOLDER`, `TB_TABLE_RUNTIME_TARGET`.

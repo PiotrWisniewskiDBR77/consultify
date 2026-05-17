@@ -1,43 +1,41 @@
 ---
 module_id: MODULE_FINANCE
 doc_kind: SCOPE
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
-# Scope — Finanse
+# Scope — Finanse / Finance & Intelligence
 
 ## Purpose
 
-Ustalić granice odpowiedzialności Finanse względem Results, Inicjatyw, Outputs i Execution.
+Define exact ownership boundaries so the system does not duplicate features across modules.
 
-## In scope (Must)
+## In Scope (Must)
 
-- MUST: Financial Analysis v3 runtime (6 zakładek) jako modelowana prawda finansowa.
-- MUST: Economics analysis artefact (as-is): scenariusze, walidacje, rekomendacje, status flow DRAFT→REVIEW→APPROVED.
-- MUST: linkage do Results (opcjonalne, jawne), gdy KPI ma znaczenie ekonomiczne.
-- MUST: controlled handoff do Inicjatyw (“create initiative from analysis”) zgodnie z Economics flow.
+- Financial statements, normalized financial models and analysis.
+- Forecasting, valuation, investment decision support and management reporting.
+- Optional KPI/Results reconciliation bridge.
+- Function set: `FN_STATEMENTS_WORKSPACE`, `FN_MODELS_WORKSPACE`, `FN_ANALYSIS_WORKSPACE`, `FN_PREDICTION_WORKSPACE`, `FN_VALUATION_WORKSPACE`, `FN_INVESTMENT_WORKSPACE`, `FN_FINANCE_DETAIL_ROUTES`.
 
-## Out of scope (Must Not)
+## Out Of Scope (Must Not)
 
-- MUST NOT: przejąć ownership KPI definitions/targets/scorecards (to Results).
-- MUST NOT: być generic spreadsheet/BI bez governance.
+- Becoming general KPI dashboard.
+- Creating unverified numbers without source/evidence.
 
-## Should
+## Inputs
 
-- SHOULD: mieć eksport/artefakty dla Outputs (reports/presentations) z traceability do danych i modelu.
+- User actions and module objects allowed by current permissions.
+- Source documents and raw author requirements listed in `SSOT.md`.
+- Cross-module handoffs only through explicit objects/links, not hidden state.
+
+## Outputs
+
+- Governed module objects, proposals, reports, tasks, decisions, artifacts or links as defined by this contract.
 
 ## Acceptance Criteria
 
-- [ ] Zakres nie wchodzi w kompetencje `Rezultaty` (metric truth) poza linkage.
-- [ ] Route truth jest zgodny z `MODULE_ROUTING_ARCHITECTURE.md` (`/economics` as-is).
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-- `DRD/consultify/docs/product/FINANCIAL_ANALYSIS_V3.md`
-- `DRD/consultify/docs/modules/ECONOMICS_MODULE.md`
-- `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
-
+- [ ] Every new feature request can be classified as in-scope, out-of-scope or cross-module handoff.
+- [ ] The module does not become a duplicate owner for another module's canonical object.

@@ -1,25 +1,22 @@
 ---
 module_id: MODULE_INITIATIVES
 doc_kind: SSOT_MAP
-version: 0.1
+version: 1.0
 owner: user
-status: draft
+status: canonical
 last_updated: 2026-05-09
 ---
 
 # SSOT — Inicjatywy
 
-## Priority order (when sources conflict)
+## Priority Order
 
-1. `DRD/consultify/docs/modules/05_inicjatywy/00_META.md` … `07_ACCEPTANCE_AND_TESTS.md` (ten kontrakt)
-2. `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md` (governance gates/roles/UX locks)
-3. `DRD/consultify/docs/product/INITIATIVE_STATUS_ROLE_CTA_MATRIX.md` (kanoniczna macierz CTA i editability)
-4. `DRD/consultify/docs/product/INITIATIVE_CAPABILITIES_SYSTEM.md` (backend contract; FE nie inferuje uprawnień)
-5. `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
-6. `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
-4. Źródła modułowe (poniżej)
+1. This module contract: `00_META.md` through `07_ACCEPTANCE_AND_TESTS.md`.
+2. Author raw input in `RAW_INPUT.md` and linked raw author files in `DRD/consultify/docs/UI_UX/` or `DRD/consultify/docs/RAW/`.
+3. Real source documents listed below.
+4. Routing and global governance: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`, `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`, `DRD/UI_UX_SOURCE_OF_TRUTH.md`, `DRD/consultify/docs/ui-standards/`.
 
-## Primary module sources (to migrate into contract)
+## Primary Sources Migrated Into This Contract
 
 - `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
 - `DRD/consultify/docs/product/INITIATIVE_STATUS_ROLE_CTA_MATRIX.md`
@@ -28,10 +25,15 @@ last_updated: 2026-05-09
 - `DRD/consultify/docs/product/SOURCE_TRACEABILITY_SPEC.md`
 - `DRD/consultify/docs/product/ROLES_MODEL.md`
 - `DRD/consultify/docs/product/PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
+- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
 
-## Related cross-cutting sources
+## Superseded Or Removed References
 
-- `DRD/UI_UX_SOURCE_OF_TRUTH.md` (enterprise UI invariants)
-- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md` (Menu 2/3 + hub)
-- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md` (task/decision semantics)
+- This SSOT intentionally removes references to filenames that are not present in the repo at audit time.
+- If an older plan references a missing file, use the nearest existing source above and record the gap in `CHANGELOG.md` before changing behavior.
 
+## Coverage Status
+
+- Status: `canonical baseline`.
+- Meaning: the module now has a coherent author-level contract based on verified repo sources and raw author inputs.
+- Remaining work: deepen each requirement by reading every linked source line-by-line during implementation sprints.
