@@ -25,7 +25,8 @@ let defaultChartCanvas: {
 async function getChartCanvasCtor(): Promise<ChartCanvasCtor | null> {
   if (chartCanvasCtor !== undefined) return chartCanvasCtor;
   try {
-    const mod = await import('chartjs-node-canvas');
+    const optionalModule = 'chartjs-node-canvas';
+    const mod = await import(optionalModule);
     chartCanvasCtor = mod.ChartJSNodeCanvas as unknown as ChartCanvasCtor;
     return chartCanvasCtor;
   } catch {
