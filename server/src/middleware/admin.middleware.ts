@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Admin Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -32,7 +33,8 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
   }
 };
 const MAX_MEMBERSHIP_LOOKUP_ID_CHARS = 128;
-const LOOKUP_ID_DISALLOWED_CHARS = /[\u0000-\u001F\u007F\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069]/g;
+const LOOKUP_ID_DISALLOWED_CHARS =
+  /[\u0000-\u001F\u007F\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069]/g;
 const isWithinLookupIdLimit = (value: string | undefined): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= MAX_MEMBERSHIP_LOOKUP_ID_CHARS;
 const sanitizeMembershipLookupId = (value: string | undefined): string | undefined => {
@@ -77,12 +79,16 @@ const sendAdminAccessRequired = (res: Response): boolean => {
   try {
     if (!res || typeof res.status !== 'function') return false;
     if (safeRead(() => Boolean(res.headersSent), false)) return false;
-    if (safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false))
+    if (
+      safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false)
+    )
       return false;
     try {
-      const setHeader = (res as Response & {
-        setHeader?: (name: string, value: string) => Response;
-      }).setHeader;
+      const setHeader = (
+        res as Response & {
+          setHeader?: (name: string, value: string) => Response;
+        }
+      ).setHeader;
       if (typeof setHeader === 'function') {
         const denySecurityHeaders: ReadonlyArray<readonly [string, string]> = [
           ['Cache-Control', 'no-store'],
@@ -114,7 +120,11 @@ const sendAdminAccessRequired = (res: Response): boolean => {
     return false;
   } catch {
     try {
-      if (res && !safeRead(() => Boolean(res.headersSent), false) && typeof res.sendStatus === 'function') {
+      if (
+        res &&
+        !safeRead(() => Boolean(res.headersSent), false) &&
+        typeof res.sendStatus === 'function'
+      ) {
         res.sendStatus(403);
         return true;
       }
@@ -129,7 +139,9 @@ const safeSendAdminAccessRequired = (res: Response): void => {
   if (sent) return;
   try {
     if (!res || safeRead(() => Boolean(res.headersSent), false)) return;
-    if (safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false))
+    if (
+      safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false)
+    )
       return;
     if (typeof (res as Response & { end?: () => void }).end === 'function') {
       (res as Response & { end: () => void }).end();
@@ -194,7 +206,9 @@ export const verifyAdmin = async (
           { fallback: true }
         );
         const membershipRole =
-          typeof membership?.role === 'string' ? normalizeOptionalString(membership.role) : undefined;
+          typeof membership?.role === 'string'
+            ? normalizeOptionalString(membership.role)
+            : undefined;
         const normalizedRole = safeRead(
           () => normalizeOrganizationRole(membershipRole || role),
           normalizeOrganizationRole('')

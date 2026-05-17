@@ -14,9 +14,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  MELS_CHIP_ORDER,
-} from '../../../../shared/ExecutiveModuleShell/ChipDescriptor';
+import { MELS_CHIP_ORDER } from '../../../../shared/ExecutiveModuleShell/ChipDescriptor';
 import { buildTabeleTopBarChips } from '../TabeleTopBarChips';
 
 describe('buildTabeleTopBarChips', () => {

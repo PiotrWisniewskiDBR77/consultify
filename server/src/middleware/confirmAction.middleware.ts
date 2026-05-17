@@ -196,8 +196,9 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
             reason,
             riskLevel,
             normalizeOptionalString(safeRead(() => req.ip, undefined)) || null,
-            normalizeOptionalHeaderValue(safeRead(() => req.headers?.['user-agent'], undefined))
-              ?.substring(0, 255) || null,
+            normalizeOptionalHeaderValue(
+              safeRead(() => req.headers?.['user-agent'], undefined)
+            )?.substring(0, 255) || null,
             metadataJson,
           ]
         );

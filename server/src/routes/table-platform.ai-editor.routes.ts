@@ -101,9 +101,7 @@ async function resolveWorkspaceFromTable(
       LIMIT 1`,
     [tableId]
   );
-  const row = result.rows?.[0] as
-    | { workspace_id?: string; organization_id?: string }
-    | undefined;
+  const row = result.rows?.[0] as { workspace_id?: string; organization_id?: string } | undefined;
   if (!row?.workspace_id || !row?.organization_id) return null;
   if (String(row.organization_id) !== String(organizationId)) return null;
   return { workspaceId: String(row.workspace_id), organizationId: String(row.organization_id) };
@@ -133,14 +131,11 @@ function asPositiveInt(v: unknown, def: number, max: number): number {
 
 function mapServiceError(e: unknown, res: Response): boolean {
   if (e instanceof AiBudgetExhaustedError) {
-    res
-      .set('Retry-After', String(e.retryAfterSeconds))
-      .status(e.status)
-      .json({
-        error: e.message,
-        code: e.code,
-        retryAfterSeconds: e.retryAfterSeconds,
-      });
+    res.set('Retry-After', String(e.retryAfterSeconds)).status(e.status).json({
+      error: e.message,
+      code: e.code,
+      retryAfterSeconds: e.retryAfterSeconds,
+    });
     return true;
   }
   if (e instanceof TableAiEditorError) {
@@ -300,31 +295,27 @@ router.post(
   }
 );
 
-router.get(
-  '/ai-editor/budget',
-  requireAiEditorEnabled,
-  async (req: Request, res: Response) => {
-    const authReq = req as AuthRequest;
-    const orgId = String(authReq.organizationId ?? '');
-    const workspaceId = asString(req.query.workspaceId);
-    if (!workspaceId) {
-      return res.status(400).json({ error: 'workspaceId is required' });
-    }
-    if (!(await workspaceBelongsToOrganization(workspaceId, orgId))) {
-      return res.status(403).json({ error: 'Forbidden', code: 'TENANT_VIOLATION' });
-    }
-
-    try {
-      const snapshot = await aiUsageService.getSnapshot(workspaceId);
-      return res.status(200).json({ data: snapshot });
-    } catch (e) {
-      logger.error('[TableAiEditorRoutes] budget snapshot failed', {
-        workspaceId,
-        error: (e as Error)?.message,
-      });
-      return res.status(500).json({ error: 'Internal error' });
-    }
+router.get('/ai-editor/budget', requireAiEditorEnabled, async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  const orgId = String(authReq.organizationId ?? '');
+  const workspaceId = asString(req.query.workspaceId);
+  if (!workspaceId) {
+    return res.status(400).json({ error: 'workspaceId is required' });
   }
-);
+  if (!(await workspaceBelongsToOrganization(workspaceId, orgId))) {
+    return res.status(403).json({ error: 'Forbidden', code: 'TENANT_VIOLATION' });
+  }
+
+  try {
+    const snapshot = await aiUsageService.getSnapshot(workspaceId);
+    return res.status(200).json({ data: snapshot });
+  } catch (e) {
+    logger.error('[TableAiEditorRoutes] budget snapshot failed', {
+      workspaceId,
+      error: (e as Error)?.message,
+    });
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
 
 export default router;

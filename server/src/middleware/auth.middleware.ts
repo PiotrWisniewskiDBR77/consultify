@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Authentication Middleware
  * Enterprise SaaS Architecture - TypeScript Backend Auth
@@ -544,9 +545,7 @@ const attachUser = async (
     normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organizationId')) ||
     normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organization_id'));
   let resolvedOrganizationId =
-    isDemoHeader && requestedDemoSessionOrgId
-      ? requestedDemoSessionOrgId
-      : tokenOrganizationId;
+    isDemoHeader && requestedDemoSessionOrgId ? requestedDemoSessionOrgId : tokenOrganizationId;
   let resolvedUserRole =
     readOptionalStringClaim(decodedClaims, 'role') ||
     readOptionalStringClaim(decodedClaims, 'userRole');
@@ -585,7 +584,11 @@ const attachUser = async (
   try {
     const normalizedEmailForOverride = normalizedEmail.toLowerCase();
     const forcedEmails = getForcedSuperAdminEmails();
-    if (!isProductionEnv && normalizedEmailForOverride && forcedEmails.has(normalizedEmailForOverride)) {
+    if (
+      !isProductionEnv &&
+      normalizedEmailForOverride &&
+      forcedEmails.has(normalizedEmailForOverride)
+    ) {
       req.userRole = 'SUPERADMIN';
       resolvedIsSuperAdmin = true;
     }
@@ -929,19 +932,24 @@ export const verifyToken = asyncHandler(
     if (!isProductionEnv && process.env.E2E_MODE === 'true') {
       try {
         const decodedRaw = jwtLib.decode(token);
-        const decodedClaims =
-          isPlainJwtPayload(decodedRaw)
-            ? (decodedRaw as Record<string, unknown>)
-            : undefined;
-        const decodedUserId = normalizeContextIdentifier(readOptionalStringClaim(decodedClaims, 'id'));
+        const decodedClaims = isPlainJwtPayload(decodedRaw)
+          ? (decodedRaw as Record<string, unknown>)
+          : undefined;
+        const decodedUserId = normalizeContextIdentifier(
+          readOptionalStringClaim(decodedClaims, 'id')
+        );
         if (decodedClaims && readBooleanTrueClaim(decodedClaims, 'e2e') && decodedUserId) {
           if (decodedUserId.length > MAX_AUTH_USER_ID_CHARS) {
             res.status(401).json({ error: 'Unauthorized' });
             return;
           }
           const normalizedE2EOrgId =
-            normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organizationId')) ||
-            normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organization_id')) ||
+            normalizeBoundedOrgContextId(
+              readOptionalStringClaim(decodedClaims, 'organizationId')
+            ) ||
+            normalizeBoundedOrgContextId(
+              readOptionalStringClaim(decodedClaims, 'organization_id')
+            ) ||
             'e2e-org-id';
           const normalizedE2ERole =
             readOptionalStringClaim(decodedClaims, 'role') ||
@@ -1018,7 +1026,11 @@ export const verifyToken = asyncHandler(
       if (!config || !jwtSecret || jwtSecret.length > MAX_JWT_SECRET_CHARS) {
         logger.error(
           `[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${
-            !jwtSecret ? 'missing' : jwtSecret.length > MAX_JWT_SECRET_CHARS ? 'oversized' : 'present'
+            !jwtSecret
+              ? 'missing'
+              : jwtSecret.length > MAX_JWT_SECRET_CHARS
+                ? 'oversized'
+                : 'present'
           }`
         );
         res.status(401).json({ error: 'Unauthorized' });
@@ -1233,7 +1245,8 @@ export const requireSuperAdmin = (req: AuthRequest, res: Response, next: NextFun
 export const requireOrganization = (req: AuthRequest, res: Response, next: NextFunction): void => {
   let normalizedOrganizationId = '';
   try {
-    normalizedOrganizationId = typeof req.organizationId === 'string' ? req.organizationId.trim() : '';
+    normalizedOrganizationId =
+      typeof req.organizationId === 'string' ? req.organizationId.trim() : '';
   } catch {
     normalizedOrganizationId = '';
   }

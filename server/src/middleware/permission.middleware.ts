@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Permission Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -56,10 +57,7 @@ const readOptionalString = (reader: () => unknown): string | undefined => {
   }
 };
 
-const readOwnOptionalString = (
-  record: unknown,
-  key: string
-): string | undefined => {
+const readOwnOptionalString = (record: unknown, key: string): string | undefined => {
   if (!record || typeof record !== 'object') return undefined;
   if (!Object.prototype.hasOwnProperty.call(record, key)) return undefined;
   return readOptionalString(() => (record as Record<string, unknown>)[key]);
@@ -67,9 +65,10 @@ const readOwnOptionalString = (
 
 const sanitizeRoleInput = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
-  const bounded = value.length > MAX_PERMISSION_ROLE_INPUT_LENGTH
-    ? value.slice(0, MAX_PERMISSION_ROLE_INPUT_LENGTH)
-    : value;
+  const bounded =
+    value.length > MAX_PERMISSION_ROLE_INPUT_LENGTH
+      ? value.slice(0, MAX_PERMISSION_ROLE_INPUT_LENGTH)
+      : value;
   const normalized = safeRead(() => bounded.normalize('NFKC'), bounded);
   const stripped = normalized
     .replace(ROLE_CONTROL_CHARS, '')
@@ -172,7 +171,8 @@ const shouldSkipPermissionCheck = (
 };
 const asPermissionKeyList = (permissionKeys: unknown): string[] =>
   Array.isArray(permissionKeys) ? permissionKeys : [];
-const isPermissionKeyWithinLimit = (key: string): boolean => key.length <= MAX_PERMISSION_KEY_LENGTH;
+const isPermissionKeyWithinLimit = (key: string): boolean =>
+  key.length <= MAX_PERMISSION_KEY_LENGTH;
 const dedupePermissionKeys = (permissionKeys: string[]): string[] => {
   if (permissionKeys.length <= 1) return permissionKeys;
   const seen = new Set<string>();
@@ -307,7 +307,8 @@ export const requirePermission = (permissionKey: string) => {
       }
 
       // Attach permission info for audit logging
-      (req as AuthRequest & { permissionChecked?: string }).permissionChecked = normalizedPermissionKey;
+      (req as AuthRequest & { permissionChecked?: string }).permissionChecked =
+        normalizedPermissionKey;
       next();
     } catch (err: any) {
       logger.error('[PermissionMiddleware] Error:', err);
@@ -341,13 +342,18 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
       if (shouldSkipPermissionCheck(res, 'requireAnyPermission')) return;
       const permissionKeyList = asPermissionKeyList(permissionKeys);
       if (permissionKeyList !== permissionKeys) {
-        logger.warn('[PermissionMiddleware] Invalid permission key list input for requireAnyPermission', {
-          inputType: typeof permissionKeys,
-        });
+        logger.warn(
+          '[PermissionMiddleware] Invalid permission key list input for requireAnyPermission',
+          {
+            inputType: typeof permissionKeys,
+          }
+        );
       }
-      const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
-        .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
-        .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
+      const normalizedPermissionKeys = dedupePermissionKeys(
+        permissionKeyList
+          .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
+          .filter((permissionKey): permissionKey is string => Boolean(permissionKey))
+      );
       if (normalizedPermissionKeys.length === 0) {
         logger.info(
           `[PermissionMiddleware] Denied: requireAnyPermission invoked with no valid permission keys for user ${userId}`
@@ -359,7 +365,9 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
         });
         return;
       }
-      if (normalizedPermissionKeys.some((permissionKey) => !isPermissionKeyWithinLimit(permissionKey))) {
+      if (
+        normalizedPermissionKeys.some((permissionKey) => !isPermissionKeyWithinLimit(permissionKey))
+      ) {
         logger.warn('[PermissionMiddleware] Denied: permission key over max length', {
           userId,
           max: MAX_PERMISSION_KEY_LENGTH,
@@ -442,13 +450,18 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
       if (shouldSkipPermissionCheck(res, 'requireAllPermissions')) return;
       const permissionKeyList = asPermissionKeyList(permissionKeys);
       if (permissionKeyList !== permissionKeys) {
-        logger.warn('[PermissionMiddleware] Invalid permission key list input for requireAllPermissions', {
-          inputType: typeof permissionKeys,
-        });
+        logger.warn(
+          '[PermissionMiddleware] Invalid permission key list input for requireAllPermissions',
+          {
+            inputType: typeof permissionKeys,
+          }
+        );
       }
-      const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
-        .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
-        .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
+      const normalizedPermissionKeys = dedupePermissionKeys(
+        permissionKeyList
+          .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
+          .filter((permissionKey): permissionKey is string => Boolean(permissionKey))
+      );
       if (normalizedPermissionKeys.length === 0) {
         logger.info(
           `[PermissionMiddleware] Denied: requireAllPermissions invoked with no valid permission keys for user ${userId}`
@@ -460,7 +473,9 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
         });
         return;
       }
-      if (normalizedPermissionKeys.some((permissionKey) => !isPermissionKeyWithinLimit(permissionKey))) {
+      if (
+        normalizedPermissionKeys.some((permissionKey) => !isPermissionKeyWithinLimit(permissionKey))
+      ) {
         logger.warn('[PermissionMiddleware] Denied: permission key over max length', {
           userId,
           max: MAX_PERMISSION_KEY_LENGTH,
@@ -546,10 +561,7 @@ export const auditAction = (options: AuditOptions) => {
     const { GovernanceAuditService } = deps;
     if (
       safeRead(
-        () =>
-          Boolean(
-            (res as Response & { [AUDIT_JSON_WRAPPED]?: boolean })[AUDIT_JSON_WRAPPED]
-          ),
+        () => Boolean((res as Response & { [AUDIT_JSON_WRAPPED]?: boolean })[AUDIT_JSON_WRAPPED]),
         false
       )
     ) {
@@ -558,7 +570,10 @@ export const auditAction = (options: AuditOptions) => {
     }
 
     // Store original json method
-    const originalJson = safeRead(() => res.json.bind(res), null as unknown as ((data: unknown) => unknown));
+    const originalJson = safeRead(
+      () => res.json.bind(res),
+      null as unknown as (data: unknown) => unknown
+    );
     if (!originalJson) {
       next();
       return;

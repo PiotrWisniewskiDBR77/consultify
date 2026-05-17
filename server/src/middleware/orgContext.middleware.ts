@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Organization Context Middleware (HARDENED)
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -125,7 +126,10 @@ const readUserId = (req: OrgRequest, requestUser?: AuthRequest['user']): string 
   );
 };
 
-const readUserDefaultOrgId = (req: OrgRequest, requestUser?: AuthRequest['user']): string | null => {
+const readUserDefaultOrgId = (
+  req: OrgRequest,
+  requestUser?: AuthRequest['user']
+): string | null => {
   const user = requestUser ?? readRequestUser(req);
   const organizationId = normalizeOptionalString(
     safeRead(() => user?.organizationId, undefined as unknown as string | undefined)
@@ -231,7 +235,9 @@ const sanitizeOrgContextRole = (role: unknown, isConsultant: boolean): string =>
   return trimmed;
 };
 
-const parsePermissionScope = (value: unknown): { valid: true; scope: Record<string, unknown> } | { valid: false } => {
+const parsePermissionScope = (
+  value: unknown
+): { valid: true; scope: Record<string, unknown> } | { valid: false } => {
   const normalized = normalizeOptionalString(value);
   if (!normalized) {
     return { valid: true, scope: {} };

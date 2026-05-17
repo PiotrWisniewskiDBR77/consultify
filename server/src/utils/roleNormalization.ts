@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 export const ApplicationRole = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',

@@ -1,5 +1,6 @@
 export function ideaTablePresenceErrorMessage(error: unknown, fallback: string): string {
-  const record = error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
+  const record =
+    error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
   const code = record?.data?.code;
 
   if (code === 'IDEA_TABLE_PRESENCE_POLL_FAILED') {

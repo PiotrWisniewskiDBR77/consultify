@@ -20,9 +20,9 @@ import { ArrowLeft, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
+  sortChipsByMelsOrder,
   type TopBarChipDescriptor,
   type TopBarChipDotTone,
-  sortChipsByMelsOrder,
 } from './ChipDescriptor';
 
 interface TopBarProps {
@@ -186,10 +186,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
       </div>
 
-      <div
-        className="flex items-center gap-1 flex-shrink-0"
-        data-testid="mels-topbar-chips"
-      >
+      <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
         {orderedChips.map((chip) => (
           <Chip key={chip.id} descriptor={chip} />
         ))}

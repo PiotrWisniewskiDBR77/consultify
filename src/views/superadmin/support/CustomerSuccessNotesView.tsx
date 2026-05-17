@@ -99,8 +99,11 @@ function normalizeCsNotesErrorCode(input: unknown): string | null {
     payload.code,
     (payload.error as Record<string, unknown> | undefined)?.code,
     (payload.data as Record<string, unknown> | undefined)?.code,
-    ((payload.data as Record<string, unknown> | undefined)?.error as Record<string, unknown> | undefined)
-      ?.code,
+    (
+      (payload.data as Record<string, unknown> | undefined)?.error as
+        | Record<string, unknown>
+        | undefined
+    )?.code,
   ];
 
   for (const candidate of candidates) {
@@ -153,10 +156,16 @@ function normalizeNotesPayload(input: unknown): any[] | null {
     payload.items,
     (payload.data as Record<string, unknown> | undefined)?.notes,
     (payload.data as Record<string, unknown> | undefined)?.items,
-    ((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
-      ?.notes,
-    ((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
-      ?.items,
+    (
+      (payload.data as Record<string, unknown> | undefined)?.data as
+        | Record<string, unknown>
+        | undefined
+    )?.notes,
+    (
+      (payload.data as Record<string, unknown> | undefined)?.data as
+        | Record<string, unknown>
+        | undefined
+    )?.items,
   ];
 
   for (const candidate of candidates) {
@@ -175,10 +184,18 @@ function resolveCreatedNoteId(input: unknown): string | null {
     payload.id,
     (payload.note as Record<string, unknown> | undefined)?.id,
     (payload.data as Record<string, unknown> | undefined)?.id,
-    ((payload.data as Record<string, unknown> | undefined)?.note as Record<string, unknown> | undefined)
-      ?.id,
-    (((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
-      ?.note as Record<string, unknown> | undefined)?.id,
+    (
+      (payload.data as Record<string, unknown> | undefined)?.note as
+        | Record<string, unknown>
+        | undefined
+    )?.id,
+    (
+      (
+        (payload.data as Record<string, unknown> | undefined)?.data as
+          | Record<string, unknown>
+          | undefined
+      )?.note as Record<string, unknown> | undefined
+    )?.id,
   ];
 
   for (const candidate of candidates) {

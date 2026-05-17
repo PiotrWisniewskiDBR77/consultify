@@ -24,7 +24,9 @@ const STORE_CAP_PRUNE_TARGET = 45_000;
 const MAX_RATE_LIMIT_WINDOW_MS = 7 * 24 * 60 * 60_000;
 const MAX_RATE_LIMIT_MAX = 1_000_000;
 const STORE_CLEANUP_INTERVAL_KEY = '__consultifyRateLimitStoreCleanup__';
-type RateLimitGlobal = typeof globalThis & { [STORE_CLEANUP_INTERVAL_KEY]?: ReturnType<typeof setInterval> };
+type RateLimitGlobal = typeof globalThis & {
+  [STORE_CLEANUP_INTERVAL_KEY]?: ReturnType<typeof setInterval>;
+};
 const globalRateLimit = globalThis as RateLimitGlobal;
 if (globalRateLimit[STORE_CLEANUP_INTERVAL_KEY]) {
   clearInterval(globalRateLimit[STORE_CLEANUP_INTERVAL_KEY]);
@@ -229,7 +231,9 @@ function extractKey(req: Request): string {
   const ipFromSocketRaw = normalizeOptionalString(
     safeRead(() => req.socket?.remoteAddress, undefined as unknown)
   );
-  const ipFromSocket = ipFromSocketRaw ? capKeySegment(normalizeIpKeyMaterial(ipFromSocketRaw)) : null;
+  const ipFromSocket = ipFromSocketRaw
+    ? capKeySegment(normalizeIpKeyMaterial(ipFromSocketRaw))
+    : null;
   const forwardedHeader = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);
   const trustProxy = Boolean(
     safeRead(
@@ -270,10 +274,7 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
     }
     const disableRateLimitRequested = process.env.DISABLE_RATE_LIMIT === 'true';
     const allowProdDisable = process.env.RATE_LIMIT_ALLOW_PROD_DISABLE === 'true';
-    if (
-      disableRateLimitRequested &&
-      (process.env.NODE_ENV !== 'production' || allowProdDisable)
-    ) {
+    if (disableRateLimitRequested && (process.env.NODE_ENV !== 'production' || allowProdDisable)) {
       safeInvokeNext(next);
       return;
     }

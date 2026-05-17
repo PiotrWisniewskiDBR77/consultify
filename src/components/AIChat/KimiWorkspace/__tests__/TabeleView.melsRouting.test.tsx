@@ -90,8 +90,7 @@ vi.mock('@/store/useAppStore', () => ({
 }));
 
 vi.mock('@/store/useConversationStore', () => ({
-  useConversationStore: (selector: (s: unknown) => unknown) =>
-    selector({ activeMessages: [] }),
+  useConversationStore: (selector: (s: unknown) => unknown) => selector({ activeMessages: [] }),
 }));
 
 vi.mock('@/services/api', () => ({

@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * RBAC Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -94,20 +95,18 @@ const isInvalidOrgToken = (value: string): boolean => {
 const containsInvalidOrgChars = (value: string): boolean =>
   /[\u0000-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069\u200B-\u200D\uFEFF]/.test(value);
 const containsDisallowedOrgIdDelimiters = (value: string): boolean =>
-  value.includes('..') || value.includes('//') || value.includes('\\') || value.includes('<') || value.includes('>');
+  value.includes('..') ||
+  value.includes('//') ||
+  value.includes('\\') ||
+  value.includes('<') ||
+  value.includes('>');
 
 const toCanonicalRole = (role: UserRole | undefined): CanonicalRole => {
-  const r = safeRead(
-    () => {
-      const raw = String(role ?? '');
-      if (raw.length > RBAC_MAX_ROLE_INPUT_CHARS) return '';
-      return raw
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '_');
-    },
-    ''
-  );
+  const r = safeRead(() => {
+    const raw = String(role ?? '');
+    if (raw.length > RBAC_MAX_ROLE_INPUT_CHARS) return '';
+    return raw.trim().toLowerCase().replace(/\s+/g, '_');
+  }, '');
 
   if (!r) return '';
 
@@ -135,7 +134,9 @@ const toCanonicalRole = (role: UserRole | undefined): CanonicalRole => {
 
 const getRequestRole = (req: AuthRequest): CanonicalRole => {
   // Prefer raw role from token (req.userRole). `req.user.role` may be mapped (e.g. SUPERADMIN -> owner).
-  const raw = toCanonicalRole(normalizeOptionalString(safeRead(() => req.userRole, undefined as unknown)));
+  const raw = toCanonicalRole(
+    normalizeOptionalString(safeRead(() => req.userRole, undefined as unknown))
+  );
   if (raw) return raw;
   return toCanonicalRole(
     normalizeOptionalString(safeRead(() => req.user?.role, undefined as unknown))
@@ -173,14 +174,12 @@ export const requireRole = (...roles: UserRole[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     try {
       if (req == null) {
-        sendRbacForbidden(
-          res,
-          'Insufficient role',
-          RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
-        );
+        sendRbacForbidden(res, 'Insufficient role', RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE);
         return;
       }
-      const safeRoles: UserRole[] = Array.isArray(roles) ? roles.slice(0, RBAC_MAX_REQUIRED_ROLES) : [];
+      const safeRoles: UserRole[] = Array.isArray(roles)
+        ? roles.slice(0, RBAC_MAX_REQUIRED_ROLES)
+        : [];
       if (safeRoles.length === 0) {
         invokeNextIfFunction(next);
         return;
@@ -194,22 +193,14 @@ export const requireRole = (...roles: UserRole[]) => {
       const allowed = safeRead(() => required.some((r) => roleSatisfies(userRole, r)), false);
 
       if (!allowed) {
-        sendRbacForbidden(
-          res,
-          'Insufficient role',
-          RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
-        );
+        sendRbacForbidden(res, 'Insufficient role', RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE);
         return;
       }
       if (responseWriteBlocked(res)) return;
 
       invokeNextIfFunction(next);
     } catch {
-      sendRbacForbidden(
-        res,
-        'Insufficient role',
-        RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
-      );
+      sendRbacForbidden(res, 'Insufficient role', RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE);
     }
   };
 };

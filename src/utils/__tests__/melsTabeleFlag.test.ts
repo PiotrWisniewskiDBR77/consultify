@@ -13,7 +13,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { MELS_TABELE_FLAG_KEYS, isMelsTabeleEnabled } from '../melsTabeleFlag';
+import { isMelsTabeleEnabled, MELS_TABELE_FLAG_KEYS } from '../melsTabeleFlag';
 
 const ORIGINAL_LOCATION = window.location;
 

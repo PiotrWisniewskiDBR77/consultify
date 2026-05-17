@@ -71,9 +71,9 @@ function safeWrite(writer: () => void): boolean {
 function responseWriteBlocked(res: Response): boolean {
   return Boolean(
     safeRead(() => res.headersSent, false) ||
-      safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
-      safeRead(() => (res as Response & { finished?: boolean }).finished === true, false) ||
-      safeRead(() => (res as Response & { destroyed?: boolean }).destroyed === true, false)
+    safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
+    safeRead(() => (res as Response & { finished?: boolean }).finished === true, false) ||
+    safeRead(() => (res as Response & { destroyed?: boolean }).destroyed === true, false)
   );
 }
 
@@ -198,8 +198,7 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
     const originalUrl = String(safeRead(() => req.originalUrl, '') || '').trim();
     const fallbackUrl = String(safeRead(() => req.url, '') || '').trim();
     const url = originalUrl || fallbackUrl;
-    const pathForAllowlist =
-      url.length > MAX_DEMO_GUARD_URL_CHARS ? '' : stripPathOnly(url);
+    const pathForAllowlist = url.length > MAX_DEMO_GUARD_URL_CHARS ? '' : stripPathOnly(url);
     const isAllowed = allowedRoutes.some((prefix) => pathForAllowlist.startsWith(prefix));
     if (isAllowed) return next();
 
@@ -212,7 +211,8 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
       safeRead(() => (req as any).organizationId, undefined) ??
       safeRead(() => (req as any).user?.organizationId, undefined) ??
       safeRead(() => (req as any).user?.organization_id, undefined);
-    const isDemoOrg = normalizeOrgIdForDemoComparison(orgId) === normalizeOrgIdForDemoComparison(DEMO_ORG_ID);
+    const isDemoOrg =
+      normalizeOrgIdForDemoComparison(orgId) === normalizeOrgIdForDemoComparison(DEMO_ORG_ID);
     const isInteractiveSession =
       Boolean(requestedSessionOrgId) && requestedSessionOrgId !== DEMO_ORG_ID;
 
@@ -232,7 +232,11 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
             'Cache-Control',
             'no-store'
           );
-          (setHeaderWriter as (name: string, value: string) => unknown).call(res, 'Pragma', 'no-cache');
+          (setHeaderWriter as (name: string, value: string) => unknown).call(
+            res,
+            'Pragma',
+            'no-cache'
+          );
           (setHeaderWriter as (name: string, value: string) => unknown).call(res, 'Expires', '0');
           (setHeaderWriter as (name: string, value: string) => unknown).call(
             res,

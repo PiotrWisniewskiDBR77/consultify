@@ -33,10 +33,12 @@ const TINY_PNG_BUFFER = Buffer.from([
 
 const TINY_PNG_BASE64 = TINY_PNG_BUFFER.toString('base64');
 
-function makeSchema(overrides: {
-  coverPage?: boolean;
-  coverPageDetailed?: DocumentSchema['formattingSchema']['coverPageDetailed'];
-} = {}): DocumentSchema {
+function makeSchema(
+  overrides: {
+    coverPage?: boolean;
+    coverPageDetailed?: DocumentSchema['formattingSchema']['coverPageDetailed'];
+  } = {}
+): DocumentSchema {
   return {
     documentId: 'doc-cover-logo-1',
     artifactId: 'art-cover-logo-1',
@@ -69,9 +71,7 @@ function makeSchema(overrides: {
         orderIndex: 0,
         level: 1,
         title: 'Body',
-        blocks: [
-          { blockId: 'p-1', type: 'paragraph', content: { text: 'Hello world.' } },
-        ],
+        blocks: [{ blockId: 'p-1', type: 'paragraph', content: { text: 'Hello world.' } }],
         sourceRefs: [],
       },
     ],

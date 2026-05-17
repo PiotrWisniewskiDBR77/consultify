@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Optional JWT parse for rate-limit keying
  * Extracts and verifies JWT if present, sets req._rateLimitUserId so apiLimiter
@@ -113,9 +114,10 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
     const secret = normalizeTokenCandidate(
       safeRead(() => process.env.JWT_SECRET as string | undefined, undefined)
     );
-    const strictJwtFallback = normalizeTokenCandidate(
-      safeRead(() => process.env[RATE_LIMIT_STRICT_JWT_FALLBACK_ENV], '')
-    ) === '1';
+    const strictJwtFallback =
+      normalizeTokenCandidate(
+        safeRead(() => process.env[RATE_LIMIT_STRICT_JWT_FALLBACK_ENV], '')
+      ) === '1';
 
     if (!token) return;
     if (token.length > MAX_JWT_STRING_CHARS) return;
@@ -130,8 +132,7 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
         if (!payload || !Object.hasOwn(payload, key)) return undefined;
         return normalizeTokenCandidate(safeRead(() => payload[key], undefined));
       };
-      const candidate =
-        readOwnClaim('id') || readOwnClaim('userId') || readOwnClaim('sub');
+      const candidate = readOwnClaim('id') || readOwnClaim('userId') || readOwnClaim('sub');
       if (
         candidate &&
         candidate.length <= MAX_RATE_LIMIT_USER_ID_CHARS &&

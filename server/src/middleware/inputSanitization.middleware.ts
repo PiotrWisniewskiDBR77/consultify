@@ -145,10 +145,7 @@ function truncateStrings(
  * entity-escaping. We only target `on*=` patterns; we intentionally keep
  * normal `/` and `=` intact for legitimate URLs/tokens/base64.
  */
-function neutralizeInlineEventHandlers(
-  obj: unknown,
-  depth: number = MAX_BODY_DEPTH
-): unknown {
+function neutralizeInlineEventHandlers(obj: unknown, depth: number = MAX_BODY_DEPTH): unknown {
   if (depth <= 0) return obj;
   if (obj === null || obj === undefined) return obj;
   if (typeof obj === 'string') {
@@ -281,8 +278,14 @@ export const inputSanitizationMiddleware = async (
           'params'
         );
       }
-      const sanitizedParams = sanitizeObject(truncatedParams, MAX_BODY_DEPTH) as Record<string, unknown>;
-      const normalizedParams = neutralizeInlineEventHandlers(sanitizedParams) as Record<string, unknown>;
+      const sanitizedParams = sanitizeObject(truncatedParams, MAX_BODY_DEPTH) as Record<
+        string,
+        unknown
+      >;
+      const normalizedParams = neutralizeInlineEventHandlers(sanitizedParams) as Record<
+        string,
+        unknown
+      >;
       try {
         for (const key of Object.keys(requestParams as Record<string, unknown>)) {
           delete (requestParams as Record<string, unknown>)[key];

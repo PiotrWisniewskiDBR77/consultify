@@ -89,14 +89,16 @@ function escapePrometheusLabelValue(value: string): string {
 }
 
 function addBoundedMetric(current: unknown, delta: unknown): number {
-  const currentValue = typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
+  const currentValue =
+    typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
   const deltaValue = typeof delta === 'number' && Number.isFinite(delta) && delta > 0 ? delta : 0;
   if (deltaValue === 0) return Math.min(currentValue, MAX_METRIC_COUNTER);
   return Math.min(MAX_METRIC_COUNTER, currentValue + deltaValue);
 }
 
 function subtractBoundedMetric(current: unknown, delta: unknown): number {
-  const currentValue = typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
+  const currentValue =
+    typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
   const deltaValue = typeof delta === 'number' && Number.isFinite(delta) && delta > 0 ? delta : 0;
   if (deltaValue === 0) return Math.min(currentValue, MAX_METRIC_COUNTER);
   return Math.max(0, Math.min(MAX_METRIC_COUNTER, currentValue - deltaValue));
@@ -142,7 +144,9 @@ export function getPrometheusMetrics(): string {
         `http_request_duration_ms_bucket{le="${bucket}"} ${toPrometheusCounter(metrics.latencyBuckets[`le_${bucket}`])}`
       );
     }
-    lines.push(`http_request_duration_ms_bucket{le="+Inf"} ${toPrometheusCounter(metrics.requests)}`);
+    lines.push(
+      `http_request_duration_ms_bucket{le="+Inf"} ${toPrometheusCounter(metrics.requests)}`
+    );
 
     lines.push(`# HELP rate_limit_hits_total Rate limit hits`);
     lines.push(`# TYPE rate_limit_hits_total counter`);
@@ -238,7 +242,7 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
     recordCompletion();
   };
 
-  const originalEnd = safeRead(() => res.end.bind(res), null as unknown as ((...args: any[]) => any));
+  const originalEnd = safeRead(() => res.end.bind(res), null as unknown as (...args: any[]) => any);
   if (!originalEnd) {
     next();
     return;

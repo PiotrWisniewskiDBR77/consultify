@@ -35,9 +35,7 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 
-const { loadTemplatesForOrg, persistTemplate } = await import(
-  '../documentTemplateRegistryDao.js'
-);
+const { loadTemplatesForOrg, persistTemplate } = await import('../documentTemplateRegistryDao.js');
 
 const baseRow = {
   template_id: 'tpl-1',

@@ -38,9 +38,8 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 vi.mock('../AiUsageService.js', async () => {
-  const actual = await vi.importActual<typeof import('../AiUsageService.js')>(
-    '../AiUsageService.js'
-  );
+  const actual =
+    await vi.importActual<typeof import('../AiUsageService.js')>('../AiUsageService.js');
   return {
     ...actual,
     default: { consume: (...args: unknown[]) => mockConsume(...args) },
@@ -53,11 +52,11 @@ vi.mock('../TableAiEditorLevels/index.js', () => ({
   dispatchLevelStub: (...args: unknown[]) => mockDispatchStub(...args),
 }));
 
+import { AiBudgetExhaustedError } from '../AiUsageService.js';
 import tableAiEditorService, {
   AI_EDITOR_LEVELS,
   TableAiEditorError,
 } from '../TableAiEditorService.js';
-import { AiBudgetExhaustedError } from '../AiUsageService.js';
 
 const TABLE = 'tbl-1';
 const WS = 'ws-A';
@@ -285,12 +284,12 @@ describe('TableAiEditorService.proposeEdit', () => {
       estimatedTokensOutput: 1,
       model: 'gpt-test',
     };
-    await expect(
-      tableAiEditorService.proposeEdit({ ...base, tableId: '' })
-    ).rejects.toMatchObject({ code: 'TABLE_ID_REQUIRED' });
-    await expect(
-      tableAiEditorService.proposeEdit({ ...base, prompt: '' })
-    ).rejects.toMatchObject({ code: 'PROMPT_REQUIRED' });
+    await expect(tableAiEditorService.proposeEdit({ ...base, tableId: '' })).rejects.toMatchObject({
+      code: 'TABLE_ID_REQUIRED',
+    });
+    await expect(tableAiEditorService.proposeEdit({ ...base, prompt: '' })).rejects.toMatchObject({
+      code: 'PROMPT_REQUIRED',
+    });
     await expect(
       tableAiEditorService.proposeEdit({ ...base, workspaceId: '' })
     ).rejects.toMatchObject({ code: 'WORKSPACE_ID_REQUIRED' });
@@ -322,7 +321,7 @@ describe('TableAiEditorService.applyProposal', () => {
     expect(result.reason).toBe('stub_handler_no_op');
 
     const updateCall = mockQuery.mock.calls.find((c) =>
-      String(c[0]).includes("UPDATE tp_schema_proposals")
+      String(c[0]).includes('UPDATE tp_schema_proposals')
     );
     expect(updateCall).toBeTruthy();
     expect(mockLogEvent).toHaveBeenCalledWith(

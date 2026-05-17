@@ -12,7 +12,6 @@ export { GridView } from './GridView';
 export { HubWorkAreaLoadError } from './HubWorkAreaLoadError';
 export { HubWorkAreaLoading } from './HubWorkAreaLoading';
 export { ModuleHub } from './ModuleHub';
-export { useModuleOpenDocuments } from './useModuleOpenDocuments';
 export type { StatusFilter } from './ModuleNavBar';
 export { ModuleNavBar } from './ModuleNavBar';
 export type {
@@ -31,3 +30,4 @@ export {
   StatusDropdown,
 } from './StatusDropdown';
 export * from './types';
+export { useModuleOpenDocuments } from './useModuleOpenDocuments';

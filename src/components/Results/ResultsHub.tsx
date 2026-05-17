@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -11,12 +12,11 @@ import {
   type V8ResultsDashboardSnapshot,
 } from '@/services/api/v8/results';
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
-import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
-import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
+import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -278,7 +278,9 @@ export const ResultsHub: React.FC = () => {
   useEffect(() => {
     if (deepLinkHandled) return;
     const openId = String(searchParams.get('open') || '').trim();
-    const mode = String(searchParams.get('mode') || '').trim().toLowerCase();
+    const mode = String(searchParams.get('mode') || '')
+      .trim()
+      .toLowerCase();
     if (!openId || (mode !== 'initiative' && mode !== 'doc')) return;
 
     setActiveTabRaw('results_initiatives');
@@ -701,12 +703,7 @@ export const ResultsHub: React.FC = () => {
       },
       ['initiativeName']
     );
-  }, [
-    activeTab,
-    replaceResultsFilters,
-    searchParams,
-    trackedInitiatives,
-  ]);
+  }, [activeTab, replaceResultsFilters, searchParams, trackedInitiatives]);
 
   const openInitiativeKpiLane = useCallback(
     (initiative: ResultsTrackedInitiative) => {
@@ -726,15 +723,18 @@ export const ResultsHub: React.FC = () => {
     [replaceResultsFilters]
   );
 
-  const openInitiativeReportsLane = useCallback((initiative?: ResultsTrackedInitiative) => {
-    setActiveTab('results_reports');
-    setReportWorkspaceMode('reports');
-    if (initiative?.initiativeId) {
-      const next = new URLSearchParams(searchParams);
-      next.set('initiativeId', initiative.initiativeId);
-      setSearchParams(next, { replace: true });
-    }
-  }, [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]);
+  const openInitiativeReportsLane = useCallback(
+    (initiative?: ResultsTrackedInitiative) => {
+      setActiveTab('results_reports');
+      setReportWorkspaceMode('reports');
+      if (initiative?.initiativeId) {
+        const next = new URLSearchParams(searchParams);
+        next.set('initiativeId', initiative.initiativeId);
+        setSearchParams(next, { replace: true });
+      }
+    },
+    [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]
+  );
 
   const openScopedExecutionLane = useCallback(() => {
     if (!scopedInitiativeId) return;
@@ -1260,11 +1260,7 @@ export const ResultsHub: React.FC = () => {
 
   const commandRowRightContent = useMemo(() => {
     const scopedExecutionButton = scopedInitiativeId ? (
-      <button
-        type="button"
-        onClick={openScopedExecutionLane}
-        className={MENU_3_ACTION_NEUTRAL}
-      >
+      <button type="button" onClick={openScopedExecutionLane} className={MENU_3_ACTION_NEUTRAL}>
         <span>{t('results.actions.openInExecution', 'Open in Execution')}</span>
       </button>
     ) : null;

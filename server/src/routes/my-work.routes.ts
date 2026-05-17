@@ -461,14 +461,16 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
   const userId = (req as any).userId || req.user?.id;
   const orgId = req.user?.organizationId;
   if (!userId || !orgId) {
-    res.status(401).json(
-      buildMyWorkFailClosedError(
-        req,
-        401,
-        'MY_WORK_UNAUTHORIZED',
-        'Authentication is required to access My Work.'
-      )
-    );
+    res
+      .status(401)
+      .json(
+        buildMyWorkFailClosedError(
+          req,
+          401,
+          'MY_WORK_UNAUTHORIZED',
+          'Authentication is required to access My Work.'
+        )
+      );
     return null;
   }
   return { userId, orgId };
@@ -799,14 +801,16 @@ router.get(
     const type = String(req.query.type || '').trim();
     const id = String(req.query.id || '').trim();
     if (!type || !id) {
-      res.status(400).json(
-        buildMyWorkFailClosedError(
-          req,
-          400,
-          'MY_WORK_LINK_GRAPH_QUERY_INCOMPLETE',
-          'Both type and id query parameters are required.'
-        )
-      );
+      res
+        .status(400)
+        .json(
+          buildMyWorkFailClosedError(
+            req,
+            400,
+            'MY_WORK_LINK_GRAPH_QUERY_INCOMPLETE',
+            'Both type and id query parameters are required.'
+          )
+        );
       return;
     }
 
@@ -863,14 +867,16 @@ router.post(
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json(
-        buildMyWorkFailClosedError(
-          req,
-          400,
-          'MY_WORK_LINK_GRAPH_PAYLOAD_INVALID',
-          'Link graph edge payload is invalid.'
-        )
-      );
+      res
+        .status(400)
+        .json(
+          buildMyWorkFailClosedError(
+            req,
+            400,
+            'MY_WORK_LINK_GRAPH_PAYLOAD_INVALID',
+            'Link graph edge payload is invalid.'
+          )
+        );
       return;
     }
 

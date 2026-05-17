@@ -97,7 +97,6 @@ import {
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
-import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -108,6 +107,7 @@ import {
   type ReportDef,
 } from './executionReports';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
@@ -671,9 +671,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     if (deepLinkHandled) return;
     const openId = String(searchParams.get('open') || '').trim();
-    const mode = String(searchParams.get('mode') || '').trim().toLowerCase();
-    const targetTab = String(searchParams.get('tab') || '').trim().toLowerCase();
-    const targetView = String(searchParams.get('view') || '').trim().toLowerCase();
+    const mode = String(searchParams.get('mode') || '')
+      .trim()
+      .toLowerCase();
+    const targetTab = String(searchParams.get('tab') || '')
+      .trim()
+      .toLowerCase();
+    const targetView = String(searchParams.get('view') || '')
+      .trim()
+      .toLowerCase();
 
     if (targetTab === 'reports') {
       setActiveTab('reports');
@@ -715,14 +721,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     let changed = false;
-    const currentTab = String(next.get('tab') || '').trim().toLowerCase();
-    const desiredTab = String(activeTab || '').trim().toLowerCase();
+    const currentTab = String(next.get('tab') || '')
+      .trim()
+      .toLowerCase();
+    const desiredTab = String(activeTab || '')
+      .trim()
+      .toLowerCase();
     if (desiredTab && currentTab !== desiredTab) {
       next.set('tab', desiredTab);
       changed = true;
     }
-    const currentView = String(next.get('view') || '').trim().toLowerCase();
-    const desiredView = String(viewMode || '').trim().toLowerCase();
+    const currentView = String(next.get('view') || '')
+      .trim()
+      .toLowerCase();
+    const desiredView = String(viewMode || '')
+      .trim()
+      .toLowerCase();
     if (desiredView && currentView !== desiredView) {
       next.set('view', desiredView);
       changed = true;

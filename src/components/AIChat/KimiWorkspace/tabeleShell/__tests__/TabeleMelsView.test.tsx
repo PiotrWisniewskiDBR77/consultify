@@ -43,7 +43,6 @@ vi.mock('react-router-dom', async () => {
 });
 
 import type { ArtifactPreview } from '../../KimiWorkspaceShell';
-
 import { TabeleMelsView } from '../TabeleMelsView';
 
 const samplePreview: ArtifactPreview & { type: 'tabele' } = {
@@ -95,12 +94,7 @@ describe('TabeleMelsView', () => {
   });
 
   it('mounts the TabelePreviewLayout canvas when preview is present', () => {
-    render(
-      <TabeleMelsView
-        preview={samplePreview}
-        persistRailState={false}
-      />
-    );
+    render(<TabeleMelsView preview={samplePreview} persistRailState={false} />);
     expect(screen.getByTestId('tabele-mels-canvas')).toBeInTheDocument();
     // TabelePreviewLayout renders the table title text.
     expect(screen.getAllByText(/Sample table|Operational/i).length).toBeGreaterThan(0);
@@ -139,12 +133,7 @@ describe('TabeleMelsView', () => {
   });
 
   it('left rail derives section badges from the preview', () => {
-    render(
-      <TabeleMelsView
-        preview={samplePreview}
-        persistRailState={false}
-      />
-    );
+    render(<TabeleMelsView preview={samplePreview} persistRailState={false} />);
     expect(screen.getByTestId('tabele-outline-records')).toHaveTextContent('3');
     expect(screen.getByTestId('tabele-outline-schema')).toHaveTextContent('2');
     expect(screen.getByTestId('tabele-outline-relations')).toHaveTextContent('0');

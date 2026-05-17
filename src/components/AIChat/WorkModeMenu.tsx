@@ -1,4 +1,13 @@
-import { Check, ChevronRight, FileText, Globe2, Lock, SlidersHorizontal, Users, Zap } from 'lucide-react';
+import {
+  Check,
+  ChevronRight,
+  FileText,
+  Globe2,
+  Lock,
+  SlidersHorizontal,
+  Users,
+  Zap,
+} from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

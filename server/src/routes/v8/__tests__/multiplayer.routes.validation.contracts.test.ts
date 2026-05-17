@@ -54,7 +54,12 @@ function createApp(): Express {
 describe('V8 Multiplayer validation contracts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUser = { id: 'user-mp-v8', role: 'ADMIN', organizationId: 'org-mp-v8', isSuperAdmin: false };
+    mockUser = {
+      id: 'user-mp-v8',
+      role: 'ADMIN',
+      organizationId: 'org-mp-v8',
+      isSuperAdmin: false,
+    };
     mockResolveRoomBinding.mockResolvedValue({
       roomResourceType: 'whiteboard',
       roomResourceId: 'wb-1',

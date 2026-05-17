@@ -20,13 +20,11 @@ const INVITE_PUBLIC_ERROR_COPY = {
 } as const;
 
 function mapPublicInvitationError(input: unknown, context: 'validate' | 'accept'): string {
-  const payload = input as
-    | {
-        message?: unknown;
-        code?: unknown;
-        error?: unknown;
-      }
-    | null;
+  const payload = input as {
+    message?: unknown;
+    code?: unknown;
+    error?: unknown;
+  } | null;
 
   const nestedError = payload?.error as { message?: unknown; code?: unknown } | undefined;
   const codeCandidates = [payload?.code, nestedError?.code].filter(
@@ -105,7 +103,10 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         const loggedEmail = currentUser?.email?.trim().toLowerCase();
         const invitedEmail = (data as InvitationValidation | null)?.email?.trim().toLowerCase();
         const shouldBlockMismatch = Boolean(
-          currentUser?.isAuthenticated && loggedEmail && invitedEmail && loggedEmail !== invitedEmail
+          currentUser?.isAuthenticated &&
+          loggedEmail &&
+          invitedEmail &&
+          loggedEmail !== invitedEmail
         );
         setEmailMismatch(shouldBlockMismatch);
       } catch (err) {

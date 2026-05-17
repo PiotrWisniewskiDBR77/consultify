@@ -313,7 +313,10 @@ interface RecordRow {
   updatedAt: string;
 }
 
-async function loadRecords(tableId: string, limit = MAX_RECORDS_FOR_FORMULA_SCAN): Promise<RecordRow[]> {
+async function loadRecords(
+  tableId: string,
+  limit = MAX_RECORDS_FOR_FORMULA_SCAN
+): Promise<RecordRow[]> {
   const db = getDatabase();
   const { rows } = await db.query(
     `SELECT id, data, confidence_score, validation_status, updated_at
@@ -332,9 +335,7 @@ async function loadRecords(tableId: string, limit = MAX_RECORDS_FOR_FORMULA_SCAN
           ? safeParseObject(r.data)
           : (r.data as Record<string, unknown>),
     confidenceScore:
-      r.confidence_score == null || r.confidence_score === ''
-        ? null
-        : Number(r.confidence_score),
+      r.confidence_score == null || r.confidence_score === '' ? null : Number(r.confidence_score),
     validationStatus: String(r.validation_status ?? 'unverified'),
     updatedAt:
       r.updated_at instanceof Date
@@ -345,10 +346,9 @@ async function loadRecords(tableId: string, limit = MAX_RECORDS_FOR_FORMULA_SCAN
 
 async function countRecords(tableId: string): Promise<number> {
   const db = getDatabase();
-  const { rows } = await db.query(
-    `SELECT COUNT(*)::int AS n FROM tp_records WHERE table_id = $1`,
-    [tableId]
-  );
+  const { rows } = await db.query(`SELECT COUNT(*)::int AS n FROM tp_records WHERE table_id = $1`, [
+    tableId,
+  ]);
   return Number(rows?.[0]?.n ?? 0);
 }
 
@@ -511,10 +511,7 @@ function computeCompletenessAxis(
   };
 }
 
-function computeFreshnessAxis(
-  records: RecordRow[],
-  lastVerifiedAt: string | null
-): QaAxisDetail {
+function computeFreshnessAxis(records: RecordRow[], lastVerifiedAt: string | null): QaAxisDetail {
   if (records.length === 0) {
     return {
       score: 1,
@@ -532,8 +529,7 @@ function computeFreshnessAxis(
   const daysSinceUpdate = daysBetween(newest);
   const daysSinceVerify = lastVerifiedAt ? daysBetween(lastVerifiedAt) : null;
   const updateScore = freshnessSubScore(daysSinceUpdate);
-  const verifyScore =
-    daysSinceVerify === null ? updateScore : freshnessSubScore(daysSinceVerify);
+  const verifyScore = daysSinceVerify === null ? updateScore : freshnessSubScore(daysSinceVerify);
   const score = clamp01((updateScore + verifyScore) / 2);
   return {
     score,
@@ -747,9 +743,7 @@ function computeFormulaAxis(fields: FieldRow[], records: RecordRow[]): FormulaAx
     }
   }
   const successRate = total === 0 ? 1 : (total - errors) / total;
-  const broken = [...errorByField.entries()]
-    .filter(([, n]) => n > 0)
-    .map(([fid]) => fid);
+  const broken = [...errorByField.entries()].filter(([, n]) => n > 0).map(([fid]) => fid);
   return {
     axis: {
       score: clamp01(successRate),
@@ -794,9 +788,7 @@ function synthesizeSuggestions(input: SuggestionInputs): QaSuggestion[] {
 
   // Completeness — top-3 emptiest required fields by count.
   if (input.completenessScore < BAND_GREEN_MIN && input.emptyByField.size > 0) {
-    const topEmpty = [...input.emptyByField.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
+    const topEmpty = [...input.emptyByField.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
     for (const [fieldId, count] of topEmpty) {
       const field = input.fields.find((f) => f.id === fieldId);
       const fieldName = field?.name ?? fieldId;
@@ -941,11 +933,7 @@ const tableQaService = {
     const tenant = await loadTenant(input.tableId);
     if (!tenant) throw new TableQaError('TABLE_NOT_FOUND', 'Table not found', 404);
     if (tenant.organizationId !== input.organizationId) {
-      throw new TableQaError(
-        'TENANT_VIOLATION',
-        'Table not in actor organization',
-        403
-      );
+      throw new TableQaError('TENANT_VIOLATION', 'Table not in actor organization', 403);
     }
 
     const start = Date.now();
@@ -1023,13 +1011,9 @@ const tableQaService = {
    * Returns the most recent persisted report for `tableId`, or `null` if none.
    * Cross-tenant defense: refuses tables not in `organizationId`.
    */
-  async getLatestReport(
-    tableId: string,
-    organizationId: string
-  ): Promise<QaReport | null> {
+  async getLatestReport(tableId: string, organizationId: string): Promise<QaReport | null> {
     if (!tableId) throw new TableQaError('TABLE_ID_REQUIRED', 'tableId is required');
-    if (!organizationId)
-      throw new TableQaError('ORG_ID_REQUIRED', 'organizationId is required');
+    if (!organizationId) throw new TableQaError('ORG_ID_REQUIRED', 'organizationId is required');
 
     const tenant = await loadTenant(tableId);
     if (!tenant) return null;
@@ -1064,8 +1048,7 @@ const tableQaService = {
       throw new TableQaError('ORG_ID_REQUIRED', 'organizationId is required');
     if (!input.fingerprint)
       throw new TableQaError('FINGERPRINT_REQUIRED', 'fingerprint is required');
-    if (!input.dismissedBy)
-      throw new TableQaError('ACTOR_REQUIRED', 'dismissedBy is required');
+    if (!input.dismissedBy) throw new TableQaError('ACTOR_REQUIRED', 'dismissedBy is required');
 
     const tenant = await loadTenant(input.tableId);
     if (!tenant) throw new TableQaError('TABLE_NOT_FOUND', 'Table not found', 404);
@@ -1173,9 +1156,7 @@ function rowToReport(row: any): QaReport {
     organizationId: String(row.organization_id),
     workspaceId: String(row.workspace_id),
     computedAt:
-      row.computed_at instanceof Date
-        ? row.computed_at.toISOString()
-        : String(row.computed_at),
+      row.computed_at instanceof Date ? row.computed_at.toISOString() : String(row.computed_at),
     computedBy: String(row.computed_by),
     triggerKind: String(row.trigger_kind) as QaTriggerKind,
     overallScore: Number(row.overall_score),

@@ -66,4 +66,3 @@ export function resolveAllowedApiMethods(app: Application, req: Request): string
 
   return Array.from(allowed).sort();
 }
-

@@ -21,7 +21,9 @@ export const ActiveModeStrip: React.FC = () => {
   const chips = [
     {
       key: 'preset',
-      label: PRESET_LABELS[String(cfg.workModePreset || '')] || t('aiChat.workMode.default', 'Tryb pracy'),
+      label:
+        PRESET_LABELS[String(cfg.workModePreset || '')] ||
+        t('aiChat.workMode.default', 'Tryb pracy'),
       active: Boolean(cfg.workModePreset),
       icon: ShieldCheck,
     },

@@ -13,7 +13,6 @@
  * Cross-tenant defense + stub fallback identical to cell handler.
  */
 
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -23,6 +22,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opRecordUpdate } from './operations.js';
 
@@ -47,7 +47,7 @@ export const proposeRecordEdit: LevelHandler = async (input): Promise<LevelStubO
   const { tableId, prompt, context, organizationId, workspaceId, llmProvider } = input;
   const recordId = asString(context.recordId);
   const requestedFieldIds = Array.isArray(context.targetFields)
-    ? (context.targetFields.filter((f): f is string => typeof f === 'string'))
+    ? context.targetFields.filter((f): f is string => typeof f === 'string')
     : null;
 
   if (!recordId) {
@@ -72,7 +72,10 @@ export const proposeRecordEdit: LevelHandler = async (input): Promise<LevelStubO
     };
   }
 
-  const [fields, record] = await Promise.all([loadTableFields(tableId), loadRecord(tableId, recordId)]);
+  const [fields, record] = await Promise.all([
+    loadTableFields(tableId),
+    loadRecord(tableId, recordId),
+  ]);
   if (!record) {
     return {
       handlerStatus: 'live',

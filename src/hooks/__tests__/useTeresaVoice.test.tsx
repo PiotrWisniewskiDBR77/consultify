@@ -16,13 +16,13 @@ const { sessionCloseMock } = vi.hoisted(() => ({
 }));
 let sendClientContentMock = vi.fn();
 let sendRealtimeInputMock = vi.fn();
-let lastProcessorNode:
-  | {
-      connect: ReturnType<typeof vi.fn>;
-      disconnect: ReturnType<typeof vi.fn>;
-      onaudioprocess: ((event: { inputBuffer: { getChannelData: (channel: number) => Float32Array } }) => void) | null;
-    }
-  | null = null;
+let lastProcessorNode: {
+  connect: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  onaudioprocess:
+    | ((event: { inputBuffer: { getChannelData: (channel: number) => Float32Array } }) => void)
+    | null;
+} | null = null;
 
 vi.mock('@google/genai', () => {
   class GoogleGenAI {

@@ -15,8 +15,8 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
 import { ROUTES } from '@/routes/routeConfig';
+import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getSourceDisplayLabel } from './InitiativeSourceLink';

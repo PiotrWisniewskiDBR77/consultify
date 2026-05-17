@@ -71,7 +71,10 @@ type VEvent = {
 };
 type CalendarResponse = Record<string, unknown>;
 
-let nodeIcalModule: { sync: { parseICS: (icsData: string) => CalendarResponse } } | null | undefined;
+let nodeIcalModule:
+  | { sync: { parseICS: (icsData: string) => CalendarResponse } }
+  | null
+  | undefined;
 let tsdavModule: { DAVClient: DAVClientCtor } | null | undefined;
 
 async function getNodeIcalModule(): Promise<{
@@ -85,7 +88,9 @@ async function getNodeIcalModule(): Promise<{
       default?: { sync?: { parseICS?: (icsData: string) => CalendarResponse } };
     };
     const resolved = mod.sync?.parseICS ? mod : mod.default;
-    nodeIcalModule = resolved?.sync?.parseICS ? (resolved as NonNullable<typeof nodeIcalModule>) : null;
+    nodeIcalModule = resolved?.sync?.parseICS
+      ? (resolved as NonNullable<typeof nodeIcalModule>)
+      : null;
     return nodeIcalModule;
   } catch {
     nodeIcalModule = null;
@@ -222,7 +227,10 @@ interface ParsedVEvents {
   exceptions: Map<string, Array<{ event: VEvent; calObj: DAVObject }>>;
 }
 
-async function collectVEvents(calendarObjects: DAVObject[], calendarId: string): Promise<ParsedVEvents> {
+async function collectVEvents(
+  calendarObjects: DAVObject[],
+  calendarId: string
+): Promise<ParsedVEvents> {
   const masters = new Map<string, { event: VEvent; calObj: DAVObject }>();
   const exceptions = new Map<string, Array<{ event: VEvent; calObj: DAVObject }>>();
   const ical = await getNodeIcalModule();
@@ -321,7 +329,10 @@ function buildProviderEvent(
   return pe;
 }
 
-async function mapCalendarObjects(calendarObjects: DAVObject[], calendarId: string): Promise<ProviderEvent[]> {
+async function mapCalendarObjects(
+  calendarObjects: DAVObject[],
+  calendarId: string
+): Promise<ProviderEvent[]> {
   const { masters, exceptions } = await collectVEvents(calendarObjects, calendarId);
   const events: ProviderEvent[] = [];
 

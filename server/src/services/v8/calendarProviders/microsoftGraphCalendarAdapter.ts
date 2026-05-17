@@ -32,7 +32,9 @@ type GraphClient = {
   api: (path: string) => GraphRequest;
 };
 type GraphClientCtor = {
-  init: (options: { authProvider: (done: (error: Error | null, token?: string) => void) => void }) => GraphClient;
+  init: (options: {
+    authProvider: (done: (error: Error | null, token?: string) => void) => void;
+  }) => GraphClient;
 };
 
 let graphClientCtor: GraphClientCtor | null | undefined;

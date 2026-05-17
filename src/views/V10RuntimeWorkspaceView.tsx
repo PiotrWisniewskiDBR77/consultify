@@ -25,9 +25,9 @@ export function V10RuntimeWorkspaceView() {
             Internal V10 QA Workspace
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Wewnetrzny host QA do sprawdzania V10 jako calego systemu: 8 blokow, readiness, flagi
-            i smoke surface pod testy integracyjne. Ten ekran nie jest czescia normalnej
-            nawigacji produktu.
+            Wewnetrzny host QA do sprawdzania V10 jako calego systemu: 8 blokow, readiness, flagi i
+            smoke surface pod testy integracyjne. Ten ekran nie jest czescia normalnej nawigacji
+            produktu.
           </p>
         </div>
 

@@ -43,7 +43,11 @@ function classifyError(err: HandlerError): {
   }
 
   if (/validation/i.test(errorName) || /validation/i.test(errorMessage)) {
-    return { statusCode: 400, error: errorMessage || 'Validation failed', code: 'VALIDATION_ERROR' };
+    return {
+      statusCode: 400,
+      error: errorMessage || 'Validation failed',
+      code: 'VALIDATION_ERROR',
+    };
   }
 
   if (/ECONNREFUSED|ETIMEDOUT|ECONNRESET/i.test(errorMessage)) {
@@ -96,7 +100,10 @@ export function errorHandler(
 
 export function notFoundHandler(req: Request, res: Response): void {
   const method = safeRead(() => req.method, 'UNKNOWN');
-  const path = safeRead(() => req.path, safeRead(() => req.originalUrl, 'unknown'));
+  const path = safeRead(
+    () => req.path,
+    safeRead(() => req.originalUrl, 'unknown')
+  );
   const responseWriteBlocked =
     safeRead(() => res.headersSent, false) || safeRead(() => res.writableEnded, false);
   if (responseWriteBlocked) return;

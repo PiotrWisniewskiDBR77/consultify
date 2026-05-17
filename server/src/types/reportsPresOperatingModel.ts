@@ -243,7 +243,15 @@ export const SetAIGovernanceConfigParamsSchema = z.object({
 // OUTPUT RUNTIME — delivery, export, quality (Wave 17)
 // ==========================================
 
-export const OutputExportFormatValues = ['pdf', 'pptx', 'xlsx', 'html', 'png', 'docx', 'csv'] as const;
+export const OutputExportFormatValues = [
+  'pdf',
+  'pptx',
+  'xlsx',
+  'html',
+  'png',
+  'docx',
+  'csv',
+] as const;
 export type OutputExportFormat = (typeof OutputExportFormatValues)[number];
 
 export interface OutputQualityScores {

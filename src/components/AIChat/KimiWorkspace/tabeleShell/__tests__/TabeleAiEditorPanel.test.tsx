@@ -31,10 +31,10 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
 }));
 
 vi.mock('react-hot-toast', () => ({
-  default: Object.assign(
-    (msg: string, _opts?: unknown) => msg,
-    { success: vi.fn(), error: vi.fn() }
-  ),
+  default: Object.assign((msg: string, _opts?: unknown) => msg, {
+    success: vi.fn(),
+    error: vi.fn(),
+  }),
 }));
 
 import { TabeleAiEditorPanel } from '../aiEditor/TabeleAiEditorPanel';
@@ -49,13 +49,7 @@ describe('<TabeleAiEditorPanel>', () => {
   });
 
   it('renders all 8 level cards', () => {
-    render(
-      <TabeleAiEditorPanel
-        tableId="tbl-1"
-        workspaceId="ws-1"
-        testInitialBudget={null}
-      />
-    );
+    render(<TabeleAiEditorPanel tableId="tbl-1" workspaceId="ws-1" testInitialBudget={null} />);
     for (const id of [
       'cell',
       'record',
@@ -92,13 +86,7 @@ describe('<TabeleAiEditorPanel>', () => {
       handlerStatus: 'live',
     });
 
-    render(
-      <TabeleAiEditorPanel
-        tableId="tbl-1"
-        workspaceId="ws-1"
-        testInitialBudget={null}
-      />
-    );
+    render(<TabeleAiEditorPanel tableId="tbl-1" workspaceId="ws-1" testInitialBudget={null} />);
 
     fireEvent.change(screen.getByTestId('ai-editor-prompt'), {
       target: { value: 'Set status to Done for record 42' },
@@ -129,13 +117,7 @@ describe('<TabeleAiEditorPanel>', () => {
       reason: 'ok',
     });
 
-    render(
-      <TabeleAiEditorPanel
-        tableId="tbl-1"
-        workspaceId="ws-1"
-        testInitialBudget={null}
-      />
-    );
+    render(<TabeleAiEditorPanel tableId="tbl-1" workspaceId="ws-1" testInitialBudget={null} />);
     fireEvent.change(screen.getByTestId('ai-editor-prompt'), {
       target: { value: 'do something' },
     });
@@ -166,13 +148,7 @@ describe('<TabeleAiEditorPanel>', () => {
       rejected: true,
     });
 
-    render(
-      <TabeleAiEditorPanel
-        tableId="tbl-1"
-        workspaceId="ws-1"
-        testInitialBudget={null}
-      />
-    );
+    render(<TabeleAiEditorPanel tableId="tbl-1" workspaceId="ws-1" testInitialBudget={null} />);
     fireEvent.change(screen.getByTestId('ai-editor-prompt'), {
       target: { value: 'do something' },
     });

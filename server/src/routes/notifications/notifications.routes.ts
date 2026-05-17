@@ -69,14 +69,16 @@ router.get(
     const userId = (req as any).userId || req.user?.id;
 
     if (!userId) {
-      return res.status(401).json(
-        buildNotificationsFailClosedError(
-          req,
-          401,
-          'NOTIFICATIONS_UNAUTHORIZED',
-          'Authentication is required to access notifications.'
-        )
-      );
+      return res
+        .status(401)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            401,
+            'NOTIFICATIONS_UNAUTHORIZED',
+            'Authentication is required to access notifications.'
+          )
+        );
     }
 
     try {
@@ -89,14 +91,16 @@ router.get(
       return res.json(notifications);
     } catch (err: any) {
       logger.error('[NotificationsRoute] Error:', err);
-      return res.status(500).json(
-        buildNotificationsFailClosedError(
-          req,
-          500,
-          'NOTIFICATIONS_READ_FAILED',
-          'Failed to load notifications.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            500,
+            'NOTIFICATIONS_READ_FAILED',
+            'Failed to load notifications.'
+          )
+        );
     }
   })
 );
@@ -128,14 +132,16 @@ router.post(
     const role = (req as any).userRole || req.user?.role;
 
     if (!userId || !orgId) {
-      return res.status(401).json(
-        buildNotificationsFailClosedError(
-          req,
-          401,
-          'NOTIFICATIONS_BROADCAST_UNAUTHORIZED',
-          'Authentication is required to broadcast notifications.'
-        )
-      );
+      return res
+        .status(401)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            401,
+            'NOTIFICATIONS_BROADCAST_UNAUTHORIZED',
+            'Authentication is required to broadcast notifications.'
+          )
+        );
     }
 
     const isAdmin =
@@ -143,38 +149,44 @@ router.post(
       role === 'SUPERADMIN' ||
       (req.can && typeof req.can === 'function' && req.can('edit_organization_settings'));
     if (!isAdmin) {
-      return res.status(403).json(
-        buildNotificationsFailClosedError(
-          req,
-          403,
-          'NOTIFICATIONS_BROADCAST_FORBIDDEN',
-          'Admin role is required to broadcast notifications.'
-        )
-      );
+      return res
+        .status(403)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            403,
+            'NOTIFICATIONS_BROADCAST_FORBIDDEN',
+            'Admin role is required to broadcast notifications.'
+          )
+        );
     }
 
     const { type, title, body, message, severity, category, actionUrl, data, userIds } =
       req.body || {};
 
     if (!type || typeof type !== 'string') {
-      return res.status(400).json(
-        buildNotificationsFailClosedError(
-          req,
-          400,
-          'NOTIFICATIONS_BROADCAST_TYPE_REQUIRED',
-          'Notification type is required.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            400,
+            'NOTIFICATIONS_BROADCAST_TYPE_REQUIRED',
+            'Notification type is required.'
+          )
+        );
     }
     if (!title || typeof title !== 'string') {
-      return res.status(400).json(
-        buildNotificationsFailClosedError(
-          req,
-          400,
-          'NOTIFICATIONS_BROADCAST_TITLE_REQUIRED',
-          'Notification title is required.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            400,
+            'NOTIFICATIONS_BROADCAST_TITLE_REQUIRED',
+            'Notification title is required.'
+          )
+        );
     }
     try {
       const resolvedBody =
@@ -192,14 +204,16 @@ router.post(
               );
       } catch (err: unknown) {
         if (isMissingTableError(err)) {
-          return res.status(503).json(
-            buildNotificationsFailClosedError(
-              req,
-              503,
-              'NOTIFICATIONS_SERVICE_NOT_CONFIGURED',
-              'Notifications service is temporarily unavailable.'
-            )
-          );
+          return res
+            .status(503)
+            .json(
+              buildNotificationsFailClosedError(
+                req,
+                503,
+                'NOTIFICATIONS_SERVICE_NOT_CONFIGURED',
+                'Notifications service is temporarily unavailable.'
+              )
+            );
         }
         throw err;
       }
@@ -226,14 +240,16 @@ router.post(
       const failed = results.length - ok;
       return res.json({ success: true, sent: ok, failed });
     } catch {
-      return res.status(500).json(
-        buildNotificationsFailClosedError(
-          req,
-          500,
-          'NOTIFICATIONS_BROADCAST_FAILED',
-          'Failed to broadcast notifications.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildNotificationsFailClosedError(
+            req,
+            500,
+            'NOTIFICATIONS_BROADCAST_FAILED',
+            'Failed to broadcast notifications.'
+          )
+        );
     }
   })
 );

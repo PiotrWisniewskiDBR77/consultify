@@ -247,9 +247,11 @@ describe('v10 teresa voice routes', () => {
   });
 
   it('truncates oversized telemetry event payloads', async () => {
-    const res = await request(createApp()).post('/api/v10/teresa/voice-event').send({
-      event: 'a'.repeat(400),
-    });
+    const res = await request(createApp())
+      .post('/api/v10/teresa/voice-event')
+      .send({
+        event: 'a'.repeat(400),
+      });
 
     expect(res.status).toBe(202);
     expect(res.body.accepted).toBe(true);

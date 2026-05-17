@@ -18,7 +18,6 @@
  */
 
 import { getDatabase } from '../../../database/Database.js';
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -28,6 +27,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opSourceSuggest } from './operations.js';
 
@@ -230,10 +230,10 @@ async function listRecordsMissingSources(tableId: string, limit: number): Promis
     return rows.map((r: any) => String(r.id));
   } catch {
     const db = getDatabase();
-    const { rows } = await db.query(
-      `SELECT id FROM tp_records WHERE table_id = $1 LIMIT $2`,
-      [tableId, limit]
-    );
+    const { rows } = await db.query(`SELECT id FROM tp_records WHERE table_id = $1 LIMIT $2`, [
+      tableId,
+      limit,
+    ]);
     return rows.map((r: any) => String(r.id));
   }
 }

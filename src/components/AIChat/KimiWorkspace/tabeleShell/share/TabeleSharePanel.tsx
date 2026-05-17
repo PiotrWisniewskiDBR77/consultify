@@ -197,10 +197,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
   }, [tableId, workspaceId, target, sourcePackId, title, refreshConversions]);
 
   const sortedPacks = useMemo(
-    () =>
-      [...packs].sort((a, b) =>
-        b.createdAt.localeCompare(a.createdAt)
-      ),
+    () => [...packs].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [packs]
   );
 
@@ -236,7 +233,11 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
         <legend className="px-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Convert to
         </legend>
-        <div className="mt-1 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Conversion target">
+        <div
+          className="mt-1 grid grid-cols-2 gap-2"
+          role="radiogroup"
+          aria-label="Conversion target"
+        >
           {TARGET_OPTIONS.map((opt) => {
             const checked = target === opt.value;
             return (
@@ -384,7 +385,8 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
                     {tone.label}
                   </span>
                   <span className="flex-1 truncate">
-                    {conv.title ?? `${conv.target === 'document' ? 'Document' : 'Presentation'} — ${conv.id.slice(0, 8)}`}
+                    {conv.title ??
+                      `${conv.target === 'document' ? 'Document' : 'Presentation'} — ${conv.id.slice(0, 8)}`}
                   </span>
                   {conv.artifactDeepLink ? (
                     <a

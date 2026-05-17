@@ -1702,9 +1702,10 @@ export async function proposeAiEdit(
       body: JSON.stringify(payload),
     }
   );
-  const data = await handleResponse<
-    AiEditorProposeResponse | { data: AiEditorProposeResponse }
-  >(res, 'Failed to propose AI edit');
+  const data = await handleResponse<AiEditorProposeResponse | { data: AiEditorProposeResponse }>(
+    res,
+    'Failed to propose AI edit'
+  );
   return unwrapDataEnvelope<AiEditorProposeResponse>(data);
 }
 
@@ -1816,10 +1817,9 @@ export async function recomputeQaReport(
 }
 
 export async function getLatestQaReport(tableId: string): Promise<QaReport | null> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/latest`,
-    { headers: getHeaders() }
-  );
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/latest`, {
+    headers: getHeaders(),
+  });
   if (res.status === 204) return null;
   const data = await handleResponse<any>(res, 'Failed to fetch QA report');
   return unwrapDataEnvelope<QaReport>(data);
@@ -1938,10 +1938,9 @@ export async function createSourcePack(input: {
 }
 
 export async function getSourcePack(packId: string): Promise<SourcePack | null> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/source-packs/${encodeURIComponent(packId)}`,
-    { headers: getHeaders() }
-  );
+  const res = await fetchWithRetry(`${BASE_PATH}/source-packs/${encodeURIComponent(packId)}`, {
+    headers: getHeaders(),
+  });
   if (res.status === 404) return null;
   const data = await handleResponse<any>(res, 'Failed to fetch source pack');
   return unwrapDataEnvelope<SourcePack>(data);
@@ -1982,10 +1981,10 @@ export async function listSourcePacksForWorkspace(
 export async function markSourcePackUsed(
   packId: string
 ): Promise<{ packId: string; usedCount: number }> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/source-packs/${encodeURIComponent(packId)}/used`,
-    { method: 'POST', headers: getHeaders() }
-  );
+  const res = await fetchWithRetry(`${BASE_PATH}/source-packs/${encodeURIComponent(packId)}/used`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
   const data = await handleResponse<any>(res, 'Failed to mark source pack used');
   return unwrapDataEnvelope(data);
 }
@@ -1996,12 +1995,7 @@ export async function markSourcePackUsed(
 
 export type TableConversionTarget = 'document' | 'presentation';
 
-export type TableConversionStatus =
-  | 'queued'
-  | 'running'
-  | 'succeeded'
-  | 'failed'
-  | 'cancelled';
+export type TableConversionStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 export interface TableConversionOutlineHint {
   heading: string;
@@ -2048,21 +2042,16 @@ export async function convertTable(
   tableId: string,
   input: TableConvertInput
 ): Promise<TableConvertResult> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/convert`,
-    {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(input),
-    }
-  );
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${encodeURIComponent(tableId)}/convert`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(input),
+  });
   const data = await handleResponse<any>(res, 'Failed to convert table');
   return unwrapDataEnvelope(data);
 }
 
-export async function getTableConversion(
-  conversionId: string
-): Promise<TableConversionRecord> {
+export async function getTableConversion(conversionId: string): Promise<TableConversionRecord> {
   const res = await fetchWithRetry(
     `${BASE_PATH}/table-conversions/${encodeURIComponent(conversionId)}`,
     { headers: getHeaders() }
@@ -2116,10 +2105,9 @@ export interface IssuedFormIntakeJwt {
 
 /** Admin: fetch the JWT-intake context for a form (target table + allow-list). */
 export async function getFormIntakeContext(formId: string): Promise<FormIntakeContext> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake`,
-    { headers: getHeaders() }
-  );
+  const res = await fetchWithRetry(`${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake`, {
+    headers: getHeaders(),
+  });
   const data = await handleResponse<any>(res, 'Failed to fetch form intake context');
   return unwrapDataEnvelope(data);
 }
@@ -2129,14 +2117,11 @@ export async function issueFormIntakeJwt(
   formId: string,
   input: IssueFormIntakeJwtInput
 ): Promise<IssuedFormIntakeJwt> {
-  const res = await fetchWithRetry(
-    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake/jwt`,
-    {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(input),
-    }
-  );
+  const res = await fetchWithRetry(`${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake/jwt`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(input),
+  });
   const data = await handleResponse<any>(res, 'Failed to issue intake JWT');
   return unwrapDataEnvelope(data);
 }
@@ -2184,22 +2169,17 @@ export async function submitPublicFormByJwt(
   token: string,
   data: Record<string, unknown>
 ): Promise<{ recordId: string }> {
-  const res = await fetch(
-    `${BASE_PATH}/public/forms/jwt/${encodeURIComponent(token)}/submit`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data }),
-    }
-  );
+  const res = await fetch(`${BASE_PATH}/public/forms/jwt/${encodeURIComponent(token)}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data }),
+  });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const code = (body as any)?.code;
     const message =
       (body as any).error ||
-      (code === 'RATE_LIMITED'
-        ? 'Submission rate limit exceeded'
-        : 'Submission failed');
+      (code === 'RATE_LIMITED' ? 'Submission rate limit exceeded' : 'Submission failed');
     throw new Error(message);
   }
   const json = await res.json();

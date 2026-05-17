@@ -746,7 +746,9 @@ router.post(
       return res.status(400).json({ error: 'Invalid action', code: 'INBOX_TRIAGE_ACTION_INVALID' });
     }
     if (itemKeys.length === 0) {
-      return res.status(400).json({ error: 'Missing itemKeys[]', code: 'INBOX_TRIAGE_ITEM_KEYS_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Missing itemKeys[]', code: 'INBOX_TRIAGE_ITEM_KEYS_REQUIRED' });
     }
 
     const data = await applyGovernedBulkInboxTriage({
@@ -774,7 +776,9 @@ router.post(
     const payload = InboxAiAssistItemSchema.safeParse(body.item);
 
     if (!payload.success) {
-      return res.status(400).json({ error: 'Invalid item payload', code: 'INBOX_AI_ASSIST_INVALID_ITEM' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid item payload', code: 'INBOX_AI_ASSIST_INVALID_ITEM' });
     }
 
     try {

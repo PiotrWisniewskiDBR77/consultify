@@ -154,7 +154,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
                 Strona napotkała problem i została bezpiecznie zatrzymana.
               </p>
               <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony głównej.
+                Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony
+                głównej.
               </p>
             </div>
             {this.state.telemetryDelivery === 'sent' && (

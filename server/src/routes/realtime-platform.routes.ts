@@ -425,7 +425,9 @@ router.get(
     if (!id) return;
     const afterSeq = Number(req.query.afterSequence) || 0;
     try {
-      res.json({ updates: await realtimePlatformService.getCrdtUpdates(req.params.docId, afterSeq) });
+      res.json({
+        updates: await realtimePlatformService.getCrdtUpdates(req.params.docId, afterSeq),
+      });
     } catch (error) {
       if (isRealtimeSubstrateUnavailableError(error)) {
         res.status(503).json({
@@ -494,7 +496,10 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     try {
-      const s = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const s = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!s) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -531,7 +536,10 @@ router.put(
       return;
     }
     try {
-      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!session) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -539,7 +547,9 @@ router.put(
         });
         return;
       }
-      res.json(await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState));
+      res.json(
+        await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState)
+      );
     } catch (error) {
       if (isRealtimeSubstrateUnavailableError(error)) {
         res.status(503).json({
@@ -568,7 +578,10 @@ router.put(
       return;
     }
     try {
-      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!session) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -596,7 +609,10 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     try {
-      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!session) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -638,7 +654,10 @@ router.post(
       return;
     }
     try {
-      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!session) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -702,7 +721,10 @@ router.post(
       return;
     }
     try {
-      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!session) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -756,7 +778,10 @@ router.post(
       return;
     }
     try {
-      const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
+      const session = await realtimePlatformService.getFacilitationSession(
+        id.orgId,
+        req.params.sessionId
+      );
       if (!session) {
         res.status(404).json({
           error: 'Facilitation session not found',
@@ -874,7 +899,10 @@ router.get(
     if (!id) return;
     try {
       res.json({
-        presence: await realtimePlatformService.listToolPresence(id.orgId, req.params.toolSessionId),
+        presence: await realtimePlatformService.listToolPresence(
+          id.orgId,
+          req.params.toolSessionId
+        ),
       });
     } catch (error) {
       if (isRealtimeSubstrateUnavailableError(error)) {

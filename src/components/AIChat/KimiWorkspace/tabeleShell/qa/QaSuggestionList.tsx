@@ -74,9 +74,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                   → {labelLevel(s.recommendedAction.level)}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-slate-800 dark:text-slate-100">
-                {s.description}
-              </p>
+              <p className="mt-1 text-sm text-slate-800 dark:text-slate-100">{s.description}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {onOpenInAiEditor && (
                   <button

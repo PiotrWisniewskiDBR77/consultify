@@ -62,7 +62,8 @@ function parseErrorCode(payload: unknown): string | null {
 function normalizeOAuthStatusPayload(raw: unknown): OAuthStatus {
   const value = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const normalizeProvider = (provider: unknown): { configured: boolean; loginUrl: string } => {
-    const entry = provider && typeof provider === 'object' ? (provider as Record<string, unknown>) : {};
+    const entry =
+      provider && typeof provider === 'object' ? (provider as Record<string, unknown>) : {};
     return {
       configured: Boolean(entry.configured),
       loginUrl: typeof entry.loginUrl === 'string' ? entry.loginUrl : '',
@@ -185,10 +186,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
       }
       toast.success(t('admin.security.saved', 'Security settings saved'));
     } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(
-        error,
-        ADMIN_SECURITY_COPY.saveFailed
-      );
+      const message = normalizeApiErrorMessage(error, ADMIN_SECURITY_COPY.saveFailed);
       setSaveError(message);
       toast.error(message);
     } finally {
@@ -226,10 +224,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
 
       {loadError ? (
         <div role="alert">
-          <DegradedState
-            title={ADMIN_SECURITY_COPY.loadUnavailableTitle}
-            description={loadError}
-          />
+          <DegradedState title={ADMIN_SECURITY_COPY.loadUnavailableTitle} description={loadError} />
         </div>
       ) : (
         <>
@@ -509,7 +504,9 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
               className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
             >
               <p>{saveError}</p>
-              {saveErrorCode ? <p className="mt-1 font-mono text-xs">Code: {saveErrorCode}</p> : null}
+              {saveErrorCode ? (
+                <p className="mt-1 font-mono text-xs">Code: {saveErrorCode}</p>
+              ) : null}
             </div>
           )}
 

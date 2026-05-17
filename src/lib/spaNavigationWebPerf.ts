@@ -5,9 +5,7 @@ let navCounter = 0;
 let lastMarkName: string | null = null;
 
 function sanitizeRouteKey(routeKey: string): string {
-  return routeKey
-    .slice(0, MAX_ROUTE_KEY_LENGTH)
-    .replace(/[^a-zA-Z0-9:/?&=._-]/g, '_');
+  return routeKey.slice(0, MAX_ROUTE_KEY_LENGTH).replace(/[^a-zA-Z0-9:/?&=._-]/g, '_');
 }
 
 export function recordSpaNavigationWebPerf(routeKey: string): void {
@@ -38,4 +36,3 @@ export function recordSpaNavigationWebPerf(routeKey: string): void {
     lastMarkName = currentMarkName;
   }
 }
-

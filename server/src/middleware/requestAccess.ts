@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 import type { AuthRequest } from './auth.middleware.js';
 
 export type RequestAccessRole = 'superadmin' | 'owner' | 'admin' | 'member' | 'guest' | '';
@@ -74,7 +75,10 @@ export const isRequestSuperAdmin = (req: AuthRequest): boolean => {
 export const getRequestAccessRole = (req: AuthRequest): RequestAccessRole => {
   const requestUserSnapshot = getOwnRequestUser(req);
   const userRoleSnapshot = getOwnRequestUserRole(req);
-  if (isOwnSuperAdminTrue(requestUserSnapshot) || normalizeAccessRole(userRoleSnapshot) === 'superadmin') {
+  if (
+    isOwnSuperAdminTrue(requestUserSnapshot) ||
+    normalizeAccessRole(userRoleSnapshot) === 'superadmin'
+  ) {
     return 'superadmin';
   }
 

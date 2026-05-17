@@ -7,16 +7,7 @@
  * Block C · EPIC-T10 · Sprint C-S5.
  */
 
-import {
-  Boxes,
-  Code2,
-  Columns3,
-  Filter,
-  Library,
-  PenLine,
-  Rows,
-  ShieldCheck,
-} from 'lucide-react';
+import { Boxes, Code2, Columns3, Filter, Library, PenLine, Rows, ShieldCheck } from 'lucide-react';
 
 import type { AiEditorLevel } from '@/services/api/tablePlatform.api';
 

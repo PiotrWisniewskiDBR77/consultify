@@ -190,7 +190,10 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const metadata =
-      req.body && typeof req.body === 'object' && req.body.metadata && typeof req.body.metadata === 'object'
+      req.body &&
+      typeof req.body === 'object' &&
+      req.body.metadata &&
+      typeof req.body.metadata === 'object'
         ? (req.body.metadata as Record<string, unknown>)
         : null;
     const metadataInitiativeId = metadata?.initiativeId;

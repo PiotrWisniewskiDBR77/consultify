@@ -11,10 +11,9 @@
  */
 
 import type { AiEditorLevel } from '../AiUsageService.js';
-import type { LlmProvider } from './llmProvider.js';
-
 import { proposeCellEdit } from './cellLevel.js';
 import { proposeColumnEdit } from './columnLevel.js';
+import type { LlmProvider } from './llmProvider.js';
 import { proposeMethodologicalEdit } from './methodologicalLevel.js';
 import { proposeRecordEdit } from './recordLevel.js';
 import { proposeRelationalEdit } from './relationalLevel.js';

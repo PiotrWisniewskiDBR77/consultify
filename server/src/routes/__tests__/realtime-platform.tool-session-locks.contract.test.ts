@@ -43,7 +43,9 @@ describe('Realtime tool-session locks contracts', () => {
   });
 
   it('returns coded 400 for invalid lock payload', async () => {
-    const res = await request(createApp()).post('/api/realtime-v4/tool-sessions/sess-1/locks').send({});
+    const res = await request(createApp())
+      .post('/api/realtime-v4/tool-sessions/sess-1/locks')
+      .send({});
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('REALTIME_TOOL_SESSION_LOCK_PAYLOAD_INVALID');

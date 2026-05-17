@@ -156,8 +156,9 @@ async function streamCsvExport(
     for (const record of batch.records) {
       const data = (record as any).data ?? record;
       const row =
-        fields.map((f) => escapeCsvValue(formatFieldValue(data[f.id] ?? data[f.name], f))).join(',') +
-        '\n';
+        fields
+          .map((f) => escapeCsvValue(formatFieldValue(data[f.id] ?? data[f.name], f)))
+          .join(',') + '\n';
       writer.write(row);
     }
 

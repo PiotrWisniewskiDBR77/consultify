@@ -1712,7 +1712,7 @@ const FX_CONVERSION_HINTS: ReadonlyArray<string> = [
   'po kursie',
 ];
 
-const PERCENT_PATTERN = /([\w \t\/_-]{1,40}?)(\d{1,3}(?:[.,]\d+)?)\s?%/g;
+const PERCENT_PATTERN = /([\w \t/_-]{1,40}?)(\d{1,3}(?:[.,]\d+)?)\s?%/g;
 
 const SUSPICIOUS_PLACEHOLDER_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
@@ -2005,10 +2005,7 @@ function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
           // are declared (otherwise the renderer falls back to "1, 2, 3"
           // and the labels desynchronize from the bars).
           for (const series of chart.series) {
-            if (
-              Array.isArray(series.values) &&
-              series.values.length !== chart.categories.length
-            ) {
+            if (Array.isArray(series.values) && series.values.length !== chart.categories.length) {
               findings.push(
                 makeFinding(
                   'low',

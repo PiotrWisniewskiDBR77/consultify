@@ -19,11 +19,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  authorizeShareLinkEditSession,
   __resetShareLinkRegistryForTests,
-  createShareLinkEditSession,
+  authorizeShareLinkEditSession,
   consumeShareLink,
   createShareLink,
+  createShareLinkEditSession,
   getActiveShareLinkCount,
   getShareLink,
   getShareLinkRuntimeStatus,

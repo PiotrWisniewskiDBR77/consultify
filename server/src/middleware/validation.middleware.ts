@@ -53,36 +53,38 @@ const safeJsonPreview = (value: unknown, maxChars: number): string => {
   }
 };
 
-const readValidationErrors = (result: unknown): Array<{ field: string; message: string; code: string }> =>
+const readValidationErrors = (
+  result: unknown
+): Array<{ field: string; message: string; code: string }> =>
   readValidationIssues(result)
     .slice(0, MAX_VALIDATION_DETAILS_ITEMS)
     .map((rawIssue) => {
-    try {
-      const issue = rawIssue as { path?: unknown; message?: unknown; code?: unknown };
-      const pathValue = issue.path;
-      const field = Array.isArray(pathValue)
-        ? pathValue
-            .slice(0, MAX_VALIDATION_PATH_SEGMENTS)
-            .map((segment) => (segment === undefined || segment === null ? '' : String(segment)))
-            .join('.')
-        : typeof pathValue === 'string'
+      try {
+        const issue = rawIssue as { path?: unknown; message?: unknown; code?: unknown };
+        const pathValue = issue.path;
+        const field = Array.isArray(pathValue)
           ? pathValue
-          : '';
-      return {
-        field: truncateValidationString(field, MAX_VALIDATION_FIELD_CHARS),
-        message: truncateValidationString(
-          typeof issue.message === 'string' ? issue.message : 'Invalid value',
-          MAX_VALIDATION_MESSAGE_CHARS
-        ),
-        code: typeof issue.code === 'string' ? issue.code : 'custom',
-      };
-    } catch {
-      return {
-        field: '',
-        message: 'Invalid value',
-        code: 'custom',
-      };
-    }
+              .slice(0, MAX_VALIDATION_PATH_SEGMENTS)
+              .map((segment) => (segment === undefined || segment === null ? '' : String(segment)))
+              .join('.')
+          : typeof pathValue === 'string'
+            ? pathValue
+            : '';
+        return {
+          field: truncateValidationString(field, MAX_VALIDATION_FIELD_CHARS),
+          message: truncateValidationString(
+            typeof issue.message === 'string' ? issue.message : 'Invalid value',
+            MAX_VALIDATION_MESSAGE_CHARS
+          ),
+          code: typeof issue.code === 'string' ? issue.code : 'custom',
+        };
+      } catch {
+        return {
+          field: '',
+          message: 'Invalid value',
+          code: 'custom',
+        };
+      }
     });
 const safeReadValidationErrors = (
   result: unknown

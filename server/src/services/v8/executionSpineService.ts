@@ -734,11 +734,7 @@ export async function getActiveRuns(
     params.push(initiativeId);
   }
   sql += ` ORDER BY created_at DESC`;
-  const rows = await dbAll<RunRow>(
-    sql,
-    params,
-    { fallback: true }
-  );
+  const rows = await dbAll<RunRow>(sql, params, { fallback: true });
 
   return (rows || []).map(rowToRun);
 }

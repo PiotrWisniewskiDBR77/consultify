@@ -21,13 +21,11 @@ vi.mock('uuid', () => ({
 import {
   evaluateShortlistGate,
   generateCandidates,
-  recordShortlistGateBlocked,
   type InitiativeWizardCandidate,
+  recordShortlistGateBlocked,
 } from '../initiativeWizardService.js';
 
-function candidate(
-  overrides: Partial<InitiativeWizardCandidate> = {}
-): InitiativeWizardCandidate {
+function candidate(overrides: Partial<InitiativeWizardCandidate> = {}): InitiativeWizardCandidate {
   return {
     id: 'candidate-1',
     wizardSessionId: 'session-1',

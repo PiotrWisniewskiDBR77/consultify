@@ -28,9 +28,10 @@
  * system stack.
  */
 
-import PDFDocument from 'pdfkit';
 import { imageSize } from 'image-size';
+import PDFDocument from 'pdfkit';
 
+import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
   formatAppendixHeading,
   formatBodyHeading,
@@ -47,7 +48,6 @@ import {
   type FormattingSchema,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
-import { renderChartBlockToPng } from './documentChartRasterizer.js';
 
 /**
  * Mirror of `DocumentRenderOptions` from the DOCX renderer so PDF

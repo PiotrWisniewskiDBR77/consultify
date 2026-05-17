@@ -112,7 +112,11 @@ function mapPublicAuthError(error: unknown, context: PublicAuthErrorContext): st
   }
 }
 
-function getSafeAuthErrorLogMeta(error: unknown): { name?: string; code?: string; context: string } {
+function getSafeAuthErrorLogMeta(error: unknown): {
+  name?: string;
+  code?: string;
+  context: string;
+} {
   const raw = error as { name?: unknown; code?: unknown; error?: { code?: unknown } } | null;
   const code =
     typeof raw?.code === 'string'

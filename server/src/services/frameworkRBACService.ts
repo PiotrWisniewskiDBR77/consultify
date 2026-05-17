@@ -1,5 +1,5 @@
-import { getAssessmentRoles } from './assessmentPermissionService.js';
 import { get as dbGet } from '../utils/DbPromise.js';
+import { getAssessmentRoles } from './assessmentPermissionService.js';
 
 type SupportedAction = 'create' | 'read' | 'update' | 'delete' | 'export' | string;
 
@@ -35,11 +35,15 @@ const resolveUserRoles = async (
 ): Promise<Array<{ userId?: string; role?: string; permissions?: Record<string, boolean> }>> => {
   if (!assessmentId || !organizationId) return [];
   const rows = await getAssessmentRoles(assessmentId, organizationId);
-  return Array.isArray(rows) ? (rows as Array<{ userId?: string; role?: string; permissions?: Record<string, boolean> }>) : [];
+  return Array.isArray(rows)
+    ? (rows as Array<{ userId?: string; role?: string; permissions?: Record<string, boolean> }>)
+    : [];
 };
 
 const getSystemRole = async (userId: string): Promise<string | undefined> => {
-  const fromRole = await dbGet<{ role?: string }>(`SELECT role FROM users WHERE id = ? LIMIT 1`, [userId]);
+  const fromRole = await dbGet<{ role?: string }>(`SELECT role FROM users WHERE id = ? LIMIT 1`, [
+    userId,
+  ]);
   if (normalizeOptionalString(fromRole?.role)) return normalizeRole(fromRole?.role);
 
   const fromAccessRole = await dbGet<{ access_role?: string }>(

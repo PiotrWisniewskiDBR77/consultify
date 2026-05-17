@@ -25,4 +25,3 @@ export function installDocumentLifecycleWebPerf(): () => void {
     document.removeEventListener('visibilitychange', onVisibilityChange);
   };
 }
-

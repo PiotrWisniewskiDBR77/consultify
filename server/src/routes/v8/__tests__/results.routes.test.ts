@@ -318,7 +318,9 @@ describe('V8 results read-only routes', () => {
   it('GET /api/v8/results/dashboard forwards initiativeId scope when provided', async () => {
     mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
     const app = createApp();
-    const res = await request(app).get('/api/v8/results/dashboard').query({ initiativeId: 'init-1' });
+    const res = await request(app)
+      .get('/api/v8/results/dashboard')
+      .query({ initiativeId: 'init-1' });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);

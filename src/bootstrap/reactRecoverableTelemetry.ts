@@ -31,4 +31,3 @@ export function handleReactRecoverableError(reason: unknown): void {
     // Keep recoverable-error telemetry fail-soft.
   }
 }
-

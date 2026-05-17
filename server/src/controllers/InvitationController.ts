@@ -241,7 +241,12 @@ export class InvitationController {
 
       const InvitationService = (await import('../services/invitationService.js')).default;
       try {
-        const invitation = await InvitationService.resendInvitation(invitationId, userId, {}, organizationId);
+        const invitation = await InvitationService.resendInvitation(
+          invitationId,
+          userId,
+          {},
+          organizationId
+        );
 
         res.json({
           success: true,
@@ -303,7 +308,9 @@ export class InvitationController {
               req,
               status,
               status === 400 ? 'INVITATION_ACCEPT_INVALID' : 'INVITATION_ACCEPT_FAILED',
-              status === 400 ? 'Invitation token or payload is invalid.' : 'Failed to accept invitation.'
+              status === 400
+                ? 'Invitation token or payload is invalid.'
+                : 'Failed to accept invitation.'
             )
           );
       }
@@ -389,7 +396,13 @@ export class InvitationController {
 
       const InvitationService = (await import('../services/invitationService.js')).default;
       try {
-        const invitation = await InvitationService.revokeInvitation(id, userId, '', {}, organizationId);
+        const invitation = await InvitationService.revokeInvitation(
+          id,
+          userId,
+          '',
+          {},
+          organizationId
+        );
         res.json({
           success: true,
           message: 'Invitation cancelled',

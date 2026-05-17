@@ -23,10 +23,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import {
-  type QaReport,
-  type QaSuggestion,
   dismissQaSuggestion,
   getLatestQaReport,
+  type QaReport,
+  type QaSuggestion,
   recomputeQaReport,
 } from '@/services/api/tablePlatform.api';
 
@@ -122,9 +122,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       aria-label="Tabele QA report"
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          QA Report
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">QA Report</h3>
         <button
           type="button"
           onClick={handleRecompute}
@@ -150,10 +148,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
           <QaAxisCard axisName="sourceCoverage" detail={report.axes.sourceCoverage} />
           <QaAxisCard axisName="methodology" detail={report.axes.methodology} />
           <QaAxisCard axisName="freshness" detail={report.axes.freshness} />
-          <QaAxisCard
-            axisName="formulaConsistency"
-            detail={report.axes.formulaConsistency}
-          />
+          <QaAxisCard axisName="formulaConsistency" detail={report.axes.formulaConsistency} />
         </div>
       )}
 

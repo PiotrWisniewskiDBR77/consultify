@@ -1,5 +1,6 @@
 export function toolSessionLockErrorMessage(error: unknown, fallback: string): string {
-  const record = error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
+  const record =
+    error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
   const code = record?.data?.code;
 
   if (code === 'REALTIME_TOOL_SESSION_LOCK_PAYLOAD_INVALID') {

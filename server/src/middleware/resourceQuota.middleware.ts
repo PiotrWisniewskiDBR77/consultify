@@ -134,7 +134,10 @@ const toLoggableError = (error: unknown): Record<string, unknown> => {
 const getOrgId = (req: AuthRequest): string | undefined =>
   normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
   normalizeOptionalString(
-    safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
+    safeRead(
+      () => (req.user as { organization_id?: string } | undefined)?.organization_id,
+      undefined
+    )
   );
 
 export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -206,13 +209,13 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
         next,
         429,
         {
-        error: 'Memory quota exceeded',
-        details: {
-          current,
-          limit: memoryLimit,
-          message: safeQuotaMessage('Memory'),
+          error: 'Memory quota exceeded',
+          details: {
+            current,
+            limit: memoryLimit,
+            message: safeQuotaMessage('Memory'),
+          },
         },
-      },
         'memory'
       );
       return;
@@ -295,13 +298,13 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
         next,
         429,
         {
-        error: 'CPU quota exceeded',
-        details: {
-          current,
-          limit: cpuLimit,
-          message: safeQuotaMessage('CPU'),
+          error: 'CPU quota exceeded',
+          details: {
+            current,
+            limit: cpuLimit,
+            message: safeQuotaMessage('CPU'),
+          },
         },
-      },
         'cpu'
       );
       return;
@@ -337,7 +340,9 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
       return;
     }
 
-    const monthlyBudget = readFiniteNumber((orgBudget as Record<string, unknown>).monthly_budget_usd);
+    const monthlyBudget = readFiniteNumber(
+      (orgBudget as Record<string, unknown>).monthly_budget_usd
+    );
     const spentRaw = readFiniteNumber(
       (orgBudget as Record<string, unknown>).budget_spent_current_period
     );
@@ -355,13 +360,13 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
         next,
         429,
         {
-        error: 'Monthly budget exceeded',
-        details: {
-          spent,
-          limit: monthlyBudget,
-          message: safeQuotaMessage('Monthly budget'),
+          error: 'Monthly budget exceeded',
+          details: {
+            spent,
+            limit: monthlyBudget,
+            message: safeQuotaMessage('Monthly budget'),
+          },
         },
-      },
         'budget'
       );
       return;

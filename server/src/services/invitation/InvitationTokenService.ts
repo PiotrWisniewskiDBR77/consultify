@@ -36,9 +36,7 @@ export class InvitationTokenService {
   isCanonicalInvitationRawToken(token: unknown): token is string {
     if (typeof token !== 'string') return false;
     const normalized = token.trim();
-    return (
-      normalized.length === INVITATION_TOKEN_HEX_LENGTH && /^[a-fA-F0-9]+$/.test(normalized)
-    );
+    return normalized.length === INVITATION_TOKEN_HEX_LENGTH && /^[a-fA-F0-9]+$/.test(normalized);
   }
 
   /**

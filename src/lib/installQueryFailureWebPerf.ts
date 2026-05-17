@@ -7,9 +7,7 @@ const MAX_KEY_FINGERPRINT_LENGTH = 80;
 function toKeyFingerprint(input: unknown): string {
   try {
     const serialized = JSON.stringify(input ?? 'unknown');
-    return serialized
-      .slice(0, MAX_KEY_FINGERPRINT_LENGTH)
-      .replace(/[^a-zA-Z0-9:/?&=._-]/g, '_');
+    return serialized.slice(0, MAX_KEY_FINGERPRINT_LENGTH).replace(/[^a-zA-Z0-9:/?&=._-]/g, '_');
   } catch {
     return 'unknown';
   }
@@ -66,4 +64,3 @@ export function installQueryFailureWebPerf(client: QueryClient): () => void {
     mutationUnsubscribe();
   };
 }
-

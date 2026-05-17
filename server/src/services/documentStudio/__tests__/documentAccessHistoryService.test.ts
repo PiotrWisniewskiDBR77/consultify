@@ -12,7 +12,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getDocumentAccessHistory } from '../documentAccessHistoryService.js';
-
 import {
   __resetApprovalServiceForTests,
   recordApprovalDecision,

@@ -1245,9 +1245,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         icon={AlertTriangle}
         dashed={false}
         message={loadError}
-        hint={
-          isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en
-        }
+        hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
         action={{
           label: isPolish ? 'Ponów' : 'Retry',
           onClick: retryLoadData,
@@ -1575,9 +1573,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             icon={AlertTriangle}
             dashed={false}
             message={loadError}
-            hint={
-              isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en
-            }
+            hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
             action={{
               label: isPolish ? 'Ponów' : 'Retry',
               onClick: retryLoadData,

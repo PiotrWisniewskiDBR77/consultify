@@ -30,7 +30,9 @@ export const HubWorkAreaLoadError: React.FC<HubWorkAreaLoadErrorProps> = ({
       >
         <div className="text-sm font-semibold text-red-300">{title}</div>
         <p className="mt-1 text-sm text-red-200/90">{message}</p>
-        {errorCode ? <p className="mt-1 text-xs text-red-200/70 font-mono">code: {errorCode}</p> : null}
+        {errorCode ? (
+          <p className="mt-1 text-xs text-red-200/70 font-mono">code: {errorCode}</p>
+        ) : null}
         <div className="mt-4 flex items-center gap-2">
           <button
             type="button"

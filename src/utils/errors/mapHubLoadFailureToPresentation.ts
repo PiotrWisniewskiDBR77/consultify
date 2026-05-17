@@ -26,4 +26,3 @@ export function mapHubLoadFailureToPresentation(
   }
   return { message: fallbackMessage, code };
 }
-

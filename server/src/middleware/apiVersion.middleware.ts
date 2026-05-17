@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * API Versioning Middleware
  * Enterprise SaaS Architecture - API Management
@@ -90,7 +91,9 @@ const safeAppendVaryHeader = (res: Response, value: string): void => {
     const normalizedExisting = existingValues
       .map((entry) => entry.trim())
       .filter((entry) => Boolean(entry));
-    const hasValue = normalizedExisting.some((entry) => entry.toLowerCase() === normalizedValue.toLowerCase());
+    const hasValue = normalizedExisting.some(
+      (entry) => entry.toLowerCase() === normalizedValue.toLowerCase()
+    );
     if (!hasValue) normalizedExisting.push(normalizedValue);
     safeSetHeader(res, 'Vary', normalizedExisting.join(', '));
     return true;
@@ -167,7 +170,8 @@ const formatVersionForError = (value: unknown): string => {
 
 const clampVersionInput = (value: string): string =>
   value.length > MAX_VERSION_INPUT_CHARS ? value.slice(0, MAX_VERSION_INPUT_CHARS) : value;
-const stripAsciiControlChars = (value: string): string => value.replace(/[\u0000-\u001F\u007F]/g, '');
+const stripAsciiControlChars = (value: string): string =>
+  value.replace(/[\u0000-\u001F\u007F]/g, '');
 const sanitizeHeaderValue = (value: string): string =>
   value.replace(/[\r\n\0]/g, '').slice(0, MAX_HEADER_VALUE_CHARS);
 const sanitizeVersionTokenForPayload = (value: string): string => sanitizeHeaderValue(value);
@@ -281,9 +285,7 @@ export function apiVersionMiddleware(
 
     if (!version) {
       version =
-        coerceVersionInput(
-          safeRead(() => getOwnQueryParam(req.query, 'version'), undefined)
-        ) || '';
+        coerceVersionInput(safeRead(() => getOwnQueryParam(req.query, 'version'), undefined)) || '';
     }
 
     if (!version) {
@@ -311,10 +313,10 @@ export function apiVersionMiddleware(
       applyNoStoreHeaders(res);
       if (
         !safeStatusJson(res, 400, {
-        error: 'Invalid API version',
-        message: `Unsupported API version: ${formatVersionForError(version)}`,
-        supportedVersions: getSupportedMajorVersionsForError(),
-        currentVersion: sanitizeVersionTokenForPayload(LATEST_VERSION),
+          error: 'Invalid API version',
+          message: `Unsupported API version: ${formatVersionForError(version)}`,
+          supportedVersions: getSupportedMajorVersionsForError(),
+          currentVersion: sanitizeVersionTokenForPayload(LATEST_VERSION),
         })
       ) {
         logger.warn('[APIVersion] Failed to send invalid version response body', {
@@ -391,14 +393,17 @@ export function requireVersion(minVersion: string) {
           logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
             reason: 'missing_api_version',
           });
-          invokeNextSafely(next, '[APIVersion] requireVersion next() threw (missing version branch)');
+          invokeNextSafely(
+            next,
+            '[APIVersion] requireVersion next() threw (missing version branch)'
+          );
           return;
         }
         applyNoStoreHeaders(res);
         if (
           !safeStatusJson(res, 400, {
-          error: 'API version required',
-          message: 'This endpoint requires explicit API version.',
+            error: 'API version required',
+            message: 'This endpoint requires explicit API version.',
           })
         ) {
           logger.warn('[APIVersion] Failed to send missing api version response body');
@@ -406,13 +411,18 @@ export function requireVersion(minVersion: string) {
         return;
       }
 
-      const normalizedMinVersionInput = stripAsciiControlChars(clampVersionInput(String(minVersion ?? '')));
+      const normalizedMinVersionInput = stripAsciiControlChars(
+        clampVersionInput(String(minVersion ?? ''))
+      );
       const normalizedMinVersion = normalizeVersion(normalizedMinVersionInput);
       const minInfo = hasOwnVersionEntry(normalizedMinVersion)
         ? API_VERSIONS[normalizedMinVersion]
         : undefined;
       if (!minInfo) {
-        invokeNextSafely(next, '[APIVersion] requireVersion next() threw (unknown minVersion no-op)');
+        invokeNextSafely(
+          next,
+          '[APIVersion] requireVersion next() threw (unknown minVersion no-op)'
+        );
         return;
       }
 
@@ -423,21 +433,25 @@ export function requireVersion(minVersion: string) {
             requiredVersion: minInfo.full,
             currentVersion: req.apiVersion.full,
           });
-          invokeNextSafely(next, '[APIVersion] requireVersion next() threw (headers already sent, too old)', {
-            requiredVersion: minInfo.full,
-            currentVersion: req.apiVersion.full,
-          });
+          invokeNextSafely(
+            next,
+            '[APIVersion] requireVersion next() threw (headers already sent, too old)',
+            {
+              requiredVersion: minInfo.full,
+              currentVersion: req.apiVersion.full,
+            }
+          );
           return;
         }
         applyNoStoreHeaders(res);
         if (
           !safeStatusJson(res, 400, {
-          error: 'API version too old',
-          message: `This endpoint requires API version ${formatVersionForError(
-            normalizedMinVersionInput
-          )} or higher.`,
-          yourVersion: sanitizeVersionTokenForPayload(req.apiVersion.full),
-          requiredVersion: sanitizeVersionTokenForPayload(minInfo.full),
+            error: 'API version too old',
+            message: `This endpoint requires API version ${formatVersionForError(
+              normalizedMinVersionInput
+            )} or higher.`,
+            yourVersion: sanitizeVersionTokenForPayload(req.apiVersion.full),
+            requiredVersion: sanitizeVersionTokenForPayload(minInfo.full),
           })
         ) {
           logger.warn('[APIVersion] Failed to send outdated api version response body', {
@@ -478,9 +492,7 @@ export function deprecatedEndpoint(sunsetDate?: Date, alternativeEndpoint?: stri
     }
     const trimmedAlternative =
       typeof alternativeEndpoint === 'string' ? alternativeEndpoint.trim() : '';
-    const sanitizedAlternative = trimmedAlternative
-      ? sanitizeHeaderValue(trimmedAlternative)
-      : '';
+    const sanitizedAlternative = trimmedAlternative ? sanitizeHeaderValue(trimmedAlternative) : '';
     const safeAlternative = sanitizedAlternative || undefined;
     res.json = function (body: unknown): Response {
       if (isPlainJsonObject(body)) {

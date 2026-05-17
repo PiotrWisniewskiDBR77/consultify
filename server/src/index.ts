@@ -39,17 +39,17 @@ import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middlewa
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import { sendSystemAlert } from './services/systemAlertNotifier.js';
-import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
-// TypeScript routes (migrated)
-import { get as dbGet } from './utils/DbPromise.js';
 import {
   sendApiGatewayRateLimitedResponse,
   sendApiMethodNotAllowed,
   sendApiUnknownRouteNotFound,
 } from './utils/apiContractResponses.js';
+import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
+import { resolveAllowedApiMethods } from './utils/apiRouteMethodAllowlist.js';
+// TypeScript routes (migrated)
+import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
-import { resolveAllowedApiMethods } from './utils/apiRouteMethodAllowlist.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
 

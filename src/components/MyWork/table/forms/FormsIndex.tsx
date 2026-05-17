@@ -465,9 +465,7 @@ export function FormsIndex({
                   label: String(fc?.label ?? platformField?.name ?? fieldId),
                 };
               })
-              .filter(
-                (entry): entry is { fieldId: string; label: string } => entry != null
-              );
+              .filter((entry): entry is { fieldId: string; label: string } => entry != null);
             return (
               <IntakeJwtPanel
                 formId={form.id}

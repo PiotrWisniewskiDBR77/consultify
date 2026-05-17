@@ -1232,14 +1232,16 @@ router.post('/block-types', async (req: Request, res: Response, next: NextFuncti
     res.status(201).json({ block: created });
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating block type:', err);
-    res.status(500).json(
-      buildReportBuilderFailClosedError(
-        req,
-        500,
-        'REPORT_BUILDER_BLOCK_TYPE_CREATE_FAILED',
-        'Failed to create report block type.'
-      )
-    );
+    res
+      .status(500)
+      .json(
+        buildReportBuilderFailClosedError(
+          req,
+          500,
+          'REPORT_BUILDER_BLOCK_TYPE_CREATE_FAILED',
+          'Failed to create report block type.'
+        )
+      );
   }
 });
 
@@ -3452,14 +3454,16 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
     return res.json({ success: true, url: result.url });
   } catch (err: any) {
     logger.error('[ReportBuilder] Error exporting to Notion:', err);
-    return res.status(500).json(
-      buildReportBuilderFailClosedError(
-        req,
-        500,
-        'REPORT_BUILDER_EXPORT_NOTION_FAILED',
-        'Failed to export report to Notion.'
-      )
-    );
+    return res
+      .status(500)
+      .json(
+        buildReportBuilderFailClosedError(
+          req,
+          500,
+          'REPORT_BUILDER_EXPORT_NOTION_FAILED',
+          'Failed to export report to Notion.'
+        )
+      );
   }
 });
 
@@ -3517,14 +3521,16 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
       status: 'failed',
     }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting PDF:', err);
-    return res.status(500).json(
-      buildReportBuilderFailClosedError(
-        req,
-        500,
-        'REPORT_BUILDER_EXPORT_PDF_FAILED',
-        'Failed to export report as PDF.'
-      )
-    );
+    return res
+      .status(500)
+      .json(
+        buildReportBuilderFailClosedError(
+          req,
+          500,
+          'REPORT_BUILDER_EXPORT_PDF_FAILED',
+          'Failed to export report as PDF.'
+        )
+      );
   }
 });
 

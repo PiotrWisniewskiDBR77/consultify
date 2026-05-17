@@ -1250,7 +1250,10 @@ router.get(
     }
     let portfolio;
     try {
-      portfolio = await getROIPortfolioSummary(organizationId, initiativeId ? { initiativeId } : undefined);
+      portfolio = await getROIPortfolioSummary(
+        organizationId,
+        initiativeId ? { initiativeId } : undefined
+      );
     } catch {
       return res.status(500).json({
         error: 'Failed to load ROI portfolio summary',

@@ -187,9 +187,7 @@ describe('Slice E17.charts.qa — Format category', () => {
       }),
     ]);
     const fmt = getFormatCategory(schema);
-    expect(
-      fmt.findings.some((f) => f.code === 'format_chart_series_category_mismatch')
-    ).toBe(true);
+    expect(fmt.findings.some((f) => f.code === 'format_chart_series_category_mismatch')).toBe(true);
   });
 
   it('emits format_chart_missing_axis_labels for bar/line/area/scatter without axis labels', () => {
@@ -197,9 +195,7 @@ describe('Slice E17.charts.qa — Format category', () => {
       chartBlock('blk-no-axes', { xAxisLabel: undefined, yAxisLabel: undefined }),
     ]);
     const fmt = getFormatCategory(schema);
-    expect(
-      fmt.findings.some((f) => f.code === 'format_chart_missing_axis_labels')
-    ).toBe(true);
+    expect(fmt.findings.some((f) => f.code === 'format_chart_missing_axis_labels')).toBe(true);
   });
 
   it('does NOT emit format_chart_missing_axis_labels for pie or donut charts', () => {
@@ -211,9 +207,7 @@ describe('Slice E17.charts.qa — Format category', () => {
       }),
     ]);
     const fmt = getFormatCategory(schema);
-    expect(
-      fmt.findings.some((f) => f.code === 'format_chart_missing_axis_labels')
-    ).toBe(false);
+    expect(fmt.findings.some((f) => f.code === 'format_chart_missing_axis_labels')).toBe(false);
   });
 
   it('passes a fully-specified chart with no findings', () => {

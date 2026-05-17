@@ -17,7 +17,6 @@
  */
 
 import { getDatabase } from '../../../database/Database.js';
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -26,6 +25,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opRelationCreate } from './operations.js';
 
@@ -70,9 +70,10 @@ export const proposeRelationalEdit: LevelHandler = async (input): Promise<LevelS
         (s): s is string => typeof s === 'string' && s.length > 0
       )
     : null;
-  const candidates = supplied && supplied.length > 0
-    ? await filterCandidatesInTenant(supplied, organizationId, workspaceId)
-    : await listSameBaseTables(tableId, organizationId, workspaceId);
+  const candidates =
+    supplied && supplied.length > 0
+      ? await filterCandidatesInTenant(supplied, organizationId, workspaceId)
+      : await listSameBaseTables(tableId, organizationId, workspaceId);
   const candidateIds = candidates.map((c) => c.id).filter((id) => id !== tableId);
 
   if (candidateIds.length === 0) {
@@ -245,9 +246,7 @@ function buildRelationalUserMessage(
     .slice(0, 30)
     .map((f) => `  - ${f.name} (${f.fieldType})`)
     .join('\n');
-  const candidateList = candidates
-    .map((c) => `  - id="${c.id}" name="${c.name}"`)
-    .join('\n');
+  const candidateList = candidates.map((c) => `  - id="${c.id}" name="${c.name}"`).join('\n');
   return [
     `Source table id="${sourceTableId}".`,
     `Source-table fields:\n${fieldList || '  (none)'}`,

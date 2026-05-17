@@ -40,9 +40,7 @@ export async function assertTableInOrganization(
       LIMIT 1`,
     [tableId]
   );
-  const row = rows?.[0] as
-    | { workspace_id?: string; organization_id?: string }
-    | undefined;
+  const row = rows?.[0] as { workspace_id?: string; organization_id?: string } | undefined;
   if (
     !row ||
     String(row.organization_id) !== String(organizationId) ||
@@ -91,10 +89,7 @@ export async function loadTableFields(tableId: string): Promise<FieldDef[]> {
 }
 
 /** Loads a single record by id (scoped to tableId for tenant defense). */
-export async function loadRecord(
-  tableId: string,
-  recordId: string
-): Promise<RecordRow | null> {
+export async function loadRecord(tableId: string, recordId: string): Promise<RecordRow | null> {
   const db = getDatabase();
   const { rows } = await db.query(
     `SELECT id, table_id, data
@@ -103,9 +98,7 @@ export async function loadRecord(
       LIMIT 1`,
     [recordId, tableId]
   );
-  const row = rows?.[0] as
-    | { id?: string; table_id?: string; data?: unknown }
-    | undefined;
+  const row = rows?.[0] as { id?: string; table_id?: string; data?: unknown } | undefined;
   if (!row) return null;
   return {
     id: String(row.id),
@@ -118,10 +111,7 @@ export async function loadRecord(
 }
 
 /** Loads up to `limit` records from a table (used for column-level context). */
-export async function loadRecords(
-  tableId: string,
-  recordIds: string[]
-): Promise<RecordRow[]> {
+export async function loadRecords(tableId: string, recordIds: string[]): Promise<RecordRow[]> {
   if (recordIds.length === 0) return [];
   const db = getDatabase();
   const { rows } = await db.query(
@@ -134,9 +124,7 @@ export async function loadRecords(
     id: String(r.id),
     tableId: String(r.table_id),
     data:
-      typeof r.data === 'string'
-        ? safeJson(r.data)
-        : ((r.data ?? {}) as Record<string, unknown>),
+      typeof r.data === 'string' ? safeJson(r.data) : ((r.data ?? {}) as Record<string, unknown>),
   }));
 }
 

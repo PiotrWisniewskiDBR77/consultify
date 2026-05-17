@@ -2642,7 +2642,10 @@ router.get('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
 
 router.post('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
-  if (!draft) return res.status(404).json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
+  if (!draft)
+    return res
+      .status(404)
+      .json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
   const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
   if (hasDraftConflict(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'start_workflow');
@@ -2683,7 +2686,10 @@ router.post('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
 
 router.post('/drafts/:draftId/workflows/:workflowRunId/resume', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
-  if (!draft) return res.status(404).json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
+  if (!draft)
+    return res
+      .status(404)
+      .json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
   const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
   if (hasDraftConflict(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'resume_workflow');
@@ -2745,7 +2751,10 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/resume', async (req: Auth
 
 router.post('/drafts/:draftId/workflows/:workflowRunId/run-next', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
-  if (!draft) return res.status(404).json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
+  if (!draft)
+    return res
+      .status(404)
+      .json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
   const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
   if (hasDraftConflict(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'run_workflow_step');
@@ -2908,7 +2917,10 @@ router.patch(
   '/drafts/:draftId/workflows/:workflowRunId/collaboration',
   async (req: AuthRequest, res) => {
     const draft = await ownedDraft(req, req.params.draftId);
-    if (!draft) return res.status(404).json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
+    if (!draft)
+      return res
+        .status(404)
+        .json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
     const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
     if (hasDraftConflict(draft, baseUpdatedAt)) {
       return sendDraftConflict(res, draft, baseUpdatedAt, 'update_workflow_collaboration');
@@ -2930,12 +2942,10 @@ router.patch(
     }
     const lifecycle = String(req.body?.lifecycle || run.collaboration?.lifecycle || 'draft');
     if (!['draft', 'in_review', 'approved'].includes(lifecycle)) {
-      return res
-        .status(400)
-        .json({
-          error: 'Workflow lifecycle must be draft, in_review, or approved',
-          code: 'WORK_CANVAS_WORKFLOW_LIFECYCLE_INVALID',
-        });
+      return res.status(400).json({
+        error: 'Workflow lifecycle must be draft, in_review, or approved',
+        code: 'WORK_CANVAS_WORKFLOW_LIFECYCLE_INVALID',
+      });
     }
     const now = new Date().toISOString();
     const updatedRun: WorkCanvasWorkflowRun = {
@@ -2984,7 +2994,10 @@ router.patch(
 
 router.post('/drafts/:draftId/workflows/:workflowRunId/comments', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
-  if (!draft) return res.status(404).json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
+  if (!draft)
+    return res
+      .status(404)
+      .json({ error: 'Canvas draft not found', code: 'WORK_CANVAS_DRAFT_NOT_FOUND' });
   const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
   if (hasDraftConflict(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'add_workflow_comment');

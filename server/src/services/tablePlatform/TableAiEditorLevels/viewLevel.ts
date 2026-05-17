@@ -13,7 +13,6 @@
  * Cross-tenant defense: `assertTableInOrganization` runs first.
  */
 
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -22,6 +21,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opViewCreate, opViewUpdate } from './operations.js';
 

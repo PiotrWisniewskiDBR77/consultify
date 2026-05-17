@@ -160,16 +160,16 @@ const UserStateMachine = {
 };
 
 export {
-  USER_STATES,
-  PHASES,
-  VALID_TRANSITIONS,
   canTransition,
-  validateTransition,
-  getPermissions,
-  hasPermission,
-  getPhase,
   getNextStates,
+  getPermissions,
+  getPhase,
+  hasPermission,
   isTerminalState,
+  PHASES,
+  USER_STATES,
+  VALID_TRANSITIONS,
+  validateTransition,
 };
 
 export default UserStateMachine;

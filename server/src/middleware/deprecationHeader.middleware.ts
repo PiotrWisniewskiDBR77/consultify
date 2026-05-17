@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Deprecation Header Middleware
  *
@@ -39,11 +40,12 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
   const normalized = value.trim();
   return normalized || undefined;
 };
-const stripControlChars = (value: string): string =>
-  value.replace(/[\u0000-\u001F\u007F]/g, '');
+const stripControlChars = (value: string): string => value.replace(/[\u0000-\u001F\u007F]/g, '');
 const stripQueryAndHash = (value: string): string => value.split('?')[0]?.split('#')[0] || '';
 const sanitizeLinkTargetPath = (value: string): string =>
-  stripControlChars(value).replace(/ /g, '%20').replace(/[<>"\\]/g, '');
+  stripControlChars(value)
+    .replace(/ /g, '%20')
+    .replace(/[<>"\\]/g, '');
 
 const evictWarnedKeysIfNeeded = (): void => {
   if (warned.size < WARNED_KEY_CAP) return;
@@ -88,10 +90,7 @@ const safeSetOrAppendLinkHeader = (res: Response, linkValue: string): void => {
     ? rawExistingLinkHeader.toString('utf8')
     : rawExistingLinkHeader;
   if (typeof existingLinkHeader === 'string' && existingLinkHeader.trim().length > 0) {
-    const append = safeRead(
-      () => (res as Response & { append?: unknown }).append,
-      undefined
-    );
+    const append = safeRead(() => (res as Response & { append?: unknown }).append, undefined);
     const appended =
       typeof append === 'function'
         ? safeRead(() => {
@@ -155,7 +154,10 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
   const buildLinkHeader = (target: string): string => `<${target}${LINK_REL_SUFFIX}`;
   let linkHeader = buildLinkHeader(successorPath);
   if (linkHeader.length > LINK_HEADER_MAX_CHARS) {
-    const maxTargetChars = Math.max(0, LINK_HEADER_MAX_CHARS - (`<`.length + LINK_REL_SUFFIX.length));
+    const maxTargetChars = Math.max(
+      0,
+      LINK_HEADER_MAX_CHARS - (`<`.length + LINK_REL_SUFFIX.length)
+    );
     successorPath = successorPath.slice(0, maxTargetChars);
     linkHeader = buildLinkHeader(successorPath);
   }

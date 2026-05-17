@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * Super Admin Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -65,7 +66,9 @@ const SUPERADMIN_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
 const isSuperAdminCompactJwtShape = (value: string): boolean => {
   const segments = value.split('.');
   if (segments.length !== 3) return false;
-  return segments.every((segment) => segment.length > 0 && segment.length <= MAX_SUPERADMIN_JWT_SEGMENT_CHARS);
+  return segments.every(
+    (segment) => segment.length > 0 && segment.length <= MAX_SUPERADMIN_JWT_SEGMENT_CHARS
+  );
 };
 
 const normalizeSuperAdminRole = (role?: string): string => {
@@ -243,8 +246,9 @@ export const verifySuperAdmin = async (
     typeof token === 'string'
       ? parseAuthorizationToken(token) || ''
       : Array.isArray(token)
-        ? token.map(parseAuthorizationToken).find((candidate): candidate is string => Boolean(candidate)) ||
-          ''
+        ? token
+            .map(parseAuthorizationToken)
+            .find((candidate): candidate is string => Boolean(candidate)) || ''
         : '';
 
   if (!cleanToken) {
@@ -263,7 +267,10 @@ export const verifySuperAdmin = async (
     });
     return;
   }
-  if (SUPERADMIN_TOKEN_CONTROL_CHARS.test(cleanToken) || SUPERADMIN_TOKEN_DISALLOWED_UNICODE.test(cleanToken)) {
+  if (
+    SUPERADMIN_TOKEN_CONTROL_CHARS.test(cleanToken) ||
+    SUPERADMIN_TOKEN_DISALLOWED_UNICODE.test(cleanToken)
+  ) {
     res.status(401).json({
       error: 'Unauthorized',
       code: 'UNAUTHORIZED',
@@ -491,7 +498,9 @@ export const verifySuperAdmin = async (
     next();
   } catch (err: any) {
     const errorName =
-      err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : 'UnknownError';
+      err && typeof err === 'object' && 'name' in err
+        ? String((err as { name?: unknown }).name)
+        : 'UnknownError';
     logger.warn('[SuperAdmin Middleware] JWT verification failed', {
       code: 'SUPERADMIN_JWT_VERIFY_FAILED',
       errorName,

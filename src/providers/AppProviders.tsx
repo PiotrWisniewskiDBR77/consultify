@@ -3,9 +3,9 @@ import React, { useLayoutEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 
-import { V8Provider } from '@/providers/V8Provider';
 import { createAppQueryClient } from '@/lib/createAppQueryClient';
 import { installQueryFailureWebPerf } from '@/lib/installQueryFailureWebPerf';
+import { V8Provider } from '@/providers/V8Provider';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';

@@ -47,10 +47,7 @@ import type {
 
 export const DOCUMENT_ASSET_MAX_BYTES = 5 * 1024 * 1024;
 const DOCUMENT_ASSET_MIN_BYTES = 100;
-const SUPPORTED_MIME_TYPES: ReadonlyArray<DocumentAssetMimeType> = [
-  'image/png',
-  'image/jpeg',
-];
+const SUPPORTED_MIME_TYPES: ReadonlyArray<DocumentAssetMimeType> = ['image/png', 'image/jpeg'];
 
 const assetStore = new Map<string, DocumentAsset>(); // assetId → asset
 const auditStore = new Map<string, DocumentAssetAuditEntry[]>(); // assetId → audit rows
@@ -106,7 +103,9 @@ function isSupportedMime(value: string): value is DocumentAssetMimeType {
   return SUPPORTED_MIME_TYPES.includes(value as DocumentAssetMimeType);
 }
 
-function decodeBase64Safely(dataBase64: string): { ok: true; byteLength: number } | { ok: false; reason: string } {
+function decodeBase64Safely(
+  dataBase64: string
+): { ok: true; byteLength: number } | { ok: false; reason: string } {
   // Defensive: avoid throwing on malformed input by using `Buffer.from` +
   // a round-trip parity check (Buffer silently re-encodes garbage; if the
   // re-encoded form does not match the input we treat it as malformed).
@@ -117,10 +116,8 @@ function decodeBase64Safely(dataBase64: string): { ok: true; byteLength: number 
     return { ok: false, reason: 'asset_invalid_base64' };
   }
   if (!buf || buf.length === 0) return { ok: false, reason: 'asset_invalid_base64' };
-  if (buf.length < DOCUMENT_ASSET_MIN_BYTES)
-    return { ok: false, reason: 'asset_too_small' };
-  if (buf.length > DOCUMENT_ASSET_MAX_BYTES)
-    return { ok: false, reason: 'asset_too_large' };
+  if (buf.length < DOCUMENT_ASSET_MIN_BYTES) return { ok: false, reason: 'asset_too_small' };
+  if (buf.length > DOCUMENT_ASSET_MAX_BYTES) return { ok: false, reason: 'asset_too_large' };
   return { ok: true, byteLength: buf.length };
 }
 
@@ -192,10 +189,7 @@ export function getActiveOrgLogo(organizationId: string): DocumentAsset | null {
   return result;
 }
 
-export function getAssetById(input: {
-  assetId: string;
-  organizationId: string;
-}): DocumentAsset {
+export function getAssetById(input: { assetId: string; organizationId: string }): DocumentAsset {
   const asset = assetStore.get(input.assetId);
   if (!asset) throw new Error('asset_not_found');
   if (asset.organizationId !== input.organizationId) throw new Error('asset_not_found');
@@ -216,15 +210,10 @@ export function archiveAsset(input: ArchiveAssetInput): DocumentAsset {
     archiveReason: input.reason,
   };
   assetStore.set(asset.assetId, archived);
-  appendAudit(
-    archived,
-    input.replacedBy ? 'asset_replaced' : 'asset_archived',
-    input.actorId,
-    {
-      reason: input.reason ?? null,
-      replacedBy: input.replacedBy ?? null,
-    }
-  );
+  appendAudit(archived, input.replacedBy ? 'asset_replaced' : 'asset_archived', input.actorId, {
+    reason: input.reason ?? null,
+    replacedBy: input.replacedBy ?? null,
+  });
   return archived;
 }
 
@@ -247,10 +236,7 @@ export function listAssetsForOrg(
   return out;
 }
 
-export function listAssetAudit(
-  assetId: string,
-  organizationId: string
-): DocumentAssetAuditEntry[] {
+export function listAssetAudit(assetId: string, organizationId: string): DocumentAssetAuditEntry[] {
   // Tenant scoping: we still call `getAssetById` so a cross-tenant
   // request gets a stable `asset_not_found` error instead of leaking
   // existence.

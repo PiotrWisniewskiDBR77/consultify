@@ -22,9 +22,7 @@ const ORG = 'org-A';
 const WS = 'ws-A';
 const ACTOR = 'user-1';
 
-function setupTenantOkRecords(
-  records: Array<{ id: string; data: Record<string, unknown> }>
-) {
+function setupTenantOkRecords(records: Array<{ id: string; data: Record<string, unknown> }>) {
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes('JOIN tp_bases'))
       return { rows: [{ workspace_id: WS, organization_id: ORG }] };
@@ -42,7 +40,13 @@ function setupTenantOkRecords(
 
 function makeProvider(text: string): LlmProvider {
   return {
-    generate: async () => ({ text, tokensInput: 100, tokensOutput: 50, model: 'mock', source: 'live' }),
+    generate: async () => ({
+      text,
+      tokensInput: 100,
+      tokensOutput: 50,
+      model: 'mock',
+      source: 'live',
+    }),
   };
 }
 
@@ -117,7 +121,9 @@ describe('columnLevel.proposeColumnEdit', () => {
     });
 
     expect(out.operations).toHaveLength(1);
-    const cells = (out.operations[0] as Record<string, unknown>).cells as Array<Record<string, unknown>>;
+    const cells = (out.operations[0] as Record<string, unknown>).cells as Array<
+      Record<string, unknown>
+    >;
     expect(cells).toHaveLength(1);
     expect(cells[0]!.recordId).toBe('r1');
   });

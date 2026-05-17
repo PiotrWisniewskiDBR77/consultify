@@ -67,7 +67,11 @@ const safeRemoveHeader = (res: Response, key: string): void => {
   }, false);
 };
 
-const safeSendJson = (res: Response, statusCode: number, payload: Record<string, unknown>): void => {
+const safeSendJson = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>
+): void => {
   safeRead(() => {
     res.status(statusCode).json(payload);
     return true;
@@ -105,7 +109,9 @@ rateLimitStoreCleanupInterval.unref?.();
  */
 const isHttpsRequest = (req: Request): boolean => {
   if (safeRead(() => req.secure === true, false)) return true;
-  const forwardedProtoRaw = normalizeOptionalString(safeRead(() => req.get?.('x-forwarded-proto'), undefined));
+  const forwardedProtoRaw = normalizeOptionalString(
+    safeRead(() => req.get?.('x-forwarded-proto'), undefined)
+  );
   const forwardedProto = normalizeOptionalString((forwardedProtoRaw || '').split(',')[0]);
   return (forwardedProto || '').toLowerCase() === 'https';
 };
@@ -168,11 +174,7 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
     "frame-src 'none'";
   const csp = isProduction && isHttps ? `${cspBase}; upgrade-insecure-requests` : cspBase;
 
-  safeSetHeader(
-    res,
-    'Content-Security-Policy',
-    csp
-  );
+  safeSetHeader(res, 'Content-Security-Policy', csp);
 
   safeRead(() => {
     next();
@@ -306,7 +308,10 @@ export const validateRequest = (schema: ValidationSchema) => {
   };
   return (req: Request, res: Response, next: NextFunction): void => {
     const errors: Array<{ field: string; message: string }> = [];
-    const rawBody = safeRead(() => req.body as Record<string, unknown>, {} as Record<string, unknown>);
+    const rawBody = safeRead(
+      () => req.body as Record<string, unknown>,
+      {} as Record<string, unknown>
+    );
     const body =
       rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)
         ? (rawBody as Record<string, unknown>)

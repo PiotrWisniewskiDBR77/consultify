@@ -13,8 +13,8 @@ vi.mock('../../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-import { proposeMethodologicalEdit } from '../methodologicalLevel.js';
 import type { LlmProvider } from '../llmProvider.js';
+import { proposeMethodologicalEdit } from '../methodologicalLevel.js';
 
 const TABLE = 'tbl-1';
 const ORG = 'org-A';
@@ -42,7 +42,13 @@ function setupTenantOk(records: Array<{ id: string; data: Record<string, unknown
 
 function makeProvider(text: string): LlmProvider {
   return {
-    generate: async () => ({ text, tokensInput: 50, tokensOutput: 25, model: 'mock', source: 'live' }),
+    generate: async () => ({
+      text,
+      tokensInput: 50,
+      tokensOutput: 25,
+      model: 'mock',
+      source: 'live',
+    }),
   };
 }
 

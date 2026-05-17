@@ -93,9 +93,7 @@ describe('Source-drift QA — clean cases (Slice E5.6.qa)', () => {
   it('all refs pinned via sourceSnapshotId → no findings', () => {
     const drift = getDriftCategory(
       makeSchema({
-        sourceRefs: [
-          { sourceType: 'sourcepack', sourceId: 'sp-1', sourceSnapshotId: 'snap_abc' },
-        ],
+        sourceRefs: [{ sourceType: 'sourcepack', sourceId: 'sp-1', sourceSnapshotId: 'snap_abc' }],
         sections: [
           {
             sectionId: 'sec-1',

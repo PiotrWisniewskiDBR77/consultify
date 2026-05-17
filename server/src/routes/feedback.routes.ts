@@ -718,14 +718,16 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { type, title, message, severity, appEnv, context } = req.body || {};
     if (!message || typeof message !== 'string') {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_COMPOSE_MESSAGE_REQUIRED',
-          'Message is required.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_COMPOSE_MESSAGE_REQUIRED',
+            'Message is required.'
+          )
+        );
     }
 
     // Provider check (same approach as /api/ai/refine-text)
@@ -753,14 +755,16 @@ router.post(
     const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
     const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
     if (!aiAccessCheck.allowed) {
-      return res.status(403).json(
-        buildFailClosedFeedbackError(
-          req,
-          403,
-          'FEEDBACK_COMPOSE_ACCESS_DENIED',
-          'Compose access is denied.'
-        )
-      );
+      return res
+        .status(403)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            403,
+            'FEEDBACK_COMPOSE_ACCESS_DENIED',
+            'Compose access is denied.'
+          )
+        );
     }
 
     AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
@@ -824,26 +828,30 @@ Rules:
       });
     } catch (error) {
       logger.error('[FeedbackCompose] LLM call failed:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_COMPOSE_FAILED',
-          'Failed to compose feedback draft.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_COMPOSE_FAILED',
+            'Failed to compose feedback draft.'
+          )
+        );
     }
 
     const parsed = (result as any)?.object || null;
     if (!parsed) {
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_COMPOSE_LLM_EMPTY',
-          'Failed to compose feedback draft.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_COMPOSE_LLM_EMPTY',
+            'Failed to compose feedback draft.'
+          )
+        );
     }
 
     return res.json({
@@ -1357,9 +1365,16 @@ router.get(
       return res.json(shaped);
     } catch (error) {
       logger.error('[Feedback] Failed to read feedback list:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(req, 500, 'FEEDBACK_LIST_READ_FAILED', 'Failed to read feedback list.')
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_LIST_READ_FAILED',
+            'Failed to read feedback list.'
+          )
+        );
     }
   })
 );
@@ -1377,26 +1392,30 @@ router.patch(
     const changedBy = (req as any).user?.id || req.body.userId || null;
 
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_STATUS_FEEDBACK_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_STATUS_FEEDBACK_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
 
     const validStatuses = ['NEW', 'PENDING', 'IN_PROGRESS', 'REVIEWED', 'RESOLVED', 'ARCHIVED'];
     if (typeof status !== 'string' || !validStatuses.includes(status.toUpperCase())) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_STATUS_VALUE_INVALID',
-          'Status value is invalid.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_STATUS_VALUE_INVALID',
+            'Status value is invalid.'
+          )
+        );
     }
 
     const current = await dbGet<{ status: string }>(
@@ -1410,14 +1429,16 @@ router.patch(
 
     if (!runResult.success) {
       logger.error('[Feedback] Failed to update feedback status:', runResult.error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_STATUS_UPDATE_FAILED',
-          'Failed to update feedback status.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_STATUS_UPDATE_FAILED',
+            'Failed to update feedback status.'
+          )
+        );
     }
 
     // Record status change in feedback_items history (if table exists)
@@ -1464,14 +1485,16 @@ router.patch(
     } = req.body || {};
 
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_WORKFLOW_FEEDBACK_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_WORKFLOW_FEEDBACK_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
 
     const row = await dbGet<{ metadata_json: string | null; linked_task_id?: string | null }>(
@@ -1480,14 +1503,16 @@ router.patch(
     );
 
     if (!row) {
-      return res.status(404).json(
-        buildFailClosedFeedbackError(
-          req,
-          404,
-          'FEEDBACK_WORKFLOW_NOT_FOUND',
-          'Feedback was not found.'
-        )
-      );
+      return res
+        .status(404)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            404,
+            'FEEDBACK_WORKFLOW_NOT_FOUND',
+            'Feedback was not found.'
+          )
+        );
     }
 
     const meta = safeJsonParse<Record<string, unknown>>(row.metadata_json, {});
@@ -1621,14 +1646,16 @@ router.patch(
 
     if (!runResult.success) {
       logger.error('[Feedback] Failed to update feedback workflow:', runResult.error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_WORKFLOW_UPDATE_FAILED',
-          'Failed to update feedback workflow.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_WORKFLOW_UPDATE_FAILED',
+            'Failed to update feedback workflow.'
+          )
+        );
     }
 
     return res.json({
@@ -1652,25 +1679,29 @@ router.post(
     const { id } = req.params;
 
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_RESPOND_FEEDBACK_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_RESPOND_FEEDBACK_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
 
     if (!response || !response.trim()) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_RESPOND_BODY_INVALID',
-          'Response is required.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_RESPOND_BODY_INVALID',
+            'Response is required.'
+          )
+        );
     }
 
     const cols = await getTableColumns('feedback_items');
@@ -1699,14 +1730,16 @@ router.post(
 
     if (!runResult.success) {
       logger.error('[Feedback] Failed to save admin response:', runResult.error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_RESPOND_UPDATE_FAILED',
-          'Failed to save feedback response.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_RESPOND_UPDATE_FAILED',
+            'Failed to save feedback response.'
+          )
+        );
     }
 
     // Get the feedback to notify the user
@@ -1790,14 +1823,16 @@ router.get(
       return res.json({ success: true, trending });
     } catch (error) {
       logger.error('[Trending] Error:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_TRENDING_READ_FAILED',
-          'Failed to read trending feedback topics.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_TRENDING_READ_FAILED',
+            'Failed to read trending feedback topics.'
+          )
+        );
     }
   })
 );
@@ -1809,37 +1844,37 @@ router.get(
     const { id } = req.params;
 
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_ITEM_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_ITEM_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
 
-    let row:
-      | {
-          id: string;
-          user_id: string | null;
-          user_email: string | null;
-          user_name: string | null;
-          feedback_type: string;
-          title: string;
-          description: string;
-          status: string;
-          priority?: string | null;
-          severity?: string | null;
-          source_env?: string | null;
-          linked_task_id?: string | null;
-          metadata_json: string | null;
-          admin_response: string | null;
-          responded_at: string | null;
-          created_at: string;
-          updated_at: string | null;
-        }
-      | null = null;
+    let row: {
+      id: string;
+      user_id: string | null;
+      user_email: string | null;
+      user_name: string | null;
+      feedback_type: string;
+      title: string;
+      description: string;
+      status: string;
+      priority?: string | null;
+      severity?: string | null;
+      source_env?: string | null;
+      linked_task_id?: string | null;
+      metadata_json: string | null;
+      admin_response: string | null;
+      responded_at: string | null;
+      created_at: string;
+      updated_at: string | null;
+    } | null = null;
 
     try {
       row = await dbGet<{
@@ -1874,25 +1909,29 @@ router.get(
       );
     } catch (error) {
       logger.error('[Feedback] Failed to read feedback by id:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_ITEM_READ_FAILED',
-          'Failed to read feedback item.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_ITEM_READ_FAILED',
+            'Failed to read feedback item.'
+          )
+        );
     }
 
     if (!row) {
-      return res.status(404).json(
-        buildFailClosedFeedbackError(
-          req,
-          404,
-          'FEEDBACK_ITEM_NOT_FOUND',
-          'Feedback item was not found.'
-        )
-      );
+      return res
+        .status(404)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            404,
+            'FEEDBACK_ITEM_NOT_FOUND',
+            'Feedback item was not found.'
+          )
+        );
     }
 
     let statusHistory: unknown[] = [];
@@ -1944,14 +1983,16 @@ router.get(
       await Promise.all(promises);
     } catch (error) {
       logger.error('[Feedback] Failed to read stats summary:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_STATS_SUMMARY_READ_FAILED',
-          'Failed to read feedback statistics.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_STATS_SUMMARY_READ_FAILED',
+            'Failed to read feedback statistics.'
+          )
+        );
     }
     return res.json(results);
   })
@@ -2525,14 +2566,16 @@ router.post(
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json(
-        buildFailClosedFeedbackError(
-          req,
-          401,
-          'FEEDBACK_FEATURE_VOTE_UNAUTHORIZED',
-          'Authentication is required to vote for features.'
-        )
-      );
+      return res
+        .status(401)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            401,
+            'FEEDBACK_FEATURE_VOTE_UNAUTHORIZED',
+            'Authentication is required to vote for features.'
+          )
+        );
     }
 
     // Check if already voted
@@ -2542,14 +2585,16 @@ router.post(
     );
 
     if (existing) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_FEATURE_VOTE_DUPLICATE',
-          'Feature vote already exists for this user.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_FEATURE_VOTE_DUPLICATE',
+            'Feature vote already exists for this user.'
+          )
+        );
     }
 
     // Add vote
@@ -2585,14 +2630,16 @@ router.post(
       return res.json({ success: true, insights });
     } catch (error) {
       logger.error('[AI Insights] Error:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_AI_INSIGHTS_FAILED',
-          'Failed to generate AI insights.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_AI_INSIGHTS_FAILED',
+            'Failed to generate AI insights.'
+          )
+        );
     }
   })
 );
@@ -2608,14 +2655,16 @@ router.get(
     const { id } = req.params;
 
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_AI_ANALYSIS_FEEDBACK_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_AI_ANALYSIS_FEEDBACK_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
 
     let analysis: Record<string, unknown> | null = null;
@@ -2626,25 +2675,29 @@ router.get(
       );
     } catch (error) {
       logger.error('[Feedback] Failed to read feedback AI analysis:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_AI_ANALYSIS_READ_FAILED',
-          'Failed to read feedback analysis.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_AI_ANALYSIS_READ_FAILED',
+            'Failed to read feedback analysis.'
+          )
+        );
     }
 
     if (!analysis) {
-      return res.status(404).json(
-        buildFailClosedFeedbackError(
-          req,
-          404,
-          'FEEDBACK_AI_ANALYSIS_NOT_FOUND',
-          'Feedback analysis was not found.'
-        )
-      );
+      return res
+        .status(404)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            404,
+            'FEEDBACK_AI_ANALYSIS_NOT_FOUND',
+            'Feedback analysis was not found.'
+          )
+        );
     }
 
     try {
@@ -2658,14 +2711,16 @@ router.get(
       return res.json(result);
     } catch (error) {
       logger.error('[Feedback] Failed to parse feedback AI analysis payload:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_AI_ANALYSIS_READ_FAILED',
-          'Failed to read feedback analysis.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_AI_ANALYSIS_READ_FAILED',
+            'Failed to read feedback analysis.'
+          )
+        );
     }
   })
 );
@@ -2681,14 +2736,16 @@ router.post(
     const { id } = req.params;
 
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_ANALYZE_FEEDBACK_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_ANALYZE_FEEDBACK_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
 
     // Get the feedback
@@ -2698,9 +2755,16 @@ router.post(
     );
 
     if (!feedback) {
-      return res.status(404).json(
-        buildFailClosedFeedbackError(req, 404, 'FEEDBACK_ANALYZE_NOT_FOUND', 'Feedback was not found.')
-      );
+      return res
+        .status(404)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            404,
+            'FEEDBACK_ANALYZE_NOT_FOUND',
+            'Feedback was not found.'
+          )
+        );
     }
 
     try {
@@ -2712,14 +2776,16 @@ router.post(
       return res.json({ success: true, analysis });
     } catch (error) {
       logger.error('[AI Analysis] Error:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_ANALYZE_FAILED',
-          'Failed to analyze feedback.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_ANALYZE_FAILED',
+            'Failed to analyze feedback.'
+          )
+        );
     }
   })
 );
@@ -3015,28 +3081,32 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_SCREENSHOT_FEEDBACK_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_SCREENSHOT_FEEDBACK_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
     let file: Awaited<ReturnType<typeof readFeedbackScreenshot>> = null;
     try {
       file = await readFeedbackScreenshot(id);
     } catch (error) {
       logger.error('[Feedback] Screenshot read failed:', error);
-      return res.status(500).json(
-        buildFailClosedFeedbackError(
-          req,
-          500,
-          'FEEDBACK_SCREENSHOT_READ_FAILED',
-          'Failed to read feedback screenshot.'
-        )
-      );
+      return res
+        .status(500)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            500,
+            'FEEDBACK_SCREENSHOT_READ_FAILED',
+            'Failed to read feedback screenshot.'
+          )
+        );
     }
     if (!file) {
       const row = await dbGet<{ metadata_json?: string }>(
@@ -3061,14 +3131,16 @@ router.get(
       }
     }
     if (!file) {
-      return res.status(404).json(
-        buildFailClosedFeedbackError(
-          req,
-          404,
-          'FEEDBACK_SCREENSHOT_NOT_FOUND',
-          'Feedback screenshot was not found.'
-        )
-      );
+      return res
+        .status(404)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            404,
+            'FEEDBACK_SCREENSHOT_NOT_FOUND',
+            'Feedback screenshot was not found.'
+          )
+        );
     }
     res.setHeader('Content-Type', file.mimeType);
     res.setHeader(
@@ -3091,14 +3163,16 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     if (!isUuidLike(id)) {
-      return res.status(400).json(
-        buildFailClosedFeedbackError(
-          req,
-          400,
-          'FEEDBACK_CURSOR_BRIEF_ID_INVALID',
-          'Feedback id must be a valid UUID.'
-        )
-      );
+      return res
+        .status(400)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            400,
+            'FEEDBACK_CURSOR_BRIEF_ID_INVALID',
+            'Feedback id must be a valid UUID.'
+          )
+        );
     }
     const row = await dbGet<any>(
       `SELECT id, title, description, feedback_type, severity, priority, status,
@@ -3107,14 +3181,16 @@ router.get(
       [id]
     );
     if (!row)
-      return res.status(404).json(
-        buildFailClosedFeedbackError(
-          req,
-          404,
-          'FEEDBACK_CURSOR_BRIEF_NOT_FOUND',
-          'Feedback item was not found.'
-        )
-      );
+      return res
+        .status(404)
+        .json(
+          buildFailClosedFeedbackError(
+            req,
+            404,
+            'FEEDBACK_CURSOR_BRIEF_NOT_FOUND',
+            'Feedback item was not found.'
+          )
+        );
 
     const meta: Record<string, unknown> = (() => {
       try {

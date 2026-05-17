@@ -42,4 +42,3 @@ export function sendApiMethodNotAllowed(req: Request, res: Response, allowMethod
     correlationId: resolveCorrelationId(req),
   });
 }
-

@@ -47,7 +47,9 @@ describe('effectiveAccessService capability catalog', () => {
 
   it('keeps initiative workflow capabilities in factory templates used by P0 guards', () => {
     const leader = FACTORY_ROLE_TEMPLATES.find((template) => template.roleKey === 'PROJECT_LEADER');
-    const sponsor = FACTORY_ROLE_TEMPLATES.find((template) => template.roleKey === 'PROJECT_SPONSOR');
+    const sponsor = FACTORY_ROLE_TEMPLATES.find(
+      (template) => template.roleKey === 'PROJECT_SPONSOR'
+    );
 
     expect(leader?.capabilities).toEqual(
       expect.arrayContaining(['initiative.create', 'initiative.update', 'initiative.promote'])

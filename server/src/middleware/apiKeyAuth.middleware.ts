@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex -- These middleware sanitizers intentionally reject ASCII control characters. */
 /**
  * API Key Authentication Middleware
  * Enterprise SaaS Architecture - API Security
@@ -76,7 +77,8 @@ const MAX_API_KEY_RATE_LIMIT = 1_000_000;
 const API_KEY_ATTEMPT_FINGERPRINT_CHARS = 16;
 const MAX_FORWARDED_FOR_SCAN_CHARS = 512;
 const API_KEY_UNSAFE_TRANSPORT_CHARS = /[\u0000-\u001F\u007F\s]/;
-const isSafeApiKeyTransport = (value: string): boolean => !API_KEY_UNSAFE_TRANSPORT_CHARS.test(value);
+const isSafeApiKeyTransport = (value: string): boolean =>
+  !API_KEY_UNSAFE_TRANSPORT_CHARS.test(value);
 const applyNoStoreHeaders = (res: Response): void => {
   safeSetHeader(res, 'Cache-Control', 'no-store');
   safeSetHeader(res, 'Pragma', 'no-cache');
@@ -177,9 +179,9 @@ export async function apiKeyAuth(
         res,
         401,
         {
-        error: 'API key required',
-        message: 'Provide API key via Authorization: Bearer ck_<key> or X-API-Key header.',
-        code: 'API_KEY_REQUIRED',
+          error: 'API key required',
+          message: 'Provide API key via Authorization: Bearer ck_<key> or X-API-Key header.',
+          code: 'API_KEY_REQUIRED',
         },
         { noStore: true, withAuthChallenge: true }
       );
@@ -203,9 +205,9 @@ export async function apiKeyAuth(
         res,
         401,
         {
-        error: 'Invalid API key',
-        message: 'The provided API key is invalid, expired, or not authorized for this IP.',
-        code: 'API_KEY_INVALID',
+          error: 'Invalid API key',
+          message: 'The provided API key is invalid, expired, or not authorized for this IP.',
+          code: 'API_KEY_INVALID',
         },
         { noStore: true, withAuthChallenge: true }
       );
@@ -240,9 +242,9 @@ export async function apiKeyAuth(
         res,
         401,
         {
-        error: 'Invalid API key',
-        message: 'The provided API key is invalid, expired, or not authorized for this IP.',
-        code: 'API_KEY_INVALID',
+          error: 'Invalid API key',
+          message: 'The provided API key is invalid, expired, or not authorized for this IP.',
+          code: 'API_KEY_INVALID',
         },
         { noStore: true, withAuthChallenge: true }
       );
@@ -254,9 +256,9 @@ export async function apiKeyAuth(
         res,
         401,
         {
-        error: 'Invalid API key',
-        message: 'The provided API key is invalid, expired, or not authorized for this IP.',
-        code: 'API_KEY_INVALID',
+          error: 'Invalid API key',
+          message: 'The provided API key is invalid, expired, or not authorized for this IP.',
+          code: 'API_KEY_INVALID',
         },
         { noStore: true, withAuthChallenge: true }
       );
@@ -265,10 +267,7 @@ export async function apiKeyAuth(
     const effectiveRateLimit = clampApiKeyRateLimit(validatedKey.rateLimit);
 
     // Check rate limit
-    const rateLimit = checkRateLimit(
-      `${validatedKey.kind}:${validatedKey.id}`,
-      effectiveRateLimit
-    );
+    const rateLimit = checkRateLimit(`${validatedKey.kind}:${validatedKey.id}`, effectiveRateLimit);
 
     safeSetHeader(res, 'X-RateLimit-Limit', effectiveRateLimit.toString());
     safeSetHeader(res, 'X-RateLimit-Remaining', rateLimit.remaining.toString());
@@ -309,9 +308,9 @@ export async function apiKeyAuth(
       res,
       500,
       {
-      error: 'Authentication error',
-      message: 'An unexpected error occurred while validating the API key.',
-      code: 'API_KEY_AUTH_INTERNAL_ERROR',
+        error: 'Authentication error',
+        message: 'An unexpected error occurred while validating the API key.',
+        code: 'API_KEY_AUTH_INTERNAL_ERROR',
       },
       { noStore: true }
     );
@@ -346,9 +345,9 @@ export function requireApiKeyPermission(permission: string) {
         res,
         401,
         {
-        error: 'API key authentication required',
-        message: 'Authenticate with a valid API key before calling this endpoint.',
-        code: 'API_KEY_CONTEXT_MISSING',
+          error: 'API key authentication required',
+          message: 'Authenticate with a valid API key before calling this endpoint.',
+          code: 'API_KEY_CONTEXT_MISSING',
         },
         { noStore: true, withAuthChallenge: true }
       );
@@ -360,10 +359,10 @@ export function requireApiKeyPermission(permission: string) {
         res,
         403,
         {
-        error: 'Permission denied',
-        message: `This action requires the '${normalizedPermission}' permission.`,
-        code: 'API_KEY_FORBIDDEN',
-        yourPermissions: Array.isArray(req.apiKey.permissions) ? req.apiKey.permissions : [],
+          error: 'Permission denied',
+          message: `This action requires the '${normalizedPermission}' permission.`,
+          code: 'API_KEY_FORBIDDEN',
+          yourPermissions: Array.isArray(req.apiKey.permissions) ? req.apiKey.permissions : [],
         },
         { noStore: true }
       );
@@ -476,7 +475,10 @@ const isResolvedApiKey = (value: ResolvedApiKey): boolean => {
   if (!normalizeOptionalString(value.id)) return false;
   if (!normalizeOptionalString(value.organizationId)) return false;
   if (value.kind === 'user' && !normalizeOptionalString(value.userId)) return false;
-  if (!Array.isArray(value.permissions) || !value.permissions.every((entry) => typeof entry === 'string')) {
+  if (
+    !Array.isArray(value.permissions) ||
+    !value.permissions.every((entry) => typeof entry === 'string')
+  ) {
     return false;
   }
   return value.rateLimit !== undefined && value.rateLimit !== null;
@@ -633,7 +635,9 @@ function getClientIp(req: Request): string {
 
   const forwarded = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);
   const capForwardedScan = (value: string): string =>
-    value.length > MAX_FORWARDED_FOR_SCAN_CHARS ? value.slice(0, MAX_FORWARDED_FOR_SCAN_CHARS) : value;
+    value.length > MAX_FORWARDED_FOR_SCAN_CHARS
+      ? value.slice(0, MAX_FORWARDED_FOR_SCAN_CHARS)
+      : value;
   if (typeof forwarded === 'string') {
     const candidate = normalizeClientIp(capForwardedScan(forwarded).split(',')[0] || '');
     if (candidate) return candidate;
@@ -647,7 +651,9 @@ function getClientIp(req: Request): string {
   }
   const reqIp = normalizeClientIp(safeRead(() => req.ip, undefined as unknown) || '');
   if (reqIp) return reqIp;
-  const socketIp = normalizeClientIp(safeRead(() => req.socket?.remoteAddress, undefined as unknown) || '');
+  const socketIp = normalizeClientIp(
+    safeRead(() => req.socket?.remoteAddress, undefined as unknown) || ''
+  );
   return socketIp || 'unknown';
 }
 

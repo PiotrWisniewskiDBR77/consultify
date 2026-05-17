@@ -260,7 +260,8 @@ export const csrfTokenMiddleware = (req: Request, res: Response, next: NextFunct
 export const csrfValidationMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   if (!shouldEnforceInCurrentEnv()) return next();
   const rawRequestMethod = safeRead(() => req.method, undefined as unknown as string | undefined);
-  const requestMethod = typeof rawRequestMethod === 'string' ? rawRequestMethod.trim().toUpperCase() : undefined;
+  const requestMethod =
+    typeof rawRequestMethod === 'string' ? rawRequestMethod.trim().toUpperCase() : undefined;
   const requestPath = safeRead(() => req.path, undefined as unknown as string | undefined);
   if (isSafeMethod(requestMethod)) return next();
   if (isExemptPath(requestPath)) return next();

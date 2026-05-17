@@ -31,8 +31,7 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../middleware/rbac.middleware.js', () => ({
-  requireRole:
-    (...requiredRoles: string[]) =>
+  requireRole: (...requiredRoles: string[]) =>
     ((req: MockAuthRequest, res: any, next: () => void) => {
       const role = String(req.userRole || req.user?.role || '').toLowerCase();
       const allowed = requiredRoles.map((r) => String(r).toLowerCase());

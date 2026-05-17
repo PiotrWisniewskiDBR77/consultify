@@ -129,7 +129,8 @@ export class ErrorBoundary extends Component<Props, State> {
               incident with context.
             </div>
             <div className="mb-6 text-xs text-slate-400">
-              Technical diagnostics are captured in telemetry and available through the report action.
+              Technical diagnostics are captured in telemetry and available through the report
+              action.
             </div>
             {this.state.telemetryDelivery === 'sent' && (
               <p

@@ -1,5 +1,6 @@
 export function syncWorkflowPolicyErrorMessage(error: unknown, fallback: string): string {
-  const record = error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
+  const record =
+    error && typeof error === 'object' ? (error as { data?: { code?: string } }) : null;
   const code = record?.data?.code;
 
   if (code === 'SYNC_WORKFLOW_POLICY_INTEGRATION_NOT_FOUND') {

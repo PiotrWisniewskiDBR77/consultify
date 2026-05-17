@@ -23,8 +23,8 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { __resetShareLinkRegistryForTests } from '../../services/documentStudio/documentShareLinkService.js';
 import { __resetDocumentCommentsForTests } from '../../services/documentStudio/documentCommentsService.js';
+import { __resetShareLinkRegistryForTests } from '../../services/documentStudio/documentShareLinkService.js';
 
 let mockUser: { id: string; organizationId: string; role: string } | null = null;
 
@@ -220,7 +220,9 @@ describe('POST /api/document-studio/share-links/:shareLinkId/rotate', () => {
     const id = created.body.shareLink.shareLinkId;
     await request(app).post(`/api/document-studio/share-links/${id}/revoke`).send({});
 
-    const rotate = await request(app).post(`/api/document-studio/share-links/${id}/rotate`).send({});
+    const rotate = await request(app)
+      .post(`/api/document-studio/share-links/${id}/rotate`)
+      .send({});
     expect(rotate.status).toBe(409);
     expect(rotate.body.error).toBe('share_link_not_active');
   });

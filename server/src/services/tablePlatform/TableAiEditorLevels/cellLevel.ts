@@ -19,7 +19,6 @@
  * audit/budget pipeline is exercisable without a network roundtrip.
  */
 
-import type { LevelHandler, LevelStubOutput } from './index.js';
 import {
   assertTableInOrganization,
   clampConfidence,
@@ -29,6 +28,7 @@ import {
   logHandlerError,
   safeJson,
 } from './handlerHelpers.js';
+import type { LevelHandler, LevelStubOutput } from './index.js';
 import { getLlmProvider } from './llmProvider.js';
 import { opCellSet } from './operations.js';
 
@@ -75,7 +75,10 @@ export const proposeCellEdit: LevelHandler = async (input): Promise<LevelStubOut
     };
   }
 
-  const [fields, record] = await Promise.all([loadTableFields(tableId), loadRecord(tableId, recordId)]);
+  const [fields, record] = await Promise.all([
+    loadTableFields(tableId),
+    loadRecord(tableId, recordId),
+  ]);
   const field = fields.find((f) => f.id === fieldId);
   if (!field) {
     return {
@@ -133,7 +136,7 @@ export const proposeCellEdit: LevelHandler = async (input): Promise<LevelStubOut
       ? parsed.summary
       : `[cell] ${prompt.slice(0, 200)}`;
   const warnings = Array.isArray(parsed.warnings)
-    ? (parsed.warnings.filter((w): w is string => typeof w === 'string'))
+    ? parsed.warnings.filter((w): w is string => typeof w === 'string')
     : [];
   const confidence = clampConfidence(parsed.confidence);
 

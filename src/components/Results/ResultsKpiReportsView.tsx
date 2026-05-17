@@ -580,9 +580,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               )
             );
             const relatedKpiIds = Array.from(
-              new Set(
-                selectedKpis.map((kpi) => String(kpi.id || '').trim()).filter(Boolean)
-              )
+              new Set(selectedKpis.map((kpi) => String(kpi.id || '').trim()).filter(Boolean))
             );
             await openChatWithContext({
               entityType: 'kpi_report',

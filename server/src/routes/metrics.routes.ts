@@ -56,11 +56,13 @@ router.get('/', async (req, res) => {
     res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
     const correlationId = (req as Request & { correlationId?: string }).correlationId ?? null;
     const correlationLine = correlationId ? `# correlation_id=${correlationId}\n` : '';
-    return res.status(503).send(
-      '# consultify_metrics_export_unavailable\n' +
-        '# code=METRICS_PROMETHEUS_EXPORT_FAILED\n' +
-        correlationLine
-    );
+    return res
+      .status(503)
+      .send(
+        '# consultify_metrics_export_unavailable\n' +
+          '# code=METRICS_PROMETHEUS_EXPORT_FAILED\n' +
+          correlationLine
+      );
   }
 });
 

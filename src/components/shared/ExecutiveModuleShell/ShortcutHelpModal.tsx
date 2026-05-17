@@ -78,9 +78,7 @@ export const ShortcutHelpModal: React.FC<ShortcutHelpModalProps> = ({
               {title}
             </h2>
             {description ? (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {description}
-              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{description}</p>
             ) : null}
           </div>
           <button
