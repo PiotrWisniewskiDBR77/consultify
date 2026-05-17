@@ -816,20 +816,35 @@ export async function updateInitiativeKpiAssignment(
   const refreshed = await listInitiativeKpiAssignments(params.initiativeId, params.organizationId);
   const updated = refreshed.find((item) => item.id === params.kpiId);
   if (!updated) {
+    const rawCurrent = await queryHelpers.queryOne<{
+      baseline_value: number | null;
+      target_value: number | null;
+      current_value: number | null;
+      measurement_frequency: string | null;
+      status: string | null;
+      name: string | null;
+      description: string | null;
+      category: string | null;
+      unit: string | null;
+      created_at: string | null;
+    }>('SELECT * FROM initiative_kpis WHERE id = ?', [params.kpiId]);
     const fallbackTarget =
       params.targetValue != null
         ? safeNumber(params.targetValue)
         : params.targetValue === null
           ? null
-          : existing?.targetValue ?? null;
+          : safeNumber(rawCurrent?.target_value) ?? existing?.targetValue ?? null;
     const fallbackCurrent =
       params.currentValue != null
         ? safeNumber(params.currentValue)
         : params.currentValue === null
           ? null
-          : existing?.currentValue ?? existing?.latestValue ?? null;
+          : safeNumber(rawCurrent?.current_value) ?? existing?.currentValue ?? existing?.latestValue ?? null;
     const fallbackFrequency = normalizeFrequency(
-      params.measurementFrequency ?? existing?.measurementFrequency ?? 'MONTHLY'
+      params.measurementFrequency ??
+        rawCurrent?.measurement_frequency ??
+        existing?.measurementFrequency ??
+        'MONTHLY'
     );
     const fallbackProgress = computeProgressPercentage({
       latestValue: fallbackCurrent,
@@ -840,28 +855,31 @@ export async function updateInitiativeKpiAssignment(
       mappingId: existing?.mappingId ?? null,
       initiativeId: params.initiativeId,
       initiativeStatus: existing?.initiativeStatus ?? null,
-      name: params.name != null ? String(params.name) : (existing?.name ?? ''),
-      description: params.description ?? existing?.description ?? null,
-      category: params.category ?? existing?.category ?? 'benefits',
-      unit: params.unit ?? existing?.unit ?? null,
+      name:
+        params.name != null
+          ? String(params.name)
+          : String(rawCurrent?.name ?? existing?.name ?? ''),
+      description: params.description ?? rawCurrent?.description ?? existing?.description ?? null,
+      category: params.category ?? rawCurrent?.category ?? existing?.category ?? 'benefits',
+      unit: params.unit ?? rawCurrent?.unit ?? existing?.unit ?? null,
       baselineValue:
         params.baselineValue != null
           ? safeNumber(params.baselineValue)
           : params.baselineValue === null
             ? null
-            : existing?.baselineValue ?? null,
+            : safeNumber(rawCurrent?.baseline_value) ?? existing?.baselineValue ?? null,
       targetValue: fallbackTarget,
       currentValue: fallbackCurrent,
       latestValue: fallbackCurrent,
       latestMeasurementDate: new Date().toISOString(),
       progressPercentage: fallbackProgress,
-      status: existing?.status ?? 'on_track',
+      status: String(rawCurrent?.status || existing?.status || 'on_track'),
       measurementFrequency: fallbackFrequency,
       isOnTarget: computeIsOnTarget({
         latestValue: fallbackCurrent,
         targetValue: fallbackTarget,
       }),
-      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      createdAt: String(rawCurrent?.created_at || existing?.createdAt || new Date().toISOString()),
       updatedAt: new Date().toISOString(),
       definitionSource:
         params.definitionSource || existing?.definitionSource || 'initiative-custom',
