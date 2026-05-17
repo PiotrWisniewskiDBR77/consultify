@@ -591,7 +591,9 @@ export const DeckBuilder: React.FC = () => {
               ...(prev || {}),
               ...latestDeckJson,
               deck_id: deckForAutosave.deckId,
-              title: String(latestPayload?.title || latestDeckJson.title || prev?.title || 'Untitled'),
+              title: String(
+                latestPayload?.title || latestDeckJson.title || prev?.title || 'Untitled'
+              ),
             }));
           }
           return;

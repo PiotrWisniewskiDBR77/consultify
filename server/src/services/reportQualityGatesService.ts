@@ -141,7 +141,10 @@ export async function checkQualityGates(
 
   // ── Gate 3: Recommended sections ─────────────────────────────
   for (const recType of RECOMMENDED_SECTION_TYPES) {
-    if (!hasSectionType(sectionTypes, recType) && !hasSectionType(sectionTypes, 'consulting_decisions')) {
+    if (
+      !hasSectionType(sectionTypes, recType) &&
+      !hasSectionType(sectionTypes, 'consulting_decisions')
+    ) {
       gates.push({
         id: `qg-recommend-${recType}`,
         gateType: 'MISSING_RECOMMENDED_SECTION',

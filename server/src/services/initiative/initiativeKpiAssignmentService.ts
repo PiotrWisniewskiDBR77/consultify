@@ -833,13 +833,16 @@ export async function updateInitiativeKpiAssignment(
         ? safeNumber(params.targetValue)
         : params.targetValue === null
           ? null
-          : safeNumber(rawCurrent?.target_value) ?? existing?.targetValue ?? null;
+          : (safeNumber(rawCurrent?.target_value) ?? existing?.targetValue ?? null);
     const fallbackCurrent =
       params.currentValue != null
         ? safeNumber(params.currentValue)
         : params.currentValue === null
           ? null
-          : safeNumber(rawCurrent?.current_value) ?? existing?.currentValue ?? existing?.latestValue ?? null;
+          : (safeNumber(rawCurrent?.current_value) ??
+            existing?.currentValue ??
+            existing?.latestValue ??
+            null);
     const fallbackFrequency = normalizeFrequency(
       params.measurementFrequency ??
         rawCurrent?.measurement_frequency ??
@@ -867,7 +870,7 @@ export async function updateInitiativeKpiAssignment(
           ? safeNumber(params.baselineValue)
           : params.baselineValue === null
             ? null
-            : safeNumber(rawCurrent?.baseline_value) ?? existing?.baselineValue ?? null,
+            : (safeNumber(rawCurrent?.baseline_value) ?? existing?.baselineValue ?? null),
       targetValue: fallbackTarget,
       currentValue: fallbackCurrent,
       latestValue: fallbackCurrent,
@@ -883,7 +886,8 @@ export async function updateInitiativeKpiAssignment(
       updatedAt: new Date().toISOString(),
       definitionSource:
         params.definitionSource || existing?.definitionSource || 'initiative-custom',
-      observationPhase: params.observationPhase || existing?.observationPhase || 'post-implementation',
+      observationPhase:
+        params.observationPhase || existing?.observationPhase || 'post-implementation',
       trackedInRealization: params.trackedInRealization ?? existing?.trackedInRealization ?? false,
       trackedPostImplementation:
         params.trackedPostImplementation ?? existing?.trackedPostImplementation ?? true,

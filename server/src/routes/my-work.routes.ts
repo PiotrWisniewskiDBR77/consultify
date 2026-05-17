@@ -4839,7 +4839,12 @@ router.post(
       `UPDATE my_idea_maps
        SET nodes_json = ?, edges_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
        WHERE id = ? AND version = ?`,
-      [JSON.stringify(validation.normalized.nodes), JSON.stringify(validation.normalized.edges), map.id, baseVersion]
+      [
+        JSON.stringify(validation.normalized.nodes),
+        JSON.stringify(validation.normalized.edges),
+        map.id,
+        baseVersion,
+      ]
     );
     if (Number(updateResult?.changes || 0) === 0) {
       const latest = await queryHelpers.queryOne<any>(
@@ -4969,7 +4974,12 @@ router.delete(
       `UPDATE my_idea_maps
        SET nodes_json = ?, edges_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
        WHERE id = ? AND version = ?`,
-      [JSON.stringify(validation.normalized.nodes), JSON.stringify(validation.normalized.edges), map.id, baseVersion]
+      [
+        JSON.stringify(validation.normalized.nodes),
+        JSON.stringify(validation.normalized.edges),
+        map.id,
+        baseVersion,
+      ]
     );
     if (Number(updateResult?.changes || 0) === 0) {
       const latest = await queryHelpers.queryOne<any>(

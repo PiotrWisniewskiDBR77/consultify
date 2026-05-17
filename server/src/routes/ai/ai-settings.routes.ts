@@ -12,10 +12,10 @@ import { NextFunction, Request, Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import { normalizePlatformRole } from '../../utils/roleNormalization.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
+import { normalizePlatformRole } from '../../utils/roleNormalization.js';
 
 // Apply rate limiting
 const router = Router();

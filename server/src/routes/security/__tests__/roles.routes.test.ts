@@ -79,11 +79,13 @@ describe('security roles routes validation', () => {
 
   it('rejects POST with empty roleKey', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/security/roles').send({
-      roleKey: '   ',
-      name: 'Auditor',
-      permissions: ['project.view'],
-    });
+    const res = await request(app)
+      .post('/api/security/roles')
+      .send({
+        roleKey: '   ',
+        name: 'Auditor',
+        permissions: ['project.view'],
+      });
     expect(res.status).toBe(400);
     expect(String(res.body.error)).toContain('roleKey');
   });
@@ -100,19 +102,17 @@ describe('security roles routes validation', () => {
 
   it('accepts POST with label + capabilities alias', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/security/roles').send({
-      label: 'Auditor',
-      capabilities: ['project.view', 'project.view'],
-    });
+    const res = await request(app)
+      .post('/api/security/roles')
+      .send({
+        label: 'Auditor',
+        capabilities: ['project.view', 'project.view'],
+      });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(dbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO security_roles'),
-      expect.arrayContaining([
-        'org-1',
-        'Auditor',
-        JSON.stringify(['project.view']),
-      ])
+      expect.arrayContaining(['org-1', 'Auditor', JSON.stringify(['project.view'])])
     );
   });
 
@@ -132,4 +132,3 @@ describe('security roles routes validation', () => {
     expect(String(res.body.error)).toContain('array');
   });
 });
-

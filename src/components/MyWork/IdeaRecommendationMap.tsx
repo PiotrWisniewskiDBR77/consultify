@@ -4839,12 +4839,12 @@ function MindMapInner({
             if (!artifactType || !artifactId) return;
             void (async () => {
               try {
-                  await Api.detachArtifactFromObject(
+                await Api.detachArtifactFromObject(
                   ideaId,
                   floatingToolbarInfo.nodeId,
                   artifactType,
-                    artifactId,
-                    { baseVersion: externalRuntime?.version ?? localVersionRef.current }
+                  artifactId,
+                  { baseVersion: externalRuntime?.version ?? localVersionRef.current }
                 );
                 if (externalRuntime) {
                   await externalRuntime.refresh();
@@ -6123,7 +6123,10 @@ function MindMapInner({
                 } catch (err: any) {
                   const conflictVersion = getMapVersionFromPayload(err?.data);
                   if (conflictVersion) {
-                    localVersionRef.current = Math.max(localVersionRef.current || 1, conflictVersion);
+                    localVersionRef.current = Math.max(
+                      localVersionRef.current || 1,
+                      conflictVersion
+                    );
                   }
                   if (err?.status === 409 && externalRuntime) {
                     await externalRuntime.refresh().catch(() => {});

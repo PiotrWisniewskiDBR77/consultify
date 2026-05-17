@@ -169,7 +169,8 @@ describe('MetadataService', () => {
   it('deleteField returns true when field exists', async () => {
     const before = { id: 'f-1', name: 'Field', table_id: 't-1' };
     mockQuery.mockImplementation((sql: string) => {
-      if (sql.includes('SELECT * FROM tp_fields WHERE id')) return Promise.resolve({ rows: [before] });
+      if (sql.includes('SELECT * FROM tp_fields WHERE id'))
+        return Promise.resolve({ rows: [before] });
       if (sql.includes('SELECT governance_mode FROM tp_tables'))
         return Promise.resolve({ rows: [{ governance_mode: 'operational' }] });
       if (sql.includes('UPDATE tp_views') || sql.includes('DELETE FROM tp_fields WHERE id'))

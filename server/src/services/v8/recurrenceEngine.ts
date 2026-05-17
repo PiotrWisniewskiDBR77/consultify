@@ -6,8 +6,8 @@
  * Exceptions from RecurrenceModel.exceptions[] override/cancel specific instances.
  */
 
-import RRulePackage from 'rrule';
 import type { RRule } from 'rrule';
+import RRulePackage from 'rrule';
 
 import logger from '../../utils/Logger.js';
 import type { RecurrenceModel } from './calendarInteropService.js';
@@ -61,7 +61,9 @@ export function materializeInstances(
 
     // Keep recurrence expansion compatible with older/newer `rrule` builds that may
     // not export RRuleSet in ESM. We merge explicit RDATE/EXDATE manually.
-    const exdateSet = new Set((recurrence.exdate ?? []).map((value) => new Date(value).toISOString()));
+    const exdateSet = new Set(
+      (recurrence.exdate ?? []).map((value) => new Date(value).toISOString())
+    );
     const occurrenceMap = new Map<string, Date>();
 
     for (const occ of generatedOccurrences) {

@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { defineConfig, devices } from '@playwright/test';
+
 import { STORAGE_STATE_PATH } from './tests/e2e/_helpers/testSupportState';
 
 const backendUrl = process.env.E2E_API_URL || 'http://127.0.0.1:3001';

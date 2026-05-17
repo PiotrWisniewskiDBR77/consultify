@@ -100,10 +100,14 @@ describe('RecordsService', () => {
 
     const result = await recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1');
 
-    expect(mockValidateRecord).toHaveBeenCalledWith('t-1', { Name: 'New' }, {
-      recordId: 'r-1',
-      isUpdate: true,
-    });
+    expect(mockValidateRecord).toHaveBeenCalledWith(
+      't-1',
+      { Name: 'New' },
+      {
+        recordId: 'r-1',
+        isUpdate: true,
+      }
+    );
     expect(mockValidateRecordSize).toHaveBeenCalledWith({ Name: 'New' });
     expect(result).toEqual(after);
   });

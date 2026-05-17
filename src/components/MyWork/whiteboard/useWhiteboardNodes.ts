@@ -106,7 +106,9 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
   const deleteSelected = useCallback(() => {
     if (locked) return;
     const removedIds = new Set(
-      nodes.filter((node: Node) => node.selected && !isNodeLocked(node)).map((node: Node) => node.id)
+      nodes
+        .filter((node: Node) => node.selected && !isNodeLocked(node))
+        .map((node: Node) => node.id)
     );
     if (removedIds.size === 0) return;
     pushSnapshot?.();

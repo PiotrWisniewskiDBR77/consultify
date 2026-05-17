@@ -480,7 +480,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       const items = Array.isArray(detail.items)
         ? detail.items
-        : [{ label: detail.label, text: detail.text, data: detail.data, position: detail.position }];
+        : [
+            {
+              label: detail.label,
+              text: detail.text,
+              data: detail.data,
+              position: detail.position,
+            },
+          ];
       const validItems = items.filter(
         (item) =>
           (item.label && String(item.label).trim()) || (item.text && String(item.text).trim())

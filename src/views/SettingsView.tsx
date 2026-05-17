@@ -38,6 +38,7 @@ import { AvailabilitySettings } from '../components/settings/AvailabilitySetting
 import { AvatarPhotoSettings } from '../components/settings/AvatarPhotoSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
 import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
+import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
 import { DataControlsSettings } from '../components/settings/DataControlsSettings';
@@ -45,7 +46,6 @@ import { DesktopSoundsSettings } from '../components/settings/DesktopSoundsSetti
 import { DeveloperSettings } from '../components/settings/DeveloperSettings';
 import { EmailDigestSettings } from '../components/settings/EmailDigestSettings';
 import { EmailSignaturesSettings } from '../components/settings/EmailSignaturesSettings';
-import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
