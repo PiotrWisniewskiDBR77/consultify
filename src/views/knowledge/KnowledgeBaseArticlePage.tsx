@@ -746,7 +746,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    p: ({ node, children, ...props }) => {
+                    p: ({ node, children, ref: _ref, ...props }) => {
                       const paragraphChildren = Array.isArray((node as any)?.children)
                         ? (node as any).children
                         : [];
@@ -770,7 +770,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                       }
                       return <p {...props}>{children}</p>;
                     },
-                    h2: ({ children, ...props }) => {
+                    h2: ({ children, ref: _ref, ...props }) => {
                       const text = String(children).replace(/\*\*/g, '');
                       const id = text
                         .toLowerCase()
@@ -782,7 +782,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                         </h2>
                       );
                     },
-                    h3: ({ children, ...props }) => {
+                    h3: ({ children, ref: _ref, ...props }) => {
                       const text = String(children).replace(/\*\*/g, '');
                       const id = text
                         .toLowerCase()
@@ -794,7 +794,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                         </h3>
                       );
                     },
-                    img: ({ src, alt, ...props }) => {
+                    img: ({ src, alt, ref: _ref, ...props }) => {
                       const caption = truncateAltText(alt);
                       return (
                         <figure className="my-6 sm:my-10">

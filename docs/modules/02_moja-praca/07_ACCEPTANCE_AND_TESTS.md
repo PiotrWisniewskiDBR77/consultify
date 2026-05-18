@@ -4,7 +4,7 @@ doc_kind: TESTS
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-10
+last_updated: 2026-05-18
 ---
 
 # Acceptance & Tests — Moja Praca / My Work
@@ -35,6 +35,10 @@ last_updated: 2026-05-10
 | RADAR Layout v1 includes 4 main sections (`header`, `radar map`, `insight feed`, `detail panel`) | n/a | target contract docs (`04_UI_UX.md`, `MW_HOME_RADAR.md`) | n/a | no runtime proof yet | partial (`doc_contract_only`) |
 | Top to-do hero is forbidden in target main layout | n/a | target contract docs (`04_UI_UX.md`, `MW_HOME_RADAR.md`) | n/a | no runtime proof yet | partial (`target_locked`) |
 | Reading-first density is mandatory for RADAR main experience | n/a | target contract docs (`04_UI_UX.md`) | n/a | no runtime proof yet | partial (`doc_contract_only`) |
+| Radar is a true circular radar view (rings + quadrants), not list/dashboard-first | n/a | target contract docs (`MW_HOME_RADAR.md`, `04_UI_UX.md`) | n/a | no runtime proof yet | partial (`doc_contract_only`) |
+| Radar uses interactive signal icons/dots for technologies and ideas | n/a | target contract docs (`MW_HOME_RADAR.md`, `04_UI_UX.md`) | n/a | no runtime proof yet | partial (`doc_contract_only`) |
+| Click on signal icon highlights point and updates right preview panel in-place | n/a | target contract docs (`MW_HOME_RADAR.md`, `03_BEHAVIOR.md`, `04_UI_UX.md`) | n/a | no runtime proof yet | partial (`doc_contract_only`) |
+| Right panel remains preview-only; Teresa opens as separate action surface | n/a | target contract docs (`MW_HOME_RADAR.md`, `03_BEHAVIOR.md`, `04_UI_UX.md`) | n/a | no runtime proof yet | partial (`doc_contract_only`) |
 
 ## Function-Level Acceptance Matrix
 
@@ -148,6 +152,9 @@ last_updated: 2026-05-10
 - `doc_gap`: no module-local UI recording links currently embedded in this file.
 - `code_gap`: no single end-to-end acceptance suite validating all 12 documented My Work functions in one regression pack.
 - `code_gap`: no end-to-end Radar journey test proving full path `load -> triage -> handoff -> owner-module read-back`.
+- `code_gap`: no dedicated UI/e2e test validating true circular radar geometry and interactive icon points.
+- `code_gap`: no dedicated UI/e2e test validating "click signal -> highlight -> right preview update" without route change.
+- `code_gap`: no dedicated UI/e2e test validating "right panel is not chat surface" and "Talk to Teresa opens separate conversation surface".
 - `doc_gap`: Menu 3-only AI placement is contractually required, but Home Radar currently includes inline AI controls that need runtime alignment.
 - `code_gap`: target readability reset (top-block removal + literal radar map) is not yet validated by runtime/UI tests.
 - `doc_gap`: brak dedykowanego, osobnego katalogu semantyki node/edge dla `MW_IDEAS_MINDMAP` (taxonomy + required evidence fields).

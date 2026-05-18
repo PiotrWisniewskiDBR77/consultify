@@ -320,7 +320,13 @@ export class InitiativeController {
         : priorityRaw
           ? [priorityRaw]
           : [];
-      const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+      const qh = queryHelpers as unknown as {
+        getTableColumns?: (table: string) => Promise<unknown[]>;
+        queryAll?: (sql: string, params?: Array<unknown>) => Promise<Record<string, unknown>[]>;
+      };
+      const initiativeColumns = getColumnNameSet(
+        typeof qh.getTableColumns === 'function' ? await qh.getTableColumns('initiatives') : []
+      );
       const params: Array<unknown> = [orgId];
       let sql = `
             SELECT i.*, 
@@ -415,7 +421,10 @@ export class InitiativeController {
 
       let rows: Record<string, unknown>[] = [];
       try {
-        rows = await queryHelpers.queryAll(sql, params);
+        if (typeof qh.queryAll !== 'function') {
+          throw new Error('queryAll unavailable');
+        }
+        rows = await qh.queryAll(sql, params);
       } catch {
         res
           .status(500)

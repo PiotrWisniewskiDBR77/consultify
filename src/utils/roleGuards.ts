@@ -34,7 +34,7 @@ export function isSuperAdminRole(role: string | null | undefined): boolean {
 
 export function isAdminOrSuperAdminRole(role: string | null | undefined): boolean {
   const normalized = normalizeAppRole(role);
-  return normalized === 'ADMIN' || normalized === 'OWNER' || normalized === 'SUPERADMIN';
+  return normalized === 'ADMIN' || normalized === 'SUPERADMIN';
 }
 
 export function isAdminOwnerOrSuperAdminRole(role: string | null | undefined): boolean {

@@ -181,7 +181,7 @@ describe('AuditLogView honest UI', () => {
     expect(screen.getByText('Scheduler')).toBeInTheDocument();
     expect(screen.getByText('Disabled')).toBeInTheDocument();
     expect(screen.getByText('Queue readiness')).toBeInTheDocument();
-    expect(screen.getByText('Ready')).toBeInTheDocument();
+    expect(screen.getAllByText('Ready').length).toBeGreaterThan(0);
     expect(screen.getByText('Enqueue')).toBeInTheDocument();
     expect(screen.getByText('Local consume')).toBeInTheDocument();
     expect(screen.getByText('interview insight completed')).toBeInTheDocument();

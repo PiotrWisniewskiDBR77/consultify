@@ -4,92 +4,77 @@ doc_kind: UI_UX
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-10
+last_updated: 2026-05-18
 ---
 
 # UI/UX — Moja Praca / My Work
 
 ## 1. Main Screen
 
-As-Is: `/my-work/*` uses `MyWorkView` with `SplitLayout` and `MyWorkHub` as the main runtime surface. The screen job is personal work orchestration: tabbed workspace UX, document/detail side flows, attention items and cross-module next actions.
+As-Is: `/my-work/*` uses `MyWorkView` with `SplitLayout` and `MyWorkHub` as the main runtime surface. Radar is the dominant "home/start" experience for orientation and inspiration.
 
-### RADAR Main Job (locked for this cycle)
+### RADAR Main Job (locked)
 
-- User job: understand where organization/user stand versus technology shifts, get inspired, and learn what is worth exploring next.
-- Expected outcome: technology orientation + inspiration + education, not operational event management.
-- Radar role in module:
-  - in scope: technology intelligence, relevance context, maturity orientation, educational guidance, first exploration hints,
-  - out of scope: PMO control, event queue management, task lifecycle ownership.
-
-### UX Reset Decision (owner input, 2026-05-10)
-
-- Remove top narrative "to-do/headline" block from Radar main screen.
-- Default Radar surface should be an elegant technology portal feel (reading-first).
-- A literal Radar visualization should exist (technology points/signals on radar view), with linked descriptions/news context.
-- Primary purpose is inspiration and orientation, not command-and-control.
-- Density preference for Radar: `Reading`.
+- User job: quickly notice meaningful signals, understand context, and choose optional next action.
+- Expected outcome: personal orientation and thoughtful exploration, not command-and-control execution.
+- Out of scope: PMO board, KPI dashboard, task lifecycle ownership, or news-feed behavior.
 
 ## 1A. RADAR Layout Contract v1 (implementation-ready)
 
-### Screen anatomy (top -> bottom)
+### Screen anatomy
 
-1. `Radar Header Strip` (compact, informational only)
-   - contains:
-     - screen title (`Radar`),
-     - last refresh timestamp,
-     - optional lens indicator (role/company lens),
-     - no "to-do" sentence, no urgent action hero.
-2. `Radar Map Section` (primary visual anchor)
-   - literal radar visualization with:
-     - rings: `Understand`, `Watch`, `Explore`, `Pilot`, `Scale`, `Hold`,
-     - category filter chips,
-     - selectable technology dots/signals.
-3. `Insight Feed Section` (reading-first list)
-   - curated cards ordered by relevance/learning value, not by operational queue semantics,
-   - each card has short narrative, context fit, source/evidence micro-block.
-4. `Technology Detail Drawer/Panel` (opened from radar map or insight card)
-   - shows full detail for selected technology:
-     - why relevant for role/company,
-     - maturity/readiness posture,
-     - risks and hype caution,
-     - "what to explore next".
-5. `Optional Watchlist/Notebook actions` (secondary)
-   - lightweight save/capture actions only,
-   - no PMO/task governance controls in core reading surface.
+1. `Radar Header Strip` (compact)
+   - title + subtitle + personalization chips + filters.
+   - no operational urgency hero block.
+2. `Radar Canvas` (left, primary visual anchor, `65-70%`)
+   - true circular radar, square/near-square area.
+   - 4 rings: `NOW`, `PREPARE`, `LEARN`, `OBSERVE`.
+   - 4 quadrants: `My Development`, `My Projects`, `My Industry`, `My Role`.
+   - interactive signal icons/dots with short labels.
+3. `Signal Preview Panel` (right, `30-35%`)
+   - live preview of selected signal; updates on click.
+   - panel is not Teresa chat.
+4. `Footer Strip` (optional, lightweight)
+   - short legend and compact global actions.
+
+### Visual and interaction contract
+
+- Radar must look like a real radar map (circular rings + quadrants), not a list or dashboard.
+- Signals are represented as small colored icons/dots symbolizing technologies/ideas/trends.
+- Icons are interactive:
+  - hover -> tooltip,
+  - click -> active highlight + right panel update,
+  - keyboard navigation/focus support required.
+- Default radar density: `12-20` signals (ideal `16`).
+- Anti-overlap behavior (jitter/spread) is mandatory when points cluster.
+
+### Right panel contract
+
+- Right panel is a preview/info panel only:
+  - `short description`,
+  - `why it matters`,
+  - `why it matters for you`,
+  - `how to think about it`,
+  - `good first question`,
+  - `suggested next step`.
+- Action triggers may appear in panel, but Teresa conversation opens outside panel in dedicated chat surface.
+
+### Reference style note
+
+- Visual attachment used in planning is inspirational only.
+- Do not copy the example 1:1; maintain Consultify style system while preserving real-radar geometry and calm readability.
 
 ### Forbidden layout elements
 
-- No large top hero "what should be done now".
-- No command-and-control urgency banner as default first block.
-- No duplicated AI control row inside content when same actions exist in Menu 3.
-
-### Interaction model v1
-
-- Primary interaction: `scan -> select technology -> read detail -> optional capture`.
-- Secondary interaction: `apply lens/filter -> compare relevance/maturity`.
-- Tertiary interaction: `handoff/capture` only after reading context.
-- Default expanded state:
-  - radar map visible,
-  - insight feed visible,
-  - detail panel closed until user selects signal.
-
-### Content density and readability
-
-- Density mode: `Reading`.
-- Max 1 core message per card block (no stacked micro-widgets).
-- Typography hierarchy:
-  - title -> short explanatory paragraph -> evidence/provenance microline.
-- White space and section separation prioritized over dashboard compactness.
+- No large top "do this now" hero as default radar block.
+- No replacement of radar canvas by card-feed/list as primary representation.
+- No embedded chat session inside right preview panel.
+- No duplicated AI action toolbars in both canvas and Menu 3.
 
 ### Menu 3 contract for RADAR v1
 
-- Left side: context tabs/filters for Radar lens (if needed).
-- Right side (mandatory slot):
-  - AI explain action,
-  - AI compare action,
-  - AI "what should I learn next?" action.
-- Canvas/content area:
-  - must not duplicate same AI actions.
+- Contextual AI actions live in Menu 3 right-side slot.
+- Panel/canvas can expose non-duplicated contextual triggers, but must not create a second competing AI toolbar.
 
 ## 2. Runtime States
 

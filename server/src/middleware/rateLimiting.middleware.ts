@@ -150,7 +150,7 @@ function safeRead<T>(reader: () => T, fallback: T): T {
   }
 }
 
-function safeSetHeader(res: Response, headerName: string, value: string): void {
+function safeSetHeader(res: Response, headerName: string, value: string | number): void {
   try {
     res.setHeader(headerName, value);
   } catch {
@@ -289,9 +289,9 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
       const remaining = toSafeNonNegativeIntCount(max - count, 0);
       const resetSeconds = toSafeNonNegativeIntSeconds(resetAt / 1000, 0);
 
-      safeSetHeader(res, 'X-RateLimit-Limit', String(max));
-      safeSetHeader(res, 'X-RateLimit-Remaining', String(remaining));
-      safeSetHeader(res, 'X-RateLimit-Reset', String(resetSeconds));
+      safeSetHeader(res, 'X-RateLimit-Limit', max);
+      safeSetHeader(res, 'X-RateLimit-Remaining', remaining);
+      safeSetHeader(res, 'X-RateLimit-Reset', resetSeconds);
 
       if (count > max) {
         clampOverLimitCount(key, max);

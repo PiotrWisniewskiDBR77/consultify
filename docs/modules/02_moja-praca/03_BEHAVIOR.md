@@ -4,7 +4,7 @@ doc_kind: BEHAVIOR
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-10
+last_updated: 2026-05-18
 ---
 
 # Behavior — Moja Praca / My Work
@@ -16,30 +16,37 @@ last_updated: 2026-05-10
 - Hub runtime integrates context-aware chat opening and cross-module links (for example outputs/library paths and artifact links).
 - Heavy detail surfaces are lazy-loaded in hub code (task/decision/detail/calendar/workspace views).
 
-## RADAR Behavior Contract (As-Is + Scope Freeze)
+## RADAR Behavior Contract (Locked For v1 Rebuild)
 
 ### Responsibility boundary
 
-- `MW_HOME_RADAR` is a pre-initiative attention and triage layer.
-- Radar must answer: "where are we versus technology change, what is relevant, and what should we explore next?"
-- Radar must not become:
-  - project execution cockpit,
-  - task manager replacement,
-  - initiative lifecycle owner.
-  - operational event command queue.
+- `MW_HOME_RADAR` is a personalized signal-orientation and inspiration layer.
+- Radar must answer: "what is worth noticing for me now, and what should I explore next?"
+- Radar must not become PMO/task/dashboard/news-feed runtime.
 
-### Runtime signal flow (As-Is)
+### Runtime signal flow (v1 target)
 
-- Frontend:
-  - Home data and pulse blocks are rendered by `HomeView` + `useHomeData`.
-  - Radar-specific cards and prioritization surface through `useRadarData`, `useRadarTriageData`, and `RadarTriageCard`.
-- Backend:
-  - Home/radar payloads resolve under `/api/my-work/home/*` and `/api/my-work/radar*`.
-  - Triage ranking + handoff contract resolves under `/api/v8/radar-triage/*`.
-- Prioritization semantics:
-  - triage cards expose `priorityLevel` (`P0|P1|P2`) and numeric `score`,
-  - hard-gate conditions (`triggeredRules`) increase urgency posture,
-  - degraded states are explicit (`degraded_*`, `blocked_permission`).
+- Radar canvas renders signals from local/static payload first (R1), then personalization runtime (R3).
+- Each signal is mapped to:
+  - ring (`NOW|PREPARE|LEARN|OBSERVE`),
+  - quadrant (`MY_DEVELOPMENT|MY_PROJECTS|MY_INDUSTRY|MY_ROLE`),
+  - icon/label/status.
+- Signal selection event drives right preview panel update in-place (no route jump).
+- Optional actions create handoff intents; owner modules and Teresa chat execute downstream behavior.
+
+### Primary Radar interaction flow (canonical)
+
+1. User opens Radar.
+2. User scans radar map and clicks signal icon.
+3. Selected signal gets active highlight.
+4. Right preview panel updates immediately with selected signal context.
+5. User may optionally trigger action (`Talk to Teresa`, `Save`, `Turn into Idea`, `Develop Thought`, `Watch`, `Forget`).
+
+### Teresa boundary (mandatory)
+
+- Right preview panel is not chat.
+- Teresa chat opens as separate conversation surface, with signal context packet.
+- Radar must preserve selected signal when user returns from chat (if signal remains in current filter set).
 
 ### Function Runtime Breakdown (As-Is)
 
@@ -376,21 +383,24 @@ last_updated: 2026-05-10
 ## RADAR State Contract
 
 - Loading:
-  - Home spinner state is shown until initial block payload is ready.
+  - circular radar skeleton + panel skeleton + calm informative copy.
 - Empty:
-  - fallback `EmptyStateInline` with explicit retry action (not silent blank screen).
+  - personalization context setup prompt and radar-starter generation action.
 - Error:
-  - user-facing unavailable message with retry; no raw backend traces in main surface.
+  - fallback to generic radar and retry action with explicit non-blocking explanation.
+- No selection:
+  - right panel prompts user to select signal and may show featured items.
+- Signal selected:
+  - right panel renders full preview schema and optional actions.
 - Degraded:
-  - triage banners distinguish data quality, conflict, stale state, and permission block.
-- Success:
-  - technology-intelligence surfaces provide relevance rationale, maturity posture, and exploration direction.
+  - personalization/source quality degradation is visible and does not masquerade as full-confidence output.
 
 ## RADAR Presentation Direction (locked)
 
-- Main Radar presentation is reading-first (`Reading` density posture).
-- Top "to-do/headline" block is removed from target behavior contract.
-- Literal radar visualization (technology map) is part of target Radar behavior and must remain source/evidence-aware.
+- Main Radar presentation is reading-first and calm.
+- Literal circular radar is mandatory primary representation.
+- Top to-do hero is forbidden in default state.
+- Real-radar visual language is required: rings, quadrants, interactive signal icons.
 
 ## Cross-Module Runtime Impact (Explicit)
 

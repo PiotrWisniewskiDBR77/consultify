@@ -38,7 +38,6 @@ import { AvailabilitySettings } from '../components/settings/AvailabilitySetting
 import { AvatarPhotoSettings } from '../components/settings/AvatarPhotoSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
 import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
-import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
 import { DataControlsSettings } from '../components/settings/DataControlsSettings';

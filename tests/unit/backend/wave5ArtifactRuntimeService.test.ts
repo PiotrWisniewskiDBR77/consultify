@@ -22,7 +22,11 @@ vi.mock('uuid', () => ({
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.startsWith('CREATE TABLE') || normalized.startsWith('CREATE INDEX')) {
+    if (
+      normalized.startsWith('CREATE TABLE') ||
+      normalized.startsWith('CREATE INDEX') ||
+      normalized.startsWith('ALTER TABLE')
+    ) {
       return { changes: 0 };
     }
     if (normalized.startsWith('INSERT INTO wave5_artifacts')) {
@@ -32,6 +36,13 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         artifactType,
         title,
         content,
+        _canonicalFormat,
+        _contentMd,
+        _contentJsonNative,
+        _contentSchemaVersion,
+        _markdownProjectionStatus,
+        _markdownProjectedAt,
+        _projectionError,
         projectId,
         conversationId,
         researchSessionId,
@@ -66,20 +77,58 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave5_artifact_versions')) {
-      const [versionId, artifactId, organizationId, versionOrContent, contentOrProvenance, mutationIdOrCreatedBy, provenanceJson, createdBy] =
-        params;
-      const hasMutation = params.length === 8;
-      db.versions.push({
-        version_id: versionId,
-        artifact_id: artifactId,
-        organization_id: organizationId,
-        version: hasMutation ? versionOrContent : 1,
-        content: hasMutation ? contentOrProvenance : versionOrContent,
-        mutation_id: hasMutation ? mutationIdOrCreatedBy : null,
-        provenance_json: hasMutation ? provenanceJson : contentOrProvenance,
-        created_by: hasMutation ? createdBy : mutationIdOrCreatedBy,
-        created_at: new Date().toISOString(),
-      });
+      if (params.length >= 15) {
+        const [
+          versionId,
+          artifactId,
+          organizationId,
+          version,
+          content,
+          _canonicalFormat,
+          _contentMd,
+          _contentJsonNative,
+          _contentSchemaVersion,
+          _markdownProjectionStatus,
+          _markdownProjectedAt,
+          _projectionError,
+          mutationId,
+          provenanceJson,
+          createdBy,
+        ] = params;
+        db.versions.push({
+          version_id: versionId,
+          artifact_id: artifactId,
+          organization_id: organizationId,
+          version,
+          content,
+          mutation_id: mutationId,
+          provenance_json: provenanceJson,
+          created_by: createdBy,
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        const [
+          versionId,
+          artifactId,
+          organizationId,
+          version,
+          content,
+          mutationId,
+          provenanceJson,
+          createdBy,
+        ] = params;
+        db.versions.push({
+          version_id: versionId,
+          artifact_id: artifactId,
+          organization_id: organizationId,
+          version,
+          content,
+          mutation_id: mutationId,
+          provenance_json: provenanceJson,
+          created_by: createdBy,
+          created_at: new Date().toISOString(),
+        });
+      }
       return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave5_mutation_proposals')) {
@@ -330,7 +379,7 @@ describe('Wave 5 artifact runtime', () => {
 
     expect(mirrored.artifactId).toBe('v8-artifact-1');
     expect(mirrored.artifactType).toBe('slide_deck');
-    expect(mirrored.sourceRefs[0]).toEqual(
+    expect(mirrored.sourceRefs.at(-1)).toEqual(
       expect.objectContaining({
         sourceClass: 'legacy_artifact',
         originRecordId: 'deck-1',

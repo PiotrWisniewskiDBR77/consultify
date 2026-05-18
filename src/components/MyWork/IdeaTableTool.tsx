@@ -462,17 +462,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [edges, extensions, nodes, onGraphChange]);
 
   useEffect(() => {
-    if (!open) return;
-    const handleGraphRefresh = (event: Event) => {
-      const detail = (event as CustomEvent).detail as { ideaId?: string } | undefined;
-      if (detail?.ideaId && detail.ideaId !== ideaId) return;
-      refresh().catch(() => {});
-    };
-    window.addEventListener(IDEA_GRAPH_UPDATE_EVENT, handleGraphRefresh);
-    return () => window.removeEventListener(IDEA_GRAPH_UPDATE_EVENT, handleGraphRefresh);
-  }, [ideaId, open, refresh]);
-
-  useEffect(() => {
     if (!open || locked) return;
     const handleInsert = (event: Event) => {
       const detail = ((event as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail;
@@ -484,7 +473,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             {
               label: detail.label,
               text: detail.text,
-              data: detail.data,
+              data: {},
               position: detail.position,
             },
           ];
@@ -572,6 +561,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const effectiveHandleSave = usePlatform ? platformIntegration.handleSave : handleSave;
   const effectiveLoadError = usePlatform ? platformIntegration.error : loadError;
   const effectiveRefresh = usePlatform ? platformIntegration.refresh : refresh;
+
+  useEffect(() => {
+    if (!open) return;
+    const handleGraphRefresh = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { ideaId?: string } | undefined;
+      if (detail?.ideaId && detail.ideaId !== ideaId) return;
+      effectiveRefresh().catch(() => {});
+    };
+    window.addEventListener(IDEA_GRAPH_UPDATE_EVENT, handleGraphRefresh);
+    return () => window.removeEventListener(IDEA_GRAPH_UPDATE_EVENT, handleGraphRefresh);
+  }, [ideaId, open, effectiveRefresh]);
 
   // ── Platform switch: alias effective values for JSX consumption ────────────
   // When platform is active, these shadow the legacy values so the entire

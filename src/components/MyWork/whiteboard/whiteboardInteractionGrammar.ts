@@ -75,22 +75,22 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
     {
       key: 'Ctrl/Cmd+G',
       description: isPolish ? 'Grupuj zaznaczone elementy' : 'Group selected elements',
-      category: 'editing',
+      category: 'actions',
     },
     {
       key: 'Ctrl/Cmd+Shift+G',
       description: isPolish ? 'Rozgrupuj zaznaczona grupe' : 'Ungroup selected frame/group',
-      category: 'editing',
+      category: 'actions',
     },
     {
       key: 'Ctrl/Cmd+A',
       description: isPolish ? 'Zaznacz wszystko na boardzie' : 'Select all board elements',
-      category: 'editing',
+      category: 'selection',
     },
     {
       key: 'Delete / Backspace',
       description: isPolish ? 'Usun zaznaczone elementy' : 'Delete selected elements',
-      category: 'editing',
+      category: 'actions',
     },
     {
       key: '/',
