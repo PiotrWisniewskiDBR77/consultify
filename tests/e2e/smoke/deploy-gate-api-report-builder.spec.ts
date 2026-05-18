@@ -259,7 +259,7 @@ test.describe('L4 Smoke — deploy gate API (report builder + public report)', (
     expect(sourcesRes.status()).toBe(200);
     const sourcesData = await sourcesRes.json().catch(() => null);
     const firstSourceId = String(sourcesData?.sources?.[0]?.id || '');
-    test.skip(!firstSourceId, 'No interview sources available in this environment.');
+    expect(firstSourceId, 'No interview sources available in this environment.').toBeTruthy();
 
     const res = await request.post(`${API_BASE_URL}/api/report-builder`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },

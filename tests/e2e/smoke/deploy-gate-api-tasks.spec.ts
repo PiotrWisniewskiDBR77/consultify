@@ -74,11 +74,11 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   }
 
   function requireWritable() {
-    test.skip(Boolean(readOnlyReason), `Writable task flow unavailable: ${readOnlyReason}`);
+    expect(readOnlyReason, `Writable task flow unavailable: ${readOnlyReason}`).toBe('');
   }
 
   function requireTaskContext() {
-    test.skip(!taskA, 'No task context available for this environment');
+    expect(taskA, 'No task context available for this environment').toBeTruthy();
   }
 
   test.beforeAll(async ({ request }) => {
