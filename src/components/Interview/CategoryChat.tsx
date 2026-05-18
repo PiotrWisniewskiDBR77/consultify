@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * CategoryChat
  *
@@ -5,7 +6,7 @@
  * Can be used in modal or inline context.
  */
 
-import { Bot, Loader2, Send, User } from 'lucide-react';
+import { Loader2, Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { sendMessageToAI } from '@/services/ai/gemini';
@@ -173,7 +174,7 @@ Be professional and concise.
               {message.role === 'user' ? (
                 <User size={12} className="text-slate-600 dark:text-slate-300" />
               ) : (
-                <Bot size={12} className="text-white" />
+                <TeresaMark size={12} className="text-white" />
               )}
             </div>
             <div
@@ -194,7 +195,7 @@ Be professional and concise.
         {isLoading && (
           <div className="flex gap-2">
             <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0">
-              <Bot size={12} className="text-white" />
+              <TeresaMark size={12} className="text-white" />
             </div>
             <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
               <Loader2 size={14} className="text-primary-500 animate-spin" />

@@ -1,31 +1,10 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  Bot,
-  Building2,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-  Cookie,
-  CreditCard,
-  Database,
-  ExternalLink,
-  FileText,
-  Globe,
-  Lock,
-  Mail,
-  Receipt,
-  Scale,
-  Shield,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2, ChevronRight, Clock, Cookie, CreditCard, Database, ExternalLink, FileText, Globe, Lock, Mail, Receipt, Scale, Shield, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { ROUTES } from '../routes/routeConfig';
 
+import TeresaMark from '../components/shared/TeresaMark';
 interface LegalDocumentCard {
   slug: string;
   title: string;
@@ -77,7 +56,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     slug: 'ai-policy',
     title: 'AI Usage Policy',
     description: 'Transparency about our AI features, BYOK, data handling, and your controls.',
-    icon: <Bot className="w-5 h-5" />,
+    icon: <TeresaMark className="w-5 h-5" />,
     iconBg: 'from-primary-500 to-primary-600',
     required: false,
     category: 'core',

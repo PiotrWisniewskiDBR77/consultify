@@ -1,7 +1,7 @@
 import type { LiveServerMessage, Session } from '@google/genai';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
+import { Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ import type {
 } from '../../services/publicAnnaAnalytics';
 import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 
+import TeresaMark from '../shared/TeresaMark';
 type AnnaMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -1496,7 +1497,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
             <div className="flex items-start justify-between gap-3 border-b border-white/8 bg-white/[0.03] px-4 py-3">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 text-white">
-                  <Bot size={18} />
+                  <TeresaMark size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

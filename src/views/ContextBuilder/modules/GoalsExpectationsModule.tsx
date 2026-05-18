@@ -1,21 +1,11 @@
-import {
-  Ban,
-  BarChart2,
-  Bot,
-  CheckCircle,
-  GanttChartSquare,
-  Maximize,
-  Rocket,
-  Sparkles,
-  Target,
-  Zap,
-} from 'lucide-react';
+import { Ban, BarChart2, CheckCircle, GanttChartSquare, Maximize, Rocket, Sparkles, Target, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { AITextArea } from '../shared/AITextArea';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 export const GoalsExpectationsModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations'
@@ -361,7 +351,7 @@ export const GoalsExpectationsModule: React.FC = () => {
             {/* Human-AI Engagement Model */}
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-                <Bot size={20} className="text-primary-500" />
+                <TeresaMark size={20} className="text-primary-500" />
                 Human-AI Collaboration
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">

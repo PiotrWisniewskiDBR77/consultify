@@ -1,24 +1,10 @@
-import {
-  AlertTriangle,
-  BarChart3,
-  Bot,
-  Copy,
-  GitMerge,
-  LayoutGrid,
-  Loader2,
-  MessageSquare,
-  Plus,
-  Redo2,
-  Rocket,
-  Save,
-  Trash2,
-  Undo2,
-} from 'lucide-react';
+import { AlertTriangle, BarChart3, Copy, GitMerge, LayoutGrid, Loader2, MessageSquare, Plus, Redo2, Rocket, Save, Trash2, Undo2 } from 'lucide-react';
 import React from 'react';
 
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
 
+import TeresaMark from '../../shared/TeresaMark';
 // ── Re-export types ──────────────────────────────────────────────────────────
 
 export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
@@ -361,7 +347,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               }`}
               title="AI Coach"
             >
-              {coachLoading ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+              {coachLoading ? <Loader2 size={14} className="animate-spin" /> : <TeresaMark size={14} />}
               AI Coach
             </button>
             <button

@@ -162,6 +162,25 @@ function toRadarMapSignal(card: RadarSignalCard, index: number) {
 }
 
 class RadarService {
+  private async ingestFallbackSources(nowIso: string, limit = 8): Promise<void> {
+    const fallbackSources = await radarSourceRegistryService.listAll();
+    const active = fallbackSources
+      .filter((source) => source.active)
+      .sort((a, b) => b.trustScore - a.trustScore)
+      .slice(0, limit);
+
+    await Promise.all(
+      active.map(async (source) => {
+        await radarProcessingService.ingestSource(source);
+        await radarSourceRegistryService.markRefreshed(
+          source.id,
+          nowIso,
+          source.refreshFrequencyMinutes
+        );
+      })
+    );
+  }
+
   async buildView(params: {
     userId: string;
     orgId: string;
@@ -187,11 +206,16 @@ class RadarService {
       })
     );
 
-    const [profile, dynamicContext, processedSignals, actions30d, duplicateStats, watchlistItems] =
+    let processedSignals = await radarProcessingService.listSignals(80);
+    if (!processedSignals.length) {
+      await this.ingestFallbackSources(nowIso);
+      processedSignals = await radarProcessingService.listSignals(80);
+    }
+
+    const [profile, dynamicContext, actions30d, duplicateStats, watchlistItems] =
       await Promise.all([
         radarRankingService.getOrCreateProfile({ userId, orgId, role, industry }),
         radarRankingService.buildDynamicContext(userId, orgId),
-        radarProcessingService.listSignals(80),
         queryHelpers
           .queryAll<{ action_type: string }>(
             `SELECT action_type

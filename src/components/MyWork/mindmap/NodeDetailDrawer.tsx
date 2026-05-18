@@ -1,35 +1,11 @@
+import TeresaMark from '../../shared/TeresaMark';
 /**
  * NodeDetailDrawer — Slideout panel for deep-diving into a mind map node.
  *
  * Sections: Basic Info, Notes & Context, Tags & Classification,
  * Evidence & Artifacts, AI Expand, Company Context, Related Nodes.
  */
-import {
-  AlertTriangle,
-  ArrowRight,
-  Bot,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  FileText,
-  GitBranch,
-  Hash,
-  Info,
-  Lightbulb,
-  Link2,
-  Loader2,
-  MessageSquare,
-  Paperclip,
-  Plus,
-  Rocket,
-  Sparkles,
-  Star,
-  StickyNote,
-  Tag,
-  Target,
-  X,
-  Zap,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, ChevronDown, ChevronRight, ExternalLink, FileText, GitBranch, Hash, Info, Lightbulb, Link2, Loader2, MessageSquare, Paperclip, Plus, Rocket, Sparkles, Star, StickyNote, Tag, Target, X, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -380,7 +356,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isAI ? (
-              <Bot size={14} className="text-primary-500 shrink-0" />
+              <TeresaMark size={14} className="text-primary-500 shrink-0" />
             ) : (
               <Lightbulb size={14} className="text-amber-500 shrink-0" />
             )}
@@ -927,7 +903,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             title={isPl ? 'Historia AI' : 'AI history'}
             badge={String(nodeData.aiExpansionHistory?.length || 0)}
             defaultOpen={(nodeData.aiExpansionHistory?.length || 0) > 0}
-            icon={<Bot size={14} />}
+            icon={<TeresaMark size={14} />}
           >
             {nodeData.aiExpansionHistory?.length ? (
               <div className="space-y-2 mt-1">

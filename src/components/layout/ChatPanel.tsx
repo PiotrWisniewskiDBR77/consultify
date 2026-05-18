@@ -1,30 +1,4 @@
-import {
-  Bot,
-  Check,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Copy,
-  FileCode,
-  HelpCircle,
-  Mic,
-  MicOff,
-  Pencil,
-  RefreshCw,
-  Send,
-  Sparkles,
-  Square,
-  Square as StopIcon,
-  ThumbsDown,
-  ThumbsUp,
-  Trash2,
-  User,
-  Volume2,
-  VolumeX,
-  Wrench,
-  XCircle,
-} from 'lucide-react';
+import { Check, CheckCircle, ChevronDown, ChevronUp, Clock, Copy, FileCode, HelpCircle, Mic, MicOff, Pencil, RefreshCw, Send, Sparkles, Square, Square as StopIcon, ThumbsDown, ThumbsUp, Trash2, User, Volume2, VolumeX, Wrench, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -48,6 +22,7 @@ import { InlineResponseFeedback } from '../AIChat/InlineResponseFeedback';
 import { ThinkingBlock } from '../AIChat/Messages/ThinkingBlock';
 import { AIFeedbackButton } from '../AIFeedbackButton';
 
+import TeresaMark from '../shared/TeresaMark';
 // Tool Call Card Component for displaying MCP tool executions
 const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -413,7 +388,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   }`}
                 >
                   {msg.role === 'ai' ? (
-                    <Bot size={14} strokeWidth={1.75} className="text-primary-500" />
+                    <TeresaMark size={14} strokeWidth={1.75} className="text-primary-500" />
                   ) : (
                     <User size={14} strokeWidth={1.75} className="text-slate-400" />
                   )}
@@ -751,7 +726,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {isTyping && (
           <div className="flex gap-3 justify-start">
             <div className="w-6 h-6 rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5">
-              <Bot size={14} className="text-primary-600 dark:text-primary-400" />
+              <TeresaMark size={14} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-4 py-3 flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>

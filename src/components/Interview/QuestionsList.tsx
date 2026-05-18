@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * QuestionsList - Task-list style questions component
  *
@@ -9,28 +10,7 @@
  * - Owner (who answered)
  */
 
-import {
-  AlertTriangle,
-  Bot,
-  Check,
-  CheckCircle,
-  ChevronRight,
-  Circle,
-  Clock,
-  Edit3,
-  HelpCircle,
-  Lightbulb,
-  MessageSquare,
-  Paperclip,
-  Plus,
-  RefreshCw,
-  Send,
-  Sparkles,
-  Star,
-  Tag,
-  User,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle, ChevronRight, Circle, Clock, Edit3, HelpCircle, Lightbulb, MessageSquare, Paperclip, Plus, RefreshCw, Send, Sparkles, Star, Tag, User, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -1226,7 +1206,7 @@ Rules:
             {/* Header */}
             <div className="p-4 bg-white dark:bg-navy-900 flex justify-between items-center text-slate-900 dark:text-white border-b border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-2">
-                <Bot size={18} />
+                <TeresaMark size={18} />
                 <div className="min-w-0">
                   <div className="font-semibold text-sm truncate">
                     {isPolish ? 'Czat do pytania' : 'Chat for question'}
@@ -1259,7 +1239,7 @@ Rules:
                     {m.role === 'user' ? (
                       <User size={12} className="text-slate-600 dark:text-slate-300" />
                     ) : (
-                      <Bot size={12} className="text-white" />
+                      <TeresaMark size={12} className="text-white" />
                     )}
                   </div>
                   <div
@@ -1277,7 +1257,7 @@ Rules:
               {chatLoading && (
                 <div className="flex gap-2">
                   <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0">
-                    <Bot size={12} className="text-white" />
+                    <TeresaMark size={12} className="text-white" />
                   </div>
                   <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm text-slate-400">
                     {isPolish ? 'Piszę...' : 'Typing...'}

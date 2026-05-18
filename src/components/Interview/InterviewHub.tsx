@@ -20,6 +20,7 @@ import {
   Brain,
   Calendar,
   Check,
+  CircleHelp,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -86,6 +87,7 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 
 import {
   type FilterChip,
@@ -550,6 +552,11 @@ export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentProjectId,
@@ -8425,6 +8432,12 @@ Return ONLY the answer text (no markdown fences).`;
     ]
   );
 
+  const openContextualHelp = useCallback(() => {
+    setKnowledgeModuleIdOverride('interview');
+    setHelpTab('knowledge');
+    setHelpOpen(true);
+  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
+
   return (
     <div className="h-full" data-testid="interview-hub">
       <ModuleHub
@@ -8445,7 +8458,18 @@ Return ONLY the answer text (no markdown fences).`;
         onClearFilters={handleClearFilters}
         rightControls={rightControls}
         primaryCta={primaryCta}
-        toolControl={null}
+        toolControl={
+          <button
+            type="button"
+            onClick={openContextualHelp}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
+            data-testid="contextual-help-entry-interview"
+            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
+          >
+            <CircleHelp size={16} />
+            <span>{t('help.entrypoint.contextual', 'Help')}</span>
+          </button>
+        }
         commandRowContent={commandRowContent}
         forceCommandRow={hasBulkSelection}
         availableViewModes={['table']}

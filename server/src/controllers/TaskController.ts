@@ -217,8 +217,7 @@ let taskDepsSchemaCache: TaskDepsSchema | null = null;
 async function getTaskDepsSchema(): Promise<TaskDepsSchema> {
   if (taskDepsSchemaCache) return taskDepsSchemaCache;
   try {
-    const cols = await DbPromise.all<{ name: string }>('PRAGMA table_info(task_dependencies)', []);
-    const names = new Set((cols || []).map((c) => String(c.name || '')));
+    const names = await getSchemaColumns('task_dependencies');
     if (names.has('predecessor_id') && names.has('successor_id')) {
       taskDepsSchemaCache = { fromCol: 'predecessor_id', toCol: 'successor_id' };
       return taskDepsSchemaCache;

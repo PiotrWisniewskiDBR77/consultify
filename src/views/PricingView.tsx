@@ -1,21 +1,6 @@
 import { motion } from 'framer-motion';
 import {
-  ArrowRight,
-  BarChart3,
-  Bot,
-  Building2,
-  Calendar,
-  Check,
-  Cpu,
-  HelpCircle,
-  Key,
-  Rocket,
-  Server,
-  Shield,
-  Users,
-  X,
-  Zap,
-} from 'lucide-react';
+  ArrowRight, BarChart3, Building2, Calendar, Check, Cpu, HelpCircle, Key, Rocket, Server, Shield, Users, X, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +9,7 @@ import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 
+import TeresaMark from '../components/shared/TeresaMark';
 const CALENDAR_URL =
   'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
 
@@ -479,7 +465,7 @@ export const PricingView: React.FC = () => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
-                  <Bot size={24} className="text-primary-600 dark:text-primary-400" />
+                  <TeresaMark size={24} className="text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-navy-950 dark:text-white">Managed AI</h3>

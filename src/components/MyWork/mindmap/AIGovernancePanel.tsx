@@ -1,3 +1,4 @@
+import TeresaMark from '../../shared/TeresaMark';
 /**
  * AIGovernancePanel — Unified AI governance panel for mindmap workspace.
  *
@@ -8,24 +9,7 @@
  * @see docs/product/MINDMAP_V1_SSOT.md §9
  * @see docs/product/IDEA_WORKSPACE_V5_SSOT.md §7
  */
-import {
-  Activity,
-  AlertCircle,
-  BarChart3,
-  Bot,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Eye,
-  FileCheck,
-  MessageSquare,
-  Shield,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { Activity, AlertCircle, BarChart3, Check, CheckCircle2, ChevronDown, ChevronUp, Clock, Eye, FileCheck, MessageSquare, Shield, ShieldCheck, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -347,7 +331,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                         onClick={() => setExpandedEntryId(isExpanded ? null : entry.id)}
                         className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-colors"
                       >
-                        <Bot size={12} className="text-primary-500 shrink-0" />
+                        <TeresaMark size={12} className="text-primary-500 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
                             {isPl ? genLabel.pl : genLabel.en}
@@ -592,7 +576,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                 </div>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-[9px] text-primary-500 flex items-center gap-1">
-                    <Bot size={8} />
+                    <TeresaMark size={8} />
                     {isPl ? 'AI' : 'AI'}: {stats.nodesFromAI}
                   </span>
                   <span className="text-[9px] text-slate-400 flex items-center gap-1">

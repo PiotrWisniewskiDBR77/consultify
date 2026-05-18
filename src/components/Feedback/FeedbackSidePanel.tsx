@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 // @ts-nocheck
 /**
  * FeedbackSidePanel - Enterprise SaaS Feedback System
@@ -10,32 +11,7 @@
  * - Analytics integration
  */
 
-import {
-  AlertTriangle,
-  BarChart3,
-  Bot,
-  Bug,
-  CheckCircle2,
-  ChevronRight,
-  Frown,
-  Lightbulb,
-  Loader2,
-  MapPin,
-  Meh,
-  MessageSquareWarning,
-  Monitor,
-  Paperclip,
-  Send,
-  Smile,
-  Sparkles,
-  Star,
-  ThumbsDown,
-  ThumbsUp,
-  TrendingUp,
-  Upload,
-  X,
-  Zap,
-} from 'lucide-react';
+import { AlertTriangle, BarChart3, Bug, CheckCircle2, ChevronRight, Frown, Lightbulb, Loader2, MapPin, Meh, MessageSquareWarning, Monitor, Paperclip, Send, Smile, Sparkles, Star, ThumbsDown, ThumbsUp, TrendingUp, Upload, X, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -1051,7 +1027,7 @@ export const FeedbackSidePanel: React.FC = () => {
       {aiInsights.length > 0 && (
         <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
           <div className="flex items-center gap-2 mb-2">
-            <Bot size={14} className="text-primary-600 dark:text-primary-400" />
+            <TeresaMark size={14} className="text-primary-600 dark:text-primary-400" />
             <span className="text-xs font-semibold text-primary-700 dark:text-primary-300">
               {t('feedback.ai.insights', 'AI Insights')}
             </span>

@@ -37,6 +37,27 @@ function isStrictCanvasGate(): boolean {
   return process.env.E2E_STRICT_CANVAS === 'true' || Boolean(process.env.CI);
 }
 
+function isTransientConnectionError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return /ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|connect/i.test(msg);
+}
+
+async function retryRequest<T>(attempts: number, fn: () => Promise<T>) {
+  let lastError: unknown = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientConnectionError(error) || i === attempts - 1) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  throw lastError;
+}
+
 async function seedSessionStorage(page: Page, token: string, authUser: Record<string, unknown>) {
   await page.addInitScript(({ authToken, user }) => {
     window.localStorage.setItem('token', String(authToken));
@@ -195,9 +216,11 @@ async function loginViaBootstrap(page: Page, role: 'ADMIN' | 'USER', label: stri
 
 export async function loginAsUser(page: Page, email: string, password: string): Promise<string> {
   assertCredentials(email, password, 'E2E user credentials');
-  const loginResponse = await page.request.post(`${API_BASE_URL}/api/auth/login`, {
-    data: { email, password },
-  });
+  const loginResponse = await retryRequest(5, () =>
+    page.request.post(`${API_BASE_URL}/api/auth/login`, {
+      data: { email, password },
+    })
+  );
   expect(loginResponse.ok()).toBe(true);
 
   const login = await loginResponse.json();

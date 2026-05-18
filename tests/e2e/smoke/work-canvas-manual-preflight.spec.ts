@@ -22,16 +22,17 @@ test.describe('V10 Work Canvas manual preflight', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
-    await ensureWorkCanvasVisible(page, 'Manual preflight canvas');
+    await ensureWorkCanvasVisible(page);
 
     await expect(page.locator('textarea[data-testid="chat-input"]')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Canvas diagnostics' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Canvas menu' })).toBeVisible();
 
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
     await page.getByRole('button', { name: 'Markdown view' }).click();
     await expect(page.getByTestId('canvas-md-view')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Copy Markdown' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save Canvas document' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Export Markdown' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download Markdown' })).toBeVisible();
 
     await expect(page.getByRole('button', { name: 'Send to idea' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save as note' })).toBeVisible();
@@ -83,6 +84,7 @@ test.describe('V10 Work Canvas manual preflight', () => {
     });
     await ensureWorkCanvasVisible(page);
 
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
     await expect(page.getByRole('button', { name: 'Markdown view' })).toBeVisible();
     await page.getByRole('button', { name: 'Close Canvas' }).click();
     await expect(page.locator('textarea[data-testid="chat-input"]')).toBeVisible();

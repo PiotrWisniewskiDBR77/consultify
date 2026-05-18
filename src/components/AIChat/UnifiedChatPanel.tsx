@@ -19,7 +19,6 @@
  */
 
 import {
-  Bot,
   Briefcase,
   Calculator,
   CheckCircle2,
@@ -78,6 +77,7 @@ import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
+import TeresaMark from '../shared/TeresaMark';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -4570,7 +4570,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <div
                 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
               >
-                <Bot
+                <TeresaMark
                   size={isCompact ? 12 : 14}
                   className="text-primary-600 dark:text-primary-400"
                 />

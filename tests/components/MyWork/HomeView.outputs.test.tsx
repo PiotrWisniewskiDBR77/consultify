@@ -46,11 +46,44 @@ vi.mock('react-i18next', () => ({
   },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', () => {
+  const stripMotionProps = (props: Record<string, unknown>) => {
+    const cleaned: Record<string, unknown> = {};
+    for (const key of Object.keys(props)) {
+      if (
+        key === 'initial' ||
+        key === 'animate' ||
+        key === 'exit' ||
+        key === 'transition' ||
+        key === 'whileHover' ||
+        key === 'whileTap' ||
+        key === 'whileFocus' ||
+        key === 'whileInView' ||
+        key === 'variants' ||
+        key === 'layout' ||
+        key === 'layoutId'
+      ) {
+        continue;
+      }
+      cleaned[key] = props[key];
+    }
+    return cleaned;
+  };
+  const motion = new Proxy(
+    {},
+    {
+      get: (_target, tag: string) => {
+        const Component = (props: Record<string, unknown> & { children?: React.ReactNode }) => {
+          const { children, ...rest } = props;
+          return React.createElement(tag, stripMotionProps(rest), children);
+        };
+        Component.displayName = `motion.${tag}`;
+        return Component;
+      },
+    }
+  );
+  return { motion };
+});
 
 const useHomeDataMock = vi.fn();
 vi.mock('../../../src/components/MyWork/Home/useHomeData', () => ({
@@ -261,20 +294,19 @@ describe('HomeView aggregated contract', () => {
   it('renders the aggregated home contract with roof truth and block orchestration', () => {
     render(<HomeView onAction={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Roof ·/ }));
-
     expect(screen.getByText(/Radar · context/)).toBeInTheDocument();
-    expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
-    expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();
+    expect(screen.getByText(/Your Radar/)).toBeInTheDocument();
     expect(screen.getAllByText(/Radar/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/AI Agents/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Industry Lens/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Execution Current/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Momentum/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Spark Field/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Decision Temperature/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Team Signal/).length).toBeGreaterThan(0);
-    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getAllByText(/AI Agents/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Industry Lens/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Execution Current/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Momentum/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/KPI Alerts/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Triage Cockpit|triage/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/NOW/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/PREPARE/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/LEARN/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/OBSERVE/).length).toBeGreaterThan(0);
   });
 
   it('passes home actions through to the My Work hub contract', () => {
@@ -290,7 +322,7 @@ describe('HomeView aggregated contract', () => {
       }),
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Turn into Idea/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create Idea/i }));
     expect(onAction).toHaveBeenCalledWith({
       type: 'create',
       target: 'idea',
@@ -302,9 +334,7 @@ describe('HomeView aggregated contract', () => {
     const point = screen.getByTestId('radar-signal-sig-1');
     fireEvent.click(point);
     expect(screen.getByText('Can reduce repetitive delivery effort.')).toBeInTheDocument();
-    expect(
-      screen.getByText('You run delivery and growth experiments.')
-    ).toBeInTheDocument();
+    expect(screen.getAllByText('You run delivery and growth experiments.').length).toBeGreaterThan(0);
   });
 
   it('shows a retryable radar error state instead of a raw empty screen', () => {

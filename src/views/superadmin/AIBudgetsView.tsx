@@ -1,3 +1,4 @@
+import TeresaMark from '../../components/shared/TeresaMark';
 /**
  * AI Budgets View
  *
@@ -5,21 +6,7 @@
  * Enterprise-grade cost control for AI features.
  */
 
-import {
-  AlertTriangle,
-  Bell,
-  Bot,
-  Check,
-  Clock,
-  DollarSign,
-  Plus,
-  RefreshCw,
-  Target,
-  Trash2,
-  TrendingUp,
-  X,
-  Zap,
-} from 'lucide-react';
+import { AlertTriangle, Bell, Check, Clock, DollarSign, Plus, RefreshCw, Target, Trash2, TrendingUp, X, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -1035,7 +1022,7 @@ const AIBudgetsView: React.FC = () => {
 
       {modelPermissions.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <Bot className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <TeresaMark className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No model restrictions configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             All models are accessible by default

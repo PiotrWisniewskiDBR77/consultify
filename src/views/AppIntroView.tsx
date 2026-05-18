@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Bot, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { ROUTES } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
+import TeresaMark from '../components/shared/TeresaMark';
 export const AppIntroView: React.FC = () => {
   const { i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
@@ -66,7 +67,7 @@ export const AppIntroView: React.FC = () => {
                 onClick={openAi}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 px-4 py-2.5 text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
               >
-                <Bot size={15} />
+                <TeresaMark size={15} />
                 {lang === 'pl' ? 'Zapytaj AI od czego zacząć' : 'Ask AI where to begin'}
               </button>
             </div>
@@ -162,7 +163,7 @@ export const AppIntroView: React.FC = () => {
           </div>
           <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-              <Bot size={16} className="text-amber-500" />
+              <TeresaMark size={16} className="text-amber-500" />
               {lang === 'pl' ? 'Jak pomaga AI' : 'How AI helps'}
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">

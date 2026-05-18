@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * IdeaProcessFlowTool — V3 Process Flow canvas for Idea Workspace.
  *
@@ -19,17 +20,7 @@
 import 'reactflow/dist/style.css';
 
 import * as dagre from 'dagre';
-import {
-  AlertTriangle,
-  Bot,
-  CheckCircle,
-  GitMerge,
-  Lightbulb,
-  Loader2,
-  MessageSquare,
-  Plus,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, GitMerge, Lightbulb, Loader2, MessageSquare, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -1950,7 +1941,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="mx-3 mb-2 rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-950/20 p-3 max-h-48 overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
-              <Bot size={14} />
+              <TeresaMark size={14} />
               {isPl ? 'AI Coach — Analiza procesu' : 'AI Coach — Process Analysis'}
             </div>
             <button

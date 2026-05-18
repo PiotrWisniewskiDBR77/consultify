@@ -1,21 +1,4 @@
-import {
-  ArrowRight,
-  Bell,
-  BookOpen,
-  Bot,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  CircleHelp,
-  ExternalLink,
-  HelpCircle,
-  Keyboard,
-  Library,
-  PlayCircle,
-  Search,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { ArrowRight, Bell, BookOpen, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ExternalLink, HelpCircle, Keyboard, Library, PlayCircle, Search, Sparkles, X } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +23,7 @@ import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
 
+import TeresaMark from '../shared/TeresaMark';
 const HELP_CONFIG = getHelpConfig();
 
 const TABS: { id: Exclude<HelpTab, 'onboarding'>; icon: typeof BookOpen; label: string }[] = [
@@ -543,7 +527,7 @@ export const HelpSidePanel: React.FC = () => {
                   onClick={openAiNow}
                   className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
                 >
-                  <Bot size={16} />
+                  <TeresaMark size={16} />
                   {getLocalizedText(help.promptAction.label, lang)}
                 </button>
               </SectionCard>
@@ -641,7 +625,7 @@ export const HelpSidePanel: React.FC = () => {
                 onClick={openAiNow}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
               >
-                <Bot size={16} />
+                <TeresaMark size={16} />
                 {getLocalizedText(help.promptAction.label, lang)}
               </button>
             </div>

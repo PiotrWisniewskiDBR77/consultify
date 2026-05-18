@@ -1,20 +1,11 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * StudioChat - AI Chat Panel for Studio
  *
  * Chat interface for AI-powered diagram generation and modification.
  */
 
-import {
-  Bot,
-  ChevronDown,
-  ChevronUp,
-  Lightbulb,
-  Loader2,
-  Send,
-  Sparkles,
-  Trash2,
-  User,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, Lightbulb, Loader2, Send, Sparkles, Trash2, User } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Edge, Node } from 'reactflow';
 
@@ -115,7 +106,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
         {messages.length === 0 && (
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-primary-600/20 flex items-center justify-center">
-              <Bot size={28} className="text-blue-400" />
+              <TeresaMark size={28} className="text-blue-400" />
             </div>
             <h4 className="text-white font-medium mb-2">Start Creating</h4>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[200px] mx-auto">
@@ -136,7 +127,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                             ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-400' : 'bg-primary-500/20 text-primary-400'}
                         `}
             >
-              {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+              {msg.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
             </div>
 
             {/* Message Content */}

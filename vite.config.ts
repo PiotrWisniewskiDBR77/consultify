@@ -128,6 +128,16 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        react: path.resolve(__dirname, './node_modules/react'),
+        'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+        'react/jsx-runtime': path.resolve(__dirname, './node_modules/react/jsx-runtime.js'),
+        'react/jsx-dev-runtime': path.resolve(__dirname, './node_modules/react/jsx-dev-runtime.js'),
+        '@fullcalendar/core': path.resolve(__dirname, './node_modules/@fullcalendar/core'),
+        '@fullcalendar/react': path.resolve(__dirname, './node_modules/@fullcalendar/react'),
+        '@fullcalendar/daygrid': path.resolve(__dirname, './node_modules/@fullcalendar/daygrid'),
+        '@fullcalendar/timegrid': path.resolve(__dirname, './node_modules/@fullcalendar/timegrid'),
+        '@fullcalendar/list': path.resolve(__dirname, './node_modules/@fullcalendar/list'),
+        '@tiptap/react': path.resolve(__dirname, './node_modules/@tiptap/react'),
         // Force a complete lodash-es package (some nested deps ship an incomplete copy)
         'lodash-es': path.resolve(__dirname, './node_modules/lodash-es'),
       },

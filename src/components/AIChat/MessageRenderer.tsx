@@ -10,10 +10,11 @@
 
 import {
   Bookmark,
-  Bot,
   BrainCircuit,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Copy,
   Database,
   Download,
@@ -23,6 +24,7 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
   User,
   Volume2,
@@ -32,6 +34,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import TeresaMark from '@/components/shared/TeresaMark';
 
 import { usePermissions } from '../../hooks/usePermissions';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
@@ -45,7 +48,7 @@ import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { TeresaProposalCard } from './TeresaProposalCard';
-import { ThinkingStatusLine } from './ThinkingStatusLine';
+import { ThinkingIndicator } from './Messages/InlineThinkingStream';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
@@ -406,6 +409,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
+  const [showCompactActions, setShowCompactActions] = useState(false);
+  const [showSourcesDetails, setShowSourcesDetails] = useState(false);
   const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
   const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
   const userVisibleContent =
@@ -470,33 +475,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >
-      {/* Cursor-like thinking log: plain dim text, no background, no panel */}
-      {/* Only show for the LAST streaming AI message to avoid duplicated lines */}
+      {/* Minimal streaming state: one "Thinking..." with 3 dots only */}
       {msg.role === 'ai' &&
         msg.isStreaming &&
         isLastMessage &&
         (thinkingSteps.length > 0 || !msg.content?.trim()) && (
           <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-            <ThinkingStatusLine
-              compact={isCompact}
-              show
-              showSpinner={false}
-              steps={thinkingSteps
-                .filter((s) => String((s as any)?.label || '').trim())
-                .map((s) => ({
-                  label: sanitizeUserVisibleAiText(String((s as any)?.label || '').trim()).replace(
-                    /\bthinking\b/gi,
-                    'working'
-                  ),
-                  status:
-                    s.status === 'done' || s.status === 'completed'
-                      ? ('done' as const)
-                      : s.status === 'in_progress'
-                        ? ('in_progress' as const)
-                        : ('pending' as const),
-                }))
-                .slice(-6)}
-              label={t('thinking.processing', 'Preparing answer…') as string}
+            <ThinkingIndicator
+              isActive
+              label={t('thinking.processing', 'Thinking...') as string}
+              className={isCompact ? 'text-[11px]' : ''}
             />
           </div>
         )}
@@ -513,7 +501,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           }`}
         >
           {msg.role === 'ai' ? (
-            <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+            <TeresaMark
+              size={isCompact ? 12 : 14}
+              className="text-primary-600 dark:text-primary-400"
+            />
           ) : (
             <User size={isCompact ? 12 : 14} className="text-slate-500 dark:text-slate-400" />
           )}
@@ -1356,13 +1347,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   <div className="flex flex-col">
                     <span>{userVisibleContent}</span>
                     {msg.role === 'user' && !msg.isStreaming && editingMessageId !== msg.id && (
-                      <div className="flex justify-end mt-3 border-t border-white/10 pt-2">
+                      <div className="flex justify-end mt-2">
                         <button
                           onClick={() => handleStartEditMessage(msg.id)}
-                          className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium rounded-md border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                          title={t('chat.actions.editAndResend', 'Edit & Resend')}
+                          aria-label={t('chat.actions.editAndResend', 'Edit & Resend')}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/15 text-white/75 hover:text-white hover:bg-white/10 transition-colors"
                         >
                           <Pencil size={12} />
-                          {t('chat.actions.editAndResend', 'Edit & Resend')}
                         </button>
                       </div>
                     )}
@@ -1648,7 +1640,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       )}
 
       {/* Citations */}
-      {msg.role === 'ai' && hasVisibleCitations && (
+      {msg.role === 'ai' && hasVisibleCitations && showCompactActions && showSourcesDetails && (
         <div
           className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}
           data-message-id={msg.id}
@@ -1665,7 +1657,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         unaffected. Skipped while streaming — the bundle is only sealed
         at DONE.
       */}
-      {msg.role === 'ai' && !msg.isStreaming && metadata?.trustBundle && (
+      {msg.role === 'ai' &&
+        !msg.isStreaming &&
+        metadata?.trustBundle &&
+        showCompactActions &&
+        showSourcesDetails && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
           {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
               the bundle has no meaningful breakdown, so single-class turns
@@ -1686,52 +1682,65 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* Unified Feedback Block (AI only): feedback + idea + note */}
+      {/* Unified Feedback Block (AI only): compact, opt-in actions panel */}
       {msg.role === 'ai' && !msg.isStreaming && (
-        <div
-          className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-wrap items-start gap-3 p-2 rounded-lg bg-slate-50/80 dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60`}
-        >
-          <InlineResponseFeedback
-            messageId={msg.id}
-            conversationId={activeConversationId || undefined}
-            responseLength={userVisibleContent.length}
-            onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
-            compact={isCompact}
-          />
-          <div className="flex items-center gap-1 border-l border-slate-200 dark:border-navy-700 pl-3">
-            <button
-              onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
-              className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-              title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-            >
-              <Lightbulb size={14} />
-            </button>
-            <button
-              onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
-              className="p-1.5 rounded-md text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-              title={t('myWork.notebook.saveAsNote', 'Save as note')}
-            >
-              <Bookmark size={14} />
-            </button>
-            <button
-              onClick={() => handleSaveToContext(msg.id, userVisibleContent, 'ai')}
-              disabled={isContextSaveBusy || isContextSaved}
-              className="p-1.5 rounded-md text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title={
-                isContextSaved
-                  ? t('chat.actions.savedToContext', 'Saved to Context OS')
-                  : t('chat.actions.saveToContext', 'Save to Context OS')
-              }
-            >
-              {isContextSaveBusy ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : isContextSaved ? (
-                <CheckCircle2 size={14} />
-              ) : (
-                <Database size={14} />
-              )}
-            </button>
-          </div>
+        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex items-center gap-1.5`}>
+          <button
+            onClick={() =>
+              setShowCompactActions((v) => {
+                const next = !v;
+                if (!next) setShowSourcesDetails(false);
+                return next;
+              })
+            }
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300/50 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+            title={t('chat.actions.toggleResponseActions', 'Toggle response actions')}
+            aria-label={t('chat.actions.toggleResponseActions', 'Toggle response actions')}
+          >
+            {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </button>
+
+          {showCompactActions && (
+            <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-900/40">
+              <InlineResponseFeedback
+                messageId={msg.id}
+                conversationId={activeConversationId || undefined}
+                responseLength={userVisibleContent.length}
+                onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
+                compact
+                thumbsOnly
+              />
+              <button
+                onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
+                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                title={t('myWork.notebook.saveAsNote', 'Save as note')}
+                aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
+              >
+                <Bookmark size={12} />
+              </button>
+              <button
+                onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
+                className="p-1 rounded-md text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+                aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+              >
+                <Lightbulb size={12} />
+              </button>
+              <button
+                onClick={() => setShowSourcesDetails((v) => !v)}
+                className={`p-1 rounded-md transition-colors ${
+                  showSourcesDetails
+                    ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/25'
+                    : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                }`}
+                title={t('chat.sources.details', 'Sources details')}
+                aria-label={t('chat.sources.details', 'Sources details')}
+              >
+                <ShieldCheck size={12} />
+              </button>
+              <span className="mx-0.5 h-3 w-px bg-slate-200 dark:bg-navy-700" />
+            </div>
+          )}
         </div>
       )}
 

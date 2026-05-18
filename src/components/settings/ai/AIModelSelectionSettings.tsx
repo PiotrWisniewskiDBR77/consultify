@@ -1,3 +1,4 @@
+import TeresaMark from '../../shared/TeresaMark';
 /**
  * AIModelSelectionSettings - AI Model Selection & Configuration
  *
@@ -9,23 +10,7 @@
  * - Cost tracking per model
  */
 
-import {
-  BarChart3,
-  Bot,
-  Brain,
-  CheckCircle,
-  Clock,
-  Code,
-  DollarSign,
-  FileSearch,
-  Info,
-  Loader2,
-  MessageSquare,
-  Save,
-  Sliders,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { BarChart3, Brain, CheckCircle, Clock, Code, DollarSign, FileSearch, Info, Loader2, MessageSquare, Save, Sliders, Sparkles, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -229,7 +214,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Bot size={28} className="text-primary-500" />
+            <TeresaMark size={28} className="text-primary-500" />
             {t('settings.ai.models.title', 'AI Model Selection')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">

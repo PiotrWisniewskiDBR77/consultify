@@ -1,25 +1,7 @@
 import 'reactflow/dist/style.css';
 import './mindmap/mindmap-effects.css';
 
-import {
-  AlertTriangle,
-  Bot,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  FileText,
-  Flower2,
-  GitBranch,
-  Lightbulb,
-  Link2,
-  Loader2,
-  Paperclip,
-  Pencil,
-  Plus,
-  Sparkles,
-  StickyNote,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, ExternalLink, FileText, Flower2, GitBranch, Lightbulb, Link2, Loader2, Paperclip, Pencil, Plus, Sparkles, StickyNote, X } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -147,6 +129,7 @@ import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 
+import TeresaMark from '../shared/TeresaMark';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -1397,7 +1380,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               <div className="flex items-start gap-1.5">
                 <div className="flex-shrink-0 mt-0.5">
                   {isAI ? (
-                    <Bot size={10} className="text-primary-500" />
+                    <TeresaMark size={10} className="text-primary-500" />
                   ) : (
                     <Lightbulb size={10} className="text-amber-500" />
                   )}

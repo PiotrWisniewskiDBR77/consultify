@@ -1,3 +1,4 @@
+import TeresaMark from '../../shared/TeresaMark';
 /**
  * ReportEditor
  *
@@ -7,36 +8,7 @@
  * - Blocks can be added, reordered, configured inline
  */
 
-import {
-  BookTemplate,
-  Bot,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Download,
-  Eye,
-  FileText,
-  Globe,
-  Grip,
-  Image,
-  Layers,
-  Loader2,
-  Monitor,
-  MoreHorizontal,
-  Palette,
-  Plus,
-  Presentation,
-  RefreshCw,
-  Save,
-  Settings,
-  Share2,
-  Shield,
-  Sparkles,
-  Trash2,
-  Type,
-  X,
-  Zap,
-} from 'lucide-react';
+import { BookTemplate, Check, ChevronDown, ChevronRight, Download, Eye, FileText, Globe, Grip, Image, Layers, Loader2, Monitor, MoreHorizontal, Palette, Plus, Presentation, RefreshCw, Save, Settings, Share2, Shield, Sparkles, Trash2, Type, X, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -2414,7 +2386,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               }`}
               title={isPl ? 'Asystent raportu' : 'Report Agent'}
             >
-              <Bot className="w-3.5 h-3.5" />
+              <TeresaMark className="w-3.5 h-3.5" />
               {isPl ? 'Agent' : 'Agent'}
             </button>
           )}

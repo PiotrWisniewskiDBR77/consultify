@@ -1,10 +1,11 @@
+import TeresaMark from '../../components/shared/TeresaMark';
 /**
  * AIPreferencesModule - AI Preferences & Personalization
  *
  * Tabs: Instructions | Memory | Response Style | Automation | Chat History | Voice
  */
 
-import { Bot, Brain, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
+import { Brain, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -139,7 +140,7 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
     {
       id: 'automation',
       label: t('settings.tabs.automation', 'Automation'),
-      icon: <Bot size={16} />,
+      icon: <TeresaMark size={16} />,
     },
     {
       id: 'history',

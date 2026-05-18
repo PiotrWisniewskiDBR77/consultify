@@ -31,6 +31,7 @@ interface InlineResponseFeedbackProps {
   screenContext?: string;
   onFeedback: (feedback: ResponseFeedback) => void;
   compact?: boolean;
+  thumbsOnly?: boolean;
 }
 
 type LengthFeedback = 'too-short' | 'just-right' | 'too-long';
@@ -48,6 +49,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   screenContext,
   onFeedback,
   compact = false,
+  thumbsOnly = false,
 }) => {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
@@ -68,6 +70,11 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
 
   const handleInitialRating = (r: 'positive' | 'negative') => {
     setRating(r);
+
+    if (thumbsOnly) {
+      submitFeedback(r);
+      return;
+    }
 
     // C8.1 / C8.2: Both positive and negative feedback show detail options
     if (r === 'positive') {

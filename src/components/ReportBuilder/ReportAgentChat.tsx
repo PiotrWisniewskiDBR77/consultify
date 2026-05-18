@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * ReportAgentChat — T060
  *
@@ -7,20 +8,7 @@
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
-  ArrowRight,
-  Bot,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Loader2,
-  MessageSquare,
-  Send,
-  Sparkles,
-  User,
-  X,
-  Zap,
-} from 'lucide-react';
+  AlertTriangle, ArrowRight, Check, CheckCircle2, ChevronDown, Loader2, MessageSquare, Send, Sparkles, User, X, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -201,7 +189,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       <div className="flex items-center justify-between px-4 py-3 border-b border-navy-700">
         <div className="flex items-center gap-2.5">
           <div className="p-1.5 bg-primary-500/10 rounded-lg">
-            <Bot size={18} className="text-primary-400" />
+            <TeresaMark size={18} className="text-primary-400" />
           </div>
           <div>
             <div className="text-sm font-medium text-white">
@@ -224,7 +212,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <Bot className="mx-auto text-slate-600 mb-3" size={32} />
+            <TeresaMark className="mx-auto text-slate-600 mb-3" size={32} />
             <p className="text-sm text-slate-400 mb-1">
               {t('reports.agent.welcome', "I'm your report assistant")}
             </p>
@@ -255,7 +243,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
           <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'assistant' && (
               <div className="w-6 h-6 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0 mt-1">
-                <Bot size={12} className="text-primary-400" />
+                <TeresaMark size={12} className="text-primary-400" />
               </div>
             )}
             <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-first' : ''}`}>
@@ -336,7 +324,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         {sending && (
           <div className="flex gap-2">
             <div className="w-6 h-6 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0">
-              <Bot size={12} className="text-primary-400" />
+              <TeresaMark size={12} className="text-primary-400" />
             </div>
             <div className="px-3 py-2 rounded-xl bg-navy-800 border border-navy-700">
               <Loader2 size={14} className="animate-spin text-primary-400" />

@@ -1,25 +1,4 @@
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowRight,
-  BookOpen,
-  Bot,
-  Check,
-  CheckCircle,
-  CheckSquare,
-  Clock,
-  CreditCard,
-  Flag,
-  Inbox,
-  Info,
-  Megaphone,
-  MessageSquare,
-  Scale,
-  Sparkles,
-  Target,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowRight, BookOpen, Check, CheckCircle, CheckSquare, Clock, CreditCard, Flag, Inbox, Info, Megaphone, MessageSquare, Scale, Sparkles, Target, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +17,7 @@ import {
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
 
+import TeresaMark from '../shared/TeresaMark';
 export const NotificationDropdown = () => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -250,7 +230,7 @@ export const NotificationDropdown = () => {
     if (t === 'AI_RISK_DETECTED' || t === 'AI_OVERLOAD_DETECTED')
       return <AlertTriangle size={16} className="text-amber-400" />;
     if (t === 'AI_RECOMMENDATION' || t === 'AI_DEPENDENCY_CONFLICT')
-      return <Bot size={16} className="text-primary-400" />;
+      return <TeresaMark size={16} className="text-primary-400" />;
     if (t.includes('AI')) return <Sparkles size={16} className="text-indigo-500" />;
     if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-rose-500" />;
     if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-rose-500" />;

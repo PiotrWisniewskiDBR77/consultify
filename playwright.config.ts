@@ -106,14 +106,14 @@ export default defineConfig({
               ? `mkdir -p "${e2eTmpDir}" && cd server && npm run build && TMPDIR="${e2eTmpDir}" ${backendEnv} node dist/src/index.js`
               : `mkdir -p "${e2eTmpDir}" && cd server && TMPDIR="${e2eTmpDir}" ${backendEnv} tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health/ping`,
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: false,
           // Cold starts on shared machines can exceed 4 minutes.
           timeout: backendRunner === 'build' ? 600000 : 420000,
         },
         {
           command: `VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
           url: frontendUrl,
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: false,
           timeout: 420000,
         },
       ]

@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * Help Chatbot Component
  *
@@ -7,7 +8,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bot,
   ExternalLink,
   HelpCircle,
   Maximize2,
@@ -325,7 +325,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <Bot size={18} />
+            <TeresaMark size={18} />
           </div>
           <div>
             <h3 className="font-semibold">{t.title[lang]}</h3>
@@ -383,7 +383,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
                     }`}
                   >
-                    {message.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                    {message.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
                   </div>
 
                   <div
@@ -503,7 +503,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             className="flex items-start gap-2"
           >
             <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
-              <Bot size={14} />
+              <TeresaMark size={14} />
             </div>
             <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl rounded-tl-md">
               <div className="flex items-center gap-1">

@@ -125,6 +125,8 @@ import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
+import { CalendarView } from './Calendar/CalendarView';
+import { NotebookContent } from './NotebookContent';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -146,14 +148,8 @@ const ExecutiveDashboard = lazyWithRetry(() =>
 const HomeView = lazyWithRetry(() =>
   import('./Home/HomeView').then((m) => ({ default: m.HomeView }))
 );
-const CalendarView = lazyWithRetry(() =>
-  import('./Calendar/CalendarView').then((m) => ({ default: m.CalendarView }))
-);
 const FocusView = lazyWithRetry(() =>
   import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
-);
-const NotebookContent = lazyWithRetry(() =>
-  import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
 );
 const TasksKanbanBoard = lazyWithRetry(() =>
   import('./TasksKanbanBoard').then((m) => ({ default: m.TasksKanbanBoard }))

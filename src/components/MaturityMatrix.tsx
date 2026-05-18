@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Bot, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { getQuestionsForAxis } from '@/services/drdStructure';
 
 import { AxisId } from '../types';
 
+import TeresaMark from './shared/TeresaMark';
 interface MaturityMatrixProps {
   axisId: number;
   axisKey: AxisId;
@@ -200,7 +201,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                         >
                           <div className="mt-3 p-3 bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 rounded-lg">
                             <h4 className="text-primary-700 dark:text-primary-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
-                              <Bot size={14} /> Digital Pathfinder AI
+                              <TeresaMark size={14} /> Digital Pathfinder AI
                             </h4>
 
                             {!aiResult ? (

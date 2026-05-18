@@ -1,10 +1,11 @@
-import { ArrowRight, Bot, Factory, Globe2, Scale } from 'lucide-react';
+import { ArrowRight, Factory, Globe2, Scale } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { HomeBlockShell } from './HomeBlockShell';
 import type { HomeBlock, HomeScreenAction, HomeSignalCard } from './homeV2Types';
 
+import TeresaMark from '../../shared/TeresaMark';
 interface IndustryLensBlockProps {
   block: Extract<HomeBlock, { id: 'industryLens' }>;
   onAction: (action: HomeScreenAction) => void;
@@ -35,7 +36,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             onAction={onAction}
           />
           <SignalCard
-            icon={<Bot size={15} />}
+            icon={<TeresaMark size={15} />}
             signal={payload.technologySignal}
             toneClass="bg-indigo-500/15 text-indigo-200"
             onAction={onAction}

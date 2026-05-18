@@ -1,3 +1,4 @@
+import TeresaMark from '../../../components/shared/TeresaMark';
 /**
  * OrganizationProfileModule — Unified canonical organization profile.
  * P30-D: Replaces split-brain CompanyProfileModule (localStorage) + OrganizationProfileForm (admin).
@@ -7,31 +8,7 @@
  * Phase 2: Conditional sections per org type, manufacturing fields, taxonomy unification
  * Phase 3: Cross-validation, completeness coaching, downstream readiness, document extraction
  */
-import {
-  AlertCircle,
-  AlertTriangle,
-  BarChart3,
-  Bot,
-  Briefcase,
-  Building2,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Cpu,
-  Factory,
-  FileText,
-  Globe,
-  Loader2,
-  MessageSquare,
-  RefreshCw,
-  Save,
-  Shield,
-  Sparkles,
-  Target,
-  TrendingUp,
-  Upload,
-  Users,
-} from 'lucide-react';
+import { AlertCircle, AlertTriangle, BarChart3, Briefcase, Building2, CheckCircle, ChevronDown, ChevronUp, Cpu, Factory, FileText, Globe, Loader2, MessageSquare, RefreshCw, Save, Shield, Sparkles, Target, TrendingUp, Upload, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -830,7 +807,7 @@ export const OrganizationProfileModule: React.FC = () => {
       {teresaHint && (
         <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-3">
           <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 shrink-0">
-            <Bot size={18} />
+            <TeresaMark size={18} />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">

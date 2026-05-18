@@ -1,3 +1,4 @@
+import TeresaMark from '../components/shared/TeresaMark';
 /**
  * AppPricingView
  *
@@ -8,23 +9,7 @@
 
 import { motion } from 'framer-motion';
 import {
-  ArrowRight,
-  Bot,
-  Building2,
-  Calendar,
-  Check,
-  Cpu,
-  HelpCircle,
-  Key,
-  MessageCircle,
-  Rocket,
-  Server,
-  Shield,
-  Sparkles,
-  Users,
-  X,
-  Zap,
-} from 'lucide-react';
+  ArrowRight, Building2, Calendar, Check, Cpu, HelpCircle, Key, MessageCircle, Rocket, Server, Shield, Sparkles, Users, X, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
@@ -495,7 +480,7 @@ export const AppPricingView: React.FC = () => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
-                  <Bot size={22} className="text-primary-600 dark:text-primary-400" />
+                  <TeresaMark size={22} className="text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-navy-950 dark:text-white">Managed AI</h3>
