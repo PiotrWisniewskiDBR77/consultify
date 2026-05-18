@@ -50,11 +50,14 @@ describe('Superadmin routing (verifySuperAdmin middleware) - REAL_CODE', () => {
   });
 
   it('returns 403 when role is not superadmin and DB role is not superadmin', async () => {
-    const jwtVerify = vi.fn((_t: any, _s: any, cb: any) => cb(null, { id: 'u-1', role: 'ADMIN' }));
+    const token = ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32)].join('.');
+    const jwtVerify = vi.fn((_t: any, _s: any, _o: any, cb: any) =>
+      cb(null, { id: 'u-1', role: 'ADMIN' })
+    );
     const dbGet = vi.fn(async () => ({ role: 'ADMIN' }));
     setDependencies({ jwt: { verify: jwtVerify } as any, dbGet: dbGet as any });
 
-    const req: any = { headers: { authorization: 'Bearer ok' } };
+    const req: any = { headers: { authorization: `Bearer ${token}` } };
     const res = makeRes();
     const next = vi.fn();
 
@@ -65,12 +68,14 @@ describe('Superadmin routing (verifySuperAdmin middleware) - REAL_CODE', () => {
   });
 
   it('calls next and attaches superadmin flags when token role is SUPERADMIN', async () => {
-    const jwtVerify = vi.fn((_t: any, _s: any, cb: any) =>
+    const token = ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32)].join('.');
+    const jwtVerify = vi.fn((_t: any, _s: any, _o: any, cb: any) =>
       cb(null, { id: 'u-1', role: 'SUPERADMIN', organizationId: 'org-1' })
     );
-    setDependencies({ jwt: { verify: jwtVerify } as any });
+    const dbGet = vi.fn(async () => ({ role: 'SUPERADMIN' }));
+    setDependencies({ jwt: { verify: jwtVerify } as any, dbGet: dbGet as any });
 
-    const req: any = { headers: { authorization: 'Bearer ok' }, user: { id: 'u-1' } };
+    const req: any = { headers: { authorization: `Bearer ${token}` }, user: { id: 'u-1' } };
     const res = makeRes();
     const next = vi.fn();
 
@@ -82,11 +87,14 @@ describe('Superadmin routing (verifySuperAdmin middleware) - REAL_CODE', () => {
   });
 
   it('allows access when DB role promotes user to SUPERADMIN', async () => {
-    const jwtVerify = vi.fn((_t: any, _s: any, cb: any) => cb(null, { id: 'u-1', role: 'ADMIN' }));
+    const token = ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32)].join('.');
+    const jwtVerify = vi.fn((_t: any, _s: any, _o: any, cb: any) =>
+      cb(null, { id: 'u-1', role: 'ADMIN' })
+    );
     const dbGet = vi.fn(async () => ({ role: 'SUPERADMIN' }));
     setDependencies({ jwt: { verify: jwtVerify } as any, dbGet: dbGet as any });
 
-    const req: any = { headers: { authorization: 'Bearer ok' } };
+    const req: any = { headers: { authorization: `Bearer ${token}` } };
     const res = makeRes();
     const next = vi.fn();
 
