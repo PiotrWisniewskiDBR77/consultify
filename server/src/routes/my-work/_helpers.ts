@@ -7,38 +7,13 @@ export const requireUser = (
   req: AuthRequest,
   res: Response
 ): { userId: string; orgId: string } | null => {
-  let userId: unknown;
-  try {
-    userId = (req as any).userId;
-  } catch {
-    userId = undefined;
-  }
-  if (!userId) {
-    try {
-      userId = req.user?.id;
-    } catch {
-      userId = undefined;
-    }
-  }
-
-  let orgId: unknown;
-  try {
-    orgId = (req as any).organizationId;
-  } catch {
-    orgId = undefined;
-  }
-  if (!orgId) {
-    try {
-      orgId = req.user?.organizationId;
-    } catch {
-      orgId = undefined;
-    }
-  }
+  const userId = (req as any).userId || req.user?.id;
+  const orgId = req.user?.organizationId;
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Unauthorized' });
     return null;
   }
-  return { userId: String(userId), orgId: String(orgId) };
+  return { userId, orgId };
 };
 
 export const requireTables = async (res: Response, tables: string[]): Promise<boolean> => {

@@ -24,14 +24,14 @@ describe('Superadmin routing (verifySuperAdmin middleware) - REAL_CODE', () => {
     });
   });
 
-  it('returns 401 when no token provided', async () => {
+  it('returns 403 when no token provided', async () => {
     const req: any = { headers: {}, user: undefined };
     const res = makeRes();
     const next = vi.fn();
 
     await verifySuperAdmin(req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 

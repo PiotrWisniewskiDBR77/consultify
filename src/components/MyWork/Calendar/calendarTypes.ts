@@ -36,14 +36,11 @@ export interface CalendarEvent {
   syncState?: SyncState;
   permissionGradient?: PermissionGradient;
   etag?: string;
-  recurrenceRule?: string;
-  recurrenceSourceId?: string;
 }
 
 export interface CalendarFilter {
   sources: CalendarEventSource[];
   projectId?: string;
-  ownership?: 'any' | 'assignee' | 'owner';
 }
 
 export const PERMISSION_UI_RULES: Record<

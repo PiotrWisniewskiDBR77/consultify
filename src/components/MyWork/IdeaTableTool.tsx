@@ -69,13 +69,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
-import {
-  EMPTY_SELECTION,
-  IDEA_GRAPH_UPDATE_EVENT,
-  IDEA_WORKSPACE_INSERT_EVENT,
-  type IdeaWorkspaceInsertDetail,
-  type IdeaWorkspaceSelection,
-} from './ideaSelectionTypes';
+import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { ActivityFeed } from './table/ActivityFeed';
 import { AddColumnDialog } from './table/AddColumnDialog';
 import { AICategorizeTool } from './table/AICategorizeTool';
@@ -461,59 +455,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     });
   }, [edges, extensions, nodes, onGraphChange]);
 
-  useEffect(() => {
-    if (!open || locked) return;
-    const handleInsert = (event: Event) => {
-      const detail = ((event as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail;
-      if (detail.ideaId && detail.ideaId !== ideaId) return;
-
-      const items = Array.isArray(detail.items)
-        ? detail.items
-        : [
-            {
-              label: detail.label,
-              text: detail.text,
-              data: {},
-              position: detail.position,
-            },
-          ];
-      const validItems = items.filter(
-        (item) =>
-          (item.label && String(item.label).trim()) || (item.text && String(item.text).trim())
-      );
-      if (!validItems.length) return;
-
-      const now = new Date().toISOString();
-      const nextRows = validItems.map((item) => ({
-        id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        type: 'idea' as const,
-        data: {
-          label: String(item.label || item.text || '').trim(),
-          status: 'todo',
-          created_time: now,
-          created_by: currentUserId,
-          last_edited_time: now,
-          last_edited_by: currentUserId,
-          ...(item.data && typeof item.data === 'object' ? item.data : {}),
-        },
-        position: item.position || { x: 0, y: 0 },
-      }));
-
-      nodesUndo.push([...(nodes || []), ...nextRows]);
-      const insertedIds = nextRows.map((row) => row.id);
-      setSelectedRowIds(new Set(insertedIds));
-      onSelectionChange?.({
-        type: 'row',
-        count: insertedIds.length,
-        ids: insertedIds,
-        primaryId: insertedIds[0],
-      });
-    };
-
-    window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handleInsert);
-    return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handleInsert);
-  }, [currentUserId, ideaId, locked, nodes, nodesUndo, onSelectionChange, open, setSelectedRowIds]);
-
   // ── Rollup computation (inject aggregated values for rollup columns) ───────
   const processedRowsWithRollups = useRollupComputation(
     usePlatform ? effectiveProcessedRows : processedRows,
@@ -561,17 +502,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const effectiveHandleSave = usePlatform ? platformIntegration.handleSave : handleSave;
   const effectiveLoadError = usePlatform ? platformIntegration.error : loadError;
   const effectiveRefresh = usePlatform ? platformIntegration.refresh : refresh;
-
-  useEffect(() => {
-    if (!open) return;
-    const handleGraphRefresh = (event: Event) => {
-      const detail = (event as CustomEvent).detail as { ideaId?: string } | undefined;
-      if (detail?.ideaId && detail.ideaId !== ideaId) return;
-      effectiveRefresh().catch(() => {});
-    };
-    window.addEventListener(IDEA_GRAPH_UPDATE_EVENT, handleGraphRefresh);
-    return () => window.removeEventListener(IDEA_GRAPH_UPDATE_EVENT, handleGraphRefresh);
-  }, [ideaId, open, effectiveRefresh]);
 
   // ── Platform switch: alias effective values for JSX consumption ────────────
   // When platform is active, these shadow the legacy values so the entire

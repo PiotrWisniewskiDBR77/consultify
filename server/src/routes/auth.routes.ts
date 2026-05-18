@@ -172,16 +172,6 @@ const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
   ]);
 };
 
-const normalizeMembershipStatus = (status: unknown): string => {
-  if (typeof status !== 'string') return '';
-  return status.trim().toUpperCase();
-};
-
-const normalizeOrganizationStatus = (status: unknown): string => {
-  if (typeof status !== 'string') return '';
-  return status.trim().toLowerCase();
-};
-
 // LOGIN
 logger.info('[AuthRoutes] login handler is type:', typeof login);
 router.post('/login', validateBody(LoginRequestSchema), asyncHandler(login));
@@ -739,14 +729,19 @@ router.post(
         [userId, organizationId]
       );
 
-      if (!membership || normalizeMembershipStatus(membership.status) !== 'ACTIVE') {
+      if (
+        !membership ||
+        String(membership.status || '')
+          .trim()
+          .toUpperCase() !== 'ACTIVE'
+      ) {
         return res.status(403).json({
           error: 'You do not have access to this organization',
           code: 'ORG_ACCESS_DENIED',
         });
       }
 
-      if (normalizeOrganizationStatus(membership.org_status) !== 'active') {
+      if (membership.org_status !== 'active') {
         return res.status(403).json({
           error: 'This organization is not active',
           code: 'ORG_NOT_ACTIVE',
@@ -2352,4 +2347,3 @@ router.get(
 );
 
 export default router;
-export const __private__ = { normalizeMembershipStatus, normalizeOrganizationStatus };

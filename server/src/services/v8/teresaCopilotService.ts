@@ -166,8 +166,8 @@ const CHAT_ACTION_KEYWORDS: Array<{
     targetModule: 'excele',
     handoffIntent: 'generate',
     patterns: [
-      /\b(workbook|excel\s*file|financial.?model|budget.?plan|balance.?sheet|cash.?flow|p\s*&\s*l|profit.?loss|multi.?sheet|xlsx|table|tables|table\s*studio|spreadsheet|grid|canvas\s*table|table\s*in\s*canvas)\b/i,
-      /\b(skoroszyt|plik\s*excel|model.?finansowy|plan.?budżet|bilans|przepływy?.?pienięż|rachunek.?zysków|arkusz.?kalkulacyjny|tabel\w*|table\s*studio|siatk\w*|tabel\w*\s*w\s*canvas|canvas\s*tabel\w*|kanwa\s*tabel\w*)\b/i,
+      /\b(workbook|excel\s*file|financial.?model|budget.?plan|balance.?sheet|cash.?flow|p\s*&\s*l|profit.?loss|multi.?sheet|xlsx)\b/i,
+      /\b(skoroszyt|plik\s*excel|model.?finansowy|plan.?budżet|bilans|przepływy?.?pienięż|rachunek.?zysków|arkusz.?kalkulacyjny)\b/i,
     ],
   },
 ];
@@ -777,19 +777,6 @@ function inferTargetModuleFromChatRegex(
   const text = String(message || '').trim();
   if (!text) return null;
 
-  // Strong disambiguation: explicit table/spreadsheet requests should route
-  // to the Excele lane even when the sentence also mentions "risk".
-  if (
-    /\b(table|tables|table\s*studio|spreadsheet|excel|xlsx|grid|canvas\s*table|table\s*in\s*canvas)\b/i.test(
-      text
-    ) ||
-    /\b(tabel\w*|table\s*studio|arkusz\w*|siatk\w*|excel|xlsx|tabel\w*\s*w\s*canvas|canvas\s*tabel\w*|kanwa\s*tabel\w*)\b/i.test(
-      text
-    )
-  ) {
-    return { targetModule: 'excele', handoffIntent: 'generate' };
-  }
-
   for (const candidate of CHAT_ACTION_KEYWORDS) {
     if (candidate.patterns.some((pattern) => pattern.test(text))) {
       return {
@@ -832,7 +819,7 @@ Given a user message, determine if it contains an actionable intent for one of t
 - calendar: meetings, scheduling, appointments, availability, deadlines
 - notebook: notes, summaries, minutes, drafts, memos, documentation
 - interview: insights from interviews, generate insights, review insights, findings, evidence map, completed sessions
-- excele: spreadsheets, tables, Table Studio tables, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
+- excele: spreadsheets, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
 
 Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|null,"intent":"string describing the action"}
 If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
@@ -968,16 +955,6 @@ function buildTargetPayloadForChat(params: {
         title: title || 'Interview insight from Teresa',
       },
       evidence_pointers: ['chat:teresa'],
-    };
-  }
-
-  if (targetModule === 'excele') {
-    return {
-      prompt: trimPreview(userMessage || assistantMessage || title, 220),
-      why_now: trimPreview(userMessage, 160),
-      time_window: 'next-available',
-      evidence_pointers: ['chat:teresa'],
-      next_action_safe_fallback: 'Create a governed table/workbook draft after approval',
     };
   }
 

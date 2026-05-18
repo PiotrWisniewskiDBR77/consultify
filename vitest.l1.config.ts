@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import { defineConfig } from 'vitest/config';
 
 import baseConfig from './vitest.config';
@@ -12,8 +10,6 @@ import baseConfig from './vitest.config';
  * so we can reliably target 95%+ line coverage.
  */
 const base = baseConfig as any;
-const coverageRunId = process.env.VITEST_COVERAGE_RUN_ID || `${Date.now()}-${process.pid}`;
-const coverageRoot = path.resolve(process.env.TMPDIR || '/tmp', 'consultify-vitest-coverage');
 
 export default defineConfig({
   ...base,
@@ -39,7 +35,7 @@ export default defineConfig({
     exclude: ['node_modules/**', 'tests/e2e/**'],
     coverage: {
       ...(base.test?.coverage || {}),
-      reportsDirectory: path.join(coverageRoot, `l1-${coverageRunId}`),
+      reportsDirectory: 'test-results/coverage/l1',
       include: [
         'server/src/middleware/auth.middleware.ts',
         'server/src/middleware/csrf.middleware.ts',

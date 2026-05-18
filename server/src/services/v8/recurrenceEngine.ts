@@ -6,14 +6,13 @@
  * Exceptions from RecurrenceModel.exceptions[] override/cancel specific instances.
  */
 
-import type { RRule } from 'rrule';
-import RRulePackage from 'rrule';
+// @ts-ignore — optional dependency, may not have type declarations
+import { RRule, RRuleSet, rrulestr } from 'rrule';
 
 import logger from '../../utils/Logger.js';
 import type { RecurrenceModel } from './calendarInteropService.js';
 
 const LOG_PREFIX = '[P02-RecurrenceEngine]';
-const { rrulestr } = (RRulePackage as any).default || (RRulePackage as any);
 
 export interface MaterializedInstance {
   startAt: string;
@@ -54,34 +53,25 @@ export function materializeInstances(
   }
 
   try {
+    const ruleSet = new RRuleSet();
+
     const rule = rrulestr(`DTSTART:${formatRRuleDate(eventStart)}\nRRULE:${recurrence.rrule}`, {
       forceset: false,
     });
-    const generatedOccurrences = (rule as RRule).between(wStart, wEnd, true);
+    ruleSet.rrule(rule as RRule);
 
-    // Keep recurrence expansion compatible with older/newer `rrule` builds that may
-    // not export RRuleSet in ESM. We merge explicit RDATE/EXDATE manually.
-    const exdateSet = new Set(
-      (recurrence.exdate ?? []).map((value) => new Date(value).toISOString())
-    );
-    const occurrenceMap = new Map<string, Date>();
-
-    for (const occ of generatedOccurrences) {
-      const iso = occ.toISOString();
-      if (!exdateSet.has(iso)) {
-        occurrenceMap.set(iso, occ);
+    if (recurrence.rdate) {
+      for (const rd of recurrence.rdate) {
+        ruleSet.rdate(new Date(rd));
       }
     }
-    for (const rdate of recurrence.rdate ?? []) {
-      const date = new Date(rdate);
-      if (date >= wStart && date <= wEnd) {
-        const iso = date.toISOString();
-        if (!exdateSet.has(iso)) {
-          occurrenceMap.set(iso, date);
-        }
+    if (recurrence.exdate) {
+      for (const ex of recurrence.exdate) {
+        ruleSet.exdate(new Date(ex));
       }
     }
-    const occurrences = [...occurrenceMap.values()].sort((a, b) => a.getTime() - b.getTime());
+
+    const occurrences = ruleSet.between(wStart, wEnd, true);
 
     const exceptionMap = new Map<string, RecurrenceModel['exceptions'][number]>();
     for (const exc of recurrence.exceptions) {

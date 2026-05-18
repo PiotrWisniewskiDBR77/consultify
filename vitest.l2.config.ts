@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import { defineConfig } from 'vitest/config';
 
 import baseConfig from './vitest.config';
@@ -11,8 +9,6 @@ import baseConfig from './vitest.config';
  * This makes 95% coverage meaningful and achievable without pulling in the whole frontend.
  */
 const base = baseConfig as any;
-const coverageRunId = process.env.VITEST_COVERAGE_RUN_ID || `${Date.now()}-${process.pid}`;
-const coverageRoot = path.resolve(process.env.TMPDIR || '/tmp', 'consultify-vitest-coverage');
 
 export default defineConfig({
   ...base,
@@ -28,7 +24,7 @@ export default defineConfig({
     exclude: ['node_modules/**', 'tests/e2e/**'],
     coverage: {
       ...(base.test?.coverage || {}),
-      reportsDirectory: path.join(coverageRoot, `l2-${coverageRunId}`),
+      reportsDirectory: 'test-results/coverage/l2',
       include: [
         'views/auth/LoginView.tsx',
         'src/components/auth/MFASetup.tsx',

@@ -1609,15 +1609,12 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     res.status(201).json(result);
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating report:', err);
-    const message = String(err?.message || '');
     if (
-      message.includes('not found') ||
-      message.includes('not approved') ||
-      message.includes('mismatch') ||
-      message.includes('No template found') ||
-      message.includes('template_not_found')
+      err.message?.includes('not found') ||
+      err.message?.includes('not approved') ||
+      err.message?.includes('mismatch')
     ) {
-      return res.status(400).json({ error: message });
+      return res.status(400).json({ error: err.message });
     }
     next(err);
   }

@@ -186,24 +186,6 @@ type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
-interface MyWorkMainContentClassNameInput {
-  activeDocumentId: string | null;
-  activeTab: ModuleTab;
-  ideasViewMode: IdeasViewMode;
-}
-
-export function getMyWorkMainContentClassName({
-  activeDocumentId,
-  activeTab,
-  ideasViewMode,
-}: MyWorkMainContentClassNameInput): string {
-  const workspaceOwnsScroll =
-    !!activeDocumentId ||
-    activeTab === 'calendar' ||
-    (activeTab === 'ideas' && ideasViewMode === 'table');
-  return `flex-1 min-h-0 ${workspaceOwnsScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`;
-}
-
 // Q1: Per-tab system prompts for contextual chat
 const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
   home: "You are an AI transformation companion operating from the user's live Home screen. Synthesize signals across ideas, decisions, execution, team alignment, and industry context. Help the user understand what matters now, frame transformation moves, and convert signals into action. Stay strategic, concise, and highly relevant.",
@@ -3576,11 +3558,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
       {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
       <div
-        className={getMyWorkMainContentClassName({
-          activeDocumentId,
-          activeTab,
-          ideasViewMode,
-        })}
+        className={`flex-1 min-h-0 ${
+          activeTab === 'calendar' || (activeTab === 'ideas' && ideasViewMode === 'table')
+            ? 'overflow-hidden flex flex-col'
+            : 'overflow-y-auto'
+        }`}
       >
         {renderContent()}
       </div>

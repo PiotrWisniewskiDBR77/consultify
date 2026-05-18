@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
-import { Api, getMapVersionFromPayload } from '@/services/api';
+import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
@@ -2066,7 +2066,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           artifactIndex: buildArtifactCode(ref.type, ref.id),
           label: ref.title,
           linkRole: role,
-          baseVersion: graphRuntime.graph.version,
         });
         await graphRuntime.refresh();
         toast.success(isPolish ? `Dołączono: ${ref.title}` : `Attached: ${ref.title}`);
@@ -2077,10 +2076,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           role,
         });
       } catch (err: any) {
-        const conflictVersion = getMapVersionFromPayload(err?.data);
-        if (conflictVersion) {
-          await graphRuntime.refresh().catch(() => {});
-        }
         toast.error(err?.message || (isPolish ? 'Nie udało się dołączyć' : 'Failed to attach'));
       }
     },
@@ -2329,15 +2324,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           artifactIndex: `INT-${detail.id}`,
           label: detail.title || 'Interview insight',
           linkRole: 'evidence',
-          baseVersion: graphRuntime.graph.version,
         });
         await graphRuntime.refresh();
         toast.success(isPolish ? 'Dodano dowód z wywiadu' : 'Interview evidence attached');
-      } catch (err: any) {
-        const conflictVersion = getMapVersionFromPayload(err?.data);
-        if (conflictVersion) {
-          await graphRuntime.refresh().catch(() => {});
-        }
+      } catch {
         toast.error(isPolish ? 'Nie udało się dołączyć' : 'Failed to attach');
       }
     };
@@ -3038,8 +3028,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         activeTool={activeTool}
         locked={canvasLocked}
         allNodes={graphNodes}
-        mapVersion={graphRuntime.graph.version}
-        onMapConflictRefresh={graphRuntime.refresh}
         onNodeDataChange={handleNodeDataChange}
         onGenerateProposal={(batch) => {
           setProposalBatch(batch);

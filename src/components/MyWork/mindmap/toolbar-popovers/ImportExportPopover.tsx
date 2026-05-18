@@ -86,10 +86,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
   };
 
   return (
-    <div
-      data-testid="mindmap-import-export-popover"
-      className="w-56 max-h-[420px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl"
-    >
+    <div className="w-56 max-h-[420px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
       <div className="px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
           {isPl ? 'Import' : 'Import'}
@@ -99,12 +96,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
           return (
             <button
               key={a.action}
-              data-testid={`mindmap-import-export-action-${a.action}`}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                dispatch(a.action);
-              }}
+              onClick={() => dispatch(a.action)}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
             >
               <Icon size={12} className="text-slate-400 shrink-0" />
@@ -122,12 +114,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
           return (
             <button
               key={a.action}
-              data-testid={`mindmap-import-export-action-${a.action}`}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                dispatch(a.action);
-              }}
+              onClick={() => dispatch(a.action)}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
             >
               <Icon size={12} className="text-slate-400 shrink-0" />
@@ -138,12 +125,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
       </div>
       <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
         <button
-          data-testid="mindmap-import-export-action-mm_snapshot_history"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dispatch('mm_snapshot_history');
-          }}
+          onClick={() => dispatch('mm_snapshot_history')}
           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
         >
           <Clock size={12} className="text-amber-500 shrink-0" />

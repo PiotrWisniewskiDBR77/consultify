@@ -22,7 +22,6 @@ interface GraphState {
   nodes: any[];
   edges: any[];
   extensions: Record<string, unknown>;
-  version?: number;
   preferredTool?: CanvasToolType;
   lastUpdatedBy?: string;
   lastUpdatedAt?: number;
@@ -56,7 +55,6 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
             map?.extensions && typeof map.extensions === 'object'
               ? (map.extensions as Record<string, unknown>)
               : {},
-          version: Number(map?.version || 1),
           preferredTool: map?.preferredTool as CanvasToolType | undefined,
           lastUpdatedAt: Date.now(),
         };
@@ -109,7 +107,6 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
       await Api.saveMyIdeaMap(ideaId, {
         nodes: current.nodes as any,
         edges: current.edges as any,
-        version: current.version,
         extensions: current.extensions,
         preferredTool: current.preferredTool,
       });

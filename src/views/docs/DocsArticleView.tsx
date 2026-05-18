@@ -269,7 +269,7 @@ export const DocsArticleView: React.FC = () => {
                     .replace(/(^-|-$)/g, '');
                   return <h3 id={id}>{children}</h3>;
                 },
-                code({ node, className, children, ref: _ref, ...props }) {
+                code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const inline = !match;
                   return inline ? (

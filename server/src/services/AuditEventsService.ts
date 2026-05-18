@@ -120,7 +120,7 @@ class AuditEventsService {
     const params: any[] = [];
 
     if (filters.organizationId) {
-      conditions.push('org_id = ?');
+      conditions.push('(org_id = ? OR org_id IS NULL)');
       params.push(filters.organizationId);
     }
     if (filters.resourceType) {

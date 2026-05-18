@@ -51,28 +51,4 @@ test.describe('Calendar Events', () => {
     const url = page.url();
     expect(url).toBeTruthy();
   });
-
-  test('calendar api supports ownership filter and conflict payload', async ({ request }) => {
-    const unified = await request.get('/api/v8/my-work/calendar/unified', {
-      params: {
-        start: '2026-03-01',
-        end: '2026-04-01',
-        sources: 'task',
-        ownership: 'assignee',
-      },
-    });
-    expect([200, 401, 403]).toContain(unified.status());
-
-    const conflicts = await request.get('/api/v8/my-work/calendar/conflicts', {
-      params: {
-        date: '2026-03-27',
-      },
-    });
-    expect([200, 401, 403]).toContain(conflicts.status());
-    if (conflicts.status() === 200) {
-      const payload = await conflicts.json();
-      expect(payload).toHaveProperty('data');
-      expect(payload.data).toHaveProperty('hasConflicts');
-    }
-  });
 });

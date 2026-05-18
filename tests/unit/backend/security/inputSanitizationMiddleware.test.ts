@@ -545,7 +545,7 @@ describe('inputSanitizationMiddleware (L1)', () => {
       expect(sanitizeObject).toHaveBeenCalled();
       expect(loads).toBeGreaterThanOrEqual(2);
     } finally {
-      vi.doUnmock('../../../../server/src/utils/security.utils.ts');
+      vi.unmock('../../../../server/src/utils/security.utils.ts');
     }
   });
 
@@ -577,7 +577,7 @@ describe('inputSanitizationMiddleware (L1)', () => {
       expect(next2).toHaveBeenCalled();
       expect(loads).toBe(1);
     } finally {
-      vi.doUnmock('../../../../server/src/utils/security.utils.ts');
+      vi.unmock('../../../../server/src/utils/security.utils.ts');
     }
   });
 

@@ -64,19 +64,6 @@ const NEGATIVE_SIGNALS = [
   'severe',
 ];
 
-const SECTION_TYPE_ALIASES: Record<string, string[]> = {
-  summary: ['summary', 'executive_summary'],
-  cover: ['cover', 'cover_page', 'title_page'],
-  recommendations: ['recommendations', 'action_plan'],
-  consulting_decisions: ['consulting_decisions', 'next_week_focus', 'gate_decisions'],
-  findings: ['findings', 'axis_analysis'],
-};
-
-function hasSectionType(sectionTypes: Set<string>, requestedType: string): boolean {
-  const aliases = SECTION_TYPE_ALIASES[requestedType] || [requestedType];
-  return aliases.some((alias) => sectionTypes.has(alias));
-}
-
 // ── Main Check ─────────────────────────────────────────────────
 
 export async function checkQualityGates(
@@ -128,7 +115,7 @@ export async function checkQualityGates(
 
   // ── Gate 2: Missing required sections ────────────────────────
   for (const reqType of REQUIRED_SECTION_TYPES) {
-    if (!hasSectionType(sectionTypes, reqType)) {
+    if (!sectionTypes.has(reqType)) {
       gates.push({
         id: `qg-missing-${reqType}`,
         gateType: 'MISSING_REQUIRED_SECTION',
@@ -141,10 +128,7 @@ export async function checkQualityGates(
 
   // ── Gate 3: Recommended sections ─────────────────────────────
   for (const recType of RECOMMENDED_SECTION_TYPES) {
-    if (
-      !hasSectionType(sectionTypes, recType) &&
-      !hasSectionType(sectionTypes, 'consulting_decisions')
-    ) {
+    if (!sectionTypes.has(recType) && !sectionTypes.has('consulting_decisions')) {
       gates.push({
         id: `qg-recommend-${recType}`,
         gateType: 'MISSING_RECOMMENDED_SECTION',

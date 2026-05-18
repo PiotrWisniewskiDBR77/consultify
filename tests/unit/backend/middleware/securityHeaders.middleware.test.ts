@@ -250,40 +250,6 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('strips X-Powered-By when present', async () => {
-    vi.resetModules();
-    const { securityHeaders } = await import(
-      '../../../../server/src/middleware/securityHeaders.middleware.ts'
-    );
-
-    const req: any = {};
-    const res = mkRes();
-    res.removeHeader = vi.fn();
-    const next = vi.fn();
-
-    securityHeaders(req, res, next);
-
-    expect(res.removeHeader).toHaveBeenCalledWith('X-Powered-By');
-    expect(next).toHaveBeenCalledTimes(1);
-  });
-
-  it('continues when X-Powered-By removal throws', async () => {
-    vi.resetModules();
-    const { securityHeaders } = await import(
-      '../../../../server/src/middleware/securityHeaders.middleware.ts'
-    );
-
-    const req: any = {};
-    const res = mkRes();
-    res.removeHeader = vi.fn(() => {
-      throw new Error('removeHeader failed');
-    });
-    const next = vi.fn();
-
-    expect(() => securityHeaders(req, res, next)).not.toThrow();
-    expect(next).toHaveBeenCalledTimes(1);
-  });
-
   it('createRateLimiter allows up to max and then returns 429, then resets after window', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-02-18T00:00:00.000Z'));

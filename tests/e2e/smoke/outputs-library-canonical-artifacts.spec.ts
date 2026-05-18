@@ -6,7 +6,6 @@
  */
 
 import { expect, Page, test } from '@playwright/test';
-import { seedE2EAuthWithBootstrap } from './runtime-gate-helpers';
 
 async function dismissTourModal(page: Page) {
   const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
@@ -34,8 +33,6 @@ test.describe('Outputs Library — canonical artifacts [@module:outputs-library]
   test.setTimeout(90000);
 
   test('Mine tab shows rows from GET /api/artifacts?view=mine', async ({ page }) => {
-    await seedE2EAuthWithBootstrap(page);
-
     await page.route('**/api/artifacts**', async (route) => {
       const req = route.request();
       if (req.method() !== 'GET') {
@@ -102,8 +99,6 @@ test.describe('Outputs Library — canonical artifacts [@module:outputs-library]
     await expect(page.locator('#root')).toContainText(/./, { timeout: 30000 });
     await expect(page.getByText(/Coś poszło nie tak/i)).toHaveCount(0);
 
-    await expect(page.getByText('E2E Canonical Mine Output').first()).toBeVisible({
-      timeout: 20000,
-    });
+    await expect(page.getByText('E2E Canonical Mine Output')).toBeVisible({ timeout: 20000 });
   });
 });

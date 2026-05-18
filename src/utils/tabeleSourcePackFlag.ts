@@ -1,5 +1,4 @@
 /**
-<<<<<<<< HEAD:src/utils/tabeleSourcePackFlag.ts
  * Block C · EPIC-T12 · client-side kill switch for the Tabele Source Pack
  * builder panel.
  *
@@ -11,11 +10,6 @@
  *   2. `localStorage["ff.tabele_source_pack"]`
  *   3. `import.meta.env.VITE_TABELE_SOURCE_PACK`
  *   4. Default: OFF until backend `ENABLE_TABLE_SOURCE_PACK` is enabled.
-========
- * Chat V10 / V10-ART data-classification policy feature flag.
- *
- * Default OFF until artifact egress and masking policy enforcement is wired.
->>>>>>>> origin/main:src/utils/v10/artifactDataClassificationFlag.ts
  */
 
 const LS_KEY = 'ff.tabele_source_pack';

@@ -6,61 +6,6 @@ import Logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 const LOG_PREFIX = '[v8:shadow]';
-const MAX_AUTH_HEADER_LENGTH = 8192;
-const MAX_JWT_SEGMENT_LENGTH = 2048;
-const MAX_ORG_ID_LENGTH = 256;
-const MAX_V8_RESPONSE_TEXT_BYTES = 512_000;
-const MAX_V8_RESPONSE_BODY_CHARS = 262_144;
-
-const safeRead = <T>(reader: () => T, fallback: T): T => {
-  try {
-    const value = reader();
-    return value === undefined || value === null ? fallback : value;
-  } catch {
-    return fallback;
-  }
-};
-
-const sanitizeOrgId = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  if (!trimmed || trimmed.length > MAX_ORG_ID_LENGTH) return '';
-  return trimmed;
-};
-
-const decodeOrgFromBearer = (authorization: unknown): string => {
-  if (typeof authorization !== 'string' || authorization.length > MAX_AUTH_HEADER_LENGTH) return '';
-  const trimmed = authorization.trim();
-  if (!trimmed.startsWith('Bearer ')) return '';
-  const token = trimmed.slice(7).trim();
-  const segments = token.split('.');
-  if (
-    segments.length !== 3 ||
-    segments.some((segment) => segment.length === 0 || segment.length > MAX_JWT_SEGMENT_LENGTH)
-  ) {
-    return '';
-  }
-  const decoded = jwt.decode(token) as { organizationId?: string } | string | null;
-  if (!decoded || typeof decoded !== 'object') return '';
-  return sanitizeOrgId((decoded as { organizationId?: unknown }).organizationId);
-};
-
-function clampShadowResponseBody(value: unknown): unknown {
-  try {
-    const serialized = JSON.stringify(value);
-    if (typeof serialized !== 'string') return value;
-    if (serialized.length <= MAX_V8_RESPONSE_BODY_CHARS) return value;
-    return {
-      __shadowOversizedResponse: true,
-      originalLength: serialized.length,
-    };
-  } catch {
-    return {
-      __shadowOversizedResponse: true,
-      reason: 'non_serializable',
-    };
-  }
-}
 
 interface ShadowRouteMapping {
   legacyPattern: RegExp;
@@ -106,19 +51,14 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
     return;
   }
 
-  let orgId = sanitizeOrgId(safeRead(() => req.organizationId, ''));
-  const authorizationHeader = safeRead(() => req.headers.authorization, '');
-  if (
-    typeof authorizationHeader === 'string' &&
-    authorizationHeader.length > MAX_AUTH_HEADER_LENGTH
-  ) {
-    next();
-    return;
-  }
-
+  let orgId = req.organizationId;
   if (!orgId) {
     try {
-      orgId = decodeOrgFromBearer(authorizationHeader);
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const decoded = jwt.decode(authHeader.slice(7)) as { organizationId?: string } | null;
+        orgId = decoded?.organizationId;
+      }
     } catch {
       // ignore
     }
@@ -143,22 +83,7 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
 
   // Capture the legacy response
   const legacyStart = Date.now();
-  if ((res as any).headersSent) {
-    next();
-    return;
-  }
-  const rawJson = safeRead(() => res.json, null);
-  if (typeof rawJson !== 'function') {
-    next();
-    return;
-  }
-  const originalJson = (() => {
-    try {
-      return rawJson.bind(res);
-    } catch {
-      return (...args: unknown[]) => rawJson.apply(res, args as any);
-    }
-  })();
+  const originalJson = res.json.bind(res);
   let legacyBody: unknown = null;
   let legacyStatus = 200;
 
@@ -176,14 +101,12 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
       legacyBody,
       legacyStatus,
       legacyTimeMs: Date.now() - legacyStart,
-      token: typeof authorizationHeader === 'string' ? authorizationHeader.trim() : '',
+      token: req.headers.authorization || '',
     }).catch((err: Error) => {
       Logger.warn(`${LOG_PREFIX} Shadow comparison failed: ${err.message}`);
     });
 
-    const result = originalJson(body);
-    res.json = originalJson as typeof res.json;
-    return result;
+    return originalJson(body);
   } as typeof res.json;
 
   next();
@@ -207,35 +130,17 @@ async function callV8AndRecord(params: {
   try {
     // Internal call to V8 endpoint (same process, via HTTP)
     const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
-    const requestHeaders: Record<string, string> = {};
-    if (params.token) {
-      requestHeaders.Authorization = params.token;
-    }
-    if (params.method !== 'GET' && params.method !== 'HEAD') {
-      requestHeaders['Content-Type'] = 'application/json';
-    }
     const v8Res = await fetch(`${baseUrl}/api/v8${params.v8Path}`, {
       method: params.method,
-      headers: requestHeaders,
+      headers: {
+        Authorization: params.token,
+        'Content-Type': 'application/json',
+      },
     });
 
     v8Status = v8Res.status;
     try {
-      const responseText = await v8Res.text();
-      if (responseText.length > MAX_V8_RESPONSE_TEXT_BYTES) {
-        v8Body = {
-          __shadowTruncatedResponse: true,
-          originalLength: responseText.length,
-        };
-      } else if (!responseText) {
-        v8Body = null;
-      } else {
-        try {
-          v8Body = JSON.parse(responseText);
-        } catch {
-          v8Body = responseText;
-        }
-      }
+      v8Body = await v8Res.json();
     } catch {
       v8Body = null;
     }
@@ -256,7 +161,7 @@ async function callV8AndRecord(params: {
     legacyResponseTimeMs: params.legacyTimeMs,
     v8ResponseTimeMs: v8TimeMs,
     legacyResponseBody: params.legacyBody,
-    v8ResponseBody: clampShadowResponseBody(v8Body),
+    v8ResponseBody: v8Body,
     comparisonMode: params.comparisonMode,
   });
 

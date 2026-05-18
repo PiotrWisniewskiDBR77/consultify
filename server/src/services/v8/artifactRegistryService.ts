@@ -298,7 +298,6 @@ interface PresentationBackfillRow {
   presentation_mode: string | null;
   slide_count: number | null;
   export_format: string | null;
-  generated_by: string | null;
   created_at: string | null;
   updated_at: string | null;
   source_id: string | null;
@@ -910,25 +909,6 @@ async function getOriginLinkByOrigin(
   return row ? mapOriginLinkRow(row) : null;
 }
 
-export async function hasArtifactOriginLink(params: {
-  organizationId: string;
-  originRuntime:
-    | 'report'
-    | 'presentation'
-    | 'sheet'
-    | 'native_artifact'
-    | 'report_template'
-    | 'presentation_template';
-  originRecordId: string;
-}): Promise<boolean> {
-  const link = await getOriginLinkByOrigin(
-    params.organizationId,
-    params.originRuntime,
-    params.originRecordId
-  );
-  return !!link;
-}
-
 async function getArtifactRow(
   artifactId: string,
   organizationId: string
@@ -1475,7 +1455,7 @@ async function backfillReportsForOrg(organizationId: string): Promise<number> {
 async function backfillPresentationsForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<PresentationBackfillRow>(
     `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
-            d.export_format, d.generated_by, d.created_at, d.updated_at, d.source_id,
+            d.export_format, d.created_at, d.updated_at, d.source_id,
             COALESCE(d.source_artifacts, '[]') AS source_refs_json
      FROM presentation_decks d
      LEFT JOIN v8_artifact_origin_links l
@@ -1491,7 +1471,6 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   let inserted = 0;
   for (const row of rows || []) {
     try {
-      const ownerUserId = row.generated_by || null;
       const result = await registerArtifactOrigin({
         organizationId,
         outputType: 'presentation',
@@ -1499,11 +1478,13 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
         originRuntime: 'presentation',
         originRecordId: row.id,
         titleSnapshot: row.title || 'Untitled presentation',
-        ownerUserId,
-        createdBy: ownerUserId || FALLBACK_ACTOR,
+        ownerUserId: null,
+        createdBy: FALLBACK_ACTOR,
         deliveryState: mapPresentationStatusToDeliveryState(row.status),
-        // Backfill must never create inaccessible private artifacts without an owner.
-        visibilityScope: ownerUserId ? 'private' : 'organization',
+        visibilityScope: deriveArtifactVisibilityScope({
+          outputType: 'presentation',
+          isBackfill: true,
+        }),
         originSummary: {
           deckType: row.deck_type,
           presentationMode: row.presentation_mode,
@@ -2103,28 +2084,6 @@ export async function getArtifactByOrigin(params: {
     roleKey: params.roleKey,
     allowDemo: params.allowDemo,
   });
-}
-
-export async function getArtifactByOriginUnscoped(params: {
-  organizationId: string;
-  originRuntime:
-    | 'report'
-    | 'presentation'
-    | 'sheet'
-    | 'native_artifact'
-    | 'report_template'
-    | 'presentation_template';
-  originRecordId: string;
-}): Promise<ArtifactListItem | null> {
-  await ensureBackfilledOutputsForOrg(params.organizationId);
-  const link = await getOriginLinkByOrigin(
-    params.organizationId,
-    params.originRuntime,
-    params.originRecordId
-  );
-  if (!link) return null;
-  const row = await getArtifactListItemRow(link.artifactId, params.organizationId);
-  return row ? rowToListItem(row) : null;
 }
 
 export async function listMyWorkArtifacts(params: {
@@ -3005,15 +2964,13 @@ export async function materializeArtifactRun(
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
         presentationParams.setup as any,
-        validated.organizationId,
-        validated.actorUserId
+        validated.organizationId
       );
       await presentationGeneratorService.generateDeck(
         outlined.deckId,
         outlined.outline,
         presentationParams.setup as any,
-        validated.organizationId,
-        validated.actorUserId
+        validated.organizationId
       );
       await registerArtifactOrigin({
         organizationId: validated.organizationId,

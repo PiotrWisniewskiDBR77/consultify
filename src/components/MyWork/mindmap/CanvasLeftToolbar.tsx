@@ -25,7 +25,6 @@ import {
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -319,12 +318,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     return (
       <div key={slot.id} className="relative">
         <button
-          data-testid={`canvas-left-toolbar-${slot.id}`}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleSlotClick(slot);
-          }}
+          onClick={() => handleSlotClick(slot)}
           title={slotTitle}
           aria-label={slotTitle}
           className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
@@ -387,10 +381,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     );
   };
 
-  const toolbarNode = (
+  return (
     <div
       ref={toolbarRef}
-      className="fixed left-3 top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter"
+      className="absolute left-3 top-1/2 -translate-y-1/2 z-[52] flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter"
     >
       {SHARED_TOP.map(renderSlot)}
 
@@ -427,12 +421,6 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       })}
     </div>
   );
-
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return toolbarNode;
-  }
-
-  return createPortal(toolbarNode, document.body);
 };
 
 export default CanvasLeftToolbar;

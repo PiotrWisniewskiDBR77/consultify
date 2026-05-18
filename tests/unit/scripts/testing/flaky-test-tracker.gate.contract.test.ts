@@ -54,11 +54,9 @@ describe('flaky-test-tracker gate contract', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Recorded 5 test results');
-    const defaultRegistryPath = path.join(repoRoot, 'test-results', 'flaky-tests.json');
-    const effectiveRegistryPath = fs.existsSync(registryPath) ? registryPath : defaultRegistryPath;
-    expect(fs.existsSync(effectiveRegistryPath)).toBe(true);
+    expect(fs.existsSync(registryPath)).toBe(true);
 
-    const registry = JSON.parse(fs.readFileSync(effectiveRegistryPath, 'utf-8')) as any;
+    const registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8')) as any;
     expect(registry.version).toBe('1.0.0');
     expect(Array.isArray(registry.tests)).toBe(true);
     expect(registry.tests.length).toBeGreaterThan(0);

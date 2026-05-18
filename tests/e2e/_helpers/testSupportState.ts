@@ -8,10 +8,10 @@ export type TestSupportState = {
 };
 
 export const TEST_SUPPORT_STATE_PATH =
-  process.env.E2E_TEST_SUPPORT_STATE_PATH || '.tmp/e2e/e2e-test-support.json';
+  process.env.E2E_TEST_SUPPORT_STATE_PATH || 'test-results/e2e-test-support.json';
 
 export const STORAGE_STATE_PATH =
-  process.env.E2E_STORAGE_STATE_PATH || '.tmp/e2e/e2e-storage-state.json';
+  process.env.E2E_STORAGE_STATE_PATH || 'test-results/e2e-storage-state.json';
 
 export function readTestSupportState(): TestSupportState {
   const raw = fs.readFileSync(TEST_SUPPORT_STATE_PATH, 'utf8');

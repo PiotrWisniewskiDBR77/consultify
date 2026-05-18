@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import { defineConfig } from 'vitest/config';
 
 import baseConfig from './vitest.config';
@@ -10,8 +8,6 @@ import baseConfig from './vitest.config';
  * Scope is intentionally focused on security admin endpoints that hit the real DB.
  */
 const base = baseConfig as any;
-const coverageRunId = process.env.VITEST_COVERAGE_RUN_ID || `${Date.now()}-${process.pid}`;
-const coverageRoot = path.resolve(process.env.TMPDIR || '/tmp', 'consultify-vitest-coverage');
 
 export default defineConfig({
   ...base,
@@ -50,7 +46,7 @@ export default defineConfig({
     },
     coverage: {
       ...(base.test?.coverage || {}),
-      reportsDirectory: path.join(coverageRoot, `l3-${coverageRunId}`),
+      reportsDirectory: 'test-results/coverage/l3',
       include: [
         'server/src/routes/securityPolicies.routes.ts',
         'server/src/routes/security.routes.ts',

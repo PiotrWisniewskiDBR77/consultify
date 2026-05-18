@@ -74,82 +74,6 @@ interface Dependencies {
   db: Database;
   StatusMachine: StatusMachine;
 }
-const MAX_ID_LENGTH = 128;
-const MAX_STATUS_LENGTH = 128;
-const MAX_BLOCKED_REASON_LENGTH = 8192;
-
-const safeRead = <T>(reader: () => T, fallback: T): T => {
-  try {
-    return reader();
-  } catch {
-    return fallback;
-  }
-};
-
-const safeNext = (next: NextFunction): void => {
-  if (typeof next === 'function') {
-    next();
-  }
-};
-
-const safeBody = (req: PMORequest): PMORequest['body'] => {
-  const body = safeRead(() => req.body, undefined as unknown);
-  if (!body || typeof body !== 'object') {
-    return {} as PMORequest['body'];
-  }
-  return body as PMORequest['body'];
-};
-
-const safeParamsId = (req: PMORequest): string | null => {
-  try {
-    const value = req.params?.id;
-    if (typeof value !== 'string') return null;
-    const normalized = value.trim();
-    return normalized || null;
-  } catch {
-    return null;
-  }
-};
-
-const readRawParamsId = (req: PMORequest): unknown => {
-  try {
-    return req.params?.id;
-  } catch {
-    return undefined;
-  }
-};
-
-const normalizeShortString = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
-
-const normalizeEntityId = (value: unknown): string => {
-  const normalized = normalizeShortString(value);
-  if (!normalized || normalized.length > MAX_ID_LENGTH) return '';
-  return normalized;
-};
-
-const normalizeStatusValue = (value: unknown): string | null => {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== 'string') return '__INVALID_STATUS_TYPE__';
-  const normalized = value.trim();
-  if (!normalized) return null;
-  if (normalized.length > MAX_STATUS_LENGTH) return '__STATUS_TOO_LONG__';
-  return normalized;
-};
-
-const normalizeBlockedReason = (...values: unknown[]): string | undefined => {
-  for (const value of values) {
-    const normalized = normalizeShortString(value);
-    if (normalized) return normalized.slice(0, MAX_BLOCKED_REASON_LENGTH);
-  }
-  return undefined;
-};
-
-const normalizeCurrentStatus = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  const normalized = value.trim();
-  return normalized;
-};
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -168,20 +92,18 @@ let deps: Dependencies = {
  * Validate initiative creation (owner required)
  */
 export const validateInitiative = (req: PMORequest, res: Response, next: NextFunction): void => {
-  const body = safeBody(req);
-  const owner = normalizeEntityId(body.ownerId || body.owner_business_id || body.ownerBusinessId);
+  const { ownerId, owner_business_id, ownerBusinessId } = req.body;
+  const owner = ownerId || owner_business_id || ownerBusinessId;
 
   if (!owner) {
-    const ownerRaw = body.ownerId || body.owner_business_id || body.ownerBusinessId;
-    const tooLong = typeof ownerRaw === 'string' && ownerRaw.trim().length > MAX_ID_LENGTH;
     res.status(400).json({
       error: 'Initiative must have an owner',
-      rule: tooLong ? 'OWNER_VALUE_TOO_LONG' : 'INITIATIVE_OWNER_REQUIRED',
+      rule: 'INITIATIVE_OWNER_REQUIRED',
     });
     return;
   }
 
-  safeNext(next);
+  next();
 };
 
 /**
@@ -192,17 +114,13 @@ export const validateTask = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const body = safeBody(req);
-  const rawId = body.initiativeId || body.initiative_id;
-  const initId = normalizeEntityId(rawId);
+  const { initiativeId, initiative_id } = req.body;
+  const initId = initiativeId || initiative_id;
 
   if (!initId) {
     res.status(400).json({
       error: 'Task must belong to an initiative',
-      rule:
-        typeof rawId === 'string' && rawId.trim().length > MAX_ID_LENGTH
-          ? 'INVALID_ENTITY_ID'
-          : 'TASK_INITIATIVE_REQUIRED',
+      rule: 'TASK_INITIATIVE_REQUIRED',
     });
     return;
   }
@@ -219,9 +137,10 @@ export const validateTask = async (
       });
       return;
     }
-    safeNext(next);
-  } catch {
-    res.status(500).json({ error: 'Internal server error' });
+    next();
+  } catch (err: any) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -235,69 +154,44 @@ export const validateInitiativeStatus = async (
 ): Promise<void> => {
   const { StatusMachine } = deps;
 
-  const body = safeBody(req);
-  const status = normalizeStatusValue(body.status);
-  const blockedReason = normalizeBlockedReason(body.blockedReason, body.blocked_reason);
-  const initiativeId = safeParamsId(req);
-  const rawInitiativeId = readRawParamsId(req);
+  const { status, blockedReason, blocked_reason } = req.body;
 
-  if (status === null) {
-    safeNext(next);
-    return;
-  }
-  if (status === '__INVALID_STATUS_TYPE__') {
-    res.status(400).json({ error: 'Status must be a string', rule: 'INVALID_STATUS_TYPE' });
-    return;
-  }
-  if (status === '__STATUS_TOO_LONG__') {
-    res.status(400).json({ error: 'Status value too long', rule: 'STATUS_VALUE_TOO_LONG' });
-    return;
-  }
-  if (!initiativeId) {
-    res.status(400).json({ error: 'Invalid initiative id', rule: 'INVALID_ENTITY_ID' });
-    return;
-  }
-  if (typeof rawInitiativeId === 'string' && rawInitiativeId.trim().length > MAX_ID_LENGTH) {
-    res.status(400).json({ error: 'Invalid initiative id', rule: 'INVALID_ENTITY_ID' });
+  if (!status) {
+    next();
     return;
   }
 
   try {
     const row = await DbPromise.get<InitiativeRow>(
       `SELECT status, project_id FROM initiatives WHERE id = ?`,
-      [initiativeId]
+      [req.params.id]
     );
     if (!row) {
       res.status(404).json({ error: 'Initiative not found' });
       return;
     }
-    const currentStatus = normalizeCurrentStatus(row.status);
-    if (!currentStatus) {
-      res.status(500).json({ error: 'Invalid current initiative status' });
-      return;
-    }
 
-    const validation = StatusMachine.validateInitiativeTransition(currentStatus, status, {
-      blockedReason,
+    const validation = StatusMachine.validateInitiativeTransition(row.status, status, {
+      blockedReason: blockedReason || blocked_reason,
     });
 
-    if (!validation || validation.valid !== true) {
+    if (!validation.valid) {
       res.status(400).json({
-        error:
-          typeof validation?.reason === 'string' ? validation.reason : 'Invalid status transition',
+        error: validation.reason,
         rule: 'INVALID_STATUS_TRANSITION',
-        currentStatus,
+        currentStatus: row.status,
         requestedStatus: status,
       });
       return;
     }
 
     // Store current status for audit
-    req.previousStatus = currentStatus;
+    req.previousStatus = row.status;
     req.projectId = row.project_id;
-    safeNext(next);
-  } catch {
-    res.status(500).json({ error: 'Internal server error' });
+    next();
+  } catch (err: any) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -311,70 +205,44 @@ export const validateTaskStatus = async (
 ): Promise<void> => {
   const { StatusMachine } = deps;
 
-  const body = safeBody(req);
-  const status = normalizeStatusValue(body.status);
-  const blockedReason = normalizeBlockedReason(body.blockedReason, body.blocked_reason);
-  const blockerType = normalizeShortString(body.blockerType || body.blocker_type) || undefined;
-  const taskId = safeParamsId(req);
-  const rawTaskId = readRawParamsId(req);
+  const { status, blockedReason, blocked_reason, blockerType, blocker_type } = req.body;
 
-  if (status === null) {
-    safeNext(next);
-    return;
-  }
-  if (status === '__INVALID_STATUS_TYPE__') {
-    res.status(400).json({ error: 'Status must be a string', rule: 'INVALID_STATUS_TYPE' });
-    return;
-  }
-  if (status === '__STATUS_TOO_LONG__') {
-    res.status(400).json({ error: 'Status value too long', rule: 'STATUS_VALUE_TOO_LONG' });
-    return;
-  }
-  if (!taskId) {
-    res.status(400).json({ error: 'Invalid task id', rule: 'INVALID_ENTITY_ID' });
-    return;
-  }
-  if (typeof rawTaskId === 'string' && rawTaskId.trim().length > MAX_ID_LENGTH) {
-    res.status(400).json({ error: 'Invalid task id', rule: 'INVALID_ENTITY_ID' });
+  if (!status) {
+    next();
     return;
   }
 
   try {
     const row = await DbPromise.get<TaskRow>(
       `SELECT status, initiative_id FROM tasks WHERE id = ?`,
-      [taskId]
+      [req.params.id]
     );
     if (!row) {
       res.status(404).json({ error: 'Task not found' });
       return;
     }
-    const currentStatus = normalizeCurrentStatus(row.status);
-    if (!currentStatus) {
-      res.status(500).json({ error: 'Invalid current task status' });
-      return;
-    }
 
-    const validation = StatusMachine.validateTaskTransition(currentStatus, status, {
-      blockedReason,
-      blockerType,
+    const validation = StatusMachine.validateTaskTransition(row.status, status, {
+      blockedReason: blockedReason || blocked_reason,
+      blockerType: blockerType || blocker_type,
     });
 
-    if (!validation || validation.valid !== true) {
+    if (!validation.valid) {
       res.status(400).json({
-        error:
-          typeof validation?.reason === 'string' ? validation.reason : 'Invalid status transition',
+        error: validation.reason,
         rule: 'INVALID_STATUS_TRANSITION',
-        currentStatus,
+        currentStatus: row.status,
         requestedStatus: status,
       });
       return;
     }
 
-    req.previousStatus = currentStatus;
+    req.previousStatus = row.status;
     req.initiativeId = row.initiative_id;
-    safeNext(next);
-  } catch {
-    res.status(500).json({ error: 'Internal server error' });
+    next();
+  } catch (err: any) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -383,55 +251,26 @@ export const validateTaskStatus = async (
  */
 export const logStatusChange = (entityType: string) => {
   return (req: PMORequest, res: Response, next: NextFunction): void => {
-    let originalSend: ((data: unknown) => unknown) | null = null;
-    try {
-      if (typeof (res as any).json !== 'function') {
-        safeNext(next);
-        return;
-      }
-      originalSend = (res as any).json.bind(res);
-    } catch {
-      safeNext(next);
-      return;
-    }
+    const originalSend = res.json.bind(res);
 
     (res.json as any) = async (data: unknown) => {
       // Only log if successful and status changed, and we have a valid org context
-      const statusCode = safeRead(() => Number(res.statusCode), Number.NaN);
-      const previousStatus = safeRead(() => req.previousStatus || '', '');
-      const body = safeBody(req);
-      const nextStatus = normalizeStatusValue(body.status);
-      const organizationId = normalizeEntityId(safeRead(() => req.organizationId, undefined));
-      const userId = normalizeEntityId(safeRead(() => req.userId, undefined));
-      const entityId = normalizeEntityId(safeRead(() => req.params?.id, undefined));
-
-      if (
-        Number.isFinite(statusCode) &&
-        statusCode < 400 &&
-        previousStatus &&
-        typeof nextStatus === 'string' &&
-        nextStatus &&
-        organizationId &&
-        userId &&
-        entityId
-      ) {
+      if (res.statusCode < 400 && req.previousStatus && req.body.status && req.organizationId) {
         const logSql = `INSERT INTO activity_logs 
                     (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                     VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
 
         try {
-          const oldValue = JSON.stringify({ status: previousStatus });
-          const newValue = JSON.stringify({ status: nextStatus });
           await DbPromise.run(logSql, [
             uuidv4(),
-            organizationId,
-            userId,
+            req.organizationId,
+            req.userId,
             entityType,
-            entityId,
-            oldValue,
-            newValue,
+            req.params.id,
+            JSON.stringify({ status: req.previousStatus }),
+            JSON.stringify({ status: req.body.status }),
           ]);
-        } catch (err: unknown) {
+        } catch (err: any) {
           // Log error but don't fail the request
           const errorMessage = err instanceof Error ? err.message : String(err);
           const errorStack = err instanceof Error ? err.stack : undefined;
@@ -440,10 +279,10 @@ export const logStatusChange = (entityType: string) => {
               error: errorMessage,
               stack: errorStack,
               sql: logSql,
-              organizationId: organizationId || 'unknown',
-              userId: userId || null,
+              organizationId: req.organizationId || 'unknown',
+              userId: req.userId || null,
               entityType,
-              entityId,
+              entityId: req.params.id,
             });
           } catch (logErr) {
             // Fallback if logging itself fails (e.g., circular reference)
@@ -452,10 +291,10 @@ export const logStatusChange = (entityType: string) => {
         }
       }
 
-      return originalSend!(data);
+      return originalSend(data);
     };
 
-    safeNext(next);
+    next();
   };
 };
 

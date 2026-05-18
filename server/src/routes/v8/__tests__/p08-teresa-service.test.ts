@@ -310,26 +310,6 @@ describe('P08-B §1A — Chat proposal synthesis', () => {
     expect(proposal!.previewLines.length).toBeGreaterThan(0);
   });
 
-  it('creates a Teresa chat proposal envelope for table intents in Canvas', async () => {
-    const proposal = await createChatProposal({
-      organizationId: ORG,
-      userId: USER,
-      sessionId: SESSION,
-      userMessage: 'Utwórz tabelę w Canvas do ryzyk projektu',
-      assistantMessage: 'Mogę przygotować propozycję tabeli i przekazać ją do Table Studio.',
-      context: {
-        workspaceContext: { projectId: 'proj-1', type: 'work-canvas' },
-        screenContext: { currentScreen: 'work-canvas' },
-      },
-      citations: [{ id: 'cit-2' }],
-    });
-
-    expect(proposal).not.toBeNull();
-    expect(proposal!.targetModule).toBe('excele');
-    expect(proposal!.allowedActions).toContain('approve');
-    expect(proposal!.previewLines.length).toBeGreaterThan(0);
-  });
-
   it('returns null when the chat turn does not imply a safe Teresa handoff', async () => {
     const proposal = await createChatProposal({
       organizationId: ORG,

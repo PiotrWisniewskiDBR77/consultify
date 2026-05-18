@@ -4,7 +4,7 @@ doc_kind: ENTRYPOINT
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-18
+last_updated: 2026-05-09
 ---
 
 # Moja Praca / My Work
@@ -12,12 +12,6 @@ last_updated: 2026-05-18
 ## Purpose
 
 Osobiste centrum pracy użytkownika: home, inbox/radar, bieżące artefakty, zadania, powroty do pracy i dzienny rytm bez przejmowania odpowiedzialności modułów źródłowych.
-
-## Current Module Priority
-
-- `MW_HOME_RADAR` is currently under canonical rebuild direction.
-- The dominant source for Radar decisions is `functions/MW_HOME_RADAR.md`.
-- Development sequence is locked as `R0 -> R1 -> R2 -> R3` (documented in that function contract).
 
 ## Contract Layers
 

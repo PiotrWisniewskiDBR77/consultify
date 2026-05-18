@@ -136,27 +136,6 @@ describe('RouterSync idea artifact deep links', () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
     });
-
-    navigateMock.mockReset();
-
-    routerState.pathname = '/portfolio';
-    render(<RouterSync />);
-
-    await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
-    });
-  });
-
-  it('protects AI OS routes for unauthenticated users', async () => {
-    appState.currentUser = null as any;
-    routerState.searchParams = new URLSearchParams();
-    routerState.pathname = '/ai/actions';
-
-    render(<RouterSync />);
-
-    await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
-    });
   });
 
   it('protects AI OS routes for unauthenticated users', async () => {

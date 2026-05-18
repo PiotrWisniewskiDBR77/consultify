@@ -4,22 +4,6 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const expectFailEnvelope = (
-  payload: any,
-  code: string,
-  message: string,
-  expectedStatus: 'fail' | 'error' = 'fail'
-) => {
-  expect(payload).toMatchObject({
-    status: expectedStatus,
-    correlationId: null,
-    error: {
-      code,
-      message,
-    },
-  });
-};
-
 const mockInvitationServiceDefault = {
   getInvitations: vi.fn(),
   createInvitation: vi.fn(),
@@ -69,11 +53,7 @@ describe('InvitationController', () => {
     await InvitationController.getInvitations(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATIONS_UNAUTHORIZED',
-      'Authentication is required.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
   });
 
   it('getInvitations should return service payload', async () => {
@@ -109,11 +89,7 @@ describe('InvitationController', () => {
     await InvitationController.resendInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_ID_REQUIRED',
-      'Invitation ID is required.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invitation ID is required' });
   });
 
   it('resendInvitation should 401 without organization context', async () => {
@@ -124,11 +100,7 @@ describe('InvitationController', () => {
     await InvitationController.resendInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_UNAUTHORIZED',
-      'Authentication is required.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     expect(mockInvitationServiceDefault.resendInvitation).not.toHaveBeenCalled();
   });
 
@@ -157,11 +129,7 @@ describe('InvitationController', () => {
     await InvitationController.acceptInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_ACCEPT_INVALID',
-      'Invitation token or payload is invalid.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Token does not match' });
   });
 
   it('acceptInvitation should return 400 on known invitation domain errors', async () => {
@@ -173,11 +141,7 @@ describe('InvitationController', () => {
     await InvitationController.acceptInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_ACCEPT_INVALID',
-      'Invitation token or payload is invalid.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invitation has expired' });
   });
 
   it('acceptInvitation should keep 500 for unexpected failures', async () => {
@@ -189,12 +153,7 @@ describe('InvitationController', () => {
     await InvitationController.acceptInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_ACCEPT_FAILED',
-      'Failed to accept invitation.',
-      'error'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database exploded' });
   });
 
   it('validateToken should include role and expiry details in success payload', async () => {
@@ -229,11 +188,7 @@ describe('InvitationController', () => {
     await InvitationController.getInvitationAudit(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_UNAUTHORIZED',
-      'Authentication is required.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     expect(mockInvitationServiceDefault.getInvitationAudit).not.toHaveBeenCalled();
   });
 
@@ -260,11 +215,7 @@ describe('InvitationController', () => {
     await InvitationController.cancelInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
-    expectFailEnvelope(
-      mockRes.json.mock.calls[0][0],
-      'INVITATION_UNAUTHORIZED',
-      'Authentication is required.'
-    );
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     expect(mockInvitationServiceDefault.revokeInvitation).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,4 @@
 /**
-<<<<<<<< HEAD:src/utils/recordProvenanceFlag.ts
  * Tabele Block B / EPIC-T9 — feature flag for the record-provenance UI
  * (confidence bar, validation badge, source popover, AddSourceDialog).
  *
@@ -18,12 +17,6 @@
  *   3. `import.meta.env.VITE_RECORD_PROVENANCE` — build-time default.
  *   4. Default: OFF. Block B ships behind a closed flag until backend
  *      `ENABLE_RECORD_PROVENANCE` is rolled out across staging + prod.
-========
- * Chat V10 / V10-ONB persona-capture feature flag.
- *
- * Default OFF. Enables materialising first-run persona capture only when the
- * onboarding runtime is deliberately rolled out.
->>>>>>>> origin/main:src/utils/v10/onboardPersonaCaptureFlag.ts
  */
 
 const LS_KEY = 'ff.record_provenance';

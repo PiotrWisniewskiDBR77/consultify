@@ -82,26 +82,6 @@ describe('CalendarSidebar external source availability', () => {
     });
   });
 
-  it('updates ownership filter in sidebar', () => {
-    const onFilterChange = vi.fn();
-
-    render(
-      <CalendarSidebar
-        filter={{ sources: ['task'], ownership: 'any' }}
-        onFilterChange={onFilterChange}
-        currentDate={new Date('2026-03-28T00:00:00Z')}
-        onDateChange={vi.fn()}
-      />
-    );
-
-    fireEvent.click(screen.getByText('Assigned to me'));
-
-    expect(onFilterChange).toHaveBeenCalledWith({
-      sources: ['task'],
-      ownership: 'assignee',
-    });
-  });
-
   it('shows workload guidance for the selected day', () => {
     render(
       <CalendarSidebar

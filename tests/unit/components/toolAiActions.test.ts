@@ -14,7 +14,7 @@ describe('toolAiActions registry', () => {
       aiAssisted: false,
     });
 
-    expect(actions.map((action) => action.id)).toEqual(['frame-mission', 'draft-session']);
+    expect(actions.map((action) => action.id)).toEqual(['suggest-step', 'generate-full-session']);
   });
 
   it('returns summary action for AI-assisted summary steps', () => {
@@ -29,6 +29,6 @@ describe('toolAiActions registry', () => {
     });
 
     expect(actions).toHaveLength(1);
-    expect(actions[0]?.id).toBe('finalize-outputs');
+    expect(actions[0]?.id).toBe('generate-summary');
   });
 });

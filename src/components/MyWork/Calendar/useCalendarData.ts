@@ -40,7 +40,6 @@ export function useCalendarData(
         end: dateRange?.end,
         sources: filter.sources.length < ALL_SOURCES.length ? filter.sources : undefined,
         projectId: filter.projectId,
-        ownership: filter.ownership,
       });
       if (res?.events) {
         setEvents(res.events);

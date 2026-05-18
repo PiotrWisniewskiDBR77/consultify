@@ -40,13 +40,6 @@ interface Dependencies {
   // No longer needed - using DbPromise directly
 }
 
-const MAX_USER_ID_LENGTH = 512;
-const MAX_HTTP_METHOD_LENGTH = 64;
-const MAX_REQUEST_PATH_LENGTH = 8192;
-const SAFE_METHODS = new Set(['OPTIONS', 'HEAD', 'TRACE']);
-
-type ResponsePayload = Record<string, unknown>;
-
 // ==========================================
 // CONSTANTS
 // ==========================================
@@ -57,7 +50,6 @@ type ResponsePayload = Record<string, unknown>;
 export const BLOCKED_ROUTES: BlockedRoute[] = [
   // Initiative creation/modification
   { method: 'POST', path: /^\/api\/initiatives/ },
-  { method: 'PATCH', path: /^\/api\/initiatives/ },
   { method: 'PUT', path: /^\/api\/initiatives/ },
   { method: 'DELETE', path: /^\/api\/initiatives/ },
 
@@ -94,110 +86,13 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
 // HELPER FUNCTIONS
 // ==========================================
 
-const safeRead = <T>(reader: () => T, fallback: T): T => {
-  try {
-    return reader();
-  } catch {
-    return fallback;
-  }
-};
-
-const normalizeMethod = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim().toUpperCase();
-};
-
-const normalizeUserId = (value: unknown): string => {
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  if (typeof value === 'bigint') return value.toString();
-  return '';
-};
-
-const normalizePathComponent = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-  const withoutQuery = trimmed.split('?')[0];
-  if (!withoutQuery) return '';
-  let normalized = withoutQuery.replace(/\/{2,}/g, '/');
-  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
-  return normalized;
-};
-
-const normalizeRequestPath = (req: TrialRequest): string => {
-  const candidates = [
-    safeRead(() => req.originalUrl, ''),
-    safeRead(() => req.url, ''),
-    `${safeRead(() => req.baseUrl, '') || ''}${safeRead(() => req.path, '') || ''}`,
-    safeRead(() => req.path, ''),
-  ];
-
-  for (const candidate of candidates) {
-    const normalized = normalizePathComponent(candidate);
-    if (normalized) return normalized;
-  }
-  return '';
-};
-
-const getNormalizedRequestPaths = (req: TrialRequest): string[] => {
-  const rawCandidates = [
-    safeRead(() => req.originalUrl, ''),
-    safeRead(() => req.url, ''),
-    `${safeRead(() => req.baseUrl, '') || ''}${safeRead(() => req.path, '') || ''}`,
-    safeRead(() => req.path, ''),
-  ];
-
-  const normalized = rawCandidates
-    .map((candidate) => normalizePathComponent(candidate))
-    .filter((candidate): candidate is string => Boolean(candidate));
-
-  return Array.from(new Set(normalized));
-};
-
-const safeNext = (next: NextFunction, error?: unknown): void => {
-  try {
-    if (error === undefined) next();
-    else next(error);
-  } catch (nextError) {
-    if (error === undefined) {
-      try {
-        next(nextError);
-      } catch {
-        // swallow - middleware must not crash process
-      }
-    }
-  }
-};
-
-const safeRespond = (
-  res: Response,
-  next: NextFunction,
-  statusCode: number,
-  payload: ResponsePayload
-): boolean => {
-  if (safeRead(() => Boolean(res.headersSent), false)) return false;
-  try {
-    res.status(statusCode).json(payload);
-    return true;
-  } catch (error) {
-    safeNext(
-      next,
-      new Error(`TRIAL_ENTRY_GUARD_RESPONSE_FAILED: ${String((error as Error)?.message || error)}`)
-    );
-    return false;
-  }
-};
-
 /**
  * Check if user is in Trial Entry status
  */
 export async function isTrialEntryUser(userId: string): Promise<boolean> {
   const userRow = await dbGet<UserRow>(`SELECT user_status FROM users WHERE id = ?`, [userId]);
-  const status = safeRead(() => String(userRow?.user_status || ''), '')
-    .trim()
-    .toUpperCase();
-  return status === 'TRIAL_ENTRY';
+
+  return userRow?.user_status === 'TRIAL_ENTRY';
 }
 
 /**
@@ -223,47 +118,25 @@ export const trialEntryGuard = async (
 ): Promise<void> => {
   try {
     // Skip if no user (auth middleware not applied or failed)
-    const userId = normalizeUserId(safeRead(() => req.user?.id, undefined));
-    if (!userId || userId.length > MAX_USER_ID_LENGTH) {
-      safeNext(next);
-      return;
-    }
-
-    const method = normalizeMethod(safeRead(() => req.method, ''));
-    if (!method) {
-      safeRespond(res, next, 400, { error: 'INVALID_HTTP_METHOD' });
-      return;
-    }
-    if (method.length > MAX_HTTP_METHOD_LENGTH) {
-      safeRespond(res, next, 400, { error: 'HTTP_METHOD_TOO_LONG' });
-      return;
-    }
-    if (SAFE_METHODS.has(method)) {
-      safeNext(next);
-      return;
-    }
-
-    const normalizedPath = normalizeRequestPath(req);
-    const normalizedPaths = getNormalizedRequestPaths(req);
-    if (normalizedPath.length > MAX_REQUEST_PATH_LENGTH) {
-      safeRespond(res, next, 400, { error: 'REQUEST_URI_TOO_LONG' });
+    if (!req.user?.id) {
+      next();
       return;
     }
 
     // Check if user is in Trial Entry
-    const isTrialEntry = await isTrialEntryUser(userId);
+    const isTrialEntry = await isTrialEntryUser(req.user.id);
 
     if (!isTrialEntry) {
-      safeNext(next);
+      next();
       return;
     }
 
+    // Attach flag for downstream use
+    req.isTrialEntry = true;
+
     // Check if this route is blocked
-    const shouldBlock = normalizedPaths.some((pathCandidate) =>
-      isBlockedRoute(method, pathCandidate)
-    );
-    if (shouldBlock) {
-      safeRespond(res, next, 403, {
+    if (isBlockedRoute(req.method, req.path)) {
+      res.status(403).json({
         error: 'TRIAL_ENTRY_RESTRICTION',
         message: 'Ta funkcja nie jest dostępna w Trial Entry. Załóż organizację, aby kontynuować.',
         messageEn:
@@ -276,16 +149,10 @@ export const trialEntryGuard = async (
       return;
     }
 
-    // Attach flag for downstream use only for allowed routes.
-    try {
-      req.isTrialEntry = true;
-    } catch {
-      // non-critical
-    }
-    safeNext(next);
+    next();
   } catch (error: unknown) {
     logger.error('[TrialEntryGuard] Error:', error);
-    safeNext(next, error);
+    next(error);
   }
 };
 
@@ -298,9 +165,8 @@ export const requireOrgContext = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const isTrialEntry = safeRead(() => req.isTrialEntry === true, false);
-  if (isTrialEntry) {
-    safeRespond(res, next, 403, {
+  if (req.isTrialEntry) {
+    res.status(403).json({
       error: 'ORG_REQUIRED',
       message: 'Ta funkcja wymaga organizacji. Jesteś w fazie Trial Entry.',
       cta: {
@@ -311,16 +177,15 @@ export const requireOrgContext = async (
     return;
   }
 
-  const organizationId = normalizeUserId(safeRead(() => req.user?.organizationId, undefined));
-  if (!organizationId || organizationId.length > MAX_USER_ID_LENGTH) {
-    safeRespond(res, next, 403, {
+  if (!req.user?.organizationId) {
+    res.status(403).json({
       error: 'ORG_REQUIRED',
       message: 'Brak kontekstu organizacji.',
     });
     return;
   }
 
-  safeNext(next);
+  next();
 };
 
 // ==========================================

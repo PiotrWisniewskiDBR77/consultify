@@ -22,51 +22,15 @@ export async function v8ShadowModeCheck(
   _res: Response,
   next: NextFunction
 ): Promise<void> {
-  const MAX_AUTH_HEADER_LENGTH = 8192;
-  const MAX_JWT_SEGMENT_LENGTH = 2048;
-  const MAX_ORG_ID_LENGTH = 256;
-  const safeRead = <T>(reader: () => T, fallback: T): T => {
-    try {
-      const value = reader();
-      return value === undefined || value === null ? fallback : value;
-    } catch {
-      return fallback;
-    }
-  };
-  const sanitizeOrgId = (value: unknown): string => {
-    if (typeof value !== 'string') return '';
-    const trimmed = value.trim();
-    if (!trimmed || trimmed.length > MAX_ORG_ID_LENGTH) return '';
-    return trimmed;
-  };
-
-  let orgId = sanitizeOrgId(
-    safeRead(() => req.organizationId, '') ||
-      safeRead(() => (req as any).organizationId, '') ||
-      safeRead(() => (req as any).user?.organizationId, '') ||
-      safeRead(() => (req as any).user?.organization_id, '')
-  );
+  let orgId = req.organizationId;
 
   if (!orgId) {
     try {
-      const authHeader = safeRead(() => req.headers.authorization, '');
-      if (typeof authHeader === 'string' && authHeader.length <= MAX_AUTH_HEADER_LENGTH) {
-        const trimmedHeader = authHeader.trim();
-        if (trimmedHeader.startsWith('Bearer ')) {
-          const token = trimmedHeader.slice(7).trim();
-          const segments = token.split('.');
-          if (
-            segments.length === 3 &&
-            segments.every(
-              (segment) => segment.length > 0 && segment.length <= MAX_JWT_SEGMENT_LENGTH
-            )
-          ) {
-            const decoded = jwt.decode(token) as { organizationId?: string } | string | null;
-            if (decoded && typeof decoded === 'object') {
-              orgId = sanitizeOrgId((decoded as { organizationId?: unknown }).organizationId);
-            }
-          }
-        }
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        const decoded = jwt.decode(token) as { organizationId?: string } | null;
+        orgId = decoded?.organizationId;
       }
     } catch {
       // ignore — shadow mode just won't fire
@@ -82,8 +46,8 @@ export async function v8ShadowModeCheck(
   try {
     (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = await isV8ShadowMode(orgId);
   } catch (err: unknown) {
-    const msg = (err instanceof Error ? err.message : String(err)).replace(/\s+/g, ' ').trim();
-    Logger.warn(`[v8:shadow-check] Failed shadow lookup orgId=${orgId} err=${msg}`);
+    const msg = err instanceof Error ? err.message : String(err);
+    Logger.warn(`[v8:shadow-check] Failed to check shadow mode for ${orgId}: ${msg}`);
     (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = false;
   }
 

@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildDuplicateSelection,
-} from '../../../src/components/MyWork/whiteboard/useWhiteboardNodes';
+import { buildDuplicateSelection } from '../../../src/components/MyWork/whiteboard/useWhiteboardNodes';
 
 describe('buildDuplicateSelection', () => {
   it('remaps duplicated edges to duplicated node ids', () => {
@@ -61,36 +59,5 @@ describe('buildDuplicateSelection', () => {
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].data.locked).toBe(false);
     expect(result.nodes[0].data.sourceNodeId).toBe('open-node');
-  });
-
-  it('keeps duplicated edge endpoints aligned with duplicated nodes when ids are generated once', () => {
-    const result = buildDuplicateSelection(
-      [
-        {
-          id: 'node-1',
-          selected: true,
-          position: { x: 40, y: 40 },
-          data: { label: 'One' },
-        },
-        {
-          id: 'node-2',
-          selected: true,
-          position: { x: 240, y: 40 },
-          data: { label: 'Two' },
-        },
-      ] as any,
-      [
-        {
-          id: 'edge-1-2',
-          source: 'node-1',
-          target: 'node-2',
-          data: { relation: 'depends_on' },
-        },
-      ] as any
-    );
-
-    const duplicatedIds = new Set(result.nodes.map((node) => node.id));
-    expect(duplicatedIds.has(result.edges[0].source)).toBe(true);
-    expect(duplicatedIds.has(result.edges[0].target)).toBe(true);
   });
 });

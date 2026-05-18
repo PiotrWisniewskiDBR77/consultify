@@ -33,14 +33,6 @@ interface CalendarGridProps {
   onViewModeChange: (mode: CalendarViewMode) => void;
   onEventClick?: (eventId: string, source: string) => void;
   onDateRangeChange?: (start: string, end: string) => void;
-  onEventMove?: (payload: {
-    source: string;
-    sourceId: string;
-    start: string;
-    end?: string;
-    allDay?: boolean;
-    etag?: string;
-  }) => Promise<boolean>;
 }
 
 const VIEW_MAP: Record<CalendarViewMode, string> = {
@@ -58,7 +50,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   onViewModeChange,
   onEventClick,
   onDateRangeChange,
-  onEventMove,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -119,31 +110,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       onDateRangeChange?.(info.startStr, info.endStr);
     },
     [onDateRangeChange]
-  );
-
-  const handleEventDrop = useCallback(
-    async (info: any) => {
-      if (!onEventMove) return;
-      const source = String(info?.event?.extendedProps?.source || '');
-      const sourceId = String(info?.event?.extendedProps?.sourceId || info?.event?.id || '');
-      const etag = info?.event?.extendedProps?.etag;
-      const start = info?.event?.start ? new Date(info.event.start).toISOString() : '';
-      const end = info?.event?.end ? new Date(info.event.end).toISOString() : undefined;
-      const allDay = Boolean(info?.event?.allDay);
-
-      const ok = await onEventMove({
-        source,
-        sourceId,
-        start,
-        end,
-        allDay,
-        etag: typeof etag === 'string' ? etag : undefined,
-      });
-      if (!ok) {
-        info.revert();
-      }
-    },
-    [onEventMove]
   );
 
   const renderEventContent = useCallback((arg: any) => {
@@ -277,8 +243,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           initialDate={currentDate}
           events={fcEvents}
           eventClick={handleEventClick}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventDrop}
           eventContent={renderEventContent}
           datesSet={handleDatesSet}
           headerToolbar={false}

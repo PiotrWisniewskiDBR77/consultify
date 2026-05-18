@@ -325,13 +325,12 @@ export async function createTriageSignal(params: {
   const hardGateRules = checkHardGates(params.category, params.bands);
 
   // §2.3.7: near-duplicate detection — check for same category + similar rationale in last 24h
-  const duplicateCutoffIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const recentDuplicates = await dbAll<any>(
     `SELECT signal_id, why_now_json FROM v8_radar_triage_signals 
      WHERE organization_id = ? AND category = ? 
-     AND created_at >= ?
+     AND created_at > datetime('now', '-24 hours')
      ORDER BY created_at DESC LIMIT 5`,
-    [params.organizationId, params.category, duplicateCutoffIso],
+    [params.organizationId, params.category],
     { fallback: true }
   );
 
@@ -465,13 +464,15 @@ export async function getTriageSignals(
     sql += ` AND triage_state = ?`;
     params.push(filters.triageState);
   }
-  // Cross-DB ordering (Postgres + SQLite): avoid json_extract/sqlite-only functions in runtime query.
-  sql += ` ORDER BY 
-    CASE priority_level WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 ELSE 2 END ASC,
-    score DESC,
-    created_at DESC`;
+  sql += ` ORDER BY priority_level ASC, 
+  CASE WHEN json_extract(triggered_rules_json, '$[0]') IS NOT NULL THEN 0 ELSE 1 END ASC,
+  json_extract(bands_json, '$.urgency') DESC,
+  json_extract(bands_json, '$.impact') DESC,
+  json_extract(bands_json, '$.actionability') DESC,
+  score DESC,
+  created_at DESC`;
 
-  const rows = await dbAll<any>(sql, params, { fallback: false });
+  const rows = await dbAll<any>(sql, params, { fallback: true });
   return (rows || []).map(rowToTriageSignal);
 }
 

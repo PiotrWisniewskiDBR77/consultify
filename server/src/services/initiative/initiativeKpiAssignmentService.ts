@@ -192,15 +192,6 @@ function computeIsOnTarget(params: {
     : Number(params.latestValue) >= Number(params.targetValue);
 }
 
-function computeProgressPercentage(params: {
-  latestValue: number | null;
-  targetValue: number | null;
-}): number {
-  const { latestValue, targetValue } = params;
-  if (latestValue == null || targetValue == null || targetValue === 0) return 0;
-  return Number(((latestValue / targetValue) * 100).toFixed(1));
-}
-
 async function assertInitiativeBelongsToOrg(initiativeId: string, organizationId: string) {
   const initiative = await queryHelpers.queryOne<{ id: string }>(
     'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
@@ -268,9 +259,11 @@ function mapAssignmentRow(row: AssignmentQueryRow): InitiativeKpiAssignmentRead 
 
   const progressRaw = safeNumber(row.progress_percentage);
   const progressPercentage =
-    progressRaw != null && progressRaw !== 0
+    progressRaw != null
       ? progressRaw
-      : computeProgressPercentage({ latestValue, targetValue });
+      : targetValue && latestValue != null
+        ? Number(((latestValue / targetValue) * 100).toFixed(1))
+        : 0;
 
   return {
     id: String(row.kpi_id),
@@ -747,38 +740,6 @@ export async function updateInitiativeKpiAssignment(
       ? normalizeFrequency(params.measurementFrequency)
       : undefined
   );
-  const latestForProgress =
-    params.currentValue != null
-      ? safeNumber(params.currentValue)
-      : params.currentValue === null
-        ? null
-        : undefined;
-  const targetForProgress =
-    params.targetValue != null
-      ? safeNumber(params.targetValue)
-      : params.targetValue === null
-        ? null
-        : undefined;
-  if (kpiColumns.has('progress_percentage')) {
-    if (latestForProgress !== undefined || targetForProgress !== undefined) {
-      const currentRow = await queryHelpers.queryOne<{
-        current_value: number | null;
-        target_value: number | null;
-      }>('SELECT current_value, target_value FROM initiative_kpis WHERE id = ?', [params.kpiId]);
-      const effectiveLatest =
-        latestForProgress !== undefined
-          ? latestForProgress
-          : safeNumber((currentRow as any)?.current_value ?? null);
-      const effectiveTarget =
-        targetForProgress !== undefined
-          ? targetForProgress
-          : safeNumber((currentRow as any)?.target_value ?? null);
-      pushKpiUpdate(
-        'progress_percentage',
-        computeProgressPercentage({ latestValue: effectiveLatest, targetValue: effectiveTarget })
-      );
-    }
-  }
   if (kpiColumns.has('updated_at')) {
     updates.push('updated_at = ?');
     updateParams.push(new Date().toISOString());
@@ -816,111 +777,7 @@ export async function updateInitiativeKpiAssignment(
   const refreshed = await listInitiativeKpiAssignments(params.initiativeId, params.organizationId);
   const updated = refreshed.find((item) => item.id === params.kpiId);
   if (!updated) {
-    const rawCurrent = await queryHelpers.queryOne<{
-      baseline_value: number | null;
-      target_value: number | null;
-      current_value: number | null;
-      measurement_frequency: string | null;
-      status: string | null;
-      name: string | null;
-      description: string | null;
-      category: string | null;
-      unit: string | null;
-      created_at: string | null;
-    }>('SELECT * FROM initiative_kpis WHERE id = ?', [params.kpiId]);
-    const fallbackTarget =
-      params.targetValue != null
-        ? safeNumber(params.targetValue)
-        : params.targetValue === null
-          ? null
-          : (safeNumber(rawCurrent?.target_value) ?? existing?.targetValue ?? null);
-    const fallbackCurrent =
-      params.currentValue != null
-        ? safeNumber(params.currentValue)
-        : params.currentValue === null
-          ? null
-          : (safeNumber(rawCurrent?.current_value) ??
-            existing?.currentValue ??
-            existing?.latestValue ??
-            null);
-    const fallbackFrequency = normalizeFrequency(
-      params.measurementFrequency ??
-        rawCurrent?.measurement_frequency ??
-        existing?.measurementFrequency ??
-        'MONTHLY'
-    );
-    const fallbackProgress = computeProgressPercentage({
-      latestValue: fallbackCurrent,
-      targetValue: fallbackTarget,
-    });
-    return {
-      id: params.kpiId,
-      mappingId: existing?.mappingId ?? null,
-      initiativeId: params.initiativeId,
-      initiativeStatus: existing?.initiativeStatus ?? null,
-      name:
-        params.name != null
-          ? String(params.name)
-          : String(rawCurrent?.name ?? existing?.name ?? ''),
-      description: params.description ?? rawCurrent?.description ?? existing?.description ?? null,
-      category: params.category ?? rawCurrent?.category ?? existing?.category ?? 'benefits',
-      unit: params.unit ?? rawCurrent?.unit ?? existing?.unit ?? null,
-      baselineValue:
-        params.baselineValue != null
-          ? safeNumber(params.baselineValue)
-          : params.baselineValue === null
-            ? null
-            : (safeNumber(rawCurrent?.baseline_value) ?? existing?.baselineValue ?? null),
-      targetValue: fallbackTarget,
-      currentValue: fallbackCurrent,
-      latestValue: fallbackCurrent,
-      latestMeasurementDate: new Date().toISOString(),
-      progressPercentage: fallbackProgress,
-      status: String(rawCurrent?.status || existing?.status || 'on_track'),
-      measurementFrequency: fallbackFrequency,
-      isOnTarget: computeIsOnTarget({
-        latestValue: fallbackCurrent,
-        targetValue: fallbackTarget,
-      }),
-      createdAt: String(rawCurrent?.created_at || existing?.createdAt || new Date().toISOString()),
-      updatedAt: new Date().toISOString(),
-      definitionSource:
-        params.definitionSource || existing?.definitionSource || 'initiative-custom',
-      observationPhase:
-        params.observationPhase || existing?.observationPhase || 'post-implementation',
-      trackedInRealization: params.trackedInRealization ?? existing?.trackedInRealization ?? false,
-      trackedPostImplementation:
-        params.trackedPostImplementation ?? existing?.trackedPostImplementation ?? true,
-      observationStatus: params.observationStatus || existing?.observationStatus || 'active',
-      realizationExpectation: params.realizationExpectation
-        ? {
-            baselineValue: safeNumber(params.realizationExpectation.baselineValue),
-            targetValue: safeNumber(params.realizationExpectation.targetValue),
-            measurementFrequency: normalizeFrequency(
-              params.realizationExpectation.measurementFrequency,
-              fallbackFrequency
-            ),
-          }
-        : existing?.realizationExpectation || {
-            baselineValue: null,
-            targetValue: fallbackTarget,
-            measurementFrequency: fallbackFrequency,
-          },
-      postImplementationExpectation: params.postImplementationExpectation
-        ? {
-            baselineValue: safeNumber(params.postImplementationExpectation.baselineValue),
-            targetValue: safeNumber(params.postImplementationExpectation.targetValue),
-            measurementFrequency: normalizeFrequency(
-              params.postImplementationExpectation.measurementFrequency,
-              fallbackFrequency
-            ),
-          }
-        : existing?.postImplementationExpectation || {
-            baselineValue: null,
-            targetValue: fallbackTarget,
-            measurementFrequency: fallbackFrequency,
-          },
-    };
+    throw new Error('Failed to load KPI assignment');
   }
   return updated;
 }

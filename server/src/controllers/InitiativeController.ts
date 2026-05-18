@@ -320,13 +320,7 @@ export class InitiativeController {
         : priorityRaw
           ? [priorityRaw]
           : [];
-      const qh = queryHelpers as unknown as {
-        getTableColumns?: (table: string) => Promise<unknown[]>;
-        queryAll?: (sql: string, params?: Array<unknown>) => Promise<Record<string, unknown>[]>;
-      };
-      const initiativeColumns = getColumnNameSet(
-        typeof qh.getTableColumns === 'function' ? await qh.getTableColumns('initiatives') : []
-      );
+      const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
       const params: Array<unknown> = [orgId];
       let sql = `
             SELECT i.*, 
@@ -421,10 +415,7 @@ export class InitiativeController {
 
       let rows: Record<string, unknown>[] = [];
       try {
-        if (typeof qh.queryAll !== 'function') {
-          throw new Error('queryAll unavailable');
-        }
-        rows = await qh.queryAll(sql, params);
+        rows = await queryHelpers.queryAll(sql, params);
       } catch {
         res
           .status(500)
@@ -836,8 +827,6 @@ export class InitiativeController {
         valueDriver: 'value_driver',
         confidenceLevel: 'confidence_level',
         valueTiming: 'value_timing',
-        status: 'status',
-        progress: 'progress',
         plannedStartDate: plannedStartCol,
         plannedEndDate: plannedEndCol,
         // UI aliases

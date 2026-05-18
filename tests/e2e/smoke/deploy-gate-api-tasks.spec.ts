@@ -66,20 +66,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   let commentId = '';
   let depId = '';
   let taskC = '';
-  let readOnlyReason = '';
-
-  function isDemoReadOnlyError(body: any): boolean {
-    const serialized = JSON.stringify(body || {});
-    return /DEMO_READ_ONLY|read-only|read only/i.test(serialized);
-  }
-
-  function requireWritable() {
-    expect(readOnlyReason, `Writable task flow unavailable: ${readOnlyReason}`).toBe('');
-  }
-
-  function requireTaskContext() {
-    expect(taskA, 'No task context available for this environment').toBeTruthy();
-  }
 
   test.beforeAll(async ({ request }) => {
     const login = await demoLoginApi(request);
@@ -91,25 +77,7 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: { name: `E2E Tasks ${Date.now()}`, description: 'smoke seed' },
     });
-    if (!createProject.ok()) {
-      const createProjectBody = await jsonOrText(createProject);
-      if (isDemoReadOnlyError(createProjectBody)) {
-        readOnlyReason = `DEMO_READ_ONLY (${createProject.status()})`;
-        const list = await request.get(`${API_BASE_URL}/api/tasks?limit=5`, { headers: authHeaders(token) });
-        if (list.ok()) {
-          const items = await list.json().catch(() => []);
-          if (Array.isArray(items) && items.length > 0) {
-            taskA = String(items[0]?.id || '');
-            taskB = String(items[1]?.id || taskA);
-            projectId = String(items[0]?.projectId || items[0]?.project_id || '');
-          }
-        }
-        return;
-      }
-      throw new Error(
-        `POST /api/projects (seed) failed: ${createProject.status()} ${createProject.statusText()} body=${JSON.stringify(createProjectBody)}`
-      );
-    }
+    await assertOk(createProject, 'POST /api/projects (seed)');
     const projBody = await jsonOrText(createProject);
     projectId = extractId(projBody);
     expect(projectId).toBeTruthy();
@@ -134,7 +102,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    if (readOnlyReason) return;
     const headers = authHeaders(token);
     const bestEffort = async (fn: () => Promise<any>) => {
       try {
@@ -158,7 +125,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks?projectId returns tasks for project', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks?projectId=${encodeURIComponent(projectId)}&limit=50`, {
       headers: authHeaders(token),
     });
@@ -170,7 +136,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:id returns task', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:id');
     const data = await res.json().catch(() => null);
@@ -183,8 +148,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('PUT /api/tasks/:id updates status and priority', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     const put = await request.put(`${API_BASE_URL}/api/tasks/${taskA}`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: { status: 'in_progress', priority: 'high' },
@@ -195,7 +158,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:id reflects updated status/priority', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:id (after PUT)');
     const data = await res.json().catch(() => null);
@@ -219,19 +181,17 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/search?q finds by title fragment', async ({ request }) => {
-    const query = readOnlyReason ? 'task' : 'E2E Task';
-    const res = await request.get(`${API_BASE_URL}/api/tasks/search?q=${encodeURIComponent(query)}&exclude=`, {
+    const res = await request.get(`${API_BASE_URL}/api/tasks/search?q=${encodeURIComponent('E2E Task')}&exclude=`, {
       headers: authHeaders(token),
     });
     await assertOk(res, 'GET /api/tasks/search');
     const data = await res.json().catch(() => null);
     expect(Array.isArray(data?.tasks)).toBe(true);
     const ids = (data?.tasks || []).map((t: any) => t?.id).filter(Boolean);
-    if (taskA) expect(ids).toContain(taskA);
+    expect(ids).toContain(taskA);
   });
 
   test('GET /api/tasks/search supports URL artifact parsing', async ({ request }) => {
-    requireTaskContext();
     const q = `http://localhost:3000/my-work?artifact=${encodeURIComponent(`task:${taskA}`)}`;
     const res = await request.get(`${API_BASE_URL}/api/tasks/search?q=${encodeURIComponent(q)}&exclude=`, {
       headers: authHeaders(token),
@@ -243,8 +203,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('POST /api/tasks/:taskId/comments adds comment', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     const res = await request.post(`${API_BASE_URL}/api/tasks/${taskA}/comments`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: { content: `E2E comment ${Date.now()}` },
@@ -258,7 +216,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:taskId/comments lists comment', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}/comments`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:taskId/comments');
     const data = await res.json();
@@ -272,8 +229,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('DELETE /api/tasks/:taskId/comments/:commentId removes comment', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     const res = await request.delete(`${API_BASE_URL}/api/tasks/${taskA}/comments/${commentId}`, {
       headers: authHeaders(token),
     });
@@ -286,7 +241,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:taskId/comments no longer includes deleted comment', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}/comments`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:taskId/comments (after delete)');
     const data = await res.json();
@@ -309,7 +263,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:id/dependencies returns successors/predecessors arrays', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}/dependencies`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:id/dependencies');
     const data = await res.json().catch(() => null);
@@ -323,8 +276,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('POST /api/tasks/:id/dependencies adds successor dependency', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     const res = await request.post(`${API_BASE_URL}/api/tasks/${taskA}/dependencies`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: { targetTaskId: taskB, direction: 'successor', dependencyType: 'FS', lagDays: 1, notes: 'smoke' },
@@ -342,7 +293,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:id/dependencies shows new dependency', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}/dependencies`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:id/dependencies (after add)');
     const data = await res.json().catch(() => null);
@@ -355,8 +305,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('DELETE /api/tasks/:id/dependencies/:depId removes dependency', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     if (isMockDb && !depId) {
       return;
     }
@@ -372,7 +320,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:id/dependencies no longer includes removed dependency', async ({ request }) => {
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskA}/dependencies`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/tasks/:id/dependencies (after delete)');
     const data = await res.json().catch(() => null);
@@ -385,7 +332,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('POST /api/tasks creates a task with dueDate', async ({ request }) => {
-    requireWritable();
     const res = await request.post(`${API_BASE_URL}/api/tasks`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: {
@@ -401,8 +347,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('DELETE /api/tasks/:id deletes task', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     const res = await request.delete(`${API_BASE_URL}/api/tasks/${taskC}`, { headers: authHeaders(token) });
     await assertOk(res, 'DELETE /api/tasks/:id');
     const data = await res.json().catch(() => null);
@@ -410,8 +354,6 @@ test.describe('L4 Smoke — deploy gate API (tasks)', () => {
   });
 
   test('GET /api/tasks/:id returns 404 after delete', async ({ request }) => {
-    requireWritable();
-    requireTaskContext();
     const res = await request.get(`${API_BASE_URL}/api/tasks/${taskC}`, { headers: authHeaders(token) });
     if (isMockDb) {
       expect([200, 404]).toContain(res.status());

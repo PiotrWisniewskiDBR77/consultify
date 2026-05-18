@@ -184,10 +184,7 @@ describe('InitiativeController', () => {
       await InitiativeController.getInitiativeById(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Initiative not found',
-        code: 'INITIATIVE_NOT_FOUND',
-      });
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Initiative not found' });
     });
   });
 

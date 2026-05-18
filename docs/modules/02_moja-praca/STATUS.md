@@ -4,7 +4,7 @@ doc_kind: STATUS
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-18
+last_updated: 2026-05-10
 ---
 
 # Status — Moja Praca / My Work
@@ -16,7 +16,7 @@ last_updated: 2026-05-18
 - `partial`: automated evidence exists mainly for table workspace paths, not for full My Work hub behavior.
 - `doc_gap`: previous baseline text did not list concrete route/component/service evidence.
 - `code_gap`: no dedicated `MyWorkHub` integration tests found in `src/components/MyWork`.
-- `canonical`: Radar v1 rebuild contract locked in `functions/MW_HOME_RADAR.md` as module-level product/UI source of truth.
+- `review`: Radar packet v2.0 updated with prioritized development plan and UX reset contract.
 - `review`: module-level execution plan for stabilization/completion prepared in `IMPLEMENTATION_PLAN_STABILIZATION_AND_COMPLETION.md`.
 
 ## Function Coverage Status
@@ -38,7 +38,7 @@ last_updated: 2026-05-18
 - Rerun gate: `PASS` (`npm run docs:contract:rerun-gate`, 2026-05-10)
 - Owner acceptance: `PENDING_EXPLICIT_ACCEPTANCE`
 - Handoff conflict status: `NONE_CONFIRMED` (doc-level impact only)
-- Module cycle status: `REBUILD_LOCKED` (Radar v1 contract and roadmap frozen for next implementation wave)
+- Module cycle status: `REVIEW` (not `DONE` until owner acceptance and runtime-evidence coherence for target scope)
 
 ## Active Delivery Plan — My Work Module
 

@@ -9,7 +9,6 @@
  * - E2E_USE_WEB_SERVER=true (Playwright starts backend+frontend)
  */
 import { expect, test } from '@playwright/test';
-import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
@@ -41,12 +40,7 @@ function makeE2EToken(): string {
 }
 
 async function seedAuth(page: any): Promise<string> {
-  let token = makeE2EToken();
-  try {
-    token = readTestSupportState().token;
-  } catch {
-    // Fallback for standalone runtime runs where smoke global setup did not execute.
-  }
+  const token = makeE2EToken();
   await page.addInitScript((t: string) => {
     localStorage.setItem('token', t);
     // Avoid refresh logic trying to call refresh endpoint in tests

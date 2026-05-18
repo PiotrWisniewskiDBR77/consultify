@@ -30,8 +30,6 @@ interface CalendarCreateEventModalProps {
   onCreated?: () => void;
 }
 
-type RecurrencePreset = 'none' | 'daily' | 'weekly' | 'monthly';
-
 const toDateInputValue = (date: Date) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -51,7 +49,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(toDateInputValue(defaultDate));
-  const [recurrencePreset, setRecurrencePreset] = useState<RecurrencePreset>('none');
   const [saving, setSaving] = useState(false);
   const [conflictsLoading, setConflictsLoading] = useState(false);
   const [conflicts, setConflicts] = useState<CalendarConflictResponse | null>(null);
@@ -62,7 +59,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     setTitle('');
     setDescription('');
     setDate(toDateInputValue(defaultDate));
-    setRecurrencePreset('none');
     setConflicts(null);
     setConflictsError(null);
   }, [defaultDate, open]);
@@ -137,7 +133,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         start: date,
         allDay: true,
         source: 'task',
-        recurrence: recurrencePreset === 'none' ? undefined : { preset: recurrencePreset },
       });
       toast.success(isPolish ? 'Zadanie dodane do kalendarza' : 'Task added to calendar');
       onCreated?.();
@@ -201,22 +196,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             placeholder={isPolish ? 'Np. Przygotować deck na review' : 'e.g. Prepare review deck'}
             className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {isPolish ? 'Powtarzalność' : 'Recurrence'}
-          </label>
-          <select
-            value={recurrencePreset}
-            onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
-          >
-            <option value="none">{isPolish ? 'Brak' : 'None'}</option>
-            <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-            <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-            <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-          </select>
         </div>
 
         <div className="space-y-2">

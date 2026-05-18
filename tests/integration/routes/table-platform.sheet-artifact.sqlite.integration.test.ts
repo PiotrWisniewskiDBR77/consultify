@@ -124,7 +124,6 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     req.user = { id: 'user-tp-sheet', organizationId: 'org-tp' };
     next();
   },
-  requireSuperAdmin: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
 vi.mock('../../../server/src/middleware/requireAudit.middleware.js', () => ({

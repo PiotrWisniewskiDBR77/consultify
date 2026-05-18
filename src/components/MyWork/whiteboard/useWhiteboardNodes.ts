@@ -79,81 +79,47 @@ export function buildDuplicateSelection(nodes: Node[], edges: Edge[]) {
   };
 }
 
-function buildDuplicatedEdgesFromSelection(
-  edges: Edge[],
-  idMap: Map<string, string>,
-  duplicateStamp: number
-) {
-  return edges
-    .filter((edge) => idMap.has(edge.source) && idMap.has(edge.target))
-    .map((edge, index) => ({
-      ...edge,
-      id: `${edge.id}-dup-${duplicateStamp}-${index}`,
-      source: idMap.get(edge.source) as string,
-      target: idMap.get(edge.target) as string,
-      selected: false,
-      data: {
-        ...(edge.data || {}),
-        duplicatedFrom: edge.id,
-      },
-    }));
-}
-
 export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
   const { nodes, setNodes, setEdges, locked, isPl, pushSnapshot } = opts;
   const { t } = useTranslation();
 
   const deleteSelected = useCallback(() => {
     if (locked) return;
-    const removedIds = new Set(
-      nodes
-        .filter((node: Node) => node.selected && !isNodeLocked(node))
-        .map((node: Node) => node.id)
-    );
-    if (removedIds.size === 0) return;
-    pushSnapshot?.();
-    setNodes((prev: Node[]) =>
-      prev.filter((node: Node) => !(node.selected && removedIds.has(node.id)))
-    );
+    let removedIds: Set<string>;
+    let hasRemovals = false;
+    setNodes((prev: Node[]) => {
+      removedIds = new Set(
+        prev.filter((n: Node) => n.selected && !isNodeLocked(n)).map((n: Node) => n.id)
+      );
+      hasRemovals = removedIds.size > 0;
+      return prev.filter((n: Node) => !(n.selected && removedIds!.has(n.id)));
+    });
+    if (hasRemovals) pushSnapshot?.();
     setEdges((prev: Edge[]) =>
       prev.filter(
-        (edge: Edge) =>
-          !edge.selected && !removedIds.has(edge.source) && !removedIds.has(edge.target)
+        (e: Edge) => !e.selected && !removedIds!.has(e.source) && !removedIds!.has(e.target)
       )
     );
-  }, [locked, nodes, pushSnapshot, setEdges, setNodes]);
+  }, [locked, setEdges, setNodes]);
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;
-    const selected = nodes.filter((node: Node) => node.selected && !isNodeLocked(node));
-    if (selected.length === 0) {
+    const duplicatePack = buildDuplicateSelection(nodes, []);
+    if (duplicatePack.nodes.length === 0) {
       toast(t('myWork.whiteboard.toast.noUnlockedSelection'), { duration: 900 });
       return;
     }
-    const duplicateStamp = Date.now();
-    const idMap = new Map<string, string>();
-    const duplicatedNodes = selected.map((node, index) => {
-      const newId = `${node.id}-dup-${duplicateStamp}-${index}`;
-      idMap.set(node.id, newId);
-      return {
-        ...node,
-        id: newId,
-        position: { x: node.position.x + 30, y: node.position.y + 30 },
-        selected: false,
-        data: cloneNodeData(node, newId),
-      };
-    });
-
     pushSnapshot?.();
     setNodes((prev: Node[]) => {
-      return [...prev.map((node: Node) => ({ ...node, selected: false })), ...duplicatedNodes];
+      const pack = buildDuplicateSelection(prev, []);
+      return [...prev.map((n: Node) => ({ ...n, selected: false })), ...pack.nodes];
     });
     setEdges((prev: Edge[]) => {
-      const duplicatedEdges = buildDuplicatedEdgesFromSelection(prev, idMap, duplicateStamp);
-      return [...prev, ...duplicatedEdges];
+      const pack = buildDuplicateSelection(nodes, prev);
+      return [...prev, ...pack.edges];
     });
     toast.success(t('myWork.whiteboard.toast.duplicated'), { duration: 600 });
-  }, [locked, nodes, pushSnapshot, setEdges, setNodes, t]);
+  }, [isPl, locked, nodes, pushSnapshot, setEdges, setNodes, t]);
 
   const groupSelected = useCallback(() => {
     if (locked) return;

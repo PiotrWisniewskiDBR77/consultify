@@ -603,7 +603,7 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
       "archived_at = CASE WHEN ? = 'archived' THEN CURRENT_TIMESTAMP ELSE archived_at END"
     );
     expect(transitionBlock).toContain("if (params.status === 'archived')");
-    expect(service).toContain('ALTER TABLE research_sessions ADD COLUMN IF NOT EXISTS archived_at TEXT');
+    expect(service).toContain('ALTER TABLE research_sessions ADD COLUMN archived_at TEXT');
   });
 
   it('enforces allowedSources by disabling web research and web evidence', async () => {

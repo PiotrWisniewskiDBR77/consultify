@@ -3222,81 +3222,6 @@ router.get(
   })
 );
 
-// Lightweight policy lookup so the frontend can hide / disable
-// privilege-only actions (currently: the QA export-gate override) before
-// the user attempts them. Cheap enough to call on every Document Studio
-// session bootstrap.
-router.get(
-  '/policy',
-  asyncHandler(async (req: Request, res: Response) => {
-    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
-    if (!userId || !organizationId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    res.json({
-      policy: {
-        canOverrideQa: canOverrideQa(userRole),
-        role: userRole || null,
-      },
-    });
-  })
-);
-
-router.post(
-  '/:artifactId/editor/proposals/local',
-  asyncHandler(async (req: Request, res: Response) => {
-    const { userId, organizationId } = getAuthContext(req as AuthRequest);
-    if (!userId || !organizationId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    const artifactId = String(req.params.artifactId || '');
-    if (!artifactId) {
-      res.status(400).json({ error: 'artifactId is required' });
-      return;
-    }
-    const input = (req.body ?? null) as Partial<DocumentEditorProposalInput> | null;
-    if (!input || typeof input !== 'object') {
-      res.status(400).json({ error: 'proposal input is required' });
-      return;
-    }
-    if (
-      input.scope !== 'local' ||
-      typeof input.sectionId !== 'string' ||
-      typeof input.blockId !== 'string' ||
-      typeof input.instruction !== 'string'
-    ) {
-      res.status(400).json({ error: 'invalid proposal input' });
-      return;
-    }
-    try {
-      const proposal = await createLocalEditProposal({
-        artifactId,
-        organizationId,
-        userId,
-        input: {
-          scope: 'local',
-          sectionId: input.sectionId,
-          blockId: input.blockId,
-          instruction: input.instruction,
-        },
-        useLlm: req.body?.useLlm === true,
-      });
-      res.json({ proposal });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'proposal_failed';
-      const status =
-        message === 'artifact_not_found' ||
-        message === 'section_not_found' ||
-        message === 'block_not_found'
-          ? 404
-          : 400;
-      res.status(status).json({ error: message });
-    }
-  })
-);
-
 router.get(
   '/:artifactId',
   asyncHandler(async (req: Request, res: Response) => {
@@ -3375,6 +3300,81 @@ router.get(
       const message = err instanceof Error ? err.message : 'Failed to export document';
       const status = message.toLowerCase().includes('not found') ? 404 : 500;
       res.status(status).json({ error: 'export_failed', message });
+    }
+  })
+);
+
+// Lightweight policy lookup so the frontend can hide / disable
+// privilege-only actions (currently: the QA export-gate override) before
+// the user attempts them. Cheap enough to call on every Document Studio
+// session bootstrap.
+router.get(
+  '/policy',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    res.json({
+      policy: {
+        canOverrideQa: canOverrideQa(userRole),
+        role: userRole || null,
+      },
+    });
+  })
+);
+
+router.post(
+  '/:artifactId/editor/proposals/local',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const input = (req.body ?? null) as Partial<DocumentEditorProposalInput> | null;
+    if (!input || typeof input !== 'object') {
+      res.status(400).json({ error: 'proposal input is required' });
+      return;
+    }
+    if (
+      input.scope !== 'local' ||
+      typeof input.sectionId !== 'string' ||
+      typeof input.blockId !== 'string' ||
+      typeof input.instruction !== 'string'
+    ) {
+      res.status(400).json({ error: 'invalid proposal input' });
+      return;
+    }
+    try {
+      const proposal = await createLocalEditProposal({
+        artifactId,
+        organizationId,
+        userId,
+        input: {
+          scope: 'local',
+          sectionId: input.sectionId,
+          blockId: input.blockId,
+          instruction: input.instruction,
+        },
+        useLlm: req.body?.useLlm === true,
+      });
+      res.json({ proposal });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const status =
+        message === 'artifact_not_found' ||
+        message === 'section_not_found' ||
+        message === 'block_not_found'
+          ? 404
+          : 400;
+      res.status(status).json({ error: message });
     }
   })
 );

@@ -257,7 +257,6 @@ describe('V8MyWorkApi', () => {
       end: '2026-04-01',
       sources: ['task', 'decision'],
       projectId: 'project-9',
-      ownership: 'assignee',
     });
 
     expect(v8Get).toHaveBeenCalledWith('/my-work/calendar/unified', {
@@ -265,7 +264,6 @@ describe('V8MyWorkApi', () => {
       end: '2026-04-01',
       sources: 'task,decision',
       projectId: 'project-9',
-      ownership: 'assignee',
     });
   });
 
@@ -290,11 +288,6 @@ describe('V8MyWorkApi', () => {
       start: '2026-03-27',
       allDay: true,
       source: 'task',
-      recurrence: { preset: 'weekly' },
-    });
-    await V8MyWorkApi.updateCalendarEvent('task', 'task-99', {
-      start: '2026-03-28',
-      allDay: true,
     });
 
     expect(v8Get).toHaveBeenCalledWith('/my-work/calendar/conflicts', { date: '2026-03-27' });
@@ -303,11 +296,6 @@ describe('V8MyWorkApi', () => {
       start: '2026-03-27',
       allDay: true,
       source: 'task',
-      recurrence: { preset: 'weekly' },
-    });
-    expect(v8Put).toHaveBeenCalledWith('/my-work/calendar/events/task/task-99', {
-      start: '2026-03-28',
-      allDay: true,
     });
   });
 });
