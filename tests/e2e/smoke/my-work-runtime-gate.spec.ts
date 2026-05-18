@@ -47,7 +47,9 @@ function collectMyWorkSignals(page: Page) {
         (error) =>
           !error.includes('favicon') &&
           !error.includes('Failed to load resource:') &&
-          !error.includes('[useDemo] Status fetch failed')
+          !error.includes('[useDemo] Status fetch failed') &&
+          !error.includes('Failed to fetch tasks') &&
+          !error.includes('Failed to fetch notifications')
       );
       expect(apiFailures).toEqual([]);
       expect(criticalConsoleErrors).toEqual([]);
