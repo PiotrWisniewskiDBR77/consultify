@@ -2034,15 +2034,30 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           const result = await executeTriageHandoff(action.signalId);
           if (result) {
             const mod = action.targetModule;
-            if (mod === 'Inicjatywy') {
+            if (mod === 'initiatives' || mod === 'Inicjatywy') {
               setActiveTab('ideas');
-            } else if (mod === 'Wdrożenia') {
+            } else if (mod === 'execution' || mod === 'Wdrożenia') {
               setActiveTab('tasks');
-            } else if (mod === 'Notatki') {
+            } else if (mod === 'notebook' || mod === 'Notatki') {
               setActiveTab('notebook');
               setNotebookCreateReqId((value) => value + 1);
             }
           }
+          return;
+        }
+        case 'radar_feedback': {
+          const actionType =
+            action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
+          const payload = {
+            ...(action.topic ? { topic: action.topic } : {}),
+            ...(action.source ? { source: action.source } : {}),
+          };
+          const Api = (await import('@/services/api')).default;
+          await Api.post('/my-work/radar/actions', {
+            signalId: action.signalId,
+            actionType,
+            payload,
+          }).catch(() => null);
           return;
         }
         default:

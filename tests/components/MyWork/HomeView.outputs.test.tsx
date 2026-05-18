@@ -57,6 +57,11 @@ vi.mock('../../../src/components/MyWork/Home/useHomeData', () => ({
   useHomeData: (...args: unknown[]) => useHomeDataMock(...args),
 }));
 
+const useRadarDataMock = vi.fn();
+vi.mock('../../../src/components/MyWork/Home/useRadarData', () => ({
+  useRadarData: (...args: unknown[]) => useRadarDataMock(...args),
+}));
+
 const useV8MyWorkRoofSummaryMock = vi.fn();
 vi.mock('../../../src/hooks/useV8MyWorkRoof', () => ({
   useV8MyWorkRoofSummary: (...args: unknown[]) => useV8MyWorkRoofSummaryMock(...args),
@@ -219,6 +224,38 @@ describe('HomeView aggregated contract', () => {
       isLoading: false,
       isError: false,
     });
+
+    useRadarDataMock.mockReturnValue({
+      data: {
+        generatedAt: '2026-05-18T00:00:00.000Z',
+        radarMap: {
+          signals: [
+            {
+              id: 'sig-1',
+              name: 'AI Agents',
+              ring: 'NOW',
+              quadrant: 'MY_PROJECTS',
+              status: 'new',
+              signalType: 'TECHNOLOGY',
+              importanceLevel: 'large',
+              fitLevel: 'high',
+              preview: {
+                shortDescription: 'Agentic workflows for repetitive work.',
+                whyItMatters: 'Can reduce repetitive delivery effort.',
+                whyItMattersForYou: 'You run delivery and growth experiments.',
+                howToThinkAboutIt: 'Start from one repeatable workflow.',
+                goodFirstQuestion: 'Which repetitive flow should be first?',
+                suggestedNextStep: 'Talk to Teresa for a first experiment.',
+              },
+            },
+          ],
+        },
+        whatChanged: [],
+      },
+      loading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
   });
 
   it('renders the aggregated home contract with roof truth and block orchestration', () => {
@@ -229,7 +266,8 @@ describe('HomeView aggregated contract', () => {
     expect(screen.getByText(/Radar · context/)).toBeInTheDocument();
     expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
     expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();
-    expect(screen.getAllByText(/AI Pulse Core/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Radar/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/AI Agents/)).toBeInTheDocument();
     expect(screen.getAllByText(/Industry Lens/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Execution Current/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Momentum/).length).toBeGreaterThan(0);
@@ -243,22 +281,30 @@ describe('HomeView aggregated contract', () => {
     const onAction = vi.fn();
     render(<HomeView onAction={onAction} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'open AI Pulse Core' }));
+    fireEvent.click(screen.getByRole('button', { name: /Talk to Teresa/i }));
     expect(onAction).toHaveBeenCalledWith({
       type: 'chat',
-      packet: {
-        sourceBlock: 'aiPulseCore',
-        intent: 'prioritize_transformation',
-        title: 'AI Pulse Core',
-        starterPrompt: 'Test prompt',
-      },
+      packet: expect.objectContaining({
+        intent: 'radar_signal_consult',
+        title: 'AI Agents',
+      }),
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'open Execution Current' }));
+    fireEvent.click(screen.getByRole('button', { name: /Turn into Idea/i }));
     expect(onAction).toHaveBeenCalledWith({
-      type: 'navigate',
-      target: 'outputs_review',
+      type: 'create',
+      target: 'idea',
     });
+  });
+
+  it('supports interactive radar signal selection and updates preview panel', () => {
+    render(<HomeView onAction={vi.fn()} />);
+    const point = screen.getByTestId('radar-signal-sig-1');
+    fireEvent.click(point);
+    expect(screen.getByText('Can reduce repetitive delivery effort.')).toBeInTheDocument();
+    expect(
+      screen.getByText('You run delivery and growth experiments.')
+    ).toBeInTheDocument();
   });
 
   it('shows a retryable radar error state instead of a raw empty screen', () => {

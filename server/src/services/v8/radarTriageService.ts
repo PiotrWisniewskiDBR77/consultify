@@ -31,7 +31,7 @@ export type PriorityLevel = 'P0' | 'P1' | 'P2';
 export type PrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
 export type TimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type HandoffIntent = 'open' | 'create' | 'append';
-export type TargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+export type TargetModule = 'initiatives' | 'execution' | 'notebook' | 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
 
 export type P0Archetype =
   | 'critical_path_blocker'
@@ -52,31 +52,31 @@ export const P0_ARCHETYPES: Record<
   critical_path_blocker: {
     category: 'execution_delivery',
     ownerRole: 'Delivery Lead / PMO',
-    primaryTarget: 'Wdrożenia',
+    primaryTarget: 'execution',
     fallbackTarget: 'Notatki — capture blockers checklist',
   },
   decision_needed: {
     category: 'decision_alignment',
     ownerRole: 'PMO / Initiative Owner',
-    primaryTarget: 'Inicjatywy',
+    primaryTarget: 'initiatives',
     fallbackTarget: 'Notatki',
   },
   stakeholder_escalation: {
     category: 'decision_alignment',
     ownerRole: 'Program Lead / PMO',
-    primaryTarget: 'Notatki',
+    primaryTarget: 'notebook',
     fallbackTarget: 'Inicjatywy — if decision required',
   },
   compliance_deadline: {
     category: 'governance_compliance',
     ownerRole: 'Governance Owner / PMO',
-    primaryTarget: 'Wdrożenia',
+    primaryTarget: 'execution',
     fallbackTarget: 'Notatki',
   },
   kpi_finance_anomaly: {
     category: 'finance_kpi',
     ownerRole: 'Finance Lead / PMO',
-    primaryTarget: 'Inicjatywy',
+    primaryTarget: 'initiatives',
     fallbackTarget: 'Notatki — analysis',
   },
 };
@@ -251,15 +251,15 @@ function determineTargetModule(
   if (archetype) return P0_ARCHETYPES[archetype].primaryTarget;
   switch (category) {
     case 'execution_delivery':
-      return 'Wdrożenia';
+      return 'execution';
     case 'decision_alignment':
-      return 'Inicjatywy';
+      return 'initiatives';
     case 'governance_compliance':
-      return 'Wdrożenia';
+      return 'execution';
     case 'finance_kpi':
-      return 'Inicjatywy';
+      return 'initiatives';
     case 'external_change':
-      return 'Notatki';
+      return 'notebook';
   }
 }
 
@@ -524,7 +524,7 @@ export async function executeHandoff(
     radar_handoff_context: handoffContext,
   };
 
-  if (targetModule === 'Inicjatywy') {
+  if (targetModule === 'initiatives' || targetModule === 'Inicjatywy') {
     targetPayload = {
       ...targetPayload,
       initiative_suggestion: {
@@ -535,7 +535,7 @@ export async function executeHandoff(
         open_questions: signal.uncertaintyBoundary.missingInputs,
       },
     };
-  } else if (targetModule === 'Wdrożenia') {
+  } else if (targetModule === 'execution' || targetModule === 'Wdrożenia') {
     targetPayload = {
       ...targetPayload,
       deployment_suggestion: {

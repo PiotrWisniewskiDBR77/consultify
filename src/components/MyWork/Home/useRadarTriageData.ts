@@ -66,7 +66,7 @@ export function useRadarTriageData(filters?: TriageFilters, enabled = true): Tri
 }
 
 export async function executeTriageHandoff(signalId: string): Promise<{
-  targetModule: string;
+  targetModule: 'initiatives' | 'execution' | 'notebook' | string;
   targetPayload: Record<string, unknown>;
 } | null> {
   try {
