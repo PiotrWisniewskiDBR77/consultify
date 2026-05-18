@@ -3026,6 +3026,49 @@ function mergeIdeaMapExtensions(
   return next;
 }
 
+function parseOptionalVersion(value: unknown): number | null | 'invalid' {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 'invalid';
+  return parsed;
+}
+
+function buildMapConflictPayload(
+  existing:
+    | {
+        version?: number | string | null;
+        nodesJson?: unknown;
+        edgesJson?: unknown;
+        extensionsJson?: unknown;
+        preferredTool?: unknown;
+        schemaVersion?: unknown;
+      }
+    | null
+    | undefined,
+  fallback: { id: string; title: string; isPl: boolean }
+) {
+  const currentVersion = existing ? Number(existing.version || 1) : 1;
+  const currentGraph = existing
+    ? ensureLatestSchema({
+        nodes: parseIdeaMapArray(existing.nodesJson),
+        edges: parseIdeaMapArray(existing.edgesJson),
+        extensions: parseIdeaMapObject(existing.extensionsJson),
+        preferredTool: existing?.preferredTool ? String(existing.preferredTool) : null,
+        schemaVersion: Number(existing?.schemaVersion || 1),
+      } as any)
+    : buildDefaultIdeaMap({ id: fallback.id, title: fallback.title }, fallback.isPl);
+
+  return {
+    error: 'Idea map conflict',
+    code: 'IDEA_MAP_CONFLICT',
+    currentVersion,
+    map: {
+      ...currentGraph,
+      version: currentVersion,
+    },
+  };
+}
+
 function isSuspiciousEmptyTableReset(params: {
   preferredTool?: string | null;
   normalizedNodes: any[];
@@ -3348,12 +3391,55 @@ router.put(
     );
     if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
 
+    const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
+    const baseVersionParsed = parseOptionalVersion(baseVersionRaw);
+    if (baseVersionParsed === 'invalid') {
+      return res.status(400).json({
+        error: 'Invalid baseVersion',
+        details: 'baseVersion must be a number when provided',
+      });
+    }
+    const baseVersion = baseVersionParsed;
+
     const mapCols = await getTableColumns('my_idea_maps');
     const extColSelect = mapCols.has('extensions_json') ? ', extensions_json' : '';
+    const preferredToolSelect = mapCols.has('preferred_tool') ? ', preferred_tool' : '';
+    const schemaVersionSelect = mapCols.has('schema_version') ? ', schema_version' : '';
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, version, nodes_json, edges_json${extColSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, version, nodes_json, edges_json${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
     );
+
+    const currentVersion = existing ? Number(existing.version || 1) : 1;
+    if (existing && baseVersion === null) {
+      return res.status(400).json({
+        error: 'baseVersion is required for map updates',
+        code: 'IDEA_MAP_BASE_VERSION_REQUIRED',
+        currentVersion,
+      });
+    }
+    if (
+      baseVersion !== null &&
+      ((existing && baseVersion !== currentVersion) || (!existing && baseVersion > 1))
+    ) {
+      return res.status(409).json(
+        buildMapConflictPayload(
+          {
+            version: currentVersion,
+            nodesJson: existing?.nodes_json,
+            edgesJson: existing?.edges_json,
+            extensionsJson: existing?.extensions_json,
+            preferredTool: existing?.preferred_tool,
+            schemaVersion: existing?.schema_version ?? 1,
+          },
+          {
+            id: ideaId,
+            title: String((ideaOk as any)?.title || ''),
+            isPl: false,
+          }
+        )
+      );
+    }
 
     // V4-IDEA-01: Merge extensions for no-data-loss tool switch (preserve other tools' view state)
     let mergedExtensions = extensions;
@@ -3404,7 +3490,7 @@ router.put(
       });
     }
     const now = new Date().toISOString();
-    const nextVersion = existing ? Number(existing.version || 1) + 1 : 1;
+    const nextVersion = existing ? currentVersion + 1 : 1;
 
     if (!existing) {
       const id = uuidv4();
@@ -3448,12 +3534,34 @@ router.put(
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
       params.push(ideaId, userId, orgId);
-      await queryHelpers.queryRun(
+      if (baseVersion !== null) {
+        params.push(baseVersion);
+      }
+      const updateResult = await queryHelpers.queryRun(
         `UPDATE my_idea_maps
          SET ${setParts.join(', ')}
-         WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
+         WHERE idea_id = ? AND user_id = ? AND organization_id = ?${
+           baseVersion !== null ? ' AND version = ?' : ''
+         }`,
         params
       );
+      if (baseVersion !== null && Number(updateResult?.changes || 0) === 0) {
+        const latest = await queryHelpers.queryOne<any>(
+          `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${
+            mapCols.has('preferred_tool') ? ', preferred_tool as "preferredTool"' : ''
+          }${mapCols.has('extensions_json') ? ', extensions_json as "extensionsJson"' : ''}${
+            mapCols.has('schema_version') ? ', schema_version as "schemaVersion"' : ''
+          } FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+          [ideaId, userId, orgId]
+        );
+        return res.status(409).json(
+          buildMapConflictPayload(latest, {
+            id: ideaId,
+            title: '',
+            isPl: false,
+          })
+        );
+      }
     }
 
     const appliedFromAI = Boolean(req.body?.fromAI);
@@ -3522,12 +3630,14 @@ router.post(
         ? extensionsRaw
         : null;
     const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
-    const baseVersion =
-      baseVersionRaw == null || baseVersionRaw === ''
-        ? null
-        : Number.isFinite(Number(baseVersionRaw))
-          ? Number(baseVersionRaw)
-          : null;
+    const baseVersionParsed = parseOptionalVersion(baseVersionRaw);
+    if (baseVersionParsed === 'invalid') {
+      return res.status(400).json({
+        error: 'Invalid baseVersion',
+        details: 'baseVersion must be a number when provided',
+      });
+    }
+    const baseVersion = baseVersionParsed;
 
     const validation = validateAndNormalizeGraph({
       nodes,
@@ -3567,28 +3677,24 @@ router.post(
     );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
+    if (existing && baseVersion === null) {
+      return res.status(400).json({
+        error: 'baseVersion is required for sync updates',
+        code: 'IDEA_MAP_BASE_VERSION_REQUIRED',
+        currentVersion,
+      });
+    }
     const hasVersionConflict =
       baseVersion !== null &&
       ((existing && baseVersion !== currentVersion) || (!existing && baseVersion > 1));
     if (hasVersionConflict) {
-      const currentGraph = existing
-        ? ensureLatestSchema({
-            nodes: parseIdeaMapArray(existing.nodesJson),
-            edges: parseIdeaMapArray(existing.edgesJson),
-            extensions: parseIdeaMapObject(existing.extensionsJson),
-            preferredTool: existing?.preferredTool ? String(existing.preferredTool) : null,
-            schemaVersion: Number(existing?.schemaVersion || 1),
-          } as any)
-        : buildDefaultIdeaMap({ id: ideaId, title: '' }, false);
-      return res.status(409).json({
-        error: 'Idea map conflict',
-        code: 'IDEA_MAP_CONFLICT',
-        currentVersion,
-        map: {
-          ...currentGraph,
-          version: currentVersion,
-        },
-      });
+      return res.status(409).json(
+        buildMapConflictPayload(existing, {
+          id: ideaId,
+          title: '',
+          isPl: false,
+        })
+      );
     }
 
     let mergedExtensions = extensions;
@@ -4636,6 +4742,7 @@ const ArtifactAttachBodySchema = z.object({
   artifactIndex: z.string().optional(),
   label: z.string().optional(),
   linkRole: z.enum(['context', 'source', 'output', 'evidence', 'related']).optional(),
+  baseVersion: z.number().int().positive().optional(),
 });
 
 router.post(
@@ -4654,15 +4761,33 @@ router.post(
     if (!parsed.success)
       return res.status(400).json({ error: 'Invalid body', details: parsed.error.flatten() });
 
-    const { artifactRef, artifactIndex, label, linkRole } = parsed.data;
+    const { artifactRef, artifactIndex, label, linkRole, baseVersion } = parsed.data;
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
     const map = await queryHelpers.queryOne<any>(
-      `SELECT id, nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, version, nodes_json, edges_json, preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
+       FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
+    const currentVersion = Number(map.version || 1);
+    if (baseVersion == null) {
+      return res.status(400).json({
+        error: 'baseVersion is required for artifact attach',
+        code: 'IDEA_MAP_BASE_VERSION_REQUIRED',
+        currentVersion,
+      });
+    }
+    if (baseVersion !== currentVersion) {
+      return res.status(409).json(
+        buildMapConflictPayload(map, {
+          id: ideaId,
+          title: '',
+          isPl: false,
+        })
+      );
+    }
 
     let nodes: any[];
     try {
@@ -4698,12 +4823,43 @@ router.post(
     node.artifactLinks = updatedLinks;
     nodes[nodeIdx] = node;
 
-    await queryHelpers.queryRun(
+    const validation = validateAndNormalizeGraph({
+      nodes,
+      edges: parseIdeaMapArray(map.edges_json),
+      extensions: parseIdeaMapObject(map.extensionsJson),
+      preferredTool: map.preferredTool ? String(map.preferredTool) : null,
+    });
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Invalid graph schema after artifact attach',
+        details: validation.errors,
+      });
+    }
+    const updateResult = await queryHelpers.queryRun(
       `UPDATE my_idea_maps
-       SET nodes_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
-       WHERE id = ?`,
-      [JSON.stringify(nodes), map.id]
+       SET nodes_json = ?, edges_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
+       WHERE id = ? AND version = ?`,
+      [
+        JSON.stringify(validation.normalized.nodes),
+        JSON.stringify(validation.normalized.edges),
+        map.id,
+        baseVersion,
+      ]
     );
+    if (Number(updateResult?.changes || 0) === 0) {
+      const latest = await queryHelpers.queryOne<any>(
+        `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson", preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
+         FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+        [ideaId, userId, orgId]
+      );
+      return res.status(409).json(
+        buildMapConflictPayload(latest, {
+          id: ideaId,
+          title: '',
+          isPl: false,
+        })
+      );
+    }
 
     // Create LinkGraph edge for cross-platform traceability
     try {
@@ -4723,7 +4879,7 @@ router.post(
       /* best-effort — link_graph_edges table may not exist */
     }
 
-    res.status(201).json({ ok: true, artifactLink: newLink });
+    res.status(201).json({ ok: true, artifactLink: newLink, version: currentVersion + 1 });
   })
 );
 
@@ -4736,6 +4892,14 @@ router.delete(
     const { userId, orgId } = identity;
 
     const { id: ideaId, objectId, artifactType, artifactId } = req.params;
+    const baseVersionParsed = parseOptionalVersion(req.query.baseVersion);
+    if (baseVersionParsed === 'invalid') {
+      return res.status(400).json({
+        error: 'Invalid baseVersion',
+        details: 'baseVersion must be a number when provided',
+      });
+    }
+    const baseVersion = baseVersionParsed;
     if (!ideaId || !objectId || !artifactType || !artifactId) {
       return res.status(400).json({ error: 'Missing required params' });
     }
@@ -4743,10 +4907,28 @@ router.delete(
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
     const map = await queryHelpers.queryOne<any>(
-      `SELECT id, nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, version, nodes_json, edges_json, preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
+       FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
+    const currentVersion = Number(map.version || 1);
+    if (baseVersion == null) {
+      return res.status(400).json({
+        error: 'baseVersion is required for artifact detach',
+        code: 'IDEA_MAP_BASE_VERSION_REQUIRED',
+        currentVersion,
+      });
+    }
+    if (baseVersion !== currentVersion) {
+      return res.status(409).json(
+        buildMapConflictPayload(map, {
+          id: ideaId,
+          title: '',
+          isPl: false,
+        })
+      );
+    }
 
     let nodes: any[];
     try {
@@ -4776,12 +4958,43 @@ router.delete(
     node.artifactLinks = filtered.length > 0 ? filtered : undefined;
     nodes[nodeIdx] = node;
 
-    await queryHelpers.queryRun(
+    const validation = validateAndNormalizeGraph({
+      nodes,
+      edges: parseIdeaMapArray(map.edges_json),
+      extensions: parseIdeaMapObject(map.extensionsJson),
+      preferredTool: map.preferredTool ? String(map.preferredTool) : null,
+    });
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Invalid graph schema after artifact detach',
+        details: validation.errors,
+      });
+    }
+    const updateResult = await queryHelpers.queryRun(
       `UPDATE my_idea_maps
-       SET nodes_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
-       WHERE id = ?`,
-      [JSON.stringify(nodes), map.id]
+       SET nodes_json = ?, edges_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
+       WHERE id = ? AND version = ?`,
+      [
+        JSON.stringify(validation.normalized.nodes),
+        JSON.stringify(validation.normalized.edges),
+        map.id,
+        baseVersion,
+      ]
     );
+    if (Number(updateResult?.changes || 0) === 0) {
+      const latest = await queryHelpers.queryOne<any>(
+        `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson", preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
+         FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+        [ideaId, userId, orgId]
+      );
+      return res.status(409).json(
+        buildMapConflictPayload(latest, {
+          id: ideaId,
+          title: '',
+          isPl: false,
+        })
+      );
+    }
 
     // V51-04: Remove corresponding LinkGraph edge on detach (scoped to block_id)
     try {
@@ -4804,7 +5017,7 @@ router.delete(
       /* best-effort — link_graph_edges may not exist */
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, version: currentVersion + 1 });
   })
 );
 

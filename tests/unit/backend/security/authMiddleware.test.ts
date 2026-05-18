@@ -300,14 +300,14 @@ describe('__private__ helpers (L1)', () => {
   });
 
   it('covers role mapping edge cases', () => {
-    expect(__private__.mapRole('super_admin')).toBe('owner');
+    expect(__private__.mapRole('super_admin')).toBe('superadmin');
     expect(__private__.mapRole('member')).toBe('team_member');
-    expect(__private__.mapRole('weird_role')).toBe('weird_role' as any);
+    expect(__private__.mapRole('weird_role')).toBe('team_member');
   });
 
   it('covers permission-role normalization edge cases', () => {
     expect(__private__.normalizePermissionRole(undefined)).toBe('VIEWER');
-    expect(__private__.normalizePermissionRole('owner')).toBe('SUPERADMIN');
+    expect(__private__.normalizePermissionRole('owner')).toBe('OWNER');
     expect(__private__.normalizePermissionRole('administrator')).toBe('ADMIN');
     expect(__private__.normalizePermissionRole('client')).toBe('VIEWER');
     expect(__private__.normalizePermissionRole('custom_role')).toBe('CUSTOM_ROLE');
@@ -467,7 +467,7 @@ describe('verifyToken (L1)', () => {
     expect(req.user?.role).toBe('administrator');
   });
 
-  it('maps role correctly (superadmin → owner)', async () => {
+  it('maps role correctly (superadmin → superadmin)', async () => {
     const token = (jwt.default || (jwt as any)).sign(
       { id: 'sa-user', email: 'sa@test.com', role: 'superadmin' },
       jwtSecret,
@@ -477,7 +477,7 @@ describe('verifyToken (L1)', () => {
     const res = mockRes();
     const next = vi.fn();
     await verifyToken(req, res, next);
-    expect(req.user?.role).toBe('owner');
+    expect(req.user?.role).toBe('superadmin');
   });
 
   it('maps role correctly (user → team_member)', async () => {
@@ -506,7 +506,7 @@ describe('verifyToken (L1)', () => {
     expect(req.user?.role).toBe('guest');
   });
 
-  it('maps role correctly (manager → project_manager)', async () => {
+  it('maps role correctly (manager → team_member)', async () => {
     const token = (jwt.default || (jwt as any)).sign(
       { id: 'm-user', email: 'm@test.com', role: 'manager' },
       jwtSecret,
@@ -516,7 +516,7 @@ describe('verifyToken (L1)', () => {
     const res = mockRes();
     const next = vi.fn();
     await verifyToken(req, res, next);
-    expect(req.user?.role).toBe('project_manager');
+    expect(req.user?.role).toBe('team_member');
   });
 
   it('defaults to team_member when no role', async () => {

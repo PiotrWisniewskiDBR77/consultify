@@ -34,6 +34,8 @@ interface CalendarSidebarProps {
   workloadSummary?: CalendarWorkloadSummary | null;
 }
 
+type OwnershipFilter = 'any' | 'assignee' | 'owner';
+
 const ALL_SOURCES: CalendarEventSource[] = [
   'task',
   'initiative',
@@ -53,6 +55,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const activeOwnership: OwnershipFilter = (filter.ownership as OwnershipFilter) || 'any';
 
   const toggleSource = (source: CalendarEventSource) => {
     const isExternalSource = source === 'google' || source === 'outlook';
@@ -64,6 +67,10 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
       ? current.filter((s) => s !== source)
       : [...current, source];
     onFilterChange({ ...filter, sources: next.length > 0 ? next : ALL_SOURCES });
+  };
+
+  const setOwnership = (ownership: OwnershipFilter) => {
+    onFilterChange({ ...filter, ownership });
   };
 
   const year = currentDate.getFullYear();
@@ -223,6 +230,43 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
             })}
           </div>
         )}
+      </div>
+
+      <div>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-3">
+          {isPolish ? 'Własność' : 'Ownership'}
+        </h4>
+        <div className="space-y-1.5">
+          {[
+            {
+              id: 'any' as const,
+              label: isPolish ? 'Dowolna' : 'Any',
+            },
+            {
+              id: 'assignee' as const,
+              label: isPolish ? 'Przypisane do mnie' : 'Assigned to me',
+            },
+            {
+              id: 'owner' as const,
+              label: isPolish ? 'Jestem właścicielem' : 'Owned by me',
+            },
+          ].map((entry) => {
+            const active = activeOwnership === entry.id;
+            return (
+              <button
+                key={entry.id}
+                onClick={() => setOwnership(entry.id)}
+                className={`w-full px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-colors ${
+                  active
+                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                }`}
+              >
+                {entry.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {workloadSummary && (

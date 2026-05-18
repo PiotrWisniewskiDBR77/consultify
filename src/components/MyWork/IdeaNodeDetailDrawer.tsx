@@ -32,7 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
+import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { getArtifactLabel } from '@/utils/artifactLinks';
 
@@ -130,6 +130,8 @@ export interface IdeaNodeDetailDrawerProps {
   onNodeDataChange: (nodeId: string, data: Partial<ExtendedNodeData>) => void;
   onGenerateProposal?: (batch: AIProposalBatch) => void;
   onDrillDown?: (nodeId: string) => void;
+  mapVersion?: number;
+  onMapConflictRefresh?: () => Promise<void> | void;
 }
 
 // ── Simple markdown renderer (no external deps) ─────────────────────────────
@@ -212,6 +214,8 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   onNodeDataChange,
   onGenerateProposal,
   onDrillDown,
+  mapVersion,
+  onMapConflictRefresh,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -364,18 +368,24 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     async (artifactType: string, artifactId: string) => {
       if (locked) return;
       try {
-        await Api.detachArtifactFromObject(ideaId, nodeId, artifactType, artifactId);
+        await Api.detachArtifactFromObject(ideaId, nodeId, artifactType, artifactId, {
+          baseVersion: mapVersion,
+        });
         setArtifactLinks((prev) =>
           prev.filter(
             (link) =>
               !(link?.artifactRef?.type === artifactType && link?.artifactRef?.id === artifactId)
           )
         );
-      } catch {
+      } catch (err: any) {
+        const conflictVersion = getMapVersionFromPayload(err?.data);
+        if (conflictVersion) {
+          await onMapConflictRefresh?.();
+        }
         // keep drawer responsive; attachment list will refresh on reopen
       }
     },
-    [ideaId, locked, nodeId]
+    [ideaId, locked, mapVersion, nodeId, onMapConflictRefresh]
   );
 
   const handleAddEvidence = useCallback(() => {

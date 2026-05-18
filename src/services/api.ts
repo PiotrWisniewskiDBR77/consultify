@@ -666,6 +666,15 @@ export const getHeaders = () => {
   return headers;
 };
 
+export const getMapVersionFromPayload = (payload: unknown): number | null => {
+  if (!payload || typeof payload !== 'object') return null;
+  const map = (payload as Record<string, unknown>).map;
+  if (!map || typeof map !== 'object') return null;
+  const versionRaw = (map as Record<string, unknown>).version;
+  const parsed = Number(versionRaw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
 // Wrapper for fetch that handles 401 with automatic token refresh
 type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
 
@@ -771,6 +780,24 @@ const fetchWithRetry = async (
 
 const handleResponse = async (res: Response, defaultError: string) => {
   if (res.ok) {
+    // If a previous AI budget freeze was transient/no longer valid,
+    // unfreeze the chat on successful AI-related responses.
+    try {
+      const path = getTransportPath(res.url || '');
+      if (path.includes('/api/ai') || path.includes('/api/chat')) {
+        const { useAppStore } = await import('../store/useAppStore');
+        const store = useAppStore.getState();
+        if (store.aiFreezeStatus?.isFrozen) {
+          store.setAiFreezeStatus({
+            isFrozen: false,
+            reason: null,
+            scope: null,
+          });
+        }
+      }
+    } catch {
+      // no-op
+    }
     // Some endpoints return 204 No Content
     if (res.status === 204) return null;
     return res.json();
@@ -4718,6 +4745,7 @@ export const Api = {
       artifactIndex?: string;
       label?: string;
       linkRole?: string;
+      baseVersion?: number;
     }
   ): Promise<{ ok: boolean; artifactLink: any }> => {
     const res = await fetch(`${API_URL}/my-work/my-ideas/${ideaId}/objects/${objectId}/artifacts`, {
@@ -4732,10 +4760,15 @@ export const Api = {
     ideaId: string,
     objectId: string,
     artifactType: string,
-    artifactId: string
+    artifactId: string,
+    opts?: { baseVersion?: number }
   ): Promise<{ ok: boolean }> => {
+    const qs =
+      opts?.baseVersion != null
+        ? `?baseVersion=${encodeURIComponent(String(opts.baseVersion))}`
+        : '';
     const res = await fetch(
-      `${API_URL}/my-work/my-ideas/${ideaId}/objects/${objectId}/artifacts/${artifactType}/${artifactId}`,
+      `${API_URL}/my-work/my-ideas/${ideaId}/objects/${objectId}/artifacts/${artifactType}/${artifactId}${qs}`,
       { method: 'DELETE', headers: getHeaders() }
     );
     return handleResponse(res, 'Failed to detach artifact');
@@ -10349,6 +10382,7 @@ export const Api = {
     end?: string;
     sources?: string[];
     projectId?: string;
+    ownership?: 'any' | 'assignee' | 'owner';
   }): Promise<{ events: any[] }> => {
     try {
       return await V8MyWorkApi.getCalendarUnified(filters);
@@ -10361,6 +10395,8 @@ export const Api = {
       if (filters?.end) params.set('end', filters.end);
       if (filters?.sources?.length) params.set('sources', filters.sources.join(','));
       if (filters?.projectId) params.set('projectId', filters.projectId);
+      if (filters?.ownership && filters.ownership !== 'any')
+        params.set('ownership', filters.ownership);
       const qs = params.toString();
       const res = await fetch(`${API_URL}/my-work/calendar/unified${qs ? `?${qs}` : ''}`, {
         headers: getHeaders(),
@@ -10391,6 +10427,9 @@ export const Api = {
     allDay?: boolean;
     source?: 'task' | 'initiative' | 'decision';
     description?: string;
+    recurrence?: {
+      preset: 'daily' | 'weekly' | 'monthly';
+    };
   }): Promise<any> => {
     try {
       return await V8MyWorkApi.createCalendarEvent(body);
@@ -10404,6 +10443,35 @@ export const Api = {
         body: JSON.stringify(body),
       });
       return handleResponse(res, 'Failed to create calendar event');
+    }
+  },
+  updateMyWorkCalendarEvent: async (body: {
+    source: string;
+    sourceId: string;
+    start: string;
+    end?: string;
+    allDay?: boolean;
+    etag?: string;
+  }): Promise<any> => {
+    const source = String(body.source || '').toLowerCase();
+    const sourceId = String(body.sourceId || '').trim();
+    if (!source || !sourceId) {
+      throw new Error('Missing calendar event source/sourceId');
+    }
+
+    const sourceType =
+      source === 'task' || source === 'initiative' || source === 'decision' ? source : 'task';
+    try {
+      return await V8MyWorkApi.updateCalendarEvent(sourceType, sourceId, {
+        start: body.start,
+        end: body.end,
+        allDay: body.allDay,
+      });
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
+        throw error;
+      }
+      throw new Error('Calendar event updates require V8 calendar routes');
     }
   },
   // Assessment Reports

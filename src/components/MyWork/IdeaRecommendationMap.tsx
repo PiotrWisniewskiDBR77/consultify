@@ -42,7 +42,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { Api } from '@/services/api';
+import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
   type ArtifactLink,
@@ -4843,7 +4843,8 @@ function MindMapInner({
                   ideaId,
                   floatingToolbarInfo.nodeId,
                   artifactType,
-                  artifactId
+                  artifactId,
+                  { baseVersion: externalRuntime?.version ?? localVersionRef.current }
                 );
                 if (externalRuntime) {
                   await externalRuntime.refresh();
@@ -4867,6 +4868,13 @@ function MindMapInner({
                   duration: 900,
                 });
               } catch (err: any) {
+                const conflictVersion = getMapVersionFromPayload(err?.data);
+                if (conflictVersion) {
+                  localVersionRef.current = Math.max(localVersionRef.current || 1, conflictVersion);
+                }
+                if (err?.status === 409 && externalRuntime) {
+                  await externalRuntime.refresh().catch(() => {});
+                }
                 toast.error(
                   err?.message ||
                     (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
@@ -6096,6 +6104,7 @@ function MindMapInner({
                     artifactRef: { type, id },
                     label,
                     linkRole: 'related',
+                    baseVersion: externalRuntime?.version ?? localVersionRef.current,
                   });
                   if (externalRuntime) {
                     await externalRuntime.refresh();
@@ -6112,6 +6121,16 @@ function MindMapInner({
                     duration: 900,
                   });
                 } catch (err: any) {
+                  const conflictVersion = getMapVersionFromPayload(err?.data);
+                  if (conflictVersion) {
+                    localVersionRef.current = Math.max(
+                      localVersionRef.current || 1,
+                      conflictVersion
+                    );
+                  }
+                  if (err?.status === 409 && externalRuntime) {
+                    await externalRuntime.refresh().catch(() => {});
+                  }
                   toast.error(
                     err?.message ||
                       (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')

@@ -1,9 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { ChatV10RuntimesPanel } from '@/components/Admin/ChatV10RuntimesPanel';
-import { getChatV10RolloutSnapshot, getChatV10RolloutSummary } from '@/utils/chatV10Rollout';
-
 function readinessBadge(readiness: 'ready' | 'partial' | 'flagged_off') {
   if (readiness === 'ready')
     return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300';
@@ -14,8 +11,30 @@ function readinessBadge(readiness: 'ready' | 'partial' | 'flagged_off') {
 
 export function V10RuntimeWorkspaceView() {
   const location = useLocation();
-  const rolloutSummary = getChatV10RolloutSummary();
-  const rolloutBlocks = getChatV10RolloutSnapshot();
+  const rolloutSummary = {
+    totalBlocks: 0,
+    readyBlocks: 0,
+    partialBlocks: 0,
+    totalFunctions: 0,
+    readyFunctions: 0,
+    flaggedOffFunctions: 0,
+    defaultOffFlags: 0,
+    totalFlags: 0,
+  };
+  const rolloutBlocks: Array<{
+    block: string;
+    title: string;
+    description: string;
+    readiness: 'ready' | 'partial' | 'flagged_off';
+    enabledGateFlags: number;
+    totalGateFlags: number;
+    functions: Array<{
+      id: string;
+      phase: string | number;
+      title: string;
+      readiness: 'ready' | 'partial' | 'flagged_off';
+    }>;
+  }> = [];
 
   return (
     <div className="space-y-6 p-4 lg:p-6" data-testid="v10-runtime-entrypoint">
@@ -115,8 +134,6 @@ export function V10RuntimeWorkspaceView() {
           </div>
         </div>
       </div>
-
-      <ChatV10RuntimesPanel />
     </div>
   );
 }

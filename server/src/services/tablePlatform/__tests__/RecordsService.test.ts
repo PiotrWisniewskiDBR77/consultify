@@ -28,6 +28,16 @@ vi.mock('../RelationService.js', () => ({
   default: { onRecordDeleted: (...args: unknown[]) => mockOnRecordDeleted(...args) },
 }));
 
+const mockRecomputeAffectedFields = vi.fn();
+vi.mock('../formulaEngine.js', () => ({
+  recomputeAffectedFields: (...args: unknown[]) => mockRecomputeAffectedFields(...args),
+}));
+
+const mockConfidenceRecompute = vi.fn();
+vi.mock('../ConfidenceScoringService.js', () => ({
+  default: { recompute: (...args: unknown[]) => mockConfidenceRecompute(...args) },
+}));
+
 vi.mock('uuid', () => ({
   v4: vi.fn(() => 'rec-uuid-001'),
 }));
@@ -41,19 +51,19 @@ describe('RecordsService', () => {
     mockValidateRecord.mockResolvedValue({ valid: true, errors: [] });
     mockValidateRecordSize.mockReturnValue(undefined);
     mockOnRecordDeleted.mockResolvedValue(undefined);
+    mockRecomputeAffectedFields.mockResolvedValue(undefined);
+    mockConfidenceRecompute.mockResolvedValue({ applied: false });
   });
 
   // 1. createRecord → calls validation, inserts, returns record
   it('createRecord calls validation, inserts, and returns record', async () => {
     const recordRow = { id: 'rec-uuid-001', table_id: 't-1', data: { Name: 'Test' } };
     mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // SELECT all fields (defaults)
       .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
       .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
       .mockResolvedValueOnce({ rows: [] }) // INSERT
-      .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT after insert
-      .mockResolvedValueOnce({
-        rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }],
-      }); // recomputeAffectedFields tp_fields
+      .mockResolvedValueOnce({ rows: [recordRow] }); // SELECT after insert
 
     const result = await recordsService.createRecord('t-1', { Name: 'Test' }, 'user-1');
 
@@ -68,12 +78,13 @@ describe('RecordsService', () => {
       valid: false,
       errors: [{ fieldId: 'f1', message: 'must be a string' }],
     });
+    mockQuery.mockResolvedValueOnce({ rows: [] }); // SELECT all fields (defaults)
 
     await expect(
       recordsService.createRecord('t-1', { Title: 123 as any }, 'user-1')
     ).rejects.toThrow(ValidationError);
 
-    expect(mockQuery).not.toHaveBeenCalled();
+    expect(mockQuery).toHaveBeenCalledTimes(1);
   });
 
   // 3. updateRecord → calls validation, updates
@@ -85,14 +96,18 @@ describe('RecordsService', () => {
       .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
       .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
       .mockResolvedValueOnce({ rows: [] }) // UPDATE
-      .mockResolvedValueOnce({ rows: [after] }) // SELECT after
-      .mockResolvedValueOnce({
-        rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }],
-      }); // recomputeAffectedFields tp_fields
+      .mockResolvedValueOnce({ rows: [after] }); // SELECT after
 
     const result = await recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1');
 
-    expect(mockValidateRecord).toHaveBeenCalledWith('t-1', { Name: 'New' });
+    expect(mockValidateRecord).toHaveBeenCalledWith(
+      't-1',
+      { Name: 'New' },
+      {
+        recordId: 'r-1',
+        isUpdate: true,
+      }
+    );
     expect(mockValidateRecordSize).toHaveBeenCalledWith({ Name: 'New' });
     expect(result).toEqual(after);
   });

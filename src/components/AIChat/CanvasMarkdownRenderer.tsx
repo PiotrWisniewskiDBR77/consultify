@@ -101,7 +101,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
               {children}
             </a>
           ),
-          input: (props) => (
+          input: ({ node: _node, ref: _ref, ...props }: any) => (
             <input
               {...props}
               readOnly

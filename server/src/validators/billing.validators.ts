@@ -19,7 +19,7 @@ export const InvoiceLineItemSchema = z
 
 // Create Invoice Request
 export const CreateInvoiceRequestSchema = z.object({
-  organizationId: z.string().min(1),
+  organizationId: z.string().uuid(),
   lineItems: z.array(InvoiceLineItemSchema).min(1),
   currency: z.string().default('USD'),
   dueDate: z.string().datetime().optional(),
@@ -139,7 +139,7 @@ export const BillingStatsQuerySchema = z.object({
 
 export const ListInvoicesQuerySchema = z.object({
   status: z.enum(['draft', 'open', 'paid', 'past_due', 'void']).optional(),
-  organizationId: z.string().min(1).optional(),
+  organizationId: z.string().uuid().optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(50),
 });

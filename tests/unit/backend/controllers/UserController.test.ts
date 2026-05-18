@@ -162,6 +162,16 @@ describe('UserController', () => {
       });
       (queryHelpers.queryRun as any)
         .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
         .mockResolvedValueOnce({ changes: 1 });
 
       await UserController.updateUser(mockReq, mockRes, vi.fn());
@@ -170,9 +180,9 @@ describe('UserController', () => {
         expect.stringContaining('UPDATE user_profiles SET'),
         expect.arrayContaining(['Plant Lead', 'Engineering', expect.any(String), 'user-1'])
       );
-      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+      expect(queryHelpers.queryRun).not.toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO user_profiles'),
-        expect.arrayContaining([expect.any(String), 'user-1'])
+        expect.any(Array)
       );
       expect(jsonFn).toHaveBeenCalledWith({
         id: 'user-1',
@@ -205,6 +215,16 @@ describe('UserController', () => {
       });
       (queryHelpers.queryRun as any)
         .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
         .mockResolvedValueOnce({ changes: 1 });
 
       await UserController.updateUser(mockReq, mockRes, vi.fn());
@@ -213,7 +233,7 @@ describe('UserController', () => {
         'UPDATE user_profiles SET job_title = ?, department = ? WHERE user_id = ?',
         ['Product Lead', 'Engineering', 'user-1']
       );
-      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+      expect(queryHelpers.queryRun).not.toHaveBeenCalledWith(
         'INSERT INTO user_profiles (user_id, job_title, department) VALUES (?, ?, ?)',
         ['user-1', 'Product Lead', 'Engineering']
       );
@@ -240,6 +260,16 @@ describe('UserController', () => {
       });
       (queryHelpers.queryRun as any)
         .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 0 })
         .mockResolvedValueOnce({ changes: 1 });
 
       await UserController.updateUser(mockReq, mockRes, vi.fn());
@@ -248,9 +278,9 @@ describe('UserController', () => {
         expect.stringContaining('UPDATE user_profile_extended SET'),
         expect.arrayContaining(['Engineering Manager', 'Engineering', expect.any(String), 'user-1'])
       );
-      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+      expect(queryHelpers.queryRun).not.toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO user_profile_extended'),
-        expect.arrayContaining(['user-1', 'Engineering Manager', 'Engineering', expect.any(String)])
+        expect.any(Array)
       );
       expect(jsonFn).toHaveBeenCalledWith({
         id: 'user-1',

@@ -32,6 +32,17 @@ export function getToolSuggestionPrompt(
 ): string {
   if (toolType === 'market-forces') {
     const porterData = inputData as any;
+    if (stepId === 'rivalry') {
+      return `Analyze the rivalry force for this market context and provide specific, evidence-based implications for margin and positioning.
+
+Context:
+- Industry / market: ${porterData?.context?.industry || 'missing'}
+- Geographic scope: ${porterData?.context?.geographicScope || 'missing'}
+- Position: ${porterData?.context?.position || 'challenger'}
+
+Return JSON:
+{"analysis":{"force":"rivalry","score":3,"trend":"increasing|stable|decreasing","drivers":["..."],"evidence":["..."],"implication":"...","confidence":1-5}}`;
+    }
     if (stepId === 'mission') {
       return `Act as an AI strategy mentor. Improve the market brief for this Porter Five Forces session.
 

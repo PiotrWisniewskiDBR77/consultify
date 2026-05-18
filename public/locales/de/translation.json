@@ -1064,6 +1064,17 @@
     "register": "Registrieren"
   },
   "help": {
+    "feedback": {
+      "title": "War das hilfreich?",
+      "yes": "Ja",
+      "no": "Nein",
+      "addComment": "Sagen Sie uns, was gefehlt hat",
+      "commentPlaceholder": "Was sollen wir verbessern?",
+      "submit": "Feedback senden",
+      "skip": "Überspringen",
+      "thanks": "Danke für das Feedback",
+      "error": "Feedback konnte nicht gesendet werden. Bitte erneut versuchen."
+    },
     "title": "Hilfezentrum",
     "knowledge": {
       "title": "Wissensdatenbank",

@@ -225,6 +225,8 @@ export async function getPortfolioRead(
       plannedEndDate: initiative.planned_end_date,
       actualStartDate: initiative.actual_start_date,
       actualEndDate: initiative.actual_end_date,
+      ownerId: initiative.owner_execution_id ?? initiative.owner_id ?? null,
+      sponsorId: initiative.sponsor_id ?? null,
       priority: String(initiative.priority || 'MEDIUM').toUpperCase(),
       sourceId: initiative.source_id,
       sourceType: initiative.source_type,

@@ -62,5 +62,40 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
       description: isPolish ? 'Zapisz aktualny stan boardu' : 'Save the current board state',
       category: 'actions',
     },
+    {
+      key: 'Ctrl/Cmd+Z',
+      description: isPolish ? 'Cofnij ostatnia zmiane' : 'Undo the latest change',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+Shift+Z',
+      description: isPolish ? 'Ponow cofniecie (redo)' : 'Redo the previously undone change',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+G',
+      description: isPolish ? 'Grupuj zaznaczone elementy' : 'Group selected elements',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+Shift+G',
+      description: isPolish ? 'Rozgrupuj zaznaczona grupe' : 'Ungroup selected frame/group',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+A',
+      description: isPolish ? 'Zaznacz wszystko na boardzie' : 'Select all board elements',
+      category: 'selection',
+    },
+    {
+      key: 'Delete / Backspace',
+      description: isPolish ? 'Usun zaznaczone elementy' : 'Delete selected elements',
+      category: 'actions',
+    },
+    {
+      key: '/',
+      description: isPolish ? 'Otworz menu szybkich komend' : 'Open quick command menu',
+      category: 'navigation',
+    },
   ];
 }

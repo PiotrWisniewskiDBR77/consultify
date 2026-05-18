@@ -1,4 +1,5 @@
 /**
+<<<<<<<< HEAD:src/utils/tabeleQaFlag.ts
  * Block C · EPIC-T11 · client-side kill switch for the Tabele QA panel.
  *
  * Mirrors `melsTabeleFlag` and `tabeleAiEditorFlag` so operator overrides
@@ -9,6 +10,11 @@
  *   2. `localStorage["ff.tabele_qa"]`
  *   3. `import.meta.env.VITE_TABELE_QA`
  *   4. Default: OFF until backend `ENABLE_TABLE_QA_ENGINE` is enabled.
+========
+ * Chat V10 / V10-AGT approval-mode resolver feature flag.
+ *
+ * Default OFF until strictest-wins approval resolution is wired into runtime.
+>>>>>>>> origin/main:src/utils/v10/agentApprovalModeFlag.ts
  */
 
 const LS_KEY = 'ff.tabele_qa';

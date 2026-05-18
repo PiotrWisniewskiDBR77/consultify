@@ -27,13 +27,13 @@ const baseProps = {
 
 describe('CanvasLeftToolbar', () => {
   it('renders when isAccepted is true', () => {
-    const { container } = render(<CanvasLeftToolbar {...baseProps} />);
-    expect(container.querySelector('button')).toBeTruthy();
+    render(<CanvasLeftToolbar {...baseProps} />);
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
   });
 
   it('still renders the toolbar shell when isAccepted is false', () => {
-    const { container } = render(<CanvasLeftToolbar {...baseProps} isAccepted={false} />);
-    expect(container.querySelector('button')).toBeTruthy();
+    render(<CanvasLeftToolbar {...baseProps} isAccepted={false} />);
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
   });
 
   it('renders mindmap-specific slots (GitBranch for Add node)', () => {

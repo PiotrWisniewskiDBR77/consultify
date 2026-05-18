@@ -31,6 +31,23 @@ interface BuildSchemaInput {
   sourceRefs: DocumentSourceRef[];
 }
 
+function normalizeAudience(audience: unknown): string[] {
+  if (Array.isArray(audience)) {
+    return audience
+      .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+      .filter((entry) => entry.length > 0);
+  }
+
+  if (typeof audience === 'string') {
+    return audience
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+
+  return [];
+}
+
 function buildSectionBlocks(
   sectionTitle: string,
   intakeDescription: string,
@@ -161,7 +178,7 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
     title: outline.title,
     documentType: outline.documentType,
     language: intake.language ?? 'pl',
-    audience: intake.audience ?? [],
+    audience: normalizeAudience((intake as { audience?: unknown }).audience),
     goal: intake.goal ?? 'inform',
     communicationRegister: outline.recommendedRegister,
     density: outline.recommendedDensity,

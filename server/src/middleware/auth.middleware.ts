@@ -456,7 +456,7 @@ const mapRole = (role?: string): UserRole => {
       return 'administrator';
     case 'superadmin':
     case 'super_admin':
-      return 'owner';
+      return 'superadmin';
     case 'user':
       return 'team_member';
     case 'member':
@@ -466,9 +466,34 @@ const mapRole = (role?: string): UserRole => {
     case 'guest':
       return 'guest';
     case 'manager':
-      return 'project_manager';
+      return 'team_member';
     default:
-      return normalizedRole as UserRole;
+      return 'team_member';
+  }
+};
+
+const mapRoleForAuthenticatedUser = (role?: string): UserRole => {
+  const normalized = normalizeRoleClaim(role);
+  if (!normalized) return 'team_member';
+
+  const lower = normalized.toLowerCase();
+  switch (lower) {
+    case 'admin':
+      return 'administrator';
+    case 'super_admin':
+    case 'superadmin':
+    case 'owner':
+      return 'owner';
+    case 'manager':
+      return 'project_manager';
+    case 'member':
+    case 'user':
+      return 'team_member';
+    case 'client':
+    case 'guest':
+      return 'guest';
+    default:
+      return normalized as UserRole;
   }
 };
 
@@ -479,8 +504,9 @@ const normalizePermissionRole = (role?: string): string => {
   switch (r) {
     case 'SUPER_ADMIN':
     case 'SUPERADMIN':
-    case 'OWNER':
       return 'SUPERADMIN';
+    case 'OWNER':
+      return 'OWNER';
     case 'ADMINISTRATOR':
     case 'ADMIN':
       return 'ADMIN';
@@ -601,7 +627,7 @@ const attachUser = async (
     email: normalizedEmail,
     name: normalizedDisplayName,
     ...splitDisplayName(normalizedDisplayName),
-    role: mapRole(req.userRole),
+    role: mapRoleForAuthenticatedUser(req.userRole),
     organizationId: req.organizationId || '',
     isSuperAdmin: resolvedIsSuperAdmin,
     isDemo: readBooleanTrueClaim(decodedClaims, 'isDemo') || isDemoHeader,

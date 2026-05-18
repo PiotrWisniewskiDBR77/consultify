@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { getMyWorkMainContentClassName } from '@/components/MyWork/MyWorkHub';
 
+describe('test contract guard', () => {
+  it('exports getMyWorkMainContentClassName helper from MyWorkHub', () => {
+    expect(typeof getMyWorkMainContentClassName).toBe('function');
+  });
+});
+
 describe('getMyWorkMainContentClassName', () => {
   it('lets an open workspace own scroll and canvas gestures', () => {
     const className = getMyWorkMainContentClassName({

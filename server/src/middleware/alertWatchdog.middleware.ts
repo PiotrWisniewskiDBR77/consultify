@@ -36,18 +36,88 @@ const records: RequestRecord[] = [];
 const lastAlerts: Map<string, number> = new Map();
 let totalRequests = 0;
 let totalFiveXx = 0;
+let scheduledThresholdCheck = false;
+
+const RES_END_PATCHED = Symbol.for('consultify.alertWatchdog.endPatched');
+const RES_COMPLETED = Symbol.for('consultify.alertWatchdog.completed');
+const MAX_PRUNE_PER_INVOCATION = 1000;
+const MAX_RECORDS_HARD_CAP = 50_000;
+const MAX_STRINGIFIED_ALERT_PAYLOAD = 8_192;
+
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (typeof raw !== 'string' || raw.trim().length === 0) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+const RUNTIME_CONFIG = {
+  windowMs: readPositiveIntEnv('ALERT_WATCHDOG_WINDOW_MS', DEFAULT_CONFIG.windowMs),
+  maxRecords: Math.min(
+    readPositiveIntEnv('ALERT_WATCHDOG_MAX_RECORDS', MAX_RECORDS_HARD_CAP),
+    MAX_RECORDS_HARD_CAP
+  ),
+  checkEveryN: readPositiveIntEnv('ALERT_WATCHDOG_CHECK_EVERY_N', 10),
+};
+
+function nowMs(): number {
+  try {
+    const now = Date.now();
+    return Number.isFinite(now) ? now : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function nowMonotonicMs(): number {
+  try {
+    return Number(performance.now());
+  } catch {
+    return Number.NaN;
+  }
+}
+
+function normalizeStatusCode(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  if (!Number.isInteger(value)) return 0;
+  if (value < 100 || value > 599) return 0;
+  return value;
+}
+
+function safeToErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+function escapeHtml(value: unknown): string {
+  if (value == null) return '';
+  const asString = String(value);
+  return asString
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
 
 function pruneOld(config: WatchdogConfig): void {
-  const cutoff = Date.now() - config.windowMs;
-  while (records.length > 0 && records[0].timestamp < cutoff) {
+  const cutoff = nowMs() - config.windowMs;
+  let removed = 0;
+  while (
+    records.length > 0 &&
+    records[0].timestamp < cutoff &&
+    removed < MAX_PRUNE_PER_INVOCATION
+  ) {
     records.shift();
+    removed += 1;
   }
 }
 
 function shouldAlert(type: string, config: WatchdogConfig): boolean {
   const last = lastAlerts.get(type);
-  if (last && Date.now() - last < config.cooldownMs) return false;
-  lastAlerts.set(type, Date.now());
+  if (typeof last === 'number' && nowMs() - last < config.cooldownMs) return false;
+  lastAlerts.set(type, nowMs());
   return true;
 }
 
@@ -55,25 +125,33 @@ function checkThresholds(config: WatchdogConfig): void {
   pruneOld(config);
   if (records.length === 0) return;
 
-  const fiveXxInWindow = records.filter((r) => r.statusCode >= 500).length;
-  if (fiveXxInWindow >= config.fiveXxThreshold && shouldAlert('5xx_spike', config)) {
-    logger.error(
-      `[AlertWatchdog] 5xx SPIKE: ${fiveXxInWindow} errors in ${config.windowMs / 1000}s window`
-    );
-    notifyAlert(
-      'api_5xx_spike_detected',
-      `5xx spike: ${fiveXxInWindow} errors in ${config.windowMs / 60000}min`
-    );
+  try {
+    const fiveXxInWindow = records.filter((r) => r.statusCode >= 500 && r.statusCode <= 599).length;
+    if (fiveXxInWindow >= config.fiveXxThreshold && shouldAlert('5xx_spike', config)) {
+      logger.error(
+        `[AlertWatchdog] 5xx SPIKE: ${fiveXxInWindow} errors in ${config.windowMs / 1000}s window`
+      );
+      void notifyAlert(
+        'api_5xx_spike_detected',
+        `5xx spike: ${fiveXxInWindow} errors in ${config.windowMs / 60000}min`
+      );
+    }
+  } catch {
+    // continue with latency branch
   }
 
-  const durations = records.map((r) => r.durationMs).sort((a, b) => a - b);
-  const p95Index = Math.floor(durations.length * 0.95);
-  const p95 = durations[p95Index] || 0;
-  if (p95 > config.latencyThresholdMs && shouldAlert('high_latency', config)) {
-    logger.warn(
-      `[AlertWatchdog] HIGH LATENCY: p95=${p95.toFixed(0)}ms (threshold: ${config.latencyThresholdMs}ms)`
-    );
-    notifyAlert('api_latency_spike', `p95 latency: ${p95.toFixed(0)}ms`);
+  try {
+    const durations = records.map((r) => r.durationMs).sort((a, b) => a - b);
+    const p95Index = Math.floor(durations.length * 0.95);
+    const p95 = durations[p95Index] || 0;
+    if (p95 > config.latencyThresholdMs && shouldAlert('high_latency', config)) {
+      logger.warn(
+        `[AlertWatchdog] HIGH LATENCY: p95=${p95.toFixed(0)}ms (threshold: ${config.latencyThresholdMs}ms)`
+      );
+      void notifyAlert('api_latency_spike', `p95 latency: ${p95.toFixed(0)}ms`);
+    }
+  } catch {
+    // fail-open
   }
 }
 
@@ -82,10 +160,12 @@ async function notifyAlert(type: string, message: string): Promise<void> {
     const emailService = await import('../services/emailService.js').then((m) => m.default || m);
     const alertEmail = process.env.ALERT_EMAIL || process.env.ADMIN_EMAIL || '';
     if (alertEmail && emailService?.sendEmail) {
+      const safeType = escapeHtml(type);
+      const safeMessage = escapeHtml(message).slice(0, MAX_STRINGIFIED_ALERT_PAYLOAD);
       await emailService.sendEmail(
         alertEmail,
-        `[Consultivity Alert] ${type}`,
-        `<p>${message}</p><p>Time: ${new Date().toISOString()}</p>`
+        `[Consultivity Alert] ${safeType}`,
+        `<p>${safeMessage}</p><p>Time: ${new Date().toISOString()}</p>`
       );
     }
   } catch {
@@ -100,44 +180,132 @@ export function getWatchdogStats(): {
   windowFiveXx: number;
   p95Ms: number;
 } {
-  const now = Date.now();
-  const windowRecords = records.filter((r) => now - r.timestamp < DEFAULT_CONFIG.windowMs);
-  const durations = windowRecords.map((r) => r.durationMs).sort((a, b) => a - b);
-  const p95Index = Math.floor(durations.length * 0.95);
-  return {
-    totalRequests,
-    totalFiveXx,
-    windowRequests: windowRecords.length,
-    windowFiveXx: windowRecords.filter((r) => r.statusCode >= 500).length,
-    p95Ms: durations[p95Index] || 0,
-  };
+  try {
+    const now = nowMs();
+    const windowRecords = records.filter((r) => now - r.timestamp < RUNTIME_CONFIG.windowMs);
+    const durations = windowRecords.map((r) => r.durationMs).sort((a, b) => a - b);
+    const p95Index = Math.floor(durations.length * 0.95);
+    return {
+      totalRequests,
+      totalFiveXx,
+      windowRequests: windowRecords.length,
+      windowFiveXx: windowRecords.filter((r) => r.statusCode >= 500 && r.statusCode <= 599).length,
+      p95Ms: durations[p95Index] || 0,
+    };
+  } catch {
+    return {
+      totalRequests: 0,
+      totalFiveXx: 0,
+      windowRequests: 0,
+      windowFiveXx: 0,
+      p95Ms: 0,
+    };
+  }
 }
 
 const alertWatchdog = (req: Request, res: Response, next: NextFunction): void => {
-  const start = Date.now();
-  totalRequests++;
+  if ((res as any)[RES_END_PATCHED]) {
+    next();
+    return;
+  }
 
-  const originalEnd = res.end.bind(res) as (...args: any[]) => any;
+  const startWall = nowMs();
+  const startMonotonic = nowMonotonicMs();
+
+  const originalEndFn = (() => {
+    try {
+      return res.end;
+    } catch {
+      return null;
+    }
+  })();
+  if (typeof originalEndFn !== 'function') {
+    next();
+    return;
+  }
+
+  let boundOriginalEnd: ((...args: any[]) => any) | null = null;
+  try {
+    boundOriginalEnd = originalEndFn.bind(res) as (...args: any[]) => any;
+  } catch {
+    next();
+    return;
+  }
+
+  try {
+    Object.defineProperty(res, RES_END_PATCHED, {
+      value: true,
+      enumerable: false,
+      configurable: true,
+    });
+  } catch {
+    next();
+    return;
+  }
+
   (res as any).end = function (...args: any[]) {
-    const duration = Date.now() - start;
-    const statusCode = res.statusCode;
+    try {
+      if (!(res as any)[RES_COMPLETED]) {
+        Object.defineProperty(res, RES_COMPLETED, {
+          value: true,
+          enumerable: false,
+          configurable: true,
+        });
 
-    if (statusCode >= 500) totalFiveXx++;
+        const endMonotonic = nowMonotonicMs();
+        const durationFromMonotonic =
+          Number.isFinite(startMonotonic) && Number.isFinite(endMonotonic)
+            ? Math.max(0, endMonotonic - startMonotonic)
+            : Number.NaN;
+        const durationFromWall = Math.max(0, nowMs() - startWall);
+        const durationMs = Number.isFinite(durationFromMonotonic)
+          ? durationFromMonotonic
+          : durationFromWall;
 
-    records.push({ timestamp: Date.now(), statusCode, durationMs: duration });
+        const statusCode = normalizeStatusCode(
+          (() => {
+            try {
+              return res.statusCode;
+            } catch {
+              return 0;
+            }
+          })()
+        );
 
-    if (records.length % 10 === 0) {
-      try {
-        checkThresholds(DEFAULT_CONFIG);
-      } catch {
-        /* fail-open */
+        totalRequests += 1;
+        if (statusCode >= 500 && statusCode <= 599) totalFiveXx += 1;
+
+        records.push({ timestamp: nowMs(), statusCode, durationMs });
+        while (records.length > RUNTIME_CONFIG.maxRecords) {
+          records.shift();
+        }
+
+        pruneOld({ ...DEFAULT_CONFIG, windowMs: RUNTIME_CONFIG.windowMs });
+        if (records.length % RUNTIME_CONFIG.checkEveryN === 0 && !scheduledThresholdCheck) {
+          scheduledThresholdCheck = true;
+          setImmediate(() => {
+            scheduledThresholdCheck = false;
+            try {
+              checkThresholds({ ...DEFAULT_CONFIG, windowMs: RUNTIME_CONFIG.windowMs });
+            } catch {
+              // fail-open
+            }
+          });
+        }
       }
+    } catch {
+      // fail-open
     }
 
-    return originalEnd(...args);
-  };
+    return boundOriginalEnd ? boundOriginalEnd(...args) : undefined;
+  } as typeof res.end;
 
   next();
+};
+
+export const __private__ = {
+  escapeHtml,
+  getRecordCount: () => records.length,
 };
 
 export default alertWatchdog;

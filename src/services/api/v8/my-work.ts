@@ -233,6 +233,7 @@ export interface V8CalendarUnifiedFilters {
   end?: string;
   sources?: string[];
   projectId?: string;
+  ownership?: 'any' | 'assignee' | 'owner';
 }
 
 export const V8MyWorkApi = {
@@ -418,5 +419,17 @@ export const V8MyWorkApi = {
     allDay?: boolean;
     source?: 'task' | 'initiative' | 'decision';
     description?: string;
+    recurrence?: {
+      preset: 'daily' | 'weekly' | 'monthly';
+    };
   }) => v8Post<{ id: string; source: string; message: string }>('/my-work/calendar/events', body),
+  updateCalendarEvent: (
+    source: 'task' | 'initiative' | 'decision',
+    sourceId: string,
+    body: { start: string; end?: string; allDay?: boolean }
+  ) =>
+    v8Put<{ id: string; source: string; message: string }>(
+      `/my-work/calendar/events/${encodeURIComponent(source)}/${encodeURIComponent(sourceId)}`,
+      body
+    ),
 };

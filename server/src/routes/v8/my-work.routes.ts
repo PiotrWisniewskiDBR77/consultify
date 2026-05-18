@@ -31,6 +31,7 @@ import {
   toPublicNotebookCaptureMetadata,
 } from '../../services/notebookSourceFileService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
+import { materializeInstances } from '../../services/v8/recurrenceEngine.js';
 import type {
   CalendarPhaseName,
   CalendarPhaseStatus,
@@ -1694,6 +1695,9 @@ router.get(
           .filter(Boolean)
       : ['task', 'initiative', 'decision', 'outlook', 'google', 'consultify'];
     const projectId = req.query.projectId ? String(req.query.projectId).trim() : '';
+    const ownership = req.query.ownership
+      ? String(req.query.ownership).trim().toLowerCase()
+      : 'any';
 
     const events: Array<{
       id: string;
@@ -1736,8 +1740,8 @@ router.get(
 
       const assignmentParts: string[] = [];
       if (hasAssigneeId) assignmentParts.push('t.assignee_id = ?');
-      if (hasAssignedTo) assignmentParts.push('t.assigned_to = ?');
-      if (hasOwnerId) assignmentParts.push('t.owner_id = ?');
+      if (hasAssignedTo && ownership !== 'owner') assignmentParts.push('t.assigned_to = ?');
+      if (hasOwnerId && ownership !== 'assignee') assignmentParts.push('t.owner_id = ?');
       if (assignmentParts.length === 0 && hasCreatedBy) assignmentParts.push('t.created_by = ?');
 
       const where: string[] = ['t.organization_id = ?'];
@@ -1776,6 +1780,7 @@ router.get(
       if (hasEnd) select.push('t.end_date as end_date');
       if (hasPlannedStart) select.push('t.planned_start_date as planned_start_date');
       if (hasPlannedEnd) select.push('t.planned_end_date as planned_end_date');
+      if (taskCols.has('metadata')) select.push('t.metadata as metadata');
 
       const rows =
         (await queryHelpers.queryAll<any>(
@@ -1808,6 +1813,50 @@ router.get(
           priority: row.priority,
           description: row.description,
         });
+
+        try {
+          const metadataRaw = row?.metadata;
+          const metadata =
+            typeof metadataRaw === 'string' ? JSON.parse(metadataRaw || '{}') : metadataRaw;
+          const recurrence = metadata?.calendarRecurrence;
+          if (recurrence?.rrule && startDate && end && start) {
+            const seriesStart = `${startDate}T00:00:00.000Z`;
+            const materialized = materializeInstances(
+              seriesStart,
+              due ? undefined : endDate ? `${endDate}T00:00:00.000Z` : null,
+              {
+                seriesMasterRef: String(row.id),
+                rrule: recurrence.rrule,
+                rdate: null,
+                exdate: null,
+                exceptions: [],
+                materializationRule: 'window_only',
+              },
+              start,
+              end
+            );
+            for (const occurrence of materialized) {
+              if (occurrence.isCancelled) continue;
+              const occDate = occurrence.startAt.slice(0, 10);
+              events.push({
+                id: `task-${row.id}-rec-${occurrence.recurrenceId}`,
+                title: String(row.title || '').trim() || 'Task',
+                start: occDate,
+                allDay: true,
+                source: 'task',
+                sourceId: String(row.id),
+                color: '#2563eb',
+                status: row.status,
+                priority: row.priority,
+                description: row.description,
+                recurrenceRule: recurrence.rrule,
+                recurrenceSourceId: String(row.id),
+              });
+            }
+          }
+        } catch {
+          // ignore invalid metadata payload and keep base event
+        }
       }
     }
 
@@ -1993,9 +2042,9 @@ router.get(
       const hasProjectId = decisionCols.has('project_id');
 
       const ownerParts: string[] = [];
-      if (hasDecisionOwner) ownerParts.push('d.decision_owner_id = ?');
-      if (hasDecisionMaker) ownerParts.push('d.decision_maker_id = ?');
-      if (hasAssignedTo) ownerParts.push('d.assigned_to = ?');
+      if (hasDecisionOwner && ownership !== 'assignee') ownerParts.push('d.decision_owner_id = ?');
+      if (hasDecisionMaker && ownership !== 'assignee') ownerParts.push('d.decision_maker_id = ?');
+      if (hasAssignedTo && ownership !== 'owner') ownerParts.push('d.assigned_to = ?');
       if (ownerParts.length === 0 && hasCreatedBy) ownerParts.push('d.created_by = ?');
       if (ownerParts.length === 0) ownerParts.push('1=0');
 
@@ -2268,6 +2317,11 @@ router.post(
       allDay: z.boolean().optional().default(true),
       source: z.enum(['task', 'initiative', 'decision']).optional().default('task'),
       description: z.string().optional(),
+      recurrence: z
+        .object({
+          preset: z.enum(['daily', 'weekly', 'monthly']),
+        })
+        .optional(),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -2278,7 +2332,7 @@ router.post(
       });
     }
 
-    const { title, start, source, description } = parsed.data;
+    const { title, start, source, description, recurrence } = parsed.data;
     if (source !== 'task') {
       return res.status(501).json({
         error: `Creating ${source} events from calendar is not yet supported`,
@@ -2286,14 +2340,133 @@ router.post(
     }
 
     const id = randomUUID();
+    const recurrencePayload =
+      recurrence?.preset === 'daily'
+        ? { rrule: 'FREQ=DAILY' }
+        : recurrence?.preset === 'weekly'
+          ? { rrule: 'FREQ=WEEKLY' }
+          : recurrence?.preset === 'monthly'
+            ? { rrule: 'FREQ=MONTHLY' }
+            : null;
+
     await queryHelpers.queryRun(
       `INSERT INTO tasks (id, title, description, due_date, assignee_id, organization_id, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 'todo', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [id, title, description || null, start, userId, organizationId]
     );
+    if (recurrencePayload) {
+      const taskCols = await getTableColumns('tasks');
+      if (!taskCols.has('metadata')) {
+        return res.status(501).json({
+          error: 'Recurring calendar tasks are not supported in this environment',
+        });
+      }
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET metadata = ? WHERE id = ? AND organization_id = ?`,
+        [JSON.stringify({ calendarRecurrence: recurrencePayload }), id, organizationId]
+      );
+    }
 
     return res.status(201).json({
       data: { id, source: 'task', message: 'Task created from calendar' },
+      meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
+    });
+  })
+);
+
+router.put(
+  '/calendar/events/:source/:sourceId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const source = String(req.params.source || '').toLowerCase();
+    const sourceId = String(req.params.sourceId || '').trim();
+    const schema = z.object({
+      start: z.string().min(1),
+      end: z.string().optional(),
+      allDay: z.boolean().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid event update payload',
+        details: parsed.error.issues,
+      });
+    }
+
+    if (!sourceId || !['task', 'initiative', 'decision'].includes(source)) {
+      return res.status(400).json({
+        error: 'Invalid source/sourceId',
+      });
+    }
+
+    const { start } = parsed.data;
+    const startDate = String(start).slice(0, 10);
+
+    if (source === 'task') {
+      const result = await queryHelpers.queryRun(
+        `UPDATE tasks
+         SET due_date = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ? AND assignee_id = ?`,
+        [startDate, sourceId, organizationId, userId]
+      );
+      if (!result.changes) {
+        return res.status(404).json({ error: 'Task event not found for user' });
+      }
+      return res.json({
+        data: { id: sourceId, source: 'task', message: 'Task rescheduled from calendar' },
+        meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
+      });
+    }
+
+    if (source === 'initiative') {
+      const initCols = await getTableColumns('initiatives');
+      const startColumn = initCols.has('planned_start_date')
+        ? 'planned_start_date'
+        : initCols.has('start_date')
+          ? 'start_date'
+          : null;
+      if (!startColumn) {
+        return res
+          .status(501)
+          .json({ error: 'Initiative calendar updates are not supported here' });
+      }
+      const result = await queryHelpers.queryRun(
+        `UPDATE initiatives
+         SET ${startColumn} = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [startDate, sourceId, organizationId]
+      );
+      if (!result.changes) {
+        return res.status(404).json({ error: 'Initiative event not found' });
+      }
+      return res.json({
+        data: {
+          id: sourceId,
+          source: 'initiative',
+          message: 'Initiative rescheduled from calendar',
+        },
+        meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
+      });
+    }
+
+    const decisionCols = await getTableColumns('decisions');
+    const ownerClause = decisionCols.has('decision_owner_id')
+      ? '(decision_owner_id = ? OR decision_maker_id = ? OR assigned_to = ? OR created_by = ?)'
+      : '(assigned_to = ? OR created_by = ?)';
+    const ownerParams = decisionCols.has('decision_owner_id')
+      ? [userId, userId, userId, userId]
+      : [userId, userId];
+    const result = await queryHelpers.queryRun(
+      `UPDATE decisions
+       SET deadline = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND organization_id = ? AND ${ownerClause}`,
+      [startDate, sourceId, organizationId, ...ownerParams]
+    );
+    if (!result.changes) {
+      return res.status(404).json({ error: 'Decision event not found for user' });
+    }
+    return res.json({
+      data: { id: sourceId, source: 'decision', message: 'Decision rescheduled from calendar' },
       meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
     });
   })
@@ -2305,7 +2478,7 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const date = req.query.date ? String(req.query.date) : new Date().toISOString().split('T')[0];
 
-    const [tasks, decisions] = await Promise.all([
+    const [tasks, decisions, meetings] = await Promise.all([
       queryHelpers.queryAll<any>(
         `SELECT id, title, due_date
          FROM tasks
@@ -2325,12 +2498,55 @@ router.get(
          ORDER BY deadline ASC`,
         [organizationId, userId, userId, date]
       ),
+      queryHelpers.queryAll<any>(
+        `SELECT id, title, start_at, end_at
+         FROM meetings
+         WHERE organization_id = ?
+           AND created_by = ?
+           AND date(start_at) = date(?)
+         ORDER BY start_at ASC`,
+        [organizationId, userId, date]
+      ),
     ]);
 
     const taskRows = tasks || [];
     const decisionRows = decisions || [];
     const totalItems = taskRows.length + decisionRows.length;
-    const hasConflicts = totalItems > 3;
+    const windows: Array<{ start: number; end: number }> = [];
+    const toMs = (value: unknown) => {
+      const dateObj = value ? new Date(String(value)) : null;
+      return dateObj && !Number.isNaN(dateObj.getTime()) ? dateObj.getTime() : null;
+    };
+    for (const task of taskRows) {
+      const startMs = toMs(
+        task?.due_date ? `${String(task.due_date).slice(0, 10)}T09:00:00.000Z` : null
+      );
+      if (startMs != null) windows.push({ start: startMs, end: startMs + 60 * 60 * 1000 });
+    }
+    for (const decision of decisionRows) {
+      const startMs = toMs(
+        decision?.deadline ? `${String(decision.deadline).slice(0, 10)}T11:00:00.000Z` : null
+      );
+      if (startMs != null) windows.push({ start: startMs, end: startMs + 60 * 60 * 1000 });
+    }
+    for (const meeting of meetings || []) {
+      const startMs = toMs(meeting?.start_at);
+      const endMs = toMs(meeting?.end_at);
+      if (startMs != null) {
+        windows.push({
+          start: startMs,
+          end: endMs != null && endMs > startMs ? endMs : startMs + 30 * 60 * 1000,
+        });
+      }
+    }
+    windows.sort((a, b) => a.start - b.start);
+    let overlapCount = 0;
+    for (let index = 1; index < windows.length; index += 1) {
+      if (windows[index].start < windows[index - 1].end) {
+        overlapCount += 1;
+      }
+    }
+    const hasConflicts = overlapCount > 0 || totalItems > 3;
 
     return res.json({
       data: {
@@ -2339,6 +2555,7 @@ router.get(
         decisions: decisionRows,
         totalItems,
         hasConflicts,
+        overlapCount,
         suggestion: hasConflicts
           ? 'This day looks busy. Consider rescheduling lower-priority items.'
           : null,

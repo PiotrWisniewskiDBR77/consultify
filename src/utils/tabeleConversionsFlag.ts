@@ -1,4 +1,5 @@
 /**
+<<<<<<<< HEAD:src/utils/tabeleConversionsFlag.ts
  * Block D · EPIC-T13 · client-side kill switch for the Tabele lane
  * conversions ("Convert to Document / Presentation") UI hosted inside
  * the right-rail share panel (CTO Q15).
@@ -12,6 +13,11 @@
  *   2. `localStorage["ff.tabele_conversions"]`
  *   3. `import.meta.env.VITE_TABELE_CONVERSIONS`
  *   4. Default: OFF until backend `ENABLE_TABLE_ARTIFACT_CONVERSION` is enabled.
+========
+ * Chat V10 / V10-ART review lifecycle FSM feature flag.
+ *
+ * Default OFF until the closed review transition resolver is adopted by runtime.
+>>>>>>>> origin/main:src/utils/v10/artifactReviewFsmFlag.ts
  */
 
 const LS_KEY = 'ff.tabele_conversions';
