@@ -356,6 +356,7 @@
     "recharts": "^2.15.4",
     "redis": "^5.10.0",
     "remark-gfm": "^4.0.1",
+    "rrule": "^2.8.1",
     "socket.io-client": "^4.8.3",
     "speakeasy": "^2.0.0",
     "stripe": "^20.1.0",
