@@ -12,6 +12,10 @@ vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
 
 import {
   checkUserDemoPreference,
+  demoContextMiddleware,
+  demoWriteProtection,
+  DEMO_ORG_ID,
+  DEMO_SESSION_ORG_HEADER,
   getDemoStartedAt,
   getDemoStats,
   setUserDemoPreference,
@@ -143,5 +147,54 @@ describe('demoGuard.middleware setUserDemoPreference', () => {
 
     expect(startedAt).toBeNull();
     expect(getMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores spoofed X-Demo-Session-Org when there is no active matching demo session', async () => {
+    getMock.mockResolvedValueOnce(null);
+    const req: any = {
+      get: (name: string) =>
+        name === 'X-Demo-Mode'
+          ? 'true'
+          : name === DEMO_SESSION_ORG_HEADER
+            ? 'other-org'
+            : undefined,
+      user: { id: 'user-1', organizationId: 'real-org', organization_id: 'real-org' },
+    };
+    const next = vi.fn();
+
+    await demoContextMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.demo).toEqual({
+      enabled: true,
+      organizationId: DEMO_ORG_ID,
+      sessionValidated: false,
+    });
+    expect(req.organizationId).toBe(DEMO_ORG_ID);
+    expect(req.user.organizationId).toBe(DEMO_ORG_ID);
+  });
+
+  it('blocks demo writes even when a spoofed session org header is present', () => {
+    const req: any = {
+      method: 'POST',
+      originalUrl: '/api/projects',
+      get: (name: string) =>
+        name === 'X-Demo-Mode'
+          ? 'true'
+          : name === DEMO_SESSION_ORG_HEADER
+            ? 'other-org'
+            : undefined,
+      demo: { enabled: true, organizationId: DEMO_ORG_ID, sessionValidated: false },
+    };
+    const json = vi.fn();
+    const status = vi.fn(() => ({ json }));
+    const setHeader = vi.fn();
+    const next = vi.fn();
+
+    demoWriteProtection()(req, { status, setHeader } as any, next);
+
+    expect(status).toHaveBeenCalledWith(403);
+    expect(json).toHaveBeenCalledWith({ error: 'Demo mode is read-only', code: 'DEMO_READ_ONLY' });
+    expect(next).not.toHaveBeenCalled();
   });
 });

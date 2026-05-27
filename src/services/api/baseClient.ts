@@ -4,6 +4,11 @@
  */
 
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../../utils/accessBlocked';
 import { tokenService } from '../tokenService';
 
 export const API_URL = '/api';
@@ -157,6 +162,14 @@ export const handleResponse = async <T = unknown>(
 
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
   const message = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
+
+  if (res.status === 403) {
+    const code = getAccessBlockedCode(data);
+    if (isAccessBlockedCode(code)) {
+      dispatchAccessBlocked(data, message || defaultError);
+      throw new Error(message);
+    }
+  }
 
   const err: any = new Error(message);
   err.status = res.status;

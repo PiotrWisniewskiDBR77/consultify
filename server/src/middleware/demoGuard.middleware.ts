@@ -48,6 +48,7 @@ type DemoRequest = Request & {
   demo?: {
     enabled: boolean;
     organizationId: string;
+    sessionValidated?: boolean;
   };
 };
 
@@ -108,6 +109,40 @@ function stripPathOnly(url: string): string {
   return url.split('?')[0]?.split('#')[0] || '';
 }
 
+function getRequestUserId(req: Request): string | undefined {
+  const raw =
+    safeRead(() => (req as any).user?.id, undefined) ??
+    safeRead(() => (req as any).userId, undefined);
+  const normalized = String(raw ?? '').trim();
+  if (!normalized || normalized.length > MAX_DEMO_USER_ID_CHARS) return undefined;
+  if (!/^[a-zA-Z0-9_.:-]+$/.test(normalized)) return undefined;
+  return normalized;
+}
+
+async function resolveValidatedDemoSessionOrgId(
+  userId: string | undefined,
+  requestedSessionOrgId: string
+): Promise<string> {
+  if (!userId || !requestedSessionOrgId || requestedSessionOrgId === DEMO_ORG_ID) return '';
+  try {
+    const session = await dbGet<{ session_org_id?: string }>(
+      `SELECT session_org_id
+       FROM demo_sessions
+       WHERE user_id = ?
+         AND session_org_id = ?
+         AND status = 'active'
+         AND expires_at > ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId, requestedSessionOrgId, new Date().toISOString()],
+      { fallback: false }
+    );
+    return session?.session_org_id === requestedSessionOrgId ? requestedSessionOrgId : '';
+  } catch {
+    return '';
+  }
+}
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
@@ -115,13 +150,21 @@ function stripPathOnly(url: string): string {
 /**
  * Demo context middleware - attaches demo context to request
  */
-export const demoContextMiddleware = (req: Request, _res: Response, next: NextFunction): void => {
+export const demoContextMiddleware = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
   const isDemoHeader = isDemoModeHeaderTrue(safeRead(() => req.get?.('X-Demo-Mode'), ''));
   if (isDemoHeader) {
     const requestedSessionOrgId = sanitizeDemoOrgIdCandidate(
       safeRead(() => req.get?.(DEMO_SESSION_ORG_HEADER), '')
     );
-    const effectiveOrgId = requestedSessionOrgId || DEMO_ORG_ID;
+    const validatedSessionOrgId = await resolveValidatedDemoSessionOrgId(
+      getRequestUserId(req),
+      requestedSessionOrgId
+    );
+    const effectiveOrgId = validatedSessionOrgId || DEMO_ORG_ID;
     const requestUser = safeRead(() => (req as any).user, undefined as unknown);
     const previousDemo = safeRead(() => (req as DemoRequest).demo, undefined as unknown);
     const previousOrgId = safeRead(() => (req as any).organizationId, undefined as unknown);
@@ -135,7 +178,11 @@ export const demoContextMiddleware = (req: Request, _res: Response, next: NextFu
         : undefined;
 
     const applied = safeWrite(() => {
-      (req as DemoRequest).demo = { enabled: true, organizationId: effectiveOrgId };
+      (req as DemoRequest).demo = {
+        enabled: true,
+        organizationId: effectiveOrgId,
+        sessionValidated: Boolean(validatedSessionOrgId),
+      };
       // Legacy compatibility: many routes read org context from req/user.
       (req as any).organizationId = effectiveOrgId;
       if (requestUser && typeof requestUser === 'object') {
@@ -203,9 +250,6 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
     if (isAllowed) return next();
 
     const isDemoHeader = isDemoModeHeaderTrue(safeRead(() => req.get?.('X-Demo-Mode'), ''));
-    const requestedSessionOrgId = sanitizeDemoOrgIdCandidate(
-      safeRead(() => req.get?.(DEMO_SESSION_ORG_HEADER), '')
-    );
     const orgId =
       safeRead(() => (req as DemoRequest).demo?.organizationId, undefined) ??
       safeRead(() => (req as any).organizationId, undefined) ??
@@ -213,10 +257,13 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
       safeRead(() => (req as any).user?.organization_id, undefined);
     const isDemoOrg =
       normalizeOrgIdForDemoComparison(orgId) === normalizeOrgIdForDemoComparison(DEMO_ORG_ID);
-    const isInteractiveSession =
-      Boolean(requestedSessionOrgId) && requestedSessionOrgId !== DEMO_ORG_ID;
+    const demoWritesEnabled = String(process.env.DEMO_WRITES_ENABLED || '').toLowerCase() === 'true';
+    const isValidatedInteractiveSession =
+      demoWritesEnabled &&
+      safeRead(() => (req as DemoRequest).demo?.sessionValidated === true, false) &&
+      normalizeOrgIdForDemoComparison(orgId) !== normalizeOrgIdForDemoComparison(DEMO_ORG_ID);
 
-    if ((isDemoHeader && !isInteractiveSession) || isDemoOrg) {
+    if ((isDemoHeader && !isValidatedInteractiveSession) || isDemoOrg) {
       if (responseWriteBlocked(res)) {
         next();
         return;

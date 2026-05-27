@@ -1,10 +1,12 @@
-import type { Express } from 'express';
+import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import verifyToken from './middleware/auth.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
+import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
+import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -294,6 +296,8 @@ import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
 
+const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
+
 export class ApiGateway {
   private static instance: ApiGateway;
 
@@ -332,6 +336,17 @@ export class ApiGateway {
       // otherwise early-mounted high-traffic routes bypass logging entirely.
       app.use(apiLoggingMiddleware);
 
+      // Demo Mode middleware - switches context and protects against writes.
+      // Mount immediately after logging so all gateway routes share the same boundary.
+      app.use(demoContextMiddleware);
+      app.use(
+        demoWriteProtection({
+          // Demo onboarding/status endpoints must remain writable/readable enough
+          // to enter and leave demo mode; auth routes handle login/logout.
+          allowedRoutes: ['/api/demo/', '/api/auth/'],
+        })
+      );
+
       // TypeScript routes (migrated)
       logger.info('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
@@ -342,7 +357,7 @@ export class ApiGateway {
       // V8 shadow mode: check flag and intercept legacy AI routes for comparison
       app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
 
-      const internalToolsGuard = [verifyToken, requireInternalToolsAccess];
+      const internalToolsGuard = [gatewayVerifyToken, requireInternalToolsAccess];
       app.use('/api/ai/actions', ...internalToolsGuard);
       app.use('/api/ai/prompts', ...internalToolsGuard);
       app.use('/api/ai-context', ...internalToolsGuard);
@@ -356,6 +371,8 @@ export class ApiGateway {
       app.use('/api/agents', ...internalToolsGuard);
       app.use('/api/ai-operator', ...internalToolsGuard);
       app.use('/api/ai-memory', ...internalToolsGuard);
+      app.use('/api/ai-operator', highRiskSurfaceGuard({ categories: ['autopilot'] }));
+      app.use('/api/ai-memory', highRiskSurfaceGuard({ categories: ['ai_memory'] }));
       app.use('/api/ai-prompts', ...internalToolsGuard);
       app.use('/api/ai-training', ...internalToolsGuard);
       app.use('/api/ai-analytics', ...internalToolsGuard);
@@ -394,15 +411,6 @@ export class ApiGateway {
       app.use('/api/admin', adminBulkRoutes);
       app.use('/api/admin', adminP32Routes);
 
-      // Demo Mode middleware - switches context and protects against writes
-      app.use(demoContextMiddleware);
-      app.use(
-        demoWriteProtection({
-          // Allow demo mode toggle and status check
-          allowedRoutes: ['/api/demo/', '/api/auth/'],
-        })
-      );
-
       logger.info('[ApiGateway] Mounting /api/users');
       app.use('/api/users', userRoutes);
 
@@ -435,7 +443,7 @@ export class ApiGateway {
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
-      app.use('/api/initiatives', initiativesRoutes);
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
       app.use('/api/admin-alerts', adminAlertsRoutes);
       app.use('/api/admin/backups', adminBackupRoutes);
       app.use('/api/admin/ai-quality', adminAIQualityRoutes);
@@ -480,7 +488,12 @@ export class ApiGateway {
 
       // Integration routes
       app.use('/api/voice', voiceRoutes);
-      app.use('/api/documents', documentRoutes);
+      app.use(
+        '/api/documents',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
+        documentRoutes
+      );
       app.use('/api/settings', settingsRoutes);
       app.use('/api/meeting', meetingRoutes);
       mountStub(
@@ -578,11 +591,23 @@ export class ApiGateway {
       // Core API routes
       app.use('/api/conclusions', conclusionsRoutes);
       app.use('/api/artifact-conversions', artifactConversionsRoutes);
-      app.use('/api/projects', projectRoutes);
-      app.use('/api/knowledge', knowledgeRoutes);
+      app.use('/api/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
+      app.use(
+        '/api/knowledge',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['upload', 'ai_memory'] }),
+        knowledgeRoutes
+      );
       app.use('/api/knowledge-graph', knowledgeGraphRoutes);
       app.use('/api/kb', knowledgeBaseRoutes); // Public Knowledge Base API
-      app.use('/api/media-ingestion', mediaIngestionRoutes);
+      app.use(
+        '/api/media-ingestion',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['upload'] }),
+        mediaIngestionRoutes
+      );
       app.use('/api/llm', llmRoutes);
       app.use('/api/tasks', taskRoutes);
       app.use('/api/public/v1', publicApiV1Routes);
@@ -617,9 +642,16 @@ export class ApiGateway {
 
       // Organization routes
       app.use('/api/megatrends', megatrendRoutes);
+      app.use(
+        '/api/organizations',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['invite'] })
+      );
       app.use('/api/organizations', organizationRoutes);
       app.use('/api/organizations', ownershipRoutes);
       app.use('/api/organizations', approvedDomainsRoutes);
+      app.use('/api/invitations', gatewayVerifyToken, trialEntryGuard);
       mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
@@ -651,10 +683,20 @@ export class ApiGateway {
       // Feature routes
       app.use('/api/gamification', gamificationRoutes);
       app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
-      app.use('/api/trial', trialRoutes);
-      app.use('/api/cloud', cloudRoutes);
+      app.use('/api/trial', trialEntryGuard, trialRoutes);
+      app.use(
+        '/api/cloud',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export'] }),
+        cloudRoutes
+      );
       app.use('/api/rbac', rbacRoutes);
-      app.use('/api/branding', brandingRoutes);
+      app.use(
+        '/api/branding',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload'] }),
+        brandingRoutes
+      );
       mountStub('/api/workspace-defaults', workspaceDefaultsRoutes, 'workspaceDefaultsRoutes');
       // My Work is a production-critical module (not a stub).
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
@@ -671,7 +713,12 @@ export class ApiGateway {
       // so `POST /share-links/resolve` lands here and never reaches the
       // authed router.
       app.use('/api/document-studio', documentShareLinkPublicRoutes);
-      app.use('/api/document-studio', documentStudioRoutes);
+      app.use(
+        '/api/document-studio',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
+        documentStudioRoutes
+      );
       // Execution-module UI/UX standard (Epic E11) — read-only governance
       // surface exposing the canonical Doc / Excel / Deck Builder standard
       // and the system-owned reference manifests.
@@ -692,7 +739,7 @@ export class ApiGateway {
       app.use('/api/benchmark', benchmarkRoutes);
 
       // Assessment routes
-      app.use('/api/assessment', assessmentAIRoutes); // AI endpoints: /api/assessment/:projectId/ai/*
+      app.use('/api/assessment', gatewayVerifyToken, trialEntryGuard, assessmentAIRoutes); // AI endpoints: /api/assessment/:projectId/ai/*
       mountStub('/api/assessment', assessmentRoutes, 'assessmentRoutes');
       mountStub('/api/rapidlean', rapidleanRoutes, 'rapidleanRoutes');
       mountStub(
@@ -718,7 +765,7 @@ export class ApiGateway {
       );
 
       // PMO routes
-      app.use('/api/roadmap', roadmapRoutes);
+      app.use('/api/roadmap', gatewayVerifyToken, trialEntryGuard, roadmapRoutes);
       app.use('/api/execution', executionRoutes);
       mountStub('/api/stabilization', stabilizationRoutes, 'stabilizationRoutes');
       app.use('/api/decisions', decisionsRoutes);
@@ -727,8 +774,8 @@ export class ApiGateway {
       app.use('/api/pmo-context', pmoContextRoutes);
       app.use('/api/pmo', pmoRoutes);
       // Compatibility mounts (some clients expect PMO-scoped prefixes)
-      app.use('/api/pmo/projects', projectRoutes);
-      app.use('/api/pmo/initiatives', initiativesRoutes);
+      app.use('/api/pmo/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
+      app.use('/api/pmo/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
       app.use('/api/pmo/tasks', taskRoutes);
       app.use('/api/pmo-domains', pmoDomainsRoutes);
       // Compatibility mount for legacy clients.
@@ -743,11 +790,22 @@ export class ApiGateway {
       app.use('/api/scenarios', scenariosRoutes);
 
       // Reports routes
-      app.use('/api/reports', reportsRoutes);
+      app.use('/api/reports', gatewayVerifyToken, trialEntryGuard, reportsRoutes);
       app.use('/api/reports/premium', premiumReportsRoutes);
-      app.use('/api/report-builder', reportBuilderRoutes);
+      app.use(
+        '/api/report-builder',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
+        reportBuilderRoutes
+      );
       app.use('/api/reports-v4', reportEnterpriseRoutes);
-      app.use('/api/report-import', reportImportRoutes);
+      app.use(
+        '/api/report-import',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['upload'] }),
+        reportImportRoutes
+      );
       app.use('/api/ai-suggestions', aiSuggestionsRoutes);
       app.use('/api/report-initiatives', reportInitiativesRoutes);
       app.use('/api/scheduled-reports', scheduledReportsRoutes);
@@ -861,6 +919,8 @@ export class ApiGateway {
       app.use('/api/benefits', benefitsRoutes);
       app.use(
         '/api/finance-statements',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export'] }),
         deprecationHeader('/api/v8/finance'),
         financeStatementsRoutes
       );

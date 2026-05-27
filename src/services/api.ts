@@ -14,6 +14,7 @@ import i18n from '@/i18n';
 
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import { dispatchAccessBlocked, getAccessBlockedCode, isAccessBlockedCode } from '../utils/accessBlocked';
 import { normalizeApiErrorMessage } from '../utils/apiError';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
@@ -896,30 +897,10 @@ const handleResponse = async (res: Response, defaultError: string) => {
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
   if (res.status === 403) {
-    const featureAccessDenied = data?.error === 'FEATURE_ACCESS_DENIED';
-    const code = featureAccessDenied ? 'FEATURE_ACCESS_DENIED' : data.code || data.errorCode;
-    const accessBlockedCodes = new Set([
-      'TRIAL_PROFILE_INCOMPLETE',
-      'TRIAL_EXPIRED',
-      'AI_LIMIT_REACHED',
-      'AI_TOKEN_BUDGET_EXCEEDED',
-      'INSUFFICIENT_TOKENS',
-      'DEMO_READ_ONLY',
-      'FEATURE_ACCESS_DENIED',
-    ]);
-    if (accessBlockedCodes.has(code)) {
+    const code = getAccessBlockedCode(data);
+    if (isAccessBlockedCode(code)) {
       try {
-        window.dispatchEvent(
-          new CustomEvent('access:blocked', {
-            detail: {
-              code,
-              message:
-                data.message ||
-                (featureAccessDenied ? 'Access to this feature is restricted.' : data.error) ||
-                defaultError,
-            },
-          })
-        );
+        dispatchAccessBlocked(data, defaultError);
       } catch {
         // ignore
       }
@@ -5044,10 +5025,80 @@ export const Api = {
             type: 'replace_selection';
             selectedText: string;
             replacementMd: string;
+            selection?: {
+              draftId?: string;
+              mode: 'document' | 'md';
+              selectedText: string;
+              startOffset?: number;
+              endOffset?: number;
+              occurrenceIndex?: number;
+              headingPath?: string[];
+            } | null;
             reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
           }
-        | { type: 'append_section'; heading: string; contentMd: string; reason?: string }
-        | { type: 'update_document'; contentMd: string; reason?: string }
+        | {
+            type: 'insert_element';
+            elementKind: 'text' | 'heading' | 'table' | 'diagram' | 'list' | 'summary';
+            contentMd: string;
+            target?: {
+              position:
+                | 'at_cursor'
+                | 'before_selection'
+                | 'after_selection'
+                | 'replace_selection'
+                | 'end_of_document';
+              selection?: {
+                draftId?: string;
+                mode: 'document' | 'md';
+                selectedText: string;
+                startOffset?: number;
+                endOffset?: number;
+                occurrenceIndex?: number;
+                headingPath?: string[];
+              } | null;
+            };
+            reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
+          }
+        | {
+            type: 'append_section';
+            heading: string;
+            contentMd: string;
+            target?: {
+              position:
+                | 'at_cursor'
+                | 'before_selection'
+                | 'after_selection'
+                | 'replace_selection'
+                | 'end_of_document';
+              selection?: {
+                draftId?: string;
+                mode: 'document' | 'md';
+                selectedText: string;
+                startOffset?: number;
+                endOffset?: number;
+                occurrenceIndex?: number;
+                headingPath?: string[];
+              } | null;
+            };
+            reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
+          }
+        | {
+            type: 'update_document';
+            contentMd: string;
+            reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
+          }
         | {
             type: 'generate_block_from_selection';
             kind: 'table' | 'chart' | 'diagram' | 'decision' | 'research' | 'dashboard';

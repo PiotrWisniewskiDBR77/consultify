@@ -39,6 +39,13 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   STORAGE_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
   SUBSCRIPTION_PAST_DUE: { labelKey: 'access.cta.fixPayment', href: '/settings?tab=billing' },
   SUBSCRIPTION_CANCELLED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  TRIAL_ENTRY_RESTRICTION: { labelKey: 'access.cta.completeSetup', href: '/trial/create-org' },
+  TRIAL_INVITES_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_UPLOAD_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_EXPORT_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  PUBLIC_SHARE_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_AI_MEMORY_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  AI_AUTOPILOT_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
 };
 
 export const AccessBlockedModal: React.FC = () => {
@@ -71,6 +78,13 @@ export const AccessBlockedModal: React.FC = () => {
     const isOrgError = code === 'ORG_NOT_FOUND' || code === 'ORG_INACTIVE';
     const isTrialBlock =
       code === 'TRIAL_EXPIRED' ||
+      code === 'TRIAL_ENTRY_RESTRICTION' ||
+      code === 'TRIAL_INVITES_DISABLED' ||
+      code === 'TRIAL_UPLOAD_DISABLED' ||
+      code === 'TRIAL_EXPORT_DISABLED' ||
+      code === 'PUBLIC_SHARE_DISABLED' ||
+      code === 'TRIAL_AI_MEMORY_DISABLED' ||
+      code === 'AI_AUTOPILOT_DISABLED' ||
       code === 'AI_LIMIT_REACHED' ||
       code === 'AI_TOKEN_BUDGET_EXCEEDED' ||
       code === 'INSUFFICIENT_TOKENS';

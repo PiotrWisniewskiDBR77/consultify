@@ -12,7 +12,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
-import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
+import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = process.env.NODE_ENV === 'production';
@@ -204,6 +204,30 @@ const safeWrite = (writer: () => void): boolean => {
     return true;
   } catch {
     return false;
+  }
+};
+
+const getActiveDemoSessionOrgId = async (
+  userId: string,
+  requestedSessionOrgId: string | undefined,
+  dbGetDependency: Dependencies['dbGet']
+): Promise<string | undefined> => {
+  if (!requestedSessionOrgId || requestedSessionOrgId === DEMO_ORG_ID) return undefined;
+  try {
+    const session = await dbGetDependency<{ session_org_id?: string }>(
+      `SELECT session_org_id
+       FROM demo_sessions
+       WHERE user_id = ?
+         AND session_org_id = ?
+         AND status = 'active'
+         AND expires_at > ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId, requestedSessionOrgId, new Date().toISOString()]
+    );
+    return session?.session_org_id === requestedSessionOrgId ? requestedSessionOrgId : undefined;
+  } catch {
+    return undefined;
   }
 };
 
@@ -570,8 +594,15 @@ const attachUser = async (
   const tokenOrganizationId =
     normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organizationId')) ||
     normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organization_id'));
+  const validatedDemoSessionOrgId = isDemoHeader
+    ? await getActiveDemoSessionOrgId(decodedUserId, requestedDemoSessionOrgId, dbGet)
+    : undefined;
   let resolvedOrganizationId =
-    isDemoHeader && requestedDemoSessionOrgId ? requestedDemoSessionOrgId : tokenOrganizationId;
+    isDemoHeader && validatedDemoSessionOrgId
+      ? validatedDemoSessionOrgId
+      : isDemoHeader
+        ? DEMO_ORG_ID
+        : tokenOrganizationId;
   let resolvedUserRole =
     readOptionalStringClaim(decodedClaims, 'role') ||
     readOptionalStringClaim(decodedClaims, 'userRole');
