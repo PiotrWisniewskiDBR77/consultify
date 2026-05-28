@@ -18,12 +18,12 @@ fail() {
 
 case "$environment" in
   staging)
-    expected_ref="refs/heads/develop"
+    expected_refs="refs/heads/develop refs/heads/staging"
     expected_environment="staging"
     allowed_hosts="demo.consultify.ai stage.consultinity.ai"
     ;;
   production)
-    expected_ref="refs/heads/main"
+    expected_refs="refs/heads/main"
     expected_environment="production"
     allowed_hosts="consultify.ai www.consultify.ai"
     ;;
@@ -33,7 +33,15 @@ case "$environment" in
 esac
 
 [ -n "$git_ref" ] || fail "missing git ref (set GIT_REF or GITHUB_REF)"
-[ "$git_ref" = "$expected_ref" ] || fail "ref '$git_ref' does not match $environment branch '$expected_ref'"
+ref_ok=1
+for expected_ref in $expected_refs; do
+  if [ "$git_ref" = "$expected_ref" ]; then
+    ref_ok=0
+    break
+  fi
+done
+
+[ "$ref_ok" -eq 0 ] || fail "ref '$git_ref' does not match $environment branch list '$expected_refs'"
 
 if [ -n "$railway_environment" ] && [ "$railway_environment" != "$expected_environment" ]; then
   fail "Railway environment '$railway_environment' does not match expected '$expected_environment'"
