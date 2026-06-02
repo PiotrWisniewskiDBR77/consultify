@@ -1047,14 +1047,34 @@ export const useConversationStore = create<ConversationState>()(
         });
 
         try {
-          const result = await Api.addConversationMessage(conversationId, {
-            role: message.role,
-            content: message.content,
-            messageType: message.messageType,
-            metadata: messageMetadata,
-            tokenCount: message.tokenCount,
-            modelUsed: message.modelUsed,
-          });
+          // Persist with bounded retry. Safe because the server dedupes on clientMessageId,
+          // so a retried POST never creates a duplicate row — it just returns the existing one.
+          const persistMessage = async () => {
+            const maxAttempts = 3;
+            let lastErr: unknown;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              try {
+                return await Api.addConversationMessage(conversationId, {
+                  role: message.role,
+                  content: message.content,
+                  messageType: message.messageType,
+                  metadata: messageMetadata,
+                  tokenCount: message.tokenCount,
+                  modelUsed: message.modelUsed,
+                  // Reuse the optimistic id as the idempotency key so a network-retried POST
+                  // (fetchWithRetry) or a double-trigger collapses to a single server row.
+                  clientMessageId: optimisticId,
+                });
+              } catch (e) {
+                lastErr = e;
+                if (attempt < maxAttempts) {
+                  await new Promise((r) => setTimeout(r, 600 * attempt));
+                }
+              }
+            }
+            throw lastErr;
+          };
+          const result = await persistMessage();
 
           const newMessage =
             result && typeof result === 'object'

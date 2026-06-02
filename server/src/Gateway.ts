@@ -1,7 +1,7 @@
 import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
-import verifyToken from './middleware/auth.middleware.js';
+import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
@@ -297,6 +297,7 @@ import { initializeLayoutCapacityPersistence } from './services/presentationStud
 import logger from './utils/Logger.js';
 
 const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
+const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
 
 export class ApiGateway {
   private static instance: ApiGateway;
@@ -450,8 +451,11 @@ export class ApiGateway {
       app.use('/api/admin/model-registry', modelRegistryRoutes);
 
       // AI-related legacy/duplicate routes (cleaned up)
-      app.use('/api/conversations', conversationsRoutes);
-      app.use('/api/chat-projects', chatProjectsRoutes);
+      // gatewayVerifyToken populates req.organizationId from the token BEFORE validateOrgMembership
+      // re-checks active membership against the DB (fail-fast on revocation; passes through when
+      // no org context = personal chat). Closes the stale-token tenancy gap on chat routes.
+      app.use('/api/conversations', gatewayVerifyToken, orgMembershipGuard, conversationsRoutes);
+      app.use('/api/chat-projects', gatewayVerifyToken, orgMembershipGuard, chatProjectsRoutes);
       mountStub('/api/daily-brief', dailyBriefRoutes, 'dailyBriefRoutes');
       mountStub('/api/pinned-prompts', pinnedPromptsRoutes, 'pinnedPromptsRoutes');
       mountStub('/api/task-advisor', taskAdvisorRoutes, 'taskAdvisorRoutes');

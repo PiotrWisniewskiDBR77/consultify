@@ -2493,10 +2493,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (conversationId) {
         try {
           const userMessageMetadata =
-            uploadedAttachments.length > 0 || failedAttachments.length > 0 || canvasContextPacket
+            uploadedAttachments.length > 0 ||
+            failedAttachments.length > 0 ||
+            attachmentDocIds.length > 0 ||
+            canvasContextPacket
               ? {
                   ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
                   ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
+                  // Persist the KB doc ids attached to this turn so the RAG scope can be
+                  // reconstructed after a page reload (previously only sent to the live AI call).
+                  ...(attachmentDocIds.length > 0 ? { attachmentDocIds } : {}),
                   ...(canvasContextPacket
                     ? {
                         canvasContext: {
@@ -2522,7 +2528,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             metadata: userMessageMetadata as any,
           });
         } catch (err) {
+          // Don't silently swallow: the store keeps the optimistic bubble flagged with
+          // localError and retries in the background (idempotent via clientMessageId), but
+          // surface a non-blocking warning so the user knows this turn may not be persisted.
           console.error('[UnifiedChatPanel] Failed to save user message:', err);
+          toast.error(
+            t(
+              'aiChat.errors.messageSaveFailed',
+              "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds."
+            )
+          );
         }
       }
 

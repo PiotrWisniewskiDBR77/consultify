@@ -9660,6 +9660,8 @@ export const Api = {
       metadata?: Record<string, any>;
       tokenCount?: number;
       modelUsed?: string;
+      /** Idempotency key so a network-retried POST doesn't create a duplicate row. */
+      clientMessageId?: string;
     }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/messages`, {

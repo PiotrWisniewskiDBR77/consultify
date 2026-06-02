@@ -1182,6 +1182,14 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               // New controller for retry
               abortControllerRef.current?.abort();
               abortControllerRef.current = new AbortController();
+              // Reset the streamed-content accumulator before resending. The retry reuses the
+              // same `handleChunk` closure, which APPENDS to `fullText`; without this reset any
+              // chunks received before the error would be duplicated/garbled in the re-stream
+              // (e.g. "The revenue is" + full re-stream → "The revenue isThe revenue is …").
+              fullText = '';
+              hasReceivedContent = false;
+              setStreamedContent('');
+              setCurrentStreamContent('');
               await Api.chatWithAIStream(
                 message,
                 history,
