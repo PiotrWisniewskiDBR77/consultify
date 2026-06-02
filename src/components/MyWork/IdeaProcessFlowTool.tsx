@@ -1643,6 +1643,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (isInput) return;
 
+      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut). e.code is
+      // layout-independent (Shift+1 yields "!" on most layouts).
+      if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        e.preventDefault();
+        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
+        return;
+      }
+
       if (e.key === 'F2') {
         e.preventDefault();
         setShowPropertiesPanel(true);

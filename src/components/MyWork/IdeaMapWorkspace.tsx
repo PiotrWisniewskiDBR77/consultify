@@ -1533,6 +1533,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         description: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
         category: 'navigation',
       },
+      {
+        key: `Shift+1 / ${isMacPlatform ? '⌘0' : 'Ctrl+0'}`,
+        description: isPolish ? 'Dopasuj widok (zoom to fit)' : 'Zoom to fit',
+        category: 'navigation',
+      },
     ];
     // `shortcuts` already starts with the '?' help row injected by the hook.
     return [...globals, ...shortcuts];

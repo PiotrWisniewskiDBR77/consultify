@@ -3079,6 +3079,23 @@ function MindMapInner({
         }
         return;
       }
+      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut, FigJam-style).
+      // e.code is layout-independent (Shift+1 yields "!" as e.key on most layouts).
+      if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        const t = e.target as HTMLElement | null;
+        const typing =
+          !!t &&
+          (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+        if (!typing) {
+          e.preventDefault();
+          try {
+            fitView({ padding: 0.3, duration: 300 });
+          } catch {
+            /* */
+          }
+          return;
+        }
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === '0') {
         e.preventDefault();
         debugLog('KEY_HANDLED fitView', {

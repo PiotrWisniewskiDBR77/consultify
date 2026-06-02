@@ -127,7 +127,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   isFullscreen: externalIsFullscreen = false,
   onContextMenu: externalOnContextMenu,
 }) => {
-  const { screenToFlowPosition, setViewport } = useReactFlow();
+  const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [showMiniMap, setShowMiniMap] = React.useState(false);
@@ -180,6 +180,28 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
     return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
   }, [setViewport]);
+
+  // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
+  // Mind Map and Process Flow tools. Whiteboard previously had neither.
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+        e.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+        return;
+      }
+      // e.code is layout-independent (Shift+1 yields "!" on most layouts).
+      if (!typing && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        e.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [fitView]);
 
   const getCenter = React.useCallback(() => {
     return screenToFlowPosition({
